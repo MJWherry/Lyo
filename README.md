@@ -36,7 +36,7 @@ These are the areas that tend to anchor product work; each links to deeper docs 
 | [`Lyo.Net/Security/`](Lyo.Net/Security/) | Cryptography (`Lyo.Encryption`) and encryption benchmarks. |
 | [`Lyo.Net/Communication/`](Lyo.Net/Communication/) | Messaging and media delivery: SMTP email, SMS (including Twilio), and text-to-speech providers. |
 | [`Lyo.Net/Tools/`](Lyo.Net/Tools/) | Host apps and utilities (e.g. gateway, test API/console) for trying components end-to-end. |
-| [`k6/`](k6/) | Load-testing scripts; see [k6 framework: Person Query API](k6/framework-person/README.md). |
+| [`k6/`](k6/) | Load-testing scripts; see [k6 framework: Person Query API](k6/framework-person/README.md) and [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md). |
 
 Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo.Something`). The sections below list **every** in-repo `README.md` beside a library, grouped by top-level area.
 
@@ -131,6 +131,7 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 ### Load testing (k6)
 
 - [k6 framework: Person Query API](k6/framework-person/README.md): k6 workloads and query shapes against `TestApi` persons.
+- [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md): latest archived run metrics and comparison to common API stacks (Hasura/PostgREST, typical ORM APIs, etc.).
 
 ---
 

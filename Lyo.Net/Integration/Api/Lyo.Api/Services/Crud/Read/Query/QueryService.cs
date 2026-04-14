@@ -502,6 +502,22 @@ public class QueryService<TContext>(
 
                 Logger.LogDebug("Query cache key: {CacheKey}", cacheKey);
                 try {
+                    string[] BuildSqlProjectionCacheTags()
+                    {
+                        var tags = new List<string>(4 + effectiveIncludes.Count) {
+                            "queries",
+                            "queryproject",
+                            "entities",
+                            $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}",
+                        };
+                        if (sharedIncludeValidationAndSqlContext is not null && effectiveIncludes.Count > 0) {
+                            foreach (var refType in loaderService.GetReferencedTypes<TContext, TDbModel>(sharedIncludeValidationAndSqlContext, effectiveIncludes))
+                                tags.Add($"entity:{refType.Name.ToLowerInvariant()}");
+                        }
+
+                        return tags.ToArray();
+                    }
+
                     async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildSqlProjectedCacheEntryAsync(CancellationToken ct2)
                     {
                         var r = await ExecuteSqlProjectedQueryAsync(
@@ -524,8 +540,7 @@ public class QueryService<TContext>(
                         var projectedSuccess = ResultFactory.ProjectedQuerySuccess(
                             queryRequestForEcho, items, r.Start, items.Count, r.Total, r.HasMore, entityTypes: entityTypes);
 
-                        string[] tags = ["queries", "queryproject", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}"];
-                        return (projectedSuccess, tags);
+                        return (projectedSuccess, BuildSqlProjectionCacheTags());
                     }
 
                     ProjectedQueryRes<object?>? sqlResult;

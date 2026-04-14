@@ -735,13 +735,13 @@ public sealed class FusionCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();
@@ -801,14 +801,14 @@ public sealed class FusionCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
             await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();
@@ -963,13 +963,13 @@ public sealed class FusionCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
             _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();

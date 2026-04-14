@@ -33,15 +33,25 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
 
     /// <inheritdoc />
     public byte[] Encode(ReadOnlySpan<byte> plaintext)
+        => EncodeReturningEnvelope(plaintext).Framed;
+
+    /// <inheritdoc />
+    public (byte[] Framed, CacheEntryEnvelope Envelope) EncodeReturningEnvelope(ReadOnlySpan<byte> plaintext)
     {
         var o = _cacheOptions.Payload;
         byte flags = 0;
-        var working = plaintext.ToArray();
+        var applicationPlaintext = plaintext.ToArray();
+        var working = applicationPlaintext;
+        CompressionResult? compressionResult = null;
+#if NET10_0_OR_GREATER
+        EncryptionResult? encryptionResult = null;
+#endif
 
         if (o.AutoCompress && plaintext.Length >= o.AutoCompressMinSizeBytes) {
-            _ = _compression.Compress(working, out var compressed);
+            var compressInfo = _compression.Compress(working, out var compressed);
             if (compressed.Length < working.Length) {
                 flags |= CachePayloadFrame.FlagCompressed;
+                compressionResult = CompressionResult.FromSuccess(compressed, compressInfo);
                 working = compressed;
             }
         }
@@ -51,10 +61,24 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
             OperationHelpers.ThrowIfNull(_encryption, "AutoEncrypt is enabled but no IEncryptionService is registered.");
             working = _encryption.Encrypt(working, o.EncryptionKeyId);
             flags |= CachePayloadFrame.FlagEncrypted;
+            encryptionResult = EncryptionResult.FromSuccess(working, o.EncryptionKeyId);
         }
 #endif
 
-        return CachePayloadFrame.Create(working, flags);
+        var framed = CachePayloadFrame.Create(working, flags);
+#if NET10_0_OR_GREATER
+        var envelope = new CacheEntryEnvelope {
+            Compression = compressionResult,
+            Encryption = encryptionResult,
+            Payload = applicationPlaintext
+        };
+#else
+        var envelope = new CacheEntryEnvelope {
+            Compression = compressionResult,
+            Payload = applicationPlaintext
+        };
+#endif
+        return (framed, envelope);
     }
 
     /// <inheritdoc />

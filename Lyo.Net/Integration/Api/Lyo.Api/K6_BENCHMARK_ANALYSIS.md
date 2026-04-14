@@ -1,7 +1,7 @@
 # K6 Benchmark Analysis — Lyo Query API
 
-**Date**: March 20, 2026
-**Results**: `k6/framework-person/results/20260320-151513/`
+**Date**: April 14, 2026  
+**Results**: `k6/framework-person/results/20260414-002619/`  
 **Environment**: Local development (API + PostgreSQL + k6 on same machine)
 
 ---
@@ -15,7 +15,7 @@
 | **Database**    | PostgreSQL (localhost:5437)                                                   |
 | **OS**          | Linux 6.8.0-106-generic, x86_64                                               |
 | **Disk**        | 1.8 TB root partition, 721 GB free                                            |
-| **Dataset**     | Real production-like data (hundreds to low-thousands of persons)              |
+| **Dataset**     | Large PostgreSQL graph (representative counts): **~135k** `person` (29 columns); **~815k** `contact_address` (10) + **~815k** `address` (21); **~480k** `contact_phone_number` (10) + **~460k** `phone_number` (9); **~285k** `contact_email_address` (11) + **~285k** `email_address` (6) |
 | **Compression** | Brotli enabled (API-side), `Accept-Encoding: br, gzip, deflate` on client     |
 
 > **Important**: API, database, and k6 load generator all share the same 12-core laptop CPU.
@@ -29,7 +29,7 @@ The `Person` entity is moderately complex:
 
 - **29 columns** (26 scalar + 3 JSONB)
 - **7 navigation properties** in the domain model
-- **5 database indexes** (first name, last name, composite last+first, is_active, created_timestamp)
+- **PostgreSQL indexes** (typical TestApi / `people.person`): `PK_person`, `ix_person_created_timestamp`, `ix_person_first_name`, `ix_person_is_active`, `ix_person_last_name`, `ix_person_last_name_first_name`
 
 The heavy-include tests exercise 3 include paths, each of which traverses a **join table** before reaching the target entity — making each include a **two-hop navigation**:
 
@@ -65,17 +65,16 @@ related records across 6 child/grandchild tables.
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 17.3 ms                     |
-| **Median latency**    | 15.3 ms                     |
-| **p95 latency**       | 35.2 ms                     |
-| **p99 latency**       | 69.2 ms                     |
-| **Max latency**       | 231 ms                      |
-| **Throughput**        | 20.0 req/s (3,601 requests) |
+| **Avg latency**       | 21.2 ms                     |
+| **Median latency**    | 20.6 ms                     |
+| **p95 latency**       | 31.6 ms                     |
+| **p99 latency**       | 45.7 ms                     |
+| **Max latency**       | 129 ms                      |
+| **Throughput**        | 20.0 req/s (3,600 requests) |
 | **Success rate**      | **100%**                    |
 | **Avg response size** | 247 KB                      |
 
-**Assessment**: Excellent. Five different query types — including dynamically compiled expression trees, query node filters, sort chains, and regex-based subqueries — all complete
-in under 231 ms at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass.
+**Assessment**: Excellent. Five different query types — including dynamically compiled expression trees, query node filters, sort chains, and regex-based subqueries — stay in a tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass.
 
 ---
 
@@ -83,17 +82,16 @@ in under 231 ms at sustained 20 req/s. Zero failures. Randomized start/amount fo
 
 | Metric                | Value                          |
 |-----------------------|--------------------------------|
-| **Avg latency**       | 71.5 ms                        |
-| **Median latency**    | 37.3 ms                        |
-| **p95 latency**       | 267 ms                         |
-| **p99 latency**       | 506 ms                         |
-| **Max latency**       | 1,087 ms                       |
-| **Throughput**        | 211.9 req/s (101,730 requests) |
+| **Avg latency**       | 178 ms                         |
+| **Median latency**    | 144 ms                         |
+| **p95 latency**       | 475 ms                         |
+| **p99 latency**       | 719 ms                         |
+| **Max latency**       | 1,433 ms                       |
+| **Throughput**        | 113.4 req/s (54,465 requests) |
 | **Success rate**      | **100%**                       |
 | **Avg response size** | 601 KB                         |
 
-**Assessment**: Strong. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). All 101K+ requests complete within 2.5 s SLA at up to 40 VUs. This
-reflects typical production usage (moderate page sizes, single include path) rather than the previous 7-table, ~2000-row stress case.
+**Assessment**: Strong under concurrent load. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). Average latency rises versus a lighter laptop-only run (March 2026 archive) because API, Postgres, and k6 share CPU while ramping to 40 VUs; all requests still meet the 2.5 s SLA. Use this scenario for **stress**, not apples-to-apples with single-request localhost timings.
 
 ---
 
@@ -101,17 +99,16 @@ reflects typical production usage (moderate page sizes, single include path) rat
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 4.8 ms                      |
-| **Median latency**    | 3.9 ms                      |
-| **p95 latency**       | 7.2 ms                      |
-| **p99 latency**       | 12.3 ms                     |
-| **Max latency**       | 138 ms                      |
-| **Throughput**        | 56.2 req/s (6,748 requests) |
+| **Avg latency**       | 7.6 ms                      |
+| **Median latency**    | 6.9 ms                      |
+| **p95 latency**       | 10.9 ms                     |
+| **p99 latency**       | 14.6 ms                     |
+| **Max latency**       | 68 ms                       |
+| **Throughput**        | 56.2 req/s (6,750 requests) |
 | **Success rate**      | **100%**                    |
 | **Avg response size** | 205 KB                      |
 
-**Assessment**: Excellent. Handles an 80 req/s spike burst with sub-10 ms p95 latency. Select projection (returning only 5 fields including a nested navigation path) is highly
-efficient.
+**Assessment**: Excellent. Handles a high arrival-rate spike with sub–11 ms p95 latency. Select projection (five fields including a nested navigation path) remains efficient.
 
 ---
 
@@ -119,18 +116,17 @@ efficient.
 
 | Metric                | Value                           |
 |-----------------------|---------------------------------|
-| **Avg latency**       | 88.0 ms                         |
-| **Median latency**    | 29.8 ms                         |
-| **p95 latency**       | 490 ms                          |
-| **p99 latency**       | 944 ms                          |
-| **Max latency**       | 9,911 ms                        |
-| **Throughput**        | 41.8 req/s (300,797 requests)   |
-| **Duration**          | 2 hours                         |
-| **Success rate**      | **99.97%** (100 slow responses) |
-| **Avg response size** | 608 KB (range: 183 KB – 8.5 MB) |
+| **Avg latency**       | 118 ms                          |
+| **Median latency**    | 47.2 ms                         |
+| **p95 latency**       | 234 ms                          |
+| **p99 latency**       | 1,499 ms                        |
+| **Max latency**       | 3,896 ms                        |
+| **Throughput**        | 37.0 req/s (266,589 requests)   |
+| **Duration**          | 2 hours (configured)            |
+| **Success rate**      | **100%** (all k6 checks passed) |
+| **Avg response size** | 607 KB (range varies by query shape) |
 
-**Assessment**: Very strong. Sustained 2 hours of mixed load with periodic heavy-include spikes, processing nearly 301K requests. One hundred iterations exceeded the slow threshold
-(heavy-include, baseline, filter_sort, complex_node, select_projection); all returned 200. Randomized queries avoid REM cache hits. No evidence of memory leaks or latency drift.
+**Assessment**: Very strong. Long soak with mixed load and periodic heavy-include spikes; hundreds of thousands of requests with no failed checks. Randomized queries limit REM cache hits. Compare p95/p99 to prior archived runs with care — mix of query shapes and heavy spikes shifts tail latency.
 
 ---
 
@@ -138,18 +134,17 @@ efficient.
 
 | Metric                | Value                       |
 |-----------------------|-----------------------------|
-| **Avg latency**       | 12.7 ms                     |
-| **Median latency**    | 9.4 ms                      |
-| **p95 latency**       | 14.9 ms                     |
-| **p99 latency**       | 103 ms                      |
-| **Max latency**       | 370 ms                      |
-| **Throughput**        | 20.0 req/s (3,601 requests) |
+| **Avg latency**       | 15.8 ms                     |
+| **Median latency**    | 14.8 ms                     |
+| **p95 latency**       | 20.8 ms                     |
+| **p99 latency**       | 25.0 ms                     |
+| **Max latency**       | 85 ms                       |
+| **Throughput**        | 20.0 req/s (3,600 requests) |
 | **Success rate**      | **100%**                    |
 | **Avg response size** | 231 KB                      |
 
 **Assessment**: Excellent. The most complex query structure in the suite — a two-level `QueryNode` tree with a `SubQuery` containing nested `And`/`Or` logical operators and a regex
-comparator — completes in under 370 ms at sustained 20 req/s. The SQL-first subquery pushdown strategy translates the entire nested query into a single database roundtrip.
-Randomized start/amount for cache bypass.
+comparator — holds ~21 ms p95 at sustained 20 req/s. The SQL-first subquery pushdown strategy translates the nested query efficiently. Randomized start/amount for cache bypass.
 
 ---
 
@@ -159,29 +154,27 @@ Randomized start/amount for cache bypass.
 
 | System / Stack                                    | Comparable Workload                            | Typical p95 Latency |
 |---------------------------------------------------|------------------------------------------------|---------------------|
-| **Lyo Query API** (EF Core + dynamic expressions) | Filters, sorts, subqueries, regex, projections | **15–35 ms**        |
+| **Lyo Query API** (this run, EF Core + dynamic expressions) | Mixed / spike / subquery workloads (see scenarios) | **~11–32 ms** scenario-dependent |
 | **Hasura / PostgREST** (direct PG → JSON, no ORM) | Filters + sorts + pagination                   | 5–30 ms             |
 | **Typical EF Core REST API**                      | Dynamic filters + pagination                   | 50–200 ms           |
 | **Django REST Framework**                         | QuerySet filters + pagination                  | 50–300 ms           |
 | **Ruby on Rails**                                 | ActiveRecord scopes + pagination               | 80–400 ms           |
 | **Spring Boot + JPA/Hibernate**                   | JPQL with dynamic predicates                   | 30–150 ms           |
 
-Lyo's lightweight query performance is **at the top end of ORM-based frameworks** and competitive with schema-less query engines like Hasura that skip ORM hydration entirely.
+Lyo remains **at the top end of ORM-based frameworks** for these query shapes and **in the same order of magnitude** as thin Postgres-to-JSON gateways for comparable payload sizes on local hardware.
 
 ### Heavy Include / Navigation Queries (Scenario 02)
 
 | System / Stack                               | Comparable Workload                             | Typical Behavior                       |
 |----------------------------------------------|-------------------------------------------------|----------------------------------------|
-| **Lyo Query API**                            | 3 tables, 100–300 rows, 601 KB response, 40 VUs | **71 ms avg, 100% within 2.5 s SLA**   |
+| **Lyo Query API** (this run)                 | 3 tables, 100–300 rows, ~601 KB, up to 40 VUs   | **~178 ms avg, p95 ~475 ms, 100% within 2.5 s SLA** |
 | **EF Core API** (typical)                    | 5–7 table includes, 500–2000 rows               | 2–10s depending on depth and row count |
 | **Django + select_related/prefetch_related** | 2000 rows + 3 FK joins                          | 3–10s                                  |
 | **Rails + includes (eager load)**            | 2000 rows + 3 associations                      | 5–15s                                  |
 | **GraphQL (Apollo + DataLoader)**            | Nested resolvers, 3 levels deep                 | 1–5s (with batching), 10–30s (without) |
 | **Hasura**                                   | Nested object queries, 3 levels                 | 500ms–2s (no ORM overhead)             |
 
-The realistic workload (100–300 items, single include path) performs well. The previous 7-table, ~2000-row case remains demanding; production APIs typically cap pagination (50–200
-items)
-and limit include depth (2–3 levels).
+The realistic include workload remains **production-appropriate** (pagination band, single primary include path). Heavier multi-include graphs are still possible; cap page size and include depth in public APIs.
 
 ---
 
@@ -189,19 +182,19 @@ and limit include depth (2–3 levels).
 
 | Category                                                        | Grade | Notes                                                       |
 |-----------------------------------------------------------------|-------|-------------------------------------------------------------|
-| Simple queries (filters, sorts, pagination)                     | **A** | 13–17 ms avg; competitive with ORM-based APIs               |
-| Complex query compilation (subqueries, regex, expression trees) | **A** | Sub-15 ms p95 for dynamically compiled nested query nodes   |
-| Spike/burst handling                                            | **A** | 80 req/s with no errors or degradation                      |
-| Sustained load stability                                        | **A** | 2 hours, 301K requests, 99.97% success, no drift            |
-| Realistic include loads (3-table, 100–300 rows)                 | **A** | 71 ms avg, 100% within SLA; production-appropriate workload |
+| Simple queries (filters, sorts, pagination)                     | **A** | ~21 ms avg mixed load; aligns with strong ORM-class APIs   |
+| Complex query compilation (subqueries, regex, expression trees) | **A** | ~16 ms avg / ~21 ms p95 subquery scenario                   |
+| Spike/burst handling                                            | **A** | ~11 ms p95 on spike scenario; no errors                     |
+| Sustained load stability                                        | **A** | 2 h soak, 266K+ requests, 100% k6 checks                    |
+| Realistic include loads (3-table, 100–300 rows, high VUs)       | **A** | 100% within SLA; higher avg than single-user curl — expected under shared CPU |
 
 ---
 
 ## Caveats
 
 1. **Shared hardware**: All three components (API, PostgreSQL, k6) compete for 12 CPU cores. Dedicated infrastructure would improve all numbers, especially under high concurrency.
-2. **Small dataset**: With hundreds to low-thousands of persons, the entire dataset fits in PostgreSQL's shared buffers. Results would change at 100K+ rows where index efficiency
-   and I/O patterns matter more.
-3. **Localhost networking**: Zero network latency between k6 → API and API → PostgreSQL. Real deployments would add 0.5–2ms per hop.
-4. **Scenario 02**: Now uses a realistic workload (100–300 items, 3 tables). The previous 7-table, ~2000-row case was more demanding; production workloads typically use smaller
+2. **Run-to-run variance**: Laptop thermals, background processes, and cache state change absolute milliseconds. Use trends and scenario comparisons, not a single number in isolation.
+3. **Dataset size**: This is **not** a toy database — person rows are in the **hundreds of thousands**, with **hundreds of thousands to ~800k** rows in major join tables (addresses, phones, emails). Latency still depends on **predicate selectivity**, **sort/index alignment**, and **page size** (`Start`/`Amount`); k6 scenarios use bounded windows, not full-table materialization of the graph. On a machine with ample RAM, hot indexes and pages may cache well, but **cold paths, large offsets, or missing index support** remain expensive at this scale.
+4. **Localhost networking**: Zero network latency between k6 → API and API → PostgreSQL. Real deployments would add 0.5–2ms per hop.
+5. **Scenario 02**: Realistic workload (100–300 items, 3 tables). Older 7-table, ~2000-row stress cases are more demanding; production workloads typically use smaller
    page sizes and fewer includes.

@@ -654,13 +654,13 @@ public sealed class LocalCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new CacheEntryOptions { Duration = effectiveDuration };
             SetInternal(normalizedKey, framed, opts.Duration, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();
@@ -719,14 +719,14 @@ public sealed class LocalCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new CacheEntryOptions { Duration = effectiveDuration };
             var mergedTags = MergeTags(factoryTags, extraTags);
             SetInternal(normalizedKey, framed, opts.Duration, mergedTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();
@@ -879,13 +879,13 @@ public sealed class LocalCacheService : ICacheService
             if (plain == null)
                 return null;
 
-            var framed = _payloadCodec.Encode(plain);
+            var (framed, envelope) = _payloadCodec.EncodeReturningEnvelope(plain);
             var opts = new CacheEntryOptions { Duration = effectiveDuration };
             SetInternal(normalizedKey, framed, opts.Duration, extraTags);
             stopwatch.Stop();
             _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
             _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
-            return _payloadCodec.Decode(framed);
+            return envelope;
         }
         catch (Exception ex) {
             stopwatch.Stop();

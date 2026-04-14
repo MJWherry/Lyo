@@ -2,6 +2,27 @@
 
 Reusable k6 framework for `TestApi` person querying with multiple workload profiles and query shapes based on your `QueryRequest` model.
 
+## Benchmarks & “modern standards”
+
+Archived k6 outputs live under `k6/framework-person/results/<timestamp>/` (JSON summaries + logs). The **authoritative write-up** — per-scenario metrics, environment, grades, and **comparison to common stacks** (Hasura/PostgREST, typical EF/Django/Rails/Spring, GraphQL) — is:
+
+- [`Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md`](../../Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md)
+
+**Latest full suite analyzed there (April 2026)**: `k6/framework-person/results/20260414-002619/`.
+
+At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs split infra):
+
+| Bucket | What to expect in the wild | This stack (see analysis) |
+|--------|----------------------------|---------------------------|
+| Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100–300 ms**; internal microservices often **~50–150 ms** | Mixed query **~32 ms p95**; subquery load **~21 ms p95** on the archived run |
+| Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5–30 ms** p95 for simple reads on small data | Competitive **order of magnitude** for comparable shapes and sizes |
+| ORM-heavy APIs (typical EF/Django/Rails) | Often **50–400 ms** for non-trivial reads | **Lower** than “typical ORM” bands in the analysis for the scenarios tested |
+| Large payloads / deep graphs | Dominated by **bytes and join depth** — compare after pagination, not a single global SLO | Heavy-include stress **~178 ms avg** with **100%** within scenario SLA under 40 VUs |
+
+Treat any table as **directional**: dataset size, indexes, cache keys, and hardware dominate absolute milliseconds.
+
+**Dataset (typical TestApi / benchmark DB)**: on the order of **~135k** persons and **hundreds of thousands** of rows in related contact/address/phone/email tables — not a tiny seed database. Scenarios still use **bounded `Start`/`Amount`**; they do not load the full graph.
+
 ## What this covers
 
 - Workload profiles:

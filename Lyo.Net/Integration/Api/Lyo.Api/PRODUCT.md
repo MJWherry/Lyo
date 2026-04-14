@@ -1,11 +1,11 @@
 <p align="center">
   <h1 align="center">Lyo</h1>
-  <p align="center"><strong>The complete API layer for .NET — query, CRUD, cache, ship.</strong></p>
+  <p align="center"><strong>The complete API layer for .NET — query, projection, CRUD, cache, ship. You've already built this three times. Stop rebuilding it.</strong></p>
 </p>
 
 ---
 
-**Lyo** is a production-ready API framework for .NET that gives you 17 fully-featured endpoints from a single builder call. Dynamic queries, full CRUD, bulk operations, caching,
+**Lyo** is a production-ready API framework for .NET that gives you 17 fully-featured endpoints from a single builder call. Dynamic queries, **SQL-aware field projection** (`QueryProject`), full CRUD, bulk operations, caching,
 auth, and observability — all wired together, all out of the box.
 
 ```csharp
@@ -91,6 +91,17 @@ A structured JSON query language with the expressiveness of GraphQL and the simp
 - GraphQL-style field projection with nested path support
 - Multi-sort with direction control
 - Works on **any `IQueryable<T>`** — not just EF Core
+
+### Query projection (`QueryProject`)
+
+A first-class **`POST …/QueryProject`** endpoint for **sparse, nested projections** — not just trimming JSON after a full entity load.
+
+- **Declarative `Select`** — list the fields you need, including **multi-hop paths** (e.g. `contactaddresses.address.city`) and collection branches; optional **computed fields** for server-side expressions.
+- **SQL-level projection when possible** — the engine pushes eligible shapes to the database so you move **less data** and avoid hydrating full entity graphs when the query allows it; more complex shapes fall back to **load-then-project** with the same request model.
+- **Same power as `Query`** — shared filters, `Include` / `MatchedOnly`, sorts, paging, subqueries, and **query result caching** (including optional UTF-8 payload + compression).
+- **Client-friendly JSON** — projected rows can include **`entityTypes`** (and related metadata) so consumers know the shape of each column.
+
+Use **`Query`** when you want full entities (or maximum flexibility with includes); use **`QueryProject`** when grids, APIs, or integrations need **narrow columns and smaller payloads** by design.
 
 ### 17 Endpoints from One Builder
 
@@ -202,9 +213,10 @@ Only expose what you need:
 
 Built-in support for local caching or distributed caching via FusionCache:
 
-- Query results are cached with tag-based keys
-- Any write operation (Create, Update, Patch, Delete, Upsert) automatically invalidates the relevant cache entries
-- Per-entity cache isolation — updating Person doesn't invalidate Order cache
+- Query and QueryProject results are cached with tag-based keys derived from the request (see **`QueryCacheKeyBuilder`** in the library README).
+- **Built-in write paths invalidate the query cache for that entity type** after a successful operation: **Create**, **Update**, **Patch** (including bulk patch where applicable), **Delete**, and **Upsert** (including bulk upsert), implemented via **`InvalidateQueryCacheAsync<TDbModel>()`** in the corresponding CRUD services.
+- **Per–root-entity isolation across unrelated types** — **`InvalidateQueryCacheAsync<T>()`** clears every cached query tagged `entity:{T}` (lowercased type name). Patching **Person** clears cached **Person** queries; it does **not** clear an unrelated aggregate’s cache (e.g. **Order** vs **Person**).
+- **Includes and related entity types** — for **`GET` with `includes`**, **`POST …/Query`** with **`Include`**, and **`POST …/QueryProject`** (SQL and fallback paths), cached entries are tagged for the root and for **each EF entity type** returned by **`GetReferencedTypes`** for the effective include paths (derived from includes or from projection / where). Patching a **child** (e.g. **Address**) calls **`InvalidateQueryCacheAsync<AddressEntity>()`**, which invalidates cached **parent** reads (e.g. **Person**) that referenced that type in the stored tags.
 
 ### OpenTelemetry and Observability
 
@@ -244,61 +256,57 @@ Use it in background jobs, data pipelines, report generation — anywhere you fi
 
 ## Performance
 
-Benchmarked on a laptop (Intel Core Ultra 7 155U, 62 GB RAM) with API, PostgreSQL, and the load generator all running on the same machine. See `K6_BENCHMARK_ANALYSIS.md` for full
-details. Production deployments on dedicated infrastructure would perform better.
+Benchmarked on a laptop (Intel Core Ultra 7 155U, 62 GB RAM) with API, PostgreSQL, and the load generator all running on the same machine. Latest archived k6 suite: **April 2026**
+(`k6/framework-person/results/20260414-002619/`). See `K6_BENCHMARK_ANALYSIS.md` for full per-scenario tables, methodology, and caveats. Production deployments on dedicated infrastructure would perform better.
 
 ### Lightweight Queries (filters, sorts, projections, subqueries)
 
-| Metric          | Result                |
-|-----------------|-----------------------|
-| Average latency | **5–17 ms**           |
-| p95 latency     | **7–35 ms**           |
-| p99 latency     | **10–103 ms**         |
-| Throughput      | 20–56 req/s sustained |
-| Success rate    | **100%**              |
+| Metric          | Result (April 2026 archive)     |
+|-----------------|---------------------------------|
+| Scenario spread | **~8–21 ms** avg (spike → mixed) |
+| p95 latency     | **~11–32 ms** (scenario-dependent) |
+| p99 latency     | **~15–46 ms** (mixed load)      |
+| Throughput      | 20–56 req/s sustained          |
+| Success rate    | **100%**                        |
 
-Select projection (sparse fields) is the fastest at ~5 ms avg; mixed query types with nested expression trees, subqueries, and regex run at 13–17 ms avg — on shared laptop
-hardware.
+Select projection spike scenario averages **~8 ms**; mixed five-shape rotation **~21 ms** avg; subquery load **~16 ms** avg — on shared laptop hardware with cache-bypass style keys.
 
 ### Heavy Navigation Queries (3 tables, 100–300 rows, ~601 KB response)
 
-| Metric          | Result                              |
-|-----------------|-------------------------------------|
-| Average latency | **71 ms**                           |
-| Median latency  | 37 ms                               |
-| p95 latency     | 267 ms                              |
-| Throughput      | 212 req/s under 40 concurrent users |
-| Success rate    | **100%** (all within 2.5 s SLA)     |
+| Metric          | Result (April 2026 archive)           |
+|-----------------|---------------------------------------|
+| Average latency | **178 ms**                            |
+| Median latency  | 144 ms                                |
+| p95 latency     | 475 ms                                |
+| Throughput      | **113** req/s under 40 concurrent VUs |
+| Success rate    | **100%** (all within 2.5 s SLA)       |
 
-Realistic workload: person → contact_addresses → address. All 101K+ requests complete within SLA. The 7-table, ~2000-row stress case is more demanding; see
-K6_BENCHMARK_ANALYSIS.md.
+Realistic workload: person → contact_addresses → address. **54K+** HTTP requests in the stress stage; averages are higher than a March 2026 archive run because API, Postgres, and k6 share CPU under load. The 7-table, ~2000-row stress case is more demanding; see `K6_BENCHMARK_ANALYSIS.md`.
 
 ### Sustained Load (2-hour soak test)
 
-| Metric          | Result      |
-|-----------------|-------------|
-| Total requests  | **300,797** |
-| Duration        | 2 hours     |
-| Average latency | 88 ms       |
-| Success rate    | **99.97%**  |
-| Errors          | **0**       |
+| Metric          | Result (April 2026 archive) |
+|-----------------|-----------------------------|
+| Total requests  | **266,589**                 |
+| Duration        | 2 hours (configured)        |
+| Average latency | 118 ms                      |
+| Success rate    | **100%** (all k6 checks)    |
+| Errors          | **0**                       |
 
-Zero HTTP failures. One hundred iterations exceeded the per-query latency threshold (all returned 200). No memory leaks or latency drift over 301K requests with mixed query types
-and
-periodic heavy-include spikes.
+Zero HTTP failures over the soak window. Mixed query types with periodic heavy-include spikes; tail latency includes intentional heavy shapes — see `K6_BENCHMARK_ANALYSIS.md` for p95/p99.
 
 ### How This Compares
 
-| Framework                          | Dynamic query avg latency | Notes                                 |
-|------------------------------------|---------------------------|---------------------------------------|
-| **Lyo**                            | **5–17 ms**               | Expression tree compilation + EF Core |
-| Hasura / PostgREST                 | 5–30 ms                   | No ORM — direct DB to JSON            |
-| Typical EF Core API (hand-written) | 50–200 ms                 | Manual filter/sort implementation     |
-| Django REST Framework              | 50–300 ms                 | Python ORM                            |
-| Spring Boot + JPA                  | 30–150 ms                 | Hibernate                             |
-| Ruby on Rails                      | 80–400 ms                 | ActiveRecord                          |
+| Framework                          | Typical dynamic read p95 (industry ballpark) | Notes                                 |
+|------------------------------------|---------------------------------------------|---------------------------------------|
+| **Lyo** (archived k6)              | **~11–32 ms** lightweight scenarios         | Expression trees + EF Core + Postgres |
+| Hasura / PostgREST                 | 5–30 ms                                     | No ORM — direct DB to JSON            |
+| Typical EF Core API (hand-written) | 50–200 ms                                   | Manual filter/sort implementation     |
+| Django REST Framework              | 50–300 ms                                   | Python ORM                            |
+| Spring Boot + JPA                  | 30–150 ms                                   | Hibernate                             |
+| Ruby on Rails                      | 80–400 ms                                   | ActiveRecord                          |
 
-Lyo matches the performance of schema-less query engines that skip ORM hydration entirely, while providing full EF Core entity tracking, navigation fixup, and change detection.
+Lyo stays in the **same order of magnitude** as thin Postgres-to-JSON gateways for comparable read shapes on this hardware, while keeping full EF Core mapping, navigation fixup, and the dynamic query surface.
 
 ---
 
@@ -417,9 +425,3 @@ Lyo works with your existing EF Core entities and DbContext. No base classes to 
 Yes. Benchmarked under sustained load (301K requests, 2 hours, zero HTTP failures), with OpenTelemetry instrumentation, structured logging, and clean error responses with
 trace/span
 IDs.
-
----
-
-<p align="center">
-  <strong>You've already built this three times. Stop rebuilding it.</strong>
-</p>

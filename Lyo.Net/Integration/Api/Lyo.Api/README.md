@@ -685,6 +685,23 @@ app.CreateBuilder<...>("/api/items", "Items")
 
 Register cache before **`AddLyoQueryServices`** / **`AddLyoCrudServices`**. **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to match **`JsonOptions`**, so cached payloads stay consistent with API JSON.
 
+### Invalidation on writes (built-in CRUD)
+
+When query caching is enabled, successful writes call **`ICacheService.InvalidateQueryCacheAsync<TDbModel>()`**, which removes cache entries associated with the tag **`entity:{lowercased type name}`**. This runs from the standard **`CreateService`**, **`UpdateService`**, **`PatchService`**, **`DeleteService`**, and **`UpsertService`** pipelines — including bulk operations that complete successfully for the affected entity.
+
+How tags attach to cached reads (see **`QueryService.QueryCore`** and **`Get`** overloads):
+
+- **`POST …/Query`** with **`Include`**, and **`GET …/{id}`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type returned by **`loaderService.GetReferencedTypes`** for those include paths. So **`InvalidateQueryCacheAsync<AddressEntity>()`** invalidates not only Address-only queries but also **cached parent queries** (e.g. Person) that **included** Address — the child tag is on the same cache entry.
+- **`POST …/QueryProject`**: the **SQL projection** path uses the same **`GetReferencedTypes`** tagging as **`/Query`** for derived include paths from **`Select`** / **`Where`** (plus **`queries`**, **`queryproject`**, **`entities`**, and root **`entity:{T}`**). The **fallback** path goes through **`QueryCore`** and uses the same pattern. A write on a **related** entity type therefore invalidates matching **`QueryProject`** cache entries as well.
+
+| Concern | Behavior |
+|--------|----------|
+| **Patch / Upsert / Update / Create / Delete** | **`InvalidateQueryCacheAsync<T>()`** for the written entity type after success |
+| **Unrelated root entity** (e.g. Order vs Person) | **Not** invalidated — different `entity:` tags |
+| **Child entity** updated via **its** endpoint | Clears that type’s tag — **does** invalidate **parent `GET`/`Query`/`QueryProject`** caches whose stored tags include that **`entity:{child}`** (includes / projected navigation paths) |
+
+For extra fan-out (custom rules, raw SQL, or third-party writers), use **Before/After** hooks or **`InvalidateCacheItemByTag`** / **`InvalidateAllCachedQueriesAsync`** as needed.
+
 Example (see also **`Lyo.TestApi`** `appsettings.json`):
 
 ```json
