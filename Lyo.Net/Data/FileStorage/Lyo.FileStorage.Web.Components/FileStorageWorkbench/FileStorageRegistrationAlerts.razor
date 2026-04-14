@@ -1,0 +1,32 @@
+@namespace Lyo.FileStorage.Web.Components
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudAlert Severity="@(string.IsNullOrEmpty(FileStorageImplementationName) ? Severity.Warning : Severity.Success)" Dense="true" Variant="Variant.Outlined">
+            File storage: @(FileStorageImplementationName ?? "not resolved")<br/>
+            <span>@FileStorageResolutionDescription</span>
+        </MudAlert>
+    </MudItem>
+    <MudItem xs="12" md="6">
+        <MudAlert Severity="@(string.IsNullOrEmpty(KeyStoreImplementationName) ? Severity.Warning : Severity.Success)" Dense="true" Variant="Variant.Outlined">
+            Keystore: @(KeyStoreImplementationName ?? "not resolved")<br/>
+            <span>@KeyStoreResolutionDescription</span>
+        </MudAlert>
+    </MudItem>
+</MudGrid>
+
+@code {
+
+    [Parameter]
+    public string? FileStorageImplementationName { get; set; }
+
+    [Parameter]
+    public string FileStorageResolutionDescription { get; set; } = "";
+
+    [Parameter]
+    public string? KeyStoreImplementationName { get; set; }
+
+    [Parameter]
+    public string KeyStoreResolutionDescription { get; set; } = "";
+
+}

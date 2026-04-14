@@ -1,0 +1,22 @@
+/* Upload row: align browse control with outlined fields (label + input). */
+.save-file-line1 .save-file-upload-cell {
+    padding-bottom: 2px;
+}
+
+.save-file-line1 ::deep .mud-button-root {
+    min-height: 40px;
+    font-size: 0.8125rem;
+}
+
+.save-file-line2 {
+    width: 100%;
+}
+
+.file-metadata-grid-dense ::deep .mud-table-cell {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.file-metadata-grid-dense ::deep .mud-table-cell .mud-typography {
+    line-height: 1.25;
+}

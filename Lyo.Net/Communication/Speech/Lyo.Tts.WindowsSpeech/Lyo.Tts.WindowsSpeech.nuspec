@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Tts.WindowsSpeech</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Windows Speech Synthesis Text-to-Speech service implementation for converting text to speech using Windows built-in SAPI. Windows-only.</description>
+        <summary>Windows Speech Synthesis TTS service implementation</summary>
+        <readme>README.md</readme>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>tts text-to-speech windows speech synthesis sapi</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="netstandard2.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Tts" version="[1.0.71,)"/>
+                <dependency id="Lyo.Tts.Models" version="[1.0.71,)"/>
+                <dependency id="System.Speech" version="10.0.2"/>
+            </group>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Tts" version="[1.0.71,)"/>
+                <dependency id="Lyo.Tts.Models" version="[1.0.71,)"/>
+                <dependency id="System.Speech" version="10.0.2"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="README.md" target=""/>
+        <file src="bin/Release/netstandard2.0/*.dll" target="lib/netstandard2.0"/>
+        <file src="bin/Release/netstandard2.0/*.pdb" target="lib/netstandard2.0"/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

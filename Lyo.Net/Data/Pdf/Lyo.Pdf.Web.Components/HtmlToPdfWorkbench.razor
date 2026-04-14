@@ -1,0 +1,220 @@
+@using System.Text
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.WebRenderer
+@inject IWebRendererService WebRendererService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">HTML to PDF</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Paste HTML or upload an HTML file, then convert it to PDF with the web renderer service.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">HTML file</MudText>
+                                <LyoFileUpload ValidFileTypes="FileTypeFlags.Html | FileTypeFlags.Htm | FileTypeFlags.Txt"
+                                               MaxFiles="1"
+                                               ButtonText="Upload HTML"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnHtmlFileReadyAsync"
+                                               OnClientFileRemoved="OnHtmlFileRemovedAsync"
+                                               OnUploadStarted="OnUploadStartedAsync"
+                                               OnUploadProgress="OnUploadProgressAsync"
+                                               OnUploadCompleted="OnUploadCompletedAsync"
+                                               OnUploadCancelled="OnUploadCancelledAsync"
+                                               OnUploadFailed="OnUploadFailedAsync"/>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Upload status: @_uploadStatus
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudTextField T="string"
+                                      Label="HTML"
+                                      Variant="Variant.Outlined"
+                                      Lines="16"
+                                      FullWidth="true"
+                                      @bind-Value="_htmlContent"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConvertAsync" Disabled="@_busy">Convert to PDF</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_pdfBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download PDF</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_pdfBytes == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Convert HTML to inspect the generated PDF details here.
+                        </MudText>
+                    }
+                    else {
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Source</strong></td>
+                                <td>@_inputSource</td>
+                            </tr>
+                            <tr>
+                                <td><strong>HTML size</strong></td>
+                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(Encoding.UTF8.GetByteCount(_htmlContent), lowercaseAbbreviation: false)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>PDF size</strong></td>
+                                <td>@FileSizeUnitInfo.FormatBestFitAbbreviation(_pdfBytes.LongLength, lowercaseAbbreviation: false)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>File name</strong></td>
+                                <td>@_pdfFileName</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+
+    private string _htmlContent = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Lyo Gateway</title>
+</head>
+<body>
+  <h1>Hello from the test gateway</h1>
+  <p>This HTML will be converted into a PDF.</p>
+</body>
+</html>
+""";
+
+    private string _inputSource = "Editor";
+    private byte[]? _pdfBytes;
+    private readonly string _pdfFileName = "html-to-pdf.pdf";
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _uploadStatus = "No HTML file uploaded.";
+
+    private Task OnHtmlFileReadyAsync(LocalBrowserFile file)
+    {
+        _htmlContent = Encoding.UTF8.GetString(file.Content);
+        _inputSource = file.FileName;
+        _pdfBytes = null;
+        SetStatus($"{file.FileName} loaded.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task OnHtmlFileRemovedAsync(LocalBrowserFile file)
+    {
+        _inputSource = "Editor";
+        SetStatus($"{file.FileName} removed.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadStartedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"Uploading {args.FileName}...";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadProgressAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName}: {args.Progress:F0}%";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadCompletedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} ready.";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadCancelledAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} cancelled.";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadFailedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} failed: {args.ErrorMessage}";
+        return Task.CompletedTask;
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_htmlContent)) {
+            SetStatus("Enter HTML or upload an HTML file.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            _pdfBytes = await WebRendererService.ConvertHtmlToPdfAsync(_htmlContent);
+            SetStatus("PDF generated.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_pdfBytes == null)
+            return;
+
+        await Js.DownloadFile(_pdfBytes, _pdfFileName, FileTypeInfo.Pdf.MimeType);
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

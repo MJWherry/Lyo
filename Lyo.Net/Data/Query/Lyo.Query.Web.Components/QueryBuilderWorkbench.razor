@@ -1,0 +1,51 @@
+@using Lyo.Web.Components.QueryRequestBuilder
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudStack Spacing="4">
+        <MudText Typo="Typo.h4">@Title</MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">
+            Build a <strong>/Query</strong> (<c>QueryReq</c>) or <strong>/QueryProject</strong> (<c>ProjectionQueryReq</c>) request from the form, or edit JSON on the run tab. Shared fields stay in sync when you switch endpoints.
+        </MudText>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Query Builder" Icon="@Icons.Material.Filled.Build">
+                <MudPaper Elevation="0" Class="pa-4">
+                    <MudStack Spacing="3">
+                        @if (_runConfig.RunMode == QueryWorkbenchRunMode.Query) {
+                            <QueryReqForm Request="@_entityQuery"
+                                          RequestChanged="@OnEntityFormRequestChanged"
+                                          IncludeAll="@_includeAll"
+                                          IncludeAllChanged="@OnIncludeAllChanged"
+                                          KeysAll="@(_keysAll.Count > 0 ? _keysAll : null)"
+                                          KeysAllChanged="@OnKeysAllChanged"
+                                          PropertyDefinitions="@_propertyDefinitions"
+                                          ShowEndpointToggle="true"
+                                          UseQueryProject="@(_runConfig.RunMode == QueryWorkbenchRunMode.QueryProject)"
+                                          UseQueryProjectChanged="@OnWorkbenchEndpointToggleChanged"/>
+                        }
+                        else {
+                            <QueryRequestBuilder Request="@_projectionQuery"
+                                                 RequestChanged="@OnProjectionFormRequestChanged"
+                                                 SelectAll="@_selectAll"
+                                                 SelectAllChanged="@OnSelectAllChanged"
+                                                 KeysAll="@(_keysAll.Count > 0 ? _keysAll : null)"
+                                                 KeysAllChanged="@OnKeysAllChanged"
+                                                 PropertyDefinitions="@_propertyDefinitions"
+                                                 ShowEndpointToggle="true"
+                                                 UseQueryProject="@(_runConfig.RunMode == QueryWorkbenchRunMode.QueryProject)"
+                                                 UseQueryProjectChanged="@OnWorkbenchEndpointToggleChanged"/>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudTabPanel>
+            <MudTabPanel Text="JSON + Run" Icon="@Icons.Material.Filled.Code">
+                <QueryRunPanel EntityRequest="@_entityQuery"
+                               EntityRequestChanged="@OnRunPanelEntityRequestChanged"
+                               ProjectionRequest="@_projectionQuery"
+                               ProjectionRequestChanged="@OnRunPanelProjectionRequestChanged"
+                               Run="@_runConfig"
+                               RunChanged="@OnRunConfigurationChanged"
+                               RunRestoreKey="@_runRestoreKey"/>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudContainer>

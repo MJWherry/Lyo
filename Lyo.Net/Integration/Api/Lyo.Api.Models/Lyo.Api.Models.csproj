@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Api.Models.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

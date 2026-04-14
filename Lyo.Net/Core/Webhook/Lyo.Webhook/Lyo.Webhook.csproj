@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Webhook</RootNamespace>
+        <AssemblyName>Lyo.Webhook</AssemblyName>
+        <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
+        <NuspecFile>Lyo.Webhook.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+
+</Project>

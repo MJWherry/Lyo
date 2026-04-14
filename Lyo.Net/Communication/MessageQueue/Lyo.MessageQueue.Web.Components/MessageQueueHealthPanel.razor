@@ -1,0 +1,21 @@
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Health</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Validate broker access and current configuration.
+        </MudText>
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            <MudButton Variant="Variant.Text" OnClick="OnCheckHealth" Disabled="@Busy">Check Health</MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public EventCallback OnCheckHealth { get; set; }
+
+}

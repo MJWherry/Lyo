@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.FileStorage.S3</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>S3-compatible file storage (AWS S3, Backblaze B2, MinIO, etc.) for the Lyo FileStorage service using AWSSDK.S3.</description>
+        <summary>S3-compatible file storage (AWS, B2, …)</summary>
+        <readme>README.md</readme>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>file-storage aws s3 backblaze b2 minio storage</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="AWSSDK.Core" version="4.0.3.13"/>
+                <dependency id="AWSSDK.S3" version="4.0.18.4"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Compression" version="[1.0.71,)"/>
+                <dependency id="Lyo.Encryption" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.FileMetadataStore" version="[1.0.71,)"/>
+                <dependency id="Lyo.FileStorage" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="README.md" target=""/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

@@ -1,0 +1,385 @@
+@using System.Reflection
+@using Lyo.Web.Components.Models
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="Icons.Material.Filled.Reorder" Class="mr-2"/>
+            Select and Order Fields
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="padding: 0;">
+            <MudStack Spacing="2">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    <MudText Typo="Typo.caption">
+                        Select fields to export. Drag rows by the grip to reorder (or use arrows). Add custom formatted columns
+                        with SmartFormat templates (e.g. "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}").
+                    </MudText>
+                </MudAlert>
+
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2"><strong>@SelectedCount</strong> of @AllItems.Count selected</MudText>
+                    <MudButtonGroup Size="Size.Small" Variant="Variant.Text">
+                        <MudButton OnClick="SelectAll" StartIcon="@Icons.Material.Filled.SelectAll">All</MudButton>
+                        <MudButton OnClick="SelectNone" StartIcon="@Icons.Material.Filled.Deselect">None</MudButton>
+                        @if (AllowCustomColumns) {
+                            <MudButton OnClick="@(() => _showAddCustom = !_showAddCustom)" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary">
+                                Add custom formatted
+                            </MudButton>
+                        }
+                    </MudButtonGroup>
+                </MudStack>
+
+                @if (AllowCustomColumns && _showAddCustom) {
+                    <MudPaper Outlined="true" Class="pa-2">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" StretchItems="StretchItems.All">
+                            <MudTextField @bind-Value="_customHeader" Label="Column name" Placeholder="e.g. Full Name" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                                          Style="min-width: 140px; flex: 1;"/>
+                            <MudTextField @bind-Value="_customTemplate" Label="Format" Placeholder="{FirstName} {LastName}"
+                                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Style="min-width: 200px; flex: 2;"/>
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddCustomColumn" Class="mt-1"
+                                       Disabled="@(string.IsNullOrWhiteSpace(_customHeader) || string.IsNullOrWhiteSpace(_customTemplate))" StartIcon="@Icons.Material.Filled.Add">
+                                Add
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+                }
+
+                <MudPaper Elevation="1" Style="max-height: 400px; overflow-y: auto;">
+                    <style>
+                        .export-col-drop-target {
+                            box-shadow: inset 0 3px 0 0 var(--mud-palette-primary);
+                        }
+                    </style>
+                    @for (var i = 0; i < AllItems.Count; i++) {
+                        var index = i;
+                        var item = AllItems[i];
+                        <div class="@GetDropRowClass(index)"
+                             style="display: flex; align-items: center; width: 100%; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--mud-palette-table-lines); @GetDraggingRowStyle(index)"
+                             @ondragover:preventDefault="true"
+                             @ondragenter="@(() => OnDragEnterRow(index))"
+                             @ondrop="@(() => OnRowDrop(index))"
+                             @ondrop:preventDefault="true">
+                            <span draggable="true"
+                                  title="Drag to reorder"
+                                  @ondragstart="@(e => OnRowDragStart(e, index))"
+                                  @ondragend="@(() => OnDragEnd())"
+                                  style="display: inline-flex; align-items: center; cursor: grab; user-select: none; flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary"/>
+                            </span>
+                            <MudCheckBox T="bool"
+                                         Value="@item.IsSelected"
+                                         ValueChanged="@(val => ToggleSelection(index, val))"
+                                         Color="Color.Primary"
+                                         Size="Size.Small" Dense/>
+                            <div style="flex: 1; min-width: 0;">
+                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                    <MudText Typo="Typo.body2"
+                                             Style="@GetRowLabelStyle(item)">
+                                        @item.Header
+                                    </MudText>
+                                    @if (item.IsCustom) {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Text="custom"/>
+                                    }
+                                    @if (item.UncheckedByDefault) {
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mud-text-secondary" Text="hidden in grid"/>
+                                    }
+                                </MudStack>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.Value</MudText>
+                            </div>
+                            @if (item.IsCustom) {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               OnClick="@(() => RemoveCustom(index))"
+                                               Title="Remove"/>
+                            }
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                                               Size="Size.Small"
+                                               OnClick="@(() => MoveUp(index))"
+                                               Disabled="@(index == 0)"
+                                               Title="Move up"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                                               Size="Size.Small"
+                                               OnClick="@(() => MoveDown(index))"
+                                               Disabled="@(index == AllItems.Count - 1)"
+                                               Title="Move down"/>
+                            </MudStack>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(item.IsSelected ? Color.Success : Color.Default)"
+                                     Text="@(item.IsSelected ? "✓" : "○")"/>
+                        </div>
+                    }
+                </MudPaper>
+
+                @if (SelectedCount > 0) {
+                    <MudAlert Severity="Severity.Success" Dense="true">
+                        <MudText Typo="Typo.caption">
+                            <strong>Export
+                                order:</strong> @string.Join(" → ", AllItems.Where(p => p.IsSelected).OrderBy(p => p.Order).Select(p => p.Header + (p.IsCustom ? " (custom)" : "")))
+                        </MudText>
+                    </MudAlert>
+                }
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="@(SelectedCount == 0)">
+            Export (@SelectedCount)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    /// <summary>When set, derives AvailableFields from type reflection. Ignored when AvailableFields is provided.</summary>
+    [Parameter]
+    public Type? DataType { get; set; }
+
+    /// <summary>Field names to show. Required when DataType is null. When DataType is set, derived from type properties.</summary>
+    [Parameter]
+    public IEnumerable<string>? AvailableFields { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<FilterPropertyDefinition>? DisplayNameOverrides { get; init; }
+
+    [Parameter]
+    public bool AllowCustomColumns { get; set; } = true;
+
+    /// <summary>Field paths (<see cref="ExportColumnItem.Value" />) that start <strong>unchecked</strong> (e.g. columns hidden in the grid). The user can still enable them for export.</summary>
+    [Parameter]
+    public IReadOnlyCollection<string>? FieldsUncheckedByDefault { get; set; }
+
+    /// <summary>Backward-compatible alias for <see cref="FieldsUncheckedByDefault" />.</summary>
+    [Parameter]
+    public IReadOnlyCollection<string>? DisabledExportFields { get; set; }
+
+    private List<ExportColumnItem> AllItems { get; set; } = [];
+
+    private int SelectedCount => AllItems.Count(p => p.IsSelected);
+
+    private bool _showAddCustom;
+    private string _customHeader = "";
+    private string _customTemplate = "";
+
+    private HashSet<string> _uncheckedByDefaultLookup = [];
+
+    private int? _dragSourceIndex;
+    private int? _dragOverIndex;
+
+    protected override void OnInitialized()
+    {
+        var source = FieldsUncheckedByDefault ?? DisabledExportFields;
+        _uncheckedByDefaultLookup = source?.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        var fields = GetAvailableFields().ToList();
+        var lookup = DisplayNameOverrides?.ToDictionary(p => p.PropertyName, p => p.DisplayName ?? p.PropertyName, StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, string>();
+        AllItems = fields.Select((f, i) => {
+                var uncheckedDefault = _uncheckedByDefaultLookup.Contains(f);
+                return new ExportColumnItem {
+                    Header = lookup.TryGetValue(f, out var display) ? display : FormatFieldAsHeader(f),
+                    Value = f,
+                    IsCustom = false,
+                    UncheckedByDefault = uncheckedDefault,
+                    IsSelected = !uncheckedDefault,
+                    Order = i
+                };
+            })
+            .ToList();
+    }
+
+    private static string GetRowLabelStyle(ExportColumnItem item) => item.IsSelected ? "font-weight: 500;" : "color: var(--mud-palette-text-disabled);";
+
+    private string GetDropRowClass(int index) => _dragOverIndex == index && _dragSourceIndex is int d && d != index ? "export-col-drop-target" : "";
+
+    private string GetDraggingRowStyle(int index) => _dragSourceIndex == index ? "opacity: 0.55;" : "";
+
+    private void OnRowDragStart(DragEventArgs e, int index)
+    {
+        _dragSourceIndex = index;
+        _dragOverIndex = null;
+        e.DataTransfer?.EffectAllowed = "move";
+    }
+
+    private void OnDragEnterRow(int index)
+    {
+        if (_dragSourceIndex is int from && from != index)
+            _dragOverIndex = index;
+    }
+
+    private void OnDragEnd()
+    {
+        _dragSourceIndex = null;
+        _dragOverIndex = null;
+    }
+
+    private void OnRowDrop(int dropIndex)
+    {
+        if (_dragSourceIndex is not int fromIdx)
+            return;
+
+        OnDragEnd();
+        if (fromIdx < 0 || fromIdx >= AllItems.Count)
+            return;
+
+        if (dropIndex < 0 || dropIndex >= AllItems.Count)
+            return;
+
+        if (fromIdx == dropIndex)
+            return;
+
+        var item = AllItems[fromIdx];
+        AllItems.RemoveAt(fromIdx);
+        var insertAt = dropIndex;
+        if (insertAt > fromIdx)
+            insertAt--;
+
+        AllItems.Insert(insertAt, item);
+        UpdateOrderIndexes();
+        StateHasChanged();
+    }
+
+    private IEnumerable<string> GetAvailableFields()
+    {
+        if (AvailableFields != null)
+            return AvailableFields.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f!.Trim()).Distinct();
+
+        if (DataType != null) {
+            var props = DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            return props.Where(p => IsExportableType(p.PropertyType)).Select(p => p.Name);
+        }
+
+        return [];
+    }
+
+    private static string FormatFieldAsHeader(string field)
+    {
+        if (string.IsNullOrEmpty(field))
+            return field;
+
+        if (field.EndsWith(".Count", StringComparison.OrdinalIgnoreCase))
+            return field[..^6].Replace(".", " ") + " Count";
+
+        return field.Replace(".", " ");
+    }
+
+    private static bool IsExportableType(Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan) || type == typeof(decimal) || type == typeof(Guid) || type.IsEnum;
+    }
+
+    private void AddCustomColumn()
+    {
+        var header = _customHeader.Trim();
+        var template = _customTemplate.Trim();
+        if (string.IsNullOrEmpty(header) || string.IsNullOrEmpty(template))
+            return;
+
+        var item = new ExportColumnItem {
+            Header = header,
+            Value = template.Contains('{') ? template : $"{{{template}}}",
+            IsCustom = true,
+            UncheckedByDefault = false,
+            IsSelected = true,
+            Order = AllItems.Count
+        };
+
+        AllItems.Add(item);
+        _customHeader = "";
+        _customTemplate = "";
+        _showAddCustom = false;
+        StateHasChanged();
+    }
+
+    private void RemoveCustom(int index)
+    {
+        if (index >= 0 && index < AllItems.Count && AllItems[index].IsCustom) {
+            AllItems.RemoveAt(index);
+            UpdateOrderIndexes();
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleSelection(int index, bool isSelected)
+    {
+        if (index >= 0 && index < AllItems.Count) {
+            AllItems[index].IsSelected = isSelected;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index > 0 && index < AllItems.Count) {
+            var item = AllItems[index];
+            AllItems.RemoveAt(index);
+            AllItems.Insert(index - 1, item);
+            UpdateOrderIndexes();
+            StateHasChanged();
+        }
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index >= 0 && index < AllItems.Count - 1) {
+            var item = AllItems[index];
+            AllItems.RemoveAt(index);
+            AllItems.Insert(index + 1, item);
+            UpdateOrderIndexes();
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateOrderIndexes()
+    {
+        for (var i = 0; i < AllItems.Count; i++)
+            AllItems[i].Order = i;
+    }
+
+    private void SelectAll()
+    {
+        foreach (var item in AllItems)
+            item.IsSelected = true;
+
+        StateHasChanged();
+    }
+
+    private void SelectNone()
+    {
+        foreach (var item in AllItems)
+            item.IsSelected = false;
+
+        StateHasChanged();
+    }
+
+    private void Submit()
+    {
+        var result = AllItems.Where(p => p.IsSelected).OrderBy(p => p.Order).ToList();
+        MudDialog.Close(DialogResult.Ok(result));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public sealed class ExportColumnItem
+    {
+        public required string Header { get; init; }
+
+        public required string Value { get; init; }
+
+        public bool IsCustom { get; set; }
+
+        /// <summary>Column is hidden in the grid — dialog opens with this row unchecked; user may still select it.</summary>
+        public bool UncheckedByDefault { get; set; }
+
+        public bool IsSelected { get; set; }
+
+        public int Order { get; set; }
+    }
+
+}

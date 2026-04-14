@@ -1,0 +1,49 @@
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.FileUpload
+@namespace Lyo.Pdf.Web.Components.PdfAnnotator
+<MudStack Spacing="3">
+    @if (!_resultPhase) {
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="8">
+                @if (_pdfBytes == null) {
+                    <LyoFileUpload ValidFileTypes="FileTypeFlags.Pdf" MaxFiles="1" OnClientFileReady="OnPdfLoadedAsync" ButtonText="Choose PDF" ShowFiles="true"/>
+                }
+
+                @if (_pdfBytes is { Length: > 0 } && _annotatorHtml != null) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                        Draw a rectangle, enter a key, press Enter. Drag the box to move or use the corner handles to resize. Live extraction updates on the right.
+                    </MudText>
+
+                    <iframe @ref="_iframe"
+                            title="PDF annotator"
+                            style="width:100%;min-height:68vh;border:1px solid var(--mud-palette-lines-default);border-radius:4px;background:#1a1a2e;">
+                    </iframe>
+                }
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <LyoPdfAnnotatorResultsView Rows="_annotationRows"
+                                            ResultPhase="false"
+                                            OnApply="ApplyExtractionSettingsAsync"/>
+            </MudItem>
+        </MudGrid>
+    }
+    else {
+        <MudStack Row="true" Justify="Justify.FlexEnd">
+            <MudButton Variant="Variant.Outlined" OnClick="ResetAsync">Load another PDF</MudButton>
+        </MudStack>
+
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="7">
+                <iframe @ref="_viewerIframe"
+                        title="PDF template preview"
+                        style="width:100%;min-height:72vh;border:1px solid var(--mud-palette-lines-default);border-radius:4px;background:#1a1a2e;">
+                </iframe>
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <LyoPdfAnnotatorResultsView Rows="_annotationRows"
+                                            ResultPhase="true"
+                                            OnApply="ApplyExtractionSettingsAsync"/>
+            </MudItem>
+        </MudGrid>
+    }
+</MudStack>

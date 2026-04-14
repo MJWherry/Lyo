@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mapster" Version="[10,)"/>
+        <PackageReference Include="Mapster.DependencyInjection" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.AwsPolly\Lyo.Tts.AwsPolly.csproj"/>
+        <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.Typecast\Lyo.Tts.Typecast.csproj"/>
+        <ProjectReference Include="..\..\Communication\Translation\Lyo.Translation.Aws\Lyo.Translation.Aws.csproj"/>
+        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\Cache\Lyo.Cache.Fusion\Lyo.Cache.Fusion.csproj"/>
+        <ProjectReference Include="..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
+        <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\Data\Ffmpeg\Lyo.Ffmpeg\Lyo.Ffmpeg.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher.Tests\Lyo.FileSystemWatcher.Tests.csproj"/>
+        <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf\Lyo.Pdf.csproj"/>
+        <ProjectReference Include="..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Espn\Lyo.Espn.Fantasy.Football\Lyo.Espn.Fantasy.Football.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Bot\Lyo.Discord.Bot.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl\Lyo.ShortUrl.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\WebRenderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\WebReporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\WebReporting\Lyo.Web.Reporting\Lyo.Web.Reporting.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher\Lyo.FileSystemWatcher.csproj"/>
+        <ProjectReference Include="..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode\Lyo.QRCode.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+        <ProjectReference Include="..\..\Data\Images\Lyo.Images.Skia\Lyo.Images.Skia.csproj"/>
+        <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
+        <ProjectReference Include="..\Lyo.Preview\Lyo.Preview.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="appsettings.Development.json">
+            <DependentUpon>appsettings.json</DependentUpon>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.Development.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <DependentUpon>appsettings.json</DependentUpon>
+        </None>
+    </ItemGroup>
+
+</Project>

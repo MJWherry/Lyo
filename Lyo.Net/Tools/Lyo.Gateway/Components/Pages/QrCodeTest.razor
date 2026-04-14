@@ -1,0 +1,16 @@
+@using Lyo.QRCode.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.QrCodeGenerator)]
+@inherits AuthorizedPage
+
+<PageTitle>QR Code Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <QrCodeWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "QR Code Test";
+
+}

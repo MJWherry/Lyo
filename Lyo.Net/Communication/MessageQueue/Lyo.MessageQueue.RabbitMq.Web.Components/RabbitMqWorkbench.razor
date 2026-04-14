@@ -1,0 +1,435 @@
+@using System.Text
+@using System.Text.Json
+@using Lyo.Health
+@using Lyo.MessageQueue
+@using Lyo.MessageQueue.Web.Components
+@inject IRabbitMqService MqService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">RabbitMQ</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Manage exchanges, queues, bindings, publishes, and queue inspection from one RabbitMQ dashboard.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudStack Spacing="3">
+                    <MessageQueueHealthPanel Busy="_busy" OnCheckHealth="CheckHealthAsync"/>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudTabs Rounded="true" Elevation="0" Outlined="true">
+                            <MudTabPanel Text="Exchange">
+                                <MudStack Spacing="3" Class="pt-3">
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <MudTextField T="string" Label="Exchange" @bind-Value="_exchangeName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudSelect T="string" Label="Exchange type" @bind-Value="_exchangeType">
+                                                <MudSelectItem Value="@("direct")">direct</MudSelectItem>
+                                                <MudSelectItem Value="@("topic")">topic</MudSelectItem>
+                                                <MudSelectItem Value="@("fanout")">fanout</MudSelectItem>
+                                                <MudSelectItem Value="@("headers")">headers</MudSelectItem>
+                                            </MudSelect>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudCheckBox T="bool" Label="Durable" @bind-Value="_exchangeDurable"/>
+                                        <MudCheckBox T="bool" Label="Auto delete" @bind-Value="_exchangeAutoDelete"/>
+                                        <MudCheckBox T="bool" Label="Delete only if unused" @bind-Value="_exchangeDeleteIfUnused"/>
+                                    </MudStack>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" OnClick="CreateExchangeAsync" Disabled="@_busy">Create Exchange</MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="DeleteExchangeAsync" Disabled="@_busy">Delete Exchange</MudButton>
+                                    </MudStack>
+
+                                    <MudDivider Class="my-1"/>
+
+                                    <MudText Typo="Typo.subtitle1">Binding</MudText>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Exchange" @bind-Value="_exchangeName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Queue" @bind-Value="_queueName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Routing key" @bind-Value="_routingKey"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" OnClick="BindQueueAsync" Disabled="@_busy">Bind Queue To Exchange</MudButton>
+                                    </MudStack>
+                                </MudStack>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Queue">
+                                <MudStack Spacing="3" Class="pt-3">
+                                    <MudGrid>
+                                        <MudItem xs="12" md="8">
+                                            <MudTextField T="string" Label="Queue" @bind-Value="_queueName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="int" Label="Peek count" Min="1" Max="50" @bind-Value="_peekCount"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudCheckBox T="bool" Label="Durable" @bind-Value="_queueDurable"/>
+                                        <MudCheckBox T="bool" Label="Exclusive" @bind-Value="_queueExclusive"/>
+                                        <MudCheckBox T="bool" Label="Auto delete" @bind-Value="_queueAutoDelete"/>
+                                    </MudStack>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudCheckBox T="bool" Label="Delete only if unused" @bind-Value="_queueDeleteIfUnused"/>
+                                        <MudCheckBox T="bool" Label="Delete only if empty" @bind-Value="_queueDeleteIfEmpty"/>
+                                    </MudStack>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" OnClick="CreateQueueAsync" Disabled="@_busy">Create Queue</MudButton>
+                                        <MudButton Variant="Variant.Outlined" OnClick="PeekQueueMessagesAsync" Disabled="@_busy">Peek Queue</MudButton>
+                                        <MudButton Variant="Variant.Text" OnClick="ClearQueueAsync" Disabled="@_busy">Clear Queue</MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="DeleteQueueAsync" Disabled="@_busy">Delete Queue</MudButton>
+                                    </MudStack>
+                                </MudStack>
+                            </MudTabPanel>
+                            <MudTabPanel Text="Publish">
+                                <MudStack Spacing="3" Class="pt-3">
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Exchange" @bind-Value="_exchangeName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Queue" @bind-Value="_queueName"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTextField T="string" Label="Routing key" @bind-Value="_routingKey"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudTextField T="string" Label="Message body" Lines="8" FullWidth="true" @bind-Value="_messageBody"/>
+                                    <MudCheckBox T="bool" Label="Wrap body in QueueMessageEnvelope (JSON payload)" @bind-Value="_wrapInEnvelope"/>
+                                    @if (_wrapInEnvelope) {
+                                        <MudGrid>
+                                            <MudItem xs="12" md="6">
+                                                <MudTextField T="string" Label="Message ID (optional)" HelperText="Defaults to a new GUID" @bind-Value="_envelopeMessageId"/>
+                                            </MudItem>
+                                            <MudItem xs="12" md="6">
+                                                <MudTextField T="string" Label="Trace ID (optional)" @bind-Value="_envelopeTraceId"/>
+                                            </MudItem>
+                                        </MudGrid>
+                                    }
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendToQueueAsync" Disabled="@_busy">Send To Queue</MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="SendToExchangeAsync" Disabled="@_busy">Send To Exchange</MudButton>
+                                    </MudStack>
+                                </MudStack>
+                            </MudTabPanel>
+                        </MudTabs>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MessageQueueResultPanel Connected="@MqService.IsConnected()"
+                                         LastHealth="_lastHealth"
+                                         Details="_details"
+                                         PeekedMessages="_peekedMessages"
+                                         StatusMessage="_statusMessage"
+                                         StatusSeverity="_statusSeverity"/>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private readonly List<KeyValuePair<string, string>> _details = [];
+    private bool _exchangeAutoDelete;
+    private bool _exchangeDeleteIfUnused;
+    private bool _exchangeDurable = true;
+    private string _envelopeMessageId = string.Empty;
+    private string _envelopeTraceId = string.Empty;
+    private string _exchangeName = "test.exchange";
+    private string _exchangeType = "direct";
+    private HealthResult? _lastHealth;
+    private string _messageBody = """{"message":"hello from lyo gateway"}""";
+    private int _peekCount = 10;
+    private List<QueuePeekMessage> _peekedMessages = [];
+    private bool _queueAutoDelete;
+    private bool _queueDeleteIfEmpty;
+    private bool _queueDeleteIfUnused;
+    private bool _queueDurable = true;
+    private bool _queueExclusive;
+    private string _queueName = "test.gateway.queue";
+    private string _routingKey = "test.gateway";
+    private string _statusMessage = string.Empty;
+    private bool _wrapInEnvelope;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    private async Task CheckHealthAsync()
+    {
+        _busy = true;
+        try {
+            _lastHealth = await MqService.CheckHealthAsync();
+            SetDetails("Health Check", _lastHealth.IsHealthy, [Detail("Healthy", _lastHealth.IsHealthy.ToString()), Detail("Duration", _lastHealth.Duration.ToString()), Detail("Message", _lastHealth.Message ?? "(none)"), Detail("Checked", _lastHealth.CheckedAt.ToString("u")), .. _lastHealth.Metadata?.Select(x => Detail(x.Key, x.Value?.ToString() ?? "(null)")).ToList() ?? []]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task CreateQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            var ok = await MqService.CreateQueue(_queueName, _queueDurable, _queueExclusive, _queueAutoDelete);
+            SetDetails("Create Queue", ok, [Detail("Queue", _queueName), Detail("Durable", _queueDurable.ToString()), Detail("Exclusive", _queueExclusive.ToString()), Detail("Auto Delete", _queueAutoDelete.ToString())]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task BindQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        if (string.IsNullOrWhiteSpace(_exchangeName)) {
+            SetStatus("Enter an exchange name.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var ok = await MqService.BindQueueToExchange(_queueName, _exchangeName, _routingKey);
+            SetDetails("Bind Queue", ok, [Detail("Queue", _queueName), Detail("Exchange", _exchangeName), Detail("Routing Key", _routingKey)]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task ClearQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            var ok = await MqService.ClearQueue(_queueName);
+            SetDetails("Clear Queue", ok, [Detail("Queue", _queueName)]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            var ok = await MqService.DeleteQueue(_queueName, _queueDeleteIfUnused, _queueDeleteIfEmpty);
+            SetDetails("Delete Queue", ok, [Detail("Queue", _queueName), Detail("If Unused", _queueDeleteIfUnused.ToString()), Detail("If Empty", _queueDeleteIfEmpty.ToString())]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task SendToQueueAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            if (!TryBuildPublishBytes(out var bytes, out var buildError)) {
+                SetStatus(buildError!, Severity.Warning);
+                return;
+            }
+
+            var ok = await MqService.SendToQueue(_queueName, bytes);
+            SetDetails("Send To Queue", ok, [Detail("Queue", _queueName), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()), Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task CreateExchangeAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            var ok = await MqService.CreateExchange(_exchangeName, _exchangeType, _exchangeDurable, _exchangeAutoDelete);
+            SetDetails("Create Exchange", ok, [Detail("Exchange", _exchangeName), Detail("Type", _exchangeType), Detail("Durable", _exchangeDurable.ToString()), Detail("Auto Delete", _exchangeAutoDelete.ToString())]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DeleteExchangeAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        _busy = true;
+        try {
+            var ok = await MqService.DeleteExchange(_exchangeName, _exchangeDeleteIfUnused);
+            SetDetails("Delete Exchange", ok, [Detail("Exchange", _exchangeName), Detail("If Unused", _exchangeDeleteIfUnused.ToString())]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task SendToExchangeAsync()
+    {
+        if (!await EnsureConnectedAsync())
+            return;
+
+        if (string.IsNullOrWhiteSpace(_exchangeName)) {
+            SetStatus("Enter an exchange name.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            if (!TryBuildPublishBytes(out var bytes, out var buildError)) {
+                SetStatus(buildError!, Severity.Warning);
+                return;
+            }
+
+            var ok = await MqService.SendToExchange(_exchangeName, _routingKey, bytes);
+            SetDetails("Send To Exchange", ok, [Detail("Exchange", _exchangeName), Detail("Routing Key", _routingKey), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()), Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task PeekQueueMessagesAsync()
+    {
+        _busy = true;
+        try {
+            _peekedMessages = (await MqService.PeekQueueMessages(_queueName, _peekCount)).ToList();
+            SetDetails("Peek Messages", true, [Detail("Queue", _queueName), Detail("Requested", _peekCount.ToString()), Detail("Returned", _peekedMessages.Count.ToString()), Detail("Ack Mode", "Requeue (no ack/remove)")]);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task<bool> EnsureConnectedAsync()
+    {
+        if (MqService.IsConnected())
+            return true;
+
+        try {
+            await MqService.ConnectAsync();
+            return true;
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+            return false;
+        }
+    }
+
+    private void SetDetails(string operation, bool ok, IEnumerable<KeyValuePair<string, string>> details)
+    {
+        _details.Clear();
+        _details.Add(Detail("Operation", operation));
+        _details.Add(Detail("Success", ok.ToString()));
+        _details.AddRange(details);
+        SetStatus($"{operation} {(ok ? "succeeded" : "failed")}.", ok ? Severity.Success : Severity.Error);
+    }
+
+    private static KeyValuePair<string, string> Detail(string key, string value) => new(key, value);
+
+    // Builds UTF-8 body, or wraps JSON in QueueMessageEnvelope<JsonElement> when _wrapInEnvelope is true.
+    private bool TryBuildPublishBytes(out byte[] bytes, out string? error)
+    {
+        if (!_wrapInEnvelope) {
+            bytes = Encoding.UTF8.GetBytes(_messageBody);
+            error = null;
+            return true;
+        }
+
+        try {
+            var json = string.IsNullOrWhiteSpace(_messageBody) ? "{}" : _messageBody;
+            var payload = JsonSerializer.Deserialize<JsonElement>(json);
+            var messageId = string.IsNullOrWhiteSpace(_envelopeMessageId) ? Guid.NewGuid().ToString("D") : _envelopeMessageId.Trim();
+            var traceId = string.IsNullOrWhiteSpace(_envelopeTraceId) ? null : _envelopeTraceId.Trim();
+            var envelope = new QueueMessageEnvelope<JsonElement>(payload, 0, messageId, DateTime.UtcNow, traceId);
+            bytes = JsonSerializer.SerializeToUtf8Bytes(envelope);
+            error = null;
+            return true;
+        }
+        catch (JsonException ex) {
+            bytes = [];
+            error = $"QueueMessageEnvelope mode requires valid JSON in the message body: {ex.Message}";
+            return false;
+        }
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

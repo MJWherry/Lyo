@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Web.Reporting.Postgres</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>PostgreSQL implementation of Lyo.Web.Reporting for storing and loading prebuilt reports using Entity Framework Core.</description>
+        <readme>README.md</readme>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>reporting reports postgres postgresql entityframework ef</tags>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
+                <dependency id="Lyo.Postgres" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="README.md" target=""/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

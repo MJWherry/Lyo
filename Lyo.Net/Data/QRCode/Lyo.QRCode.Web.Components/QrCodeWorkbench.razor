@@ -1,0 +1,388 @@
+@using System.Text
+@using Lyo.Images
+@using Lyo.Images.Models
+@using Lyo.QRCode.Models
+@using MudBlazor.Utilities
+@inject IQRCodeService QrCodeService
+@inject IQrFrameLayoutService QrFrameLayout
+@inject IImageService? ImageService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">QR Code Generator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Generate QR codes with the configured QR code implementation and download the result.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="QRCodeFormat" Label="Format" @bind-Value="_format">
+                                    @foreach (var format in Enum.GetValues<QRCodeFormat>()) {
+                                        <MudSelectItem Value="@format">@format</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="QRCodeErrorCorrectionLevel" Label="Error correction" @bind-Value="_errorCorrectionLevel">
+                                    @foreach (var level in Enum.GetValues<QRCodeErrorCorrectionLevel>()) {
+                                        <MudSelectItem Value="@level">@level</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="int" Label="Pixels per module" @bind-Value="_size" HelperText="Total image size = module count × this value"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6" Class="d-flex align-center">
+                                <MudCheckBox T="bool" Label="Quiet zone" @bind-Value="_drawQuietZones"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            <MudColorPicker Label="Dark color" @bind-Value="_darkColor"/>
+                            <MudColorPicker Label="Light color" @bind-Value="_lightColor"/>
+                        </MudStack>
+
+                        <MudDivider/>
+                        <MudText Typo="Typo.subtitle2">Center logo</MudText>
+                        @if (LogoSupported) {
+                            <MudStack Spacing="2">
+                                <InputFile OnChange="OnLogoFileChangedAsync" accept="@string.Join(',', FileTypeInfo.Png.MimeType, FileTypeInfo.Jpeg.MimeType, FileTypeInfo.Gif.MimeType, FileTypeInfo.Webp.MimeType, FileTypeInfo.Svg.MimeType)" class="mb-1"/>
+                                @if (_logoBytes is { Length: > 0 }) {
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @(_logoFileName ?? "Logo") · @FileSizeUnitInfo.FormatBestFitAbbreviation(_logoBytes.LongLength, lowercaseAbbreviation: false)
+                                        </MudText>
+                                        <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Secondary" OnClick="ClearLogo">Remove</MudButton>
+                                    </MudStack>
+                                }
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Logo keeps its colors (RGB); transparent areas show the QR background. Logo size is capped at @QRCodeIconOptions.MaxIconSizePercent%—larger overlays are not reliable even at max error correction. Very small pixels-per-module values need a smaller logo %.
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">Logo size (@_iconSizePercent% of QR)</MudText>
+                                    <MudSlider T="int" @bind-Value="_iconSizePercent" Min="1" Max="@QRCodeIconOptions.MaxIconSizePercent" Step="1" ValueLabel="true" Color="Color.Primary"
+                                               Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
+                                    <MudCheckBox T="bool" Label="Logo border" @bind-Value="_drawIconBorder" Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
+                                </MudStack>
+                            </MudStack>
+                        }
+                        else {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Center logos are supported for PNG and SVG with the built-in generator (requires a registered image service).
+                            </MudText>
+                        }
+
+                        <MudDivider/>
+                        <MudText Typo="Typo.subtitle2">Frame</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Decorative frames apply to PNG only (built-in compositor; no separate image service required).
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mb-1">Frame style</MudText>
+                        <select class="mud-input-slot mud-input-root mud-input-text mb-2"
+                                style="width:100%;min-height:40px;padding:8px 12px;border-radius:var(--mud-default-borderradius);border:1px solid var(--mud-palette-lines-default);background:var(--mud-palette-surface);color:var(--mud-palette-text-primary);"
+                                disabled="@(_format != QRCodeFormat.Png)"
+                                @bind="_frameStyleInt">
+                            @foreach (QrFrameStyle st in Enum.GetValues<QrFrameStyle>()) {
+                                <option value="@((int)st)">@FrameStyleLabel(st)</option>
+                            }
+                        </select>
+                        @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
+                            <MudTextField T="string" Label="Caption text" @bind-Value="_frameCaption" Variant="Variant.Outlined" HelperText="Shown in the header (badge) or below the QR (border style)"/>
+                            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                                <MudColorPicker Label="Header / bar" @bind-Value="_frameHeaderBg" Disabled="@(SelectedFrameStyle == QrFrameStyle.SimpleRoundedPanel || SelectedFrameStyle == QrFrameStyle.BorderOnly)"/>
+                                <MudColorPicker Label="Caption color" @bind-Value="_frameCaptionColor"/>
+                                <MudColorPicker Label="Panel background" @bind-Value="_framePanelBg"/>
+                            </MudStack>
+                        }
+
+                        <MudTextField T="string"
+                                      Label="Data"
+                                      Variant="Variant.Outlined"
+                                      Lines="6"
+                                      FullWidth="true"
+                                      @bind-Value="_data"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateAsync" Disabled="@_busy">Generate</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_imageBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_imageBytes == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Generate a QR code to preview it here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Format</MudText>
+                                    <MudText Typo="Typo.body1">@_format</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Module scale</MudText>
+                                    <MudText Typo="Typo.body1">@($"{_size} px per module")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">File size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_imageBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            @if (_format == QRCodeFormat.Png) {
+                                <MudItem xs="12" md="4">
+                                    <MudPaper Class="pa-3" Outlined="true">
+                                        <MudText Typo="Typo.subtitle2">Frame</MudText>
+                                        <MudText Typo="Typo.body1">@FrameStyleLabel(SelectedFrameStyle)</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        </MudGrid>
+
+                        <MudDivider Class="my-3"/>
+
+                        @if (_format == QRCodeFormat.Svg) {
+                            <MudPaper Class="pa-4" Outlined="true">
+                                @((MarkupString)_svgMarkup)
+                            </MudPaper>
+                        }
+                        else {
+                            <MudPaper Class="pa-4 d-flex justify-center" Outlined="true">
+                                <img src="@_imageSource" alt="Generated QR code" style="max-width: 320px; max-height: 320px; width: 100%; object-fit: contain;"/>
+                            </MudPaper>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private string _data = "https://example.com";
+    private MudColor _darkColor = new("#000000");
+    private bool _drawIconBorder = true;
+    private bool _drawQuietZones = true;
+    private QRCodeErrorCorrectionLevel _errorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium;
+    private QRCodeFormat _format = QRCodeFormat.Png;
+    private int _iconSizePercent = 15;
+    private string _frameCaption = "Scan Me";
+    private MudColor _frameCaptionColor = new("#FFFFFF");
+    private MudColor _frameHeaderBg = new("#1e293b");
+    private MudColor _framePanelBg = new("#FFFFFF");
+    private int _frameStyleInt;
+    private byte[]? _imageBytes;
+    private string? _imageSource;
+    private byte[]? _logoBytes;
+    private string? _logoFileName;
+    private MudColor _lightColor = new("#FFFFFF");
+    private int _size = 256;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _svgMarkup = string.Empty;
+
+    private bool LogoSupported => _format is QRCodeFormat.Png or QRCodeFormat.Svg;
+
+    private QrFrameStyle SelectedFrameStyle
+        => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
+
+    private async Task OnLogoFileChangedAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        const long maxBytes = 2 * 1024 * 1024;
+        try {
+            await using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _logoBytes = ms.ToArray();
+            _logoFileName = file.Name;
+        }
+        catch {
+            SetStatus("Could not read the logo file (max 2 MB).", Severity.Error);
+            _logoBytes = null;
+            _logoFileName = null;
+        }
+    }
+
+    private void ClearLogo()
+    {
+        _logoBytes = null;
+        _logoFileName = null;
+    }
+
+    private static string ToOpaqueRgbHex(MudColor c)
+    {
+        var s = c.ToString(MudColorOutputFormats.Hex);
+        return s is { Length: 9 } && s[0] == '#' ? s[..7] : s;
+    }
+
+    private QrFrameLayoutOptions BuildFrameLayoutOptions()
+        => new() {
+            Style = SelectedFrameStyle,
+            CaptionText = string.IsNullOrWhiteSpace(_frameCaption) ? null : _frameCaption.Trim(),
+            HeaderBackgroundHex = ToOpaqueRgbHex(_frameHeaderBg),
+            HeaderCaptionTextHex = ToOpaqueRgbHex(_frameCaptionColor),
+            PanelBackgroundHex = ToOpaqueRgbHex(_framePanelBg)
+        };
+
+    private static string FrameStyleLabel(QrFrameStyle style)
+        => style switch {
+            QrFrameStyle.None => "None",
+            QrFrameStyle.BadgeWithHeader => "Badge with header",
+            QrFrameStyle.SimpleRoundedPanel => "Rounded panel",
+            QrFrameStyle.BorderOnly => "Border only",
+            var _ => style.ToString()
+        };
+
+    private async Task GenerateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_data)) {
+            SetStatus("Enter text or a URL to encode.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var options = new QRCodeOptions {
+                Format = _format,
+                Size = _size,
+                ErrorCorrectionLevel = _errorCorrectionLevel,
+                DarkColor = _darkColor.ToString(MudColorOutputFormats.Hex),
+                LightColor = _lightColor.ToString(MudColorOutputFormats.Hex),
+                DrawQuietZones = _drawQuietZones
+            };
+
+            if (LogoSupported && _logoBytes is { Length: > 0 }) {
+                var iconPct = QRCodeIconOptions.ClampIconSizePercent(_iconSizePercent);
+                options.Icon = new() { IconBytes = _logoBytes, IconSizePercent = iconPct, DrawIconBorder = _drawIconBorder };
+            }
+
+            // Do not pass options.Frame to IQRCodeService: apply the decorative frame here after PNG bytes exist.
+            // That guarantees the workbench preview matches the selection even if the hosted QR service omits framing.
+
+            var result = await QrCodeService.GenerateAsync(_data, options);
+            if (!result.IsSuccess) {
+                SetStatus(LyoResultErrorFormatter.FormatErrors(result.Errors), Severity.Error);
+                return;
+            }
+
+            if (result is not QRCodeResult qrResult || qrResult.ImageBytes is not { Length: > 0 }) {
+                SetStatus("QR generation did not return image bytes (unexpected result type).", Severity.Error);
+                return;
+            }
+
+            var imageBytes = qrResult.ImageBytes;
+            if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
+                var frameOpts = BuildFrameLayoutOptions();
+                var framed = await QrFrameLayout.CompositeQrFramePngAsync(imageBytes, frameOpts, CancellationToken.None).ConfigureAwait(false);
+                if ((!framed.IsSuccess || framed.Data == null) && ImageService != null)
+                    framed = await ImageService.CompositeQrFramePngAsync(imageBytes, frameOpts, CancellationToken.None).ConfigureAwait(false);
+
+                if (!framed.IsSuccess || framed.Data == null) {
+                    SetStatus(LyoResultErrorFormatter.FormatErrors(framed.Errors), Severity.Error);
+                    return;
+                }
+
+                imageBytes = framed.Data;
+            }
+
+            _imageBytes = imageBytes;
+            if (_format == QRCodeFormat.Svg) {
+                _svgMarkup = Encoding.UTF8.GetString(imageBytes);
+                _imageSource = null;
+            }
+            else {
+                _svgMarkup = string.Empty;
+                _imageSource = $"data:{GetMimeType()};base64,{Convert.ToBase64String(imageBytes)}";
+            }
+
+            SetStatus(qrResult.Message ?? "QR code generated.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_imageBytes == null)
+            return;
+
+        await Js.DownloadFile(_imageBytes, $"qr-code.{GetExtension()}", GetMimeType());
+    }
+
+    private string GetExtension()
+        => _format switch {
+            QRCodeFormat.Png => "png",
+            QRCodeFormat.Svg => "svg",
+            QRCodeFormat.Jpeg => "jpg",
+            QRCodeFormat.Bitmap => "bmp",
+            var _ => "bin"
+        };
+
+    private string GetMimeType()
+        => _format switch {
+            QRCodeFormat.Png => FileTypeInfo.Png.MimeType,
+            QRCodeFormat.Svg => FileTypeInfo.Svg.MimeType,
+            QRCodeFormat.Jpeg => FileTypeInfo.Jpeg.MimeType,
+            QRCodeFormat.Bitmap => FileTypeInfo.Bmp.MimeType,
+            var _ => FileTypeInfo.Unknown.MimeType
+        };
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

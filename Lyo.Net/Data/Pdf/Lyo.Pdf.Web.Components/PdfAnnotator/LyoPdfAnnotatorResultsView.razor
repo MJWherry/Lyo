@@ -1,0 +1,233 @@
+@using Lyo.Web.Components.ChipInput
+@namespace Lyo.Pdf.Web.Components.PdfAnnotator
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.subtitle1">@(ResultPhase ? "Saved extraction results" : "Live template regions")</MudText>
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">@($"{Rows.Count} region(s)")</MudChip>
+    </MudStack>
+
+    <MudText Typo="Typo.caption" Color="Color.Secondary">
+        Use each region's bounding box with plain text, key/value, or table extraction.
+    </MudText>
+
+    @if (Rows.Count == 0) {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">No regions yet.</MudText>
+    }
+    else {
+        <MudExpansionPanels MultiExpansion="true" Elevation="0" Outlined="true" Dense="true">
+            @foreach (var row in Rows) {
+                <MudExpansionPanel @key="row.Key" Expanded="true">
+                    <TitleContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle2">@row.Key</MudText>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                                    @GetExtractionSummary(row)
+                                </MudChip>
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@row.BoundingBoxSummary</MudText>
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudStack Spacing="2" Class="pt-2">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" md="@(row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText ? 4 : 5)">
+                                    <MudSelect T="PdfAnnotationExtractionType"
+                                               Label="Type"
+                                               Margin="Margin.Dense"
+                                               Value="@row.ExtractionType"
+                                               ValueChanged="value => SetExtractionType(row, value)">
+                                        <MudSelectItem Value="@PdfAnnotationExtractionType.BoundingBoxText">Bounding box text</MudSelectItem>
+                                        <MudSelectItem Value="@PdfAnnotationExtractionType.KeyValue">Key / value</MudSelectItem>
+                                        <MudSelectItem Value="@PdfAnnotationExtractionType.Table">Table</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="3">
+                                    <MudNumericField T="double"
+                                                     Label="Tolerance"
+                                                     Margin="Margin.Dense"
+                                                     Min="0"
+                                                     Step="0.5"
+                                                     Value="@row.YTolerance"
+                                                     ValueChanged="value => SetYTolerance(row, value)"/>
+                                </MudItem>
+                                @if (row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText) {
+                                    <MudItem xs="12" md="2">
+                                        <MudNumericField T="int"
+                                                         Label="Columns"
+                                                         Margin="Margin.Dense"
+                                                         Min="1"
+                                                         Max="24"
+                                                         HelperText="Multi-column layout"
+                                                         Value="@row.ColumnCount"
+                                                         ValueChanged="value => SetColumnCount(row, value)"/>
+                                    </MudItem>
+                                }
+                                <MudItem xs="12" md="@(row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText ? 3 : 4)" Class="d-flex align-end">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               FullWidth="true"
+                                               OnClick="@(() => OnApply.InvokeAsync(row))">
+                                        Apply
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+
+                            @if (row.ExtractionType == PdfAnnotationExtractionType.KeyValue) {
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Known keys</MudText>
+                                    <LyoChipInput Values="@row.KnownKeys"
+                                                  ValuesChanged="values => SetKnownKeys(row, values)"
+                                                  Placeholder="Type a key and press Enter"/>
+                                </div>
+                                <MudCheckBox T="bool"
+                                             Label="Split columns"
+                                             Dense="true"
+                                             Checked="@row.SplitColumns"
+                                             CheckedChanged="value => SetSplitColumns(row, value)"/>
+                            }
+                            else if (row.ExtractionType == PdfAnnotationExtractionType.Table) {
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Table headers</MudText>
+                                    <LyoChipInput Values="@row.TableHeaders"
+                                                  ValuesChanged="values => SetTableHeaders(row, values)"
+                                                  Placeholder="Type a header and press Enter"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Prefix a header with <code>*</code> to mark a key column.</MudText>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(row.ErrorMessage)) {
+                                <MudAlert Severity="Severity.Warning" Dense="true">@row.ErrorMessage</MudAlert>
+                            }
+
+                            @if (row.ExtractionType == PdfAnnotationExtractionType.KeyValue && row.KeyValuePairs is { Count: > 0 }) {
+                                <MudSimpleTable Dense="true" Striped="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Value</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var pair in row.KeyValuePairs) {
+                                        <tr>
+                                            <td>@pair.Key</td>
+                                            <td style="white-space:pre-wrap;word-break:break-word;">@(pair.Value ?? "—")</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            else if (row.ExtractionType == PdfAnnotationExtractionType.Table && row.TableRows is { Count: > 0 }) {
+                                var headers = GetTableHeaders(row.TableRows);
+                                <MudSimpleTable Dense="true" Striped="true" Bordered="true" Style="overflow-x:auto;">
+                                    <thead>
+                                    <tr>
+                                        @foreach (var header in headers) {
+                                            <th>@header</th>
+                                        }
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var tableRow in row.TableRows) {
+                                        <tr>
+                                            @foreach (var header in headers) {
+                                                <td style="white-space:pre-wrap;word-break:break-word;">@(tableRow.TryGetValue(header, out var value) ? value : "—")</td>
+                                            }
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            else if (row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText && row.ColumnTexts is { Count: > 1 }) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Result (per column)</MudText>
+
+                                <MudGrid Spacing="2" Class="mt-1">
+                                    @for (var i = 0; i < row.ColumnTexts.Count; i++) {
+                                        var colIdx = i;
+                                        <MudItem xs="12" sm="6" md="@(12 / row.ColumnTexts.Count)">
+                                            <MudPaper Class="pa-2" Outlined="true">
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">Column @(colIdx + 1)</MudText>
+                                                <MudText Typo="Typo.body2" Style="white-space:pre-wrap;word-break:break-word;">
+                                                    @(string.IsNullOrWhiteSpace(row.ColumnTexts[colIdx]) ? "—" : row.ColumnTexts[colIdx])
+                                                </MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            }
+                            else {
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Result</MudText>
+                                    <MudText Typo="Typo.body2" Style="white-space:pre-wrap;word-break:break-word;">
+                                        @(string.IsNullOrWhiteSpace(row.ExtractedText) ? "—" : row.ExtractedText)
+                                    </MudText>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+</MudStack>
+
+@code {
+
+    [Parameter]
+    public IReadOnlyList<LyoPdfAnnotationResult> Rows { get; set; } = [];
+
+    [Parameter]
+    public bool ResultPhase { get; set; }
+
+    [Parameter]
+    public EventCallback<LyoPdfAnnotationResult> OnApply { get; set; }
+
+    private static IReadOnlyList<string> GetTableHeaders(IReadOnlyList<IReadOnlyDictionary<string, string?>> rows) => rows.SelectMany(x => x.Keys).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    private static string GetExtractionSummary(LyoPdfAnnotationResult row)
+        => row.ExtractionType switch {
+            PdfAnnotationExtractionType.KeyValue => $"Key/Value ({row.KnownKeys.Count})",
+            PdfAnnotationExtractionType.Table => $"Table ({row.TableHeaders.Count})",
+            PdfAnnotationExtractionType.BoundingBoxText when row.ColumnCount > 1 => $"Plain text ({row.ColumnCount} col)",
+            var _ => "Plain Text"
+        };
+
+    private void SetExtractionType(LyoPdfAnnotationResult row, PdfAnnotationExtractionType value)
+    {
+        row.ExtractionType = value;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetYTolerance(LyoPdfAnnotationResult row, double value)
+    {
+        row.YTolerance = value;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetKnownKeys(LyoPdfAnnotationResult row, IEnumerable<string> values)
+    {
+        row.KnownKeys = values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetTableHeaders(LyoPdfAnnotationResult row, IEnumerable<string> values)
+    {
+        row.TableHeaders = values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetSplitColumns(LyoPdfAnnotationResult row, bool value)
+    {
+        row.SplitColumns = value;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetColumnCount(LyoPdfAnnotationResult row, int value)
+    {
+        row.ColumnCount = value < 1 ? 1 : value;
+        InvokeAsync(StateHasChanged);
+    }
+
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Validation</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Reusable validators and a fluent builder for validating strongly typed models with structured Result-based failures.</description>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>validation validator fluent rules result</tags>
+        <dependencies>
+            <group targetFramework="netstandard2.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="System.ComponentModel.Annotations" version="5.0.0"/>
+            </group>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="System.ComponentModel.Annotations" version="5.0.0"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/netstandard2.0/*.dll" target="lib/netstandard2.0"/>
+        <file src="bin/Release/netstandard2.0/*.pdb" target="lib/netstandard2.0"/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

@@ -1,0 +1,336 @@
+@using Lyo.Email.Builders
+@using Lyo.Email.Models
+@using Lyo.Web.Components.ChipInput
+@using Lyo.Web.Components.FileUpload
+@inject IEmailService EmailService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Email</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Compose and send email through the configured email service implementation.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">To</MudText>
+                        <LyoChipInput Values="@_emailToValues"
+                                      ValuesChanged="OnEmailToValuesChanged"
+                                      Placeholder="Type email and press Enter"
+                                      ValidationPattern="@_emailValidationPattern"
+                                      ValidationErrorMessage="Enter a valid email address."/>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">CC</MudText>
+                        <LyoChipInput Values="@_emailCcValues"
+                                      ValuesChanged="OnEmailCcValuesChanged"
+                                      Placeholder="Type email and press Enter"
+                                      ValidationPattern="@_emailValidationPattern"
+                                      ValidationErrorMessage="Enter a valid email address."/>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">BCC</MudText>
+                        <LyoChipInput Values="@_emailBccValues"
+                                      ValuesChanged="OnEmailBccValuesChanged"
+                                      Placeholder="Type email and press Enter"
+                                      ValidationPattern="@_emailValidationPattern"
+                                      ValidationErrorMessage="Enter a valid email address."/>
+                    </div>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudTextField T="string" Label="Subject" @bind-Value="_emailSubject"/>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" Label="From override" @bind-Value="_emailFromAddress"/>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudTextField T="string" Label="From name override" @bind-Value="_emailFromName"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <LyoRichTextEditor Value="@_emailHtmlBody"
+                                       ValueChanged="OnEmailHtmlBodyChangedAsync"
+                                       Label="HTML body"
+                                       Placeholder="Compose the email HTML body..."
+                                       MinHeightPx="260"/>
+                    <MudTextField T="string"
+                                  Label="Text body fallback (plain HTML source)"
+                                  HelperText="Raw HTML string. The rich editor updates this when the HTML changes."
+                                  Lines="6"
+                                  FullWidth="true"
+                                  Immediate="false"
+                                  Style="font-family: ui-monospace, monospace;"
+                                  Value="@_emailTextBody"
+                                  ValueChanged="OnEmailTextBodyChangedAsync"/>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Attachments</MudText>
+                            <LyoFileUpload MaxFiles="5"
+                                           ButtonText="Add attachments"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnEmailAttachmentReadyAsync"
+                                           OnClientFileRemoved="OnEmailAttachmentRemovedAsync"
+                                           OnUploadStarted="OnAttachmentUploadStartedAsync"
+                                           OnUploadProgress="OnAttachmentUploadProgressAsync"
+                                           OnUploadCompleted="OnAttachmentUploadCompletedAsync"
+                                           OnUploadCancelled="OnAttachmentUploadCancelledAsync"
+                                           OnUploadFailed="OnAttachmentUploadFailedAsync"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Last upload event: @_attachmentUploadStatus
+                            </MudText>
+                            @if (_attachmentUploadLog.Count > 0) {
+                                <MudList T="string" Dense="true" Class="upload-log-list">
+                                    @foreach (var entry in _attachmentUploadLog) {
+                                        <MudListItem T="string">@entry</MudListItem>
+                                    }
+                                </MudList>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendEmailAsync" Disabled="@_busy">Send Email</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="TestEmailConnectionAsync" Disabled="@_busy">Test Email Connection</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">Email Result</MudText>
+                    @if (_lastEmailResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Send an email to inspect the provider response here.</MudText>
+                    }
+                    else {
+                        <MudAlert Severity="@(_lastEmailResult.IsSuccess ? Severity.Success : Severity.Error)" Dense="true" Class="mb-3">
+                            @_lastEmailSummary
+                        </MudAlert>
+
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Subject</strong></td>
+                                <td>@(_lastEmailResult.Data?.Subject ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>To</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.ToAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CC</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.CcAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>BCC</strong></td>
+                                <td>@string.Join(", ", _lastEmailResult.Data?.BccAddresses ?? [])</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Message Id</strong></td>
+                                <td>@(_lastEmailProviderResult?.MessageId ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sent Date</strong></td>
+                                <td>@(_lastEmailProviderResult?.SentDate?.ToString("u") ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SMTP Response</strong></td>
+                                <td>@(_lastEmailProviderResult?.SmtpResponse ?? "(none)")</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Errors</strong></td>
+                                <td>@LyoResultErrorFormatter.FormatErrors(_lastEmailResult.Errors)</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    private sealed record EmailAttachment(string FileName, byte[] Content);
+
+    private bool _busy;
+    private readonly List<EmailAttachment> _emailAttachments = [];
+    private readonly string _emailValidationPattern = RegexPatterns.EmailRegex.ToString();
+    private List<string> _emailBccValues = [];
+    private List<string> _emailCcValues = [];
+    private string _emailFromAddress = string.Empty;
+    private string _emailFromName = string.Empty;
+    private string _emailHtmlBody = "<p>Hello from Lyo.</p>";
+    private Result<EmailRequest>? _lastEmailResult;
+    private EmailResult? _lastEmailProviderResult;
+    private string _lastEmailSummary = string.Empty;
+    private string _emailSubject = "Lyo test message";
+    private string _emailTextBody = "<p>Hello from Lyo.</p>";
+    private List<string> _emailToValues = ["test@example.com"];
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _attachmentUploadStatus = "No attachment uploads yet.";
+    private readonly List<string> _attachmentUploadLog = [];
+
+    private Task OnEmailAttachmentReadyAsync(LocalBrowserFile file)
+    {
+        _emailAttachments.RemoveAll(x => x.FileName == file.FileName);
+        _emailAttachments.Add(new(file.FileName, file.Content.ToArray()));
+        SetStatus($"Loaded {_emailAttachments.Count} attachment(s).", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmailAttachmentRemovedAsync(LocalBrowserFile file)
+    {
+        _emailAttachments.RemoveAll(x => x.FileName == file.FileName);
+        SetStatus(_emailAttachments.Count == 0 ? "All attachments removed." : $"{_emailAttachments.Count} attachment(s) remain.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task OnAttachmentUploadStartedAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"Uploading {args.FileName}...", $"Started {args.FileName}");
+
+    private Task OnAttachmentUploadProgressAsync(LyoFileUploadEventArgs args)
+    {
+        _attachmentUploadStatus = $"{args.FileName}: {args.Progress:F0}%";
+        return Task.CompletedTask;
+    }
+
+    private Task OnAttachmentUploadCompletedAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"{args.FileName} completed.", $"Completed {args.FileName}");
+
+    private Task OnAttachmentUploadCancelledAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"{args.FileName} cancelled.", $"Cancelled {args.FileName}");
+
+    private Task OnAttachmentUploadFailedAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"{args.FileName} failed: {args.ErrorMessage}", $"Failed {args.FileName}");
+
+    private async Task SendEmailAsync()
+    {
+        if (_emailToValues.Count == 0) {
+            SetStatus("Add at least one email recipient.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            if (!string.Equals(_emailHtmlBody, _emailTextBody, StringComparison.Ordinal))
+                _emailHtmlBody = _emailTextBody;
+
+            var builder = EmailRequestBuilder.New().SetSubject(_emailSubject);
+            foreach (var recipient in _emailToValues)
+                builder.AddTo(recipient);
+
+            foreach (var cc in _emailCcValues)
+                builder.AddCc(cc);
+
+            foreach (var bcc in _emailBccValues)
+                builder.AddBcc(bcc);
+
+            if (!string.IsNullOrWhiteSpace(_emailHtmlBody))
+                builder.SetHtmlBody(_emailHtmlBody);
+
+            if (!string.IsNullOrWhiteSpace(_emailTextBody))
+                builder.SetTextBody(_emailTextBody);
+
+            foreach (var attachment in _emailAttachments)
+                builder.AddAttachment(attachment.FileName, attachment.Content);
+
+            _lastEmailResult = string.IsNullOrWhiteSpace(_emailFromAddress) ? await EmailService.SendEmailAsync(builder) : await EmailService.SendEmailAsync(builder, _emailFromAddress, _emailFromName);
+            _lastEmailProviderResult = _lastEmailResult as EmailResult;
+            _lastEmailSummary = _lastEmailResult.IsSuccess ? $"Email sent to {_emailToValues.Count} recipient(s)." : LyoResultErrorFormatter.FormatErrors(_lastEmailResult.Errors);
+            SetStatus(_lastEmailSummary, _lastEmailResult.IsSuccess ? Severity.Success : Severity.Error);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TestEmailConnectionAsync()
+    {
+        _busy = true;
+        try {
+            var ok = await EmailService.TestConnectionAsync();
+            SetStatus(ok ? "Email connection succeeded." : "Email connection failed.", ok ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task OnEmailToValuesChanged(IEnumerable<string> values)
+    {
+        _emailToValues = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmailCcValuesChanged(IEnumerable<string> values)
+    {
+        _emailCcValues = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmailBccValuesChanged(IEnumerable<string> values)
+    {
+        _emailBccValues = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmailHtmlBodyChangedAsync(string html)
+    {
+        _emailHtmlBody = html;
+        _emailTextBody = html;
+        return Task.CompletedTask;
+    }
+
+    private Task OnEmailTextBodyChangedAsync(string text)
+    {
+        _emailTextBody = text;
+        _emailHtmlBody = text;
+        return Task.CompletedTask;
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private Task UpdateAttachmentUploadAsync(string status, string logEntry)
+    {
+        _attachmentUploadStatus = status;
+        _attachmentUploadLog.Insert(0, $"{DateTime.Now:HH:mm:ss} {logEntry}");
+        if (_attachmentUploadLog.Count > 6)
+            _attachmentUploadLog.RemoveAt(_attachmentUploadLog.Count - 1);
+
+        return Task.CompletedTask;
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

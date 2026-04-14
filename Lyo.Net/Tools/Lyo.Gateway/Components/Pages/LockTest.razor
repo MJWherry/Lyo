@@ -1,0 +1,16 @@
+@using Lyo.Gateway.Components.TestGateway
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Locks)]
+@inherits AuthorizedPage
+
+<PageTitle>Lock Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <LockWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Lock Test";
+
+}

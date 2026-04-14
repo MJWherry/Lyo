@@ -1,0 +1,103 @@
+﻿@using System.Security.Claims
+@using Lyo.Gateway.Stores
+@using Lyo.Web.Components.Models
+@implements IDisposable
+
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IUserStore UserStore
+@inject NavigationManager NavigationManager
+
+<PageTitle>@PageName</PageTitle>
+
+@code {
+
+    protected ClaimsPrincipal? ClaimsPrincipal;
+
+    //protected Guid? AzureUserOid;
+    protected Guid? BachUserId;
+    protected BlazorUserInfo? BlazorUserInfo;
+    private bool _initialized;
+
+    [CascadingParameter]
+    protected MainLayout Layout { get; set; } = null!;
+
+    protected virtual string PageName { get; set; } = "";
+
+    protected bool Loading;
+
+    private async Task InitializeUserAsync()
+    {
+        if (_initialized)
+            return;
+
+        //var authState = await AuthProvider.GetAuthenticationStateAsync();
+        //
+        //        //var tokenId = authState.User.Claims.FirstOrDefault(i => i.Type == "azure_token_id");
+        //        //BlazorUserInfo = UserStore.GetUser(tokenId.Value)!;
+        //
+        //        //if (BlazorUserInfo is null)
+        //        //    NavigationManager.NavigateTo("/auth/login");
+        //
+        //        ClaimsPrincipal = authState.User;
+        //        //AzureUserOid = Guid.Parse(ClaimsPrincipal.FindFirstValue("bach_userid")!);
+        //        BachUserId = Guid.Parse(ClaimsPrincipal.FindFirstValue("bach_userid")!);
+        //
+        //        //var opusUserIdClaim = ClaimsPrincipal.FindFirstValue("opus_userid");
+        //        //if(!string.IsNullOrEmpty(opusUserIdClaim))
+        //        //    OpusUserId = int.Parse(opusUserIdClaim);
+
+        //UserStore.UpdateUserCurrentPage(tokenId.Value, $"/{NavigationManager.Uri.Replace(NavigationManager.BaseUri, "")}");
+        //_logContext = Logger.BeginScope("{UserEmail} {Username}", BlazorUserInfo!.Email, BlazorUserInfo.Name);
+        _initialized = true;
+    }
+
+    protected sealed override async Task OnInitializedAsync()
+    {
+        Loading = true;
+        try {
+            await InitializeUserAsync();
+            //Layout.PageName = PageName;
+            await OnPageInitializedAsync();
+            await base.OnInitializedAsync();
+        }
+        finally {
+            Loading = false;
+        }
+    }
+
+    protected sealed override void OnInitialized()
+    {
+        Loading = true;
+        try {
+            InitializeUserAsync().GetAwaiter().GetResult();
+            OnPageInitialized();
+            base.OnInitialized();
+        }
+        finally {
+            Loading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //After render as we can only access clientstore after server render (so not in on init)
+        //  if we ever need to use full client-side, we can store the jwt token in client store, and set the token here
+        //  for now, we can inject the token after render. As long as bach client is scoped, and we inherit this page, any sub controls
+        //      that use DI for the client should use the same client instance 
+        //BUG if fallback to long polling, the httpcontext is not available (only sciencesoft), so we may need to move to client store
+        //  to store the user store id, then do a lookup here in the userstore for the token (almost like session storage). that should be
+        //  backup only
+        //var token = await ClientStore.GetStoreId();
+        var token = HttpContextAccessor.HttpContext?.User?.FindFirstValue("cc-api-token");
+        //BachClient.SetToken(token);
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected virtual async Task OnPageInitializedAsync() => await Task.CompletedTask;
+
+    protected virtual void OnPageInitialized() { }
+
+    public void Dispose() { }
+
+}
+

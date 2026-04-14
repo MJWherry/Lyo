@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Api.Client.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.MessageQueue.RabbitMq.Web.Components.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
+        <ProjectReference Include="..\Lyo.MessageQueue.Web.Components\Lyo.MessageQueue.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor" Version="[9,)"/>
+    </ItemGroup>
+
+</Project>

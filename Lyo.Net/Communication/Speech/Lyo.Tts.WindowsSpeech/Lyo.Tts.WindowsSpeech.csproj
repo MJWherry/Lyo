@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Skip entire project on non-Windows platforms -->
+    <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>10.0</LangVersion>
+        <DisableDefaultTargets>true</DisableDefaultTargets>
+        <SkipBuild>true</SkipBuild>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Tts.WindowsSpeech.nuspec</NuspecFile>
+        <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+    </PropertyGroup>
+
+    <!-- Only include System.Speech package on Windows -->
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+        <PackageReference Include="System.Speech" Version="10.0.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Tts\Lyo.Tts.csproj"/>
+        <ProjectReference Include="..\Lyo.Tts.Models\Lyo.Tts.Models.csproj"/>
+    </ItemGroup>
+
+    <!-- Empty targets on non-Windows to prevent build -->
+    <Target Name="Build" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <Target Name="Restore" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <Target Name="Rebuild" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <Target Name="Clean" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <Target Name="Publish" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+    <Target Name="GetTargetPath" Condition="!$([MSBuild]::IsOSPlatform('Windows'))" Returns=""/>
+    <Target Name="GetTargetPaths" Condition="!$([MSBuild]::IsOSPlatform('Windows'))" Returns=""/>
+
+</Project>

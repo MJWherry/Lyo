@@ -1,0 +1,56 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@typeparam TModel
+<EditForm Model="@Model" OnValidSubmit="@HandleSubmit">
+    <CascadingValue Value="this" Name="ChangeTrackingForm" IsFixed="true">
+        <MudCard>
+            <MudCardContent>
+                @ChildContent
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@(!HasChanges)">
+                    Save Changes
+                </MudButton>
+                <MudButton OnClick="@ResetChanges"
+                           Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           Disabled="@(!HasChanges)">
+                    Reset
+                </MudButton>
+                @if (HasChanges) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        @{
+                            var propertyChangeCount = _changes.Values.Count(c => c.HasChanged);
+                            var createCount = _operations.Count(o => o.ChangeType == ChangeType.Create);
+                            var updateCount = _operations.Count(o => o.ChangeType == ChangeType.Update);
+                            var deleteCount = _operations.Count(o => o.ChangeType == ChangeType.Delete);
+                        }
+                        @if (propertyChangeCount > 0) {
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                                @propertyChangeCount change@(propertyChangeCount != 1 ? "s" : "")
+                            </MudChip>
+                        }
+                        @if (createCount > 0) {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                @createCount addition@(createCount != 1 ? "s" : "")
+                            </MudChip>
+                        }
+                        @if (updateCount > 0) {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">
+                                @updateCount update@(updateCount != 1 ? "s" : "")
+                            </MudChip>
+                        }
+                        @if (deleteCount > 0) {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">
+                                @deleteCount deletion@(deleteCount != 1 ? "s" : "")
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
+            </MudCardActions>
+        </MudCard>
+    </CascadingValue>
+</EditForm>

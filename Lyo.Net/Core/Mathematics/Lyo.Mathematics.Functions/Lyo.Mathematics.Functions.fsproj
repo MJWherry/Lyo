@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Mathematics.Functions.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Common.fs"/>
+        <Compile Include="Arithmetic.fs"/>
+        <Compile Include="Algebra.fs"/>
+        <Compile Include="Geometry.fs"/>
+        <Compile Include="Trigonometry.fs"/>
+        <Compile Include="LinearAlgebra.fs"/>
+        <Compile Include="Statistics.fs"/>
+        <Compile Include="Distributions.fs"/>
+        <Compile Include="Physics.fs"/>
+        <Compile Include="Calculus.fs"/>
+        <Compile Include="Interpolation.fs"/>
+        <Compile Include="Financial.fs"/>
+        <Compile Include="Signal.fs"/>
+        <Compile Include="Transforms.fs"/>
+        <Compile Include="Optimization.fs"/>
+        <Compile Include="Complex.fs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+        <ProjectReference Include="..\..\Scientific\Lyo.Scientific\Lyo.Scientific.csproj"/>
+    </ItemGroup>
+</Project>

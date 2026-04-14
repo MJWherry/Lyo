@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.QRCode.nuspec</NuspecFile>
+        <DefineConstants>$(DefineConstants);HAS_SPAN</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="System.Collections"/>
+        <Using Include="System.Text"/>
+        <Using Include="System.Globalization"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.QRCode.QRCoder"/>
+        <InternalsVisibleTo Include="Lyo.QRCode.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Images\Lyo.Images\Lyo.Images.csproj"/>
+        <ProjectReference Include="..\..\Codes\Lyo.Codes.ZXing\Lyo.Codes.ZXing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+
+</Project>
+

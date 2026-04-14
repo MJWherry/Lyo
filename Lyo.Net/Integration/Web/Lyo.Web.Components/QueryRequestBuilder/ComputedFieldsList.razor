@@ -1,0 +1,45 @@
+@using MudBlazor
+<MudStack Spacing="1">
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        <MudTextField T="string"
+                      @bind-Value="_newName"
+                      Label="Name"
+                      Variant="Variant.Outlined"
+                      Dense
+                      Immediate
+                      Margin="Margin.Dense"
+                      OnKeyDown="@OnKeyDown"
+                      Style="flex: 1; min-width: 80px;"/>
+        <MudTextField T="string"
+                      @bind-Value="_newTemplate"
+                      Label="Template"
+                      Variant="Variant.Outlined"
+                      Dense
+                      Immediate
+                      Margin="Margin.Dense"
+                      OnKeyDown="@OnKeyDown"
+                      Placeholder="{LastName}, {FirstName}"
+                      Style="flex: 2; min-width: 160px;"/>
+        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       OnClick="@AddField"
+                       Disabled="@(string.IsNullOrWhiteSpace(_newName) || string.IsNullOrWhiteSpace(_newTemplate))"
+                       Title="Add computed field"/>
+    </MudStack>
+
+    @if (Items.Count > 0) {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+            @foreach (var (item, i) in Items.Select((f, idx) => (f, idx))) {
+                var index = i;
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Filled"
+                         Color="Color.Primary"
+                         OnClose="@(() => RemoveField(index))">
+                    @item.Name = @item.Template
+                </MudChip>
+            }
+        </MudStack>
+    }
+</MudStack>

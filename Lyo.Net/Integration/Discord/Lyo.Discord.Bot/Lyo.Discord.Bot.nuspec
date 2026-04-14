@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Discord.Bot</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>DSharpPlus bot host that syncs Discord guild data to the Lyo API (DI, configuration, extensible base class).</description>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>discord dsharpplus bot sync lyo</tags>
+        <dependencies>
+            <group targetFramework="netstandard2.0">
+                <dependency id="DSharpPlus" version="4.5.1"/>
+                <dependency id="DSharpPlus.CommandsNext" version="4.5.1"/>
+                <dependency id="DSharpPlus.Interactivity" version="4.5.1"/>
+                <dependency id="DSharpPlus.SlashCommands" version="4.5.1"/>
+                <dependency id="Lyo.Cache" version="[1.0.71,)"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Diff" version="[1.0.71,)"/>
+                <dependency id="Lyo.Discord.Client" version="[1.0.71,)"/>
+                <dependency id="Lyo.Notification" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Caching.Memory" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Options" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Options.ConfigurationExtensions" version="[10.0.1,)"/>
+            </group>
+            <group targetFramework="net10.0">
+                <dependency id="DSharpPlus" version="4.5.1"/>
+                <dependency id="DSharpPlus.CommandsNext" version="4.5.1"/>
+                <dependency id="DSharpPlus.Interactivity" version="4.5.1"/>
+                <dependency id="DSharpPlus.SlashCommands" version="4.5.1"/>
+                <dependency id="Lyo.Cache" version="[1.0.71,)"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Diff" version="[1.0.71,)"/>
+                <dependency id="Lyo.Discord.Client" version="[1.0.71,)"/>
+                <dependency id="Lyo.Notification" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Caching.Memory" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Options" version="[10.0.1,)"/>
+                <dependency id="Microsoft.Extensions.Options.ConfigurationExtensions" version="[10.0.1,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.Web.Components.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Pdf\Lyo.Pdf\Lyo.Pdf.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
+        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage" Version="[4,)"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[10,)"/>
+        <PackageReference Include="MudBlazor" Version="[9,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="PdfAnnotator\**\*.cs"/>
+        <RazorComponent Remove="PdfAnnotator\**\*.razor"/>
+    </ItemGroup>
+
+</Project>

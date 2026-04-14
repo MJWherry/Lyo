@@ -1,0 +1,250 @@
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using MudBlazor
+<div class="lyo-json-tree" style="@($"--lyo-json-font-size: {FontSize};")" @ref="_treeContainerRef">
+    @if (Root != null) {
+        <Virtualize Items="@GetVisibleRows()" ItemSize="@TreeRowItemSize" Context="row" OverscanCount="12">
+            <div class="tree-row @(row.PathId == _activeSearchPath ? "tree-row-active-search" : "")" data-path-id="@row.PathId" @key="@row.PathId">
+                <span class="tree-spacer" style="width: @(row.Depth * 16)px;"></span>
+                @if (row.Expandable) {
+                    <button type="button" class="tree-toggle" @onclick="@(() => ToggleExpandedAsync(row.PathId))">
+                        @(row.IsExpanded ? "-" : "+")
+                    </button>
+                }
+                else {
+                    <span class="tree-toggle-placeholder"></span>
+                }
+
+                @if (!string.IsNullOrEmpty(row.Key)) {
+                    @if (Editable && _editingKeyPath == row.PathId && row.CanEditKey) {
+                        <input class="tree-key-input"
+                               value="@_editKey"
+                               @oninput="OnKeyInputChanged"
+                               @onblur="@(() => CommitKeyEdit(row.PathId))"
+                               @onkeydown="@KeyDownKeyEdit(row.PathId)"/>
+                        <span class="tree-key-sep">:</span>
+                    }
+                    else if (Editable && row.CanEditKey) {
+                        <span class="tree-key tree-editable" @onclick="@(() => StartEditKey(row.PathId, row.Key))">
+                            <MudHighlighter Text="@($"{row.Key}:")" HighlightedText="@SearchText"/>
+                        </span>
+                    }
+                    else {
+                        <span class="tree-key">
+                            <MudHighlighter Text="@($"{row.Key}:")" HighlightedText="@SearchText"/>
+                        </span>
+                    }
+                }
+
+                @if (Editable && _editingPath == row.PathId && !row.IsContainer) {
+                    @if (row.EnumOptions.Length > 0) {
+                        <select class="tree-inline-select"
+                                value="@_editValue"
+                                @onchange="@EnumChange(row.PathId)"
+                                @onblur="@(() => CommitEdit(row.PathId))"
+                                @onkeydown="@KeyDownInline(row.PathId)">
+                            @foreach (var option in row.EnumOptions) {
+                                <option value="@option">@option</option>
+                            }
+                        </select>
+                    }
+                    else if (row.ValueKind == JsonValueKind.Number) {
+                        <input class="tree-inline-input"
+                               type="number"
+                               step="any"
+                               value="@_editValue"
+                               @oninput="OnInlineInputChanged"
+                               @onblur="@(() => CommitEdit(row.PathId))"
+                               @onkeydown="@KeyDownInline(row.PathId)"/>
+                    }
+                    else if (row.ValueKind is JsonValueKind.True or JsonValueKind.False) {
+                        <input type="checkbox"
+                               checked="@(_editValue.Equals("true", StringComparison.OrdinalIgnoreCase))"
+                               @onchange="@BooleanChange(row.PathId)"/>
+                    }
+                    else {
+                        <input class="tree-inline-input"
+                               value="@_editValue"
+                               @oninput="OnInlineInputChanged"
+                               @onblur="@(() => CommitEdit(row.PathId))"
+                               @onkeydown="@KeyDownInline(row.PathId)"/>
+                    }
+
+                    @if (row.CanSetNull) {
+                        <button type="button" class="tree-null-btn" @onclick="@(() => SetNull(row.PathId))">null</button>
+                    }
+                }
+                else if (Editable && !row.IsContainer) {
+                    <span class="@($"{row.ValueCss} tree-editable")" @onclick="@(() => StartEdit(row.PathId, row.EditValue))">
+                        <MudHighlighter Text="@row.DisplayValue" HighlightedText="@SearchText"/>
+                    </span>
+                }
+                else {
+                    <span class="@row.ValueCss">
+                        <MudHighlighter Text="@row.DisplayValue" HighlightedText="@SearchText"/>
+                    </span>
+                }
+                <MudIconButton Class="@(row.PathId == _copiedPath ? "tree-copy-btn tree-copy-btn-copied" : "tree-copy-btn")"
+                               Icon="@(row.PathId == _copiedPath ? Icons.Material.Filled.Check : Icons.Material.Filled.ContentCopy)"
+                               Size="Size.Small"
+                               Color="Color.Default"
+                               OnClick="@(() => CopyByPath(row.PathId))"/>
+                @if (Editable && row.IsContainer) {
+                    <MudIconButton Class="tree-copy-btn"
+                                   Icon="@Icons.Material.Filled.Add"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="@(() => AddChild(row.PathId))"/>
+                }
+                @if (Editable && !string.IsNullOrEmpty(row.PathId)) {
+                    <MudIconButton Class="tree-copy-btn"
+                                   Icon="@Icons.Material.Filled.Remove"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="@(() => RemoveByPath(row.PathId))"/>
+                }
+            </div>
+        </Virtualize>
+    }
+</div>
+
+<style>
+    .lyo-json-tree {
+        font-family: ui-monospace, monospace;
+        font-size: var(--lyo-json-font-size, 0.8125rem);
+        line-height: 1.4;
+        max-height: 400px;
+        overflow: auto;
+        color: var(--mud-palette-text-primary);
+    }
+
+    .lyo-json-tree .tree-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 28px;
+        height: 28px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .lyo-json-tree .tree-row-active-search {
+        background: color-mix(in srgb, var(--mud-palette-primary) 16%, transparent);
+        border-radius: 4px;
+    }
+
+    .lyo-json-tree .tree-spacer {
+        flex: 0 0 auto;
+    }
+
+    .lyo-json-tree .tree-toggle {
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: transparent;
+        color: var(--mud-palette-text-secondary);
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .lyo-json-tree .tree-toggle-placeholder {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+    }
+
+    .lyo-json-tree .tree-key {
+        color: var(--mud-palette-text-primary);
+        font-weight: 600;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-json-tree .tree-key-sep {
+        color: var(--mud-palette-text-primary);
+        font-weight: 600;
+        margin-left: -4px;
+    }
+
+    .lyo-json-tree .tree-string {
+        color: var(--mud-palette-success);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-json-tree .tree-number {
+        color: var(--mud-palette-primary);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-json-tree .tree-bool {
+        color: var(--mud-palette-warning);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-json-tree .tree-null {
+        color: var(--mud-palette-text-secondary);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-json-tree .tree-editable {
+        cursor: pointer;
+        text-decoration: underline dotted;
+        text-underline-offset: 2px;
+    }
+
+    .lyo-json-tree .tree-inline-input {
+        font-family: ui-monospace, monospace;
+        font-size: inherit;
+        width: min(100%, 320px);
+    }
+
+    .lyo-json-tree .tree-key-input {
+        font-family: ui-monospace, monospace;
+        font-size: inherit;
+        width: min(100%, 220px);
+    }
+
+    .lyo-json-tree .tree-inline-select {
+        font-family: ui-monospace, monospace;
+        font-size: inherit;
+        min-width: 140px;
+    }
+
+    .lyo-json-tree .tree-null-btn {
+        margin-left: 4px;
+        border: 1px solid var(--mud-palette-lines-default);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--mud-palette-text-secondary);
+        font-size: inherit;
+        line-height: 1.2;
+        padding: 1px 6px;
+        cursor: pointer;
+    }
+
+    .lyo-json-tree .tree-copy-btn {
+        margin-left: 2px;
+        opacity: 0;
+        transition: opacity 120ms ease-in-out;
+    }
+
+    .lyo-json-tree .tree-row:hover .tree-copy-btn {
+        opacity: 1;
+    }
+
+    .lyo-json-tree .tree-copy-btn-copied {
+        opacity: 1;
+        color: var(--mud-palette-success);
+    }
+</style>

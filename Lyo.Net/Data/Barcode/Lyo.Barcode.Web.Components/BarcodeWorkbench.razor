@@ -1,0 +1,222 @@
+@using System.Text
+@using Lyo.Barcode.Models
+@using MudBlazor.Utilities
+@inject IBarcodeService BarcodeService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Barcode Generator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Code 128 (subset B) generated in-process — BMP or SVG, no barcode NuGet packages.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="3">
+                        <MudSelect T="BarcodeFormat" Label="Format" @bind-Value="_format">
+                            @foreach (var format in Enum.GetValues<BarcodeFormat>()) {
+                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="int" Label="Module width (px)" @bind-Value="_moduleWidth"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="int" Label="Bar height (px)" @bind-Value="_barHeight"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="int" Label="Quiet zone (modules)" @bind-Value="_quietZone"/>
+
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            <MudColorPicker Label="Bars" @bind-Value="_darkColor"/>
+                            <MudColorPicker Label="Background" @bind-Value="_lightColor"/>
+                        </MudStack>
+
+                        <MudTextField T="string"
+                                      Label="Data (ASCII 32–127)"
+                                      Variant="Variant.Outlined"
+                                      Lines="4"
+                                      FullWidth="true"
+                                      @bind-Value="_data"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateAsync" Disabled="@_busy">Generate</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_imageBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_imageBytes == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Generate a barcode to preview it here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Format</MudText>
+                                    <MudText Typo="Typo.body1">@_format</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Size</MudText>
+                                    <MudText Typo="Typo.body1">@($"{_widthPx} × {_heightPx} px")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">File size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_imageBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudDivider Class="my-3"/>
+
+                        @if (_format == BarcodeFormat.Svg) {
+                            <MudPaper Class="pa-4" Outlined="true">
+                                @((MarkupString)_svgMarkup)
+                            </MudPaper>
+                        }
+                        else {
+                            <MudPaper Class="pa-4 d-flex justify-center" Outlined="true">
+                                <img src="@_imageSource" alt="Generated barcode" style="max-width: 100%; height: auto; object-fit: contain;"/>
+                            </MudPaper>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private int _barHeight = 80;
+    private string _data = "HELLO-128";
+    private MudColor _darkColor = new("#000000");
+    private BarcodeFormat _format = BarcodeFormat.Bmp;
+    private int _heightPx;
+    private byte[]? _imageBytes;
+    private string? _imageSource;
+    private MudColor _lightColor = new("#FFFFFF");
+    private int _moduleWidth = 2;
+    private int _quietZone = 10;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _svgMarkup = string.Empty;
+    private int _widthPx;
+
+    private async Task GenerateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_data)) {
+            SetStatus("Enter text to encode.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var options = new BarcodeOptions {
+                Format = _format,
+                ModuleWidthPixels = _moduleWidth,
+                BarHeightPixels = _barHeight,
+                QuietZoneModules = _quietZone,
+                DarkColor = _darkColor.ToString(MudColorOutputFormats.Hex),
+                LightColor = _lightColor.ToString(MudColorOutputFormats.Hex)
+            };
+
+            var result = await BarcodeService.GenerateAsync(_data, BarcodeSymbology.Code128, options);
+            var bcResult = result as BarcodeResult;
+            if (!result.IsSuccess || bcResult?.ImageBytes == null) {
+                SetStatus(LyoResultErrorFormatter.FormatErrors(result.Errors), Severity.Error);
+                return;
+            }
+
+            _imageBytes = bcResult.ImageBytes;
+            _widthPx = bcResult.ImageWidthPixels ?? 0;
+            _heightPx = bcResult.ImageHeightPixels ?? 0;
+            if (_format == BarcodeFormat.Svg) {
+                _svgMarkup = Encoding.UTF8.GetString(bcResult.ImageBytes);
+                _imageSource = null;
+            }
+            else {
+                _svgMarkup = string.Empty;
+                _imageSource = $"data:{GetMimeType()};base64,{Convert.ToBase64String(bcResult.ImageBytes)}";
+            }
+
+            SetStatus(bcResult.Message ?? "Barcode generated.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_imageBytes == null)
+            return;
+
+        await Js.DownloadFile(_imageBytes, $"barcode.{GetExtension()}", GetMimeType());
+    }
+
+    private string GetExtension()
+        => _format switch {
+            BarcodeFormat.Bmp => "bmp",
+            BarcodeFormat.Svg => "svg",
+            var _ => "bin"
+        };
+
+    private string GetMimeType()
+        => _format switch {
+            BarcodeFormat.Bmp => FileTypeInfo.Bmp.MimeType,
+            BarcodeFormat.Svg => FileTypeInfo.Svg.MimeType,
+            var _ => FileTypeInfo.Unknown.MimeType
+        };
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

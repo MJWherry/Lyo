@@ -1,0 +1,142 @@
+@using System.Security.Claims
+@using Lyo.Web.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using Constants = Constants
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ClientStore ClientStore
+@inject NavigationManager NavigationManager
+
+@if (_initialized) {
+    <MudThemeProvider Theme="@Themes.Default" IsDarkMode="@_isDarkMode"/>
+
+    <MudPopoverProvider/>
+
+    <MudDialogProvider/>
+
+    <MudSnackbarProvider/>
+
+    <MudLayout>
+        <MudDrawer @bind-Open="_drawerOpen"
+                   Elevation="1"
+                   Variant="DrawerVariant.Temporary"
+                   Anchor="Anchor.Start"
+                   Class="mud-width-260">
+            <div>
+                <MudPaper Class="pa-4" Square="true" Style="min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <MudAvatar Size="Size.Large"/>
+                    <MudText Typo="Typo.subtitle1" Class="mt-2">@user?.Identity?.Name</MudText>
+                    <MudText Typo="Typo.caption">@user?.Claims.FirstOrDefault(i => i.Type == ClaimTypes.Email)?.Value</MudText>
+                    <MudLink Href="/Account" Class="mt-2">
+                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountCircle">
+                            Account
+                        </MudButton>
+                    </MudLink>
+                </MudPaper>
+                <MudDivider/>
+                <MudNavMenu Dense="true" Class="mt-2">
+                    <!--<AuthorizeView Roles="Admin">-->
+                    <MudNavLink Href="AdminDashboard" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudNavLink>
+                    <!--</AuthorizeView>-->
+                    <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All">Home</MudNavLink>
+                    <MudNavLink Href="PeopleManagement" Icon="@Icons.Material.Filled.Contacts">People</MudNavLink>
+                    <MudNavLink Href="@Constants.Page.QueryBuilder" Icon="@Icons.Material.Filled.QueryBuilder">Query Builder</MudNavLink>
+                    <MudNavGroup Title="Communication"
+                                 Icon="@Icons.Material.Filled.Forum"
+                                 Expanded="@IsExpanded(Constants.Page.Messaging, Constants.Page.Translation, Constants.Page.Tts, Constants.Page.Profanity)">
+                        <MudNavLink Href="@Constants.Page.Messaging" Icon="@Icons.Material.Filled.Textsms">Sms/Email</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Translation" Icon="@Icons.Material.Filled.Translate">Translate</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Tts" Icon="@Icons.Material.Filled.AudioFile">TTS</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Profanity" Icon="@Icons.Material.Filled.Warning">Profanity</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Documents & Files"
+                                 Icon="@Icons.Material.Filled.Description"
+                                 Expanded="@IsExpanded(Constants.Page.FileService, Constants.Page.FileStorageWorkbench, Constants.Page.HtmlToPdf, Constants.Page.PdfAnnotator, Constants.Page.QrCodeGenerator, Constants.Page.BarcodeGenerator, Constants.Page.RichTextEditor, Constants.Page.SpriteSheetAnimator, Constants.Page.ImageWorkbench, Constants.Page.TextDiff, Constants.Page.CsvXlsx)">
+                        <MudNavLink Href="@Constants.Page.CsvXlsx" Icon="@Icons.Material.Filled.TableChart">CSV / XLSX</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.FileService" Icon="@Icons.Material.Filled.EnhancedEncryption">Encryption/Compression</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.FileStorageWorkbench" Icon="@Icons.Material.Filled.Storage">File Storage Workbench</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.HtmlToPdf" Icon="@Icons.Material.Filled.PictureAsPdf">Html -> Pdf</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.PdfAnnotator" Icon="@Icons.Material.Filled.PictureAsPdf">Pdf Annotator</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.QrCodeGenerator" Icon="@Icons.Material.Filled.QrCode">QRCode Generator</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.BarcodeGenerator" Icon="@Icons.Material.Filled.ViewWeek">Barcode Generator</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.SpriteSheetAnimator" Icon="@Icons.Material.Filled.Movie">Spritesheet Animator</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.ImageWorkbench" Icon="@Icons.Material.Filled.Palette">Image Workbench</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.TextDiff" Icon="@Icons.Material.Filled.CompareArrows">Text Diff Workbench</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavGroup Title="Infrastructure"
+                                 Icon="@Icons.Material.Filled.SettingsEthernet"
+                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache)">
+                        <MudNavLink Href="@Constants.Page.Cache" Icon="@Icons.Material.Filled.Storage">Cache</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Locks" Icon="@Icons.Material.Filled.Lock">Locks</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.RabbitMq" Icon="@Icons.Material.Filled.Message">RabbitMq</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Metrics" Icon="@Icons.Material.Filled.HourglassTop">Metrics</MudNavLink>
+                    </MudNavGroup>
+                </MudNavMenu>
+            </div>
+        </MudDrawer>
+        <MudMainContent>
+            <MudAppBar Elevation="4" Color="Color.Primary" Dense="true">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+                <MudButton Href="/" Variant="Variant.Text" Class="ml-2" Style="text-transform: none; padding: 0; min-width: auto;">
+                    <MudText Typo="Typo.h6" Style="color: white;">@PageName</MudText>
+                </MudButton>
+                <MudSpacer/>
+                <MudSwitch T="bool" Value="_isDarkMode" ValueChanged="Callback" Color="Color.Default" Label="Dark Mode"/>
+            </MudAppBar>
+            <CascadingValue Value="this">
+                @Body
+            </CascadingValue>
+        </MudMainContent>
+    </MudLayout>
+}
+else {
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <MudProgressCircular Indeterminate="true"/>
+    </div>
+}
+
+
+@code {
+    private bool _drawerOpen;
+    private ClaimsPrincipal? user;
+    private bool _isDarkMode;
+    private bool _initialized;
+
+    public string PageName { get; set; } = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized) {
+            _isDarkMode = await ClientStore.GetDarkThemeAsync();
+            _initialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Callback(bool value)
+    {
+        _isDarkMode = value;
+        await ClientStore.SetDarkThemeAsync(value);
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private bool IsExpanded(params string[] routes)
+    {
+        var currentRoute = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/');
+        return routes.Any(route => string.Equals(currentRoute, route.Trim('/'), StringComparison.OrdinalIgnoreCase));
+    }
+
+}
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

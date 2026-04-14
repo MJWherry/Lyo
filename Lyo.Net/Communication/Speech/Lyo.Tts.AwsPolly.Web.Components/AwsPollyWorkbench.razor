@@ -1,0 +1,215 @@
+@using Lyo.Common.Enums
+@inject AwsPollyTtsService TtsService
+@inject AwsPollyOptions TtsOptions
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">AWS Polly TTS</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Generate speech with the configured AWS Polly implementation and preview it inline.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="AwsPollyVoiceId" Label="Voice" @bind-Value="_selectedVoiceId">
+                                    @foreach (var voice in AvailableVoices) {
+                                        <MudSelectItem Value="@voice">@voice</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="AudioFormat" Label="Format" @bind-Value="_audioFormat">
+                                    <MudSelectItem Value="@AudioFormat.Mp3">mp3</MudSelectItem>
+                                    <MudSelectItem Value="@AudioFormat.Wav">wav</MudSelectItem>
+                                    <MudSelectItem Value="@AudioFormat.Ogg">ogg</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect T="string" Label="Language" @bind-Value="_selectedLanguage">
+                                    <MudSelectItem Value="@AutoLanguage">Default</MudSelectItem>
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="8"
+                                      FullWidth="true"
+                                      @bind-Value="_text"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SynthesizeAsync" Disabled="@_busy">
+                                Synthesize
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="TestConnectionAsync" Disabled="@_busy">Test Connection</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_audioBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Audio</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_audioBytes == null || string.IsNullOrWhiteSpace(_audioSource)) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Synthesize speech to preview the generated audio here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Voice</MudText>
+                                    <MudText Typo="Typo.body1">@_selectedVoiceId</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Format</MudText>
+                                    <MudText Typo="Typo.body1">@_audioFormat</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Audio size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_audioBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <audio controls style="width: 100%; margin-top: 16px;" src="@_audioSource"></audio>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private const string AutoLanguage = "__default__";
+    private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
+    private readonly IReadOnlyList<AwsPollyVoiceId> AvailableVoices = Enum.GetValues<AwsPollyVoiceId>().Where(i => i != AwsPollyVoiceId.Unknown).ToArray();
+    private bool _busy;
+    private AudioFormat _audioFormat = AudioFormat.Mp3;
+    private byte[]? _audioBytes;
+    private string? _audioSource;
+    private AwsPollyVoiceId _selectedVoiceId = AwsPollyVoiceId.Amy;
+    private string _selectedLanguage = AutoLanguage;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _text = "Hello from Lyo.";
+
+    protected override void OnInitialized()
+    {
+        _selectedVoiceId = TtsOptions.DefaultVoiceIdEnum;
+        _audioFormat = TtsOptions.DefaultOutputFormat ?? AudioFormat.Mp3;
+    }
+
+    private async Task SynthesizeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_text)) {
+            SetStatus("Enter text to synthesize.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var request = new AwsPollyTtsRequest(_text, _selectedVoiceId, _selectedLanguage == AutoLanguage ? null : LanguageCodeInfo.FromBcp47(_selectedLanguage), _audioFormat);
+            var result = await TtsService.SynthesizeAsync(request);
+            if (!result.IsSuccess || result.AudioData == null) {
+                SetStatus(LyoResultErrorFormatter.FormatErrors(result.Errors), Severity.Error);
+                return;
+            }
+
+            _audioBytes = result.AudioData;
+            _audioSource = $"data:{GetMimeType()};base64,{Convert.ToBase64String(result.AudioData)}";
+            SetStatus(result.Message ?? "Speech synthesized.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_audioBytes == null)
+            return;
+
+        await Js.DownloadFile(_audioBytes, $"aws-polly-{DateTime.UtcNow:yyyyMMddHHmmss}.{GetExtension()}", GetMimeType());
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        _busy = true;
+        try {
+            var ok = await TtsService.TestConnectionAsync();
+            SetStatus(ok ? "AWS Polly connection succeeded." : "AWS Polly connection failed.", ok ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private string GetExtension()
+        => _audioFormat switch {
+            AudioFormat.Wav => "wav",
+            AudioFormat.Ogg => "ogg",
+            var _ => "mp3"
+        };
+
+    private string GetMimeType()
+        => _audioFormat switch {
+            AudioFormat.Wav => "audio/wav",
+            AudioFormat.Ogg => "audio/ogg",
+            var _ => "audio/mpeg"
+        };
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

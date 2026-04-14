@@ -1,0 +1,205 @@
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Models
+@using Lyo.Web.Components.UniqueValueSelector
+@using MudBlazor
+@* Equal fixed columns: property | operator | values | Add — widths enforced by wrapper divs + FullWidth controls. *@
+<div class="lyo-query-filter-root d-flex align-center flex-nowrap"
+     style="width: 100%; height: 100%; min-width: 0; box-sizing: border-box; column-gap: 8px;">
+    <div class="lyo-filter-col">
+        <MudSelect T="FilterPropertyDefinition"
+                   @bind-Value="@_currentProperty"
+                   Label="Property"
+                   Variant="Variant.Outlined"
+                   Dense
+                   Margin="Margin.Dense"
+                   FullWidth="true"
+                   MaxHeight="320"
+                   Modal="false"
+                   PopoverFixed="true">
+            @foreach (var property in PropertyDefinitions) {
+                <MudSelectItem Value="@property">@(property.DisplayName ?? property.PropertyName)</MudSelectItem>
+            }
+        </MudSelect>
+    </div>
+
+    <div class="lyo-filter-col">
+        <MudSelect T="ComparisonOperatorEnum" @bind-Value="@_currentComparison"
+                   Label="Operator" Variant="Variant.Outlined" Dense
+                   Margin="Margin.Dense"
+                   FullWidth="true"
+                   MaxHeight="280"
+                   Modal="false"
+                   PopoverFixed="true"
+                   Class="mud-select-small">
+            @if (_currentProperty != null) {
+                @foreach (var comparator in Extensions.GetAvailableComparisonOperators(_currentProperty.Type)) {
+                    <MudSelectItem Value="@comparator">@Common.Extensions.GetDescription(comparator)</MudSelectItem>
+                }
+            }
+        </MudSelect>
+    </div>
+
+    @if (_currentProperty != null) {
+        <div class="lyo-filter-col">
+            @if (_currentComparison.IsMultiValueComparisonOperator()) {
+                @* Multi-value comparators (OneOf, NotOneOf) *@
+                @if (_currentProperty.HasDynamicUniqueValues || (_currentProperty.UniqueValues != null && _currentProperty.UniqueValues.Any())) {
+                    <MudMenu @ref="_uniqueValuesMenu"
+                             FullWidth="true"
+                             Dense="true"
+                             MaxHeight="400"
+                             PopoverFixed="true"
+                             Modal="false"
+                             Class="lyo-filter-unique-menu">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Default"
+                                       Size="Size.Medium"
+                                       FullWidth="true"
+                                       DropShadow="false"
+                                       Ripple="false"
+                                       EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                                       Class="lyo-filter-values-trigger"
+                                       Style="justify-content: space-between; min-height: 40px; text-transform: none;"
+                                       OnClick="@context.ToggleAsync">
+                                @if (_currentMultiSelectValues.Any()) {
+                                    <span>@(_currentMultiSelectValues.Count()) selected</span>
+                                }
+                                else {
+                                    <span>Select values...</span>
+                                }
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <div class="lyo-unique-value-menu d-flex flex-column" style="width: 26rem; max-width: calc(100vw - 2rem); box-sizing: border-box;">
+                                <div class="pa-3 flex-grow-1" style="max-height: 22rem; overflow: auto;">
+                                    <UniqueValueSelector T="string"
+                                                         Items="@(_currentPropertyUniqueValues ?? _currentProperty.UniqueValues ?? [])"
+                                                         SelectedValues="@_currentMultiSelectValues"
+                                                         SelectedValuesChanged="@OnUniqueValuesChanged"
+                                                         SearchTextChanged="@OnUniqueValueSelectorTextChanged"
+                                                         ValueFormatter="@_currentProperty.ValueFormatter"
+                                                         IsLoading="@_isLoadingUniqueValues"/>
+                                </div>
+                                <MudDivider/>
+                                <div class="pa-2 d-flex justify-end">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Ripple="false"
+                                               OnClick="@CloseUniqueValuesMenuAsync">
+                                        Done
+                                    </MudButton>
+                                </div>
+                            </div>
+                        </ChildContent>
+                    </MudMenu>
+                }
+                else if (_currentProperty.EnumValues != null) {
+                    <MudSelect T="string" MultiSelection="true"
+                               SelectedValues="@_currentMultiSelectValues"
+                               SelectedValuesChanged="@OnMudSelectValuesChanged"
+                               MultiSelectionTextFunc="@SummarizeMultiSelectSummary"
+                               Label="Values" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
+                               FullWidth="true"
+                               MaxHeight="320"
+                               Modal="false"
+                               PopoverFixed="true"
+                               SelectAll="true" SelectAllText="Select All">
+                        @foreach (var enumValue in _currentProperty.EnumValues) {
+                            <MudSelectItem Value="@enumValue.Key">@enumValue.Value</MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else {
+                    <MudTextField @bind-Value="@_currentCsvValue"
+                                  Label="Values (comma separated)"
+                                  Variant="Variant.Outlined" HelperText="Enter values separated by commas"
+                                  Margin="Margin.Dense"
+                                  Lines="2"
+                                  FullWidth="true"/>
+                }
+            }
+            else {
+                @if (ShouldUseTextInput(_currentProperty, _currentComparison)) {
+                    <MudTextField @bind-Value="@_currentStringValue"
+                                  Label="Value"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="Enter value or leave blank for null/empty"
+                                  Margin="Margin.Dense"
+                                  FullWidth="true"/>
+                }
+                else if (_currentProperty.HasDynamicUniqueValues || (_currentProperty.UniqueValues != null && _currentProperty.UniqueValues.Any())) {
+                    <MudSelect T="string" @bind-Value="_currentStringValue"
+                               Label="Value" Variant="Variant.Outlined" Dense Margin="Margin.Dense"
+                               FullWidth="true"
+                               MaxHeight="360"
+                               Modal="false"
+                               PopoverFixed="true">
+                        @foreach (var uniqueValue in (_currentPropertyUniqueValues ?? _currentProperty.UniqueValues ?? []).OrderByDescending(x => x.Count)) {
+                            <MudSelectItem Value="@uniqueValue.Value">
+                                <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                                    <span>@(FormatValue(uniqueValue.Value, _currentProperty.ValueFormatter))</span>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Class="ma-0 ml-2">
+                                        @uniqueValue.Count.ToString("N0")
+                                    </MudChip>
+                                </div>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+                else {
+                    @switch (_currentProperty.Type) {
+                        case FilterPropertyType.String:
+                            <MudTextField @bind-Value="@_currentStringValue" Label="Value" Variant="Variant.Outlined"
+                                          Margin="Margin.Dense" FullWidth="true"/>
+
+                            break;
+                        case FilterPropertyType.Number:
+                            <MudNumericField @bind-Value="@_currentNumberValue" Label="Value" Variant="Variant.Outlined"
+                                             Margin="Margin.Dense" FullWidth="true"/>
+
+                            break;
+                        case FilterPropertyType.DateTime:
+                            <MudDatePicker @bind-Date="@_currentDateValue" Label="Value" Variant="Variant.Outlined"
+                                           Margin="Margin.Dense" FullWidth="true"/>
+
+                            break;
+                        case FilterPropertyType.Enum when _currentProperty.EnumValues != null:
+                            <MudSelect T="string" @bind-Value="_currentStringValue" Label="Value"
+                                       Variant="Variant.Outlined" Dense Margin="Margin.Dense"
+                                       FullWidth="true"
+                                       MaxHeight="280"
+                                       Modal="false"
+                                       PopoverFixed="true">
+                                @foreach (var enumValue in _currentProperty.EnumValues) {
+                                    <MudSelectItem Value="@enumValue.Key">@enumValue.Value</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            break;
+                        case FilterPropertyType.Bool:
+                            <MudSelect T="bool?" @bind-Value="@_currentBoolValue" Label="Value"
+                                       Variant="Variant.Outlined" Dense Margin="Margin.Dense"
+                                       FullWidth="true"
+                                       Modal="false"
+                                       PopoverFixed="true">
+                                <MudSelectItem T="bool?" Value="true">True</MudSelectItem>
+                                <MudSelectItem T="bool?" Value="false">False</MudSelectItem>
+                                <MudSelectItem T="bool?" Value="null">Null</MudSelectItem>
+                            </MudSelect>
+
+                            break;
+                    }
+                }
+            }
+        </div>
+    }
+
+    <MudButton Color="Color.Default" Variant="Variant.Filled" Size="Size.Small"
+               Class="flex-shrink-0"
+               OnClick="@AddFilter" StartIcon="@Icons.Material.Filled.Add"
+               Disabled="@(_currentProperty == null || !IsValidInput())">
+        Add
+    </MudButton>
+</div>

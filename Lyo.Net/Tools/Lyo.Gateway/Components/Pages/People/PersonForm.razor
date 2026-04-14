@@ -1,0 +1,148 @@
+@using Lyo.Api.Models.Builders
+@using Lyo.Api.Models.Common.Request
+@using Lyo.Api.Models.Common.Response
+@using Lyo.Web.Components.Form
+@using Constants = Lyo.Gateway.Models.Constants
+@inject IApiClient ApiClient
+@inject ISnackbar Snackbar
+
+@if (CurrentPerson is null) {
+    <MudAlert Severity="Severity.Warning">No person was provided to the form.</MudAlert>
+}
+else {
+    <LyoForm TModel="PersonRes" Model="CurrentPerson" OnSubmit="@(changes => HandleSaveChanges(changes))" @ref="_formRef">
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Basic Info">
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="Guid"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.Id)"
+                                      Label="Id"
+                                      AllowEditing="false"/>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="Guid?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.EndatoPersonId)"
+                                      Label="Endato Person Id"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.Source)"
+                                      Label="Source"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.Prefix)"
+                                      Label="Prefix"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.FirstName)"
+                                      Label="First Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.MiddleName)"
+                                      Label="Middle Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.LastName)"
+                                      Label="Last Name"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <LyoFormInput TModel="PersonRes"
+                                      TValue="string?"
+                                      Model="CurrentPerson"
+                                      PropertyExpression="@(c => c.Suffix)"
+                                      Label="Suffix"
+                                      AllowEditing="true"/>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </LyoForm>
+}
+
+@code {
+
+    [Parameter]
+    public PersonRes? Person { get; set; }
+
+    private PersonRes? CurrentPerson { get; set; }
+
+    private LyoForm<PersonRes>? _formRef;
+
+    private static readonly HashSet<string> AllowedPersonPatchProperties = [nameof(PersonRes.EndatoPersonId), nameof(PersonRes.Prefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName), nameof(PersonRes.Suffix), nameof(PersonRes.Source)];
+
+    protected override void OnParametersSet()
+    {
+        if (Person is null) {
+            CurrentPerson = null;
+            return;
+        }
+
+        if (CurrentPerson is null || CurrentPerson.Id != Person.Id)
+            CurrentPerson = Person;
+    }
+
+    private async Task HandleSaveChanges(LyoForm<PersonRes>.SubmitContext context)
+    {
+        if (CurrentPerson is null)
+            return;
+
+        foreach (var operation in context.Operations)
+            await operation.Operation(CurrentPerson);
+
+        if (!context.PropertyChanges.Any()) {
+            Snackbar.Add("No person changes to save.", Severity.Info);
+            return;
+        }
+
+        var patchBuilder = PatchRequestBuilder.ForId(CurrentPerson.Id);
+        var includedCount = 0;
+        foreach (var change in context.PropertyChanges.Values.Where(i => i.HasChanged)) {
+            if (!AllowedPersonPatchProperties.Contains(change.PropertyName))
+                continue;
+
+            patchBuilder.SetProperty(change.PropertyName, change.CurrentValue);
+            includedCount++;
+        }
+
+        if (includedCount == 0) {
+            Snackbar.Add("No supported person fields changed.", Severity.Info);
+            return;
+        }
+
+        var patchRequest = patchBuilder.Build();
+        var patchResult = await ApiClient.PatchAsAsync<PatchRequest, PatchResult<PersonRes>>(Constants.Person.Route, patchRequest);
+        if (!patchResult.IsSuccess) {
+            Snackbar.Add(patchResult.Error?.ToString() ?? "Patch failed.", Severity.Error);
+            return;
+        }
+
+        _formRef?.ResetChanges();
+        Snackbar.Add("Person updated.", Severity.Success);
+    }
+
+}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
+        <ProjectReference Include="..\..\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mapster" Version="[10,)"/>
+        <PackageReference Include="Mapster.DependencyInjection" Version="1.*"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,88 @@
+@using Lyo.Pdf.Web.Components.PdfAnnotator
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">PDF Annotation</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Draw regions on a PDF and inspect the emitted annotation payloads.
+            </MudText>
+        </div>
+
+        <LyoPdfAnnotator AnnotationsChanged="OnAnnotationsChanged"
+                         AnnotationsSaved="OnAnnotationsSaved"/>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Annotator Events</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Live regions: @_liveAnnotations.Count | Saved regions: @_savedAnnotations.Count
+                </MudText>
+
+                @if (_savedAnnotations.Count > 0) {
+                    <MudSimpleTable Dense="true">
+                        <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Mode</th>
+                            <th>Bounding Box</th>
+                            <th>Extracted Result</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var annotation in _savedAnnotations) {
+                            <tr>
+                                <td>@annotation.Key</td>
+                                <td>@annotation.ExtractionType</td>
+                                <td>@annotation.BoundingBoxSummary</td>
+                                <td style="white-space:pre-wrap;word-break:break-word;">@FormatResult(annotation)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+                else if (_liveAnnotations.Count > 0) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Live annotation ids: @string.Join(", ", _liveAnnotations.Select(x => x.Key))
+                    </MudText>
+                }
+                else {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Draw annotations and save them to review the emitted payload here.
+                    </MudText>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private List<LyoPdfAnnotationResult> _liveAnnotations = [];
+    private List<LyoPdfAnnotationResult> _savedAnnotations = [];
+
+    private Task OnAnnotationsChanged(IReadOnlyList<LyoPdfAnnotationResult> annotations)
+    {
+        _liveAnnotations = annotations.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnAnnotationsSaved(IReadOnlyList<LyoPdfAnnotationResult> annotations)
+    {
+        _savedAnnotations = annotations.ToList();
+        return Task.CompletedTask;
+    }
+
+    private static string FormatResult(LyoPdfAnnotationResult annotation)
+    {
+        if (!string.IsNullOrWhiteSpace(annotation.ErrorMessage))
+            return annotation.ErrorMessage;
+
+        if (annotation.KeyValuePairs is { Count: > 0 })
+            return string.Join(Environment.NewLine, annotation.KeyValuePairs.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
+
+        if (annotation.TableRows is { Count: > 0 })
+            return $"{annotation.TableRows.Count} row(s) extracted.";
+
+        return string.IsNullOrWhiteSpace(annotation.ExtractedText) ? "—" : annotation.ExtractedText;
+    }
+
+}

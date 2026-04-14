@@ -1,0 +1,56 @@
+@* InvoiceCompact.razor - Minimal single-column invoice *@
+
+@code {
+
+    public sealed record InvoiceCompactOptions(string InvoiceNumber, DateTime InvoiceDate, DateTime DueDate, string FromCompany, string FromAddress, string ToName, string ToAddress, List<InvoiceCompactLineItem> LineItems, string PaymentInstructions)
+    {
+        public decimal GrandTotal => LineItems.Sum(i => i.Total);
+    }
+
+    public sealed record InvoiceCompactLineItem(string Description, int Quantity, decimal UnitPrice)
+    {
+        public decimal Total => Quantity * UnitPrice;
+    }
+
+    [Parameter]
+    [EditorRequired]
+    public InvoiceCompactOptions Options { get; set; } = null!;
+
+}
+
+<div style="max-width: 600px; margin: 40px auto; padding: 40px; font-family: 'Georgia', serif; font-size: 14px;">
+    <div style="margin-bottom: 30px; border-bottom: 1px solid #333;">
+        <div style="font-size: 24px; font-weight: 600;">@Options.FromCompany</div>
+        <div style="color: #666; font-size: 12px;">@Options.FromAddress</div>
+    </div>
+    <div style="margin-bottom: 30px;">
+        <strong>Bill To:</strong><br/>
+        @Options.ToName<br/>
+        @Options.ToAddress
+    </div>
+    <div style="margin-bottom: 20px; font-size: 11px; color: #666;">
+        Invoice #@Options.InvoiceNumber | Date: @Options.InvoiceDate.ToString("MM/dd/yyyy") | Due: @Options.DueDate.ToString("MM/dd/yyyy")
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+        <tr style="border-bottom: 2px solid #333;">
+            <th style="text-align: left; padding: 8px 0;">Description</th>
+            <th style="text-align: right; padding: 8px 0;">Qty</th>
+            <th style="text-align: right; padding: 8px 0;">Rate</th>
+            <th style="text-align: right; padding: 8px 0;">Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Options.LineItems) {
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 8px 0;">@item.Description</td>
+                <td style="text-align: right;">@item.Quantity</td>
+                <td style="text-align: right;">$@item.UnitPrice.ToString("N2")</td>
+                <td style="text-align: right;">$@item.Total.ToString("N2")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div style="margin-top: 20px; text-align: right; font-size: 18px; font-weight: 600;">Total: $@Options.GrandTotal.ToString("N2")</div>
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">@Options.PaymentInstructions</div>
+</div>

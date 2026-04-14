@@ -1,0 +1,253 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@using Variant = MudBlazor.Variant
+
+<MudStack Row="@InlineLayout" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+
+    <!-- Upload button / drag-drop zone -->
+    @{
+        var slotsAvailable = GetRemainingFileSlots() > 0 && !HasActiveUploads();
+    }
+    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                   Class="lyo-upload-picker"
+                   FilesChanged="OnFilesChanged"
+                   Accept="@GetAcceptString()"
+                   Disabled="@(IsDisabled || !slotsAvailable)"
+                   Style="@(slotsAvailable ? null : "display:none")">
+        @*
+            The MudFileUpload MUST stay in the DOM while a file is being streamed so that Blazor's
+            JS-side _blazorFilesById map remains alive. We hide it visually with display:none
+            instead of removing it with @if, and re-show it once slots free up.
+        *@
+            <ActivatorContent>
+                @if (AllowDragDrop) {
+                    <div class="lyo-drop-zone @(_isDragOver ? "lyo-drop-zone-active" : "")"
+                         @ondragenter="OnDragEnter"
+                         @ondragenter:preventDefault
+                         @ondragleave="OnDragLeave"
+                         @ondragover:preventDefault>
+                        <MudIcon Icon="@Icons.Material.Filled.CloudUpload"
+                                 Size="Size.Large"
+                                 Color="@(_isDragOver ? Color.Primary : Color.Default)"
+                                 Class="mb-2"/>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Drag files here or click to browse
+                        </MudText>
+                    </div>
+                }
+                else {
+                    <MudButton Variant="@ButtonVariant"
+                               Color="@ButtonColor"
+                               StartIcon="@ButtonIcon"
+                               Disabled="@IsDisabled"
+                               FullWidth="@ButtonFullWidth">
+                        @GetButtonText()
+                    </MudButton>
+                }
+            </ActivatorContent>
+        </MudFileUpload>
+
+    <!-- Uploaded file chips (omit with ClientFileDisplay.ExternalList + parent list) -->
+    @if (_fileStates?.Any() == true && ClientFileDisplay == ClientFileDisplayMode.Chips) {
+        @if (ShowFiles) {
+            @if (ChipsToggleable) {
+                <MudChipSet T="string" Class="d-flex flex-wrap gap-2">
+                    @foreach (var fileState in _fileStates) {
+                        <MudChip T="string"
+                                 Color="@(fileState.Status switch {
+                                            LyoFileUploadStatus.Completed => Color.Success,
+                                            LyoFileUploadStatus.Failed => Color.Error,
+                                            LyoFileUploadStatus.Cancelled => Color.Warning,
+                                            var _ => Color.Primary
+                                        })"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Medium"
+                                 Icon="@(fileState.Status switch {
+                                           LyoFileUploadStatus.Completed => Icons.Material.Filled.CheckCircle,
+                                           LyoFileUploadStatus.Failed => Icons.Material.Filled.Error,
+                                           LyoFileUploadStatus.Cancelled => Icons.Material.Filled.Cancel,
+                                           LyoFileUploadStatus.Uploading => Icons.Material.Filled.CloudUpload,
+                                           var _ => Icons.Material.Filled.InsertDriveFile
+                                       })"
+                                 DisableRipple="true"
+                                 Class="d-flex align-center">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
+                                      Style="overflow:hidden; max-width: 100%; min-width: 0;">
+                                @if (ShouldShowChipFileNameTooltip(fileState.FileName)) {
+                                    <MudTooltip Text="@fileState.FileName">
+                                        <span class="lyo-chip-file-name">
+                                            <MudText Typo="Typo.body2" Style="white-space: nowrap;">@GetChipFileNameDisplay(fileState.FileName)</MudText>
+                                        </span>
+                                    </MudTooltip>
+                                }
+                                else {
+                                    <MudText Typo="Typo.body2" Class="lyo-chip-file-name" Style="white-space: nowrap;">@fileState.FileName</MudText>
+                                }
+
+                                @if (fileState.Status == LyoFileUploadStatus.Uploading) {
+                                    <MudProgressCircular Size="Size.Small"
+                                                         Value="@fileState.Progress"
+                                                         Color="Color.Primary"
+                                                         Indeterminate="@(fileState.Progress == 0)"/>
+
+                                    <MudText Typo="Typo.caption">@fileState.Progress.ToString("F0")%</MudText>
+                                }
+                                else if (fileState.Status == LyoFileUploadStatus.Failed) {
+                                    <MudTooltip Text="@fileState.ErrorMessage">
+                                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error"
+                                                 Size="Size.Small"/>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+
+                            @if (fileState.Status == LyoFileUploadStatus.Uploading) {
+                                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="() => CancelUpload(fileState)"
+                                               Title="Cancel upload"/>
+                            }
+                            else if (ShowRemoveButton) {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Default"
+                                               Size="Size.Small"
+                                               OnClick="() => RemoveFile(fileState)"
+                                               Title="Remove file"/>
+                            }
+                        </MudChip>
+                    }
+                </MudChipSet>
+            }
+            else {
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    @foreach (var fileState in _fileStates) {
+                        <MudChip T="string"
+                                 Color="@(fileState.Status switch {
+                                            LyoFileUploadStatus.Completed => Color.Success,
+                                            LyoFileUploadStatus.Failed => Color.Error,
+                                            LyoFileUploadStatus.Cancelled => Color.Warning,
+                                            var _ => Color.Primary
+                                        })"
+                                 Variant="Variant.Filled"
+                                 Size="Size.Medium"
+                                 Icon="@(fileState.Status switch {
+                                           LyoFileUploadStatus.Completed => Icons.Material.Filled.CheckCircle,
+                                           LyoFileUploadStatus.Failed => Icons.Material.Filled.Error,
+                                           LyoFileUploadStatus.Cancelled => Icons.Material.Filled.Cancel,
+                                           LyoFileUploadStatus.Uploading => Icons.Material.Filled.CloudUpload,
+                                           var _ => Icons.Material.Filled.InsertDriveFile
+                                       })"
+                                 DisableRipple="true"
+                                 Class="d-flex align-center">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1"
+                                      Style="overflow:hidden; max-width: 100%; min-width: 0;">
+                                @if (ShouldShowChipFileNameTooltip(fileState.FileName)) {
+                                    <MudTooltip Text="@fileState.FileName">
+                                        <span class="lyo-chip-file-name">
+                                            <MudText Typo="Typo.body2" Style="white-space: nowrap;">@GetChipFileNameDisplay(fileState.FileName)</MudText>
+                                        </span>
+                                    </MudTooltip>
+                                }
+                                else {
+                                    <MudText Typo="Typo.body2" Class="lyo-chip-file-name" Style="white-space: nowrap;">@fileState.FileName</MudText>
+                                }
+
+                                @if (fileState.Status == LyoFileUploadStatus.Uploading) {
+                                    <MudProgressCircular Size="Size.Small"
+                                                         Value="@fileState.Progress"
+                                                         Color="Color.Primary"
+                                                         Indeterminate="@(fileState.Progress == 0)"/>
+
+                                    <MudText Typo="Typo.caption">@fileState.Progress.ToString("F0")%</MudText>
+                                }
+                                else if (fileState.Status == LyoFileUploadStatus.Failed) {
+                                    <MudTooltip Text="@fileState.ErrorMessage">
+                                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error"
+                                                 Size="Size.Small"/>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+
+                            @if (fileState.Status == LyoFileUploadStatus.Uploading) {
+                                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               OnClick="() => CancelUpload(fileState)"
+                                               Title="Cancel upload"/>
+                            }
+                            else if (ShowRemoveButton) {
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Default"
+                                               Size="Size.Small"
+                                               OnClick="() => RemoveFile(fileState)"
+                                               Title="Remove file"/>
+                            }
+                        </MudChip>
+                    }
+                </MudStack>
+            }
+        }
+        else if (HasActiveUploads()) {
+            <MudChip T="string"
+                     Color="Color.Primary"
+                     Variant="Variant.Filled"
+                     Size="Size.Medium"
+                     Icon="@Icons.Material.Filled.CloudUpload"
+                     DisableRipple="true"
+                     Class="d-flex align-center"
+            >
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Style="overflow:hidden; max-width: 100%;">
+                    <MudText Typo="Typo.body2">@GetUploadingSummaryText()</MudText>
+                </MudStack>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               OnClick="CancelAllUploads"
+                               Title="Cancel all uploads"/>
+            </MudChip>
+        }
+    }
+</MudStack>
+
+<style>
+    /* MudFileUpload renders its own Secondary (grey) chips in .mud-file-upload-files-default-template.
+       We always show our own status chips below; hide the built-in list. */
+    .lyo-upload-picker .mud-file-upload-files-default-template,
+    .lyo-upload-picker .mud-file-upload-filelist {
+        display: none !important;
+    }
+
+    .lyo-upload-picker .mud-chip-set {
+        display: none;
+    }
+
+    .lyo-drop-zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        padding: 24px;
+        border: 2px dashed var(--mud-palette-lines-default);
+        border-radius: 8px;
+        background: var(--mud-palette-background);
+        cursor: pointer;
+        transition: border-color 150ms ease, background 150ms ease;
+    }
+
+    .lyo-drop-zone:hover,
+    .lyo-drop-zone-active {
+        border-color: var(--mud-palette-primary);
+        background: var(--mud-palette-primary-hover);
+    }
+
+    .lyo-chip-file-name {
+        display: inline-block;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        vertical-align: bottom;
+    }
+</style>
+

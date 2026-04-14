@@ -1,0 +1,286 @@
+@namespace Lyo.Web.Components.DataGrid
+@typeparam T
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.QueryNodeEditor
+@using MudBlazor
+@implements IDisposable
+
+@* Toolbar *@
+<MudStack Spacing="2" Style="width: 100%; padding: 8px 16px;">
+    @* Row 1: Actions *@
+    <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%;">
+        @if (HasFeature(LyoDataGridFeatureFlags.BulkMenu)) {
+            <MudMenu Disabled="@(_loading || !CanExport())">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Default"
+                               Size="Size.Small"
+                               EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                               Disabled="@(_loading || !CanExport())"
+                               OnClick="@context.ToggleAsync">
+                        Bulk @(GetBulkLabel())
+                    </MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem>
+                        @if (HasFeature(LyoDataGridFeatureFlags.BulkExport) && AvailableExportTypes is not null) {
+                            <MudMenu Label="Export"
+                                     StartIcon="@Icons.Material.Filled.Download"
+                                     AnchorOrigin="Origin.TopLeft"
+                                     TransformOrigin="Origin.TopRight"
+                                     Variant="Variant.Outlined"
+                                     Size="Size.Small"
+                                     Disabled="@(!CanExport())"
+                                     Dense>
+                                @foreach (var flag in GetExportFlags(AvailableExportTypes)) {
+                                    @if (flag is not FileTypeFlags.Unknown or FileTypeFlags.All) {
+                                        <MudMenuItem OnClick="@(() => BulkExport(flag))"
+                                                     Icon="@Extensions.GetIcon(flag)">
+                                            Export as @flag
+                                        </MudMenuItem>
+                                    }
+                                }
+                            </MudMenu>
+                        }
+                        @if (KeySelector is not null) {
+                            @if (BulkMenuItems is not null) {
+                                @BulkMenuItems
+                            }
+
+                            @if (HasFeature(LyoDataGridFeatureFlags.BulkPatch) && !string.IsNullOrEmpty(PatchRoute)) {
+                                <MudMenuItem OnClick="@(_ => BulkPatch())" Label="Patch"/>
+                            }
+
+                            @if (HasFeature(LyoDataGridFeatureFlags.BulkDelete) && !string.IsNullOrEmpty(Route)) {
+                                <MudMenuItem OnClick="@(_ => BulkDelete())" Label="Delete"/>
+                            }
+                        }
+                    </MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        }
+
+        @if (LeftControls != null) {
+            @LeftControls
+        }
+
+        <MudSpacer/>
+
+        <MudMenu Disabled="@_loading">
+            <ActivatorContent>
+                <MudButton Color="Color.Default"
+                           Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.DeveloperMode"
+                           EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                           Disabled="@_loading"
+                           OnClick="@context.ToggleAsync">
+                    Dev
+                </MudButton>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="@(() => ShowInJsonDialog(CurrentQuery, "Request"))">View Request</MudMenuItem>
+                <MudMenuItem OnClick="@(() => ShowInJsonDialog(CurrentResults, "Result"))">Show Result</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Default"
+                   Size="Size.Small"
+                   OnClick="@(_ => RefreshData())"
+                   StartIcon="@Icons.Material.Filled.Refresh"
+                   Disabled="@_loading">
+            Refresh
+        </MudButton>
+
+        @if (HasFeature(LyoDataGridFeatureFlags.AutoRefresh)) {
+            <MudMenu Disabled="@_loading">
+                <ActivatorContent>
+                    <MudButton Color="@(_autoRefreshEnabled ? Color.Success : Color.Error)"
+                               Variant="Variant.Outlined"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                               Disabled="@_loading"
+                               OnClick="@context.ToggleAsync">
+                        @if (_autoRefreshEnabled) {
+                            <text>Auto (@(_refreshInterval.TotalSeconds)s)</text>
+                        }
+                        else {
+                            <text>Auto Refresh</text>
+                        }
+                    </MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem OnClick="@ToggleAutoRefresh"
+                                 Icon="@(_autoRefreshEnabled ? Icons.Material.Filled.Stop : Icons.Material.Filled.PlayArrow)">
+                        @(_autoRefreshEnabled ? "Stop Auto Refresh" : "Start Auto Refresh")
+                    </MudMenuItem>
+                    <MudDivider/>
+                    @foreach (var seconds in AutoRefreshIntervalsSeconds) {
+                        <MudMenuItem OnClick="@(() => SetRefreshInterval(seconds))">
+                            <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                                @if (_refreshInterval.TotalSeconds == seconds) {
+                                    <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small"/>
+                                }
+                                <span>@seconds second@(seconds > 1 ? "s" : "")</span>
+                            </MudStack>
+                        </MudMenuItem>
+                    }
+                </ChildContent>
+            </MudMenu>
+        }
+
+        <MudMenu Icon="@Icons.Material.Outlined.Settings" Size="Size.Small" AnchorOrigin="Origin.BottomCenter"
+                 Dense="true" Disabled="@_loading">
+            <MudMenuItem OnClick="@_dataGrid.ShowColumnsPanel">Columns</MudMenuItem>
+        </MudMenu>
+    </MudStack>
+
+    @* Row 2: Search and Filters *@
+    @if (HasFeature(LyoDataGridFeatureFlags.Searchable) || (HasFeature(LyoDataGridFeatureFlags.Filterable) && FilterPropertyDefinitions.Any())) {
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+            @if (HasFeature(LyoDataGridFeatureFlags.Searchable)) {
+                <MudTextField @ref="_searchField"
+                              @bind-Value="_searchText"
+                              Placeholder="Search users by name, email, user ID, session ID, or current page..."
+                              Adornment="Adornment.Start"
+                              Style="flex: 1; min-width: 300px;"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium"
+                              Disabled="@_loading"
+                              Clearable="true"
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="OnSearchDebounced"
+                              OnKeyDown="OnSearchKeyDown"
+                              @onfocus="@(() => _searchHadFocus = true)"
+                              @onblur="@(() => _searchHadFocus = false)"/>
+            }
+
+            @if (HasFeature(LyoDataGridFeatureFlags.Filterable) && FilterPropertyDefinitions.Any()) {
+                <MudMenu AnchorOrigin="Origin.BottomLeft"
+                         TransformOrigin="Origin.TopLeft"
+                         PopoverFixed="true"
+                         PopoverClass="lyo-filter-menu-popover">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Size="Size.Small"
+                                   OnClick="@context.ToggleAsync"
+                                   StartIcon="@Icons.Material.Filled.FilterList"
+                                   Disabled="@_loading">
+                            Filters
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <div class="px-3 py-2 lyo-filter-panel-popover"
+                             style="@("width: min(44rem, calc(100vw - 2rem)); min-width: min(44rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); height: 6.75rem; min-height: 6.75rem; max-height: 6.75rem; overflow: hidden; box-sizing: border-box;")">
+                            <QueryFilterComponent ApiClient="ApiClient" PropertyDefinitions="@FilterPropertyDefinitions"
+                                                  CurrentFilters="@GetActiveFilters()"
+                                                  FiltersChanged="@OnFiltersChanged"/>
+                        </div>
+                    </ChildContent>
+                </MudMenu>
+
+                @if (_filterStates.Any()) {
+                    @foreach (var (filterState, index) in _filterStates.Select((f, i) => (f, i))) {
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@(filterState.IsEnabled ? Color.Primary : Color.Default)"
+                                 Variant="@(filterState.IsEnabled ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => ToggleFilter(index))"
+                                 OnClose="@(() => RemoveFilter(index))"
+                                 CloseIcon="@Icons.Material.Filled.Close"
+                                 Style="@(filterState.IsEnabled ? "" : "opacity: 0.6; text-decoration: line-through;")">
+                            <FilterChipLabel Text="@GetFilterDisplayText(filterState.Condition)"
+                                             DialogText="@GetFilterDisplayDetailText(filterState.Condition)"
+                                             MaxLength="@FilterChipLabelMaxLength"/>
+                        </MudChip>
+                    }
+                }
+                else {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">None</MudText>
+                }
+            }
+        </MudStack>
+    }
+</MudStack>
+
+@* Data Grid *@
+@{
+    _propertyColumnRegistry.Clear();
+}
+<MudDataGrid @ref="_dataGrid"
+             T="T"
+             ServerData="LoadServerData"
+             Loading="@_loading"
+             LoadingProgressColor="Color.Primary"
+             Filterable="false"
+             SortMode="SortMode.Multiple"
+             Hover
+             Striped
+             Dense
+             ColumnResizeMode="ResizeMode.Column"
+             Height="70vh"
+             FixedHeader
+             MultiSelection="@IsSelectable"
+             SelectOnRowClick="false"
+             Hideable="_hideable"
+             ColumnsPanelReordering="_columnsPanelReorderingEnabled"
+             SelectedItems="SelectedItems"
+             SelectedItemsChanged="OnGridSelectedItemsChanged">
+    <Columns>
+        @if (IsSelectable) {
+            <SelectColumn T="T" Hideable="false"/>
+        }
+        <CascadingValue Name="LyoDataGridPropertyColumnRegistry" Value="_propertyColumnRegistry">
+            <CascadingValue Name="LyoDataGridQuickSearchText" Value="CurrentQuickSearchText">
+                @Columns
+            </CascadingValue>
+        </CascadingValue>
+        <TemplateColumn T="T" Sortable="false" Hideable="false" Tag="@RowActionsColumnTag">
+            <CellTemplate Context="row">
+                <MudMenu Size="Size.Small" Icon="@Icons.Material.Filled.MoreVert" Dense>
+                    @if (RowMenuControls is not null) {
+                        @RowMenuControls(row.Item)
+                    }
+                    <MudMenu Label="Dev" StartIcon="@Icons.Material.Filled.Visibility">
+                        <MudMenuItem OnClick="@(() => ShowInJsonDialog<T>(row.Item))">View Json</MudMenuItem>
+                    </MudMenu>
+                </MudMenu>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <NoRecordsContent>
+        @if (NoRecordsContent != null) {
+            @NoRecordsContent
+        }
+        else if (QueryError is not null) {
+            <div class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Class="mb-2"/>
+                <MudText Typo="Typo.h6">@QueryError.Detail</MudText>
+                <MudText Typo="Typo.body1">@QueryError.TraceId</MudText>
+            </div>
+        }
+        else {
+            <div class="d-flex flex-column align-center pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-2"/>
+                <MudText Typo="Typo.h6">No records found</MudText>
+            </div>
+        }
+    </NoRecordsContent>
+    <LoadingContent>
+        @if (LoadingContent != null) {
+            @LoadingContent
+        }
+        else {
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+            </div>
+        }
+    </LoadingContent>
+    <PagerContent>
+        <MudDataGridPager T="T" Disabled="@_loading" PageSizeOptions="@PageSizes" PageSizeSelector="true"/>
+    </PagerContent>
+</MudDataGrid>

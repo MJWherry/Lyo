@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Geolocation.Models.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Folder Include="Navigation\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+    </ItemGroup>
+
+</Project>

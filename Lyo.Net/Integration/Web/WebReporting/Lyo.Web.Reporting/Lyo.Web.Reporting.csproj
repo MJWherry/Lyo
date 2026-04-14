@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Business\Invoice.razor"/>
+        <None Include="Business\StatementOfWork.razor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+
+</Project>

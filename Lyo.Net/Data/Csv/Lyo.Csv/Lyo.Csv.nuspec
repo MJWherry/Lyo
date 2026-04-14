@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Csv</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>CSV processing library using CsvHelper for reading and writing CSV files.</description>
+        <summary>CSV processing library</summary>
+        <readme>README.md</readme>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>csv csvhelper parsing</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="CsvHelper" version="[33.1,)"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Csv.Models" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10,)"/>
+                <dependency id="System.Text.Encoding.CodePages" version="[10,)"/>
+            </group>
+            <group targetFramework="netstandard2.0">
+                <dependency id="CsvHelper" version="[33.1,)"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Csv.Models" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10,)"/>
+                <dependency id="System.Text.Encoding.CodePages" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="README.md" target=""/>
+        <file src="bin/Release/netstandard2.0/*.dll" target="lib/netstandard2.0"/>
+        <file src="bin/Release/netstandard2.0/*.pdb" target="lib/netstandard2.0"/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

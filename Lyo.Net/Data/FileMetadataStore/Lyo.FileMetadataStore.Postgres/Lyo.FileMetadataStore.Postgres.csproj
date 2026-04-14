@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.FileMetadataStore.Postgres.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
+        <ProjectReference Include="..\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="[10,)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+    </ItemGroup>
+
+</Project>

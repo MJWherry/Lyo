@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Scientific.Functions.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Common.fs"/>
+        <Compile Include="Chemistry.fs"/>
+        <Compile Include="Astronomy.fs"/>
+        <Compile Include="Thermodynamics.fs"/>
+        <Compile Include="FluidDynamics.fs"/>
+        <Compile Include="Mechanics.fs"/>
+        <Compile Include="CompressibleFlow.fs"/>
+        <Compile Include="SolidMechanics.fs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Scientific\Lyo.Scientific.csproj"/>
+        <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+    </ItemGroup>
+</Project>

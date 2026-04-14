@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[10,)"/>
+        <PackageReference Include="MudBlazor" Version="[9,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Web.Components\Lyo.Email.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq.Web.Components\Lyo.MessageQueue.RabbitMq.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue.Web.Components\Lyo.MessageQueue.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Web.Components\Lyo.Sms.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.AwsPolly.Web.Components\Lyo.Tts.AwsPolly.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.Typecast\Lyo.Tts.Typecast.csproj"/>
+        <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.Typecast.Web.Components\Lyo.Tts.Typecast.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Communication\Translation\Lyo.Translation.Aws\Lyo.Translation.Aws.csproj"/>
+        <ProjectReference Include="..\..\Communication\Translation\Lyo.Translation.Web.Components\Lyo.Translation.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
+        <ProjectReference Include="..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Models\Lyo.People.Models.csproj"/>
+        <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\Data\Images\Lyo.Images\Lyo.Images.csproj"/>
+        <ProjectReference Include="..\..\Data\Images\Lyo.Images.Web.Components\Lyo.Images.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.Web.Components\Lyo.FileStorage.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
+        <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf\Lyo.Pdf.csproj"/>
+        <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\Query\Lyo.Query.Web.Components\Lyo.Query.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Data\Barcode\Lyo.Barcode.Native\Lyo.Barcode.Native.csproj"/>
+        <ProjectReference Include="..\..\Data\Barcode\Lyo.Barcode.TestWorkbench.Web.Components\Lyo.Barcode.TestWorkbench.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode\Lyo.QRCode.csproj"/>
+        <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode.Web.Components\Lyo.QRCode.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\WebRenderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+        <ProjectReference Include="..\..\Features\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="appsettings.Development.json">
+            <DependentUpon>appsettings.json</DependentUpon>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="Components\Pages\People\EndatoCePersonGrid.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Pages\People\EndatoCePersonQueryGrid.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Pages\People\EndatoPsPersonGrid.razor"/>
+        <_ContentIncludedByDefault Remove="Components\Pages\People\EndatoPsPersonQueryGrid.razor"/>
+    </ItemGroup>
+
+</Project>

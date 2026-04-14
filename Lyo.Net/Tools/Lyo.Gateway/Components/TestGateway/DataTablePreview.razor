@@ -1,0 +1,40 @@
+@using Lyo.DataTable.Models
+@if (Table == null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No table loaded.</MudText>
+}
+else {
+    var maxCol = Table.MaxColumn;
+    if (maxCol < 0) {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Empty table.</MudText>
+    }
+    else {
+        var cols = Enumerable.Range(0, maxCol + 1).ToList();
+        <div style="overflow:auto; max-height: 480px;">
+            <MudSimpleTable Dense="true" Bordered="true" Striped="true">
+                <thead>
+                <tr>
+                    @foreach (var col in cols) {
+                        <th>@(Table.Headers.TryGetValue(col, out var h) ? h.DisplayValue : "")</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Table.Rows) {
+                    <tr>
+                        @foreach (var col in cols) {
+                            <td>@row[col].DisplayValue</td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        </div>
+    }
+}
+
+@code {
+
+    [Parameter]
+    public DataTable? Table { get; set; }
+
+}

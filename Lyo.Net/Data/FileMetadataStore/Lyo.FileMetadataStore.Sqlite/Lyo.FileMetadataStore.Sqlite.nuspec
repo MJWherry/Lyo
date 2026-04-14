@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.FileMetadataStore.Sqlite</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>SQLite implementation of the Lyo FileMetadataStore service (placeholder package).</description>
+        <summary>SQLite file store implementation</summary>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>file-store sqlite</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+    </files>
+</package>

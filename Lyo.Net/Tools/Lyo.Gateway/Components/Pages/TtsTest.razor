@@ -1,0 +1,16 @@
+@using Lyo.Tts.Typecast.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Tts)]
+@inherits AuthorizedPage
+
+<PageTitle>TTS Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <TtsWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "TTS Test";
+
+}

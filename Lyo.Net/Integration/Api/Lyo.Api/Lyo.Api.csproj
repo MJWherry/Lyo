@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.Api.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query\Lyo.Query.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="[10,)"/>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.*"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="[10,)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="[10,)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Analyzers" Version="[10,)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.1,)"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,68 @@
+@* Estimate.razor - Quote / Estimate *@
+
+@code {
+
+    public sealed record EstimateOptions(string EstimateNumber, DateTime IssueDate, DateTime? ValidUntil, string CompanyName, string CompanyAddress, string ClientName, string ClientAddress, List<EstimateLineItem> LineItems, string Terms, string Notes)
+    {
+        public decimal GrandTotal => LineItems.Sum(i => i.Total);
+    }
+
+    public sealed record EstimateLineItem(string Description, int Quantity, decimal UnitPrice)
+    {
+        public decimal Total => Quantity * UnitPrice;
+    }
+
+    [Parameter]
+    [EditorRequired]
+    public EstimateOptions Options { get; set; } = null!;
+
+}
+
+<div style="max-width: 800px; margin: 40px auto; padding: 50px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid #7c3aed;">
+        <div>
+            <h1 style="margin: 0; font-size: 24px; color: #5b21b6;">@Options.CompanyName</h1>
+            <div style="color: #64748b; font-size: 14px;">@Options.CompanyAddress</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 12px; color: #7c3aed; font-weight: 600;">ESTIMATE</div>
+            <div style="font-size: 22px; font-weight: 700;">#@Options.EstimateNumber</div>
+            <div style="font-size: 13px; margin-top: 8px;">Issued: @Options.IssueDate.ToString("MMM d, yyyy")</div>
+            @if (Options.ValidUntil.HasValue) {
+                <div style="font-size: 13px; color: #dc2626;">Valid until: @Options.ValidUntil.Value.ToString("MMM d, yyyy")</div>
+            }
+        </div>
+    </div>
+    <div style="margin-bottom: 30px;">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Prepared For</div>
+        <div style="font-weight: 600; font-size: 16px;">@Options.ClientName</div>
+        <div style="color: #475569;">@Options.ClientAddress</div>
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+        <tr style="background: #f5f3ff; border-bottom: 2px solid #7c3aed;">
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: right;">Qty</th>
+            <th style="padding: 12px; text-align: right;">Unit Price</th>
+            <th style="padding: 12px; text-align: right;">Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Options.LineItems) {
+            <tr style="border-bottom: 1px solid #e9e5ff;">
+                <td style="padding: 14px;">@item.Description</td>
+                <td style="padding: 14px; text-align: right;">@item.Quantity</td>
+                <td style="padding: 14px; text-align: right;">$@item.UnitPrice.ToString("N2")</td>
+                <td style="padding: 14px; text-align: right;">$@item.Total.ToString("N2")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div style="margin-top: 24px; text-align: right; font-size: 20px; font-weight: 700;">Total: $@Options.GrandTotal.ToString("N2")</div>
+    @if (!string.IsNullOrEmpty(Options.Terms)) {
+        <div style="margin-top: 30px; font-size: 13px; color: #64748b;">@Options.Terms</div>
+    }
+    @if (!string.IsNullOrEmpty(Options.Notes)) {
+        <div style="margin-top: 16px; padding: 12px; background: #faf5ff; border-radius: 6px; font-size: 13px;">@Options.Notes</div>
+    }
+</div>

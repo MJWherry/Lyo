@@ -1,0 +1,227 @@
+@using MudBlazor
+@namespace Lyo.Web.Components
+
+<div class="lyo-rte-root" @ref="_rootRef">
+    @if (!string.IsNullOrWhiteSpace(Label)) {
+        <MudText Typo="Typo.subtitle2" Class="mb-1">@Label</MudText>
+    }
+
+    <MudPaper Outlined="true" Class="lyo-rte-shell">
+        @if (ShowToolbar && !ReadOnly) {
+            <div class="lyo-rte-toolbar">
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudTooltip Text="Clear formatting">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatClear"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ClearFormattingAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Undo">
+                        <MudIconButton Icon="@Icons.Material.Filled.Undo"
+                                       Disabled="@(!ToolbarState.CanUndo)"
+                                       Size="Size.Small"
+                                       OnClick="@UndoAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Redo">
+                        <MudIconButton Icon="@Icons.Material.Filled.Redo"
+                                       Disabled="@(!ToolbarState.CanRedo)"
+                                       Size="Size.Small"
+                                       OnClick="@RedoAsync"/>
+                    </MudTooltip>
+                    <div class="lyo-rte-divider"></div>
+
+                    @if (IsCodeBlockActive) {
+                        <select class="lyo-rte-native-select lyo-rte-code-language-select"
+                                value="@ToolbarState.CodeLanguage">
+                            @foreach (var option in CodeLanguageOptions) {
+                                <option value="@option.Value">@option.Label</option>
+                            }
+                        </select>
+                    }
+                    else {
+                        <select class="lyo-rte-native-select lyo-rte-format-select"
+                                value="@ToolbarState.BlockTag">
+                            <option value="p">Paragraph</option>
+                            <option value="h1">Heading 1</option>
+                            <option value="h2">Heading 2</option>
+                            <option value="h3">Heading 3</option>
+                            <option value="h4">Heading 4</option>
+                            <option value="h5">Heading 5</option>
+                        </select>
+                    }
+
+                    <select class="lyo-rte-native-select lyo-rte-font-select"
+                            disabled="@DisableFontFamilyControl"
+                            value="@ToolbarState.FontFamily">
+                        @foreach (var option in FontFamilyOptions) {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
+
+                    <select class="lyo-rte-native-select lyo-rte-size-select"
+                            value="@ToolbarState.FontSize">
+                        @foreach (var option in FontSizeOptions) {
+                            <option value="@option.Value">@option.Label</option>
+                        }
+                    </select>
+
+                    <MudTooltip Text="Text color">
+                        <label class="@(DisableUnsupportedCodeBlockControls ? "lyo-rte-color-picker-wrap is-disabled" : "lyo-rte-color-picker-wrap")">
+                            <MudIcon Icon="@Icons.Material.Filled.FormatColorText" Size="Size.Small"/>
+                            <input type="color"
+                                   class="lyo-rte-color-picker"
+                                   data-color-role="foreground"
+                                   disabled="@DisableUnsupportedCodeBlockControls"
+                                   value="@ToolbarState.ForeColor"/>
+                        </label>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Highlight color">
+                        <label class="@(DisableUnsupportedCodeBlockControls ? "lyo-rte-color-picker-wrap is-disabled" : "lyo-rte-color-picker-wrap")">
+                            <MudIcon Icon="@Icons.Material.Filled.FormatColorFill" Size="Size.Small"/>
+                            <input type="color"
+                                   class="lyo-rte-color-picker"
+                                   data-color-role="highlight"
+                                   disabled="@DisableUnsupportedCodeBlockControls"
+                                   value="@ToolbarState.HighlightColor"/>
+                        </label>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Bold">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatBold"
+                                       Color="@GetButtonColor(ToolbarState.IsBold)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleBoldAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Italic">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatItalic"
+                                       Color="@GetButtonColor(ToolbarState.IsItalic)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleItalicAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Underline">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatUnderlined"
+                                       Color="@GetButtonColor(ToolbarState.IsUnderline)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleUnderlineAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Strikethrough">
+                        <MudIconButton Icon="@Icons.Material.Filled.StrikethroughS"
+                                       Color="@GetButtonColor(ToolbarState.IsStrikeThrough)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleStrikeThroughAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Quote block">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatQuote"
+                                       Color="@GetButtonColor(IsQuoteBlockActive)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ApplyQuoteBlockAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Code block">
+                        <MudIconButton Icon="@Icons.Material.Filled.Code"
+                                       Color="@GetButtonColor(IsCodeBlockActive)"
+                                       Size="Size.Small"
+                                       OnClick="@ApplyCodeBlockAsync"/>
+                    </MudTooltip>
+                    <div class="lyo-rte-divider"></div>
+
+                    <MudTooltip Text="Align left">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatAlignLeft"
+                                       Color="@GetButtonColor(ToolbarState.IsAlignLeft)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@AlignLeftAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Align center">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatAlignCenter"
+                                       Color="@GetButtonColor(ToolbarState.IsAlignCenter)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@AlignCenterAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Align right">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatAlignRight"
+                                       Color="@GetButtonColor(ToolbarState.IsAlignRight)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@AlignRightAsync"/>
+                    </MudTooltip>
+
+                    <div class="lyo-rte-divider"></div>
+
+                    <MudTooltip Text="Bulleted list">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted"
+                                       Color="@GetButtonColor(ToolbarState.IsUnorderedList)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleUnorderedListAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Numbered list">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatListNumbered"
+                                       Color="@GetButtonColor(ToolbarState.IsOrderedList)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@ToggleOrderedListAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Outdent">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatIndentDecrease"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@OutdentAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Indent">
+                        <MudIconButton Icon="@Icons.Material.Filled.FormatIndentIncrease"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@IndentAsync"/>
+                    </MudTooltip>
+
+                    <div class="lyo-rte-divider"></div>
+
+                    <MudTooltip Text="Insert link">
+                        <MudIconButton Icon="@Icons.Material.Filled.Link"
+                                       Color="@GetButtonColor(ToolbarState.IsLink)"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@PromptForLinkAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Remove link">
+                        <MudIconButton Icon="@Icons.Material.Filled.LinkOff"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@RemoveLinkAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Insert image">
+                        <MudIconButton Icon="@Icons.Material.Filled.Image"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@PromptForImageAsync"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Horizontal line">
+                        <MudIconButton Icon="@Icons.Material.Filled.HorizontalRule"
+                                       Disabled="@DisableUnsupportedCodeBlockControls"
+                                       Size="Size.Small"
+                                       OnClick="@InsertHorizontalRuleAsync"/>
+                    </MudTooltip>
+
+                    <div class="lyo-rte-divider"></div>
+                </MudStack>
+            </div>
+        }
+
+        <div @ref="_editorRef"
+             class="lyo-rte-surface"
+             contenteditable="@(!ReadOnly)"
+             role="textbox"
+             aria-label="Rich text editor"
+             aria-multiline="true"
+             data-placeholder="@Placeholder"
+             style="@($"min-height: {MinHeightPx}px;")"></div>
+    </MudPaper>
+</div>
+

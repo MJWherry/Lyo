@@ -1,0 +1,57 @@
+@namespace Lyo.Web.Components.DataGrid
+@using MudBlazor
+
+<span class="d-inline-flex align-center lyo-filter-chip-label" style="gap: 2px; min-width: 0; max-width: 100%;">
+@if (ChipLabelHelper.ShouldTruncate(Text, MaxLength)) {
+    <MudTooltip Text="@Text">
+        <span style="display:inline-block;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;vertical-align:bottom;">@ChipLabelHelper.TruncateLabel(Text, MaxLength)</span>
+    </MudTooltip>
+    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                   Size="Size.Small"
+                   Class="ma-0 pa-0 lyo-filter-chip-view-btn"
+                   Color="Color.Inherit"
+                   AriaLabel="View full filter"
+                   OnClick="OpenViewDialog"
+                   @onclick:stopPropagation="true"/>
+}
+else {
+    <span style="min-width:0;">@Text</span>
+}
+</span>
+
+<MudDialog @bind-Visible="_viewDialogOpen" Options="_viewDialogOptions">
+    <TitleContent>Filter</TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Style="white-space: pre-wrap; word-break: break-word; max-height: 65vh; overflow: auto;">@DialogBodyText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => _viewDialogOpen = false)">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Parameter]
+    [EditorRequired]
+    public string Text { get; set; } = default!;
+
+    /// <summary>Full filter description for the view dialog. When null, <see cref="Text"/> is used.</summary>
+    [Parameter]
+    public string? DialogText { get; set; }
+
+    [Parameter]
+    public int MaxLength { get; set; } = ChipLabelHelper.DefaultFilterChipMaxLength;
+
+    private bool _viewDialogOpen;
+
+    private string DialogBodyText => string.IsNullOrEmpty(DialogText) ? Text : DialogText!;
+
+    private readonly DialogOptions _viewDialogOptions = new() {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    private void OpenViewDialog() => _viewDialogOpen = true;
+
+}

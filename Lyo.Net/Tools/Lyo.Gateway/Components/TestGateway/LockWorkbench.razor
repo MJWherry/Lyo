@@ -1,0 +1,552 @@
+@using System.Diagnostics
+@using Lyo.Lock
+@using Lyo.Metrics
+@using LockConstants = Lyo.Lock.Constants
+@implements IAsyncDisposable
+@inject ILockService LockService
+@inject IMetrics Metrics
+@inject ISnackbar Snackbar
+
+<MudTabs Rounded="true" KeepPanelsAlive="true" ApplyEffectsToContainer="true">
+    <MudTabPanel Text="Lock Service" Icon="@Icons.Material.Filled.Lock">
+        <MudPaper Class="pa-4">
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.h5">Local Lock Workbench</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Exercise `Lyo.Lock` from the gateway by manually holding a key, forcing timed contention, and comparing locked vs unlocked worker bursts.
+                    </MudText>
+                </div>
+
+                <MudGrid>
+                    <MudItem xs="12" md="5">
+                        <MudStack Spacing="3">
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Configuration</MudText>
+                                    <MudTextField T="string" Label="Lock key" @bind-Value="_lockKey"/>
+                                    <MudGrid>
+                                        <MudItem xs="12" sm="4">
+                                            <MudNumericField T="int" Label="Workers" Min="1" Max="20" @bind-Value="_workerCount"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudNumericField T="int" Label="Hold ms" Min="10" Max="10000" @bind-Value="_holdMilliseconds"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudNumericField T="int" Label="Timeout ms" Min="10" Max="20000" @bind-Value="_timeoutMilliseconds"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Locked runs should keep max concurrent work at `1`, while unlocked runs will usually overlap.
+                                    </MudText>
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Manual Lock Handle</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Hold the lock yourself, then verify a competing acquire times out against the same key.
+                                    </MudText>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" OnClick="AcquireHeldLockAsync" Disabled="@(_busy || _heldLock != null)">Acquire</MudButton>
+                                        <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || _heldLock == null)">Competing Acquire
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleaseHeldLockAsync" Disabled="@(_busy || _heldLock == null)">Release
+                                        </MudButton>
+                                    </MudStack>
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Burst Demo</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Launch several workers at once to show how the lock serializes access to the critical section.
+                                    </MudText>
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunLockedDemoAsync" Disabled="@(_busy || _heldLock != null)">Run With
+                                            Lock
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RunUnlockedDemoAsync" Disabled="@_busy">Run Without Lock</MudButton>
+                                        <MudButton Variant="Variant.Text" OnClick="RefreshMetricsAsync" Disabled="@_busy">Refresh Metrics</MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
+                                    </MudStack>
+                                </MudStack>
+                            </MudPaper>
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="7">
+                        <MudStack Spacing="3">
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudChip T="string" Color="@(_heldLock == null ? Color.Default : Color.Success)">
+                                            @(_heldLock == null ? "No Handle Held" : "Handle Held")
+                                        </MudChip>
+                                        <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
+                                            @(_busy ? "Busy" : "Idle")
+                                        </MudChip>
+                                        <MudChip T="string" Color="@(MetricsStore == null ? Color.Warning : Color.Success)">
+                                            @(MetricsStore == null ? "Metrics Unavailable" : "Metrics Enabled")
+                                        </MudChip>
+                                    </MudStack>
+
+                                    @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                                        <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudText Typo="Typo.h6" Class="mb-3">Latest Run</MudText>
+
+                                @if (_lastRun == null) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Run one of the burst demos to inspect how much concurrency reached the critical section.
+                                    </MudText>
+                                }
+                                else {
+                                    <MudGrid>
+                                        <MudItem xs="6" sm="3">
+                                            <MudPaper Class="pa-3" Outlined="true">
+                                                <MudText Typo="Typo.subtitle2">Mode</MudText>
+                                                <MudText Typo="Typo.h6">@(_lastRun.UsedLock ? "Locked" : "Unlocked")</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3">
+                                            <MudPaper Class="pa-3" Outlined="true">
+                                                <MudText Typo="Typo.subtitle2">Completed</MudText>
+                                                <MudText Typo="Typo.h6">@_lastRun.Completed / @_lastRun.WorkerCount</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3">
+                                            <MudPaper Class="pa-3" Outlined="true">
+                                                <MudText Typo="Typo.subtitle2">Timeouts</MudText>
+                                                <MudText Typo="Typo.h6">@_lastRun.TimedOut</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="3">
+                                            <MudPaper Class="pa-3" Outlined="true">
+                                                <MudText Typo="Typo.subtitle2">Max Concurrent</MudText>
+                                                <MudText Typo="Typo.h6">@_lastRun.MaxConcurrent</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <MudSimpleTable Dense="true" Class="mt-3">
+                                        <tbody>
+                                        <tr>
+                                            <td><strong>Started</strong></td>
+                                            <td>@_lastRun.StartedAt.ToString("u")</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Elapsed</strong></td>
+                                            <td>@_lastRun.Elapsed.TotalMilliseconds.ToString("0") ms</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Summary</strong></td>
+                                            <td>@_lastRun.Summary</td>
+                                        </tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudText Typo="Typo.h6" Class="mb-3">Lock Metrics For Current Key</MudText>
+
+                                @if (MetricsStore == null) {
+                                    <MudAlert Severity="Severity.Warning" Dense="true">
+                                        The current `IMetrics` implementation is not `MetricsService`, so live lock metrics are not available here.
+                                    </MudAlert>
+                                }
+                                else {
+                                    <MudSimpleTable Dense="true">
+                                        <tbody>
+                                        <tr>
+                                            <td><strong>Key</strong></td>
+                                            <td>@_lockKey</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Acquire Success</strong></td>
+                                            <td>@_acquireSuccess</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Acquire Failure</strong></td>
+                                            <td>@_acquireFailure</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Acquire Duration Samples</strong></td>
+                                            <td>@_acquireDurationCount (@_acquireDurationAverageMs.ToString("0.##") ms avg)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Release Duration Samples</strong></td>
+                                            <td>@_releaseDurationCount (@_releaseDurationAverageMs.ToString("0.##") ms avg)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Execute Duration Samples</strong></td>
+                                            <td>@_executeDurationCount (@_executeDurationAverageMs.ToString("0.##") ms avg)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Last Refresh</strong></td>
+                                            <td>@(_lastMetricsRefresh == default ? "(not loaded)" : _lastMetricsRefresh.ToString("u"))</td>
+                                        </tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudText Typo="Typo.h6" Class="mb-3">Recent Events</MudText>
+
+                                @if (VisibleEvents.Count == 0) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Acquire a handle or run a demo to populate the event log.
+                                    </MudText>
+                                }
+                                else {
+                                    <MudSimpleTable Dense="true" Hover="true">
+                                        <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Stage</th>
+                                            <th>Details</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @foreach (var entry in VisibleEvents) {
+                                            <tr>
+                                                <td>@entry.Timestamp.ToString("HH:mm:ss.fff")</td>
+                                                <td>@entry.Stage</td>
+                                                <td style="white-space: pre-wrap; word-break: break-word;">@entry.Message</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                }
+                            </MudPaper>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        </MudPaper>
+    </MudTabPanel>
+    <MudTabPanel Text="Semaphore" Icon="@Icons.Material.Filled.Traffic">
+        <SemaphoreWorkbench/>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private readonly List<DemoEvent> _events = [];
+    private readonly object _eventsLock = new();
+    private bool _busy;
+    private long _acquireFailure;
+    private long _acquireSuccess;
+    private int _acquireDurationCount;
+    private double _acquireDurationAverageMs;
+    private int _executeDurationCount;
+    private double _executeDurationAverageMs;
+    private ILockHandle? _heldLock;
+    private int _holdMilliseconds = 750;
+    private DateTime _lastMetricsRefresh;
+    private DemoSummary? _lastRun;
+    private string _lockKey = "workbench:local-lock";
+    private int _releaseDurationCount;
+    private double _releaseDurationAverageMs;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private int _timeoutMilliseconds = 2500;
+    private int _workerCount = 6;
+
+    private MetricsService? MetricsStore => Metrics as MetricsService;
+
+    private List<DemoEvent> VisibleEvents {
+        get {
+            lock (_eventsLock)
+                return _events.ToList();
+        }
+    }
+
+    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_heldLock == null)
+            return;
+
+        await _heldLock.ReleaseAsync();
+        _heldLock = null;
+    }
+
+    private async Task AcquireHeldLockAsync()
+    {
+        if (_heldLock != null) {
+            SetStatus("The UI already holds this lock.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var handle = await LockService.AcquireAsync(_lockKey, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+            if (handle == null) {
+                AppendEvent("Acquire", $"UI failed to acquire '{_lockKey}' within {_timeoutMilliseconds} ms.");
+                SetStatus("Lock acquisition timed out.", Severity.Warning);
+                return;
+            }
+
+            _heldLock = handle;
+            AppendEvent("Acquire", $"UI acquired '{_lockKey}' and is holding it.");
+            SetStatus("Lock acquired. You can now test a competing acquire.", Severity.Success);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Acquire Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task ReleaseHeldLockAsync()
+    {
+        if (_heldLock == null) {
+            SetStatus("There is no held lock to release.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            await _heldLock.ReleaseAsync();
+            _heldLock = null;
+            AppendEvent("Release", $"UI released '{_lockKey}'.");
+            SetStatus("Held lock released.", Severity.Success);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Release Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TryCompetingAcquireAsync()
+    {
+        if (_heldLock == null) {
+            SetStatus("Acquire and hold the lock first.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var stopwatch = Stopwatch.StartNew();
+            var competingHandle = await LockService.AcquireAsync(_lockKey, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+            stopwatch.Stop();
+            if (competingHandle == null) {
+                AppendEvent("Competing Acquire", $"Second acquire attempt timed out after {stopwatch.Elapsed.TotalMilliseconds:0} ms while the UI held '{_lockKey}'.");
+                SetStatus("Competing acquire timed out as expected.", Severity.Success);
+                await RefreshMetricsAsync();
+                return;
+            }
+
+            await competingHandle.ReleaseAsync();
+            AppendEvent("Competing Acquire", $"Second acquire unexpectedly succeeded after {stopwatch.Elapsed.TotalMilliseconds:0} ms.");
+            SetStatus("Competing acquire succeeded unexpectedly.", Severity.Warning);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Competing Acquire Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task RunLockedDemoAsync() => RunDemoAsync(true);
+
+    private Task RunUnlockedDemoAsync() => RunDemoAsync(false);
+
+    private async Task RunDemoAsync(bool useLock)
+    {
+        if (_heldLock != null) {
+            SetStatus("Release the manually-held lock before running the burst demo.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var startedAt = DateTime.UtcNow;
+            var stopwatch = Stopwatch.StartNew();
+            var startGate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var activeWorkers = 0;
+            var completedWorkers = 0;
+            var timedOutWorkers = 0;
+            var maxConcurrent = 0;
+            AppendEvent("Demo", $"Starting {_workerCount} workers {(useLock ? "with" : "without")} lock protection for '{_lockKey}'.");
+            var tasks = Enumerable.Range(1, _workerCount)
+                .Select(async workerId => {
+                    await startGate.Task;
+                    if (useLock) {
+                        try {
+                            await LockService.ExecuteWithLockAsync(
+                                _lockKey, async ct => {
+                                    var current = Interlocked.Increment(ref activeWorkers);
+                                    UpdateMax(ref maxConcurrent, current);
+                                    AppendEvent("Enter", $"Worker {workerId} entered the critical section. concurrent={current}");
+                                    try {
+                                        await Task.Delay(_holdMilliseconds, ct);
+                                    }
+                                    finally {
+                                        var remaining = Interlocked.Decrement(ref activeWorkers);
+                                        AppendEvent("Exit", $"Worker {workerId} left the critical section. remaining={remaining}");
+                                    }
+                                }, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+
+                            Interlocked.Increment(ref completedWorkers);
+                            AppendEvent("Complete", $"Worker {workerId} completed under lock.");
+                        }
+                        catch (TimeoutException) {
+                            Interlocked.Increment(ref timedOutWorkers);
+                            AppendEvent("Timeout", $"Worker {workerId} timed out waiting for '{_lockKey}'.");
+                        }
+                    }
+                    else {
+                        var current = Interlocked.Increment(ref activeWorkers);
+                        UpdateMax(ref maxConcurrent, current);
+                        AppendEvent("Enter", $"Worker {workerId} entered without a lock. concurrent={current}");
+                        try {
+                            await Task.Delay(_holdMilliseconds);
+                        }
+                        finally {
+                            var remaining = Interlocked.Decrement(ref activeWorkers);
+                            AppendEvent("Exit", $"Worker {workerId} left the unlocked section. remaining={remaining}");
+                        }
+
+                        Interlocked.Increment(ref completedWorkers);
+                        AppendEvent("Complete", $"Worker {workerId} completed without a lock.");
+                    }
+                })
+                .ToList();
+
+            startGate.TrySetResult(true);
+            await Task.WhenAll(tasks);
+            stopwatch.Stop();
+            var summary = useLock ? maxConcurrent == 1 && timedOutWorkers == 0 ? "Workers were serialized correctly; only one entered at a time." : "The locked run did not stay fully serialized, or some workers timed out." : maxConcurrent > 1 ? "Unlocked workers overlapped, showing the race you avoid with the lock service." : "Unlocked workers happened to avoid overlap on this run.";
+            _lastRun = new() {
+                Completed = completedWorkers,
+                Elapsed = stopwatch.Elapsed,
+                MaxConcurrent = maxConcurrent,
+                StartedAt = startedAt,
+                Summary = summary,
+                TimedOut = timedOutWorkers,
+                UsedLock = useLock,
+                WorkerCount = _workerCount
+            };
+
+            SetStatus(summary, useLock ? maxConcurrent == 1 && timedOutWorkers == 0 ? Severity.Success : Severity.Warning : Severity.Info);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Demo Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task RefreshMetricsAsync()
+    {
+        if (MetricsStore == null)
+            return Task.CompletedTask;
+
+        var tags = new[] { (LockConstants.Metrics.Tags.Key, _lockKey) };
+        _acquireSuccess = MetricsStore.GetCounterValue(LockConstants.Metrics.AcquireSuccess, tags);
+        _acquireFailure = MetricsStore.GetCounterValue(LockConstants.Metrics.AcquireFailure, tags);
+        var acquireDuration = MetricsStore.GetHistogram(LockConstants.Metrics.AcquireDuration, tags);
+        _acquireDurationCount = acquireDuration?.Count ?? 0;
+        _acquireDurationAverageMs = acquireDuration?.Average ?? 0;
+        var releaseDuration = MetricsStore.GetHistogram(LockConstants.Metrics.ReleaseDuration, tags);
+        _releaseDurationCount = releaseDuration?.Count ?? 0;
+        _releaseDurationAverageMs = releaseDuration?.Average ?? 0;
+        var executeDuration = MetricsStore.GetHistogram(LockConstants.Metrics.ExecuteDuration, tags);
+        _executeDurationCount = executeDuration?.Count ?? 0;
+        _executeDurationAverageMs = executeDuration?.Average ?? 0;
+        _lastMetricsRefresh = DateTime.UtcNow;
+        return Task.CompletedTask;
+    }
+
+    private void ClearEvents()
+    {
+        lock (_eventsLock)
+            _events.Clear();
+
+        SetStatus("Event log cleared.", Severity.Info);
+    }
+
+    private void AppendEvent(string stage, string message)
+    {
+        lock (_eventsLock) {
+            _events.Insert(0, new(DateTime.UtcNow, stage, message));
+            if (_events.Count > 40)
+                _events.RemoveRange(40, _events.Count - 40);
+        }
+    }
+
+    private static void UpdateMax(ref int target, int candidate)
+    {
+        int snapshot;
+        do {
+            snapshot = target;
+            if (candidate <= snapshot)
+                return;
+        } while (Interlocked.CompareExchange(ref target, candidate, snapshot) != snapshot);
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private sealed record DemoEvent(DateTime Timestamp, string Stage, string Message);
+
+    private sealed class DemoSummary
+    {
+        public int Completed { get; init; }
+
+        public TimeSpan Elapsed { get; init; }
+
+        public int MaxConcurrent { get; init; }
+
+        public DateTime StartedAt { get; init; }
+
+        public required string Summary { get; init; }
+
+        public int TimedOut { get; init; }
+
+        public required bool UsedLock { get; init; }
+
+        public int WorkerCount { get; init; }
+    }
+
+}

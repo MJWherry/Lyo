@@ -1,0 +1,16 @@
+@using Lyo.Images.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.SpriteSheetAnimator)]
+@inherits AuthorizedPage
+
+<PageTitle>Spritesheet Animator</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <SpriteSheetWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Spritesheet Animator";
+
+}

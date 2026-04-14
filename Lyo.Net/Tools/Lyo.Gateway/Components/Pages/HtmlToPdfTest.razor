@@ -1,0 +1,16 @@
+@using Lyo.Gateway.Components.TestGateway
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.HtmlToPdf)]
+@inherits AuthorizedPage
+
+<PageTitle>HTML To PDF Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <HtmlToPdfWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "HTML To PDF Test";
+
+}

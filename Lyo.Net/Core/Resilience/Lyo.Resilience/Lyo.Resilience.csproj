@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Resilience.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="[10,)"/>
+        <PackageReference Include="Polly" Version="8.*"/>
+        <PackageReference Include="Polly.Extensions" Version="8.*"/>
+    </ItemGroup>
+
+</Project>

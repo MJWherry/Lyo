@@ -1,0 +1,78 @@
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.FileUpload
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Spritesheet</MudText>
+        <LyoFileUpload @ref="_fileUpload"
+                       MaxFiles="64"
+                       ValidFileTypes="FileTypeFlags.Images"
+                       ButtonText="Add spritesheet(s)"
+                       InlineLayout="false"
+                       ClientFileDisplay="ClientFileDisplayMode.ExternalList"
+                       OnClientFileReady="OnClientFileReady"
+                       OnClientFileRemoved="OnClientFileRemoved"/>
+
+        @if (Sheets.Count > 0) {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">Uploaded — click a row to open it.</MudText>
+
+            <MudPaper Outlined="true" Class="pa-2" Style="max-height: 280px; overflow-y: auto;">
+                <MudStack Spacing="1">
+                    @foreach (var entry in Sheets) {
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="gap-1">
+                            <MudButton FullWidth="true"
+                                       Variant="@(entry.Id == SelectedSheetId ? Variant.Filled : Variant.Outlined)"
+                                       Color="@(entry.Id == SelectedSheetId ? Color.Primary : Color.Default)"
+                                       Class="flex-grow-1 text-truncate justify-start"
+                                       Style="min-width: 0;"
+                                       OnClick="@(() => OnSelectSheet.InvokeAsync(entry.Id))">
+                                <MudText Typo="Typo.body2" Class="text-truncate">@GetLabel(entry)</MudText>
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Color="Color.Default"
+                                           Size="Size.Small"
+                                           title="Remove from list"
+                                           OnClick="@(() => OnRemoveSheet.InvokeAsync(entry))"/>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (ShowAddImagesHint) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Add one or more images. Remove a sheet with the list ×.
+            </MudText>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    private LyoFileUpload? _fileUpload;
+
+    [Parameter]
+    public IReadOnlyList<AnimatorSheetEntry> Sheets { get; set; } = [];
+
+    [Parameter]
+    public Guid? SelectedSheetId { get; set; }
+
+    [Parameter]
+    public bool ShowAddImagesHint { get; set; }
+
+    [Parameter]
+    public Func<AnimatorSheetEntry, string> GetLabel { get; set; } = static e => e.File.FileName;
+
+    [Parameter]
+    public EventCallback<LocalBrowserFile> OnClientFileReady { get; set; }
+
+    [Parameter]
+    public EventCallback<LocalBrowserFile> OnClientFileRemoved { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnSelectSheet { get; set; }
+
+    [Parameter]
+    public EventCallback<AnimatorSheetEntry> OnRemoveSheet { get; set; }
+
+    public Task RemoveClientFileAsync(LocalBrowserFile? file) => _fileUpload?.RemoveClientFileAsync(file) ?? Task.CompletedTask;
+
+}

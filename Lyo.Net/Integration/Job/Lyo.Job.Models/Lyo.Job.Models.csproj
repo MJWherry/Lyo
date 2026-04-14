@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Job.Models.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

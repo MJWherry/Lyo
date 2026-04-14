@@ -1,0 +1,25 @@
+@using Lyo.Email.Web.Components
+@using Lyo.Sms.Web.Components
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Messaging</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Email and SMS workbenches are now hosted from reusable component libraries.
+            </MudText>
+        </div>
+
+        <MudTabs Rounded="true" Elevation="0" Outlined="true">
+            <MudTabPanel Text="Email">
+                <div class="mt-3">
+                    <EmailWorkbench/>
+                </div>
+            </MudTabPanel>
+            <MudTabPanel Text="SMS / MMS">
+                <div class="mt-3">
+                    <SmsWorkbench/>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>

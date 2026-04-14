@@ -1,0 +1,239 @@
+@using Lyo.Common
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Form
+@using Lyo.Web.Components.Models
+@using MudBlazor
+@using Extensions = Extensions
+
+<div style="margin-left: @(Level * 20)px; margin-bottom: 8px;">
+    <MudPaper Elevation="1" Class="pa-3" Style="@GetBorderStyle()">
+        <MudStack Spacing="2">
+            @if (Node is GroupClause logicalNode) {
+                @* GroupClause editor *@
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudChip T="string" Size="Size.Small" Color="@GetOperatorColor(logicalNode)">
+                        @logicalNode.Operator.ToString()
+                    </MudChip>
+                    <MudSelect T="GroupOperatorEnum"
+                               Value="@logicalNode.Operator"
+                               ValueChanged="@OnGroupOperatorChanged"
+                               Variant="Variant.Outlined"
+                               Dense
+                               Margin="Margin.Dense"
+                               Style="min-width: 100px;">
+                        <MudSelectItem Value="GroupOperatorEnum.And">And</MudSelectItem>
+                        <MudSelectItem Value="GroupOperatorEnum.Or">Or</MudSelectItem>
+                    </MudSelect>
+                    <div style="flex: 1;">
+                        <LyoNullableTextField Value="@logicalNode.Description"
+                                              ValueChanged="@(value => OnDescriptionChanged(value))"
+                                              Label="Description (optional)"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"/>
+                    </div>
+                    @if (CanRemove) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@RemoveNode"/>
+                    }
+                </MudStack>
+
+                @* Children *@
+                @if (logicalNode.Children != null && logicalNode.Children.Any()) {
+                    <MudStack Spacing="2" Style="margin-left: 20px; margin-top: 8px;">
+                        @foreach (var child in logicalNode.Children.ToList()) {
+                            <QueryNodeEditorItem Node="@child"
+                                                 PropertyDefinitions="@PropertyDefinitions"
+                                                 OnNodeChanged="@HandleChildChanged"
+                                                 OnRemoveChild="@RemoveChild"
+                                                 Level="@(Level + 1)"/>
+                        }
+                    </MudStack>
+                }
+
+                @* Add Child Buttons *@
+                <MudStack Row="true" Spacing="2" Style="margin-left: 20px; margin-top: 8px;">
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="@AddChildLogical">
+                        Add group clause
+                    </MudButton>
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="@AddChildCondition">
+                        Add condition clause
+                    </MudButton>
+                </MudStack>
+            }
+            else if (Node is ConditionClause conditionNode) {
+                @* ConditionClause editor *@
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary">Condition clause</MudChip>
+
+                    <MudAutocomplete T="string"
+                                     Value="@conditionNode.Field"
+                                     ValueChanged="@OnFieldChanged"
+                                     SearchFunc="@SearchFieldNames"
+                                     Label="Field (e.g., DocketCharges.Code)"
+                                     Variant="Variant.Outlined"
+                                     Dense
+                                     Margin="Margin.Dense"
+                                     Style="min-width: 200px;"
+                                     HelperText="Enter field name or select from suggestions"/>
+
+                    <MudSelect T="ComparisonOperatorEnum"
+                               Value="@conditionNode.Comparison"
+                               ValueChanged="@(value => OnComparisonChanged(value))"
+                               Label="Operator"
+                               Variant="Variant.Outlined"
+                               Dense
+                               Margin="Margin.Dense"
+                               Style="min-width: 150px;">
+                        @{
+                            var propertyType = _selectedProperty?.Type ?? FilterPropertyType.String;
+                            var availableComparisonOperators = Extensions.GetAvailableComparisonOperators(propertyType);
+                        }
+                        @foreach (var comparator in availableComparisonOperators) {
+                            <MudSelectItem
+                                Value="@comparator">
+                                @comparator.GetDescription()
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    @* Value Input *@
+                    <div style="min-width: 150px;">
+                        @if (_selectedProperty != null) {
+                            @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
+                                <MudTextField T="string"
+                                              Value="@_csvValue"
+                                              ValueChanged="@OnCsvValueChanged"
+                                              Label="Values (comma separated)"
+                                              Variant="Variant.Outlined"
+                                              Dense
+                                              HelperText="Enter values separated by commas"/>
+                            }
+                            else {
+                                @switch (_selectedProperty.Type) {
+                                    case FilterPropertyType.String:
+                                        <LyoNullableTextField Value="@_stringValue"
+                                                              ValueChanged="@(value => OnStringValueChanged(value))"
+                                                              Label="Value"
+                                                              Variant="Variant.Outlined"
+                                                              Margin="Margin.Dense"/>
+
+                                        break;
+                                    case FilterPropertyType.Number:
+                                        <MudNumericField T="decimal?"
+                                                         Value="@_numberValue"
+                                                         ValueChanged="@OnNumberValueChanged"
+                                                         Label="Value"
+                                                         Variant="Variant.Outlined"
+                                                         Dense/>
+
+                                        break;
+                                    case FilterPropertyType.DateTime:
+                                        <MudDatePicker Date="@_dateValue"
+                                                       DateChanged="@(OnDateValueChanged)"
+                                                       Label="Value"
+                                                       Variant="Variant.Outlined"
+                                                       Dense/>
+
+                                        break;
+                                    case FilterPropertyType.Bool:
+                                        <MudSelect T="bool?"
+                                                   Value="@_boolValue"
+                                                   ValueChanged="@(OnBoolValueChanged)"
+                                                   Label="Value"
+                                                   Variant="Variant.Outlined"
+                                                   Dense>
+                                            <MudSelectItem T="bool?" Value="true">True</MudSelectItem>
+                                            <MudSelectItem T="bool?" Value="false">False</MudSelectItem>
+                                            <MudSelectItem T="bool?" Value="null">Null</MudSelectItem>
+                                        </MudSelect>
+
+                                        break;
+                                    case FilterPropertyType.Enum when _selectedProperty.EnumValues != null:
+                                        <MudSelect T="string"
+                                                   Value="@_stringValue"
+                                                   ValueChanged="@(OnStringValueChanged)"
+                                                   Label="Value"
+                                                   Variant="Variant.Outlined"
+                                                   Dense>
+                                            @foreach (var enumValue in _selectedProperty.EnumValues) {
+                                                <MudSelectItem Value="@enumValue.Key">@enumValue.Value</MudSelectItem>
+                                            }
+                                        </MudSelect>
+
+                                        break;
+                                    default:
+                                        <LyoNullableTextField Value="@_stringValue"
+                                                              ValueChanged="@(value => OnStringValueChanged(value))"
+                                                              Label="Value"
+                                                              Variant="Variant.Outlined"
+                                                              Margin="Margin.Dense"/>
+
+                                        break;
+                                }
+                            }
+                        }
+                        else {
+                            @* Fallback for custom/nested fields not in PropertyDefinitions *@
+                            @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
+                                <MudTextField T="string"
+                                              Value="@_csvValue"
+                                              ValueChanged="@OnCsvValueChanged"
+                                              Label="Values (comma separated)"
+                                              Variant="Variant.Outlined"
+                                              Dense
+                                              HelperText="Enter values separated by commas"/>
+                            }
+                            else {
+                                <LyoNullableTextField Value="@_stringValue"
+                                                      ValueChanged="@(value => OnStringValueChanged(value))"
+                                                      Label="Value"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"/>
+                            }
+                        }
+                    </div>
+
+                    @if (CanRemove) {
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="@RemoveNode"/>
+                    }
+                </MudStack>
+
+                @* SubQuery - two-phase execution *@
+                @if (conditionNode.SubClause != null) {
+                    <MudStack Spacing="2" Style="margin-left: 20px; margin-top: 8px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">SubQuery</MudText>
+                        <QueryNodeEditorItem Node="@conditionNode.SubClause"
+                                             PropertyDefinitions="@PropertyDefinitions"
+                                             OnNodeChanged="@HandleChildChanged"
+                                             OnRemoveChild="@RemoveSubClauseChild"
+                                             Level="@(Level + 1)"
+                                             CanRemove="true"/>
+                    </MudStack>
+                }
+                else {
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="@(() => AddSubClause(conditionNode))"
+                               Style="margin-left: 20px; margin-top: 4px;">
+                        Add SubQuery
+                    </MudButton>
+                }
+            }
+        </MudStack>
+    </MudPaper>
+</div>
+
+

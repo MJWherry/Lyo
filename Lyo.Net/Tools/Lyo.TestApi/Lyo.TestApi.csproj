@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mapster" Version="[10,)"/>
+        <PackageReference Include="Mapster.DependencyInjection" Version="[10,)"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0"/>
+        <PackageReference Include="Npgsql" Version="10.0.1"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0"/>
+        <PackageReference Include="Scalar.AspNetCore" Version="2.13.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="appsettings.Development.json">
+            <DependentUpon>appsettings.json</DependentUpon>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+    </ItemGroup>
+
+</Project>

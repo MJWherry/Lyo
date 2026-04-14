@@ -1,0 +1,331 @@
+<Solution>
+    <Folder Name="/Communication/Speech/">
+        <Project Path="Communication/Speech/Lyo.Stt/Lyo.Stt.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.AwsPolly.Web.Components/Lyo.Tts.AwsPolly.Web.Components.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.AwsPolly/Lyo.Tts.AwsPolly.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.Models/Lyo.Tts.Models.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.Typecast.Web.Components/Lyo.Tts.Typecast.Web.Components.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.Typecast/Lyo.Tts.Typecast.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts.WindowsSpeech/Lyo.Tts.WindowsSpeech.csproj" />
+        <Project Path="Communication/Speech/Lyo.Tts/Lyo.Tts.csproj" />
+    </Folder>
+    <Folder Name="/Communication/Translation/">
+        <Project Path="Communication/Translation/Lyo.Translation.Aws/Lyo.Translation.Aws.csproj" />
+        <Project Path="Communication/Translation/Lyo.Translation.Google/Lyo.Translation.Google.csproj" />
+        <Project Path="Communication/Translation/Lyo.Translation.Web.Components/Lyo.Translation.Web.Components.csproj" />
+        <Project Path="Communication/Translation/Lyo.Translation/Lyo.Translation.csproj" />
+    </Folder>
+    <Folder Name="/Core/Common/">
+        <Project Path="Core/Common/Lyo.Common/Lyo.Common.csproj" />
+        <Project Path="Core/Common/Lyo.Common.Tests/Lyo.Common.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/">
+        <Project Path="Core/Lyo.Exceptions/Lyo.Exceptions.csproj" />
+        <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj" />
+    </Folder>
+    <Folder Name="/Core/Mathematics/">
+        <Project Path="Core/Mathematics/Lyo.Mathematics/Lyo.Mathematics.csproj" />
+        <Project Path="Core/Mathematics/Lyo.Mathematics.Functions/Lyo.Mathematics.Functions.fsproj" />
+        <Project Path="Core/Mathematics/Lyo.Mathematics.Tests/Lyo.Mathematics.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Scientific/">
+        <Project Path="Core/Scientific/Lyo.Scientific/Lyo.Scientific.csproj" />
+        <Project Path="Core/Scientific/Lyo.Scientific.Functions/Lyo.Scientific.Functions.fsproj" />
+        <Project Path="Core/Scientific/Lyo.Scientific.Tests/Lyo.Scientific.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Audit/">
+        <Project Path="Core/Audit/Lyo.Audit.Postgres.Tests/Lyo.Audit.Postgres.Tests.csproj" />
+        <Project Path="Core/Audit/Lyo.Audit.Postgres/Lyo.Audit.Postgres.csproj" />
+        <Project Path="Core/Audit/Lyo.Audit.Tests/Lyo.Audit.Tests.csproj" />
+        <Project Path="Core/Audit/Lyo.Audit/Lyo.Audit.csproj" />
+    </Folder>
+    <Folder Name="/Core/ChangeTracker/">
+        <Project Path="Core/ChangeTracker/Lyo.ChangeTracker.Postgres.Tests/Lyo.ChangeTracker.Postgres.Tests.csproj" />
+        <Project Path="Core/ChangeTracker/Lyo.ChangeTracker.Postgres/Lyo.ChangeTracker.Postgres.csproj" />
+        <Project Path="Core/ChangeTracker/Lyo.ChangeTracker.Tests/Lyo.ChangeTracker.Tests.csproj" />
+        <Project Path="Core/ChangeTracker/Lyo.ChangeTracker/Lyo.ChangeTracker.csproj" />
+    </Folder>
+    <Folder Name="/Core/Cache/">
+        <Project Path="Core/Cache/Lyo.Cache/Lyo.Cache.csproj" />
+        <Project Path="Core/Cache/Lyo.Cache.Fusion/Lyo.Cache.Fusion.csproj" />
+        <Project Path="Core/Cache/Lyo.Cache.Tests/Lyo.Cache.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Notification/">
+        <Project Path="Core/Notification/Lyo.Notification/Lyo.Notification.csproj" />
+    </Folder>
+    <Folder Name="/Core/Lock/">
+        <Project Path="Core/Lock/Lyo.Lock/Lyo.Lock.csproj" />
+        <Project Path="Core/Lock/Lyo.Lock.Redis/Lyo.Lock.Redis.csproj" />
+        <Project Path="Core/Lock/Lyo.Lock.Tests/Lyo.Lock.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/DateAndTime/">
+        <Project Path="Core/DateAndTime/Lyo.DateAndTime/Lyo.DateAndTime.csproj" />
+        <Project Path="Core/DateAndTime/Lyo.DateAndTime.Tests/Lyo.DateAndTime.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Diff/">
+        <Project Path="Core/Diff/Lyo.Diff/Lyo.Diff.csproj" />
+        <Project Path="Core/Diff/Lyo.Diff.Tests/Lyo.Diff.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Geolocation/">
+        <Project Path="Core/Geolocation/Lyo.Geolocation.Google/Lyo.Geolocation.Google.csproj" />
+        <Project Path="Core/Geolocation/Lyo.Geolocation.Models/Lyo.Geolocation.Models.csproj" />
+        <Project Path="Core/Geolocation/Lyo.Geolocation/Lyo.Geolocation.csproj" />
+    </Folder>
+    <Folder Name="/Core/Metrics/">
+        <Project Path="Core/Metrics/Lyo.Metrics.OpenTelemetry/Lyo.Metrics.OpenTelemetry.csproj" />
+        <Project Path="Core/Metrics/Lyo.Metrics.Tests/Lyo.Metrics.Tests.csproj" />
+        <Project Path="Core/Metrics/Lyo.Metrics/Lyo.Metrics.csproj" />
+    </Folder>
+    <Folder Name="/Core/People/">
+        <Project Path="Core/People/Lyo.People.Models/Lyo.People.Models.csproj" />
+        <Project Path="Core/People/Lyo.People.Postgres/Lyo.People.Postgres.csproj" />
+        <Project Path="Core/People/Lyo.People.Postgres.Tests/Lyo.People.Postgres.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Health/">
+        <Project Path="Core/Health/Lyo.Health/Lyo.Health.csproj" />
+    </Folder>
+    <Folder Name="/Core/Validation/">
+        <Project Path="Core/Validation/Lyo.Validation.Tests/Lyo.Validation.Tests.csproj" />
+        <Project Path="Core/Validation/Lyo.Validation/Lyo.Validation.csproj" />
+    </Folder>
+    <Folder Name="/Core/Webhook/">
+        <Project Path="Core/Webhook/Lyo.Webhook/Lyo.Webhook.csproj" />
+        <Project Path="Core/Webhook/Lyo.Webhook.Twilio/Lyo.Webhook.Twilio.csproj" />
+        <Project Path="Core/Webhook/Lyo.Webhook.Tests/Lyo.Webhook.Tests.csproj" />
+        <Project Path="Core/Webhook/Lyo.Webhook.Twilio.Tests/Lyo.Webhook.Twilio.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Resilience/">
+        <Project Path="Core/Resilience/Lyo.Resilience/Lyo.Resilience.csproj" />
+        <Project Path="Core/Resilience/Lyo.Resilience.Tests/Lyo.Resilience.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Core/Schedule/">
+        <Project Path="Core/Schedule/Lyo.Schedule.Models/Lyo.Schedule.Models.csproj" />
+    </Folder>
+    <Folder Name="/Core/Scheduler/">
+        <Project Path="Core/Scheduler/Lyo.Scheduler.Tests/Lyo.Scheduler.Tests.csproj" />
+        <Project Path="Core/Scheduler/Lyo.Scheduler/Lyo.Scheduler.csproj" />
+        <Project Path="Core/Scheduler/Lyo.Scheduler.Cache/Lyo.Scheduler.Cache.csproj" />
+    </Folder>
+    <Folder Name="/Data/" />
+    <Folder Name="/Data/Compression/">
+        <Project Path="Data/Compression/Lyo.Compression/Lyo.Compression.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.Benchmarks/Lyo.Compression.Benchmarks.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.Tests/Lyo.Compression.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/Csv/">
+        <Project Path="Data/Csv/Lyo.Csv/Lyo.Csv.csproj" />
+        <Project Path="Data/Csv/Lyo.Csv.Models/Lyo.Csv.Models.csproj" />
+        <Project Path="Data/Csv/Lyo.Csv.Tests/Lyo.Csv.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/Images/">
+        <Project Path="Data/Images/Lyo.Images.Skia/Lyo.Images.Skia.csproj" />
+        <Project Path="Data/Images/Lyo.Images.Tests/Lyo.Images.Tests.csproj" />
+        <Project Path="Data/Images/Lyo.Images.Web.Components/Lyo.Images.Web.Components.csproj" />
+        <Project Path="Data/Images/Lyo.Images/Lyo.Images.csproj" />
+    </Folder>
+    <Folder Name="/Data/IOTemp/">
+        <Project Path="Data/IOTemp/Lyo.IO.Temp/Lyo.IO.Temp.csproj" />
+        <Project Path="Data/IOTemp/Lyo.IO.Temp.Tests/Lyo.IO.Temp.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/Pdf/">
+        <Project Path="Data/Pdf/Lyo.Pdf.Models/Lyo.Pdf.Models.csproj" />
+        <Project Path="Data/Pdf/Lyo.Pdf.Tests/Lyo.Pdf.Tests.csproj" />
+        <Project Path="Data/Pdf/Lyo.Pdf.Web.Components/Lyo.Pdf.Web.Components.csproj" />
+        <Project Path="Data/Pdf/Lyo.Pdf/Lyo.Pdf.csproj" />
+    </Folder>
+    <Folder Name="/Data/QRCode/">
+        <Project Path="Data/QRCode/Lyo.QRCode.QRCoder/Lyo.QRCode.QRCoder.csproj" />
+        <Project Path="Data/QRCode/Lyo.QRCode.Tests/Lyo.QRCode.Tests.csproj" />
+        <Project Path="Data/QRCode/Lyo.QRCode.Web.Components/Lyo.QRCode.Web.Components.csproj" />
+        <Project Path="Data/QRCode/Lyo.QRCode/Lyo.QRCode.csproj" />
+    </Folder>
+    <Folder Name="/Data/Barcode/">
+        <Project Path="Data/Barcode/Lyo.Barcode.Native/Lyo.Barcode.Native.csproj" />
+        <Project Path="Data/Barcode/Lyo.Barcode.Tests/Lyo.Barcode.Tests.csproj" />
+        <Project Path="Data/Barcode/Lyo.Barcode.TestWorkbench.Web.Components/Lyo.Barcode.TestWorkbench.Web.Components.csproj" />
+        <Project Path="Data/Barcode/Lyo.Barcode.Web.Components/Lyo.Barcode.Web.Components.csproj" />
+        <Project Path="Data/Barcode/Lyo.Barcode/Lyo.Barcode.csproj" />
+    </Folder>
+    <Folder Name="/Data/Codes/">
+        <Project Path="Data/Codes/Lyo.Codes.ZXing/Lyo.Codes.ZXing.csproj" />
+    </Folder>
+    <Folder Name="/Data/Query/">
+        <Project Path="Data/Query/Lyo.Query/Lyo.Query.csproj" />
+        <Project Path="Data/Query/Lyo.Query.Models/Lyo.Query.Models.csproj" />
+        <Project Path="Data/Query/Lyo.Query.Tests/Lyo.Query.Tests.csproj" />
+        <Project Path="Data/Query/Lyo.Query.Web.Components/Lyo.Query.Web.Components.csproj" />
+    </Folder>
+    <Folder Name="/Data/DataTable/">
+        <Project Path="Data/DataTable/Lyo.DataTable.Models/Lyo.DataTable.Models.csproj" />
+        <Project Path="Data/DataTable/Lyo.DataTable.Models.Tests/Lyo.DataTable.Models.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/Xlsx/">
+        <Project Path="Data/Xlsx/Lyo.Xlsx/Lyo.Xlsx.csproj" />
+        <Project Path="Data/Xlsx/Lyo.Xlsx.Models/Lyo.Xlsx.Models.csproj" />
+        <Project Path="Data/Xlsx/Lyo.Xlsx.Tests/Lyo.Xlsx.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/FileStorage/">
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Azure/Lyo.FileStorage.Azure.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.S3/Lyo.FileStorage.S3.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Tests/Lyo.FileStorage.Tests.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Web.Components/Lyo.FileStorage.Web.Components.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage/Lyo.FileStorage.csproj" />
+    </Folder>
+    <Folder Name="/Data/Postgres/">
+        <Project Path="Data/Postgres/Lyo.Postgres/Lyo.Postgres.csproj" />
+    </Folder>
+    <Folder Name="/Data/FileMetadataStore/">
+        <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/Lyo.FileMetadataStore.Postgres.csproj" />
+        <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres.Tests/Lyo.FileMetadataStore.Postgres.Tests.csproj" />
+        <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore.Sqlite/Lyo.FileMetadataStore.Sqlite.csproj" />
+        <Project Path="Data/FileMetadataStore/Lyo.FileMetadataStore/Lyo.FileMetadataStore.csproj" />
+    </Folder>
+    <Folder Name="/Data/FileSystemWatcher/">
+        <Project Path="Data/FileSystemWatcher/Lyo.FileSystemWatcher/Lyo.FileSystemWatcher.csproj" />
+        <Project Path="Data/FileSystemWatcher/Lyo.FileSystemWatcher.Tests/Lyo.FileSystemWatcher.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Features/" />
+    <Folder Name="/Features/Comment/">
+        <Project Path="Features/Comment/Lyo.Comment.Postgres/Lyo.Comment.Postgres.csproj" />
+        <Project Path="Features/Comment/Lyo.Comment/Lyo.Comment.csproj" />
+    </Folder>
+    <Folder Name="/Features/HomeInventory/">
+        <Project Path="Features/HomeInventory/Lyo.HomeInventory.Postgres/Lyo.HomeInventory.Postgres.csproj" />
+        <Project Path="Features/HomeInventory/Lyo.HomeInventory/Lyo.HomeInventory.csproj" />
+    </Folder>
+    <Folder Name="/Features/Config/">
+        <Project Path="Features/Config/Lyo.Config.Postgres/Lyo.Config.Postgres.csproj" />
+        <Project Path="Features/Config/Lyo.Config/Lyo.Config.csproj" />
+    </Folder>
+    <Folder Name="/Features/Note/">
+        <Project Path="Features/Note/Lyo.Note.Postgres/Lyo.Note.Postgres.csproj" />
+        <Project Path="Features/Note/Lyo.Note/Lyo.Note.csproj" />
+    </Folder>
+    <Folder Name="/Features/Rating/">
+        <Project Path="Features/Rating/Lyo.Rating.Postgres/Lyo.Rating.Postgres.csproj" />
+        <Project Path="Features/Rating/Lyo.Rating/Lyo.Rating.csproj" />
+    </Folder>
+    <Folder Name="/Features/Tag/">
+        <Project Path="Features/Tag/Lyo.Tag.Postgres/Lyo.Tag.Postgres.csproj" />
+        <Project Path="Features/Tag/Lyo.Tag/Lyo.Tag.csproj" />
+    </Folder>
+    <Folder Name="/Features/ContactUs/">
+        <Project Path="Features/ContactUs/Lyo.ContactUs.Postgres/Lyo.ContactUs.Postgres.csproj" />
+        <Project Path="Features/ContactUs/Lyo.ContactUs/Lyo.ContactUs.csproj" />
+    </Folder>
+    <Folder Name="/Features/Profanity/">
+        <Project Path="Features/Profanity/Lyo.Profanity/Lyo.Profanity.csproj" />
+        <Project Path="Features/Profanity/Lyo.Profanity.Tests/Lyo.Profanity.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Features/ShortUrl/">
+        <Project Path="Features/ShortUrl/Lyo.ShortUrl.Postgres/Lyo.ShortUrl.Postgres.csproj" />
+        <Project Path="Features/ShortUrl/Lyo.ShortUrl.Tests/Lyo.ShortUrl.Tests.csproj" />
+        <Project Path="Features/ShortUrl/Lyo.ShortUrl/Lyo.ShortUrl.csproj" />
+    </Folder>
+    <Folder Name="/Data/Ffmpeg/">
+        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg.Models/Lyo.Ffmpeg.Models.csproj" />
+        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg/Lyo.Ffmpeg.csproj" />
+        <Project Path="Data/Ffmpeg/Lyo.Ffmpeg.Tests/Lyo.Ffmpeg.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Data/Formatter/">
+        <Project Path="Data/Formatter/Lyo.Formatter.Tests/Lyo.Formatter.Tests.csproj" />
+        <Project Path="Data/Formatter/Lyo.Formatter/Lyo.Formatter.csproj" />
+    </Folder>
+    <Folder Name="/.SolutionItems/">
+        <File Path="..\.gitignore" />
+        <File Path="..\CONTRIBUTING.md" />
+        <File Path="..\LICENSE" />
+        <File Path="..\README.md" />
+        <File Path=".editorconfig" />
+        <File Path="build-nuget.sh" />
+        <File Path="Directory.Build.props" />
+    </Folder>
+    <Folder Name="/Communication/" />
+    <Folder Name="/Communication/Email/">
+        <Project Path="Communication/Email/Lyo.Email.Models/Lyo.Email.Models.csproj" />
+        <Project Path="Communication/Email/Lyo.Email.Postgres/Lyo.Email.Postgres.csproj" />
+        <Project Path="Communication/Email/Lyo.Email.Tests/Lyo.Email.Tests.csproj" />
+        <Project Path="Communication/Email/Lyo.Email.Web.Components/Lyo.Email.Web.Components.csproj" />
+        <Project Path="Communication/Email/Lyo.Email/Lyo.Email.csproj" />
+    </Folder>
+    <Folder Name="/Communication/Sms/">
+        <Project Path="Communication/Sms/Lyo.Sms.Models/Lyo.Sms.Models.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms/Lyo.Sms.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Postgres/Lyo.Sms.Postgres.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Tests/Lyo.Sms.Tests.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Twilio.Postgres/Lyo.Sms.Twilio.Postgres.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Twilio.Postgres.Tests/Lyo.Sms.Twilio.Postgres.Tests.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Twilio/Lyo.Sms.Twilio.csproj" />
+        <Project Path="Communication/Sms/Lyo.Sms.Web.Components/Lyo.Sms.Web.Components.csproj" />
+    </Folder>
+    <Folder Name="/Communication/MessageQueue/">
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue/Lyo.MessageQueue.csproj" />
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/Lyo.MessageQueue.RabbitMq.csproj" />
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue.Tests/Lyo.MessageQueue.Tests.csproj" />
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue.Web.Components/Lyo.MessageQueue.Web.Components.csproj" />
+        <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Web.Components/Lyo.MessageQueue.RabbitMq.Web.Components.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Web/WebRenderer/">
+        <Project Path="Integration/Web/WebRenderer/Lyo.Web.WebRenderer/Lyo.Web.WebRenderer.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Web/WebReporting/">
+        <Project Path="Integration/Web/WebReporting/Lyo.Web.Reporting.Postgres/Lyo.Web.Reporting.Postgres.csproj" />
+        <Project Path="Integration/Web/WebReporting/Lyo.Web.Reporting/Lyo.Web.Reporting.csproj" />
+    </Folder>
+    <Folder Name="/Security/" />
+    <Folder Name="/Security/Encryption/">
+        <Project Path="Security/Encryption/Lyo.Encryption/Lyo.Encryption.csproj" />
+        <File Path="Security\Encryption\README.md" />
+        <Project Path="Security/Encryption/Lyo.Encryption.Benchmarks/Lyo.Encryption.Benchmarks.csproj" />
+        <Project Path="Security/Encryption/Lyo.Encryption.Tests/Lyo.Encryption.Tests.csproj" />
+        <Project Path="Security/Encryption/Lyo.Keystore.Aws/Lyo.Keystore.Aws.csproj" />
+        <Project Path="Security/Encryption/Lyo.Keystore/Lyo.Keystore.csproj" />
+    </Folder>
+    <Folder Name="/Integration/" />
+    <Folder Name="/Integration/Endato/">
+        <Project Path="Integration/Endato/Lyo.Endato.Client/Lyo.Endato.Client.csproj" />
+        <Project Path="Integration/Endato/Lyo.Endato.Postgres/Lyo.Endato.Postgres.csproj" />
+        <Project Path="Integration/Endato/Lyo.Endato.Postgres.Tests/Lyo.Endato.Postgres.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Typecast/">
+        <Project Path="Integration/Typecast/Lyo.Typecast.Client/Lyo.Typecast.Client.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Web/">
+        <Project Path="Integration/Web/Lyo.Web.Components/Lyo.Web.Components.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Api/">
+        <Project Path="Integration/Api/Lyo.Api.Client/Lyo.Api.Client.csproj" />
+        <Project Path="Integration/Api/Lyo.Api.Models/Lyo.Api.Models.csproj" />
+        <Project Path="Integration/Api/Lyo.Api.Tests.Host/Lyo.Api.Tests.Host.csproj" />
+        <Project Path="Integration/Api/Lyo.Api.Tests/Lyo.Api.Tests.csproj" />
+        <Project Path="Integration/Api/Lyo.Api/Lyo.Api.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Scraping/">
+        <Project Path="Integration/Scraping/Lyo.Scraping/Lyo.Scraping.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Espn/">
+        <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football/Lyo.Espn.Fantasy.Football.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Job/">
+        <Project Path="Integration/Job/Lyo.Job.Postgres/Lyo.Job.Postgres.csproj" />
+        <Project Path="Integration/Job/Lyo.Job.Postgres.Tests/Lyo.Job.Postgres.Tests.csproj" />
+        <Project Path="Integration/Job/Lyo.Job.Models/Lyo.Job.Models.csproj" />
+        <Project Path="Integration/Job/Lyo.Job.Scheduler/Lyo.Job.Scheduler.csproj" />
+    </Folder>
+    <Folder Name="/Integration/Discord/">
+        <Project Path="Integration/Discord/Lyo.Discord.Models/Lyo.Discord.Models.csproj" />
+        <Project Path="Integration/Discord/Lyo.Discord.Postgres/Lyo.Discord.Postgres.csproj" />
+        <Project Path="Integration/Discord/Lyo.Discord.Client/Lyo.Discord.Client.csproj" />
+        <Project Path="Integration/Discord/Lyo.Discord.Bot/Lyo.Discord.Bot.csproj" />
+    </Folder>
+    <Folder Name="/Core/Streams/">
+        <Project Path="Core/Streams/Lyo.Streams/Lyo.Streams.csproj" />
+        <Project Path="Core/Streams/Lyo.Streams.Tests/Lyo.Streams.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Tools/">
+        <Project Path="Tools/Lyo.Gateway/Lyo.Gateway.csproj" />
+        <Project Path="Tools/Lyo.Preview/Lyo.Preview.csproj" />
+        <Project Path="Tools/Lyo.TestApi/Lyo.TestApi.csproj" />
+        <Project Path="Tools/Lyo.TestConsole/Lyo.TestConsole.csproj" />
+    </Folder>
+</Solution>

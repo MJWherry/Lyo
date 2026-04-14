@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.FileStorage.Azure.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Azure.Storage.Blobs" Version="[12.27,)"/>
+    </ItemGroup>
+
+</Project>

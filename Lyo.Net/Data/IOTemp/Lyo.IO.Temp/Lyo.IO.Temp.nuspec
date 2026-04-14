@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.IO.Temp</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Temp file and directory service with session tracking, logging, and metrics support.</description>
+        <summary>IO temp service</summary>
+        <readme>README.md</readme>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>io temp files directories session</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="netstandard2.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10,)"/>
+            </group>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="README.md" target=""/>
+        <file src="bin/Release/netstandard2.0/*.dll" target="lib/netstandard2.0"/>
+        <file src="bin/Release/netstandard2.0/*.pdb" target="lib/netstandard2.0"/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

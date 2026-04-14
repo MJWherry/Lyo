@@ -1,0 +1,205 @@
+@using Lyo.Translation.Models
+@inject ITranslationService TranslationService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Translation Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Translate freeform text with the configured translation implementation.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" Label="Source language" @bind-Value="_sourceLanguage">
+                                    <MudSelectItem Value="@AutoLanguage">Auto detect</MudSelectItem>
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" Label="Target language" @bind-Value="_targetLanguage">
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      @bind-Value="_inputText"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TranslateAsync" Disabled="@_busy">Translate</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="DetectLanguageAsync"
+                                       Disabled="@(_busy || string.IsNullOrWhiteSpace(_inputText))">
+                                Detect Language
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="TestConnectionAsync" Disabled="@_busy">Test Connection</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+
+                    @if (_translationResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Translate text to see the detected language and translated result here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Detected source</MudText>
+                                    <MudText Typo="Typo.body1">@(_translationResult.DetectedSourceLanguage?.Description ?? _detectedLanguage?.Description ?? "Unknown")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Target</MudText>
+                                    <MudText Typo="Typo.body1">@CurrentTarget.Description</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Request Id</MudText>
+                                    <MudText Typo="Typo.body1">@(_translationResult.RequestId ?? "(none)")</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Translated text"
+                                      Variant="Variant.Outlined"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      Value="@_translationResult.TranslatedText"
+                                      ReadOnly="true"
+                                      Class="mt-3"/>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private const string AutoLanguage = "__auto__";
+    private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
+
+    private bool _busy;
+    private LanguageCodeInfo? _detectedLanguage;
+    private string _inputText = "Hello from the test gateway.";
+    private string _sourceLanguage = AutoLanguage;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _targetLanguage = LanguageCodeInfo.EsEs.Bcp47;
+    private TranslationResult? _translationResult;
+
+    private LanguageCodeInfo CurrentTarget => LanguageCodeInfo.FromBcp47(_targetLanguage);
+
+    private async Task TranslateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText)) {
+            SetStatus("Enter text to translate.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var request = new TranslationRequest(_inputText, CurrentTarget, _sourceLanguage == AutoLanguage ? null : LanguageCodeInfo.FromBcp47(_sourceLanguage));
+            var result = await TranslationService.TranslateAsync(request);
+            if (!result.IsSuccess) {
+                SetStatus(FormatErrors(result.Errors), Severity.Error);
+                return;
+            }
+
+            _translationResult = result;
+            _detectedLanguage = result.DetectedSourceLanguage;
+            SetStatus(result.Message ?? "Translation completed.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DetectLanguageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText)) {
+            SetStatus("Enter text to analyze.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            _detectedLanguage = await TranslationService.DetectLanguageAsync(_inputText);
+            SetStatus($"Detected {_detectedLanguage.Description}.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        _busy = true;
+        try {
+            var ok = await TranslationService.TestConnectionAsync();
+            SetStatus(ok ? "Translation connection succeeded." : "Translation connection failed.", ok ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private static string FormatErrors(IReadOnlyList<Error>? errors) => errors == null || errors.Count == 0 ? "Unknown error." : string.Join(Environment.NewLine, errors.Select(i => $"{i.Code}: {i.Message}"));
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

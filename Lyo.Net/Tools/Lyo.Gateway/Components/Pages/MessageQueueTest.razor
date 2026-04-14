@@ -1,0 +1,16 @@
+@using Lyo.MessageQueue.RabbitMq.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.RabbitMq)]
+@inherits AuthorizedPage
+
+<PageTitle>Message Queue Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <RabbitMqWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Message Queue Test";
+
+}

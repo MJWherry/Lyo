@@ -1,0 +1,17 @@
+@using Constants = Constants
+@using Lyo.Query.Web.Components
+@attribute [Route("/" + Constants.Page.QueryBuilder)]
+@rendermode InteractiveServer
+@inherits AuthorizedPage
+
+<PageTitle>Query Builder Example</PageTitle>
+
+<QueryBuilderWorkbench Routes="@Routes"/>
+
+@code {
+
+    protected override string PageName { get; set; } = "Query Builder Example";
+
+    public readonly Dictionary<string, List<string>> Routes = new() { ["http://localhost:5251"] = ["Person"], ["http://localhost:5074"] = ["Docket", "Docket/Charge"] };
+
+}

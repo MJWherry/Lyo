@@ -1,0 +1,86 @@
+@using Lyo.Health
+<MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+    <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+
+    <MudStack Row="true" Spacing="2" Class="mb-3">
+        <MudChip T="string" Color="@(Connected ? Color.Success : Color.Default)">
+            @(Connected ? "Connected" : "Disconnected")
+        </MudChip>
+        @if (LastHealth != null) {
+            <MudChip T="string" Color="@(LastHealth.IsHealthy ? Color.Success : Color.Warning)">
+                @(LastHealth.IsHealthy ? "Healthy" : "Unhealthy")
+            </MudChip>
+        }
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage)) {
+        <MudAlert Severity="@StatusSeverity" Dense="true" Class="mb-3">@StatusMessage</MudAlert>
+    }
+
+    @if (Details.Count == 0) {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Run a queue operation to inspect the latest result here.
+        </MudText>
+    }
+    else {
+        <MudSimpleTable Dense="true">
+            <tbody>
+            @foreach (var detail in Details) {
+                <tr>
+                    <td><strong>@detail.Key</strong></td>
+                    <td>@detail.Value</td>
+                </tr>
+            }
+            </tbody>
+        </MudSimpleTable>
+    }
+
+    @if (PeekedMessages.Count > 0) {
+        <MudDivider Class="my-3"/>
+
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Peeked Messages</MudText>
+
+        <MudSimpleTable Dense="true">
+            <thead>
+            <tr>
+                <th>Payload</th>
+                <th>Routing Key</th>
+                <th>Exchange</th>
+                <th>Remaining</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var message in PeekedMessages) {
+                <tr>
+                    <td style="white-space:pre-wrap;word-break:break-word;">@message.Payload</td>
+                    <td>@(message.RoutingKey ?? "(none)")</td>
+                    <td>@(message.Exchange ?? "(none)")</td>
+                    <td>@(message.MessageCount?.ToString() ?? "(unknown)")</td>
+                </tr>
+            }
+            </tbody>
+        </MudSimpleTable>
+    }
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public bool Connected { get; set; }
+
+    [Parameter]
+    public HealthResult? LastHealth { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<KeyValuePair<string, string>> Details { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyList<QueuePeekMessage> PeekedMessages { get; set; } = [];
+
+    [Parameter]
+    public string StatusMessage { get; set; } = string.Empty;
+
+    [Parameter]
+    public Severity StatusSeverity { get; set; } = Severity.Info;
+
+}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.FileMetadataStore.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="[10,)"/>
+    </ItemGroup>
+
+</Project>

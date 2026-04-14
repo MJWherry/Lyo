@@ -1,0 +1,70 @@
+@inject IJsInterop Js
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Lyo.Web.Components.JsonEditor
+@using MudBlazor
+@typeparam T
+
+<MudDialog>
+    <DialogContent>
+        @if (parseError != null) {
+            <MudAlert Severity="Severity.Error">
+                <MudText Typo="Typo.body2">Invalid JSON: @parseError</MudText>
+            </MudAlert>
+        }
+        else if (rootNode != null) {
+            <JsonTreeView Root="@rootNode"/>
+        }
+        else {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
+            Copy JSON
+        </MudButton>
+        <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public T Data { get; set; }
+
+    [Parameter]
+    public string Title { get; set; } = "JSON Viewer";
+
+    private JsonNode? rootNode;
+    private string? parseError;
+    private string? jsonString;
+
+    protected override void OnParametersSet()
+    {
+        try {
+            parseError = null;
+            if (Data == null) {
+                rootNode = null;
+                return;
+            }
+
+            // Serialize the object to JSON string
+            jsonString = JsonSerializer.Serialize(Data, new JsonSerializerOptions { WriteIndented = true });
+
+            // Parse into JsonNode for tree building
+            rootNode = JsonNode.Parse(jsonString);
+        }
+        catch (Exception ex) {
+            parseError = ex.Message;
+            rootNode = null;
+        }
+    }
+
+    private async Task CopyToClipboard() => await Js.SendToClipboard(jsonString ?? "");
+
+    private void Close() => MudDialog.Close();
+
+}

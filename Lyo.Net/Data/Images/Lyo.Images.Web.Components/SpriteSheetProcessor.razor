@@ -1,0 +1,101 @@
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Slicing</MudText>
+        <MudGrid Spacing="1">
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int" Label="Row count" Min="1" Max="256" Value="RowCount" ValueChanged="RowCountChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int" Label="Frames per row (computed)" Min="1" Max="4096" Value="FramesPerRow" ValueChanged="FramesPerRowChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int" Label="X offset" Min="0" Max="4096" Value="OffsetX" ValueChanged="OffsetXChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int" Label="Y offset" Min="0" Max="4096" Value="OffsetY" ValueChanged="OffsetYChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="int" Label="Left trim" Min="0" Max="4096" Value="LeftTrim" ValueChanged="LeftTrimChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="int" Label="Right trim" Min="0" Max="4096" Value="RightTrim" ValueChanged="RightTrimChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="int" Label="Top trim" Min="0" Max="4096" Value="TopTrim" ValueChanged="TopTrimChanged" Margin="Margin.Dense"/>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="int" Label="Bottom trim" Min="0" Max="4096" Value="BottomTrim" ValueChanged="BottomTrimChanged" Margin="Margin.Dense"/>
+            </MudItem>
+        </MudGrid>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            PNGs from this app’s Extract include grid metadata and slice automatically. Otherwise set frames per row manually; pixel remainder is spread across
+            the first columns/rows so the grid covers the full image.
+        </MudText>
+
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnApply" Disabled="@(!HasSpriteSheet || Busy)">Apply</MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public bool HasSpriteSheet { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public int RowCount { get; set; }
+
+    [Parameter]
+    public EventCallback<int> RowCountChanged { get; set; }
+
+    [Parameter]
+    public int FramesPerRow { get; set; }
+
+    [Parameter]
+    public EventCallback<int> FramesPerRowChanged { get; set; }
+
+    [Parameter]
+    public int OffsetX { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OffsetXChanged { get; set; }
+
+    [Parameter]
+    public int OffsetY { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OffsetYChanged { get; set; }
+
+    [Parameter]
+    public int LeftTrim { get; set; }
+
+    [Parameter]
+    public EventCallback<int> LeftTrimChanged { get; set; }
+
+    [Parameter]
+    public int RightTrim { get; set; }
+
+    [Parameter]
+    public EventCallback<int> RightTrimChanged { get; set; }
+
+    [Parameter]
+    public int TopTrim { get; set; }
+
+    [Parameter]
+    public EventCallback<int> TopTrimChanged { get; set; }
+
+    [Parameter]
+    public int BottomTrim { get; set; }
+
+    [Parameter]
+    public EventCallback<int> BottomTrimChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnApply { get; set; }
+
+}

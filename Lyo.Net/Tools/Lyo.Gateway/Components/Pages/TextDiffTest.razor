@@ -1,0 +1,17 @@
+@using Lyo.Gateway.Components.TestGateway
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.TextDiff)]
+@inherits AuthorizedPage
+
+<PageTitle>Text Diff Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <TextDiffWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Text Diff Workbench";
+
+}
+

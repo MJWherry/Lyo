@@ -1,0 +1,211 @@
+@using Lyo.Sms.Builders
+@using Lyo.Sms.Models
+@using Lyo.Web.Components.ChipInput
+@inject ISmsService SmsService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">SMS / MMS</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Send SMS and MMS through the configured SMS service using provider-neutral request types.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Recipients</MudText>
+                        <LyoChipInput Values="@_smsToValues"
+                                      ValuesChanged="OnSmsToValuesChanged"
+                                      Placeholder="Type phone number and press Enter"
+                                      ValidationPattern="@_phoneValidationPattern"
+                                      ValidationErrorMessage="Enter a valid phone number."/>
+                    </div>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudTextField T="string" Label="From override" @bind-Value="_smsFrom"/>
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Public media URLs</MudText>
+                            <LyoChipInput Values="@_smsMediaUrlValues"
+                                          ValuesChanged="OnSmsMediaUrlValuesChanged"
+                                          Placeholder="Type URL and press Enter"
+                                          ValidationPattern="@_publicMediaUrlValidationPattern"
+                                          ValidationErrorMessage="Enter a valid public http(s) URL."/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        MMS media must be reachable by the configured SMS provider. Unsupported providers may ignore media URLs.
+                    </MudAlert>
+
+                    <MudTextField T="string" Label="Body" Lines="5" FullWidth="true" @bind-Value="_smsBody"/>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SendSmsAsync" Disabled="@_busy">Send SMS / MMS</MudButton>
+                        <MudButton Variant="Variant.Text" OnClick="TestSmsConnectionAsync" Disabled="@_busy">Test SMS Connection</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">SMS Result</MudText>
+                    @if (_lastSmsBulkResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Send SMS or MMS to inspect the results here.</MudText>
+                    }
+                    else {
+                        <MudAlert Severity="@(_lastSmsBulkResult.IsCompleteSuccess ? Severity.Success : Severity.Warning)" Dense="true" Class="mb-3">
+                            @_lastSmsSummary
+                        </MudAlert>
+
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                            <tr>
+                                <td><strong>Total</strong></td>
+                                <td>@_lastSmsBulkResult.TotalCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Success</strong></td>
+                                <td>@_lastSmsBulkResult.SuccessCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Failure</strong></td>
+                                <td>@_lastSmsBulkResult.FailureCount</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Errors</strong></td>
+                                <td>@string.Join(" | ", _lastSmsBulkResult.ErrorMessages)</td>
+                            </tr>
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudDivider Class="my-3"/>
+
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                            <tr>
+                                <th>To</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var smsResult in _lastSmsResults) {
+                                <tr>
+                                    <td>@(smsResult.Data?.To ?? "(none)")</td>
+                                    <td>@(smsResult.IsSuccess ? "sent" : "failed")</td>
+                                    <td>@(smsResult.IsSuccess ? "OK" : LyoResultErrorFormatter.FormatErrors(smsResult.Errors))</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private readonly string _phoneValidationPattern = RegexPatterns.PhoneNumberRegex.ToString();
+    private readonly string _publicMediaUrlValidationPattern = @"^https?:\/\/[^\s]+$";
+    private BulkResult<SmsRequest>? _lastSmsBulkResult;
+    private List<Result<SmsRequest>> _lastSmsResults = [];
+    private string _lastSmsSummary = string.Empty;
+    private string _smsBody = "Hello from Lyo.";
+    private string _smsFrom = string.Empty;
+    private List<string> _smsMediaUrlValues = [];
+    private List<string> _smsToValues = ["+15551234567"];
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    private async Task SendSmsAsync()
+    {
+        if (_smsToValues.Count == 0) {
+            SetStatus("Add at least one phone number.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var bulkBuilder = BulkSmsBuilder.New();
+            if (!string.IsNullOrWhiteSpace(_smsFrom))
+                bulkBuilder.SetDefaultFrom(_smsFrom);
+
+            foreach (var recipient in _smsToValues) {
+                bulkBuilder.Add(recipient, _smsBody);
+                foreach (var mediaUrl in _smsMediaUrlValues)
+                    bulkBuilder.AddAttachment(mediaUrl);
+            }
+
+            _lastSmsBulkResult = await SmsService.SendBulkAsync(bulkBuilder);
+            _lastSmsResults = _lastSmsBulkResult.Results.ToList();
+            _lastSmsSummary = _lastSmsBulkResult.IsCompleteSuccess ? $"SMS completed: {_lastSmsBulkResult.SuccessCount}/{_lastSmsBulkResult.TotalCount} succeeded." : string.Join(Environment.NewLine, _lastSmsBulkResult.ErrorMessages);
+            SetStatus(_lastSmsSummary, _lastSmsBulkResult.IsCompleteSuccess ? Severity.Success : Severity.Error);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TestSmsConnectionAsync()
+    {
+        _busy = true;
+        try {
+            var ok = await SmsService.TestConnectionAsync();
+            SetStatus(ok ? "SMS connection succeeded." : "SMS connection failed.", ok ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task OnSmsToValuesChanged(IEnumerable<string> values)
+    {
+        _smsToValues = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnSmsMediaUrlValuesChanged(IEnumerable<string> values)
+    {
+        _smsMediaUrlValues = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

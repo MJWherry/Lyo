@@ -1,0 +1,58 @@
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.Gateway.Models.Constants
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+
+<LyoDataGrid @ref="_dataGrid" T="PersonRes"
+             ApiClient="ApiClient"
+             GridKey="PersonGrid"
+             Route="@Constants.Person.Route"
+             KeySelector="@(i => [i.Id])"
+             BeforeQuery="@(query => query.AddIncludes(_includes.ToArray()))"
+             FilterPropertyDefinitions="@_propertyDefinitions"
+             RowMenuControls="@GetRowMenuControls()">
+    <Columns>
+        <LyoPropertyColumn T="PersonRes" TProperty="Guid" Property="x => x.Id" Title="ID"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.FirstName" Title="Firstname" QuickSearchPropertyName="FirstName"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.MiddleName" Title="Middlename"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.LastName" Title="Lastname" QuickSearchPropertyName="LastName"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.Addresses == null ? 0 : x.Addresses.Count" Title="Addresses"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.PhoneNumbers == null ? 0 : x.PhoneNumbers.Count" Title="Phone Numbers"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="int" Property="x => x.EmailAddresses == null ? 0 : x.EmailAddresses.Count" Title="Emails"/>
+        <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.Source" Title="Source"/>
+    </Columns>
+</LyoDataGrid>
+
+@code {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FirstName")];
+
+    private readonly IEnumerable<string> _includes = ["contactaddresses.address", "contactphonenumbers.phonenumber", "contactemailaddresses.emailaddress"];
+
+    private LyoDataGrid<PersonRes>? _dataGrid;
+
+    private RenderFragment<PersonRes?> GetRowMenuControls()
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditor(person))">Edit</MudMenuItem>;
+
+    private async Task OpenEditor(PersonRes? person)
+    {
+        if (person == null)
+            return;
+
+        var id = ProjectedValueHelper.GetValue(person, "Id");
+        if (id == null)
+            return;
+
+        var personRes = await ApiClient.GetAsAsync<PersonRes>($"{Constants.Person.Route}/{id}");
+        if (personRes == null)
+            return;
+
+        var dialogParameters = new DialogParameters<PersonForm> { { i => i.Person, personRes } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<PersonForm>($"Edit {personRes.FullName}", dialogParameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled && _dataGrid is not null)
+            await _dataGrid.RefreshData();
+    }
+
+}

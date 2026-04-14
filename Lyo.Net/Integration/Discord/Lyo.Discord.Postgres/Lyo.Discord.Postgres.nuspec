@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Discord.Postgres</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>PostgreSQL persistence for Discord entities (EF Core, schema discord).</description>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>discord postgres postgresql entityframework ef</tags>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Api" version="[1.0.71,)"/>
+                <dependency id="Lyo.Config" version="[1.0.71,)"/>
+                <dependency id="Lyo.Discord.Models" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Postgres" version="[1.0.71,)"/>
+                <dependency id="Mapster" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.Hosting.Abstractions" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

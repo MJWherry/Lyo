@@ -1,0 +1,14 @@
+@using Lyo.Web.Components.ChipInput
+@using MudBlazor
+<MudStack Spacing="1">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Select</MudText>
+    <LyoChipInput Values="@SelectAll"
+                  ValuesChanged="@OnValuesChanged"
+                  SelectedValues="@Select"
+                  SelectedValuesChanged="@OnSelectedChanged"
+                  SelectableChips="true"
+                  ValidationPattern="^[a-zA-Z.]+$"
+                  ValidationErrorMessage="Only letters (a-z, A-Z) and dots are allowed."
+                  Placeholder="Property path (e.g. Id or JobDefinition.Name), press Enter to add"/>
+</MudStack>
+

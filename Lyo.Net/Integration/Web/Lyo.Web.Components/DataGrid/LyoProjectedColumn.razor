@@ -1,0 +1,94 @@
+@using MudBlazor
+<TemplateColumn T="object?"
+                Title="@Title"
+                Sortable="@Sortable"
+                SortFunc="@GetSortValue"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                Align="@Align"
+                Tag="@GetApiSortKey()"
+                Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
+                HiddenChanged="@OnHiddenChanged">
+    <CellTemplate Context="cell">
+        @{
+            string displayText;
+            if (FormattedValue != null) {
+                var raw = ProjectedValueHelper.GetValue(cell.Item, Field);
+                displayText = FormattedValue(cell.Item, raw);
+            }
+            else {
+                displayText = ProjectedValueHelper.GetDisplayValue(cell.Item, Field);
+            }
+        }
+        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+            <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+        }
+        else {
+            @displayText
+        }
+    </CellTemplate>
+</TemplateColumn>
+
+@code {
+
+    [CascadingParameter(Name = "LyoDataGridQuickSearchText")]
+    public string? QuickSearchText { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridProjectedColumnRegistry")]
+    public ProjectedColumnRegistry? ColumnRegistry { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridColumnVisibilityBinder")]
+    public ColumnVisibilityBinder? VisibilityBinder { get; set; }
+
+    /// <summary>Field name in the projected result (e.g. "Id", "FirstName", "Addresses.Count"). Used for display and API sort key.</summary>
+    [Parameter]
+    [EditorRequired]
+    public required string Field { get; set; }
+
+    /// <summary>Sort key sent to API. Defaults to Field. Use when API expects different name than Field.</summary>
+    [Parameter]
+    public string? SortKey { get; set; }
+
+    /// <summary>When set, this column participates in quick search highlighting. Use the same property name as in QuickSearchProperties.</summary>
+    [Parameter]
+    public string? QuickSearchPropertyName { get; set; }
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public bool Sortable { get; set; } = true;
+
+    [Parameter]
+    public SortDirection InitialDirection { get; set; } = SortDirection.None;
+
+    [Parameter]
+    public bool Hideable { get; set; } = true;
+
+    [Parameter]
+    public bool Resizable { get; set; } = true;
+
+    [Parameter]
+    public Align Align { get; set; } = Align.Inherit;
+
+    /// <summary>When true, the column starts hidden (and stays out of the query select) until the user shows it, unless visibility was restored from the client store.</summary>
+    [Parameter]
+    public bool HiddenByDefault { get; set; }
+
+    /// <summary>
+    /// When set, builds the cell text from the projected row and raw field value (same object <see cref="ProjectedValueHelper.GetValue"/> uses).
+    /// Use when the default string representation is not enough (e.g. human-readable file size). Ignore the row with <c>_</c> if only the value matters.
+    /// </summary>
+    [Parameter]
+    public Func<object?, object?, string>? FormattedValue { get; set; }
+
+    protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault);
+
+    private void OnHiddenChanged(bool hidden) => VisibilityBinder?.SetHidden(Field, hidden);
+
+    private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
+
+    internal string GetApiSortKey() => SortKey ?? Field;
+
+}

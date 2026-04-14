@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
+    </ItemGroup>
+
+</Project>

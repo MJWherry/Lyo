@@ -1,0 +1,101 @@
+::deep .lyo-json-editor-toolbar {
+    padding: 4px 0;
+}
+
+::deep .lyo-json-editor-textarea {
+    font-family: ui-monospace, monospace !important;
+    min-height: 200px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: var(--mud-palette-background);
+    color: var(--mud-palette-text-primary);
+    resize: vertical;
+}
+
+::deep .lyo-json-editor-textarea:focus {
+    outline: none;
+    border-color: var(--mud-palette-primary);
+    box-shadow: 0 0 0 2px rgba(var(--mud-palette-primary-rgb), 0.25);
+}
+
+::deep .lyo-json-editor-raw-readonly {
+    margin: 0;
+    padding: 8px 10px;
+    min-height: 200px;
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--mud-palette-surface) 96%, var(--mud-palette-text-primary) 4%);
+    font-family: ui-monospace, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+::deep .lyo-json-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+::deep .lyo-json-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 120px;
+}
+
+::deep .lyo-json-search-wrap .lyo-json-search-field {
+    width: 100%;
+}
+
+::deep .lyo-json-search-wrap .lyo-json-search-field .mud-input-control {
+    margin-top: 0;
+}
+
+::deep .lyo-json-search-wrap .lyo-json-search-field input {
+    padding-right: 46px !important;
+    font-size: 0.75rem;
+}
+
+::deep .lyo-json-search-nav {
+    position: absolute;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+}
+
+::deep .lyo-json-search-nav-up {
+    top: 4px;
+}
+
+::deep .lyo-json-search-nav-down {
+    bottom: 4px;
+}
+
+::deep .lyo-json-search-count {
+    min-width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+::deep .lyo-json-toolbar-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--mud-palette-lines-default);
+    flex-shrink: 0;
+}
+
+::deep .lyo-json-toolbar-mode {
+    flex-shrink: 0;
+}
+
+::deep .lyo-json-toolbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    min-width: 0;
+}

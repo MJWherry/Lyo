@@ -1,0 +1,294 @@
+@using System.Globalization
+@using Lyo.Metrics
+@using Lyo.Metrics.Models
+@inject IMetrics Metrics
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Metrics Viewer</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Inspect live in-memory counters, gauges, histograms, and recent metric events recorded by the gateway.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Total Recorded</MudText>
+                    <MudText Typo="Typo.h6">@(_snapshot?.TotalMetricsRecorded.ToString("n0", CultureInfo.InvariantCulture) ?? "0")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Metric Sets</MudText>
+                    <MudText Typo="Typo.h6">@($"{_snapshot?.Counters.Count ?? 0} C / {_snapshot?.Gauges.Count ?? 0} G / {_snapshot?.Histograms.Count ?? 0} H")</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-3" Outlined="true">
+                    <MudText Typo="Typo.subtitle2">Last Refresh</MudText>
+                    <MudText Typo="Typo.h6">@(_lastRefresh == default ? "(not loaded)" : _lastRefresh.ToString("u"))</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudStack Spacing="2">
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudTextField T="string"
+                                  Label="Filter by name or tag"
+                                  Immediate="true"
+                                  Clearable="true"
+                                  @bind-Value="_filterText"/>
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Outlined" OnClick="RefreshAsync" Disabled="@_busy">Refresh</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearAsync" Disabled="@(_busy || MetricsStore == null)">Clear Metrics</MudButton>
+                    </MudStack>
+                </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                    <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                }
+
+                @if (MetricsStore == null) {
+                    <MudAlert Severity="Severity.Warning" Dense="true">
+                        The current `IMetrics` implementation is not the in-memory `MetricsService`, so this viewer cannot inspect live metrics.
+                    </MudAlert>
+                }
+                else {
+                    <MudTabs Rounded="true" PanelClass="pa-0">
+                        <MudTabPanel Text="@($"Counters ({FilteredCounters.Count})")">
+                            @if (FilteredCounters.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No counter metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                        <th>Tags</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var entry in FilteredCounters) {
+                                        <tr>
+                                            <td>@entry.Value.Name</td>
+                                            <td>@entry.Value.Value.ToString("n0", CultureInfo.InvariantCulture)</td>
+                                            <td>@FormatTags(entry.Value.Tags)</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Gauges ({FilteredGauges.Count})")">
+                            @if (FilteredGauges.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No gauge metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                        <th>Updated</th>
+                                        <th>Tags</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var entry in FilteredGauges) {
+                                        <tr>
+                                            <td>@entry.Value.Name</td>
+                                            <td>@entry.Value.Value.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                            <td>@entry.Value.LastUpdated.ToString("u")</td>
+                                            <td>@FormatTags(entry.Value.Tags)</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Histograms ({FilteredHistograms.Count})")">
+                            @if (FilteredHistograms.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No histogram metrics match the current filter.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Count</th>
+                                        <th>Min</th>
+                                        <th>Avg</th>
+                                        <th>Max</th>
+                                        <th>Tags</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var entry in FilteredHistograms) {
+                                        <tr>
+                                            <td>@entry.Value.Name</td>
+                                            <td>@entry.Value.Count.ToString("n0", CultureInfo.InvariantCulture)</td>
+                                            <td>@entry.Value.Min.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                            <td>@entry.Value.Average.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                            <td>@entry.Value.Max.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                            <td>@FormatTags(entry.Value.Tags)</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="@($"Events ({FilteredEvents.Count})")">
+                            @if (FilteredEvents.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No metric events match the current filter.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Value</th>
+                                        <th>Tags</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var metric in FilteredEvents) {
+                                        <tr>
+                                            <td>@metric.Timestamp.ToString("u")</td>
+                                            <td>@metric.Name</td>
+                                            <td>@metric.Type</td>
+                                            <td>@metric.Value.ToString("0.###", CultureInfo.InvariantCulture)</td>
+                                            <td style="white-space: pre-wrap; word-break: break-word;">@FormatEventTags(metric)</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudTabPanel>
+                    </MudTabs>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private string _filterText = string.Empty;
+    private DateTime _lastRefresh;
+    private MetricsSnapshot? _snapshot;
+    private List<MetricData> _events = [];
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    private MetricsService? MetricsStore => Metrics as MetricsService;
+
+    private List<KeyValuePair<string, CounterData>> FilteredCounters => (_snapshot?.Counters ?? []).Where(MatchesFilter).OrderBy(i => i.Value.Name).ToList();
+
+    private List<KeyValuePair<string, GaugeData>> FilteredGauges => (_snapshot?.Gauges ?? []).Where(MatchesFilter).OrderBy(i => i.Value.Name).ToList();
+
+    private List<KeyValuePair<string, HistogramData>> FilteredHistograms => (_snapshot?.Histograms ?? []).Where(MatchesFilter).OrderBy(i => i.Value.Name).ToList();
+
+    private List<MetricData> FilteredEvents => _events.Where(MatchesFilter).OrderByDescending(i => i.Timestamp).ToList();
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+
+    private Task RefreshAsync()
+    {
+        if (MetricsStore == null) {
+            SetStatus("Metrics viewer requires the in-memory MetricsService implementation.", Severity.Warning);
+            _snapshot = null;
+            _events = [];
+            return Task.CompletedTask;
+        }
+
+        _busy = true;
+        try {
+            _snapshot = MetricsStore.Export();
+            _events = MetricsStore.GetEvents(250).OrderByDescending(i => i.Timestamp).ToList();
+            _lastRefresh = DateTime.UtcNow;
+            SetStatus("Metrics refreshed.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task ClearAsync()
+    {
+        if (MetricsStore == null) {
+            SetStatus("Metrics viewer requires the in-memory MetricsService implementation.", Severity.Warning);
+            return Task.CompletedTask;
+        }
+
+        MetricsStore.Clear();
+        _snapshot = MetricsStore.Export();
+        _events = [];
+        _lastRefresh = DateTime.UtcNow;
+        SetStatus("Metrics cleared.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private bool MatchesFilter(KeyValuePair<string, CounterData> entry) => MatchesFilter(entry.Value.Name, entry.Value.Tags);
+
+    private bool MatchesFilter(KeyValuePair<string, GaugeData> entry) => MatchesFilter(entry.Value.Name, entry.Value.Tags);
+
+    private bool MatchesFilter(KeyValuePair<string, HistogramData> entry) => MatchesFilter(entry.Value.Name, entry.Value.Tags);
+
+    private bool MatchesFilter(MetricData entry) => MatchesFilter(entry.Name, entry.Tags);
+
+    private bool MatchesFilter(string name, Dictionary<string, string>? tags)
+    {
+        if (string.IsNullOrWhiteSpace(_filterText))
+            return true;
+
+        var filter = _filterText.Trim();
+        if (name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return tags?.Any(i => i.Key.Contains(filter, StringComparison.OrdinalIgnoreCase) || i.Value.Contains(filter, StringComparison.OrdinalIgnoreCase)) == true;
+    }
+
+    private static string FormatTags(Dictionary<string, string>? tags) => tags == null || tags.Count == 0 ? "(none)" : string.Join(", ", tags.OrderBy(i => i.Key).Select(i => $"{i.Key}={i.Value}"));
+
+    private static string FormatEventTags(MetricData metric)
+    {
+        var tags = metric.Tags == null || metric.Tags.Count == 0 ? "(none)" : string.Join(", ", metric.Tags.OrderBy(i => i.Key).Select(i => $"{i.Key}={i.Value}"));
+        return metric.Exception == null ? tags : $"{tags} | exception={metric.Exception.Message}";
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

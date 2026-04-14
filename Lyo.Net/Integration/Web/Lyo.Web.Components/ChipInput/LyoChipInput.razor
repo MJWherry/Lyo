@@ -1,0 +1,73 @@
+@using MudBlazor
+@implements IAsyncDisposable
+<div class="lyo-chip-input d-flex flex-wrap gap-2 align-center"
+     style="min-height: 40px; padding: 4px 12px; border: 1px solid @(_lastValidationError is not null ? "var(--mud-palette-error)" : "var(--mud-palette-lines-default)"); border-radius: 4px; background: var(--mud-palette-background); color: var(--mud-palette-text-primary);">
+    @foreach (var item in EnumeratedValues) {
+        var isSelected = SelectableChips && (SelectedValues?.ToHashSet() ?? new HashSet<string>()).Contains(item);
+        var itemCopy = item;
+        @if (ShowCloseIcon) {
+            <MudChip T="string"
+                     Size="Size.Small"
+                     OnClose="@(() => RemoveItem(itemCopy))"
+                     CloseIcon="@Icons.Material.Filled.Cancel"
+                     CloseIconColor="Color.Default"
+                     Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                     Color="@(isSelected ? Color.Primary : Color.Default)"
+                     OnClick="@(SelectableChips ? EventCallback.Factory.Create(this, () => ToggleSelection(itemCopy)) : default)"
+                     Style="@(SelectableChips ? "cursor: pointer;" : "")"
+                     Class="@(SelectableChips && !isSelected ? "lyo-chip-disabled" : "")">
+                @item
+            </MudChip>
+        }
+        else {
+            <MudChip T="string"
+                     Size="Size.Small"
+                     Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                     Color="@(isSelected ? Color.Primary : Color.Default)"
+                     OnClick="@(SelectableChips ? EventCallback.Factory.Create(this, () => ToggleSelection(itemCopy)) : default)"
+                     Style="@(SelectableChips ? "cursor: pointer;" : "")"
+                     Class="@(SelectableChips && !isSelected ? "lyo-chip-disabled" : "")">
+                @item
+            </MudChip>
+        }
+    }
+    <div @ref="_rootRef"
+         class="flex-grow-1"
+         style="min-width: 120px;">
+        <MudTextField T="string"
+                      @key="_inputKey"
+                      @ref="_textFieldRef"
+                      Value="@_inputValue"
+                      ValueChanged="OnTextValueChanged"
+                      Placeholder="@Placeholder"
+                      Immediate="true"
+                      Variant="Variant.Text"
+                      Margin="Margin.None"
+                      Dense="true"
+                      DisableUnderLine="true"
+                      OnKeyDown="OnKeyDown"
+                      Class="lyo-chip-input-field"
+                      Style="width: 100%;"/>
+    </div>
+</div>
+@if (_lastValidationError is not null) {
+    <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1 ml-1">@_lastValidationError</MudText>
+}
+
+<style>
+    .lyo-chip-input .lyo-chip-disabled {
+        text-decoration: line-through;
+    }
+
+    .lyo-chip-input .lyo-chip-input-field {
+        margin-top: 0 !important;
+    }
+
+    .lyo-chip-input .lyo-chip-input-field .mud-input-slot {
+        background: transparent;
+    }
+
+    .lyo-chip-input .lyo-chip-input-field input {
+        font-size: 0.875rem;
+    }
+</style>

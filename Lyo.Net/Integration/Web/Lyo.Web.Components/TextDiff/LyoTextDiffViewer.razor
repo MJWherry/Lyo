@@ -1,0 +1,446 @@
+@using MudBlazor
+<div @ref="_rootRef">
+    <MudPaper Class="lyo-textdiff pa-2" Outlined="true">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+            @if (!string.IsNullOrWhiteSpace(Title)) {
+                <MudText Typo="Typo.subtitle2">@Title</MudText>
+            }
+            else {
+                <span></span>
+            }
+            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton OnClick="@(() => SetViewMode(DiffViewMode.SideBySide))" Color="@(CurrentView == DiffViewMode.SideBySide ? Color.Primary : Color.Default)">Side by side
+                </MudButton>
+                <MudButton OnClick="@(() => SetViewMode(DiffViewMode.AboveBelow))" Color="@(CurrentView == DiffViewMode.AboveBelow ? Color.Primary : Color.Default)">Above/below
+                </MudButton>
+                <MudButton OnClick="@(() => SetViewMode(DiffViewMode.Unified))" Color="@(CurrentView == DiffViewMode.Unified ? Color.Primary : Color.Default)">Unified</MudButton>
+            </MudButtonGroup>
+        </MudStack>
+
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+                @if (!IsLiveEditorView()) {
+                    <div class="lyo-textdiff-search-wrap">
+                        <MudTextField T="string"
+                                      Value="@_searchText"
+                                      ValueChanged="@OnSearchTextChangedAsync"
+                                      OnKeyDown="@OnSearchKeyDown"
+                                      Placeholder="Search"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Immediate="true"
+                                      Margin="Margin.Dense"
+                                      Class="lyo-textdiff-search-field"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                                       Size="Size.Small"
+                                       Disabled="@(_searchTotal == 0)"
+                                       Class="lyo-textdiff-search-nav lyo-textdiff-search-nav-up"
+                                       OnClick="@PreviousSearch"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                                       Size="Size.Small"
+                                       Disabled="@(_searchTotal == 0)"
+                                       Class="lyo-textdiff-search-nav lyo-textdiff-search-nav-down"
+                                       OnClick="@NextSearch"/>
+                    </div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="lyo-textdiff-search-count">
+                        @($"{_searchCurrent}/{_searchTotal}")
+                    </MudText>
+
+                    <MudDivider Vertical="true" FlexItem="true"/>
+                }
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                               Size="Size.Small"
+                               Disabled="@(_diffChunkTotal == 0)"
+                               OnClick="@PreviousDiff"/>
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                               Size="Size.Small"
+                               Disabled="@(_diffChunkTotal == 0)"
+                               OnClick="@NextDiff"/>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="lyo-textdiff-search-count">
+                    @($"{_currentDiffChunk}/{_diffChunkTotal}")
+                </MudText>
+            </MudStack>
+
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@CollapseUnchanged">Collapse unchanged</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@ExpandAll">Expand all</MudButton>
+            </MudStack>
+        </MudStack>
+
+        @if (CurrentView == DiffViewMode.SideBySide && !_collapseUnchanged) {
+            <div class="lyo-textdiff-split @(_isResizingSplit ? "is-resizing" : "")"
+                 data-lyo-textdiff-hsplit
+                 style="@HorizontalSplitCssVars">
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-left">
+                    <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
+                        <span class="lyo-textdiff-header-title">Left</span>
+                        <div class="lyo-textdiff-header-search">
+                            <MudTextField T="string"
+                                          Value="@_leftSearchText"
+                                          ValueChanged="@OnLeftSearchTextChangedAsync"
+                                          OnKeyDown="@(e => OnEditorSearchKeyDown(e, true))"
+                                          Placeholder="Search"
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          Class="lyo-textdiff-header-search-field"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(_leftSearchTotal == 0)" OnClick="@PreviousLeftSearch"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(_leftSearchTotal == 0)" OnClick="@NextLeftSearch"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{_leftSearchCurrent}/{_leftSearchTotal}")</MudText>
+                        </div>
+                    </div>
+                    <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
+                        <div class="lyo-textdiff-gutter" data-role="gutter">
+                            @for (var line = 1; line <= LeftLineCount; line++) {
+                                <div class="lyo-textdiff-gutter-line">@line</div>
+                            }
+                        </div>
+                        <div class="lyo-textdiff-editor-wrap">
+                            <div class="lyo-textdiff-highlight" data-role="highlight">
+                                @for (var idx = 0; idx < LeftLineCount; idx++) {
+                                    <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(_leftLineTypes, idx))}")"></div>
+                                }
+                            </div>
+                            <div class="lyo-textdiff-content" data-role="content">
+                                @foreach (var line in _leftPaneLines) {
+                                    <div class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
+                                        @foreach (var segment in line.Segments) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <textarea class="lyo-textdiff-textarea"
+                                      data-role="textarea"
+                                      data-editor-index="0"
+                                      spellcheck="false"
+                                      wrap="off"
+                                      value="@_leftEditorText"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="lyo-textdiff-splitter"
+                     role="separator"
+                     title="Resize left/right panes"></div>
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-right">
+                    <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
+                        <span class="lyo-textdiff-header-title">Right</span>
+                        <div class="lyo-textdiff-header-search">
+                            <MudTextField T="string"
+                                          Value="@_rightSearchText"
+                                          ValueChanged="@OnRightSearchTextChangedAsync"
+                                          OnKeyDown="@(e => OnEditorSearchKeyDown(e, false))"
+                                          Placeholder="Search"
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          Class="lyo-textdiff-header-search-field"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(_rightSearchTotal == 0)" OnClick="@PreviousRightSearch"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(_rightSearchTotal == 0)" OnClick="@NextRightSearch"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{_rightSearchCurrent}/{_rightSearchTotal}")</MudText>
+                        </div>
+                    </div>
+                    <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
+                        <div class="lyo-textdiff-gutter" data-role="gutter">
+                            @for (var line = 1; line <= RightLineCount; line++) {
+                                <div class="lyo-textdiff-gutter-line">@line</div>
+                            }
+                        </div>
+                        <div class="lyo-textdiff-editor-wrap">
+                            <div class="lyo-textdiff-highlight" data-role="highlight">
+                                @for (var idx = 0; idx < RightLineCount; idx++) {
+                                    <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(_rightLineTypes, idx))}")"></div>
+                                }
+                            </div>
+                            <div class="lyo-textdiff-content" data-role="content">
+                                @foreach (var line in _rightPaneLines) {
+                                    <div class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
+                                        @foreach (var segment in line.Segments) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <textarea class="lyo-textdiff-textarea"
+                                      data-role="textarea"
+                                      data-editor-index="1"
+                                      spellcheck="false"
+                                      wrap="off"
+                                      value="@_rightEditorText"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (CurrentView == DiffViewMode.AboveBelow && !_collapseUnchanged) {
+            <div class="lyo-textdiff-split lyo-textdiff-split-vertical @(_isResizingSplit ? "is-resizing" : "")"
+                 data-lyo-textdiff-vsplit
+                 style="@VerticalSplitCssVars">
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-top">
+                    <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
+                        <span class="lyo-textdiff-header-title">Left</span>
+                        <div class="lyo-textdiff-header-search">
+                            <MudTextField T="string"
+                                          Value="@_leftSearchText"
+                                          ValueChanged="@OnLeftSearchTextChangedAsync"
+                                          OnKeyDown="@(e => OnEditorSearchKeyDown(e, true))"
+                                          Placeholder="Search"
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          Class="lyo-textdiff-header-search-field"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(_leftSearchTotal == 0)" OnClick="@PreviousLeftSearch"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(_leftSearchTotal == 0)" OnClick="@NextLeftSearch"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{_leftSearchCurrent}/{_leftSearchTotal}")</MudText>
+                        </div>
+                    </div>
+                    <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
+                        <div class="lyo-textdiff-gutter" data-role="gutter">
+                            @for (var line = 1; line <= LeftLineCount; line++) {
+                                <div class="lyo-textdiff-gutter-line">@line</div>
+                            }
+                        </div>
+                        <div class="lyo-textdiff-editor-wrap">
+                            <div class="lyo-textdiff-highlight" data-role="highlight">
+                                @for (var idx = 0; idx < LeftLineCount; idx++) {
+                                    <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(_leftLineTypes, idx))}")"></div>
+                                }
+                            </div>
+                            <div class="lyo-textdiff-content" data-role="content">
+                                @foreach (var line in _leftPaneLines) {
+                                    <div class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
+                                        @foreach (var segment in line.Segments) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <textarea class="lyo-textdiff-textarea"
+                                      data-role="textarea"
+                                      data-editor-index="0"
+                                      spellcheck="false"
+                                      wrap="off"
+                                      value="@_leftEditorText"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="lyo-textdiff-splitter lyo-textdiff-splitter-horizontal"
+                     role="separator"
+                     title="Resize top/bottom panes"></div>
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-bottom">
+                    <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
+                        <span class="lyo-textdiff-header-title">Right</span>
+                        <div class="lyo-textdiff-header-search">
+                            <MudTextField T="string"
+                                          Value="@_rightSearchText"
+                                          ValueChanged="@OnRightSearchTextChangedAsync"
+                                          OnKeyDown="@(e => OnEditorSearchKeyDown(e, false))"
+                                          Placeholder="Search"
+                                          Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Immediate="true"
+                                          Margin="Margin.Dense"
+                                          Class="lyo-textdiff-header-search-field"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(_rightSearchTotal == 0)" OnClick="@PreviousRightSearch"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(_rightSearchTotal == 0)" OnClick="@NextRightSearch"/>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{_rightSearchCurrent}/{_rightSearchTotal}")</MudText>
+                        </div>
+                    </div>
+                    <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
+                        <div class="lyo-textdiff-gutter" data-role="gutter">
+                            @for (var line = 1; line <= RightLineCount; line++) {
+                                <div class="lyo-textdiff-gutter-line">@line</div>
+                            }
+                        </div>
+                        <div class="lyo-textdiff-editor-wrap">
+                            <div class="lyo-textdiff-highlight" data-role="highlight">
+                                @for (var idx = 0; idx < RightLineCount; idx++) {
+                                    <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(_rightLineTypes, idx))}")"></div>
+                                }
+                            </div>
+                            <div class="lyo-textdiff-content" data-role="content">
+                                @foreach (var line in _rightPaneLines) {
+                                    <div class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
+                                        @foreach (var segment in line.Segments) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <textarea class="lyo-textdiff-textarea"
+                                      data-role="textarea"
+                                      data-editor-index="1"
+                                      spellcheck="false"
+                                      wrap="off"
+                                      value="@_rightEditorText"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (CurrentView == DiffViewMode.SideBySide) {
+            <div class="lyo-textdiff-collapsed-grid" data-role="rendered-editor-scroll">
+                <div class="lyo-textdiff-header">Left</div>
+                <div class="lyo-textdiff-header">Right</div>
+                @foreach (var item in _visibleEditorItems) {
+                    if (item.Kind == EditorDisplayItemKind.Collapsed) {
+                        <div class="lyo-textdiff-collapse-row lyo-textdiff-span-2">
+                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExpandEditorBlock(item.BlockKey!))">
+                                @($"{item.HiddenLineCount} hidden line(s)")
+                            </MudButton>
+                        </div>
+                    }
+                    else if (item.Kind == EditorDisplayItemKind.ExpandedControl) {
+                        <div class="lyo-textdiff-collapse-row lyo-textdiff-span-2">
+                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => CollapseEditorBlock(item.BlockKey!))">
+                                Collapse block
+                            </MudButton>
+                        </div>
+                    }
+                    else {
+                        var row = item.Row!;
+                        <div class="@($"lyo-textdiff-rendered-line {GetUnifiedClass(row.LeftType)} {(item.IsSearchMatch ? "search-current" : string.Empty)}")"
+                             data-editor-row-index="@item.RowIndex">
+                            <span class="lyo-textdiff-ln">@FormatLineNumber(row.LeftLineNumber)</span>
+                            <span class="lyo-textdiff-text">
+                            @foreach (var segment in HighlightSearch(row.LeftSegments)) {
+                                    <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                }
+                        </span>
+                        </div>
+                        <div class="@($"lyo-textdiff-rendered-line {GetUnifiedClass(row.RightType)} {(item.IsSearchMatch ? "search-current" : string.Empty)}")"
+                             data-editor-row-index="@item.RowIndex">
+                            <span class="lyo-textdiff-ln">@FormatLineNumber(row.RightLineNumber)</span>
+                            <span class="lyo-textdiff-text">
+                            @foreach (var segment in HighlightSearch(row.RightSegments)) {
+                                    <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                }
+                        </span>
+                        </div>
+                    }
+                }
+            </div>
+        }
+        else if (CurrentView == DiffViewMode.AboveBelow) {
+            <div class="lyo-textdiff-split lyo-textdiff-split-vertical @(_isResizingSplit ? "is-resizing" : "")"
+                 data-lyo-textdiff-vsplit
+                 style="@VerticalSplitCssVars">
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-top">
+                    <div class="lyo-textdiff-header">Left</div>
+                    <div class="lyo-textdiff-rendered-scroll" data-role="rendered-editor-scroll">
+                        @foreach (var item in _visibleEditorItems) {
+                            if (item.Kind == EditorDisplayItemKind.Collapsed) {
+                                <div class="lyo-textdiff-collapse-row">
+                                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExpandEditorBlock(item.BlockKey!))">
+                                        @($"{item.HiddenLineCount} hidden line(s)")
+                                    </MudButton>
+                                </div>
+                            }
+                            else if (item.Kind == EditorDisplayItemKind.ExpandedControl) {
+                                <div class="lyo-textdiff-collapse-row">
+                                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => CollapseEditorBlock(item.BlockKey!))">
+                                        Collapse block
+                                    </MudButton>
+                                </div>
+                            }
+                            else {
+                                var row = item.Row!;
+                                <div class="@($"lyo-textdiff-rendered-line {GetUnifiedClass(row.LeftType)} {(item.IsSearchMatch ? "search-current" : string.Empty)}")"
+                                     data-editor-row-index="@item.RowIndex">
+                                    <span class="lyo-textdiff-ln">@FormatLineNumber(row.LeftLineNumber)</span>
+                                    <span class="lyo-textdiff-text">
+                                    @foreach (var segment in HighlightSearch(row.LeftSegments)) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+                <div class="lyo-textdiff-splitter lyo-textdiff-splitter-horizontal"
+                     role="separator"
+                     title="Resize top/bottom panes"></div>
+                <div class="lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-bottom">
+                    <div class="lyo-textdiff-header">Right</div>
+                    <div class="lyo-textdiff-rendered-scroll" data-role="rendered-editor-scroll">
+                        @foreach (var item in _visibleEditorItems) {
+                            if (item.Kind == EditorDisplayItemKind.Collapsed) {
+                                <div class="lyo-textdiff-collapse-row">
+                                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExpandEditorBlock(item.BlockKey!))">
+                                        @($"{item.HiddenLineCount} hidden line(s)")
+                                    </MudButton>
+                                </div>
+                            }
+                            else if (item.Kind == EditorDisplayItemKind.ExpandedControl) {
+                                <div class="lyo-textdiff-collapse-row">
+                                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => CollapseEditorBlock(item.BlockKey!))">
+                                        Collapse block
+                                    </MudButton>
+                                </div>
+                            }
+                            else {
+                                var row = item.Row!;
+                                <div class="@($"lyo-textdiff-rendered-line {GetUnifiedClass(row.RightType)} {(item.IsSearchMatch ? "search-current" : string.Empty)}")"
+                                     data-editor-row-index="@item.RowIndex">
+                                    <span class="lyo-textdiff-ln">@FormatLineNumber(row.RightLineNumber)</span>
+                                    <span class="lyo-textdiff-text">
+                                    @foreach (var segment in HighlightSearch(row.RightSegments)) {
+                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                        }
+                                </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else {
+            <div class="lyo-textdiff-unified">
+                <div class="lyo-textdiff-header">Unified</div>
+                <div class="lyo-textdiff-unified-scroll" data-role="unified-scroll">
+                    @foreach (var item in _visibleUnifiedItems) {
+                        if (item.Kind == UnifiedDisplayItemKind.Collapsed) {
+                            <div class="lyo-textdiff-collapse-row">
+                                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => ExpandUnifiedBlock(item.BlockKey!))">
+                                    @($"{item.HiddenLineCount} hidden line(s)")
+                                </MudButton>
+                            </div>
+                        }
+                        else if (item.Kind == UnifiedDisplayItemKind.ExpandedControl) {
+                            <div class="lyo-textdiff-collapse-row">
+                                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => CollapseUnifiedBlock(item.BlockKey!))">
+                                    Collapse block
+                                </MudButton>
+                            </div>
+                        }
+                        else {
+                            var row = item.Row!;
+                            <div class="@($"lyo-textdiff-cell lyo-textdiff-unified-row {GetUnifiedClass(row.Type)} {(item.IsSearchMatch ? "search-current" : string.Empty)}")"
+                                 data-row-index="@item.RowIndex">
+                                <span class="lyo-textdiff-ln">@FormatLineNumber(row.OldLineNumber)</span>
+                                <span class="lyo-textdiff-ln">@FormatLineNumber(row.NewLineNumber)</span>
+                                <span class="lyo-textdiff-sign">@row.Prefix</span>
+                                <span class="lyo-textdiff-text">
+                                @foreach (var segment in row.Segments) {
+                                        <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                    }
+                            </span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </MudPaper>
+</div>
+

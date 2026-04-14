@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.Pdf.Web.Components.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Pdf\Lyo.Pdf.csproj"/>
+        <ProjectReference Include="..\Lyo.Pdf.Models\Lyo.Pdf.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\WebRenderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor" Version="[9,)"/>
+    </ItemGroup>
+
+</Project>

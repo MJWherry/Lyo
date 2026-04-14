@@ -1,0 +1,156 @@
+@using Lyo.Api.Models.Common.Request
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.QueryNodeEditor
+@using MudBlazor
+<MudStack Spacing="4">
+    <MudPaper Elevation="1" Class="pa-4">
+        @{
+            var score = QueryRequestScorer.ScoreDetailed(Request);
+        }
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.SpaceBetween"
+                  Spacing="2"
+                  Wrap="Wrap.Wrap">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.h6">Query Score: @score.TotalScore QS</MudText>
+                <MudTooltip Placement="Placement.Bottom">
+                    <ChildContent>
+                        <MudIcon Icon="@Icons.Material.Filled.Info"
+                                 Size="Size.Small"
+                                 Style="opacity:0.75; cursor:help;"/>
+                    </ChildContent>
+                    <TooltipContent>
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.caption"><b>Total:</b> @score.TotalScore</MudText>
+                            <MudDivider Class="my-1"/>
+                            <MudText Typo="Typo.caption">Paging: @score.PagingScore</MudText>
+                            <MudText Typo="Typo.caption">Keys: @score.KeysScore</MudText>
+                            <MudText Typo="Typo.caption">Sort: @score.SortScore</MudText>
+                            <MudText Typo="Typo.caption">Include: @score.IncludeScore</MudText>
+                            <MudText Typo="Typo.caption">Computed: @score.ComputedFieldsScore</MudText>
+                            <MudText Typo="Typo.caption">Count Mode: @score.TotalCountModeScore</MudText>
+                            <MudText Typo="Typo.caption">Query Node: @score.WhereClauseScore</MudText>
+                        </MudStack>
+                    </TooltipContent>
+                </MudTooltip>
+            </MudStack>
+            @if (ShowEndpointToggle) {
+                <MudButtonGroup OverrideStyles="false"
+                                Variant="Variant.Outlined"
+                                Size="Size.Small"
+                                Class="query-builder-endpoint-toggle">
+                    <MudButton OnClick="@(() => OnEndpointToggleClicked(false))"
+                               Variant="@(!UseQueryProject ? Variant.Filled : Variant.Outlined)"
+                               Color="@(!UseQueryProject ? Color.Primary : Color.Default)">/Query</MudButton>
+                    <MudButton OnClick="@(() => OnEndpointToggleClicked(true))"
+                               Variant="@(UseQueryProject ? Variant.Filled : Variant.Outlined)"
+                               Color="@(UseQueryProject ? Color.Primary : Color.Default)">/QueryProject</MudButton>
+                </MudButtonGroup>
+            }
+        </MudStack>
+    </MudPaper>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Pagination</MudText>
+                <StartAmountFields Start="@Request.Start"
+                                   Amount="@Request.Amount"
+                                   ValueChanged="@OnStartAmountChanged"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Options</MudText>
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Spacing="1">
+                        <MudSelect T="QueryTotalCountMode"
+                                   Value="@Request.Options.TotalCountMode"
+                                   ValueChanged="@OnTotalCountModeChanged"
+                                   Label="Total Count Mode"
+                                   Variant="Variant.Outlined"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   Style="min-width: 140px;">
+                            <MudSelectItem Value="@QueryTotalCountMode.Exact">Exact</MudSelectItem>
+                            <MudSelectItem Value="@QueryTotalCountMode.None">None</MudSelectItem>
+                            <MudSelectItem Value="@QueryTotalCountMode.HasMore">HasMore</MudSelectItem>
+                        </MudSelect>
+                        <MudSelect T="QueryIncludeFilterMode"
+                                   Value="@Request.Options.IncludeFilterMode"
+                                   ValueChanged="@OnIncludeFilterModeChanged"
+                                   Label="Include Filter Mode"
+                                   Variant="Variant.Outlined"
+                                   Dense
+                                   Margin="Margin.Dense"
+                                   Style="min-width: 140px;">
+                            <MudSelectItem Value="@QueryIncludeFilterMode.Full">Full</MudSelectItem>
+                            <MudSelectItem Value="@QueryIncludeFilterMode.MatchedOnly">MatchedOnly</MudSelectItem>
+                        </MudSelect>
+                    </MudStack>
+                    <MudSwitch T="bool"
+                               Value="@GetZipSiblingCollectionSelections()"
+                               ValueChanged="@OnZipSiblingCollectionSelectionsChanged"
+                               Color="Color.Primary"
+                               Label="Zip sibling collection fields (QueryProject)"
+                               Dense/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        When on, multiple <code>Select</code> paths under the same collection merge into one array of objects per row.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Select</MudText>
+                <SelectList Select="@(Request.Select ?? [])"
+                            SelectAll="@(SelectAll ?? Request.Select ?? [])"
+                            SelectChanged="@OnSelectChanged"
+                            SelectAllChanged="@OnSelectAllChanged"/>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Computed Fields</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    SmartFormat templates applied to projected rows, e.g. Name=FullName, Template=&#123;LastName&#125;, &#123;FirstName&#125;
+                </MudText>
+                <ComputedFieldsList Items="@(Request.ComputedFields ?? [])"
+                                    ItemsChanged="@OnComputedFieldsChanged"/>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudGrid Spacing="2">
+        <MudItem xs="12">
+            <MudPaper Elevation="1" Class="pa-3 h-100">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Keys</MudText>
+                <KeysList Keys="@(Request.Keys ?? [])"
+                          KeysAll="@(KeysAll ?? Request.Keys?.Select(FormatKeySet) ?? [])"
+                          KeysChanged="@OnKeysChanged"
+                          KeysAllChanged="@OnKeysAllChanged"/>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Elevation="1" Class="pa-3">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Sort By</MudText>
+        <SortByList Items="@(Request.SortBy ?? [])"
+                    ItemsChanged="@OnSortByChanged"/>
+    </MudPaper>
+
+    <MudPaper Elevation="1" Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Filter</MudText>
+        <QueryNodeEditorPanel WhereClause="@Request.WhereClause"
+                              PropertyDefinitions="@PropertyDefinitions"
+                              WhereClauseChanged="@OnWhereClauseChanged"
+                              SelectedNodeChanged="@OnSelectedWhereClauseChanged"
+                              AllowDragDrop="@AllowFilterDragDrop"
+                              AutoSelectNewNode="@AutoSelectNewFilterNode"/>
+    </MudPaper>
+</MudStack>
+

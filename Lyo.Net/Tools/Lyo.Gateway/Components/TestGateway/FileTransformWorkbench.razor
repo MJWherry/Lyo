@@ -1,0 +1,409 @@
+@using Lyo.Common.Records
+@using Lyo.Compression.Models
+@using Lyo.Encryption
+@using Lyo.Encryption.Symmetric.Aes.AesSiv
+@using Lyo.Web.Components
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.Models
+@inject TestGatewayFileTransformer Transformer
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Encryption / Compression</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Choose compression and/or encryption, then run forward or reverse on the uploaded file. When both are selected, forward runs compression then encryption, and
+                reverse runs decryption then decompression.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="3">
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudSelect T="CompressionAlgorithm?" Label="@(_reverse ? "Decompression algorithm" : "Compression algorithm")" @bind-Value="_compressionAlgorithm">
+                                    <MudSelectItem Value="@((CompressionAlgorithm?)null)">None</MudSelectItem>
+                                    @foreach (var algorithm in Enum.GetValues<CompressionAlgorithm>()) {
+                                        <MudSelectItem Value="@((CompressionAlgorithm?)algorithm)">@algorithm</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudSwitch T="bool"
+                                           @bind-Value="_useTwoKeyEncryption"
+                                           Color="Color.Primary"
+                                           Label="@(_useTwoKeyEncryption ? "Two-key encryption" : "Normal encryption")"/>
+
+                                @if (_useTwoKeyEncryption) {
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Data decryption algorithm" : "Data encryption algorithm")"
+                                                       @bind-Value="_dataEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
+                                            <MudItem xs="12" md="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="Data AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" md="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="Data AES-SIV key size" @bind-Value="_dataAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        <MudItem xs="12" md="6">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Key decryption algorithm" : "Key encryption algorithm")"
+                                                       @bind-Value="_keyEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm)) {
+                                            <MudItem xs="12" md="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="Key AES key size (GCM / CCM)" @bind-Value="_keyAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                        @if (_keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" md="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="Key AES-SIV key size" @bind-Value="_keyAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                }
+                                else {
+                                    <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Decryption algorithm" : "Encryption algorithm")"
+                                               @bind-Value="_dataEncryptionAlgorithm">
+                                        <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                        @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                            <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                    @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
+                                        <MudSelect T="AesGcmKeySizeBits" Label="AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize" Class="mt-2">
+                                            @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    }
+                                    @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                        <MudSelect T="AesSivKeySizeBits" Label="AES-SIV key size" @bind-Value="_dataAesSivKeySize" Class="mt-2">
+                                            @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    }
+                                }
+
+                                @if (HasEncryptionSelection) {
+                                    <MudTextField T="string"
+                                                  Label="Secret"
+                                                  InputType="@(_showSecret ? InputType.Text : InputType.Password)"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@(_showSecret ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                                  OnAdornmentClick="ToggleSecretVisibility"
+                                                  HelperText="The gateway derives key material from this secret (SHA-256 for most symmetric algorithms; SHA-512 truncated for AES-SIV key lengths) and uses the services without keystore-based roundtripping."
+                                                  FullWidth="true"
+                                                  @bind-Value="_secret"/>
+                                }
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Input File</MudText>
+                                <LyoFileUpload MaxFiles="1"
+                                               ButtonText="Choose file"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnClientFileReadyAsync"
+                                               OnClientFileRemoved="OnClientFileRemovedAsync"
+                                               OnUploadStarted="OnUploadStartedAsync"
+                                               OnUploadProgress="OnUploadProgressAsync"
+                                               OnUploadCompleted="OnUploadCompletedAsync"
+                                               OnUploadCancelled="OnUploadCancelledAsync"
+                                               OnUploadFailed="OnUploadFailedAsync"/>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Upload status: @_uploadStatus
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TransformAsync" Disabled="@(_busy || _uploadedFile == null)">
+                                @GetActionButtonText()
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ProbeFileAsync" Disabled="@(_busy || _uploadedFile == null)">
+                                Probe header / compression
+                            </MudButton>
+                            <MudSwitch T="bool" @bind-Value="_reverse" Color="Color.Primary"
+                                       Label="@(_reverse ? "Reverse (decrypt / decompress)" : "Forward (compress / encrypt)")"/>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_result != null && _result.OutputBytes.Length > 0) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Result</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_result == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Run a transform or use <strong>Probe header / compression</strong> to see the output file and step details here.
+                        </MudText>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">@(_result.OutputBytes.Length > 0 ? "Output File" : "Analysis")</MudText>
+                            <MudText Typo="Typo.body2">@_result.OutputFileName</MudText>
+                            <MudDivider/>
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                @foreach (var detail in _result.Details) {
+                                    <tr>
+                                        <td><strong>@detail.Key</strong></td>
+                                        <td>@detail.Value</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        </MudStack>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private CompressionAlgorithm? _compressionAlgorithm;
+    private EncryptionAlgorithm? _dataEncryptionAlgorithm;
+    private EncryptionAlgorithm? _keyEncryptionAlgorithm;
+    private AesGcmKeySizeBits _dataAesGcmKeySize = AesGcmKeySizeBits.Bits256;
+    private AesGcmKeySizeBits _keyAesGcmKeySize = AesGcmKeySizeBits.Bits256;
+    private AesSivKeySizeBits _dataAesSivKeySize = AesSivKeySizeBits.Bits256;
+    private AesSivKeySizeBits _keyAesSivKeySize = AesSivKeySizeBits.Bits256;
+
+    private static readonly EncryptionAlgorithm[] SymmetricWorkbenchAlgorithms =
+    [
+        EncryptionAlgorithm.AesGcm,
+        EncryptionAlgorithm.ChaCha20Poly1305,
+        EncryptionAlgorithm.AesCcm,
+        EncryptionAlgorithm.AesSiv,
+        EncryptionAlgorithm.XChaCha20Poly1305
+    ];
+
+    private static string FormatEncryptionAlgorithmLabel(EncryptionAlgorithm a)
+        => a switch {
+            EncryptionAlgorithm.AesGcm => "AES-GCM",
+            EncryptionAlgorithm.ChaCha20Poly1305 => "ChaCha20-Poly1305",
+            EncryptionAlgorithm.AesCcm => "AES-CCM",
+            EncryptionAlgorithm.AesSiv => "AES-SIV",
+            EncryptionAlgorithm.XChaCha20Poly1305 => "XChaCha20-Poly1305",
+            _ => a.ToString()
+        };
+
+    private static bool UsesAesGcmOrCcmKeySize(EncryptionAlgorithm? algorithm)
+        => algorithm is EncryptionAlgorithm.AesGcm or EncryptionAlgorithm.AesCcm;
+    private bool _reverse;
+    private TestGatewayTransformResult? _result;
+    private string _secret = "change-me";
+    private bool _showSecret;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private TestGatewayUploadedFile? _uploadedFile;
+    private bool _useTwoKeyEncryption;
+    private string _uploadStatus = "No file selected.";
+
+    private Task OnClientFileReadyAsync(LocalBrowserFile file)
+    {
+        _uploadedFile = new(file.FileName, FileTypeInfo.Unknown.MimeType, file.Content);
+        _result = null;
+        SetStatus($"Loaded {_uploadedFile.FileName}.", Severity.Success);
+        return Task.CompletedTask;
+    }
+
+    private Task OnClientFileRemovedAsync(LocalBrowserFile file)
+    {
+        if (_uploadedFile?.FileName == file.FileName)
+            _uploadedFile = null;
+
+        _result = null;
+        SetStatus($"{file.FileName} removed.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadStartedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"Uploading {args.FileName}...";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadProgressAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName}: {args.Progress:F0}%";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadCompletedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} ready.";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadCancelledAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} cancelled.";
+        return Task.CompletedTask;
+    }
+
+    private Task OnUploadFailedAsync(LyoFileUploadEventArgs args)
+    {
+        _uploadStatus = $"{args.FileName} failed: {args.ErrorMessage}";
+        return Task.CompletedTask;
+    }
+
+    private async Task ProbeFileAsync()
+    {
+        if (_uploadedFile == null) {
+            SetStatus("Upload a file first.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            _result = await Task.Run(() => Transformer.ProbeFile(_uploadedFile));
+            SetStatus("Probe completed.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TransformAsync()
+    {
+        if (_uploadedFile == null) {
+            SetStatus("Upload a file first.", Severity.Warning);
+            return;
+        }
+
+        if (_useTwoKeyEncryption && HasEncryptionSelection && !(_dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue)) {
+            SetStatus("Select both data and key algorithms for two-key mode, or leave both as None.", Severity.Warning);
+            return;
+        }
+
+        var actionLabel = GetActionButtonText();
+        _busy = true;
+        try {
+            _result = await Transformer.TransformAsync(_uploadedFile, new(_reverse, ApplyCompression, ApplyEncryption, _useTwoKeyEncryption, _secret, _dataEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _keyEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _compressionAlgorithm ?? CompressionAlgorithm.Brotli, _dataAesGcmKeySize, _keyAesGcmKeySize, _dataAesSivKeySize, _keyAesSivKeySize));
+            SetStatus($"{actionLabel} completed.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_result == null)
+            return;
+
+        await Js.DownloadFile(_result.OutputBytes, _result.OutputFileName, _result.OutputContentType);
+    }
+
+    private string GetActionButtonText()
+    {
+        if (_busy)
+            return "Working...";
+
+        if (_reverse)
+            return "Reverse";
+
+        if (ApplyCompression && ApplyEncryption)
+            return _useTwoKeyEncryption ? "Compress + Two-key Encrypt" : "Compress + Encrypt";
+
+        if (ApplyCompression)
+            return "Compress";
+
+        if (ApplyEncryption)
+            return _useTwoKeyEncryption ? "Two-key Encrypt" : "Encrypt";
+
+        return "Process";
+    }
+
+    private Task ToggleSecretVisibility(MouseEventArgs _)
+    {
+        _showSecret = !_showSecret;
+        return Task.CompletedTask;
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool ApplyCompression => _compressionAlgorithm.HasValue;
+
+    private bool ApplyEncryption => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
+
+    private bool HasEncryptionSelection => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue || _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
+
+}

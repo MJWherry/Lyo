@@ -1,0 +1,386 @@
+@using System.Diagnostics
+@using Lyo.Common.Records
+@using Lyo.Profanity
+@using Lyo.Profanity.Models
+@using Lyo.Web.Components.ChipInput
+@inject FileProfanityFilterOptions BaseOptions
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Profanity Filter</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Test profanity detection and replacement with the configured sources plus inline words for quick experimentation.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="string" Label="Language" @bind-Value="_selectedLanguage">
+                                    @foreach (var language in _languages) {
+                                        <MudSelectItem Value="@language.Bcp47">@language.Description (@language.Bcp47)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSelect T="ProfanityReplacementStrategy" Label="Replacement strategy" @bind-Value="_replacementStrategy">
+                                    @foreach (var strategy in _replacementStrategies) {
+                                        <MudSelectItem Value="@strategy">@strategy</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string"
+                                              Label="Replacement char"
+                                              HelperText="Used for ReplaceWithChar and PreserveBoundary."
+                                              MaxLength="1"
+                                              @bind-Value="_replacementCharText"/>
+                            </MudItem>
+                            <MudItem xs="12" md="8">
+                                <MudTextField T="string"
+                                              Label="Replacement word"
+                                              HelperText="Used when the strategy is ReplaceWithWord."
+                                              @bind-Value="_replacementWord"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudSwitch T="bool" Label="Case sensitive" @bind-Value="_caseSensitive"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudSwitch T="bool" Label="Whole words only" @bind-Value="_matchWholeWordsOnly"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="10"
+                                      FullWidth="true"
+                                      @bind-Value="_inputText"/>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Additional words</MudText>
+                                    <LyoChipInput Values="@_additionalWords"
+                                                  ValuesChanged="OnAdditionalWordsChanged"
+                                                  Placeholder="Type a word and press Enter"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                        Adds inline words to the configured profanity sources.
+                                    </MudText>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <div>
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Excluded words</MudText>
+                                    <LyoChipInput Values="@_excludedWords"
+                                                  ValuesChanged="OnExcludedWordsChanged"
+                                                  Placeholder="Type a word and press Enter"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                        Prevents specific words from being flagged.
+                                    </MudText>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="Words file path override"
+                                              HelperText="Optional. Falls back to configured paths when blank."
+                                              FullWidth="true"
+                                              @bind-Value="_wordsFilePath"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="Words URL override"
+                                              HelperText="Optional. Falls back to configured URLs when blank."
+                                              FullWidth="true"
+                                              @bind-Value="_wordsUrl"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FilterAsync" Disabled="@_busy">Filter Text</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CheckAsync" Disabled="@_busy">Check Only</MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="ResetToDefaults" Disabled="@_busy">Reset Defaults</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+
+                    @if (_filterResult == null && _containsResult == null) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Run the filter or checker to inspect matches and output here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Language</MudText>
+                                    <MudText Typo="Typo.body1">@CurrentLanguage.Description</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Contains</MudText>
+                                    <MudText Typo="Typo.body1">@FormatContainsResult()</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Matches</MudText>
+                                    <MudText Typo="Typo.body1">@(_filterResult?.Matches.Count ?? 0)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Filtered text"
+                                      Variant="Variant.Outlined"
+                                      Lines="8"
+                                      FullWidth="true"
+                                      Value="@(_filterResult?.FilteredText ?? string.Empty)"
+                                      ReadOnly="true"
+                                      Class="mt-3"/>
+
+                        @if (_filterResult is { Matches.Count: > 0 }) {
+                            <MudSimpleTable Dense="true" Class="mt-3">
+                                <thead>
+                                <tr>
+                                    <th>Match</th>
+                                    <th>Index</th>
+                                    <th>Rule</th>
+                                    <th>Severity</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var match in _filterResult.Value.Matches) {
+                                    <tr>
+                                        <td>@match.OriginalText</td>
+                                        <td>@match.Index</td>
+                                        <td>@match.Entry.Id</td>
+                                        <td>@match.Entry.Severity</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
+    private readonly IReadOnlyList<ProfanityReplacementStrategy> _replacementStrategies = Enum.GetValues<ProfanityReplacementStrategy>();
+
+    private bool _busy;
+    private bool _caseSensitive;
+    private bool _matchWholeWordsOnly;
+    private bool? _containsResult;
+    private ProfanityFilterResult? _filterResult;
+    private FileProfanityFilterService? _cachedService;
+    private List<string> _additionalWords = ["badword"];
+    private string _inputText = "This sample badword should be filtered.";
+    private List<string> _excludedWords = [];
+    private string? _serviceCacheKey;
+    private string _replacementCharText = "*";
+    private string _replacementWord = "***";
+    private ProfanityReplacementStrategy _replacementStrategy = ProfanityReplacementStrategy.Mask;
+    private string _selectedLanguage = LanguageCodeInfo.EnUs.Bcp47;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _wordsFilePath = string.Empty;
+    private string _wordsUrl = string.Empty;
+
+    private LanguageCodeInfo CurrentLanguage => LanguageCodeInfo.FromBcp47(_selectedLanguage);
+
+    protected override void OnInitialized() => ResetToDefaults();
+
+    private async Task FilterAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText)) {
+            SetStatus("Enter text to filter.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var service = GetOrBuildService();
+            var result = await service.FilterAsync(_inputText, CurrentLanguage);
+            _filterResult = result;
+            _containsResult = result.HasProfanity;
+            SetStatus(result.HasProfanity ? $"Detected {result.Matches.Count} match(es)." : "No profanity detected.", result.HasProfanity ? Severity.Warning : Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task CheckAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText)) {
+            SetStatus("Enter text to check.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var service = GetOrBuildService();
+            var t = Stopwatch.StartNew();
+            _containsResult = await service.ContainsProfanityAsync(_inputText, CurrentLanguage);
+            t.Stop();
+            SetStatus(_containsResult == true ? "Profanity detected." : "No profanity detected.", _containsResult == true ? Severity.Warning : Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private void ResetToDefaults()
+    {
+        _selectedLanguage = ProfanityFilterOptions.ResolveLanguageCode(BaseOptions.Language).Bcp47;
+        _replacementStrategy = BaseOptions.ReplacementStrategy;
+        _replacementCharText = BaseOptions.ReplacementChar.ToString();
+        _replacementWord = BaseOptions.ReplacementWord;
+        _caseSensitive = BaseOptions.CaseSensitive;
+        _matchWholeWordsOnly = BaseOptions.MatchWholeWordsOnly;
+        _additionalWords = BaseOptions.AdditionalWords.Count > 0 ? NormalizeWords(BaseOptions.AdditionalWords.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)) : ["badword"];
+        _excludedWords = NormalizeWords(BaseOptions.ExcludedWords.OrderBy(i => i, StringComparer.OrdinalIgnoreCase));
+        _wordsFilePath = BaseOptions.WordsFilePath;
+        _wordsUrl = BaseOptions.WordsUrl;
+        _filterResult = null;
+        _containsResult = null;
+        _cachedService = null;
+        _serviceCacheKey = null;
+        _statusMessage = string.Empty;
+    }
+
+    private FileProfanityFilterService GetOrBuildService()
+    {
+        var cacheKey = BuildServiceCacheKey();
+        if (_cachedService != null && string.Equals(_serviceCacheKey, cacheKey, StringComparison.Ordinal))
+            return _cachedService;
+
+        var options = new FileProfanityFilterOptions {
+            Language = _selectedLanguage,
+            ReplacementStrategy = _replacementStrategy,
+            ReplacementChar = string.IsNullOrWhiteSpace(_replacementCharText) ? '*' : _replacementCharText.Trim()[0],
+            ReplacementWord = string.IsNullOrWhiteSpace(_replacementWord) ? "***" : _replacementWord.Trim(),
+            CaseSensitive = _caseSensitive,
+            MatchWholeWordsOnly = _matchWholeWordsOnly,
+            EnableMetrics = BaseOptions.EnableMetrics,
+            AllowRefresh = BaseOptions.AllowRefresh,
+            Encoding = BaseOptions.Encoding,
+            WordsFilePath = string.IsNullOrWhiteSpace(_wordsFilePath) ? BaseOptions.WordsFilePath : _wordsFilePath.Trim(),
+            WordsUrl = string.IsNullOrWhiteSpace(_wordsUrl) ? BaseOptions.WordsUrl : _wordsUrl.Trim(),
+            WordsByLanguage = CloneWordsByLanguage(BaseOptions.WordsByLanguage),
+            AdditionalWords = ToWordSet(_additionalWords),
+            ExcludedWords = ToWordSet(_excludedWords)
+        };
+
+        // Keep the page usable even when no appsettings-backed word source exists yet.
+        if (options.AdditionalWords.Count == 0 && string.IsNullOrWhiteSpace(options.WordsFilePath) && string.IsNullOrWhiteSpace(options.WordsUrl) && (options.WordsByLanguage == null || options.WordsByLanguage.Count == 0)) {
+            options.AdditionalWords = ["badword"];
+        }
+
+        _cachedService = new(options);
+        _serviceCacheKey = cacheKey;
+        return _cachedService;
+    }
+
+    private Task OnAdditionalWordsChanged(IEnumerable<string> values)
+    {
+        _additionalWords = NormalizeWords(values);
+        return Task.CompletedTask;
+    }
+
+    private Task OnExcludedWordsChanged(IEnumerable<string> values)
+    {
+        _excludedWords = NormalizeWords(values);
+        return Task.CompletedTask;
+    }
+
+    private static List<string> NormalizeWords(IEnumerable<string>? values)
+    {
+        if (values == null)
+            return [];
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        return values.Select(i => i?.Trim()).Where(i => !string.IsNullOrWhiteSpace(i)).Cast<string>().Where(seen.Add).ToList();
+    }
+
+    private static HashSet<string> ToWordSet(IEnumerable<string>? values) => NormalizeWords(values).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static Dictionary<string, LanguageWordSourceConfig>? CloneWordsByLanguage(Dictionary<string, LanguageWordSourceConfig>? source)
+    {
+        if (source == null || source.Count == 0)
+            return null;
+
+        return source.ToDictionary(pair => pair.Key, pair => new LanguageWordSourceConfig { WordsFilePath = pair.Value.WordsFilePath, WordsUrl = pair.Value.WordsUrl }, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private string BuildServiceCacheKey()
+    {
+        var wordsByLanguage = BaseOptions.WordsByLanguage is { Count: > 0 } ? string.Join("|", BaseOptions.WordsByLanguage.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase).Select(pair => $"{pair.Key}:{pair.Value.WordsFilePath}:{pair.Value.WordsUrl}")) : string.Empty;
+        return string.Join("||", _selectedLanguage, _replacementStrategy, string.IsNullOrWhiteSpace(_replacementCharText) ? "*" : _replacementCharText.Trim(), string.IsNullOrWhiteSpace(_replacementWord) ? "***" : _replacementWord.Trim(), _caseSensitive, _matchWholeWordsOnly, BaseOptions.EnableMetrics, BaseOptions.AllowRefresh, BaseOptions.Encoding.WebName, string.IsNullOrWhiteSpace(_wordsFilePath) ? BaseOptions.WordsFilePath : _wordsFilePath.Trim(), string.IsNullOrWhiteSpace(_wordsUrl) ? BaseOptions.WordsUrl : _wordsUrl.Trim(), wordsByLanguage, NormalizeWordSet(_additionalWords), NormalizeWordSet(_excludedWords));
+    }
+
+    private static string NormalizeWordSet(IEnumerable<string>? values) => string.Join("|", ToWordSet(values).OrderBy(word => word, StringComparer.OrdinalIgnoreCase));
+
+    private string FormatContainsResult()
+        => _containsResult switch {
+            true => "Yes",
+            false => "No",
+            var _ => "Not run"
+        };
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

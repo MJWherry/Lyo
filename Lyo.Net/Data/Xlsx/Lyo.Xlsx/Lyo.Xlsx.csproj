@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Xlsx.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ClosedXML" Version="[0.99,)"/>
+        <PackageReference Include="ExcelDataReader" Version="[3.8,)"/>
+        <PackageReference Include="ExcelDataReader.DataSet" Version="[3.8,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

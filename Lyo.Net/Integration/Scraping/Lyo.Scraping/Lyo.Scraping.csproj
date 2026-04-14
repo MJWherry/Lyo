@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Scraping.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Selenium.Support" Version="4.*"/>
+        <PackageReference Include="Selenium.WebDriver" Version="4.*"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Resilience\Lyo.Resilience\Lyo.Resilience.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Encryption</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A production-ready .NET encryption library providing secure, authenticated encryption with support
+            for multiple algorithms (AES-GCM, ChaCha20Poly1305, RSA), key management, and envelope encryption patterns.
+        </description>
+        <summary>Production-ready encryption library with multiple algorithms and key management</summary>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>encryption security aes-gcm chacha20poly1305 rsa cryptography keystore</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="BouncyCastle.Cryptography" version="2.6.2"/>
+                <dependency id="Dorssel.Security.Cryptography.AesExtra" version="2.0.0"/>
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Lyo.Keystore" version="[1.0.71,)"/>
+                <dependency id="Lyo.Streams" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

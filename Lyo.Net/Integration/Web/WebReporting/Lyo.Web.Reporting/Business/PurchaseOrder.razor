@@ -1,0 +1,70 @@
+@* PurchaseOrder.razor *@
+
+@code {
+
+    public sealed record PurchaseOrderOptions(string PONumber, DateTime OrderDate, DateTime? RequestedDeliveryDate, string BuyerCompany, string BuyerAddress, string ShipToName, string ShipToAddress, List<PurchaseOrderLineItem> LineItems, string Notes)
+    {
+        public decimal GrandTotal => LineItems.Sum(i => i.Total);
+    }
+
+    public sealed record PurchaseOrderLineItem(string ItemNumber, string Description, int Quantity, decimal UnitPrice)
+    {
+        public decimal Total => Quantity * UnitPrice;
+    }
+
+    [Parameter]
+    [EditorRequired]
+    public PurchaseOrderOptions Options { get; set; } = null!;
+
+}
+
+<div style="max-width: 850px; margin: 40px auto; padding: 50px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <div style="text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #059669;">
+        <h1 style="margin: 0; font-size: 32px; color: #065f46;">PURCHASE ORDER</h1>
+        <div style="font-size: 28px; font-weight: 700; color: #059669; margin-top: 8px;">#@Options.PONumber</div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+        <div>
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Buyer</div>
+            <div style="font-weight: 600; font-size: 16px;">@Options.BuyerCompany</div>
+            <div style="color: #475569;">@Options.BuyerAddress</div>
+        </div>
+        <div>
+            <div style="font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase;">Ship To</div>
+            <div style="font-weight: 600; font-size: 16px;">@Options.ShipToName</div>
+            <div style="color: #475569;">@Options.ShipToAddress</div>
+        </div>
+    </div>
+    <div style="margin-bottom: 24px; font-size: 14px;">
+        <span style="font-weight: 600;">Order Date:</span> @Options.OrderDate.ToString("MMM d, yyyy")
+        @if (Options.RequestedDeliveryDate.HasValue) {
+            <span style="margin-left: 24px;"><span style="font-weight: 600;">Requested Delivery:</span> @Options.RequestedDeliveryDate.Value.ToString("MMM d, yyyy")</span>
+        }
+    </div>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+        <tr style="background: #ecfdf5; border-bottom: 2px solid #059669;">
+            <th style="padding: 12px; text-align: left;">Item #</th>
+            <th style="padding: 12px; text-align: left;">Description</th>
+            <th style="padding: 12px; text-align: right;">Qty</th>
+            <th style="padding: 12px; text-align: right;">Unit Price</th>
+            <th style="padding: 12px; text-align: right;">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Options.LineItems) {
+            <tr style="border-bottom: 1px solid #d1fae5;">
+                <td style="padding: 14px;">@item.ItemNumber</td>
+                <td style="padding: 14px;">@item.Description</td>
+                <td style="padding: 14px; text-align: right;">@item.Quantity</td>
+                <td style="padding: 14px; text-align: right;">$@item.UnitPrice.ToString("N2")</td>
+                <td style="padding: 14px; text-align: right; font-weight: 600;">$@item.Total.ToString("N2")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div style="margin-top: 24px; text-align: right; font-size: 20px; font-weight: 700; color: #065f46;">Total: $@Options.GrandTotal.ToString("N2")</div>
+    @if (!string.IsNullOrEmpty(Options.Notes)) {
+        <div style="margin-top: 40px; padding: 16px; background: #f0fdf4; border-radius: 6px; font-size: 14px;"><strong>Notes:</strong> @Options.Notes</div>
+    }
+</div>

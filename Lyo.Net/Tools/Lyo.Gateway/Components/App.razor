@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <base href="/"/>
+    <ResourcePreloader/>
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]"/>
+    <link rel="stylesheet" href="@Assets["app.css"]"/>
+    <link rel="stylesheet" href="@Assets["Lyo.Gateway.styles.css"]"/>
+    <link rel="stylesheet" href=@Assets["_content/MudBlazor/MudBlazor.min.css"]/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
+    <ImportMap/>
+    <link rel="icon" type="@FileTypeInfo.Png.MimeType" href="favicon.png"/>
+    <HeadOutlet/>
+</head>
+
+<body>
+<Routes @rendermode="InteractiveServer"/>
+<ReconnectModal/>
+<script src=@Assets["_content/MudBlazor/MudBlazor.min.js"]></script>
+<script src="@Assets["_framework/blazor.web.js"]"></script>
+<script>
+    window.getClientTimeZone = function () {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    };
+    window.downloadFileFromBase64 = (base64, mimeType, fileName) => {
+        const link = document.createElement('a');
+        link.href = `data:${mimeType};base64,${base64}`;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Method 1 & 4: Your existing base64 download function
+    window.downloadFileFromBase64 = (base64Data, contentType, fileName) => {
+        const dataUrl = `data:${contentType};base64,${base64Data}`;
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Method 2: Stream reference download (.NET 6+)
+    window.downloadFileFromStream = async (streamRef, contentType, fileName) => {
+        // Read the stream from .NET
+        const arrayBuffer = await streamRef.arrayBuffer();
+
+        // Create blob and download
+        const blob = new Blob([arrayBuffer], {type: contentType});
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up
+        URL.revokeObjectURL(url);
+    };
+
+    // Method 3: Chunked download functions
+    let downloadChunks = [];
+    let downloadFileName = '';
+    let downloadContentType = '';
+
+    window.initializeChunkedDownload = (fileName, contentType) => {
+        downloadChunks = [];
+        downloadFileName = fileName;
+        downloadContentType = contentType;
+    };
+
+    window.appendChunkToDownload = (base64Chunk, chunkIndex) => {
+        // Convert base64 to Uint8Array
+        const binaryString = atob(base64Chunk);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Store chunk with its index to ensure proper ordering
+        downloadChunks[chunkIndex] = bytes;
+    };
+
+    window.finalizeChunkedDownload = () => {
+        // Calculate total size
+        const totalSize = downloadChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+
+        // Combine all chunks into a single Uint8Array
+        const combined = new Uint8Array(totalSize);
+        let offset = 0;
+
+        for (const chunk of downloadChunks) {
+            combined.set(chunk, offset);
+            offset += chunk.length;
+        }
+
+        // Create blob and download
+        const blob = new Blob([combined], {type: downloadContentType});
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = downloadFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up
+        URL.revokeObjectURL(url);
+        downloadChunks = [];
+    };
+
+    // Alternative: More memory-efficient chunked download using streams (modern browsers)
+    window.downloadFileFromStreamChunked = async (streamRef, contentType, fileName) => {
+        try {
+            // Check if browser supports streaming
+            if (!window.WritableStream) {
+                // Fallback to regular method
+                return await downloadFileFromStream(streamRef, contentType, fileName);
+            }
+
+            const stream = streamRef.stream();
+            const reader = stream.getReader();
+
+            // Use native browser streaming
+            const readableStream = new ReadableStream({
+                start(controller) {
+                    function pump() {
+                        return reader.read().then(({done, value}) => {
+                            if (done) {
+                                controller.close();
+                                return;
+                            }
+                            controller.enqueue(value);
+                            return pump();
+                        });
+                    }
+
+                    return pump();
+                }
+            });
+
+            // Create response from stream and download
+            const response = new Response(readableStream);
+            const blob = await response.blob();
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Stream download failed:', error);
+            // Fallback to regular method
+            await downloadFileFromStream(streamRef, contentType, fileName);
+        }
+    };
+</script>
+</body>
+
+</html>

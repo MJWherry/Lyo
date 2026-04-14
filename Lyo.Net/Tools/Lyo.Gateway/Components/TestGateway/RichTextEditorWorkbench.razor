@@ -1,0 +1,212 @@
+@using Lyo.Web.Components
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Rich Text Editor</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Exercise the reusable `LyoRichTextEditor` component and inspect both the rendered preview and raw HTML output.
+            </MudText>
+        </div>
+
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadSample">
+                Load Sample
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">
+                Clear
+            </MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ToggleReadOnly">
+                @(_readOnly ? "Switch To Edit Mode" : "Switch To Read-Only")
+            </MudButton>
+        </MudStack>
+
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle1">Editor</MudText>
+                        <LyoRichTextEditor @bind-Value="_html"
+                                           Label="Body"
+                                           Placeholder="Write your content here..."
+                                           ReadOnly="@_readOnly"
+                                           MinHeightPx="360"/>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Preview</MudText>
+                        @if (string.IsNullOrWhiteSpace(_html)) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Start typing to preview the rendered rich text here.
+                            </MudText>
+                        }
+                        else {
+                            <div class="rte-preview">@((MarkupString)_html)</div>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">HTML Output</MudText>
+                        <MudTextField T="string"
+                                      Value="@_html"
+                                      ReadOnly="true"
+                                      Lines="12"
+                                      FullWidth="true"
+                                      Variant="Variant.Outlined"/>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+<style>
+    .rte-preview {
+        min-height: 180px;
+        line-height: 1.55;
+        word-break: break-word;
+    }
+
+    .rte-preview h1,
+    .rte-preview h2,
+    .rte-preview h3,
+    .rte-preview h4,
+    .rte-preview h5,
+    .rte-preview p,
+    .rte-preview blockquote,
+    .rte-preview pre,
+    .rte-preview ul,
+    .rte-preview ol {
+        margin-top: 0;
+    }
+
+    .rte-preview blockquote {
+        margin-left: 0;
+        padding-left: 12px;
+        border-left: 4px solid var(--mud-palette-primary);
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .rte-preview pre {
+        position: relative;
+        padding: 12px;
+        padding-top: 28px;
+        border-radius: 4px;
+        overflow-x: auto;
+        border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 70%, transparent 30%);
+        background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-text-primary) 8%);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        line-height: 1.5;
+    }
+
+    .rte-preview pre code {
+        display: block;
+        white-space: pre-wrap;
+        color: inherit;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        tab-size: 4;
+    }
+
+    .rte-preview pre code.hljs {
+        background: transparent;
+        color: var(--mud-palette-text-primary);
+    }
+
+    .rte-preview pre .hljs-comment,
+    .rte-preview pre .hljs-quote {
+        color: var(--mud-palette-text-secondary);
+        font-style: italic;
+    }
+
+    .rte-preview pre .hljs-keyword,
+    .rte-preview pre .hljs-selector-tag,
+    .rte-preview pre .hljs-section,
+    .rte-preview pre .hljs-name,
+    .rte-preview pre .hljs-attribute {
+        color: var(--mud-palette-primary);
+    }
+
+    .rte-preview pre .hljs-string,
+    .rte-preview pre .hljs-regexp,
+    .rte-preview pre .hljs-addition,
+    .rte-preview pre .hljs-bullet {
+        color: var(--mud-palette-success);
+    }
+
+    .rte-preview pre .hljs-number,
+    .rte-preview pre .hljs-literal,
+    .rte-preview pre .hljs-symbol,
+    .rte-preview pre .hljs-variable,
+    .rte-preview pre .hljs-template-variable {
+        color: var(--mud-palette-warning);
+    }
+
+    .rte-preview pre .hljs-title,
+    .rte-preview pre .hljs-title.function_,
+    .rte-preview pre .hljs-function,
+    .rte-preview pre .hljs-built_in,
+    .rte-preview pre .hljs-type,
+    .rte-preview pre .hljs-class .hljs-title {
+        color: var(--mud-palette-info);
+    }
+
+    .rte-preview pre .hljs-meta,
+    .rte-preview pre .hljs-meta .hljs-string,
+    .rte-preview pre .hljs-doctag {
+        color: color-mix(in srgb, var(--mud-palette-primary) 70%, var(--mud-palette-text-primary) 30%);
+    }
+
+    .rte-preview pre .hljs-deletion {
+        color: var(--mud-palette-error);
+    }
+
+    .rte-preview pre[data-language]::before {
+        content: attr(data-language);
+        position: absolute;
+        top: 6px;
+        right: 10px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .rte-preview :last-child {
+        margin-bottom: 0;
+    }
+</style>
+
+@code {
+
+    private string _html = """
+                          <h2>Welcome</h2>
+                          <p>This is a <strong>rich text editor</strong> test page for the component library.</p>
+                          <p>You can edit formatted text, create <a href="https://example.com" target="_blank" rel="noopener noreferrer">links</a>, and inspect the generated HTML.</p>
+                          <ul>
+                            <li>Bold, italic, underline, and strike-through</li>
+                            <li>Headings, quotes, and code blocks</li>
+                            <li>Lists, alignment, links, and images</li>
+                          </ul>
+                          """;
+
+    private bool _readOnly;
+
+    private void LoadSample()
+        => _html = """
+                                         <h1>Sample Article</h1>
+                                         <p><strong>LyoRichTextEditor</strong> stores its value as HTML so it can be reused anywhere in the app.</p>
+                                         <blockquote>Use this page to verify toolbar actions and preview the rendered result.</blockquote>
+                                         <p style="text-align:center;">Centered text also works.</p>
+                                         <pre>Console.WriteLine("Hello from the rich text editor");</pre>
+                                         """;
+
+    private void Clear() => _html = string.Empty;
+
+    private void ToggleReadOnly() => _readOnly = !_readOnly;
+
+}

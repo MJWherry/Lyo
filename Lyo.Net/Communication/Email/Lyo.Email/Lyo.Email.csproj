@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Email.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\Lyo.Email.Models\Lyo.Email.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MailKit" Version="[4.15,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[10,)"/>
+    </ItemGroup>
+
+</Project>

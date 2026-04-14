@@ -1,0 +1,14 @@
+@using Lyo.Web.Components.ChipInput
+@using MudBlazor
+<MudStack Spacing="1">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Include</MudText>
+    <LyoChipInput Values="@IncludeAll"
+                  ValuesChanged="@OnValuesChanged"
+                  SelectedValues="@Include"
+                  SelectedValuesChanged="@OnSelectedChanged"
+                  SelectableChips="true"
+                  ValidationPattern="^[a-zA-Z.]+$"
+                  ValidationErrorMessage="Only letters (a-z, A-Z) and dots are allowed."
+                  Placeholder="Property path (e.g. DocketCharges), press Enter to add"/>
+</MudStack>
+

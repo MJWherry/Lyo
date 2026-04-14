@@ -1,0 +1,24 @@
+@using MudBlazor
+@typeparam T
+<div class="@(IsValid ? "" : "lyo-validation-invalid")">
+    @ChildContent
+    @if (!IsValid && Errors.Count > 0) {
+        @foreach (var error in Errors) {
+            <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1 ml-1">@error.Message</MudText>
+        }
+    }
+</div>
+
+<style>
+    .lyo-validation-invalid .mud-input-control .mud-input-outlined-border {
+        border-color: var(--mud-palette-error) !important;
+    }
+
+    .lyo-validation-invalid .mud-input-control .mud-input.mud-input-outlined {
+        border-color: var(--mud-palette-error) !important;
+    }
+
+    .lyo-validation-invalid .mud-input-control label.mud-input-label {
+        color: var(--mud-palette-error) !important;
+    }
+</style>

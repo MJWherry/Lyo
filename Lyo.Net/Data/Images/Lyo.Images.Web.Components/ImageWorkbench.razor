@@ -1,0 +1,565 @@
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.FileUpload
+@using ResizeMode = Lyo.Images.Models.ResizeMode
+@inject IImageService ImageService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Image Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Upload one image, inspect metadata/palette, and apply common image operations using your image library.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Source image</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           ValidFileTypes="FileTypeFlags.Images"
+                                           ButtonText="Choose image"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnClientFileReadyAsync"
+                                           OnClientFileRemoved="OnClientFileRemovedAsync"/>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Palette</MudText>
+                            <MudNumericField T="int" Label="Color count" Min="1" Max="256" @bind-Value="_paletteColorCount"/>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExtractPaletteAsync" Disabled="@(!HasImage || _busy)">
+                                Extract palette
+                            </MudButton>
+
+                            @if (_paletteColors.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No palette yet.</MudText>
+                            }
+                            else {
+                                <MudGrid Spacing="1">
+                                    @foreach (var color in _paletteColors) {
+                                        <MudItem xs="4" sm="3">
+                                            <MudPaper Class="pa-1" Outlined="true">
+                                                <div style="height: 28px; border-radius: 4px; background-color: @color; border: 1px solid var(--mud-palette-lines-default);"></div>
+                                                <MudText Typo="Typo.caption">@color</MudText>
+                                            </MudPaper>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Operations</MudText>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Resize</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="W" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_resizeWidth"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="H" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_resizeHeight"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ResizeMode" Label="Mode" Margin="Margin.Dense" @bind-Value="_resizeMode">
+                                            @foreach (var mode in Enum.GetValues<ResizeMode>()) {
+                                                <MudSelectItem Value="@mode">@mode</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_resizeFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_resizeQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyResizeAsync" Disabled="@(!HasImage || _busy)">
+                                            Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Crop</MudText>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="X" Min="0" Max="8192" Margin="Margin.Dense" @bind-Value="_cropX"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="Y" Min="0" Max="8192" Margin="Margin.Dense" @bind-Value="_cropY"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="W" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_cropWidth"/>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="H" Min="1" Max="8192" Margin="Margin.Dense" @bind-Value="_cropHeight"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_cropFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_cropQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyCropAsync" Disabled="@(!HasImage || _busy)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Rotate</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="float" Label="Degrees" Min="-3600" Max="3600" Margin="Margin.Dense" Value="_rotateDegrees"
+                                                         ValueChanged="OnRotateDegreesChangedAsync" Immediate="true"/>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_rotateFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_rotateQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="6">
+                                        <MudSwitch T="bool" @bind-Value="_liveRotate" Color="Color.Primary" Label="Live rotate"/>
+                                    </MudItem>
+                                    <MudItem xs="6" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyRotateAsync"
+                                                   Disabled="@(!HasImage || _busy || _liveRotate)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Compress</MudText>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_compressFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="4">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_compressQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="4" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyCompressAsync" Disabled="@(!HasImage || _busy)">
+                                            Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudPaper Outlined="true" Class="pa-2">
+                                <MudGrid Spacing="1">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.caption">Convert format</MudText>
+                                    </MudItem>
+                                    <MudItem xs="6">
+                                        <MudSelect T="ImageFormat" Label="Format" Margin="Margin.Dense" @bind-Value="_convertFormat">
+                                            @foreach (var format in SupportedOutputFormats) {
+                                                <MudSelectItem Value="@format">@format</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+                                    <MudItem xs="3">
+                                        <MudNumericField T="int" Label="Quality" Min="1" Max="100" Margin="Margin.Dense" @bind-Value="_convertQuality"/>
+                                    </MudItem>
+                                    <MudItem xs="3" Class="d-flex align-end">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ApplyConvertFormatAsync"
+                                                   Disabled="@(!HasImage || _busy)">Apply
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+
+                            <MudButton Variant="Variant.Outlined" OnClick="ResetToOriginalAsync" Disabled="@(!CanReset || _busy)">
+                                Reset to original
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+
+                    @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                        <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                    }
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Preview</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadCurrentAsync" Disabled="@(!HasImage || _busy)">
+                                Download
+                            </MudButton>
+                        </MudStack>
+
+                        @if (string.IsNullOrWhiteSpace(_previewDataUrl)) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Upload an image to preview.</MudText>
+                        }
+                        else {
+                            <MudPaper Class="pa-4 d-flex justify-center mt-2" Outlined="true">
+                                <img src="@_previewDataUrl" alt="Image preview" style="max-width: 100%; height: auto; border: 1px solid var(--mud-palette-lines-default);"/>
+                            </MudPaper>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-2">Metadata</MudText>
+                        @if (_metadata == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">No image metadata yet.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Format</strong></td>
+                                    <td>@_metadata.Format</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dimensions</strong></td>
+                                    <td>@($"{_metadata.Width} x {_metadata.Height}")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>File size</strong></td>
+                                    <td>@(_metadata.FileSizeBytes.HasValue ? $"{_metadata.FileSizeBytes.Value:N0} bytes" : "Unknown")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Has alpha</strong></td>
+                                    <td>@_metadata.HasAlpha</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private static readonly ImageFormat[] SupportedOutputFormats = [ImageFormat.Png, ImageFormat.Jpeg];
+
+    private LocalBrowserFile? _uploadedFile;
+    private ImageMetadata? _metadata;
+    private byte[]? _originalBytes;
+    private byte[]? _currentBytes;
+    private string? _previewDataUrl;
+    private bool _busy;
+
+    private int _paletteColorCount = 8;
+    private readonly List<string> _paletteColors = [];
+
+    private int _resizeWidth = 256;
+    private int _resizeHeight = 256;
+    private ResizeMode _resizeMode = ResizeMode.Max;
+    private ImageFormat _resizeFormat = ImageFormat.Png;
+    private int _resizeQuality = 90;
+    private int _cropX;
+    private int _cropY;
+    private int _cropWidth = 64;
+    private int _cropHeight = 64;
+    private ImageFormat _cropFormat = ImageFormat.Png;
+    private int _cropQuality = 90;
+    private float _rotateDegrees;
+    private ImageFormat _rotateFormat = ImageFormat.Png;
+    private int _rotateQuality = 90;
+    private bool _liveRotate = true;
+    private ImageFormat _compressFormat = ImageFormat.Jpeg;
+    private int _compressQuality = 80;
+    private ImageFormat _convertFormat = ImageFormat.Png;
+    private int _convertQuality = 90;
+
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    private bool HasImage => _currentBytes is { Length: > 0 };
+
+    private bool CanReset => _originalBytes != null && _currentBytes != null && !_originalBytes.AsSpan().SequenceEqual(_currentBytes);
+
+    private async Task OnClientFileReadyAsync(LocalBrowserFile file)
+    {
+        _busy = true;
+        try {
+            _uploadedFile = file;
+            _originalBytes = file.Content.ToArray();
+            _currentBytes = file.Content.ToArray();
+            _paletteColors.Clear();
+            await RefreshPreviewAndMetadataAsync();
+            ApplyDefaultEditValues();
+            SetStatus($"Loaded {file.FileName}.", Severity.Success);
+        }
+        catch (Exception ex) {
+            ResetState();
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task OnClientFileRemovedAsync(LocalBrowserFile _)
+    {
+        ResetState();
+        SetStatus("Image removed.", Severity.Info);
+        return Task.CompletedTask;
+    }
+
+    private async Task ExtractPaletteAsync()
+    {
+        if (!HasImage)
+            return;
+
+        _busy = true;
+        try {
+            await using var input = new MemoryStream(_currentBytes!, false);
+            var result = await ImageService.GetPaletteAsync(input, Math.Clamp(_paletteColorCount, 1, 256));
+            ThrowIfFailed(result, "Failed to extract palette.");
+            _paletteColors.Clear();
+            _paletteColors.AddRange(result.Data!.Colors);
+            SetStatus($"Extracted {_paletteColors.Count} colors.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task ApplyResizeAsync()
+        => ApplyOperationAsync(
+            async (input, output) => {
+                var result = await ImageService.ResizeAsync(input, output, Math.Max(1, _resizeWidth), Math.Max(1, _resizeHeight), _resizeMode, _resizeFormat, Math.Clamp(_resizeQuality, 1, 100));
+                ThrowIfFailed(result, "Resize failed.");
+            }, "Resize applied.");
+
+    private Task ApplyCropAsync()
+        => ApplyOperationAsync(
+            async (input, output) => {
+                var result = await ImageService.CropAsync(input, output, Math.Max(0, _cropX), Math.Max(0, _cropY), Math.Max(1, _cropWidth), Math.Max(1, _cropHeight), _cropFormat, Math.Clamp(_cropQuality, 1, 100));
+                ThrowIfFailed(result, "Crop failed.");
+            }, "Crop applied.");
+
+    private Task ApplyRotateAsync() => ApplyRotateByDegreesAsync(_rotateDegrees, "Rotation applied.");
+
+    private Task ApplyCompressAsync()
+        => ApplyOperationAsync(
+            async (input, output) => {
+                var result = await ImageService.CompressAsync(input, output, Math.Clamp(_compressQuality, 1, 100), _compressFormat);
+                ThrowIfFailed(result, "Compress failed.");
+            }, "Compression applied.");
+
+    private Task ApplyConvertFormatAsync()
+        => ApplyOperationAsync(
+            async (input, output) => {
+                var result = await ImageService.ConvertFormatAsync(input, output, _convertFormat, Math.Clamp(_convertQuality, 1, 100));
+                ThrowIfFailed(result, "Format conversion failed.");
+            }, "Format conversion applied.");
+
+    private async Task OnRotateDegreesChangedAsync(float value)
+    {
+        var previous = _rotateDegrees;
+        _rotateDegrees = value;
+        if (!_liveRotate || !HasImage || _busy)
+            return;
+
+        var delta = value - previous;
+        if (Math.Abs(delta) < 0.001f)
+            return;
+
+        await ApplyRotateByDegreesAsync(delta, $"Live rotation: {value:0.##} deg");
+    }
+
+    private Task ApplyRotateByDegreesAsync(float degrees, string successMessage)
+        => ApplyOperationAsync(
+            async (input, output) => {
+                var result = await ImageService.RotateAsync(input, output, degrees, _rotateFormat, Math.Clamp(_rotateQuality, 1, 100));
+                ThrowIfFailed(result, "Rotate failed.");
+            }, successMessage, false);
+
+    private async Task ApplyOperationAsync(Func<Stream, Stream, Task> operation, string successMessage, bool clearPalette = true)
+    {
+        if (!HasImage)
+            return;
+
+        _busy = true;
+        try {
+            await using var input = new MemoryStream(_currentBytes!, false);
+            await using var output = new MemoryStream();
+            await operation(input, output);
+            _currentBytes = output.ToArray();
+            if (clearPalette)
+                _paletteColors.Clear();
+
+            await RefreshPreviewAndMetadataAsync();
+            SetStatus(successMessage, Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task ResetToOriginalAsync()
+    {
+        if (_originalBytes == null)
+            return;
+
+        _currentBytes = _originalBytes.ToArray();
+        _rotateDegrees = 0;
+        _paletteColors.Clear();
+        await RefreshPreviewAndMetadataAsync();
+        SetStatus("Reset to original image.", Severity.Success);
+    }
+
+    private async Task DownloadCurrentAsync()
+    {
+        if (!HasImage)
+            return;
+
+        var fileName = BuildDownloadFileName();
+        await Js.DownloadFile(_currentBytes!, fileName, GetMimeType(_metadata?.Format ?? ImageFormat.Png));
+    }
+
+    private async Task RefreshPreviewAndMetadataAsync()
+    {
+        if (!HasImage) {
+            _metadata = null;
+            _previewDataUrl = null;
+            return;
+        }
+
+        await using var stream = new MemoryStream(_currentBytes!, false);
+        var metadataResult = await ImageService.GetMetadataAsync(stream);
+        ThrowIfFailed(metadataResult, "Failed to read metadata.");
+        _metadata = metadataResult.Data!;
+        _previewDataUrl = $"data:{GetMimeType(_metadata.Format)};base64,{Convert.ToBase64String(_currentBytes!)}";
+    }
+
+    private static void ThrowIfFailed<T>(Result<T> result, string fallbackMessage)
+    {
+        if (result.IsSuccess && result.Data != null)
+            return;
+
+        var message = result.Errors == null || result.Errors.Count == 0 ? fallbackMessage : string.Join(Environment.NewLine, result.Errors.Where(error => !string.IsNullOrWhiteSpace(error.Message)).Select(error => error.Message));
+        throw new InvalidOperationException(message);
+    }
+
+    private string BuildDownloadFileName()
+    {
+        var originalName = _uploadedFile?.FileName ?? "image";
+        var baseName = Path.GetFileNameWithoutExtension(originalName);
+        var extension = GetExtension(_metadata?.Format ?? ImageFormat.Png);
+        return $"{baseName}-edited.{extension}";
+    }
+
+    private static string GetExtension(ImageFormat format)
+        => format switch {
+            ImageFormat.Png => "png",
+            ImageFormat.Jpeg => "jpg",
+            ImageFormat.Gif => "gif",
+            ImageFormat.Bmp => "bmp",
+            ImageFormat.WebP => "webp",
+            ImageFormat.Tiff => "tiff",
+            ImageFormat.Ico => "ico",
+            var _ => "png"
+        };
+
+    private static string GetMimeType(ImageFormat format)
+        => format switch {
+            ImageFormat.Png => FileTypeInfo.Png.MimeType,
+            ImageFormat.Jpeg => FileTypeInfo.Jpeg.MimeType,
+            ImageFormat.Gif => FileTypeInfo.Gif.MimeType,
+            ImageFormat.Bmp => FileTypeInfo.Bmp.MimeType,
+            ImageFormat.WebP => FileTypeInfo.Webp.MimeType,
+            ImageFormat.Tiff => FileTypeInfo.Tiff.MimeType,
+            ImageFormat.Ico => FileTypeInfo.Ico.MimeType,
+            var _ => FileTypeInfo.Unknown.MimeType
+        };
+
+    private void ApplyDefaultEditValues()
+    {
+        if (_metadata == null)
+            return;
+
+        _resizeWidth = Math.Max(1, _metadata.Width);
+        _resizeHeight = Math.Max(1, _metadata.Height);
+        _cropX = 0;
+        _cropY = 0;
+        _cropWidth = Math.Max(1, _metadata.Width / 2);
+        _cropHeight = Math.Max(1, _metadata.Height / 2);
+        _rotateDegrees = 0;
+    }
+
+    private void ResetState()
+    {
+        _uploadedFile = null;
+        _metadata = null;
+        _originalBytes = null;
+        _currentBytes = null;
+        _previewDataUrl = null;
+        _paletteColors.Clear();
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

@@ -1,0 +1,18 @@
+@namespace Lyo.FileStorage.Web.Components
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="1">
+        <MudText Typo="Typo.h5">@Title</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">@Description</MudText>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "File Storage Workbench";
+
+    [Parameter]
+    public string Description { get; set; } = "";
+
+}

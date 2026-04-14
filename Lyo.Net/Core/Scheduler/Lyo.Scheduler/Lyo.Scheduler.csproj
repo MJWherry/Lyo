@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Scheduler.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
+        <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+@using Lyo.FileStorage.Web.Components
+@using Lyo.Gateway.Components.Pages
+@attribute [Route("/" + Lyo.Gateway.Constants.Page.FileStorageWorkbench)]
+@inherits AuthorizedPage
+
+<PageTitle>File Storage Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <FileStorageWorkbench FileMetadataQueryRoute="@Lyo.Gateway.Models.Constants.FileStorageWorkbench.FileMetadataRoute"
+                          ProxyDownloadPath="@Lyo.Gateway.Models.Constants.FileStorageWorkbench.ProxyDownloadRoute"/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "File Storage Workbench";
+
+}

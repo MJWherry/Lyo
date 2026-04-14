@@ -1,0 +1,42 @@
+@* Receipt.razor *@
+
+@code {
+
+    public sealed record ReceiptOptions(string ReceiptNumber, DateTime TransactionDate, string MerchantName, string MerchantAddress, string CustomerName, string PaymentMethod, List<ReceiptLineItem> Items, decimal TaxAmount, decimal Total);
+
+    public sealed record ReceiptLineItem(string Description, int Quantity, decimal UnitPrice)
+    {
+        public decimal Total => Quantity * UnitPrice;
+    }
+
+    [Parameter]
+    [EditorRequired]
+    public ReceiptOptions Options { get; set; } = null!;
+
+}
+
+<div style="max-width: 400px; margin: 40px auto; padding: 30px; font-family: 'Courier New', monospace; font-size: 14px; border: 2px dashed #cbd5e1;">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 18px; font-weight: 700;">@Options.MerchantName</div>
+        <div style="font-size: 12px;">@Options.MerchantAddress</div>
+    </div>
+    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 12px 0; margin: 16px 0;">
+        <div>RECEIPT #@Options.ReceiptNumber</div>
+        <div>Date: @Options.TransactionDate.ToString("MM/dd/yyyy HH:mm")</div>
+        <div>Customer: @Options.CustomerName</div>
+        <div>Payment: @Options.PaymentMethod</div>
+    </div>
+    <div style="border-bottom: 1px dashed #000; padding-bottom: 12px;">
+        @foreach (var item in Options.Items) {
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>@item.Description x @item.Quantity</span>
+                <span>$@item.Total.ToString("N2")</span>
+            </div>
+        }
+    </div>
+    <div style="margin-top: 8px;">
+        <div style="display: flex; justify-content: space-between;">Tax: <span>$@Options.TaxAmount.ToString("N2")</span></div>
+        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; margin-top: 8px;">TOTAL: <span>$@Options.Total.ToString("N2")</span></div>
+    </div>
+    <div style="text-align: center; margin-top: 24px; font-size: 12px;">Thank you for your business!</div>
+</div>

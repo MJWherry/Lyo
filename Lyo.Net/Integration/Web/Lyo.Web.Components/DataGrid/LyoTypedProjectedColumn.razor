@@ -1,0 +1,104 @@
+@namespace Lyo.Web.Components.DataGrid
+@typeparam TValue
+@using MudBlazor
+<TemplateColumn T="object?"
+                Title="@Title"
+                Sortable="@Sortable"
+                SortFunc="@GetSortValue"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                Align="@Align"
+                Tag="@GetApiSortKey()"
+                Hidden="@(VisibilityBinder?.IsHidden(Field) ?? false)"
+                HiddenChanged="@OnHiddenChanged">
+    <CellTemplate Context="cell">
+        @{
+            string displayText;
+            if (Format != null) {
+                var raw = ProjectedValueHelper.GetValue(cell.Item, Field);
+                displayText = Format(ProjectedValueHelper.ConvertTo<TValue>(raw));
+            }
+            else if (FormattedValue != null) {
+                var raw = ProjectedValueHelper.GetValue(cell.Item, Field);
+                var typed = ProjectedValueHelper.ConvertTo<TValue>(raw);
+                displayText = FormattedValue(cell.Item, typed);
+            }
+            else {
+                displayText = ProjectedValueHelper.GetDisplayValue(cell.Item, Field);
+            }
+        }
+        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+            <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+        }
+        else {
+            @displayText
+        }
+    </CellTemplate>
+</TemplateColumn>
+
+@code {
+
+    [CascadingParameter(Name = "LyoDataGridQuickSearchText")]
+    public string? QuickSearchText { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridProjectedColumnRegistry")]
+    public ProjectedColumnRegistry? ColumnRegistry { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridColumnVisibilityBinder")]
+    public ColumnVisibilityBinder? VisibilityBinder { get; set; }
+
+    /// <summary>Field name in the projected result (e.g. "Id", "FirstName", "Addresses.Count"). Used for display and API sort key.</summary>
+    [Parameter]
+    [EditorRequired]
+    public required string Field { get; set; }
+
+    /// <summary>Sort key sent to API. Defaults to Field. Use when API expects different name than Field.</summary>
+    [Parameter]
+    public string? SortKey { get; set; }
+
+    /// <summary>When set, this column participates in quick search highlighting. Use the same property name as in QuickSearchProperties.</summary>
+    [Parameter]
+    public string? QuickSearchPropertyName { get; set; }
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public bool Sortable { get; set; } = true;
+
+    [Parameter]
+    public SortDirection InitialDirection { get; set; } = SortDirection.None;
+
+    [Parameter]
+    public bool Hideable { get; set; } = true;
+
+    [Parameter]
+    public bool Resizable { get; set; } = true;
+
+    [Parameter]
+    public Align Align { get; set; } = Align.Inherit;
+
+    /// <summary>When true, the column starts hidden (and stays out of the query select) until the user shows it, unless visibility was restored from the client store.</summary>
+    [Parameter]
+    public bool HiddenByDefault { get; set; }
+
+    /// <summary>When set, formats the cell from the field value alone (coerced to <typeparamref name="TValue"/>). Prefer this over <see cref="FormattedValue"/> when you do not need the row.</summary>
+    [Parameter]
+    public Func<TValue, string>? Format { get; set; }
+
+    /// <summary>
+    /// When set (and <see cref="Format"/> is null), formats the cell using the projected row and the field value coerced to <typeparamref name="TValue"/> (see <see cref="ProjectedValueHelper.ConvertTo{T}"/>).
+    /// </summary>
+    [Parameter]
+    public Func<object?, TValue, string>? FormattedValue { get; set; }
+
+    protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault);
+
+    private void OnHiddenChanged(bool hidden) => VisibilityBinder?.SetHidden(Field, hidden);
+
+    private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
+
+    internal string GetApiSortKey() => SortKey ?? Field;
+
+}

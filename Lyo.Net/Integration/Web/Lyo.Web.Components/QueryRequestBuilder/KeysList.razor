@@ -1,0 +1,14 @@
+@using Lyo.Web.Components.ChipInput
+@using MudBlazor
+<MudStack Spacing="1">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Keys</MudText>
+    <div style="font-family: ui-monospace, monospace;">
+        <LyoChipInput Values="@GetValuesList()"
+                      ValuesChanged="@OnValuesChanged"
+                      SelectedValues="@GetSelectedValuesList()"
+                      SelectedValuesChanged="@OnSelectedChanged"
+                      SelectableChips="true"
+                      Placeholder="@(GetValuesList().Any() ? "" : "Comma-separated key values, press Enter to add")"/>
+    </div>
+</MudStack>
+

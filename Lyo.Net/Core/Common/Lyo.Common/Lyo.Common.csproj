@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Common.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json" Version="[10,)"/>
+
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+</Project>

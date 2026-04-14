@@ -1,0 +1,67 @@
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Models
+@using Constants = Lyo.Gateway.Models.Constants
+@inject IApiClient ApiClient
+@inject IDialogService DialogService
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="PersonGrid"
+                      Route="@Constants.Person.Route"
+                      KeySelector="@(GetKey)"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      RowMenuControls="@GetRowMenuControls()">
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID"/>
+        <LyoProjectedColumn Field="FirstName" Title="Firstname" QuickSearchPropertyName="Firstname"/>
+        <LyoProjectedColumn Field="MiddleName" Title="Middlename"/>
+        <LyoProjectedColumn Field="LastName" Title="Lastname" QuickSearchPropertyName="Lastname"/>
+        <LyoProjectedColumn Field="DateOfBirth" Title="DoB" HiddenByDefault="true"/>
+        <LyoProjectedColumn Field="ContactAddresses.Count" Title="Addresses"/>
+        <LyoProjectedColumn Field="ContactEmailAddresses.Count" Title="Email Addresses"/>
+        <LyoProjectedColumn Field="ContactPhoneNumbers.Count" Title="Phone Numbers"/>
+        <LyoProjectedColumn Field="Source" Title="Source"/>
+    </Columns>
+</LyoDataGridProjected>
+
+@code {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FirstName"), FilterPropertyDefinition.FromDatabase("LastName", "last_name", "person", "people")];
+
+    private readonly IEnumerable<string> _includes = [];
+
+    private LyoDataGridProjected? _dataGrid;
+
+    private static object[] GetKey(object? item)
+    {
+        if (item == null)
+            return [];
+
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        return id != null ? [id] : [];
+    }
+
+    private RenderFragment<object?> GetRowMenuControls()
+        => person => @<MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => OpenEditor(person))">Edit</MudMenuItem>;
+
+    private async Task OpenEditor(object? person)
+    {
+        if (person == null)
+            return;
+
+        var id = ProjectedValueHelper.GetValue(person, "Id");
+        if (id == null)
+            return;
+
+        var personRes = await ApiClient.GetAsAsync<PersonRes>($"{Constants.Person.Route}/{id}");
+        if (personRes == null)
+            return;
+
+        var dialogParameters = new DialogParameters<PersonForm> { { i => i.Person, personRes } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<PersonForm>($"Edit {personRes.FullName}", dialogParameters, options);
+        var result = await dialog.Result;
+        if (!result.Canceled && _dataGrid is not null)
+            await _dataGrid.RefreshData();
+    }
+
+}

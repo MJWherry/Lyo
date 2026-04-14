@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <RootNamespace>Lyo.DataTable.Models</RootNamespace>
+        <AssemblyName>Lyo.DataTable.Models</AssemblyName>
+        <PackageId>Lyo.DataTable.Models</PackageId>
+        <NuspecFile>Lyo.DataTable.Models.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

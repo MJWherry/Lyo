@@ -1,0 +1,370 @@
+@using Lyo.Common.Enums
+@using Lyo.Web.Components.FileUpload
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Spritesheet Animator</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Animate: slice a flat spritesheet and preview or export. Extract: sample one loop at a target FPS (default 60), lay frames in a grid you control, then pad and
+                offset the PNG sheet.
+            </MudText>
+        </div>
+
+        <MudTabs Rounded="true" KeepPanelsAlive="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Animate" Icon="@Icons.Material.Filled.Animation">
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudStack Spacing="3">
+                            <SpriteSheetAnimateUploader @ref="_animatorUploader"
+                                                        Sheets="_animatorSheets"
+                                                        SelectedSheetId="_selectedAnimatorSheetId"
+                                                        ShowAddImagesHint="@(_metadata == null)"
+                                                        GetLabel="GetAnimatorSheetLabel"
+                                                        OnClientFileReady="OnAnimatorClientFileReadyAsync"
+                                                        OnClientFileRemoved="OnAnimatorClientFileRemovedAsync"
+                                                        OnSelectSheet="OnAnimatorSheetSelectedAsync"
+                                                        OnRemoveSheet="RemoveAnimatorSheetAsync"/>
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudStack Spacing="3">
+                            <SpriteSheetImageInfo Metadata="_metadata" Calculation="_calculation"/>
+                            <SpriteSheetProcessor HasSpriteSheet="HasSpriteSheet"
+                                                  Busy="_busy"
+                                                  RowCount="_rowCount"
+                                                  RowCountChanged="OnAnimatorSliceRowCountChangedAsync"
+                                                  FramesPerRow="_framesPerRow"
+                                                  FramesPerRowChanged="OnAnimatorSliceFramesPerRowChangedAsync"
+                                                  OffsetX="_offsetX"
+                                                  OffsetXChanged="OnAnimatorSliceOffsetXChangedAsync"
+                                                  OffsetY="_offsetY"
+                                                  OffsetYChanged="OnAnimatorSliceOffsetYChangedAsync"
+                                                  LeftTrim="_leftTrim"
+                                                  LeftTrimChanged="OnAnimatorSliceLeftTrimChangedAsync"
+                                                  RightTrim="_rightTrim"
+                                                  RightTrimChanged="OnAnimatorSliceRightTrimChangedAsync"
+                                                  TopTrim="_topTrim"
+                                                  TopTrimChanged="OnAnimatorSliceTopTrimChangedAsync"
+                                                  BottomTrim="_bottomTrim"
+                                                  BottomTrimChanged="OnAnimatorSliceBottomTrimChangedAsync"
+                                                  OnApply="ApplySettingsAsync"/>
+                            <SpriteSheetPlayer Playing="_playing"
+                                               Busy="_busy"
+                                               HasIncludedFrames="HasIncludedFrames"
+                                               FramesPerSecond="_framesPerSecond"
+                                               FramesPerSecondChanged="OnFramesPerSecondChangedAsync"
+                                               SelectedPreviewIndex="_selectedPreviewIndex"
+                                               SelectedPreviewIndexChanged="OnPreviewFrameSliderChangedAsync"
+                                               MaxPreviewFrameIndex="MaxPreviewFrameIndex"
+                                               IncludedFrameCount="_calculation.IncludedFrames.Count"
+                                               OnTogglePlayPause="TogglePlayPauseAsync"/>
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudStack Spacing="3">
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                        <MudChip T="string" Color="@(_playing ? Color.Success : Color.Default)">
+                                            @(_playing ? "Playing" : "Paused")
+                                        </MudChip>
+                                        <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
+                                            @(_busy ? "Busy" : "Idle")
+                                        </MudChip>
+                                        <MudChip T="string" Color="@(HasIncludedFrames ? Color.Primary : Color.Default)">
+                                            @($"{_calculation.IncludedFrames.Count} Included")
+                                        </MudChip>
+                                    </MudStack>
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Preview</MudText>
+
+                                    @if (!HasSpriteSheet) {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            The canvas preview will appear after you upload an image.
+                                        </MudText>
+                                    }
+                                    else {
+                                        <MudPaper Class="pa-4 d-flex justify-center" Outlined="true">
+                                            <canvas @ref="_previewCanvas"
+                                                    style="max-width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--mud-palette-lines-default);"></canvas>
+                                        </MudPaper>
+
+                                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" Justify="Justify.Center" Class="mt-2">
+                                            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="DownloadGifAsync" Disabled="@(!CanDownloadGif)">Download gif
+                                            </MudButton>
+                                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadIncludedFramesAsync" Disabled="@(!CanDownloadAllFrames)">
+                                                Download
+                                                frames
+                                            </MudButton>
+                                            <MudButton Variant="Variant.Text" OnClick="DownloadCurrentFrameAsync" Disabled="@(!CanDownloadCurrentFrame)">Download current frame
+                                            </MudButton>
+                                        </MudStack>
+
+                                        @if (SelectedFrame.HasValue) {
+                                            <MudSimpleTable Dense="true">
+                                                <tbody>
+                                                <tr>
+                                                    <td><strong>Selected Included Frame</strong></td>
+                                                    <td>@_selectedPreviewIndex</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Source Frame Index</strong></td>
+                                                    <td>@SelectedFrame.Value.Index</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Crop Rect</strong></td>
+                                                    <td>@($"{SelectedFrame.Value.X}, {SelectedFrame.Value.Y}, {SelectedFrame.Value.Width}, {SelectedFrame.Value.Height}")</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Max Detectable Frames</strong></td>
+                                                    <td>@_calculation.MaxFrameCount</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Frames Per Row</strong></td>
+                                                    <td>@_calculation.ColumnCount</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Grid Position</strong></td>
+                                                    <td>@($"row {SelectedFrame.Value.Row + 1}, column {SelectedFrame.Value.Column + 1}")</td>
+                                                </tr>
+                                                </tbody>
+                                            </MudSimpleTable>
+                                        }
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudExpansionPanels Elevation="0" Outlined="true" Class="rounded" Dense="true">
+                                <MudExpansionPanel Icon="@Icons.Material.Filled.TableRows">
+                                    <TitleContent>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudText Typo="Typo.h6">Frames</MudText>
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@_calculation.Frames.Count cells</MudChip>
+                                        </MudStack>
+                                    </TitleContent>
+                                    <ChildContent>
+                                        @if (_calculation.Frames.Count == 0) {
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Adjust the width or offsets until at least one frame fits inside the spritesheet.
+                                            </MudText>
+                                        }
+                                        else {
+                                            <MudSimpleTable Dense="true" Hover="true" Style="max-height: min(60vh, 480px); overflow: auto;">
+                                                <thead>
+                                                <tr>
+                                                    <th>Index</th>
+                                                    <th>Grid</th>
+                                                    <th>Rect</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach (var frame in _calculation.Frames) {
+                                                    <tr>
+                                                        <td>@frame.Index</td>
+                                                        <td>@($"{frame.Row + 1}, {frame.Column + 1}")</td>
+                                                        <td>@($"{frame.X}, {frame.Y}, {frame.Width}, {frame.Height}")</td>
+                                                        <td>@(frame.IsIncluded ? "Included" : "Excluded")</td>
+                                                        <td>
+                                                            <MudStack Row="true" Wrap="Wrap.NoWrap" Spacing="1">
+                                                                <MudButton Variant="Variant.Text"
+                                                                           Color="@(frame.IsIncluded ? Color.Warning : Color.Success)"
+                                                                           OnClick="@(() => ToggleFrameAsync(frame.Index))"
+                                                                           Disabled="@_busy">
+                                                                    @(frame.IsIncluded ? "Exclude" : "Include")
+                                                                </MudButton>
+                                                                <MudButton Variant="Variant.Text"
+                                                                           OnClick="@(() => PreviewFrameBySourceIndexAsync(frame.Index))"
+                                                                           Disabled="@(!frame.IsIncluded || _busy)">
+                                                                    Preview
+                                                                </MudButton>
+                                                            </MudStack>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                </tbody>
+                                            </MudSimpleTable>
+                                        }
+                                    </ChildContent>
+                                </MudExpansionPanel>
+                            </MudExpansionPanels>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Extract" Icon="@Icons.Material.Filled.Image">
+                <MudGrid>
+                    <MudItem xs="12" md="5">
+                        <MudStack Spacing="3">
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Animated source</MudText>
+                                    <LyoFileUpload MaxFiles="1"
+                                                   ValidFileTypes="FileTypeFlags.Images"
+                                                   ButtonText="Choose GIF or animated image"
+                                                   InlineLayout="true"
+                                                   OnClientFileReady="OnExtractFileReadyAsync"
+                                                   OnClientFileRemoved="OnExtractFileRemovedAsync"/>
+
+                                    @if (_extractMetadata == null) {
+                                        <MudStack Spacing="1">
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                Upload a GIF or animated WebP. Target FPS (default 60) sets how many frames to take from one loop (capped by the file’s frame
+                                                count). Rows and frames-per-row form a rectangle around that budget; if the rectangle has extra slots (e.g. 7 rows × 7 columns for
+                                                47 samples), use Grid pad to spread or split duplicates so playback stays smooth. Adjust padding and offsets for the final PNG
+                                                sheet.
+                                            </MudText>
+                                        </MudStack>
+                                    }
+                                    else {
+                                        <MudGrid Spacing="1" Class="mt-1">
+                                            <MudItem xs="6" sm="3">
+                                                <MudTextField T="string" Label="Format" Value="@_extractMetadata.Format.ToString()" ReadOnly="true" Variant="Variant.Outlined"
+                                                              Margin="Margin.Dense"/>
+                                            </MudItem>
+                                            <MudItem xs="6" sm="3">
+                                                <MudTextField T="string" Label="Dimensions" Value="@($"{_extractMetadata.Width}×{_extractMetadata.Height}")" ReadOnly="true"
+                                                              Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            </MudItem>
+                                            <MudItem xs="6" sm="3">
+                                                <MudTextField T="string" Label="Grid cells" Value="@($"{_extractRowCount}×{_extractFramesPerRow} = {ExtractGridCellCount}")"
+                                                              ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="@ExtractGridCellsHelperText"/>
+                                            </MudItem>
+                                            <MudItem xs="6" sm="3">
+                                                <MudTextField T="string" Label="One loop"
+                                                              Value="@(_extractTiming.HasValue && _extractTiming.Value.LoopDurationMs > 0 ? $"{_extractTiming.Value.LoopDurationMs:0} ms" : "—")"
+                                                              ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                              HelperText="@(!_extractTiming.HasValue || _extractTiming.Value.LoopDurationMs <= 0 ? "Animated source only" : null)"/>
+                                            </MudItem>
+                                            <MudItem xs="6" sm="4">
+                                                <MudTextField T="string" Label="Target samples" Value="@ExtractSampleBudget.ToString()" ReadOnly="true" Variant="Variant.Outlined"
+                                                              Margin="Margin.Dense" HelperText="@($"Per loop at {_extractSampleFps} FPS (capped by source)")"/>
+                                            </MudItem>
+                                            <MudItem xs="6" sm="4">
+                                                <MudTextField T="string" Label="Source frames" Value="@(_extractTiming?.SourceFrameCount.ToString() ?? "—")" ReadOnly="true"
+                                                              Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Frames in file (one loop)"/>
+                                            </MudItem>
+                                            <MudItem xs="12" sm="4">
+                                                <MudTextField T="string" Label="Effective FPS" Value="@(_extractTiming?.ImpliedFps is { } eff ? eff.ToString("0.##") : "—")"
+                                                              ReadOnly="true" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                              HelperText="@(_extractTiming?.ImpliedFps is not null ? "Grid cells ÷ one loop" : "Animated source only")"/>
+                                            </MudItem>
+                                        </MudGrid>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Layout and sampling</MudText>
+                                    <MudGrid Spacing="1">
+                                        <MudItem xs="12" sm="4">
+                                            <MudNumericField T="int" Label="Target FPS" Min="1" Max="240" Value="_extractSampleFps" ValueChanged="OnExtractSampleFpsChangedAsync"
+                                                             Margin="Margin.Dense" HelperText="Caps samples per loop."/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudNumericField T="int" Label="Row count" Min="1" Max="256" Value="_extractRowCount" ValueChanged="OnExtractRowCountChangedAsync"
+                                                             Margin="Margin.Dense" HelperText="Fits sample budget."/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-0">Frames per row (computed)</MudText>
+                                            <MudText Typo="Typo.body2">@_extractFramesPerRow</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12">
+                                            <MudSelect T="SpriteGridPadMode" Label="Grid pad (cells &gt; samples)" @bind-Value="_extractGridPadMode"
+                                                       AnchorOrigin="Origin.BottomCenter" Margin="Margin.Dense" Dense="true">
+                                                <MudSelectItem Value="@SpriteGridPadMode.StretchedUniform">Stretched — spread duplicates through the loop</MudSelectItem>
+                                                <MudSelectItem Value="@SpriteGridPadMode.SymmetricBookends">Symmetric — split first/last</MudSelectItem>
+                                                <MudSelectItem Value="@SpriteGridPadMode.EndRepeatLast">End — last frame only</MudSelectItem>
+                                            </MudSelect>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Extra rectangle slots duplicate samples so the grid is full; stretched
+                                                avoids one long hold at the end.
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Sheet padding and offset</MudText>
+                                    <MudGrid>
+                                        <MudItem xs="12" sm="6">
+                                            <MudNumericField T="int" Label="X offset" Min="0" Max="4096" @bind-Value="_extractOffsetX"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6">
+                                            <MudNumericField T="int" Label="Y offset" Min="0" Max="4096" @bind-Value="_extractOffsetY"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="3">
+                                            <MudNumericField T="int" Label="Left pad" Min="0" Max="4096" @bind-Value="_extractPadLeft"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="3">
+                                            <MudNumericField T="int" Label="Right pad" Min="0" Max="4096" @bind-Value="_extractPadRight"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="3">
+                                            <MudNumericField T="int" Label="Top pad" Min="0" Max="4096" @bind-Value="_extractPadTop"/>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="3">
+                                            <MudNumericField T="int" Label="Bottom pad" Min="0" Max="4096" @bind-Value="_extractPadBottom"/>
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Padding is added inside each cell around the frame; offsets shift the whole grid from the top-left of the PNG.
+                                    </MudText>
+
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateExtractSpriteSheetAsync" Disabled="@(!CanGenerateExtract)">
+                                        Generate spritesheet
+                                    </MudButton>
+                                </MudStack>
+                            </MudPaper>
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="7">
+                        <MudStack Spacing="3">
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    @if (!string.IsNullOrWhiteSpace(_extractStatusMessage)) {
+                                        <MudAlert Severity="@_extractStatusSeverity" Dense="true">@_extractStatusMessage</MudAlert>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+
+                            <MudPaper Class="pa-4" Outlined="true">
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.h6">Result</MudText>
+                                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="DownloadExtractSpriteSheetAsync" Disabled="@(!CanDownloadExtract)">
+                                            Download PNG
+                                        </MudButton>
+                                    </MudStack>
+
+                                    @if (string.IsNullOrEmpty(_extractPreviewDataUrl)) {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            Generate a spritesheet to preview it here.
+                                        </MudText>
+                                    }
+                                    else {
+                                        <MudPaper Class="pa-4 d-flex justify-center" Outlined="true">
+                                            <img src="@_extractPreviewDataUrl" alt="Spritesheet preview"
+                                                 style="max-width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--mud-palette-lines-default);"/>
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>

@@ -1,0 +1,310 @@
+@using Lyo.Typecast.Client.Enums
+@using Lyo.Typecast.Client.Models.TextToSpeech.Request
+@using Lyo.Typecast.Client.Models.Voices.Response
+@inject TypecastTtsService TtsService
+@inject TypecastOptions TtsOptions
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Typecast TTS</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Generate speech with the configured Typecast implementation and preview it inline.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Spacing="3">
+                        <MudGrid>
+                            <MudItem xs="12" md="2">
+                                <MudTextField T="int?" Label="Seed" @bind-Value="_seed"/>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudSelect T="string" Label="Model" @bind-Value="_selectedModel">
+                                    <MudSelectItem Value="@TypecastModel.SsfmV30">@TypecastModel.SsfmV30</MudSelectItem>
+                                    <MudSelectItem Value="@TypecastModel.SsfmV21">@TypecastModel.SsfmV21</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="3">
+                                <MudSelect T="string" Label="Voice" @bind-Value="_selectedVoiceId">
+                                    @foreach (var voice in AvailableVoices) {
+                                        <MudSelectItem Value="@voice.VoiceId">@voice.VoiceName (@voice.VoiceId)</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudSelect T="string" Label="Format" @bind-Value="_audioFormat">
+                                    <MudSelectItem Value="@("mp3")">mp3</MudSelectItem>
+                                    <MudSelectItem Value="@("wav")">wav</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.subtitle2" Class="mb-1">Tags</MudText>
+                                @if (SelectedVoiceTags.Count == 0) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">No tags for this voice.</MudText>
+                                }
+                                else {
+                                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                                        @foreach (var tag in SelectedVoiceTags) {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@tag</MudChip>
+                                        }
+                                    </MudStack>
+                                }
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle2">Volume</MudText>
+                                <MudSlider T="int" Min="0" Max="200" Step="1" @bind-Value="_volume"/>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle2">Pitch</MudText>
+                                <MudSlider T="int" Min="-12" Max="12" Step="1" @bind-Value="_pitch"/>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.subtitle2">Tempo</MudText>
+                                <MudSlider T="double" Min="0.5" Max="2.0" Step="0.1" @bind-Value="_tempo"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudTextField T="string"
+                                      Label="Text"
+                                      Variant="Variant.Outlined"
+                                      Lines="8"
+                                      FullWidth="true"
+                                      @bind-Value="_text"/>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="Before text context"
+                                              HelperText="Sent to Typecast as previous_text for smart prompting."
+                                              Lines="3"
+                                              FullWidth="true"
+                                              @bind-Value="_previousText"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Label="After text context"
+                                              HelperText="Sent to Typecast as next_text for smart prompting."
+                                              Lines="3"
+                                              FullWidth="true"
+                                              @bind-Value="_nextText"/>
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SynthesizeAsync" Disabled="@(_busy || !_voicesLoaded)">
+                                Synthesize
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" OnClick="ReloadVoicesAsync" Disabled="@_busy">Reload Voices</MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="TestConnectionAsync" Disabled="@_busy">Test Connection</MudButton>
+                        </MudStack>
+
+                        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudText Typo="Typo.h6">Result</MudText>
+                        @if (_audioBytes != null) {
+                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Audio</MudButton>
+                        }
+                    </MudStack>
+
+                    @if (_audioBytes == null || string.IsNullOrWhiteSpace(_audioSource)) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Synthesize speech to preview the generated audio here.
+                        </MudText>
+                    }
+                    else {
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Voice</MudText>
+                                    <MudText Typo="Typo.body1">@SelectedVoice?.VoiceName ?? _selectedVoiceId</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Model</MudText>
+                                    <MudText Typo="Typo.body1">@_selectedModel</MudText>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-3" Outlined="true">
+                                    <MudText Typo="Typo.subtitle2">Audio size</MudText>
+                                    <MudText Typo="Typo.body1">@FileSizeUnitInfo.FormatBestFitAbbreviation(_audioBytes.LongLength, lowercaseAbbreviation: false)</MudText>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <audio controls style="width: 100%; margin-top: 16px;" src="@_audioSource"></audio>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private string _audioFormat = "mp3";
+    private byte[]? _audioBytes;
+    private string? _audioSource;
+    private int _pitch;
+    private string _previousText = string.Empty;
+    private string _nextText = string.Empty;
+    private string _selectedModel = TypecastModel.SsfmV30;
+    private string? _selectedVoiceId;
+    private int? _seed;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private string _text = "Hello from the test gateway.";
+    private double _tempo = 1.0;
+    private int _volume = 100;
+    private bool _voicesLoaded;
+
+    private IEnumerable<Voice> AvailableVoices => TtsService.GetVoicesForModel(_selectedModel).OrderBy(i => i.VoiceName);
+
+    private Voice? SelectedVoice => AvailableVoices.FirstOrDefault(i => i.VoiceId == _selectedVoiceId);
+
+    private IReadOnlyList<string> SelectedVoiceTags => SelectedVoice?.UseCases?.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selectedModel = TtsOptions.DefaultModel;
+        await ReloadVoicesAsync();
+    }
+
+    private async Task ReloadVoicesAsync()
+    {
+        _busy = true;
+        try {
+            _voicesLoaded = await TtsService.LoadVoicesAsync();
+            if (!_voicesLoaded) {
+                SetStatus("Typecast returned no voices.", Severity.Warning);
+                return;
+            }
+
+            _selectedVoiceId = AvailableVoices.FirstOrDefault()?.VoiceId;
+            SetStatus($"Loaded {AvailableVoices.Count()} voices for {_selectedModel}.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task SynthesizeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_text)) {
+            SetStatus("Enter text to synthesize.", Severity.Warning);
+            return;
+        }
+
+        var selectedVoice = AvailableVoices.FirstOrDefault(i => i.VoiceId == _selectedVoiceId) ?? AvailableVoices.FirstOrDefault();
+        if (selectedVoice == null) {
+            SetStatus("No voice is available for the selected model.", Severity.Warning);
+            return;
+        }
+
+        _selectedVoiceId = selectedVoice.VoiceId;
+        _busy = true;
+        try {
+            var builder = TypecastTtsRequestBuilder.Create(_selectedVoiceId!, _text)
+            .WithModel(_selectedModel)
+            .WithOutput(
+                new OutputSettings {
+                    AudioFormat = _audioFormat,
+                    Volume = _volume,
+                    AudioPitch = _pitch,
+                    AudioTempo = _tempo
+                });
+
+            if (_seed.HasValue)
+                builder.WithSeed(_seed.Value);
+
+            if (!string.IsNullOrWhiteSpace(_previousText) || !string.IsNullOrWhiteSpace(_nextText))
+                builder.WithSmartPrompt(_previousText, _nextText);
+
+            var request = builder.Build();
+            var result = await TtsService.SynthesizeAsync(request);
+            if (!result.IsSuccess || result.AudioData == null) {
+                SetStatus(LyoResultErrorFormatter.FormatErrors(result.Errors), Severity.Error);
+                return;
+            }
+
+            _audioBytes = result.AudioData;
+            _audioSource = $"data:{GetMimeType()};base64,{Convert.ToBase64String(result.AudioData)}";
+            SetStatus(result.Message ?? "Speech synthesized.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadAsync()
+    {
+        if (_audioBytes == null)
+            return;
+
+        await Js.DownloadFile(_audioBytes, $"typecast-{DateTime.UtcNow:yyyyMMddHHmmss}.{_audioFormat}", GetMimeType());
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        _busy = true;
+        try {
+            var ok = await TtsService.TestConnectionAsync();
+            SetStatus(ok ? "Typecast connection succeeded." : "Typecast connection failed.", ok ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private string GetMimeType() => _audioFormat == "wav" ? "audio/wav" : "audio/mpeg";
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

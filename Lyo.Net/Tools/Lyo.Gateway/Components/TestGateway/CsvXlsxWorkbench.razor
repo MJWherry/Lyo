@@ -1,0 +1,525 @@
+@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Lyo.Common
+@using Lyo.Common.Enums
+@using Lyo.Common.Records
+@using Lyo.Csv.Models
+@using Lyo.DataTable.Models
+@using Lyo.Web.Components
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.JsonEditor
+@using Lyo.Web.Components.Models
+@using Lyo.Xlsx.Models
+@inject ICsvService CsvService
+@inject IXlsxService XlsxService
+@inject IJsInterop Js
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">CSV &amp; XLSX</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Upload files with <code>LyoFileUpload</code>, parse with <code>Lyo.Csv</code> and <code>Lyo.Xlsx</code>, merge tables, convert formats, and download results.
+            </MudText>
+        </div>
+
+        <MudTabs @bind-ActivePanelIndex="_tabIndex" Rounded="true" Elevation="0" Outlined="true">
+            <MudTabPanel Text="CSV">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch @bind-Value="_csvHasHeader" Color="Color.Primary" Label="First row is header"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Upload .csv</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           MaxFileSize="@MaxUploadBytes"
+                                           ValidFileTypes="FileTypeFlags.Csv"
+                                           ButtonText="Choose CSV file"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnCsvUploadReadyAsync"/>
+                            @if (!string.IsNullOrEmpty(_csvUploadName)) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Loaded: @_csvUploadName</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudTextField T="string"
+                                  @bind-Value="_csvText"
+                                  Label="CSV text (paste or edit; Parse applies this)"
+                                  Lines="10"
+                                  FullWidth="true"
+                                  Variant="Variant.Outlined"
+                                  Style="font-family: ui-monospace, monospace;"/>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvTextAsync">Parse text</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_csvError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_csvError</MudAlert>
+                    }
+
+                    @if (_csvTable != null) {
+                        <MudText Typo="Typo.subtitle2">Preview (@_csvTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_csvTable"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="XLSX">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSwitch @bind-Value="_xlsxUseHeaderRow" Color="Color.Primary" Label="Use first row as header"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle2">Upload .xlsx</MudText>
+                            <LyoFileUpload MaxFiles="1"
+                                           MaxFileSize="@MaxUploadBytes"
+                                           ValidFileTypes="FileTypeFlags.Xlsx"
+                                           ButtonText="Choose XLSX file"
+                                           InlineLayout="true"
+                                           OnClientFileReady="OnXlsxUploadReadyAsync"/>
+                            @if (!string.IsNullOrEmpty(_xlsxUploadName)) {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Loaded: @_xlsxUploadName (@_xlsxByteLength bytes)</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxReexportAsync" Disabled="@(_xlsxTable == null)">Download .xlsx
+                            (re-export)
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxAsCsvAsync" Disabled="@(_xlsxBytes == null)">Download as .csv</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxHtmlAsync" Disabled="@(_xlsxBytes == null)">Download HTML table</MudButton>
+                    </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_xlsxError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_xlsxError</MudAlert>
+                    }
+
+                    @if (_xlsxTable != null) {
+                        <MudText Typo="Typo.subtitle2">Preview (@_xlsxTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_xlsxTable"/>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Merge">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Load two <strong>.csv</strong> or <strong>.xlsx</strong> files. Rows from source B are appended under source A (column-aligned by index). Optionally skip
+                        the first row of B when it repeats headers.
+                    </MudText>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeHeaderA" Color="Color.Primary" Label="A: first row is header"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeHeaderB" Color="Color.Primary" Label="B: first row is header"/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSwitch @bind-Value="_mergeSkipFirstRowB" Color="Color.Primary" Label="Skip first row of B when merging"/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Source A (top)</MudText>
+                                <LyoFileUpload MaxFiles="1"
+                                               MaxFileSize="@MaxUploadBytes"
+                                               ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                               ButtonText="Upload A"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnMergeAReadyAsync"/>
+                                @if (!string.IsNullOrEmpty(_mergeNameA)) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_mergeNameA</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-3" Outlined="true">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Source B (appended)</MudText>
+                                <LyoFileUpload MaxFiles="1"
+                                               MaxFileSize="@MaxUploadBytes"
+                                               ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                               ButtonText="Upload B"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnMergeBReadyAsync"/>
+                                @if (!string.IsNullOrEmpty(_mergeNameB)) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_mergeNameB</MudText>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MergeAsync" Disabled="@(_mergeBytesA == null || _mergeBytesB == null)">Merge</MudButton>
+
+                    @if (!string.IsNullOrWhiteSpace(_mergeError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_mergeError</MudAlert>
+                    }
+
+                    @if (_mergedTable != null) {
+                        <MudText Typo="Typo.subtitle2">Merged (@_mergedTable.Rows.Count row(s))</MudText>
+
+                        <DataTablePreview Table="@_mergedTable"/>
+
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedCsvAsync">Download merged .csv</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedXlsxAsync">Download merged .xlsx</MudButton>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="More">
+                <MudStack Spacing="3" Class="mt-3">
+                    <MudText Typo="Typo.subtitle2">XLSX → CSV (convert)</MudText>
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="FileTypeFlags.Xlsx"
+                                       ButtonText="Upload XLSX to convert"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnConvertXlsxReadyAsync"/>
+                        @if (!string.IsNullOrEmpty(_convertXlsxName)) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">@_convertXlsxName — ready to download as CSV</MudText>
+                        }
+                    </MudPaper>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="DownloadConvertedCsvAsync" Disabled="@(_convertXlsxBytes == null)">Download .csv</MudButton>
+
+                    <MudDivider/>
+
+                    <MudText Typo="Typo.subtitle2">Grid as JSON (read-only viewer)</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Uses <code>Parse*AsDictionary</code> — row index → column index → cell text. Toolbar: search, expand/collapse, zoom (A-/A+), Raw/Tree view. Read-only (no
+                        editing values).
+                    </MudText>
+                    <MudPaper Class="pa-3" Outlined="true">
+                        <LyoFileUpload MaxFiles="1"
+                                       MaxFileSize="@MaxUploadBytes"
+                                       ValidFileTypes="@(FileTypeFlags.Csv | FileTypeFlags.Xlsx)"
+                                       ButtonText="Upload for JSON viewer"
+                                       InlineLayout="true"
+                                       OnClientFileReady="OnJsonPreviewUploadAsync"/>
+                    </MudPaper>
+                    @if (!string.IsNullOrWhiteSpace(_dictJsonError)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_dictJsonError</MudAlert>
+                    }
+                    else if (_dictJsonRoot != null) {
+                        <MudPaper Class="pa-2" Outlined="true">
+                            <JsonEditor T="JsonNode"
+                                        @key="_dictJsonViewerKey"
+                                        @bind-Value="_dictJsonRoot"
+                                        Editable="false"
+                                        AllowTreeEditing="false"
+                                        DefaultViewMode="JsonEditorViewMode.Tree"/>
+                        </MudPaper>
+
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DownloadDictJsonAsync" Disabled="@(_dictJsonBytes == null)">Download JSON</MudButton>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private const long MaxUploadBytes = 16 * 1024 * 1024;
+
+    /// <summary>Initial tab: <c>csv</c>, <c>xlsx</c>, <c>merge</c>, or <c>more</c>.</summary>
+    [Parameter]
+    public string InitialTab { get; set; } = "csv";
+
+    private int _tabIndex;
+    private bool _csvHasHeader = true;
+    private string _csvText = "Name,Email\nAlice,alice@example.com\nBob,bob@example.com";
+    private string _csvError = string.Empty;
+    private string _csvUploadName = string.Empty;
+    private byte[]? _csvBytes;
+    private DataTable? _csvTable;
+
+    private bool _xlsxUseHeaderRow = true;
+    private string _xlsxError = string.Empty;
+    private string _xlsxUploadName = string.Empty;
+    private long _xlsxByteLength;
+    private byte[]? _xlsxBytes;
+    private DataTable? _xlsxTable;
+
+    private bool _mergeHeaderA = true;
+    private bool _mergeHeaderB = true;
+    private bool _mergeSkipFirstRowB = true;
+    private string _mergeError = string.Empty;
+    private string _mergeNameA = string.Empty;
+    private string _mergeNameB = string.Empty;
+    private byte[]? _mergeBytesA;
+    private byte[]? _mergeBytesB;
+    private DataTable? _mergedTable;
+
+    private string _convertXlsxName = string.Empty;
+    private byte[]? _convertXlsxBytes;
+
+    private JsonNode? _dictJsonRoot;
+    private string? _dictJsonError;
+    private byte[]? _dictJsonBytes;
+    private string _dictJsonFileName = "grid.json";
+    private int _dictJsonViewerKey;
+
+    protected override void OnInitialized()
+        => _tabIndex = InitialTab switch {
+            "xlsx" => 1,
+            "merge" => 2,
+            "more" => 3,
+            var _ => 0
+        };
+
+    private Task OnCsvUploadReadyAsync(LocalBrowserFile file)
+    {
+        _csvUploadName = file.FileName;
+        _csvBytes = file.Content;
+        _csvText = Encoding.UTF8.GetString(file.Content);
+        return ParseCsvTextAsync();
+    }
+
+    private Task ParseCsvTextAsync()
+    {
+        _csvError = string.Empty;
+        _csvTable = null;
+        _csvBytes = Encoding.UTF8.GetBytes(_csvText ?? string.Empty);
+        try {
+            var result = CsvService.ParseBytesAsDataTable(_csvBytes, _csvHasHeader);
+            if (result.IsSuccess && result.Data != null)
+                _csvTable = result.Data;
+            else
+                _csvError = FormatResultErrors(result);
+        }
+        catch (Exception ex) {
+            _csvError = ex.Message;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task DownloadCsvTableAsync()
+    {
+        if (_csvTable == null)
+            return;
+
+        var bytes = CsvService.ExportToCsvBytesFromDataTable(_csvTable);
+        await Js.DownloadFile(bytes, "export.csv", FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task DownloadCsvHtmlAsync()
+    {
+        if (_csvBytes == null)
+            return;
+
+        var html = CsvService.ExportToHtmlTable(_csvBytes, _csvHasHeader);
+        var bytes = Encoding.UTF8.GetBytes(html);
+        await Js.DownloadFile(bytes, "csv-preview.html", FileTypeInfo.Html.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task OnXlsxUploadReadyAsync(LocalBrowserFile file)
+    {
+        _xlsxError = string.Empty;
+        _xlsxTable = null;
+        _xlsxUploadName = file.FileName;
+        _xlsxBytes = file.Content;
+        _xlsxByteLength = file.Content.Length;
+        try {
+            var result = await XlsxService.ParseXlsxBytesAsDataTableAsync(file.Content, _xlsxUseHeaderRow).ConfigureAwait(false);
+            if (result.IsSuccess && result.Data != null)
+                _xlsxTable = result.Data;
+            else
+                _xlsxError = FormatResultErrors(result);
+        }
+        catch (Exception ex) {
+            _xlsxError = ex.Message;
+        }
+    }
+
+    private async Task DownloadXlsxReexportAsync()
+    {
+        if (_xlsxTable == null)
+            return;
+
+        var bytes = XlsxService.Exporter.ExportToXlsxBytesFromDataTable(_xlsxTable);
+        await Js.DownloadFile(bytes, "export.xlsx", FileTypeInfo.Xlsx.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task DownloadXlsxAsCsvAsync()
+    {
+        if (_xlsxBytes == null)
+            return;
+
+        var bytes = await XlsxService.ConvertXlsxToCsvBytesAsync(_xlsxBytes).ConfigureAwait(false);
+        await Js.DownloadFile(bytes, Path.ChangeExtension(_xlsxUploadName, ".csv"), FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task DownloadXlsxHtmlAsync()
+    {
+        if (_xlsxBytes == null)
+            return;
+
+        var html = await XlsxService.ExportToHtmlTableAsync(_xlsxBytes, _xlsxUseHeaderRow).ConfigureAwait(false);
+        var bytes = Encoding.UTF8.GetBytes(html);
+        await Js.DownloadFile(bytes, "xlsx-preview.html", FileTypeInfo.Html.MimeType).ConfigureAwait(false);
+    }
+
+    private Task OnMergeAReadyAsync(LocalBrowserFile file)
+    {
+        _mergeNameA = file.FileName;
+        _mergeBytesA = file.Content;
+        _mergeError = string.Empty;
+        _mergedTable = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnMergeBReadyAsync(LocalBrowserFile file)
+    {
+        _mergeNameB = file.FileName;
+        _mergeBytesB = file.Content;
+        _mergeError = string.Empty;
+        _mergedTable = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task MergeAsync()
+    {
+        _mergeError = string.Empty;
+        _mergedTable = null;
+        if (_mergeBytesA == null || _mergeBytesB == null) {
+            _mergeError = "Upload both sources.";
+            return;
+        }
+
+        try {
+            var a = await ParseToDataTableAsync(_mergeNameA, _mergeBytesA, _mergeHeaderA).ConfigureAwait(false);
+            var b = await ParseToDataTableAsync(_mergeNameB, _mergeBytesB, _mergeHeaderB).ConfigureAwait(false);
+            if (!a.IsSuccess || a.Data == null) {
+                _mergeError = "Source A: " + FormatResultErrors(a);
+                return;
+            }
+
+            if (!b.IsSuccess || b.Data == null) {
+                _mergeError = "Source B: " + FormatResultErrors(b);
+                return;
+            }
+
+            _mergedTable = TabularDataMergeHelper.AppendRows(a.Data, b.Data, _mergeSkipFirstRowB);
+            Snackbar.Add($"Merged {_mergedTable.Rows.Count} row(s).", Severity.Success);
+        }
+        catch (Exception ex) {
+            _mergeError = ex.Message;
+        }
+    }
+
+    private async Task<Result<DataTable>> ParseToDataTableAsync(string fileName, byte[] bytes, bool useHeaderRow)
+    {
+        if (IsCsv(fileName))
+            return await CsvService.ParseBytesAsDataTableAsync(bytes, useHeaderRow).ConfigureAwait(false);
+
+        if (IsXlsx(fileName))
+            return await XlsxService.ParseXlsxBytesAsDataTableAsync(bytes, useHeaderRow).ConfigureAwait(false);
+
+        return Result<DataTable>.Failure($"Unsupported type: {fileName}. Use .csv or .xlsx.", "UNSUPPORTED");
+    }
+
+    private static bool IsCsv(string name) => name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsXlsx(string name) => name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase);
+
+    private async Task DownloadMergedCsvAsync()
+    {
+        if (_mergedTable == null)
+            return;
+
+        var bytes = CsvService.ExportToCsvBytesFromDataTable(_mergedTable);
+        await Js.DownloadFile(bytes, "merged.csv", FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task DownloadMergedXlsxAsync()
+    {
+        if (_mergedTable == null)
+            return;
+
+        var bytes = XlsxService.Exporter.ExportToXlsxBytesFromDataTable(_mergedTable);
+        await Js.DownloadFile(bytes, "merged.xlsx", FileTypeInfo.Xlsx.MimeType).ConfigureAwait(false);
+    }
+
+    private Task OnConvertXlsxReadyAsync(LocalBrowserFile file)
+    {
+        _convertXlsxName = file.FileName;
+        _convertXlsxBytes = file.Content;
+        return Task.CompletedTask;
+    }
+
+    private async Task DownloadConvertedCsvAsync()
+    {
+        if (_convertXlsxBytes == null)
+            return;
+
+        var bytes = await XlsxService.ConvertXlsxToCsvBytesAsync(_convertXlsxBytes).ConfigureAwait(false);
+        await Js.DownloadFile(bytes, Path.ChangeExtension(_convertXlsxName, ".csv"), FileTypeInfo.Csv.MimeType).ConfigureAwait(false);
+    }
+
+    private async Task OnJsonPreviewUploadAsync(LocalBrowserFile file)
+    {
+        _dictJsonRoot = null;
+        _dictJsonError = null;
+        _dictJsonBytes = null;
+        _dictJsonFileName = Path.ChangeExtension(file.FileName, ".json");
+        try {
+            object? payload = null;
+            if (IsCsv(file.FileName))
+                payload = await CsvService.ParseBytesAsDictionaryAsync(file.Content).ConfigureAwait(false);
+            else if (IsXlsx(file.FileName))
+                payload = XlsxService.ParseXlsxBytesAsDictionary(file.Content);
+            else {
+                _dictJsonError = "Use a .csv or .xlsx file.";
+                return;
+            }
+
+            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+            _dictJsonRoot = JsonNode.Parse(json);
+            _dictJsonBytes = Encoding.UTF8.GetBytes(json);
+            _dictJsonViewerKey++;
+        }
+        catch (Exception ex) {
+            _dictJsonError = ex.Message;
+            _dictJsonRoot = null;
+        }
+    }
+
+    private async Task DownloadDictJsonAsync()
+    {
+        if (_dictJsonBytes == null)
+            return;
+
+        await Js.DownloadFile(_dictJsonBytes, string.IsNullOrEmpty(_dictJsonFileName) ? "grid.json" : _dictJsonFileName, FileTypeInfo.Json.MimeType).ConfigureAwait(false);
+    }
+
+    private static string FormatResultErrors<T>(Result<T> result)
+    {
+        if (result.Errors != null && result.Errors.Count > 0)
+            return string.Join("; ", result.Errors.Select(e => $"{e.Code}: {e.Message}"));
+
+        return "Operation failed.";
+    }
+
+}

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <NuspecFile>Lyo.QRCode.Web.Components.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Images\Lyo.Images\Lyo.Images.csproj"/>
+        <ProjectReference Include="..\Lyo.QRCode\Lyo.QRCode.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor" Version="[9,)"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,19 @@
+@page "/PeopleManagement"
+@inherits AuthorizedPage
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    <MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-4" KeepPanelsAlive="true">
+        <MudTabPanel Text="Internal People">
+            <PersonGrid/>
+        </MudTabPanel>
+        <MudTabPanel Text="Internal People2">
+            <PersonGrid2/>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "People Management";
+
+}

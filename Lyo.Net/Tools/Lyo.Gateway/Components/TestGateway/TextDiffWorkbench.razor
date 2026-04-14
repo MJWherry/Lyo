@@ -1,0 +1,44 @@
+@using Lyo.Web.Components.TextDiff
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Text Diff Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Compare two text blocks with side by side, above/below, or unified views.
+            </MudText>
+        </div>
+
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+            <MudSwitch T="bool" Label="Ignore whitespace" @bind-Value="_ignoreWhitespace"/>
+            <MudSwitch T="bool" Label="Ignore case" @bind-Value="_ignoreCase"/>
+        </MudStack>
+
+        <LyoTextDiffViewer Title="Left / Right Diff"
+                           OriginalText="@_leftText"
+                           ModifiedText="@_rightText"
+                           IgnoreWhitespace="@_ignoreWhitespace"
+                           IgnoreCase="@_ignoreCase"/>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    private readonly string _leftText = """
+                                        public int Add(int a, int b)
+                                        {
+                                            return a + b;
+                                        }
+                                        """;
+
+    private readonly string _rightText = """
+                                         public int Add(int a, int b)
+                                         {
+                                             var sum = a + b;
+                                             return sum;
+                                         }
+                                         """;
+
+    private bool _ignoreWhitespace;
+    private bool _ignoreCase;
+}
+

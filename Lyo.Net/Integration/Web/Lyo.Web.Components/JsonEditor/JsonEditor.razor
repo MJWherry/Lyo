@@ -1,0 +1,136 @@
+@using MudBlazor
+@typeparam T
+
+<div class="lyo-json-editor">
+    <div class="lyo-json-editor-toolbar">
+        <div class="lyo-json-toolbar-row">
+            <div class="lyo-json-search-wrap">
+                <MudTextField T="string"
+                              Value="@_searchText"
+                              ValueChanged="@HandleSearchTextChanged"
+                              OnDebounceIntervalElapsed="@OnSearchDebounced"
+                              DebounceInterval="1000"
+                              OnKeyDown="@OnSearchKeyDown"
+                              Placeholder="Search"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Immediate="true"
+                              Margin="Margin.Dense"
+                              Class="lyo-json-search-field"/>
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                               Size="Size.Small"
+                               Color="Color.Default"
+                               Disabled="@(_searchTotal == 0)"
+                               Class="lyo-json-search-nav lyo-json-search-nav-up"
+                               OnClick="@PreviousSearch"/>
+                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                               Size="Size.Small"
+                               Color="Color.Default"
+                               Disabled="@(_searchTotal == 0)"
+                               Class="lyo-json-search-nav lyo-json-search-nav-down"
+                               OnClick="@NextSearch"/>
+            </div>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="lyo-json-search-count">
+                @($"{_searchCurrent}/{_searchTotal}")
+            </MudText>
+            <div class="lyo-json-toolbar-sep"></div>
+            <div class="lyo-json-toolbar-actions">
+                @if (_viewMode == ViewMode.Tree) {
+                    <MudTooltip Text="Expand all" Placement="Placement.Bottom">
+                        <MudIconButton Icon="@Icons.Material.Filled.UnfoldMore"
+                                       Size="Size.Small"
+                                       Color="Color.Default"
+                                       OnClick="@ExpandAll"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Collapse all" Placement="Placement.Bottom">
+                        <MudIconButton Icon="@Icons.Material.Filled.UnfoldLess"
+                                       Size="Size.Small"
+                                       Color="Color.Default"
+                                       OnClick="@CollapseAll"/>
+                    </MudTooltip>
+                }
+                <MudTooltip Text="Decrease font size" Placement="Placement.Bottom">
+                    <MudIconButton Icon="@Icons.Material.Filled.ZoomOut"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="@DecreaseFontSize"/>
+                </MudTooltip>
+                <MudTooltip Text="Increase font size" Placement="Placement.Bottom">
+                    <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
+                                   Size="Size.Small"
+                                   Color="Color.Default"
+                                   OnClick="@IncreaseFontSize"/>
+                </MudTooltip>
+                @if (_viewMode == ViewMode.Tree && Editable && AllowTreeEditing) {
+                    <MudTooltip Text="@(_treeEditable ? "Disable inline editing" : "Enable inline editing")" Placement="Placement.Bottom">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Size="Size.Small"
+                                       Color="@(_treeEditable ? Color.Primary : Color.Default)"
+                                       OnClick="@ToggleTreeEditing"/>
+                    </MudTooltip>
+                }
+                @if (_viewMode == ViewMode.Raw && Editable) {
+                    <MudTooltip Text="Format JSON" Placement="Placement.Bottom">
+                        <MudIconButton Icon="@Icons.Material.Filled.AutoFixHigh"
+                                       Size="Size.Small"
+                                       Color="Color.Default"
+                                       OnClick="@FormatJson"/>
+                    </MudTooltip>
+                }
+            </div>
+            <div class="lyo-json-toolbar-sep"></div>
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="lyo-json-toolbar-mode">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Raw</MudText>
+                <MudSwitch T="bool"
+                           Value="@(_viewMode == ViewMode.Tree)"
+                           ValueChanged="@OnViewModeSwitchChanged"
+                           Color="Color.Primary"
+                           Size="Size.Small"/>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Tree</MudText>
+            </MudStack>
+        </div>
+    </div>
+
+    @if (_parseError != null) {
+        <MudAlert Severity="Severity.Error" Class="mt-2">
+            <MudText Typo="Typo.body2">@SafeDisplay(_parseError)</MudText>
+        </MudAlert>
+    }
+
+    @if (_viewMode == ViewMode.Raw) {
+        <MudPaper Elevation="1" Class="lyo-json-editor-raw pa-2 mt-2">
+            @if (Editable) {
+                <textarea class="lyo-json-editor-textarea"
+                          value="@_rawText"
+                          @oninput="OnRawTextInput"
+                          @ref="_rawTextareaRef"
+                          rows="16"
+                          style="@($"font-family: ui-monospace, monospace; font-size: {GetFontSizeCss()};")"></textarea>
+            }
+            else {
+                <pre class="lyo-json-editor-raw-readonly" @ref="_rawReadonlyRef" style="@($"font-size: {GetFontSizeCss()};")"><MudHighlighter Text="@_rawText"
+                                                                                                                                              HighlightedText="@_searchText"/></pre>
+            }
+        </MudPaper>
+    }
+    else {
+        <MudPaper Elevation="1" Class="lyo-json-editor-tree pa-2 mt-2" Style="max-height: 400px; overflow-y: auto;">
+            @if (_rootNode != null) {
+                <JsonTreeView @ref="_treeViewRef"
+                              Root="@_rootNode"
+                              RootType="@typeof(T)"
+                              FontSize="@GetFontSizeCss()"
+                              SearchText="@_searchText"
+                              SearchMatchChanged="@OnSearchMatchChanged"
+                              Editable="@(Editable && _treeEditable && AllowTreeEditing)"
+                              RootChanged="@OnTreeChanged"/>
+            }
+            else {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No data. Edit in Raw mode or set Value.</MudText>
+            }
+        </MudPaper>
+    }
+</div>
+

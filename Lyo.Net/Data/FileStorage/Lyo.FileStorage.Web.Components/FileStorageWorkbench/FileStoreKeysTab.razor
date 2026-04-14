@@ -1,0 +1,193 @@
+@namespace Lyo.FileStorage.Web.Components
+@using System.Globalization
+@using System.Security.Cryptography
+@using System.Text.Json
+@using Lyo.FileMetadataStore.Models
+@using Lyo.FileStorage.Web.Components.Services
+@using Lyo.Keystore
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+
+            <MudGrid Class="mt-1">
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-4 mb-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Direct Key Actions</MudText>
+                            <MudTextField T="string" Label="Key id" @bind-Value="_keyIdInput"/>
+                            <MudTextField T="string" Label="Version" HelperText="Leave blank to inspect the current version." @bind-Value="_keyVersionInput"/>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="InspectKeyAsync" Disabled="@(_keyBusy || Workbench.KeyStore == null)">Inspect</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="SetCurrentVersionAsync" Disabled="@(_keyBusy || Workbench.KeyStore == null)">Set
+                                    Current
+                                </MudButton>
+                                @if (Workbench.LocalKeyStore != null) {
+                                    <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="RemoveLocalKeyVersionAsync"
+                                               Disabled="@(_keyBusy || string.IsNullOrWhiteSpace(_keyIdInput) || string.IsNullOrWhiteSpace(_keyVersionInput))">
+                                        Remove Version
+                                    </MudButton>
+                                }
+                            </MudStack>
+                            @if (_inspectedKeyExists.HasValue) {
+                                <MudSimpleTable Dense="true">
+                                    <tbody>
+                                    <tr>
+                                        <td><strong>Exists</strong></td>
+                                        <td>@(_inspectedKeyExists.Value ? "Yes" : "No")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Current version</strong></td>
+                                        <td>@(_currentKeyVersion ?? "-")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Resolved version</strong></td>
+                                        <td>@(_resolvedKeyVersion ?? "-")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Fingerprint</strong></td>
+                                        <td>@(_resolvedKeyFingerprint ?? "-")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Salt</strong></td>
+                                        <td>@(_resolvedSalt == null ? "-" : $"{_resolvedSalt.Length} bytes")</td>
+                                    </tr>
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            @if (_localKeyVersions.Count > 0) {
+                                <MudText Typo="Typo.subtitle2">Local versions</MudText>
+
+                                <MudChipSet T="string">
+                                    @foreach (var version in _localKeyVersions) {
+                                        <MudChip T="string" Color="@(version == _currentKeyVersion ? Color.Primary : Color.Default)">@version</MudChip>
+                                    }
+                                </MudChipSet>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4 mb-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Create / Rotate Key</MudText>
+                            <MudTextField T="string"
+                                          Label="Secret"
+                                          InputType="@(_showSecret ? InputType.Text : InputType.Password)"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@(_showSecret ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                          OnAdornmentClick="ToggleSecretVisibility"
+                                          @bind-Value="_keySecret"/>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddKeyVersionAsync" Disabled="@(_keyBusy || Workbench.KeyStore == null)">Add Version
+                                </MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="RotateKeyAsync" Disabled="@(_keyBusy || Workbench.KeyStore == null)">Rotate Current
+                                </MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Key Metadata</MudText>
+                            <MudTextField T="string" Label="Algorithm" @bind-Value="_keyAlgorithm"/>
+                            <MudTextField T="string" Label="Expires at (UTC)" HelperText="Blank for no expiration. Example: 2026-04-07T18:30:00Z" @bind-Value="_keyExpiresAtText"/>
+                            <MudTextField T="string" Label="Additional data (JSON object)" Lines="6" @bind-Value="_keyAdditionalDataJson"/>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveKeyMetadataAsync" Disabled="@(_keyBusy || Workbench.KeyStore == null)">
+                                Save Metadata
+                            </MudButton>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" lg="6">
+                    <MudPaper Class="pa-4 mb-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.h6">Browse Keys</MudText>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="SearchKeysAsync"
+                                           Disabled="@(_browseKeysBusy || (Workbench.QueryService == null && Workbench.InventoryStore == null))">Refresh
+                                </MudButton>
+                            </MudStack>
+                            <MudGrid>
+                                <MudItem xs="12" sm="8">
+                                    <MudTextField T="string" Label="Search key id" HelperText="Leave blank to show all available keys." @bind-Value="_keySearchText"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudNumericField T="int" Label="Take" Immediate="true" @bind-Value="_keySearchTake"/>
+                                </MudItem>
+                            </MudGrid>
+                            @if (Workbench.QueryService == null && Workbench.InventoryStore == null) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    Register a key inventory-capable keystore or `IFileStorageWorkbenchQueryService` to browse keys.
+                                </MudText>
+                            }
+                            else if (_keySearchResults.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    No key results yet.
+                                </MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Version</th>
+                                        <th>Current</th>
+                                        <th>Files</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var item in _keySearchResults) {
+                                        <tr>
+                                            <td>@item.KeyId</td>
+                                            <td>@item.Version</td>
+                                            <td>@(item.IsCurrent ? "Yes" : "No")</td>
+                                            <td>@(item.FileCount?.ToString() ?? "-")</td>
+                                            <td>
+                                                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => SelectKey(item))">Open</MudButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Selected Key</MudText>
+                            @if (_inspectedKeyMetadata == null && !_inspectedKeyExists.GetValueOrDefault()) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    Inspect a key or select one from the browse results to load metadata.
+                                </MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true">
+                                    <tbody>
+                                    <tr>
+                                        <td><strong>Created</strong></td>
+                                        <td>@_inspectedKeyMetadata?.CreatedAt.ToString("u")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Expires</strong></td>
+                                        <td>@(_inspectedKeyMetadata?.ExpiresAt?.ToString("u") ?? "-")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Algorithm</strong></td>
+                                        <td>@(_inspectedKeyMetadata?.Algorithm ?? "-")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Expired</strong></td>
+                                        <td>@(_inspectedKeyMetadata?.IsExpired == true ? "Yes" : "No")</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Additional data</strong></td>
+                                        <td>@(_keyAdditionalDataJson ?? "{}")</td>
+                                    </tr>
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>

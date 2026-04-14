@@ -1,0 +1,81 @@
+@typeparam T
+@using System.Linq.Expressions
+@using MudBlazor
+@typeparam TProperty
+
+<PropertyColumn T="T" TProperty="TProperty"
+                Property="@Property"
+                Title="@Title"
+                Sortable="@Sortable"
+                InitialDirection="@InitialDirection"
+                Hideable="@Hideable"
+                Resizable="@Resizable"
+                Align="@Align"
+                Hidden="@_hidden"
+                HiddenChanged="@(h => _hidden = h)">
+    <CellTemplate Context="cell">
+        @{
+            object? rawValue = Property != null ? Property.Compile()!.Invoke(cell.Item) : null;
+            var displayText = rawValue?.ToString() ?? string.Empty;
+        }
+        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+            <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+        }
+        else {
+            @displayText
+        }
+    </CellTemplate>
+</PropertyColumn>
+
+@code {
+
+    [CascadingParameter(Name = "LyoDataGridQuickSearchText")]
+    public string? QuickSearchText { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridPropertyColumnRegistry")]
+    public ProjectedColumnRegistry? ColumnRegistry { get; set; }
+
+    /// <summary>When set, this column participates in quick search. Property name used for API query.</summary>
+    [Parameter]
+    public string? QuickSearchPropertyName { get; set; }
+
+    [Parameter]
+    public Expression<Func<T, TProperty>>? Property { get; set; }
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public bool Sortable { get; set; } = true;
+
+    [Parameter]
+    public SortDirection InitialDirection { get; set; } = SortDirection.None;
+
+    [Parameter]
+    public bool Hideable { get; set; } = true;
+
+    /// <summary>When true, the column starts hidden; the user can show it from the columns panel.</summary>
+    [Parameter]
+    public bool HiddenByDefault { get; set; }
+
+    [Parameter]
+    public bool Resizable { get; set; } = true;
+
+    [Parameter]
+    public Align Align { get; set; } = Align.Inherit;
+
+    private bool _hidden;
+    private bool _hiddenSeeded;
+
+    protected override void OnParametersSet()
+    {
+        if (!_hiddenSeeded) {
+            _hidden = HiddenByDefault;
+            _hiddenSeeded = true;
+        }
+
+        if (!string.IsNullOrEmpty(QuickSearchPropertyName))
+            ColumnRegistry?.Register("", Title, QuickSearchPropertyName);
+    }
+
+}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Webhook.Twilio</RootNamespace>
+        <AssemblyName>Lyo.Webhook.Twilio</AssemblyName>
+        <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
+        <NuspecFile>Lyo.Webhook.Twilio.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Webhook\Lyo.Webhook.csproj"/>
+    </ItemGroup>
+
+</Project>

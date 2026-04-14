@@ -1,0 +1,16 @@
+@using Lyo.Translation.Web.Components
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Translation)]
+@inherits AuthorizedPage
+
+<PageTitle>Translation Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <TranslationWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Translation Test";
+
+}

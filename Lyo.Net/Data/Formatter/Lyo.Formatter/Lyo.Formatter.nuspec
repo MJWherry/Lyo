@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Formatter</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Text templating library using SmartFormat for building templates with named placeholders, pluralization, localization, and rich formatting. Add context objects
+            and format templates with minimal, intuitive syntax.
+        </description>
+        <summary>Formatter library using SmartFormat for templates with context</summary>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>template smartformat string formatting placeholders</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="SmartFormat.NET" version="[3.6,)"/>
+            </group>
+            <group targetFramework="netstandard2.0">
+                <dependency id="Lyo.Common" version="[1.0.71,)"/>
+                <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>
+                <dependency id="SmartFormat.NET" version="[3.6,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/netstandard2.0/*.dll" target="lib/netstandard2.0"/>
+        <file src="bin/Release/netstandard2.0/*.pdb" target="lib/netstandard2.0"/>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

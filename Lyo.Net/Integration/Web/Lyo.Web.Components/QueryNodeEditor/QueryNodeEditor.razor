@@ -1,0 +1,249 @@
+@using Lyo.Common
+@using Lyo.Query.Models.Common
+@using Lyo.Query.Models.Enums
+@using Lyo.Web.Components.Form
+@using Lyo.Web.Components.Validation
+@using MudBlazor
+@if (Node is GroupClause) {
+    @* GroupClause editor *@
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h6">Group clause</MudText>
+
+        @{
+            var logicalNode = (GroupClause)Node;
+        }
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4">
+                <MudSelect T="GroupOperatorEnum"
+                           Value="@logicalNode.Operator"
+                           ValueChanged="@(value => OnGroupOperatorChanged(value))"
+                           Label="Operator"
+                           Variant="Variant.Outlined"
+                           Dense
+                           Margin="Margin.Dense">
+                    <MudSelectItem Value="GroupOperatorEnum.And">And</MudSelectItem>
+                    <MudSelectItem Value="GroupOperatorEnum.Or">Or</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="8">
+                <LyoNullableTextField Value="@logicalNode.Description"
+                                      ValueChanged="@(value => OnDescriptionChanged(value))"
+                                      Label="Description (optional)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"/>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider/>
+        <MudText Typo="Typo.subtitle2">SubQuery (optional)</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            When set, the API runs the group clause first (DB), then filters results in-memory with the subquery.
+        </MudText>
+        @if (logicalNode.SubClause != null) {
+            <MudPaper Elevation="1" Class="pa-2">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(logicalNode.SubClause)</MudText>
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               OnClick="@(() => SelectSubClause(logicalNode.SubClause))">
+                        Edit
+                    </MudButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => RemoveSubClause(logicalNode))"/>
+                </MudStack>
+            </MudPaper>
+        }
+        else {
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Tertiary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => AddSubClause(logicalNode))">
+                Add SubQuery
+            </MudButton>
+        }
+
+        <MudDivider/>
+
+        <MudText Typo="Typo.subtitle1">Children</MudText>
+
+        @if (logicalNode.Children != null && logicalNode.Children.Any()) {
+            <MudStack Spacing="2">
+                @foreach (var child in logicalNode.Children.ToList()) {
+                    <MudPaper Elevation="1" Class="pa-2">
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2" Style="flex: 1;">
+                                @GetNodeDisplayText(child)
+                            </MudText>
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       OnClick="@(() => SelectChild(child))">
+                                Edit
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           OnClick="@(() => RemoveChild(child))"/>
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+        else {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No children. Add conditions or group clauses below.
+            </MudText>
+        }
+
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@AddChildLogical">
+                Add group clause
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@AddChildCondition">
+                Add condition clause
+            </MudButton>
+        </MudStack>
+    </MudStack>
+}
+else if (Node is ConditionClause conditionNode) {
+    @* ConditionClause editor *@
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h6">Condition clause</MudText>
+
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="5">
+                <LyoValidationWrapper @ref="_fieldValidationRef" T="string" Value="@conditionNode.Field" Validator="@FieldValidator">
+                    <MudTextField T="string"
+                                  Value="@conditionNode.Field"
+                                  ValueChanged="@OnFieldChanged"
+                                  Label="Field (e.g., DocketCharges.Code)"
+                                  Variant="Variant.Outlined"
+                                  Dense
+                                  Margin="Margin.Dense"
+                                  HelperText="Enter field name, supports nested paths"/>
+                </LyoValidationWrapper>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudSelect T="ComparisonOperatorEnum"
+                           Value="@conditionNode.Comparison"
+                           ValueChanged="@(value => OnComparisonChanged(value))"
+                           Label="Operator"
+                           Variant="Variant.Outlined"
+                           Dense
+                           Margin="Margin.Dense">
+                    @foreach (var comparator in Enum.GetValues<ComparisonOperatorEnum>()) {
+                        <MudSelectItem Value="@comparator">@comparator.GetDescription()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <LyoNullableTextField Value="@conditionNode.Description"
+                                      ValueChanged="@(value => OnDescriptionChanged(value))"
+                                      Label="Description (optional)"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"/>
+            </MudItem>
+        </MudGrid>
+
+        @* Value Input *@
+        <MudText Typo="Typo.subtitle2">Value</MudText>
+
+        @if (conditionNode.Comparison.IsMultiValueComparisonOperator()) {
+            <MudTextField T="string"
+                          Value="@GetCsvValue(conditionNode)"
+                          ValueChanged="@OnCsvValueChanged"
+                          Label="Values (comma separated)"
+                          Variant="Variant.Outlined"
+                          Dense
+                          Margin="Margin.Dense"
+                          HelperText="Enter values separated by commas"/>
+        }
+        else {
+            @* Show appropriate input based on value type *@
+            @if (conditionNode.Value is bool) {
+                <MudSelect T="bool?"
+                           Value="@((bool?)conditionNode.Value)"
+                           ValueChanged="@(value => OnBoolValueChanged(value))"
+                           Label="Value"
+                           Variant="Variant.Outlined"
+                           Dense
+                           Margin="Margin.Dense">
+                    <MudSelectItem T="bool?" Value="true">True</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="false">False</MudSelectItem>
+                    <MudSelectItem T="bool?" Value="null">Null</MudSelectItem>
+                </MudSelect>
+            }
+            else if (conditionNode.Value is decimal || conditionNode.Value is int || conditionNode.Value is long) {
+                <MudNumericField
+                    T="decimal?"
+                    Value="@(conditionNode.Value != null ? Convert.ToDecimal(conditionNode.Value) : null)"
+                    ValueChanged="@(value => OnNumberValueChanged(value))"
+                    Label="Value"
+                    Variant="Variant.Outlined"
+                    Dense
+                    Margin="Margin.Dense"/>
+            }
+            else if (conditionNode.Value is DateTime) {
+                <MudDatePicker Date="@((DateTime?)conditionNode.Value)"
+                               DateChanged="@(value => OnDateValueChanged(value))"
+                               Label="Value"
+                               Variant="Variant.Outlined"
+                               Dense
+                               Margin="Margin.Dense"/>
+            }
+            else {
+                <LyoNullableTextField Value="@(conditionNode.Value?.ToString())"
+                                      ValueChanged="@(value => OnStringValueChanged(value))"
+                                      Label="Value"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"/>
+            }
+        }
+
+        @* SubQuery section - two-phase execution (root in DB, subquery in-memory) *@
+        <MudDivider/>
+        <MudText Typo="Typo.subtitle2">SubQuery (optional)</MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            When set, the API runs the root condition first (DB), then filters results in-memory with the subquery.
+        </MudText>
+        @if (conditionNode.SubClause != null) {
+            <MudPaper Elevation="1" Class="pa-2">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Style="flex: 1;">@GetNodeDisplayText(conditionNode.SubClause)</MudText>
+                    <MudButton Variant="Variant.Text"
+                               Size="Size.Small"
+                               Color="Color.Primary"
+                               OnClick="@(() => SelectSubClause(conditionNode.SubClause))">
+                        Edit
+                    </MudButton>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="@(() => RemoveSubClause(conditionNode))"/>
+                </MudStack>
+            </MudPaper>
+        }
+        else {
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Tertiary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => AddSubClause(conditionNode))">
+                Add SubQuery
+            </MudButton>
+        }
+    </MudStack>
+}
+
+

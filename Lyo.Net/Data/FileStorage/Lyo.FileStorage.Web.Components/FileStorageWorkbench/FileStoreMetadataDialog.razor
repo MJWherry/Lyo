@@ -1,0 +1,129 @@
+@namespace Lyo.FileStorage.Web.Components
+@using System.Globalization
+@using Lyo.FileMetadataStore.Models
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        @if (Metadata != null) {
+            <MudSimpleTable Dense="true" Bordered="true" Hover="false" Style="min-width: min(100%, 640px);">
+                <tbody>
+                <tr>
+                    <td><strong>Id</strong></td>
+                    <td>@Metadata.Id</td>
+                </tr>
+                <tr>
+                    <td><strong>Original name</strong></td>
+                    <td>@(Metadata.OriginalFileName ?? "-")</td>
+                </tr>
+                <tr>
+                    <td><strong>Original size</strong></td>
+                    <td>@FormatBytes(Metadata.OriginalFileSize)</td>
+                </tr>
+                <tr>
+                    <td><strong>Stored source</strong></td>
+                    <td>@Metadata.SourceFileName</td>
+                </tr>
+                <tr>
+                    <td><strong>Stored size</strong></td>
+                    <td>@FormatBytes(Metadata.SourceFileSize)</td>
+                </tr>
+                <tr>
+                    <td><strong>Compressed</strong></td>
+                    <td>@(Metadata.IsCompressed ? Metadata.CompressionAlgorithm?.ToString() ?? "Yes" : "No")</td>
+                </tr>
+                <tr>
+                    <td><strong>Encrypted</strong></td>
+                    <td>@(Metadata.IsEncrypted ? $"{Metadata.DataEncryptionKeyId} / {Metadata.DataEncryptionKeyVersion}" : "No")</td>
+                </tr>
+                <tr>
+                    <td><strong>Path prefix</strong></td>
+                    <td>@(Metadata.PathPrefix ?? "-")</td>
+                </tr>
+                <tr>
+                    <td><strong>Timestamp</strong></td>
+                    <td>@Metadata.Timestamp.ToString("u", CultureInfo.InvariantCulture)</td>
+                </tr>
+                <tr>
+                    <td><strong>Hash algorithm</strong></td>
+                    <td>@(Metadata.HashAlgorithm?.ToString() ?? "-")</td>
+                </tr>
+                <tr>
+                    <td><strong>Original hash</strong></td>
+                    <td>@FormatHash(Metadata.OriginalFileHash)</td>
+                </tr>
+                <tr>
+                    <td><strong>Stored hash</strong></td>
+                    <td>@FormatHash(Metadata.SourceFileHash)</td>
+                </tr>
+                <tr>
+                    <td><strong>Compressed size</strong></td>
+                    <td>@FormatBytes(Metadata.CompressedFileSize)</td>
+                </tr>
+                <tr>
+                    <td><strong>Compressed hash</strong></td>
+                    <td>@FormatHash(Metadata.CompressedFileHash)</td>
+                </tr>
+                <tr>
+                    <td><strong>Data key algorithm</strong></td>
+                    <td>@(Metadata.DataEncryptionKeyAlgorithm?.ToString() ?? "-")</td>
+                </tr>
+                <tr>
+                    <td><strong>Key encryption algorithm</strong></td>
+                    <td>@(Metadata.KeyEncryptionKeyAlgorithm?.ToString() ?? "-")</td>
+                </tr>
+                <tr>
+                    <td><strong>Encrypted size</strong></td>
+                    <td>@FormatBytes(Metadata.EncryptedFileSize)</td>
+                </tr>
+                <tr>
+                    <td><strong>Encrypted hash</strong></td>
+                    <td>@FormatHash(Metadata.EncryptedFileHash)</td>
+                </tr>
+                <tr>
+                    <td><strong>KEK salt</strong></td>
+                    <td>@FormatHash(Metadata.KeyEncryptionKeySalt)</td>
+                </tr>
+                </tbody>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public FileStoreResult? Metadata { get; set; }
+
+    private void Close() => MudDialog.Close();
+
+    private static string FormatBytes(long size)
+    {
+        string[] suffixes = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)size;
+        var order = 0;
+        while (value >= 1024 && order < suffixes.Length - 1) {
+            order++;
+            value /= 1024;
+        }
+
+        return $"{value:0.##} {suffixes[order]}";
+    }
+
+    private static string FormatBytes(long? size) => size.HasValue ? FormatBytes(size.Value) : "-";
+
+    private static string FormatHash(byte[]? bytes)
+    {
+        if (bytes == null || bytes.Length == 0)
+            return "-";
+
+        return Convert.ToHexString(bytes);
+    }
+
+}

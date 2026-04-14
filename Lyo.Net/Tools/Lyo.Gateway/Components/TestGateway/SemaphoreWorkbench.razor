@@ -1,0 +1,537 @@
+@using System.Diagnostics
+@using Lyo.Lock
+@using Lyo.Metrics
+@using SemaphoreConstants = Lyo.Lock.Constants
+@implements IAsyncDisposable
+@inject IKeyedSemaphoreService SemaphoreService
+@inject IMetrics Metrics
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Local Semaphore Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Exercise bounded concurrency by key, saturate permits manually, and compare semaphore-limited runs against unlocked bursts.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Configuration</MudText>
+                            <MudTextField T="string" Label="Semaphore key" @bind-Value="_key"/>
+                            <MudGrid>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Workers" Min="1" Max="20" @bind-Value="_workerCount"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Max permits" Min="1" Max="10" @bind-Value="_maxConcurrency"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Hold ms" Min="10" Max="10000" @bind-Value="_holdMilliseconds"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="3">
+                                    <MudNumericField T="int" Label="Timeout ms" Min="10" Max="20000" @bind-Value="_timeoutMilliseconds"/>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Semaphore runs should keep max concurrent work at or below the permit count.
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Manual Permit Saturation</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Acquire permits until full, then verify an additional acquire times out for the same key.
+                            </MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" OnClick="AcquirePermitAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Permit
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="AcquireUntilFullAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Until Full
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || HeldPermitCount < _maxConcurrency)">Competing
+                                    Acquire
+                                </MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleasePermitsAsync" Disabled="@(_busy || HeldPermitCount == 0)">Release All
+                                </MudButton>
+                            </MudStack>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Held permits: @HeldPermitCount / @_maxConcurrency</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Burst Demo</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunSemaphoreDemoAsync" Disabled="@(_busy || HeldPermitCount != 0)">Run With
+                                    Semaphore
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RunUnlockedDemoAsync" Disabled="@_busy">Run Without Semaphore</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="RefreshMetricsAsync" Disabled="@_busy">Refresh Metrics</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudChip T="string" Color="@(HeldPermitCount == 0 ? Color.Default : Color.Success)">
+                                    @(HeldPermitCount == 0 ? "No Permits Held" : $"{HeldPermitCount} Permits Held")
+                                </MudChip>
+                                <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
+                                    @(_busy ? "Busy" : "Idle")
+                                </MudChip>
+                                <MudChip T="string" Color="@(MetricsStore == null ? Color.Warning : Color.Success)">
+                                    @(MetricsStore == null ? "Metrics Unavailable" : "Metrics Enabled")
+                                </MudChip>
+                            </MudStack>
+
+                            @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                                <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Latest Run</MudText>
+                        @if (_lastRun == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Run one of the burst demos to inspect concurrency.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Mode</strong></td>
+                                    <td>@(_lastRun.UsedSemaphore ? "Semaphore" : "Unlocked")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Completed</strong></td>
+                                    <td>@_lastRun.Completed / @_lastRun.WorkerCount</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Timeouts</strong></td>
+                                    <td>@_lastRun.TimedOut</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Max Concurrent</strong></td>
+                                    <td>@_lastRun.MaxConcurrent</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Permit Limit</strong></td>
+                                    <td>@_lastRun.MaxAllowed</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Elapsed</strong></td>
+                                    <td>@_lastRun.Elapsed.TotalMilliseconds.ToString("0") ms</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Summary</strong></td>
+                                    <td>@_lastRun.Summary</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Semaphore Metrics For Current Key</MudText>
+                        @if (MetricsStore == null) {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                The current `IMetrics` implementation is not `MetricsService`, so live semaphore metrics are not available here.
+                            </MudAlert>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Key</strong></td>
+                                    <td>@_key</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Success</strong></td>
+                                    <td>@_acquireSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Failure</strong></td>
+                                    <td>@_acquireFailure</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Acquire Duration Samples</strong></td>
+                                    <td>@_acquireDurationCount (@_acquireDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Release Duration Samples</strong></td>
+                                    <td>@_releaseDurationCount (@_releaseDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Execute Duration Samples</strong></td>
+                                    <td>@_executeDurationCount (@_executeDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Refresh</strong></td>
+                                    <td>@(_lastMetricsRefresh == default ? "(not loaded)" : _lastMetricsRefresh.ToString("u"))</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Recent Events</MudText>
+                        @if (VisibleEvents.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Acquire permits or run a demo to populate the event log.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Stage</th>
+                                    <th>Details</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var entry in VisibleEvents) {
+                                    <tr>
+                                        <td>@entry.Timestamp.ToString("HH:mm:ss.fff")</td>
+                                        <td>@entry.Stage</td>
+                                        <td style="white-space: pre-wrap; word-break: break-word;">@entry.Message</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private readonly List<DemoEvent> _events = [];
+    private readonly List<IPermitHandle> _heldPermits = [];
+    private readonly object _eventsLock = new();
+    private bool _busy;
+    private long _acquireFailure;
+    private long _acquireSuccess;
+    private int _acquireDurationCount;
+    private double _acquireDurationAverageMs;
+    private int _executeDurationCount;
+    private double _executeDurationAverageMs;
+    private int _holdMilliseconds = 750;
+    private string _key = "workbench:local-semaphore";
+    private DateTime _lastMetricsRefresh;
+    private DemoSummary? _lastRun;
+    private int _maxConcurrency = 3;
+    private int _releaseDurationCount;
+    private double _releaseDurationAverageMs;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    private int _timeoutMilliseconds = 2500;
+    private int _workerCount = 8;
+
+    private int HeldPermitCount => _heldPermits.Count;
+
+    private MetricsService? MetricsStore => Metrics as MetricsService;
+
+    private List<DemoEvent> VisibleEvents {
+        get {
+            lock (_eventsLock)
+                return _events.ToList();
+        }
+    }
+
+    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
+
+    public ValueTask DisposeAsync() => new(ReleaseAllHeldPermitsCoreAsync());
+
+    private async Task AcquirePermitAsync()
+    {
+        _busy = true;
+        try {
+            var handle = await SemaphoreService.AcquireAsync(_key, _maxConcurrency, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+            if (handle == null) {
+                AppendEvent("Acquire", $"UI failed to acquire a permit for '{_key}' within {_timeoutMilliseconds} ms.");
+                SetStatus("Permit acquisition timed out.", Severity.Warning);
+                return;
+            }
+
+            _heldPermits.Add(handle);
+            AppendEvent("Acquire", $"UI acquired permit {_heldPermits.Count}/{_maxConcurrency} for '{_key}'.");
+            SetStatus("Permit acquired.", Severity.Success);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Acquire Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task AcquireUntilFullAsync()
+    {
+        if (HeldPermitCount >= _maxConcurrency) {
+            SetStatus("All permits are already held by the UI.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            while (HeldPermitCount < _maxConcurrency) {
+                var handle = await SemaphoreService.AcquireAsync(_key, _maxConcurrency, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+                if (handle == null) {
+                    AppendEvent("Acquire", $"Timed out before filling all permits for '{_key}'.");
+                    SetStatus("Could not acquire every permit before timeout.", Severity.Warning);
+                    await RefreshMetricsAsync();
+                    return;
+                }
+
+                _heldPermits.Add(handle);
+                AppendEvent("Acquire", $"UI acquired permit {_heldPermits.Count}/{_maxConcurrency} for '{_key}'.");
+            }
+
+            SetStatus("All permits are now held by the UI.", Severity.Success);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Acquire Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task ReleasePermitsAsync()
+    {
+        if (HeldPermitCount == 0) {
+            SetStatus("There are no held permits to release.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            await ReleaseAllHeldPermitsCoreAsync();
+            AppendEvent("Release", $"UI released all permits for '{_key}'.");
+            SetStatus("Held permits released.", Severity.Success);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Release Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task TryCompetingAcquireAsync()
+    {
+        if (HeldPermitCount < _maxConcurrency) {
+            SetStatus("Acquire all permits first so the semaphore is saturated.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var stopwatch = Stopwatch.StartNew();
+            var competingHandle = await SemaphoreService.AcquireAsync(_key, _maxConcurrency, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+            stopwatch.Stop();
+            if (competingHandle == null) {
+                AppendEvent("Competing Acquire", $"Additional permit timed out after {stopwatch.Elapsed.TotalMilliseconds:0} ms while the UI held all permits for '{_key}'.");
+                SetStatus("Competing acquire timed out as expected.", Severity.Success);
+                await RefreshMetricsAsync();
+                return;
+            }
+
+            await competingHandle.ReleaseAsync();
+            AppendEvent("Competing Acquire", $"Additional permit unexpectedly succeeded after {stopwatch.Elapsed.TotalMilliseconds:0} ms.");
+            SetStatus("Competing acquire succeeded unexpectedly.", Severity.Warning);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Competing Acquire Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task RunSemaphoreDemoAsync() => RunDemoAsync(true);
+
+    private Task RunUnlockedDemoAsync() => RunDemoAsync(false);
+
+    private async Task RunDemoAsync(bool useSemaphore)
+    {
+        if (HeldPermitCount != 0) {
+            SetStatus("Release the manually-held permits before running the burst demo.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var startGate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var stopwatch = Stopwatch.StartNew();
+            var activeWorkers = 0;
+            var completedWorkers = 0;
+            var timedOutWorkers = 0;
+            var maxConcurrent = 0;
+            var startedAt = DateTime.UtcNow;
+            AppendEvent("Demo", $"Starting {_workerCount} workers {(useSemaphore ? "with" : "without")} semaphore protection for '{_key}' (max={_maxConcurrency}).");
+            var tasks = Enumerable.Range(1, _workerCount)
+                .Select(async workerId => {
+                    await startGate.Task;
+                    if (useSemaphore) {
+                        try {
+                            await SemaphoreService.ExecuteAsync(
+                                _key, _maxConcurrency, async ct => {
+                                    var current = Interlocked.Increment(ref activeWorkers);
+                                    UpdateMax(ref maxConcurrent, current);
+                                    AppendEvent("Enter", $"Worker {workerId} entered the semaphore-protected section. concurrent={current}");
+                                    try {
+                                        await Task.Delay(_holdMilliseconds, ct);
+                                    }
+                                    finally {
+                                        var remaining = Interlocked.Decrement(ref activeWorkers);
+                                        AppendEvent("Exit", $"Worker {workerId} left the semaphore-protected section. remaining={remaining}");
+                                    }
+                                }, TimeSpan.FromMilliseconds(_timeoutMilliseconds));
+
+                            Interlocked.Increment(ref completedWorkers);
+                            AppendEvent("Complete", $"Worker {workerId} completed under the semaphore.");
+                        }
+                        catch (TimeoutException) {
+                            Interlocked.Increment(ref timedOutWorkers);
+                            AppendEvent("Timeout", $"Worker {workerId} timed out waiting for a permit on '{_key}'.");
+                        }
+                    }
+                    else {
+                        var current = Interlocked.Increment(ref activeWorkers);
+                        UpdateMax(ref maxConcurrent, current);
+                        AppendEvent("Enter", $"Worker {workerId} entered without a semaphore. concurrent={current}");
+                        try {
+                            await Task.Delay(_holdMilliseconds);
+                        }
+                        finally {
+                            var remaining = Interlocked.Decrement(ref activeWorkers);
+                            AppendEvent("Exit", $"Worker {workerId} left the unlocked section. remaining={remaining}");
+                        }
+
+                        Interlocked.Increment(ref completedWorkers);
+                        AppendEvent("Complete", $"Worker {workerId} completed without a semaphore.");
+                    }
+                })
+                .ToList();
+
+            startGate.TrySetResult(true);
+            await Task.WhenAll(tasks);
+            stopwatch.Stop();
+            var summary = useSemaphore ? maxConcurrent <= _maxConcurrency && timedOutWorkers == 0 ? $"Workers respected the semaphore limit; no more than {_maxConcurrency} ran at once." : "The semaphore run exceeded the expected limit or some workers timed out." : maxConcurrent > _maxConcurrency ? "Unlocked workers exceeded the permit limit, showing the overlap the semaphore avoids." : "Unlocked workers happened to stay within the permit limit on this run.";
+            _lastRun = new(completedWorkers, _workerCount, timedOutWorkers, maxConcurrent, _maxConcurrency, stopwatch.Elapsed, startedAt, summary, useSemaphore);
+            SetStatus(summary, useSemaphore ? maxConcurrent <= _maxConcurrency && timedOutWorkers == 0 ? Severity.Success : Severity.Warning : Severity.Info);
+            await RefreshMetricsAsync();
+        }
+        catch (Exception ex) {
+            AppendEvent("Demo Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private Task RefreshMetricsAsync()
+    {
+        if (MetricsStore == null)
+            return Task.CompletedTask;
+
+        var tags = new[] { (SemaphoreConstants.SemaphoreMetrics.Tags.Key, _key) };
+        _acquireSuccess = MetricsStore.GetCounterValue(SemaphoreConstants.SemaphoreMetrics.AcquireSuccess, tags);
+        _acquireFailure = MetricsStore.GetCounterValue(SemaphoreConstants.SemaphoreMetrics.AcquireFailure, tags);
+        var acquireDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.AcquireDuration, tags);
+        _acquireDurationCount = acquireDuration?.Count ?? 0;
+        _acquireDurationAverageMs = acquireDuration?.Average ?? 0;
+        var releaseDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.ReleaseDuration, tags);
+        _releaseDurationCount = releaseDuration?.Count ?? 0;
+        _releaseDurationAverageMs = releaseDuration?.Average ?? 0;
+        var executeDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.ExecuteDuration, tags);
+        _executeDurationCount = executeDuration?.Count ?? 0;
+        _executeDurationAverageMs = executeDuration?.Average ?? 0;
+        _lastMetricsRefresh = DateTime.UtcNow;
+        return Task.CompletedTask;
+    }
+
+    private void ClearEvents()
+    {
+        lock (_eventsLock)
+            _events.Clear();
+
+        SetStatus("Event log cleared.", Severity.Info);
+    }
+
+    private void AppendEvent(string stage, string message)
+    {
+        lock (_eventsLock) {
+            _events.Insert(0, new(DateTime.UtcNow, stage, message));
+            if (_events.Count > 40)
+                _events.RemoveRange(40, _events.Count - 40);
+        }
+    }
+
+    private async Task ReleaseAllHeldPermitsCoreAsync()
+    {
+        foreach (var permit in _heldPermits.ToList())
+            await permit.ReleaseAsync();
+
+        _heldPermits.Clear();
+    }
+
+    private static void UpdateMax(ref int target, int candidate)
+    {
+        int snapshot;
+        do {
+            snapshot = target;
+            if (candidate <= snapshot)
+                return;
+        } while (Interlocked.CompareExchange(ref target, candidate, snapshot) != snapshot);
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private sealed record DemoEvent(DateTime Timestamp, string Stage, string Message);
+
+    private sealed record DemoSummary(int Completed, int WorkerCount, int TimedOut, int MaxConcurrent, int MaxAllowed, TimeSpan Elapsed, DateTime StartedAt, string Summary, bool UsedSemaphore);
+
+}

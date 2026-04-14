@@ -1,0 +1,80 @@
+<MudPaper Class="pa-3" Outlined="true" Style="background: var(--mud-palette-table-striped); border-radius: 8px;">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle2">Playback</MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="gap-2" Style="min-width: 0;">
+            <MudIconButton Icon="@(Playing ? Icons.Material.Filled.Pause : Icons.Material.Filled.PlayArrow)"
+                           Color="Color.Primary"
+                           Size="Size.Medium"
+                           title="@(Playing ? "Pause" : "Play")"
+                           Disabled="@(!HasIncludedFrames || Busy)"
+                           OnClick="OnTogglePlayPause"/>
+
+            <MudSlider T="int" Min="0" Max="@MaxPreviewFrameIndex" Step="1" Color="Color.Primary"
+                       Class="flex-grow-1"
+                       Style="min-width: 0;"
+                       Value="SelectedPreviewIndex" ValueChanged="SelectedPreviewIndexChanged"
+                       Disabled="@(!HasIncludedFrames || Busy || Playing)"/>
+
+            <MudText Typo="Typo.body2" Style="min-width: 5rem; text-align: right; font-variant-numeric: tabular-nums;">
+                @if (HasIncludedFrames) {
+                    <text>@(SelectedPreviewIndex + 1) / @IncludedFrameCount</text>
+                }
+                else {
+                    <text>—</text>
+                }
+            </MudText>
+        </MudStack>
+
+        <MudStack Spacing="1">
+            <MudText Typo="Typo.body2">Playback FPS</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="gap-2">
+                <MudSlider T="int" Min="1" Max="60" Step="1" Color="Color.Primary" Class="flex-grow-1"
+                           Style="min-width: 0;"
+                           Value="FramesPerSecond" ValueChanged="FramesPerSecondChanged"/>
+                <MudText Typo="Typo.body2" Style="min-width: 2.5rem; font-variant-numeric: tabular-nums;">@FramesPerSecond</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            Timeline: scrub when paused; preview animates entirely in the browser while playing. Playback FPS updates the preview immediately. On load, FPS is estimated from
+            GIF/WebP;
+            flat PNGs default to
+            @SpriteSheetExportService.DefaultSpriteSheetPlaybackFps.
+        </MudText>
+    </MudStack>
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public bool Playing { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; }
+
+    [Parameter]
+    public bool HasIncludedFrames { get; set; }
+
+    [Parameter]
+    public int FramesPerSecond { get; set; }
+
+    [Parameter]
+    public EventCallback<int> FramesPerSecondChanged { get; set; }
+
+    [Parameter]
+    public int SelectedPreviewIndex { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedPreviewIndexChanged { get; set; }
+
+    [Parameter]
+    public int MaxPreviewFrameIndex { get; set; }
+
+    [Parameter]
+    public int IncludedFrameCount { get; set; }
+
+    [Parameter]
+    public EventCallback OnTogglePlayPause { get; set; }
+
+}

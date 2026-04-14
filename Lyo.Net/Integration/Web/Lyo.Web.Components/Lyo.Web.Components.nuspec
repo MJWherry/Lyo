@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Web.Components</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Blazor components library for the Lyo web UI framework with MudBlazor integration.</description>
+        <summary>Blazor components library</summary>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>blazor components web ui mudblazor</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="Blazored.LocalStorage" version="[4,)"/>
+                <dependency id="Lyo.Api.Client" version="[1.0.71,)"/>
+                <dependency id="Lyo.Csv" version="[1.0.71,)"/>
+                <dependency id="Lyo.Encryption" version="[1.0.71,)"/>
+                <dependency id="Lyo.IO.Temp" version="[1.0.71,)"/>
+                <dependency id="Lyo.Pdf" version="[1.0.71,)"/>
+                <dependency id="Lyo.Query.Models" version="[1.0.71,)"/>
+                <dependency id="Lyo.Validation" version="[1.0.71,)"/>
+                <dependency id="Lyo.Xlsx" version="[1.0.71,)"/>
+                <dependency id="Microsoft.AspNetCore.Authentication.JwtBearer" version="[10,)"/>
+                <dependency id="MudBlazor" version="[9,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

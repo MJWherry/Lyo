@@ -1,0 +1,16 @@
+@using Lyo.Gateway.Components.TestGateway
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Messaging)]
+@inherits AuthorizedPage
+
+<PageTitle>Messaging Test</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MessagingWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Messaging Test";
+
+}

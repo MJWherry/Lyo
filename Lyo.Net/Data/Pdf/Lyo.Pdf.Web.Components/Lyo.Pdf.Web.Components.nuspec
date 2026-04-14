@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>Lyo.Pdf.Web.Components</id>
+        <version>1.0.71</version>
+        <authors>Matthew Wherry</authors>
+        <owners>Matthew Wherry</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Reusable Blazor components for PDF workbenches, annotation helpers, and HTML to PDF workflows.</description>
+        <summary>PDF web components</summary>
+        <copyright>Copyright © Lyo</copyright>
+        <tags>blazor components pdf annotator mudblazor</tags>
+        <repository type="git" url="https://github.com/mjwherry/Lyo"/>
+        <dependencies>
+            <group targetFramework="net10.0">
+                <dependency id="Lyo.Pdf" version="[1.0.71,)"/>
+                <dependency id="Lyo.Pdf.Models" version="[1.0.71,)"/>
+                <dependency id="Lyo.Web.Components" version="[1.0.71,)"/>
+                <dependency id="Lyo.Web.WebRenderer" version="[1.0.71,)"/>
+                <dependency id="MudBlazor" version="[9,)"/>
+            </group>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="bin/Release/net10.0/*.dll" target="lib/net10.0"/>
+        <file src="bin/Release/net10.0/*.pdb" target="lib/net10.0"/>
+    </files>
+</package>

@@ -1,0 +1,28 @@
+﻿namespace Lyo.Job.Models.Response;
+
+public record SpJobStatistic(
+    Guid JobDefinitionId,
+    string JobName,
+    int TotalRuns,
+    int UnknownCount,
+    int SuccessCount,
+    int SuccessWithWarningsCount,
+    int PartialSuccessCount,
+    int FailureCount,
+    int CancelledCount,
+    int SkippedCount,
+    int TimeoutCount,
+    decimal? SuccessRatePercent,
+    double? AvgRunTimeMs,
+    double? MinRunTimeMs,
+    double? MaxRunTimeMs,
+    DateTime? LastRunTime,
+    string LastRunResult,
+    DateTime? LastSuccessTime,
+    DateTime? LastFailureTime,
+    DateTime? LastSuccessWithWarningsTime,
+    DateTime? LastPartialSuccessTime,
+    DateTime? LastCancelledTime,
+    DateTime? LastSkippedTime,
+    DateTime? LastTimeoutTime,
+    DateTime? LastUnknownTime);
