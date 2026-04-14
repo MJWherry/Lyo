@@ -1,6 +1,8 @@
+using Lyo.Compression;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
@@ -24,6 +26,24 @@ internal static class FusionCacheRegistration
         configureOptions?.Invoke(cacheOptions);
         svc.AddSingleton(cacheOptions);
         svc.AddMemoryCache();
+        if (!svc.Any(static d => d.ServiceType == typeof(ICompressionService)))
+            svc.AddCompressionService();
+
+        svc.AddSingleton<ICachePayloadCodec>(sp =>
+#if NET10_0_OR_GREATER
+            new CachePayloadCodec(
+                sp.GetRequiredService<CacheOptions>(),
+                sp.GetRequiredService<ICompressionService>(),
+                sp.GetService<Encryption.IEncryptionService>())
+#else
+            new CachePayloadCodec(
+                sp.GetRequiredService<CacheOptions>(),
+                sp.GetRequiredService<ICompressionService>())
+#endif
+        );
+
+        svc.TryAddSingleton(CachePayloadSerializerRegistration.Create);
+
         var fusionCacheBuilder = FusionCacheServiceCollectionExtensions.AddFusionCache(svc);
         if (configureFusionCache != null)
             fusionCacheBuilder.WithOptions(configureFusionCache);
@@ -58,7 +78,9 @@ internal static class FusionCacheRegistration
             var options = serviceProvider.GetRequiredService<CacheOptions>();
             var fusionCache = serviceProvider.GetRequiredService<IFusionCache>();
             var metrics = options.EnableMetrics ? serviceProvider.GetService<IMetrics>() : null;
-            return new FusionCacheService(fusionCache, logger, options, metrics);
+            var payloadCodec = serviceProvider.GetRequiredService<ICachePayloadCodec>();
+            var payloadSerializer = serviceProvider.GetRequiredService<ICachePayloadSerializer>();
+            return new FusionCacheService(fusionCache, logger, options, metrics, payloadCodec, payloadSerializer);
         });
 
         return svc;

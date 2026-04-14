@@ -509,15 +509,7 @@ internal static class ProjectionCollectionZip
         return combined;
     }
 
-    internal static bool NormalizedPartsContainWildcard(string[] parts)
-    {
-        for (var i = 0; i < parts.Length; i++) {
-            if (parts[i] == "*")
-                return true;
-        }
-
-        return false;
-    }
+    internal static bool NormalizedPartsContainWildcard(string[] parts) => parts.Any(t => t == "*");
 
     private static bool TryPathEndsAtCollection(Type rootType, string[] prefixParts)
     {
@@ -547,15 +539,7 @@ internal static class ProjectionCollectionZip
         if (value is ICollection collection)
             return collection.Count;
 
-        if (value is IEnumerable enumerable and not string and not byte[]) {
-            var n = 0;
-            foreach (var _ in enumerable)
-                n++;
-
-            return n;
-        }
-
-        return 0;
+        return value is IEnumerable enumerable and not string and not byte[] ? enumerable.Cast<object?>().Count() : 0;
     }
 
     private static object? GetElementAtIndex(object? value, int index)
@@ -566,14 +550,15 @@ internal static class ProjectionCollectionZip
         if (value is IList list)
             return index < list.Count ? list[index] : null;
 
-        if (value is IEnumerable enumerable and not string and not byte[]) {
-            var i = 0;
-            foreach (var x in enumerable) {
-                if (i == index)
-                    return x;
+        if (value is not (IEnumerable enumerable and not string and not byte[]))
+            return null;
 
-                i++;
-            }
+        var i = 0;
+        foreach (var x in enumerable) {
+            if (i == index)
+                return x;
+            
+            i++;
         }
 
         return null;

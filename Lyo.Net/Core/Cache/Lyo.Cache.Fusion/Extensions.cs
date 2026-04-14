@@ -89,6 +89,7 @@ public static class FusionCacheServiceExtensions
                         options.PropertyGetterExpiration = cacheOptions.PropertyGetterExpiration;
                         options.ComparisonInfoExpiration = cacheOptions.ComparisonInfoExpiration;
                         options.TypeExpirations = cacheOptions.TypeExpirations;
+                        options.Payload = cacheOptions.Payload;
                     }, configureFusionCache, configureRedisBackplane ?? (_ => { }));
             }
 
@@ -101,6 +102,7 @@ public static class FusionCacheServiceExtensions
                     options.PropertyGetterExpiration = cacheOptions.PropertyGetterExpiration;
                     options.ComparisonInfoExpiration = cacheOptions.ComparisonInfoExpiration;
                     options.TypeExpirations = cacheOptions.TypeExpirations;
+                    options.Payload = cacheOptions.Payload;
                 }, configureFusionCache, null);
         }
 

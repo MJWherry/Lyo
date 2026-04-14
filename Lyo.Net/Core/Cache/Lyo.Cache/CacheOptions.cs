@@ -23,6 +23,9 @@ public class CacheOptions
 
     public TimeSpan DefaultExpiration { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>Defaults for byte payload cache APIs (compress/encrypt framing).</summary>
+    public CachePayloadOptions Payload { get; set; } = new();
+
     /// <summary>Type-specific expiration timeouts. Key is the full type name (e.g., "My.Lib.Class") or pattern (e.g., "My.Lib.*"), value is expiration time in minutes.</summary>
     /// <remarks>
     /// Supports exact matches and wildcard patterns: - Exact: "My.Lib.Class" matches exactly "My.Lib.Class" - Wildcard: "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", etc. -

@@ -18,6 +18,7 @@ using Lyo.Query.Models.Enums;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
@@ -326,15 +327,17 @@ public class QueryService<TContext>(
 
             try {
                 Logger.LogDebug("Query cache key: {CacheKey}", cacheKey);
-                var results = await cache.GetOrSetAsync(cacheKey, BuildQueryResultsAsync!, token: ct).ConfigureAwait(false);
-                return results!;
+                if (!queryOptions.CacheQueryResultsAsUtf8Payload)
+                    return (await cache.GetOrSetAsync(cacheKey, BuildQueryResultsAsync!, token: ct).ConfigureAwait(false))!;
+
+                var payloadCached = await cache.GetOrSetPayloadAsync(cacheKey, BuildQueryResultsAsync!, token: ct).ConfigureAwait(false);
+                return payloadCached ?? ResultFactory.QueryFailure<TDbModel>(
+                    queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, "Query cache returned no payload.", DateTime.UtcNow));
             }
             catch (Exception ex) {
                 return ct.IsCancellationRequested
-                    ? ResultFactory.QueryFailure<TDbModel>(
-                        queryRequest,
-                        LyoProblemDetails.FromCode(Models.Constants.ApiErrorCodes.Cancelled, "Request was cancelled.", DateTime.UtcNow))
-                    : ResultFactory.QueryFailure<TDbModel>(queryRequest, LogAndReturnApiError(ex, "Query Error", Models.Constants.ApiErrorCodes.InvalidQuery));
+                    ? ResultFactory.QueryFailure<TDbModel>(queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.Cancelled, "Request was cancelled.", DateTime.UtcNow))
+                    : ResultFactory.QueryFailure<TDbModel>(queryRequest, LogAndReturnApiError(ex, "Query Error", ApiErrorCodes.InvalidQuery));
             }
 
             async Task<(QueryRes<TDbModel> value, string[]? tags)> BuildQueryResultsAsync(CancellationToken ct2)
@@ -395,7 +398,6 @@ public class QueryService<TContext>(
 
         // Echo the client request as-is (Select is mutated server-side for computed dependencies).
         var queryRequestForEcho = CloneProjectionQueryReq(queryRequest);
-
         var pathCache = new QueryPathValidationCache();
 
         IReadOnlyList<Error> CollectQueryModelErrors(TContext? db, IReadOnlyList<string> includePathsForValidation)
@@ -426,7 +428,7 @@ public class QueryService<TContext>(
         aggregatedErrors.AddRange(QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize));
 
         if (queryRequest.Select.Count == 0) 
-            aggregatedErrors.Add(new(Models.Constants.ApiErrorCodes.InvalidQuery, "Projected query requires at least one selected field."));
+            aggregatedErrors.Add(new(ApiErrorCodes.InvalidQuery, "Projected query requires at least one selected field."));
 
         IReadOnlyList<ProjectedFieldSpec>? projectedFieldSpecs = null;
         if (queryRequest.Select.Count > 0) {
@@ -465,9 +467,8 @@ public class QueryService<TContext>(
             if (effectiveIncludes.Count > 0)
                 sharedIncludeValidationAndSqlContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
 
-            foreach (var e in CollectQueryModelErrors(sharedIncludeValidationAndSqlContext, effectiveIncludes))
-                aggregatedErrors.Add(new(e.Code, e.Message));
-
+            aggregatedErrors.AddRange(CollectQueryModelErrors(sharedIncludeValidationAndSqlContext, effectiveIncludes).Select(e => new ApiError(e.Code, e.Message)));
+            
             if (aggregatedErrors.Count > 0) {
                 Logger.LogWarning(
                     "Projected query validation failed for {Entity}: {IssueCount} issue(s). {Details}",
@@ -501,32 +502,39 @@ public class QueryService<TContext>(
 
                 Logger.LogDebug("Query cache key: {CacheKey}", cacheKey);
                 try {
-                    var sqlResult = await cache.GetOrSetAsync(
-                            cacheKey, async ct2 => {
-                                var r = await ExecuteSqlProjectedQueryAsync(
-                                    queryRequest, defaultOrder, defaultSortDirection, projectedFieldSpecs, sqlProjection, sqlConversionPlan, sharedIncludeValidationAndSqlContext, ct2);
-                                if (r == null)
-                                    throw new SqlProjectionFallbackException();
+                    async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildSqlProjectedCacheEntryAsync(CancellationToken ct2)
+                    {
+                        var r = await ExecuteSqlProjectedQueryAsync(
+                            queryRequest, defaultOrder, defaultSortDirection, projectedFieldSpecs, sqlProjection, sqlConversionPlan, sharedIncludeValidationAndSqlContext, ct2);
+                        if (r == null)
+                            throw new SqlProjectionFallbackException();
 
-                                IReadOnlyList<object?> items = r.Items!;
-                                if (computedFields.Count > 0)
-                                    items = projectionService.ApplyComputedFields(items, computedFields, projectedFieldSpecs);
+                        var items = r.Items!;
+                        if (computedFields.Count > 0)
+                            items = projectionService.ApplyComputedFields(items, computedFields, projectedFieldSpecs);
 
-                                projectionService.MergeSiblingCollectionProjectionRows(items, typeof(TDbModel), projectedFieldSpecs, zipSiblingSelections);
+                        projectionService.MergeSiblingCollectionProjectionRows(items, typeof(TDbModel), projectedFieldSpecs, zipSiblingSelections);
 
-                                if (computedFields.Count > 0 && autoDerivedSelects is { Count: > 0 }) {
-                                    projectionService.StripAutoDerivedDependencyLeavesFromMergedCollections(items, projectedFieldSpecs, autoDerivedSelects);
-                                    StripAutoDerivedFields(items, autoDerivedSelects);
-                                }
+                        if (computedFields.Count > 0 && autoDerivedSelects is { Count: > 0 }) {
+                            projectionService.StripAutoDerivedDependencyLeavesFromMergedCollections(items, projectedFieldSpecs, autoDerivedSelects);
+                            StripAutoDerivedFields(items, autoDerivedSelects);
+                        }
 
-                                var entityTypes = projectionService.GetProjectionEntityTypeNames<TDbModel>(projectedFieldSpecs, computedFields);
-                                ProjectedQueryRes<object?> projected = ResultFactory.ProjectedQuerySuccess(
-                                    queryRequestForEcho, items, r.Start, items.Count, r.Total, r.HasMore, entityTypes: entityTypes);
+                        var entityTypes = projectionService.GetProjectionEntityTypeNames<TDbModel>(projectedFieldSpecs, computedFields);
+                        var projectedSuccess = ResultFactory.ProjectedQuerySuccess(
+                            queryRequestForEcho, items, r.Start, items.Count, r.Total, r.HasMore, entityTypes: entityTypes);
 
-                                var tags = new[] { "queries", "queryproject", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}" };
-                                return (projected, tags);
-                            }, token: ct)
-                        .ConfigureAwait(false);
+                        string[] tags = ["queries", "queryproject", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}"];
+                        return (projectedSuccess, tags);
+                    }
+
+                    ProjectedQueryRes<object?>? sqlResult;
+                    if (queryOptions.CacheQueryResultsAsUtf8Payload) {
+                        sqlResult = await cache.GetOrSetPayloadAsync(cacheKey, BuildSqlProjectedCacheEntryAsync, token: ct).ConfigureAwait(false);
+                    }
+                    else {
+                        sqlResult = await cache.GetOrSetAsync(cacheKey, BuildSqlProjectedCacheEntryAsync, token: ct).ConfigureAwait(false);
+                    }
 
                     if (sqlResult != null)
                         return sqlResult;
@@ -549,7 +557,7 @@ public class QueryService<TContext>(
                 return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, raw.Error!);
 
             var projectionFilterConditions = projectionService.GetProjectedFilterConditions<TDbModel>(queryRequest.WhereClause);
-            IReadOnlyList<object?> items = projectionService.ProjectEntities(raw.Items!, projectedFieldSpecs, includeFilterMode, projectionFilterConditions);
+            var items = projectionService.ProjectEntities(raw.Items!, projectedFieldSpecs, includeFilterMode, projectionFilterConditions);
             if (computedFields.Count > 0)
                 items = projectionService.ApplyComputedFields(items, computedFields, projectedFieldSpecs);
 
@@ -757,7 +765,7 @@ public class QueryService<TContext>(
 
     private static LyoProblemDetails AggregatedValidationProblemDetails(IReadOnlyList<ApiError> errors, string rootSummary)
         => LyoProblemDetailsBuilder.CreateWithActivity()
-            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidQuery)
+            .WithErrorCode(ApiErrorCodes.InvalidQuery)
             .WithMessage(rootSummary)
             .AddErrors(errors)
             .Build();

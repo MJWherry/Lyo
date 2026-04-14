@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text.Json.Serialization;
 using Lyo.Api;
+using Lyo.Api.Services.Crud.Read;
 using Lyo.Cache;
 using Lyo.Compression;
 using Lyo.Config.Postgres;
@@ -61,6 +62,8 @@ builder.Services.ConfigureHttpJsonOptions(options => {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
+
+builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("QueryOptions"));
 
 builder.Services.ConfigureMapster();
 var connStr = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5437;Database=postgres;Username=root_remote;Password=password";

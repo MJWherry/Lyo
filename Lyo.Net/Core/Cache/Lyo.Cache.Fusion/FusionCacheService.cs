@@ -20,13 +20,23 @@ public sealed class FusionCacheService : ICacheService
     private readonly ILogger<FusionCacheService> _logger;
     private readonly IMetrics _metrics;
     private readonly CacheOptions _options;
+    private readonly ICachePayloadCodec? _payloadCodec;
+    private readonly ICachePayloadSerializer? _payloadSerializer;
 
-    public FusionCacheService(IFusionCache fusionCache, ILogger<FusionCacheService>? logger = null, CacheOptions? options = null, IMetrics? metrics = null)
+    public FusionCacheService(
+        IFusionCache fusionCache,
+        ILogger<FusionCacheService>? logger = null,
+        CacheOptions? options = null,
+        IMetrics? metrics = null,
+        ICachePayloadCodec? payloadCodec = null,
+        ICachePayloadSerializer? payloadSerializer = null)
     {
         _fusionCache = fusionCache ?? throw new ArgumentNullException(nameof(fusionCache));
         _logger = logger ?? NullLogger<FusionCacheService>.Instance;
         _options = options ?? new CacheOptions();
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
+        _payloadCodec = payloadCodec;
+        _payloadSerializer = payloadSerializer;
         _enabled = _options.Enabled;
         if (!_enabled)
             return;
@@ -673,6 +683,395 @@ public sealed class FusionCacheService : ICacheService
             _logger.LogError(ex, "Error reading cache value for key {CacheKey}", key);
             return false;
         }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<byte[]?>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        if (_payloadCodec == null)
+            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
+
+        if (!_enabled)
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(key)) {
+            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = await _fusionCache.TryGetAsync<byte[]>(normalizedKey, token: token).ConfigureAwait(false);
+            if (cachedValue.HasValue) {
+                try {
+                    var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var plain = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var framed = _payloadCodec.Encode(plain);
+            var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
+            await _fusionCache.SetAsync(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()), token).ConfigureAwait(false);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return _payloadCodec.Decode(framed);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
+        string key,
+        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        if (_payloadCodec == null)
+            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
+
+        if (!_enabled)
+            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(key)) {
+            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
+            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = await _fusionCache.TryGetAsync<byte[]>(normalizedKey, token: token).ConfigureAwait(false);
+            if (cachedValue.HasValue) {
+                try {
+                    var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+            }
+
+            var (plain, factoryTags) = await factory(token).ConfigureAwait(false);
+            if (plain == null)
+                return null;
+
+            var framed = _payloadCodec.Encode(plain);
+            var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
+            var mergedTags = MergeTags(factoryTags, extraTags);
+            await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return _payloadCodec.Decode(framed);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<TValue?>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct)
+            => (await factory(ct).ConfigureAwait(false), null);
+
+        return GetOrSetPayloadAsync(key, AsTuple, duration, extraTags, token);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
+
+    /// <inheritdoc />
+    public async ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
+        string key,
+        Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
+        TimeSpan? duration,
+        IEnumerable<string>? extraTags = null,
+        CancellationToken token = default)
+    {
+        if (_payloadCodec == null || _payloadSerializer == null)
+            throw new InvalidOperationException("Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddFusionCache which registers both).");
+
+        if (!_enabled)
+            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(key)) {
+            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
+            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = await _fusionCache.TryGetAsync<byte[]>(normalizedKey, token: token).ConfigureAwait(false);
+            if (cachedValue.HasValue) {
+                CacheEntryEnvelope? decoded = null;
+                try {
+                    decoded = _payloadCodec.Decode(cachedValue.Value);
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    await InvalidateCacheItem(key).ConfigureAwait(false);
+                }
+
+                if (decoded != null) {
+                    try {
+                        var deserialized = _payloadSerializer.Deserialize<TValue>(PayloadBytes(decoded.Payload));
+                        stopwatch.Stop();
+                        _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                        _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                        return deserialized;
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "Failed to deserialize typed payload for key {CacheKey}; removing entry", key);
+                        await InvalidateCacheItem(key).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            var (value, factoryTags) = await factory(token).ConfigureAwait(false);
+            if (value is null)
+                return default;
+
+            var plain = _payloadSerializer.Serialize(value);
+            if (plain == null)
+                return default;
+
+            var framed = _payloadCodec.Encode(plain);
+            var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
+            var mergedTags = MergeTags(factoryTags, extraTags);
+            await _fusionCache.SetAsync(normalizedKey, framed, opts, mergedTags, token).ConfigureAwait(false);
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return value;
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, IEnumerable<string>? extraTags = null)
+        => GetOrSetPayload(key, factory, null, extraTags);
+
+    /// <inheritdoc />
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
+    {
+        if (_payloadCodec == null)
+            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
+
+        if (!_enabled)
+            return PayloadFactoryOnlySync(factory);
+
+        if (string.IsNullOrWhiteSpace(key)) {
+            _logger.LogWarning("GetOrSetPayload called with null or empty key, falling back to factory");
+            return PayloadFactoryOnlySync(factory);
+        }
+
+        var normalizedKey = key.ToLowerInvariant();
+        var effectiveDuration = duration ?? _options.DefaultExpiration;
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
+            if (cachedValue.HasValue) {
+                try {
+                    var decoded = _payloadCodec.Decode(cachedValue.Value);
+                    stopwatch.Stop();
+                    _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+                    _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+                    return decoded;
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Failed to decode payload cache for key {CacheKey}; removing entry", key);
+                    InvalidateCacheItem(key).GetAwaiter().GetResult();
+                }
+            }
+
+            var plain = factory(default);
+            if (plain == null)
+                return null;
+
+            var framed = _payloadCodec.Encode(plain);
+            var opts = new FusionCacheEntryOptions { Duration = effectiveDuration };
+            _fusionCache.Set(normalizedKey, framed, opts, extraTags?.Select(i => i.ToLowerInvariant()));
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.MissDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.MissSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+            return _payloadCodec.Decode(framed);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in GetOrSetPayload for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            return PayloadFactoryOnlySync(factory);
+        }
+    }
+
+    /// <inheritdoc />
+    public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
+    {
+        if (_payloadCodec == null)
+            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
+
+        if (!_enabled)
+            return;
+
+        if (string.IsNullOrWhiteSpace(key)) {
+            _logger.LogWarning("Attempted to set payload cache with null or empty key");
+            return;
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var framed = _payloadCodec.Encode(plaintext);
+            _fusionCache.Set(key.ToLowerInvariant(), framed, null, tags?.Select(i => i.ToLowerInvariant()));
+            stopwatch.Stop();
+            _metrics.RecordTiming(Constants.Metrics.SetDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
+            _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
+        }
+        catch (Exception ex) {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error setting payload cache for key {CacheKey}", key);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "SetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool TryGetPayload(string key, out CacheEntryEnvelope? envelope)
+    {
+        envelope = null;
+        if (_payloadCodec == null)
+            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
+
+        if (!_enabled || string.IsNullOrWhiteSpace(key))
+            return false;
+
+        try {
+            var normalizedKey = key.ToLowerInvariant();
+            var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
+            if (!cachedValue.HasValue)
+                return false;
+
+            envelope = _payloadCodec.Decode(cachedValue.Value);
+            return true;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Error decoding payload cache for key {CacheKey}", key);
+            return false;
+        }
+    }
+
+    private static async Task<CacheEntryEnvelope?> PayloadFactoryOnlyAsync(Func<CancellationToken, Task<byte[]?>> factory, CancellationToken token)
+    {
+        var plain = await factory(token).ConfigureAwait(false);
+        if (plain == null)
+            return null;
+
+        return new CacheEntryEnvelope { Payload = plain };
+    }
+
+    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(
+        Func<CancellationToken, Task<(T? value, string[]? tags)>> factory,
+        CancellationToken token)
+    {
+        var (value, _) = await factory(token).ConfigureAwait(false);
+        return value;
+    }
+
+    private static ReadOnlySpan<byte> PayloadBytes(IReadOnlyList<byte> payload)
+        => payload is byte[] b ? b : payload.ToArray();
+
+    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(
+        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
+        CancellationToken token)
+    {
+        var (plain, _) = await factory(token).ConfigureAwait(false);
+        if (plain == null)
+            return null;
+
+        return new CacheEntryEnvelope { Payload = plain };
+    }
+
+    private static CacheEntryEnvelope? PayloadFactoryOnlySync(Func<CancellationToken, byte[]?> factory)
+    {
+        var plain = factory(default);
+        if (plain == null)
+            return null;
+
+        return new CacheEntryEnvelope { Payload = plain };
     }
 
     private static string[]? MergeTags(string[]? factoryTags, IEnumerable<string>? extraTags)

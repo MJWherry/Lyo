@@ -1,8 +1,11 @@
+using System.Linq;
+using Lyo.Compression;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Cache;
@@ -10,6 +13,25 @@ namespace Lyo.Cache;
 /// <summary>Extension methods for configuring LocalCacheService with dependency injection.</summary>
 public static class CacheServiceExtensions
 {
+    private static void RegisterCachePayloadCodec(IServiceCollection services)
+    {
+        services.AddSingleton<ICachePayloadCodec>(sp =>
+#if NET10_0_OR_GREATER
+            new CachePayloadCodec(
+                sp.GetRequiredService<CacheOptions>(),
+                sp.GetRequiredService<ICompressionService>(),
+                sp.GetService<Lyo.Encryption.IEncryptionService>())
+#else
+            new CachePayloadCodec(
+                sp.GetRequiredService<CacheOptions>(),
+                sp.GetRequiredService<ICompressionService>())
+#endif
+        );
+    }
+
+    private static void RegisterCachePayloadSerializer(IServiceCollection services)
+        => services.TryAddSingleton<ICachePayloadSerializer>(CachePayloadSerializerRegistration.Create);
+
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
     {
@@ -23,12 +45,19 @@ public static class CacheServiceExtensions
             configureOptions?.Invoke(cacheOptions);
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
+            if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
+                services.AddCompressionService();
+
+            RegisterCachePayloadCodec(services);
+            RegisterCachePayloadSerializer(services);
             services.AddSingleton<ICacheService>(serviceProvider => {
                 var logger = serviceProvider.GetService<ILogger<LocalCacheService>>();
                 var options = serviceProvider.GetRequiredService<CacheOptions>();
                 var memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
                 var metrics = options.EnableMetrics ? serviceProvider.GetService<IMetrics>() : null;
-                return new LocalCacheService(memoryCache, logger, options, metrics);
+                var payloadCodec = serviceProvider.GetRequiredService<ICachePayloadCodec>();
+                var payloadSerializer = serviceProvider.GetRequiredService<ICachePayloadSerializer>();
+                return new LocalCacheService(memoryCache, logger, options, metrics, payloadCodec, payloadSerializer);
             });
 
             return services;
@@ -50,12 +79,19 @@ public static class CacheServiceExtensions
             configureOptions?.Invoke(cacheOptions);
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
+            if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
+                services.AddCompressionService();
+
+            RegisterCachePayloadCodec(services);
+            RegisterCachePayloadSerializer(services);
             services.AddSingleton<ICacheService>(serviceProvider => {
                 var logger = serviceProvider.GetService<ILogger<LocalCacheService>>();
                 var options = serviceProvider.GetRequiredService<CacheOptions>();
                 var memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
                 var metrics = options.EnableMetrics ? serviceProvider.GetService<IMetrics>() : null;
-                return new LocalCacheService(memoryCache, logger, options, metrics);
+                var payloadCodec = serviceProvider.GetRequiredService<ICachePayloadCodec>();
+                var payloadSerializer = serviceProvider.GetRequiredService<ICachePayloadSerializer>();
+                return new LocalCacheService(memoryCache, logger, options, metrics, payloadCodec, payloadSerializer);
             });
 
             return services;

@@ -10,24 +10,10 @@ internal static class SqlProjectionJoinShape
     /// <summary>
     /// True when the projection likely causes one-to-many joins or multiple result rows per root (reader fan-out).
     /// </summary>
-    internal static bool LikelyCausesReaderFanOut(
-        Type entityType,
-        SqlProjectionConversionPlan? plan,
-        IReadOnlyList<ProjectedFieldSpec> specs)
-    {
-        if (plan?.Slots.Any(s => s is SqlProjectionMergedCollectionSlot) == true)
-            return true;
-
-        foreach (var spec in specs) {
-            if (ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
-                continue;
-
-            if (FieldPathCrossesCollectionNavigation(entityType, spec.NormalizedParts))
-                return true;
-        }
-
-        return false;
-    }
+    internal static bool LikelyCausesReaderFanOut(Type entityType, SqlProjectionConversionPlan? plan, IReadOnlyList<ProjectedFieldSpec> specs) 
+        => plan?.Slots.Any(s => s is SqlProjectionMergedCollectionSlot) == true 
+            || specs.Where(spec => !ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
+                .Any(spec => FieldPathCrossesCollectionNavigation(entityType, spec.NormalizedParts));
 
     /// <summary>
     /// True when the path traverses a collection navigation (same row multiplication as a join to a child table).

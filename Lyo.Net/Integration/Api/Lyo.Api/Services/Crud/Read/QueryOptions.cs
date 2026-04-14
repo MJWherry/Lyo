@@ -31,6 +31,12 @@ public sealed class QueryOptions
     /// </summary>
     public bool AllowSelectWildcards { get; init; } = true;
 
+    /// <summary>
+    /// When <c>true</c>, query results use typed <c>ICacheService.GetOrSetPayloadAsync&lt;T&gt;</c> (via <see cref="Lyo.Cache.ICachePayloadSerializer" /> and <see cref="Lyo.Cache.ICachePayloadCodec" />;
+    /// optional compress/encrypt per <see cref="Lyo.Cache.CacheOptions.Payload" />) instead of Fusion CLR serialization. Requires cache registration (e.g. <c>AddLocalCache</c> / <c>AddFusionCache</c>).
+    /// </summary>
+    public bool CacheQueryResultsAsUtf8Payload { get; init; }
+
     public override string ToString()
-        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} AllowSelectWildcards={AllowSelectWildcards}";
+        => $"DefaultPageSize={DefaultPageSize} MaxPageSize={MaxPageSize} PagingStart=[{MinPagingStart},{MaxPagingStart}] MinAmount={MinPagingAmount} MaxExportSize={MaxExportSize} SplitQueries={EnableSplitQueries} AllowSelectWildcards={AllowSelectWildcards} CacheQueryUtf8Payload={CacheQueryResultsAsUtf8Payload}";
 }

@@ -2,6 +2,8 @@
 
 DTOs and builders for **query** requests (`QueryReq`, `ProjectionQueryReq`) and the **`WhereClause`** filter tree used by the API and Blazor tooling.
 
+**Caching:** Result caching for **`POST …/Query`** and **`POST …/QueryProject`** is configured on the API host (**`QueryOptions.CacheQueryResultsAsUtf8Payload`**, **`CacheOptions`**) — not on these DTOs. Both endpoints share the same option; see the *Query result caching* section in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
+
 ## Where-clause model
 
 | Type | Role |

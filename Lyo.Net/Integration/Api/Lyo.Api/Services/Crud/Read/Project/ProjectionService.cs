@@ -19,10 +19,8 @@ namespace Lyo.Api.Services.Crud.Read.Project;
 /// <summary>Resolves projection specs, builds projection expressions, and projects entities to selected fields.</summary>
 public sealed class ProjectionService(IFormatterService? formatterService = null, ILogger<ProjectionService>? logger = null) : IProjectionService
 {
-    /// <summary>Bare dotted path used as template without braces, e.g. <c>contactaddresses.address.streetname</c>.</summary>
-    private static readonly Regex BarePropertyPathRegex = new(
-        @"^(?:[A-Za-z_][A-Za-z0-9_]*)(?:\.[A-Za-z_][A-Za-z0-9_]*)+$",
-        RegexOptions.Compiled);
+    /// <summary>Bare dotted path used as template without braces</summary>
+    private static readonly Regex BarePropertyPathRegex = new(@"^(?:[A-Za-z_][A-Za-z0-9_]*)(?:\.[A-Za-z_][A-Za-z0-9_]*)+$", RegexOptions.Compiled);
 
     /// <summary>SmartFormat-style <c>{token}</c> segments (no format spec); used when resolving projection entity types without <see cref="IFormatterService" />.</summary>
     private static readonly Regex TemplateDependencyBraceRegex = new(@"\{([^{}:]+)\}", RegexOptions.Compiled);
@@ -194,7 +192,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (mergePrefixParts.Length == 0)
             return null;
 
-        // Select applies to the first ICollection in the shared prefix; nested navigations (e.g. contactaddresses → address → leaf) belong in the lambda.
+        // Select applies to the first ICollection in the shared prefix; nested navigations belong in the lambda.
         if (!TryFindMergedSqlOuterCollectionSegmentCount(rootType, mergePrefixParts, out var outerSegmentCount))
             return null;
 
@@ -694,12 +692,6 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return true;
     }
 
-    private static string GetCollectionRequestedPathPrefix(string fullPath)
-    {
-        var i = fullPath.LastIndexOf('.');
-        return i <= 0 ? fullPath : fullPath[..i];
-    }
-
     public IReadOnlyList<string> GetComputedFieldDependencies(IReadOnlyList<ComputedField> computedFields)
     {
         if (formatterService is null || computedFields.Count == 0)
@@ -803,8 +795,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             return;
 
         var currentType = rootType;
-        for (var i = 0; i < parts.Count; i++) {
-            var part = parts[i];
+        foreach (var part in parts) {
             if (part == "*")
                 break;
 
@@ -855,19 +846,17 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (string.Equals(e, want, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // e.g. "contactaddresses.address.*" covers "contactaddresses.address.streetname" (one leaf under that scope).
-            // "contactaddresses.*" covers only direct fields on each collection element (one segment after the scope), not
-            // nested paths like "contactaddresses.address.streettype" — those must be added explicitly for projection.
-            if (e.EndsWith(".*", StringComparison.OrdinalIgnoreCase) && e.Length > 2) {
-                var basePath = e[..^2];
-                if (want.Length <= basePath.Length
-                    || !want.StartsWith(basePath + ".", StringComparison.OrdinalIgnoreCase))
-                    continue;
+            if (!e.EndsWith(".*", StringComparison.OrdinalIgnoreCase) || e.Length <= 2)
+                continue;
 
-                var rest = want[(basePath.Length + 1)..];
-                if (!rest.Contains('.'))
-                    return true;
-            }
+            var basePath = e[..^2];
+            if (want.Length <= basePath.Length
+                || !want.StartsWith(basePath + ".", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var rest = want[(basePath.Length + 1)..];
+            if (!rest.Contains('.'))
+                return true;
         }
 
         return false;
@@ -1046,7 +1035,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 ? (Func<object?, bool>)(item => scopedConditions.Any(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value)))
                 : item => scopedConditions.All(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value));
 
-            return objectList.Where(item => matchScoped(item)).ToList();
+            return objectList.Where(matchScoped).ToList();
         }
 
         if (value is List<object?> scalarList) {
@@ -1428,7 +1417,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     private string FormatComputedValue(string template, Dictionary<string, object?> row)
     {
         if (formatterService is null || string.IsNullOrWhiteSpace(template))
-            return template ?? string.Empty;
+            return template;
         
         var placeholders = GetTemplatePlaceholders(template);
         if (placeholders.Count == 0)
@@ -1436,14 +1425,12 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
         var trimmed = template.Trim();
 
-        // Entire template is a bare dotted path (no braces), e.g. contactaddresses.address.streetname
-        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase)) {
-            if (TryResolveRowValueForTemplate(row, placeholders[0], out var val))
-                return FormatResolvedValueThroughFormatter(val, optionalFormatSuffix: "");
-
-            return string.Empty;
-        }
-
+        // Entire template is a bare-dotted path (no braces)
+        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase))
+            return TryResolveRowValueForTemplate(row, placeholders[0], out var val) 
+                ? FormatResolvedValueThroughFormatter(val, optionalFormatSuffix: "") 
+                : string.Empty;
+        
         // No '.' in placeholder names: SmartFormat resolves placeholders from the row as a flat dictionary (incl. format specs like {CreatedAt:yyyy-MM-dd}).
         if (placeholders.All(p => !p.Contains('.')))
             return formatterService.Format(trimmed, row);
@@ -1515,10 +1502,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
         return TryResolveTokenFromWildcardSiblingColumn(row, token, out val);
     }
-
-    /// <summary>
-    /// Template path <c>contactaddresses.address.streettype</c> when the row only has <c>contactaddresses.*</c>: walk each element with segments after the collection.
-    /// </summary>
+    
     private static bool TryResolveTokenFromCollectionScopeWildcard(Dictionary<string, object?> row, string token, out object? val)
     {
         val = null;

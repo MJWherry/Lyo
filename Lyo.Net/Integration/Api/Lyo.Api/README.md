@@ -41,7 +41,7 @@ Full route list for the typed builder: [Endpoints](#endpoints) below.
 - **Wildcards** – `Collection.*` (entire nested objects), `*` (root entity flattened)
 - **Collection scalar projection** – `JobRuns.CreatedBy` → array of scalar arrays per row
 - **MatchedOnly** – When filtering on nested fields, include only matched items in collections
-- **SQL-level projection** – When possible, projects in the database (no full entity load); falls back to load-then-project for wildcards/subqueries
+- **SQL-level projection** – When possible, projects in the database (no full entity load); falls back to load-then-project for wildcards/subqueries. Both paths participate in [query result caching](#query-result-caching) the same way as **`POST …/Query`**.
 - **Derived includes** – Select paths auto-include required navigation properties
 - **Computed fields** – Optional **`ComputedFields`** on the request: SmartFormat templates add named columns from other projected values (requires **`IFormatterService`** and **`ApiFeatureFlag.ProjectionComputedFields`** on the endpoint). Placeholders use dotted paths that must be loadable from **`Select`**; the server may append missing paths for template dependencies and can strip those dependency leaves from the JSON response when they were only needed for formatting (see sibling-merge / auto-derived path behavior in projection services).
 - **`entityTypes` (success only)** – On successful **`QueryProject`** responses, **`entityTypes`** is a sorted, distinct list of CLR **class** names for: the root entity type, and every navigation target (including collection **element** types) touched by **`Select`** and by computed-field **template** placeholders. Value types and strings are not listed. On failure, **`entityTypes`** is omitted or null. Regular **`Query`** does not include this property.
@@ -55,7 +55,7 @@ Full route list for the typed builder: [Endpoints](#endpoints) below.
 
 ### Cross-Cutting
 
-- **Caching** – Query result caching (FusionCache / Lyo.Cache); auto-invalidation on Create/Update/Patch/Delete/Upsert
+- **Caching** – Query and QueryProject result caching (FusionCache / Lyo.Cache), with optional typed UTF-8 payload entries when **`QueryOptions.CacheQueryResultsAsUtf8Payload`** is enabled; auto-invalidation on Create/Update/Patch/Delete/Upsert. Details: [Query result caching](#query-result-caching).
 - **Authorization** – Builder-level and per-endpoint via `RequireAuthorization`, `AllowAnonymous`, `EndpointAuth`
 - **CrudConfiguration** – Before/After hooks, per-operation auth; optional **patch property authorization** (policy-based allowlists or custom rules; disallowed keys return 403)
 - **ApiFeatureFlag** – Fine-grained control over which endpoints are generated
@@ -676,17 +676,49 @@ app.CreateBuilder<...>("/api/items", "Items")
     .Build();
 ```
 
+## Query result caching
+
+**`POST …/Query`** and **`POST …/QueryProject`** both use the same **`IQueryService`** pipeline and the same **`QueryOptions`** singleton. Cached entries are keyed from the request (filters, paging, includes/sort for Query; plus projection **`Select`**, computed fields, and projected row-shape flags for QueryProject — see **`QueryCacheKeyBuilder`**).
+
+- **Default (`CacheQueryResultsAsUtf8Payload` = `false`)** — **`GetOrSetAsync`** stores **`QueryRes<T>`** / **`ProjectedQueryRes<T>`** with Fusion’s usual serialization for CLR graphs.
+- **Typed payload (`CacheQueryResultsAsUtf8Payload` = `true`)** — **`GetOrSetPayloadAsync<T>`** stores framed bytes via **`ICachePayloadSerializer`** and **`ICachePayloadCodec`** (optional compress/encrypt under **`CacheOptions:Payload`**). The SQL-level QueryProject path and the load-then-project fallback both use this mode when enabled; fallback goes through **`QueryCore`**, which already applies the same flag.
+
+Register cache before **`AddLyoQueryServices`** / **`AddLyoCrudServices`**. **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to match **`JsonOptions`**, so cached payloads stay consistent with API JSON.
+
+Example (see also **`Lyo.TestApi`** `appsettings.json`):
+
+```json
+{
+  "QueryOptions": {
+    "CacheQueryResultsAsUtf8Payload": true
+  },
+  "CacheOptions": {
+    "Payload": {
+      "AutoCompress": true,
+      "AutoCompressMinSizeBytes": 1024
+    }
+  }
+}
+```
+
+Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
+
 ## Options
 
 ### QueryOptions (singleton)
 
-| Property                            | Default | Description                |
-|-------------------------------------|---------|----------------------------|
-| DefaultPageSize                     | 100     | Default page size          |
-| MaxPageSize                         | 2000    | Max page size              |
-| MaxExportSize                       | 5000    | Max rows for export        |
+| Property                            | Default | Description |
+|-------------------------------------|---------|-------------|
+| DefaultPageSize                     | 100     | Default page size |
+| MaxPageSize                         | 2000    | Max page size |
+| MinPagingStart                      | 0       | Minimum `Start` (inclusive) |
+| MaxPagingStart                      | 10000000 | Maximum `Start` (inclusive) |
+| MinPagingAmount                     | 1       | Minimum `Amount` when set |
+| MaxExportSize                       | 5000    | Max rows for export |
 | EnableSplitQueries                  | true    | Split queries for includes |
-| UseNoTrackingWithIdentityResolution | true    | NoTracking for reads       |
+| UseNoTrackingWithIdentityResolution | true    | NoTracking for reads |
+| AllowSelectWildcards                | true    | Allow terminal `*` in QueryProject `Select` paths |
+| CacheQueryResultsAsUtf8Payload      | false   | Use typed payload cache (`GetOrSetPayloadAsync`) for Query and QueryProject instead of CLR `GetOrSetAsync` |
 
 ### BulkOperationOptions (singleton)
 

@@ -15,9 +15,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\Lyo.Cache\Lyo.Cache.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
     </ItemGroup>
 
 </Project>

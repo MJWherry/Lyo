@@ -14,23 +14,28 @@
         <repository type="git" url="https://github.com/mjwherry/Lyo"/>
         <dependencies>
             <group targetFramework="netstandard2.0">
+                <dependency id="Lyo.Compression" version="[1.0.71,)"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
                 <dependency id="Lyo.Health" version="[1.0.71,)"/>
                 <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
                 <dependency id="Microsoft.Extensions.Caching.Memory" version="[10,)"/>
                 <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
                 <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection" version="[10.0.1,)"/>
                 <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10.0.1,)"/>
                 <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10.0.1,)"/>
                 <dependency id="System.Text.Json" version="[10,)"/>
             </group>
             <group targetFramework="net10.0">
+                <dependency id="Lyo.Compression" version="[1.0.71,)"/>
+                <dependency id="Lyo.Encryption" version="[1.0.71,)"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
                 <dependency id="Lyo.Health" version="[1.0.71,)"/>
                 <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
                 <dependency id="Microsoft.Extensions.Caching.Memory" version="[10,)"/>
                 <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>
                 <dependency id="Microsoft.Extensions.Configuration.Binder" version="[10,)"/>
+                <dependency id="Microsoft.Extensions.DependencyInjection" version="[10.0.1,)"/>
                 <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10.0.1,)"/>
                 <dependency id="Microsoft.Extensions.Logging.Abstractions" version="[10.0.1,)"/>
             </group>
