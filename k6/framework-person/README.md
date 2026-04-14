@@ -16,12 +16,15 @@ At a high level (local laptop, API + Postgres + k6 colocated — pessimistic vs 
 |--------|----------------------------|---------------------------|
 | Small/medium JSON reads, filters, sorts, projections | Public APIs often target **p95 ~100–300 ms**; internal microservices often **~50–150 ms** | Mixed query **~32 ms p95**; subquery load **~21 ms p95** on the archived run |
 | Thin DB→JSON gateways (PostgREST, Hasura) | Often **~5–30 ms** p95 for simple reads on small data | Competitive **order of magnitude** for comparable shapes and sizes |
+| GraphQL (Hasura vs hand-written resolvers) | Hasura: similar to thin gateways; Apollo/Hot Chocolate/gqlgen: **~40 ms–seconds** depending on N+1 and DataLoader | Analysis separates **gateway GraphQL** from **resolver-heavy GraphQL**; see industry tables |
 | ORM-heavy APIs (typical EF/Django/Rails) | Often **50–400 ms** for non-trivial reads | **Lower** than “typical ORM” bands in the analysis for the scenarios tested |
 | Large payloads / deep graphs | Dominated by **bytes and join depth** — compare after pagination, not a single global SLO | Heavy-include stress **~178 ms avg** with **100%** within scenario SLA under 40 VUs |
 
 Treat any table as **directional**: dataset size, indexes, cache keys, and hardware dominate absolute milliseconds.
 
 **Dataset (typical TestApi / benchmark DB)**: on the order of **~135k** persons and **hundreds of thousands** of rows in related contact/address/phone/email tables — not a tiny seed database. Scenarios still use **bounded `Start`/`Amount`**; they do not load the full graph.
+
+**TestApi host**: k6 runs against **`Lyo.TestApi`**, which wires **`ILyoMapper`** to **Mapster** (`MapsterLyoMapper`). Object mapping adds CPU and allocations compared to hand-written maps or another mapper; production APIs that skip or minimize mapping might see different end-to-end latency than these results.
 
 ## What this covers
 

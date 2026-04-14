@@ -33,9 +33,9 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
         ILoggerFactory? loggerFactory = null,
         IMetrics? metrics = null)
     {
-        ArgumentNullException.ThrowIfNull(storage);
-        ArgumentNullException.ThrowIfNull(sessions);
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(storage, nameof(storage));
+        ArgumentHelpers.ThrowIfNull(sessions, nameof(sessions));
+        ArgumentHelpers.ThrowIfNull(options, nameof(options));
         _storage = storage;
         _sessions = sessions;
         _options = options;
@@ -49,7 +49,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public async Task<MultipartBeginResult> BeginAsync(MultipartBeginRequest request, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        ArgumentHelpers.ThrowIfNull(request, nameof(request));
         OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
         var sessionId = Guid.NewGuid();
         var targetFileId = Guid.NewGuid();
@@ -81,38 +81,38 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public async Task UploadPartAsync(Guid sessionId, int partNumber, Stream content, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(content);
+        ArgumentHelpers.ThrowIfNull(content, nameof(content));
         var session = await GetActiveSessionAsync(sessionId, ct).ConfigureAwait(false);
         var dir = GetStagingDir(session);
         var partPath = Path.Combine(dir, $"part-{partNumber:D5}.bin");
-        await using var fs = File.Create(partPath);
-        await content.CopyToAsync(fs, ct).ConfigureAwait(false);
+        using var fs = File.Create(partPath);
+        await content.CopyToAsync(fs, 81920, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<FileStoreResult> CompleteAsync(CompleteMultipartUploadRequest request, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        ArgumentHelpers.ThrowIfNull(request, nameof(request));
         var session = await GetActiveSessionAsync(request.SessionId, ct).ConfigureAwait(false);
         var dir = GetStagingDir(session);
         var parts = request.Parts.OrderBy(p => p.PartNumber).ToList();
         OperationHelpers.ThrowIf(parts.Count == 0, "At least one part is required.");
         var mergedPath = Path.Combine(dir, "merged.bin");
-        await using (var merged = File.Create(mergedPath)) {
+        using (var merged = File.Create(mergedPath)) {
             foreach (var p in parts) {
                 var partPath = Path.Combine(dir, $"part-{p.PartNumber:D5}.bin");
                 if (!File.Exists(partPath))
                     throw new FileNotFoundException($"Part {p.PartNumber} not found for session {request.SessionId}.");
 
-                await using var partStream = File.OpenRead(partPath);
-                await partStream.CopyToAsync(merged, ct).ConfigureAwait(false);
+                using var partStream = File.OpenRead(partPath);
+                await partStream.CopyToAsync(merged, 81920, ct).ConfigureAwait(false);
             }
         }
 
         var mergedInfo = new FileInfo(mergedPath);
         FileAvailability? availabilityOverride = null;
         if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
-            await using var scanStream = File.OpenRead(mergedPath);
+            using var scanStream = File.OpenRead(mergedPath);
             var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
             availabilityOverride = scan.ThreatLevel switch {
                 FileScanThreatLevel.Clean => FileAvailability.Available,
@@ -122,7 +122,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             };
         }
 
-        await using var input = File.OpenRead(mergedPath);
+        using var input = File.OpenRead(mergedPath);
         var result = await _storage.SaveFromStreamAsync(
                 input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
                 session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)

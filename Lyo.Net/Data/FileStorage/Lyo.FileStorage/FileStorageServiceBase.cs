@@ -26,6 +26,20 @@ namespace Lyo.FileStorage;
 /// <summary>Base abstract class for file storage services providing common functionality.</summary>
 public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 {
+    private const int CopyToBufferSizeBytes = 81920;
+
+    private static Task DisposeStreamAsync(Stream? stream)
+    {
+        if (stream == null)
+            return Task.CompletedTask;
+#if NET5_0_OR_GREATER
+        return stream.DisposeAsync().AsTask();
+#else
+        stream.Dispose();
+        return Task.CompletedTask;
+#endif
+    }
+
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
     protected readonly ICompressionService? CompressionService;
     protected readonly IFileContentPolicy ContentPolicy;
@@ -224,7 +238,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 else {
                     // Sequential path: compress then encrypt (or just one)
                     Stream processingStream = inputStream;
-                    await using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
+                    using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
                     var hashAlg = Options.HashAlgorithm;
                     using var originalHashAlgo = hashAlg.Create();
                     if (compress) {
@@ -249,7 +263,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     }
                     else {
                         using var outputHashStream = new HashingStream(intermediateStream, originalHashAlgo);
-                        await processingStream.CopyToAsync(outputHashStream, ct).ConfigureAwait(false);
+                        await processingStream.CopyToAsync(outputHashStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                         await outputHashStream.FlushAsync(ct).ConfigureAwait(false);
                         originalHash = outputHashStream.GetHash();
                         processingStream = intermediateStream;
@@ -265,7 +279,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
                             if (Options.DuplicateStrategy == DuplicateHandlingStrategy.Overwrite) {
                                 fileId = existingMetadata.Id;
-                                await outputStream.DisposeAsync().ConfigureAwait(false);
+                                await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                                 outputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                             }
                         }
@@ -287,7 +301,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                         await encryptedHashStream.FlushAsync(ct).ConfigureAwait(false);
                         await outputStream.FlushAsync(ct).ConfigureAwait(false);
                         encryptedHash = encryptedHashStream.GetHash();
-                        await outputStream.DisposeAsync().ConfigureAwait(false);
+                        await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                         outputStream = null;
                         fileExtension = TwoKeyEncryptionService.FileExtension;
                         var headerInfo = await ExtractEncryptionHeaderAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
@@ -307,9 +321,9 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     }
                     else {
                         processingStream.Position = 0;
-                        await processingStream.CopyToAsync(outputStream, ct).ConfigureAwait(false);
+                        await processingStream.CopyToAsync(outputStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                         await outputStream.FlushAsync(ct).ConfigureAwait(false);
-                        await outputStream.DisposeAsync().ConfigureAwait(false);
+                        await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                         outputStream = null;
                     }
                 }
@@ -340,7 +354,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             }
             finally {
                 if (outputStream != null)
-                    await outputStream.DisposeAsync().ConfigureAwait(false);
+                    await DisposeStreamAsync(outputStream).ConfigureAwait(false);
             }
         }
         catch (Exception ex) {
@@ -400,7 +414,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(filePath);
 
             // Open file stream for processing
-            await using var inputStream = File.OpenRead(filePath);
+            using var inputStream = File.OpenRead(filePath);
             // Process using streaming pipeline
             var result = await ProcessAndSaveStreamAsync(
                     inputStream, fileId, actualOriginalFileName, originalSize, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
@@ -451,7 +465,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         Guid? fileId = null,
         CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(input, nameof(input));
         var resolvedTenant = ResolveTenantId(tenantId);
         await ContentPolicy.ValidateAsync(
                 new() {
@@ -511,7 +525,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
         // Read file data using streaming pipeline
         byte[] data;
-        await using var storageStream = await ReadFromStorageAsync(fileId, metadata.PathPrefix, ct).ConfigureAwait(false);
+        using var storageStream = await ReadFromStorageAsync(fileId, metadata.PathPrefix, ct).ConfigureAwait(false);
         if (storageStream == null) {
             if (Options.ThrowOnFileNotFound) {
                 sw.Stop();
@@ -536,7 +550,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 // Buffer non-seekable streams
                 if (!processingStream.CanSeek) {
                     bufferedStream = new();
-                    await processingStream.CopyToAsync(bufferedStream, ct).ConfigureAwait(false);
+                    await processingStream.CopyToAsync(bufferedStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                     bufferedStream.Position = 0;
                     processingStream = bufferedStream;
                 }
@@ -549,7 +563,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 decryptedStream.Position = 0;
                 processingStream = decryptedStream;
                 if (bufferedStream != null) {
-                    await bufferedStream.DisposeAsync();
+                    await DisposeStreamAsync(bufferedStream).ConfigureAwait(false);
                     bufferedStream = null;
                 }
 
@@ -585,7 +599,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             data = ms.ToArray();
         else {
             using var resultStream = new MemoryStream();
-            await processingStream.CopyToAsync(resultStream, ct).ConfigureAwait(false);
+            await processingStream.CopyToAsync(resultStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
             data = resultStream.ToArray();
         }
 
@@ -709,7 +723,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         int? chunkSize,
         CancellationToken ct)
     {
-        await using (storageStream) {
+        using (storageStream) {
             if (metadata.IsEncrypted && metadata.IsCompressed) {
                 OperationHelpers.ThrowIfNull(
                     TwoKeyEncryptionService,
@@ -742,7 +756,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     storageStream.Position = 0;
 
                 try {
-                    await using (var plainOut = plainWriter.AsStream(true))
+                    using (var plainOut = plainWriter.AsStream(true))
                         await TwoKeyEncryptionService!.DecryptToStreamAsync(storageStream, plainOut, null, null, ct).ConfigureAwait(false);
 
                     await plainWriter.CompleteAsync().ConfigureAwait(false);
@@ -766,7 +780,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     storageStream.Position = 0;
 
                 try {
-                    await using (var plainOut = plainWriter.AsStream(true))
+                    using (var plainOut = plainWriter.AsStream(true))
                         await CompressionService!.DecompressAsync(storageStream, plainOut, chunkSize, ct).ConfigureAwait(false);
 
                     await plainWriter.CompleteAsync().ConfigureAwait(false);
@@ -1004,7 +1018,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     var fileMetadata = await MetadataService.GetMetadataAsync(fileId, ct).ConfigureAwait(false);
                     ValidateDekRotationMetadata(fileMetadata);
                     var (resolvedTargetKeyId, resolvedTargetKeyVersion) = ResolveDekRotationTarget(fileMetadata, targetKeyId, targetKeyVersion);
-                    await using var decryptedPayloadStream = await ReadEncryptedPayloadAsync(fileMetadata, ct).ConfigureAwait(false);
+                    using var decryptedPayloadStream = await ReadEncryptedPayloadAsync(fileMetadata, ct).ConfigureAwait(false);
                     await RewriteEncryptedFileAsync(fileMetadata, decryptedPayloadStream, resolvedTargetKeyId, resolvedTargetKeyVersion, ct).ConfigureAwait(false);
                     successfullyRotated++;
                     Logger.LogDebug(
@@ -1169,7 +1183,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
     private async Task<MemoryStream> ReadEncryptedPayloadAsync(FileStoreResult metadata, CancellationToken ct)
     {
-        await using var storageStream = await ReadFromStorageAsync(metadata.Id, metadata.PathPrefix, ct).ConfigureAwait(false);
+        using var storageStream = await ReadFromStorageAsync(metadata.Id, metadata.PathPrefix, ct).ConfigureAwait(false);
         if (storageStream == null)
             throw new FileNotFoundException($"File with ID {metadata.Id} was not found in storage.", metadata.Id.ToString());
 
@@ -1178,7 +1192,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         try {
             if (!processingStream.CanSeek) {
                 bufferedStream = new();
-                await processingStream.CopyToAsync(bufferedStream, ct).ConfigureAwait(false);
+                await processingStream.CopyToAsync(bufferedStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                 bufferedStream.Position = 0;
                 processingStream = bufferedStream;
             }
@@ -1200,7 +1214,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         var fileExtension = TwoKeyEncryptionService!.FileExtension;
         var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize ?? metadata.OriginalFileSize);
         byte[] encryptedHash;
-        await using (var outputStream = await CreateOutputStreamAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false)) {
+        using (var outputStream = await CreateOutputStreamAsync(metadata.Id, fileExtension, metadata.PathPrefix, ct).ConfigureAwait(false)) {
             using (var encryptedHashAlgo = Options.HashAlgorithm.Create()) {
                 using (var encryptedHashStream = new HashingStream(outputStream, encryptedHashAlgo)) {
                     decryptedPayloadStream.Position = 0;
@@ -1269,7 +1283,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         CancellationToken ct)
     {
         try {
-            await using (var w = pipeCompressed.Writer.AsStream(true))
+            using (var w = pipeCompressed.Writer.AsStream(true))
                 await twoKey.DecryptToStreamAsync(storageStream, w, null, null, ct).ConfigureAwait(false);
 
             await pipeCompressed.Writer.CompleteAsync().ConfigureAwait(false);
@@ -1288,8 +1302,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         CancellationToken ct)
     {
         try {
-            await using var compressedRead = pipeCompressed.Reader.AsStream(true);
-            await using (var plainOut = plainWriter.AsStream(true))
+            using var compressedRead = pipeCompressed.Reader.AsStream(true);
+            using (var plainOut = plainWriter.AsStream(true))
                 await compression.DecompressAsync(compressedRead, plainOut, chunkSize, ct).ConfigureAwait(false);
 
             await plainWriter.CompleteAsync().ConfigureAwait(false);
@@ -1334,7 +1348,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         await Task.WhenAll(compressionTask, encryptionTask).ConfigureAwait(false);
         await encryptedHashStream.FlushAsync(ct).ConfigureAwait(false);
         await outputStream.FlushAsync(ct).ConfigureAwait(false);
-        await outputStream.DisposeAsync().ConfigureAwait(false);
+        await DisposeStreamAsync(outputStream).ConfigureAwait(false);
         var compressedSize = countingStream.BytesWritten;
         var compressedHash = compressedHashStream.GetHash();
         var encryptedHash = encryptedHashStream.GetHash();
@@ -1365,7 +1379,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             return FileAvailability.Available;
         }
 
-        await using var ms = new MemoryStream(data, false);
+        using var ms = new MemoryStream(data, false);
         var scan = await MalwareScanner.ScanAsync(ms, contentType, originalFileName, ct).ConfigureAwait(false);
         return scan.ThreatLevel switch {
             FileScanThreatLevel.Clean => FileAvailability.Available,
@@ -1396,7 +1410,12 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             return FileAvailability.PendingScan;
         }
 
+#if NET5_0_OR_GREATER
         var bytes = await File.ReadAllBytesAsync(filePath, ct).ConfigureAwait(false);
+#else
+        ct.ThrowIfCancellationRequested();
+        var bytes = File.ReadAllBytes(filePath);
+#endif
         return await DetermineAvailabilityAfterScanningPlaintextAsync(bytes, contentType, originalFileName, ct).ConfigureAwait(false);
     }
 
@@ -1482,7 +1501,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 return metadata;
             }
             finally {
-                await pipelineOutputStream.DisposeAsync().ConfigureAwait(false);
+                await DisposeStreamAsync(pipelineOutputStream).ConfigureAwait(false);
             }
         }
 
@@ -1493,7 +1512,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             using var originalHashAlgo = hashAlg.Create();
 
             // Compression stage
-            await using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
+            using var intermediateStream = CreateSequentialStagingStream(originalSize, compress);
             if (compress) {
                 OperationHelpers.ThrowIfNull(
                     CompressionService,
@@ -1518,7 +1537,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             else {
                 // No compression - compute original hash while copying to intermediate
                 using var outputHashStream = new HashingStream(intermediateStream, originalHashAlgo);
-                await processingStream.CopyToAsync(outputHashStream, ct).ConfigureAwait(false);
+                await processingStream.CopyToAsync(outputHashStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                 await outputHashStream.FlushAsync(ct).ConfigureAwait(false);
                 originalHash = outputHashStream.GetHash();
                 processingStream = intermediateStream;
@@ -1535,7 +1554,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
                     if (Options.DuplicateStrategy == DuplicateHandlingStrategy.Overwrite) {
                         fileId = existingMetadata.Id;
-                        await outputStream.DisposeAsync().ConfigureAwait(false);
+                        await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                         outputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                     }
                 }
@@ -1556,7 +1575,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 await encryptedHashStream.FlushAsync(ct).ConfigureAwait(false);
                 await outputStream.FlushAsync(ct).ConfigureAwait(false);
                 encryptedHash = encryptedHashStream.GetHash();
-                await outputStream.DisposeAsync().ConfigureAwait(false);
+                await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                 outputStream = null; // Prevent double disposal
                 fileExtension = TwoKeyEncryptionService.FileExtension;
 
@@ -1579,9 +1598,9 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             else {
                 // No encryption - write directly to output
                 processingStream.Position = 0;
-                await processingStream.CopyToAsync(outputStream, ct).ConfigureAwait(false);
+                await processingStream.CopyToAsync(outputStream, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
                 await outputStream.FlushAsync(ct).ConfigureAwait(false);
-                await outputStream.DisposeAsync().ConfigureAwait(false);
+                await DisposeStreamAsync(outputStream).ConfigureAwait(false);
                 outputStream = null; // Prevent double disposal
                 sourceFileHash = compress ? compressedHash : originalHash;
             }
@@ -1591,7 +1610,17 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             // Ensure originalHash is computed
             inputStream.Position = 0;
             using var hashAlgoForCompute = hashAlg.Create();
-            originalHash = await hashAlgoForCompute.ComputeHashAsync(inputStream, ct);
+#if NET5_0_OR_GREATER
+            originalHash = await hashAlgoForCompute.ComputeHashAsync(inputStream, ct).ConfigureAwait(false);
+#else
+            const int hashBufferSize = 81920;
+            var hashBuffer = new byte[hashBufferSize];
+            int hashRead;
+            while ((hashRead = await inputStream.ReadAsync(hashBuffer, 0, hashBufferSize, ct).ConfigureAwait(false)) > 0)
+                hashAlgoForCompute.TransformBlock(hashBuffer, 0, hashRead, null, 0);
+            hashAlgoForCompute.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+            originalHash = hashAlgoForCompute.Hash!;
+#endif
             
             var metadata = new FileStoreResult(
                 fileId, originalFileName, originalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress,
@@ -1608,7 +1637,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         }
         finally {
             if (outputStream != null)
-                await outputStream.DisposeAsync().ConfigureAwait(false);
+                await DisposeStreamAsync(outputStream).ConfigureAwait(false);
         }
     }
 
@@ -1632,8 +1661,10 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
     protected static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)
         => fileExtension switch {
             _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
+#if !NETSTANDARD2_0
             _ when fileExtension == BrotliExtension => CompressionAlgorithm.Brotli,
             _ when fileExtension == ZLibExtension => CompressionAlgorithm.ZLib,
+#endif
             _ when fileExtension == DeflateExtension => CompressionAlgorithm.Deflate,
             _ when fileExtension == SnappierExtension => CompressionAlgorithm.Snappier,
             _ when fileExtension == ZstdSharpExtension => CompressionAlgorithm.ZstdSharp,

@@ -683,6 +683,8 @@ app.CreateBuilder<...>("/api/items", "Items")
 - **Default (`CacheQueryResultsAsUtf8Payload` = `false`)** — **`GetOrSetAsync`** stores **`QueryRes<T>`** / **`ProjectedQueryRes<T>`** with Fusion’s usual serialization for CLR graphs.
 - **Typed payload (`CacheQueryResultsAsUtf8Payload` = `true`)** — **`GetOrSetPayloadAsync<T>`** stores framed bytes via **`ICachePayloadSerializer`** and **`ICachePayloadCodec`** (optional compress/encrypt under **`CacheOptions:Payload`**). The SQL-level QueryProject path and the load-then-project fallback both use this mode when enabled; fallback goes through **`QueryCore`**, which already applies the same flag.
 
+With typed payloads, **`CacheOptions:Payload`** can **`AutoCompress`** (above **`AutoCompressMinSizeBytes`**) and, on supported targets, **`AutoEncrypt`** (with **`EncryptionKeyId`** and **`IEncryptionService`**). Those steps run **before** the entry is written to the cache implementation. For a **distributed backplane** (e.g. **Redis** via Fusion’s secondary layer), that means **fewer bytes cross the network** on every cache read/write, which **cuts backplane latency** and bandwidth versus storing large uncompressed JSON blobs. For typical repetitive JSON query results, **lossless compression alone often shrinks stored size on the order of ~90%**, so the win is largest when the API tier and Redis are not co-located or when payload sizes are large.
+
 Register cache before **`AddLyoQueryServices`** / **`AddLyoCrudServices`**. **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to match **`JsonOptions`**, so cached payloads stay consistent with API JSON.
 
 ### Invalidation on writes (built-in CRUD)
@@ -717,6 +719,8 @@ Example (see also **`Lyo.TestApi`** `appsettings.json`):
   }
 }
 ```
+
+Optional (**.NET 10+**): set **`AutoEncrypt`** to **`true`** and **`EncryptionKeyId`** when **`IEncryptionService`** is registered, so payloads are encrypted after compression and before they reach the backplane (defense in depth alongside TLS in transit). See **`CacheOptions:Payload`** in [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 

@@ -1,6 +1,6 @@
-using System.Security.Cryptography;
 using System.Text;
 using Konscious.Security.Cryptography;
+using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
@@ -66,7 +66,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
         // Argon2 uses much lower iteration counts than PBKDF2 (typically 3-4)
         // Map high iteration values (from PBKDF2-style usage) to Argon2's range
         var argon2Iterations = MapIterationsToArgon2Range(iterations);
-        var actualSalt = salt ?? RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var actualSalt = salt ?? CryptographicRandom.GetBytes(DefaultSaltSize);
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualSalt, DefaultSaltSize, long.MaxValue, nameof(salt));
         using var argon2 = new Argon2id(password) {
             Salt = actualSalt,
@@ -91,7 +91,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
-        var salt = RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var salt = CryptographicRandom.GetBytes(DefaultSaltSize);
         var key = DeriveKey(password, salt, iterations, actualKeySize);
         return (key, salt);
     }

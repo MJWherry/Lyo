@@ -35,7 +35,7 @@ public interface IEncryptionService
     /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is invalid.
     /// </exception>
     /// <exception cref="InvalidOperationException">Thrown when no encryption key is available (neither keyId nor key provided, or keyId not found in KeyStore).</exception>
-    byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
+    byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null);
 
     /// <summary> Decrypts the provided encrypted byte array. </summary>
     /// <param name="encryptedBytes">The encrypted data to decrypt</param>
@@ -59,12 +59,7 @@ public interface IEncryptionService
     /// <exception cref="InvalidDataException">Thrown when encrypted data format is invalid, unsupported format version, or corrupted.</exception>
     /// <exception cref="InvalidOperationException">Thrown when no decryption key is available (neither keyId nor key provided, or keyId not found in KeyStore).</exception>
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong key, corrupted data, authentication failure, or tampered data.</exception>
-    byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
-    {
-        var chunk = new byte[count];
-        Array.Copy(buffer, offset, chunk, 0, count);
-        return Decrypt(chunk, keyId, key);
-    }
+    byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null);
 
     /// <summary> Encrypts a string and returns the encrypted data as bytes.</summary>
     /// <param name="text">The text to encrypt. Must not be empty.</param>

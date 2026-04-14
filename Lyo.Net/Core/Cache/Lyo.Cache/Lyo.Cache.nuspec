@@ -15,6 +15,7 @@
         <dependencies>
             <group targetFramework="netstandard2.0">
                 <dependency id="Lyo.Compression" version="[1.0.71,)"/>
+                <dependency id="Lyo.Encryption" version="[1.0.71,)"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
                 <dependency id="Lyo.Health" version="[1.0.71,)"/>
                 <dependency id="Lyo.Metrics" version="[1.0.71,)"/>

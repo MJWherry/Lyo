@@ -57,7 +57,7 @@ public static class NonceGenerator
         }
 
         // Generate new random IV
-        var iv = RandomNumberGenerator.GetBytes(IvSize);
+        var iv = CryptographicRandom.GetBytes(IvSize);
 
         // Store IV in KeyStore metadata
         var updatedMetadata = metadata ?? new KeyMetadata();
@@ -88,7 +88,7 @@ public static class NonceGenerator
         // Handle counter overflow (wrap around, but this is extremely unlikely: 2^32 operations = 4+ billion)
         if (newCounter == 0) {
             // Counter wrapped around - regenerate IV to ensure uniqueness
-            var iv = RandomNumberGenerator.GetBytes(IvSize);
+            var iv = CryptographicRandom.GetBytes(IvSize);
             var updatedMetadata = metadata ?? new KeyMetadata();
             updatedMetadata = updatedMetadata with { AdditionalData = updatedMetadata.AdditionalData ?? new Dictionary<string, string>() };
             updatedMetadata.AdditionalData![NonceIvMetadataKey] = Convert.ToBase64String(iv);

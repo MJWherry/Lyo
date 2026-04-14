@@ -106,9 +106,9 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
         if (key != null)
             AesGcmHelper.ValidateKeyLength(key, _aesKeyLengthBytes);
 
-        var aesKey = key ?? RandomNumberGenerator.GetBytes(_aesKeyLengthBytes);
+        var aesKey = key ?? CryptographicRandom.GetBytes(_aesKeyLengthBytes);
         var hasExternalKey = key != null;
-        var nonce = RandomNumberGenerator.GetBytes(AesGcmHelper.NonceSize);
+        var nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
         try {
             var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, aesKey, nonce);
             using var ms = new MemoryStream();
@@ -213,8 +213,10 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
                     throw new DecryptionFailedException(
                         $"Invalid decrypted AES key size: {keySize} bytes. Expected {_aesKeyLengthBytes} bytes for this service configuration.");
 
-                aesKey = keyNonce[..keySize];
-                nonce = keyNonce[keySize..];
+                aesKey = new byte[keySize];
+                Buffer.BlockCopy(keyNonce, 0, aesKey, 0, keySize);
+                nonce = new byte[AesGcmHelper.NonceSize];
+                Buffer.BlockCopy(keyNonce, keySize, nonce, 0, AesGcmHelper.NonceSize);
             }
             else {
                 // Read nonce and use external key (if provided)
@@ -241,9 +243,11 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
             try {
                 return AesGcmHelper.Decrypt(ciphertext, tag, aesKey, nonce);
             }
+#if NET10_0_OR_GREATER
             catch (AuthenticationTagMismatchException ex) {
                 throw new DecryptionFailedException("Decryption failed due to authentication tag mismatch. Possible causes: wrong AES key, corrupted data, or tampered data.", ex);
             }
+#endif
             catch (CryptographicException ex) {
                 var errorMsg = ex.Message.Contains("padding", StringComparison.OrdinalIgnoreCase)
                     ? "Decryption failed: RSA padding error when decrypting AES key. Possible causes: wrong RSA private key or corrupted encrypted key."
@@ -271,7 +275,7 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
     {
         Dispose(true);
         GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
+        return default;
     }
 
     private void Dispose(bool disposing)

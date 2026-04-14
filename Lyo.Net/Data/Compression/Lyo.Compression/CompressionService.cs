@@ -575,7 +575,7 @@ public sealed class CompressionService : ICompressionService
             var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(inputFilePath);
             await AtomicFileOperationAsync(
                     outputFilePath, async (tempFilePath, ct) => {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
                         using var inputStream = CreateAsyncReadStream(inputFilePath);
                         using var outputStream = CreateAsyncWriteStream(tempFilePath);
 #else
@@ -631,7 +631,7 @@ public sealed class CompressionService : ICompressionService
             var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(inputFilePath);
             await AtomicFileOperationAsync(
                     outputFilePath, async (tempFilePath, ct) => {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
                         using var inputStream = CreateAsyncReadStream(inputFilePath);
                         using var outputStream = CreateAsyncWriteStream(tempFilePath);
 #else
@@ -904,7 +904,7 @@ public sealed class CompressionService : ICompressionService
         ct.ThrowIfCancellationRequested();
         _logger.LogDebug("Compressing batch of {Count} files asynchronously with max parallelism {MaxParallel}", filePaths.Count, _options.MaxParallelFileOperations);
         var stopwatch = Stopwatch.StartNew();
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
         var successfulFiles = new ConcurrentBag<FileCompressionInfo>();
         var failedFiles = new ConcurrentBag<FailedFileOperation>();
         try {
@@ -983,7 +983,7 @@ public sealed class CompressionService : ICompressionService
 #endif
     }
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
     private async Task ProcessCompressFileAsync(
         string inputPath,
         string? outputPath,
@@ -1033,7 +1033,7 @@ public sealed class CompressionService : ICompressionService
         ct.ThrowIfCancellationRequested();
         _logger.LogDebug("Decompressing batch of {Count} files asynchronously with max parallelism {MaxParallel}", filePaths.Count, _options.MaxParallelFileOperations);
         var stopwatch = Stopwatch.StartNew();
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
         var successfulFiles = new ConcurrentBag<FileDecompressionInfo>();
         var failedFiles = new ConcurrentBag<FailedFileOperation>();
         try {
@@ -1111,7 +1111,7 @@ public sealed class CompressionService : ICompressionService
 #endif
     }
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 && !NETSTANDARD2_1
     private async Task ProcessDecompressFileAsync(
         string inputPath,
         string? outputPath,

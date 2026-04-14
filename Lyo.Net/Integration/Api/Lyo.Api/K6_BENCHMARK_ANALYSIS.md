@@ -17,6 +17,7 @@
 | **Disk**        | 1.8 TB root partition, 721 GB free                                            |
 | **Dataset**     | Large PostgreSQL graph (representative counts): **~135k** `person` (29 columns); **~815k** `contact_address` (10) + **~815k** `address` (21); **~480k** `contact_phone_number` (10) + **~460k** `phone_number` (9); **~285k** `contact_email_address` (11) + **~285k** `email_address` (6) |
 | **Compression** | Brotli enabled (API-side), `Accept-Encoding: br, gzip, deflate` on client     |
+| **DTO mapping** | **`Lyo.TestApi`** uses **Mapster** (`MapsterLyoMapper` implementing **`ILyoMapper`**) for entity ↔ API model mapping — adds overhead vs manual mapping or a leaner alternative |
 
 > **Important**: API, database, and k6 load generator all share the same 12-core laptop CPU.
 > This makes results **pessimistic** — production deployments with separated infrastructure would perform better.
@@ -156,12 +157,16 @@ comparator — holds ~21 ms p95 at sustained 20 req/s. The SQL-first subquery pu
 |---------------------------------------------------|------------------------------------------------|---------------------|
 | **Lyo Query API** (this run, EF Core + dynamic expressions) | Mixed / spike / subquery workloads (see scenarios) | **~11–32 ms** scenario-dependent |
 | **Hasura / PostgREST** (direct PG → JSON, no ORM) | Filters + sorts + pagination                   | 5–30 ms             |
+| **GraphQL** (Hasura — same stack as above)        | Auto-generated GraphQL over PostgreSQL         | 5–30 ms             |
+| **GraphQL** (Apollo / Hot Chocolate / gqlgen + hand-written resolvers) | List + filter + sort + pagination as field resolvers | **40–250 ms** with solid batching (DataLoader, lookahead); **200 ms–2s+** with N+1 or cold resolver chains |
 | **Typical EF Core REST API**                      | Dynamic filters + pagination                   | 50–200 ms           |
 | **Django REST Framework**                         | QuerySet filters + pagination                  | 50–300 ms           |
 | **Ruby on Rails**                                 | ActiveRecord scopes + pagination               | 80–400 ms           |
 | **Spring Boot + JPA/Hibernate**                   | JPQL with dynamic predicates                   | 30–150 ms           |
 
 Lyo remains **at the top end of ORM-based frameworks** for these query shapes and **in the same order of magnitude** as thin Postgres-to-JSON gateways for comparable payload sizes on local hardware.
+
+**GraphQL nuance**: *Hasura* is already GraphQL-first; its row above is the apples-to-apples comparison for “declarative query over Postgres.” *Application-layer* GraphQL (custom resolvers) spans a wider band because **resolver shape, DataLoader usage, and query-plan depth** dominate—similar to why ORM-heavy REST APIs vary. Lyo’s `QueryRequest` is **one round trip with a single SQL plan** for the tested shapes, which is closer to Hasura/PostgREST ergonomically than to a deep GraphQL resolver tree.
 
 ### Heavy Include / Navigation Queries (Scenario 02)
 
@@ -172,7 +177,8 @@ Lyo remains **at the top end of ORM-based frameworks** for these query shapes an
 | **Django + select_related/prefetch_related** | 2000 rows + 3 FK joins                          | 3–10s                                  |
 | **Rails + includes (eager load)**            | 2000 rows + 3 associations                      | 5–15s                                  |
 | **GraphQL (Apollo + DataLoader)**            | Nested resolvers, 3 levels deep                 | 1–5s (with batching), 10–30s (without) |
-| **Hasura**                                   | Nested object queries, 3 levels                 | 500ms–2s (no ORM overhead)             |
+| **GraphQL (Hasura)**                         | Nested object queries, 3 levels (same engine as lightweight row) | 500 ms–2 s (Postgres-bound, no ORM) |
+| **GraphQL (Hot Chocolate / gqlgen, custom)** | Manual nested field resolvers + batching        | Often **2–15s** if batching misses; highly team-dependent |
 
 The realistic include workload remains **production-appropriate** (pagination band, single primary include path). Heavier multi-include graphs are still possible; cap page size and include depth in public APIs.
 
@@ -198,3 +204,4 @@ The realistic include workload remains **production-appropriate** (pagination ba
 4. **Localhost networking**: Zero network latency between k6 → API and API → PostgreSQL. Real deployments would add 0.5–2ms per hop.
 5. **Scenario 02**: Realistic workload (100–300 items, 3 tables). Older 7-table, ~2000-row stress cases are more demanding; production workloads typically use smaller
    page sizes and fewer includes.
+6. **Mapster in TestApi**: Benchmarks use the stock **`Lyo.TestApi`** host, which maps through **Mapster**. That cost is included in every response; a host with hand-written mapping, source-generated maps, or a different library could shift CPU and allocation profiles (and thus latency) up or down.

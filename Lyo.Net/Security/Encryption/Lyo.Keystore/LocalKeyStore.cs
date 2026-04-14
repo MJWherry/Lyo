@@ -80,7 +80,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     public string? GetCurrentVersion(string keyId)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        return _currentVersions.GetValueOrDefault(keyId);
+        return _currentVersions.TryGetValue(keyId, out var ver) ? ver : null;
     }
 
     /// <inheritdoc />
@@ -273,7 +273,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
         if (!_metadata.TryGetValue(keyId, out var versions))
             return null;
 
-        return versions.GetValueOrDefault(version);
+        return versions.TryGetValue(version, out var meta) ? meta : null;
     }
 
     public Task<KeyMetadata?> GetKeyMetadataAsync(string keyId, string version, CancellationToken ct = default)
@@ -302,7 +302,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     public string UpdateKey(string keyId, byte[] key)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        var newVersion = Guid.CreateVersion7().ToString();
+        var newVersion = NewKeyVersionString();
         AddKey(keyId, newVersion, key);
         SetCurrentVersion(keyId, newVersion);
         return newVersion;
@@ -317,7 +317,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     public string UpdateKeyFromString(string keyId, string keyString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        var newVersion = Guid.CreateVersion7().ToString();
+        var newVersion = NewKeyVersionString();
         AddKeyFromString(keyId, newVersion, keyString);
         SetCurrentVersion(keyId, newVersion);
         return newVersion;
@@ -336,7 +336,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
         if (!_keys.TryGetValue(keyId, out var versions))
-            return [];
+            return Array.Empty<string>();
 
         return versions.Keys.OrderBy(v => v);
     }
@@ -364,5 +364,14 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
             metadataDict.TryRemove(version, out var _);
 
         return versions.TryRemove(version, out var _);
+    }
+
+    private static string NewKeyVersionString()
+    {
+#if NET10_0_OR_GREATER
+        return Guid.CreateVersion7().ToString();
+#else
+        return Guid.NewGuid().ToString();
+#endif
     }
 }

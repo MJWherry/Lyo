@@ -126,7 +126,7 @@ public class LocalFileStorageService : FileStorageServiceBase
     {
         var filePath = GetFilePath(fileId, extension, pathPrefix);
         ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
-        await using var headerReader = File.OpenRead(filePath);
+        using var headerReader = File.OpenRead(filePath);
         var header = EncryptionHeader.Read(headerReader);
         return new(header.EncryptedDataEncryptionKey, header.KeyId, header.KeyVersion, header.DekKeyMaterialBytes);
     }
@@ -137,7 +137,12 @@ public class LocalFileStorageService : FileStorageServiceBase
         if (filePath == null || !File.Exists(filePath))
             return;
 
+#if NET5_0_OR_GREATER
         var fileBytes = await File.ReadAllBytesAsync(filePath, ct).ConfigureAwait(false);
+#else
+        ct.ThrowIfCancellationRequested();
+        var fileBytes = File.ReadAllBytes(filePath);
+#endif
         if (fileBytes.Length < 4)
             throw new InvalidDataException($"File {fileId} is too small to contain encrypted data header");
 
@@ -159,7 +164,12 @@ public class LocalFileStorageService : FileStorageServiceBase
         newFileBytes.AddRange(fileBytes.Skip(chunksStartPos));
 
         // Write updated file
+#if NET5_0_OR_GREATER
         await File.WriteAllBytesAsync(filePath, newFileBytes.ToArray(), ct).ConfigureAwait(false);
+#else
+        ct.ThrowIfCancellationRequested();
+        File.WriteAllBytes(filePath, newFileBytes.ToArray());
+#endif
         Logger.LogDebug("Updated file header for {FileId} with new keyId '{KeyId}', version {Version}, and encrypted DEK", fileId, targetKeyId, targetKeyVersion);
     }
 

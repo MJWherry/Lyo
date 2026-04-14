@@ -18,7 +18,8 @@ public static class KeyValidator
     /// <exception cref="InvalidKeyException">Thrown when key size doesn't match</exception>
     public static void ValidateKeySizeOrThrow(byte[] key, int expectedSize)
     {
-        ArgumentNullException.ThrowIfNull(key);
+        if (key == null)
+            throw new ArgumentNullException(nameof(key));
         if (key.Length != expectedSize)
             throw new InvalidKeyException($"Key size ({key.Length} bytes) does not match expected size ({expectedSize} bytes).");
     }
@@ -64,7 +65,8 @@ public static class KeyValidator
     /// <exception cref="InvalidKeyException">Thrown when key appears weak</exception>
     public static void ValidateKeyStrengthOrThrow(byte[]? key)
     {
-        ArgumentNullException.ThrowIfNull(key);
+        if (key == null)
+            throw new ArgumentNullException(nameof(key));
         if (!IsStrongKey(key))
             throw new InvalidKeyException("Key appears to be weak (low entropy). Use a cryptographically secure random key generator.");
     }

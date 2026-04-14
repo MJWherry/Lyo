@@ -51,8 +51,10 @@ internal sealed class HashVerifyingReadStream : Stream
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct)
         => _hashingStream.ReadAsync(buffer, offset, count, ct);
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
         => _hashingStream.ReadAsync(buffer, ct);
+#endif
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
     public override void SetLength(long value) => throw new NotSupportedException();
@@ -70,6 +72,7 @@ internal sealed class HashVerifyingReadStream : Stream
         base.Dispose(disposing);
     }
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override async ValueTask DisposeAsync()
     {
         if (!_disposed) {
@@ -80,6 +83,7 @@ internal sealed class HashVerifyingReadStream : Stream
 
         await base.DisposeAsync().ConfigureAwait(false);
     }
+#endif
 
     private void VerifyHash()
     {

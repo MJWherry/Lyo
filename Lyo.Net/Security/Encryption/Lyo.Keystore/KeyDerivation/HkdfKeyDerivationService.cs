@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
@@ -17,7 +18,14 @@ public class HkdfKeyDerivationService : IKeyDerivationService
 
     /// <summary>Initializes a new instance of the HkdfKeyDerivationService.</summary>
     /// <param name="hashAlgorithm">The hash algorithm to use. Defaults to SHA-256.</param>
-    public HkdfKeyDerivationService(HashAlgorithmName? hashAlgorithm = null) => _hashAlgorithm = hashAlgorithm ?? HashAlgorithmName.SHA256;
+    public HkdfKeyDerivationService(HashAlgorithmName? hashAlgorithm = null)
+    {
+        _hashAlgorithm = hashAlgorithm ?? HashAlgorithmName.SHA256;
+#if !NET10_0_OR_GREATER
+        if (_hashAlgorithm != HashAlgorithmName.SHA256)
+            throw new PlatformNotSupportedException("HKDF on this target framework only supports SHA-256. Use .NET 10+ for other hash algorithms.");
+#endif
+    }
 
     /// <summary>Gets the default salt size for HKDF (32 bytes / 256 bits).</summary>
     public int DefaultSaltSize => 32;
@@ -43,17 +51,19 @@ public class HkdfKeyDerivationService : IKeyDerivationService
         ArgumentHelpers.ThrowIf(password.Length == 0, "Password cannot be empty", nameof(password));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualKeySize, 16, 64, nameof(keySizeBytes));
-        var actualSalt = salt ?? RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var actualSalt = salt ?? CryptographicRandom.GetBytes(DefaultSaltSize);
 
         // HKDF doesn't use iterations - it's a single-pass algorithm
         // Use the info parameter for context binding (RFC 5869)
         var info = Encoding.UTF8.GetBytes(DefaultInfo);
 
-        // Extract: derive PRK (Pseudo-Random Key) from password and salt
+#if NET10_0_OR_GREATER
         var prk = HKDF.Extract(_hashAlgorithm, password, actualSalt);
-
-        // Expand: derive final key from PRK
         return HKDF.Expand(_hashAlgorithm, prk, actualKeySize, info);
+#else
+        var prk = HkdfRfc5869.Extract(actualSalt, password);
+        return HkdfRfc5869.Expand(prk, actualKeySize, info);
+#endif
     }
 
     /// <summary>Derives a key from a password and returns both the key and salt.</summary>
@@ -69,7 +79,7 @@ public class HkdfKeyDerivationService : IKeyDerivationService
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
-        var salt = RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var salt = CryptographicRandom.GetBytes(DefaultSaltSize);
         var key = DeriveKey(password, salt, iterations, actualKeySize);
         return (key, salt);
     }

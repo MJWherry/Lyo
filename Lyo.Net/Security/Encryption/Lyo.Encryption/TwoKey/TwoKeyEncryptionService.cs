@@ -132,7 +132,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             return EncryptSmall(bytes, keyId, kek);
         }
 
-        var dek = RandomNumberGenerator.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
+        var dek = CryptographicRandom.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
         try {
             // Encrypt data with DEK using the DEK encryption service (no keyId for DEK - it's random)
             var encryptedData = _dekEncryptionService.Encrypt(bytes, null, dek);
@@ -250,10 +250,10 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         ArgumentHelpers.ThrowIfNull(input, nameof(input));
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIf(keyId == null && kek == null, "Either keyId or kek must be provided.");
-        var dek = RandomNumberGenerator.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
+        var dek = CryptographicRandom.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
         try {
             using var encryptedDataStream = new MemoryStream();
-            await using var encryptedDataWriter = new BinaryWriter(encryptedDataStream);
+            using var encryptedDataWriter = new BinaryWriter(encryptedDataStream);
 
             // Encrypt data chunks using DEK encryption service (no keyId for DEK - it's random)
             // Use buffer pool to reduce allocations
@@ -392,7 +392,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                     throw new DecryptionFailedException("Failed to decrypt data chunk. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
                 }
 
-                await output.WriteAsync(decryptedChunk).ConfigureAwait(false);
+                await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally {
@@ -406,7 +406,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         OperationHelpers.ThrowIf(keyId == null && kek == null, "Either keyId or kek must be provided.");
 
         // Generate a single DEK for the entire stream
-        var dek = RandomNumberGenerator.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
+        var dek = CryptographicRandom.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
         try {
             byte[]? kekBytes = null;
             string? actualKeyId = null;
@@ -425,33 +425,33 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             var kekAlgorithmId = GetAlgorithmIdFromService(_kekEncryptionService);
 
             // Write stream format header: [FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes][KeyIdLength][KeyId][KeyVersionLength][KeyVersion]
-            await output.WriteAsync(new[] { CurrentFormatVersion }, ct).ConfigureAwait(false);
-            await output.WriteAsync(new[] { dekAlgorithmId }, ct).ConfigureAwait(false);
-            await output.WriteAsync(new[] { kekAlgorithmId }, ct).ConfigureAwait(false);
-            await output.WriteAsync(new[] { (byte)GetDekKeyMaterialSize(_dekEncryptionService) }, ct).ConfigureAwait(false);
+            await output.WriteAsync(new[] { CurrentFormatVersion }, 0, 1, ct).ConfigureAwait(false);
+            await output.WriteAsync(new[] { dekAlgorithmId }, 0, 1, ct).ConfigureAwait(false);
+            await output.WriteAsync(new[] { kekAlgorithmId }, 0, 1, ct).ConfigureAwait(false);
+            await output.WriteAsync(new[] { (byte)GetDekKeyMaterialSize(_dekEncryptionService) }, 0, 1, ct).ConfigureAwait(false);
 
             // Write keyId (UTF-8 encoded)
             var keyIdBytes = actualKeyId != null ? Encoding.UTF8.GetBytes(actualKeyId) : [];
             var keyIdLenBytes = new byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(keyIdLenBytes, keyIdBytes.Length);
-            await output.WriteAsync(keyIdLenBytes, ct).ConfigureAwait(false);
+            await output.WriteAsync(keyIdLenBytes, 0, 4, ct).ConfigureAwait(false);
             if (keyIdBytes.Length > 0)
-                await output.WriteAsync(keyIdBytes, ct).ConfigureAwait(false);
+                await output.WriteAsync(keyIdBytes, 0, keyIdBytes.Length, ct).ConfigureAwait(false);
 
             // Write keyVersion (UTF-8 encoded)
             var keyVersionBytes = keyVersion != null ? Encoding.UTF8.GetBytes(keyVersion) : [];
             var keyVersionLenBytes = new byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(keyVersionLenBytes, keyVersionBytes.Length);
-            await output.WriteAsync(keyVersionLenBytes, ct).ConfigureAwait(false);
+            await output.WriteAsync(keyVersionLenBytes, 0, 4, ct).ConfigureAwait(false);
             if (keyVersionBytes.Length > 0)
-                await output.WriteAsync(keyVersionBytes, ct).ConfigureAwait(false);
+                await output.WriteAsync(keyVersionBytes, 0, keyVersionBytes.Length, ct).ConfigureAwait(false);
 
             // Encrypt the DEK using KEK encryption service
             var encryptedDek = _kekEncryptionService.Encrypt(dek, null, kekBytes);
             var encryptedDekLenBytes = new byte[4];
             BinaryPrimitives.WriteInt32LittleEndian(encryptedDekLenBytes, encryptedDek.Length);
-            await output.WriteAsync(encryptedDekLenBytes, ct).ConfigureAwait(false);
-            await output.WriteAsync(encryptedDek, ct).ConfigureAwait(false);
+            await output.WriteAsync(encryptedDekLenBytes, 0, 4, ct).ConfigureAwait(false);
+            await output.WriteAsync(encryptedDek, 0, encryptedDek.Length, ct).ConfigureAwait(false);
 
             // Encrypt and write data chunks using DEK encryption service
             // Use buffer pool to reduce allocations
@@ -464,8 +464,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                     var encryptedChunk = _dekEncryptionService.Encrypt(buffer.AsSpan(0, bytesRead), null, dek);
                     var chunkLenBytes = new byte[4];
                     BinaryPrimitives.WriteInt32LittleEndian(chunkLenBytes, encryptedChunk.Length);
-                    await output.WriteAsync(chunkLenBytes, ct).ConfigureAwait(false);
-                    await output.WriteAsync(encryptedChunk, ct).ConfigureAwait(false);
+                    await output.WriteAsync(chunkLenBytes, 0, 4, ct).ConfigureAwait(false);
+                    await output.WriteAsync(encryptedChunk, 0, encryptedChunk.Length, ct).ConfigureAwait(false);
                 }
             }
             finally {
@@ -715,7 +715,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                                                 "Failed to decrypt data chunk. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
                                         }
 
-                                        await output.WriteAsync(decryptedChunk, ct).ConfigureAwait(false);
+                                        await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, ct).ConfigureAwait(false);
                                     }
                                     finally {
                                         BufferPool.Return(encryptedChunk);
@@ -752,14 +752,14 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
         using var inputStream = new MemoryStream(data);
-        await using var outputStream = File.Create(outputPath);
+        using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(inputStream, outputStream, keyId, kek, ct: ct).ConfigureAwait(false);
     }
 
     public async Task EncryptToFileAsync(Stream input, string outputPath, string? keyId = null, byte[]? kek = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
-        await using var outputStream = File.Create(outputPath);
+        using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(input, outputStream, keyId, kek, chunkSize, ct).ConfigureAwait(false);
     }
 
@@ -767,7 +767,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath, nameof(inputPath));
         ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        await using var inputStream = File.OpenRead(inputPath);
+        using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, kek, ct).ConfigureAwait(false);
         return outputStream.ToArray();
@@ -892,7 +892,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     /// <summary>Optimized encryption path for small files to reduce overhead.</summary>
     private TwoKeyEncryptionResult EncryptSmall(byte[] bytes, string? keyId, byte[]? kek)
     {
-        var dek = RandomNumberGenerator.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
+        var dek = CryptographicRandom.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
         try {
             // Encrypt data with DEK
             var encryptedData = _dekEncryptionService.Encrypt(bytes, null, dek);

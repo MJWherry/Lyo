@@ -36,7 +36,12 @@ public class LocalFileMetadataStore : IFileMetadataStore
         }
 
         try {
+#if NETSTANDARD2_0
+            ct.ThrowIfCancellationRequested();
+            var json = File.ReadAllText(metadataPath);
+#else
             var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
             var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
             OperationHelpers.ThrowIfNull(metadata, $"Failed to deserialize metadata for file {fileId}");
             _logger.LogDebug("Retrieved metadata for file {FileId}", fileId);
@@ -60,7 +65,12 @@ public class LocalFileMetadataStore : IFileMetadataStore
 
         var options = new JsonSerializerOptions { WriteIndented = false };
         var json = JsonSerializer.Serialize(metadata, options);
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        File.WriteAllText(metadataPath, json);
+#else
         await File.WriteAllTextAsync(metadataPath, json, ct).ConfigureAwait(false);
+#endif
         _logger.LogDebug("Saved metadata for file {FileId}", fileId);
     }
 
@@ -96,7 +106,11 @@ public class LocalFileMetadataStore : IFileMetadataStore
             foreach (var metadataPath in metadataFiles) {
                 ct.ThrowIfCancellationRequested();
                 try {
+#if NETSTANDARD2_0
+                    var json = File.ReadAllText(metadataPath);
+#else
                     var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
                     if (metadata != null && ByteArraysEqual(metadata.OriginalFileHash, hash)) {
                         _logger.LogDebug("Found metadata by hash for file {FileId}", metadata.Id);
@@ -131,7 +145,11 @@ public class LocalFileMetadataStore : IFileMetadataStore
             foreach (var metadataPath in metadataFiles) {
                 ct.ThrowIfCancellationRequested();
                 try {
+#if NETSTANDARD2_0
+                    var json = File.ReadAllText(metadataPath);
+#else
                     var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
                     if (metadata != null && metadata.IsEncrypted && metadata.DataEncryptionKeyId == keyId &&
                         (keyVersion == null || metadata.DataEncryptionKeyVersion == keyVersion))

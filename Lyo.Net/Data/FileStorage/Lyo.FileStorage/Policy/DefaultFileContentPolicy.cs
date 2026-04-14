@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 
 namespace Lyo.FileStorage.Policy;
@@ -8,7 +9,7 @@ public sealed class DefaultFileContentPolicy : IFileContentPolicy
 
     public DefaultFileContentPolicy(FileStorageServiceBaseOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(options, nameof(options));
         _options = options;
     }
 

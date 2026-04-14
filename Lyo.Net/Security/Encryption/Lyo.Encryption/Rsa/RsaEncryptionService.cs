@@ -73,7 +73,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
     {
         Dispose(true);
         GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
+        return default;
     }
 
     /// <summary> Disposes of the RSA instance and releases all resources. </summary>
@@ -223,7 +223,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
                 throw new DecryptionFailedException(errorMsg, ex);
             }
 
-            decryptedMs.Write(decryptedChunk);
+            decryptedMs.Write(decryptedChunk, 0, decryptedChunk.Length);
         }
 
         return decryptedMs.ToArray();

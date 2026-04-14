@@ -45,12 +45,14 @@ internal sealed class MaxDecompressedBytesReadStream : Stream
         return n;
     }
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
     {
         var n = await _inner.ReadAsync(buffer, ct).ConfigureAwait(false);
         AfterRead(n);
         return n;
     }
+#endif
 
     private void AfterRead(int n)
     {
@@ -81,6 +83,7 @@ internal sealed class MaxDecompressedBytesReadStream : Stream
         base.Dispose(disposing);
     }
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override async ValueTask DisposeAsync()
     {
         if (!_disposed) {
@@ -90,4 +93,5 @@ internal sealed class MaxDecompressedBytesReadStream : Stream
 
         await base.DisposeAsync().ConfigureAwait(false);
     }
+#endif
 }

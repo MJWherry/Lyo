@@ -39,7 +39,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.ChaCha20Poly1305;
 
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[]?)" />
-    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
+    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
@@ -59,7 +59,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
-            nonce = RandomNumberGenerator.GetBytes(ChaCha20Poly1305Helper.NonceSize);
+            nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize);
         else
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
@@ -116,7 +116,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         // If key was provided directly (not from KeyStore), fall back to random nonce
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
-            nonce = RandomNumberGenerator.GetBytes(ChaCha20Poly1305Helper.NonceSize); // Fallback for direct key usage
+            nonce = CryptographicRandom.GetBytes(ChaCha20Poly1305Helper.NonceSize); // Fallback for direct key usage
         else
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
@@ -160,7 +160,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
     }
 
     /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[]?)" />
-    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
+    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
 
     /// <inheritdoc />
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
@@ -245,9 +245,11 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         try {
             return ChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey, nonce);
         }
+#if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {
             throw new DecryptionFailedException("Decryption failed due to authentication tag mismatch. Possible causes: wrong key, corrupted data, or tampered data.", ex);
         }
+#endif
         catch (CryptographicException ex) {
             throw new DecryptionFailedException("Decryption failed. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
         }

@@ -16,16 +16,10 @@ public static class CacheServiceExtensions
     private static void RegisterCachePayloadCodec(IServiceCollection services)
     {
         services.AddSingleton<ICachePayloadCodec>(sp =>
-#if NET10_0_OR_GREATER
             new CachePayloadCodec(
                 sp.GetRequiredService<CacheOptions>(),
                 sp.GetRequiredService<ICompressionService>(),
                 sp.GetService<Lyo.Encryption.IEncryptionService>())
-#else
-            new CachePayloadCodec(
-                sp.GetRequiredService<CacheOptions>(),
-                sp.GetRequiredService<ICompressionService>())
-#endif
         );
     }
 

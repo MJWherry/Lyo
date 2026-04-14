@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
@@ -34,8 +35,12 @@ public class Pbkdf2KeyDerivationService : IKeyDerivationService
         ArgumentHelpers.ThrowIfNullOrNotInRange(iterations, 600000, int.MaxValue, nameof(iterations));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualKeySize, 16, 64, nameof(keySizeBytes));
-        var actualSalt = salt ?? RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var actualSalt = salt ?? CryptographicRandom.GetBytes(DefaultSaltSize);
+#if NET10_0_OR_GREATER
         return Rfc2898DeriveBytes.Pbkdf2(password, actualSalt, iterations, HashAlgorithmName.SHA256, actualKeySize);
+#else
+        return Pbkdf2Sha256.DeriveBytes(password, actualSalt, iterations, actualKeySize);
+#endif
     }
 
     public (byte[] Key, byte[] Salt) DeriveKeyWithSalt(string password, int iterations = DefaultIterations, int? keySizeBytes = null, Encoding? encoding = null)
@@ -49,7 +54,7 @@ public class Pbkdf2KeyDerivationService : IKeyDerivationService
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
-        var salt = RandomNumberGenerator.GetBytes(DefaultSaltSize);
+        var salt = CryptographicRandom.GetBytes(DefaultSaltSize);
         var key = DeriveKey(password, salt, iterations, actualKeySize);
         return (key, salt);
     }

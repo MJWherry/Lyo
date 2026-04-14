@@ -40,7 +40,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesGcm;
 
     /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[]?)" />
-    public byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
+    public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
@@ -61,7 +61,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
-            nonce = RandomNumberGenerator.GetBytes(AesGcmHelper.NonceSize);
+            nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize);
         else
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
@@ -123,7 +123,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         // If key was provided directly (not from KeyStore), fall back to random nonce
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
-            nonce = RandomNumberGenerator.GetBytes(AesGcmHelper.NonceSize); // Fallback for direct key usage
+            nonce = CryptographicRandom.GetBytes(AesGcmHelper.NonceSize); // Fallback for direct key usage
         else
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
@@ -147,7 +147,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     }
 
     /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[]?)" />
-    public byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
+    public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
 
     /// <inheritdoc />
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
@@ -227,9 +227,11 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         try {
             return AesGcmHelper.Decrypt(ciphertext, tag, actualKey, nonce);
         }
+#if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {
             throw new DecryptionFailedException("Decryption failed due to authentication tag mismatch. Possible causes: wrong key, corrupted data, or tampered data.", ex);
         }
+#endif
         catch (CryptographicException ex) {
             throw new DecryptionFailedException("Decryption failed. Possible causes: wrong key, corrupted data, or authentication failure.", ex);
         }

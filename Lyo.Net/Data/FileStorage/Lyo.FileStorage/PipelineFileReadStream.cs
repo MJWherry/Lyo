@@ -42,11 +42,13 @@ internal sealed class PipelineFileReadStream : Stream
         return _inner.ReadAsync(buffer, offset, count, ct);
     }
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
     {
         ThrowIfDisposed();
         return _inner.ReadAsync(buffer, ct);
     }
+#endif
 
     public override void Flush() { }
 
@@ -77,11 +79,16 @@ internal sealed class PipelineFileReadStream : Stream
         base.Dispose(disposing);
     }
 
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override async ValueTask DisposeAsync()
     {
         if (!_disposed) {
             _disposed = true;
+#if NET5_0_OR_GREATER
             await _cts.CancelAsync().ConfigureAwait(false);
+#else
+            _cts.Cancel();
+#endif
             await _inner.DisposeAsync().ConfigureAwait(false);
             try {
                 await _pipelineTask.ConfigureAwait(false);
@@ -94,9 +101,15 @@ internal sealed class PipelineFileReadStream : Stream
 
         await base.DisposeAsync().ConfigureAwait(false);
     }
+#endif
 
     private void ThrowIfDisposed()
     {
+#if NET5_0_OR_GREATER
         ObjectDisposedException.ThrowIf(_disposed, this);
+#else
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(PipelineFileReadStream));
+#endif
     }
 }

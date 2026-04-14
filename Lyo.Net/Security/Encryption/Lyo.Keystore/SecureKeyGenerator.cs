@@ -1,5 +1,5 @@
-using System.Security.Cryptography;
 using System.Text;
+using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Keystore;
@@ -13,7 +13,7 @@ public static class SecureKeyGenerator
     public static byte[] GenerateKey(int sizeInBytes = 32)
     {
         ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 16, 64, nameof(sizeInBytes));
-        return RandomNumberGenerator.GetBytes(sizeInBytes);
+        return CryptographicRandom.GetBytes(sizeInBytes);
     }
 
     /// <summary> Generates a cryptographically secure random key string. </summary>
@@ -28,7 +28,7 @@ public static class SecureKeyGenerator
         var chars = includeSpecialChars ? alphanumeric + special : alphanumeric;
         var result = new StringBuilder(length);
         for (var i = 0; i < length; i++) {
-            var randomIndex = RandomNumberGenerator.GetInt32(0, chars.Length);
+            var randomIndex = CryptographicRandom.GetInt32(0, chars.Length);
             result.Append(chars[randomIndex]);
         }
 
@@ -42,7 +42,7 @@ public static class SecureKeyGenerator
     public static (byte[] Key, byte[] Salt) GenerateKeyWithSalt(int sizeInBytes = 32, int saltSizeInBytes = 16)
     {
         var key = GenerateKey(sizeInBytes);
-        var salt = RandomNumberGenerator.GetBytes(saltSizeInBytes);
+        var salt = CryptographicRandom.GetBytes(saltSizeInBytes);
         return (key, salt);
     }
 
@@ -52,6 +52,6 @@ public static class SecureKeyGenerator
     public static byte[] GenerateNonce(int sizeInBytes = 12)
     {
         ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 8, int.MaxValue, nameof(sizeInBytes));
-        return RandomNumberGenerator.GetBytes(sizeInBytes);
+        return CryptographicRandom.GetBytes(sizeInBytes);
     }
 }

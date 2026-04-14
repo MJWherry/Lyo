@@ -43,6 +43,18 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// <inheritdoc />
     public abstract byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null);
 
+    /// <inheritdoc />
+    public virtual byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
+        => Encrypt(plaintext.ToArray(), keyId, key);
+
+    /// <inheritdoc />
+    public virtual byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
+    {
+        var chunk = new byte[count];
+        Array.Copy(buffer, offset, chunk, 0, count);
+        return Decrypt(chunk, keyId, key);
+    }
+
     public virtual byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => Encrypt((encoding ?? DefaultEncoding).GetBytes(text), keyId, key);
 
@@ -59,9 +71,9 @@ public abstract class EncryptionServiceBase : IEncryptionService
     {
         var effectiveChunkSize = chunkSize <= 0 ? StreamChunkSizeHelper.DetermineChunkSize(input) : chunkSize;
         var formatVersion = Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1;
-        await output.WriteAsync(new[] { formatVersion }, ct).ConfigureAwait(false);
-        await output.WriteAsync(new[] { GetAlgorithmId() }, ct).ConfigureAwait(false);
-        await output.WriteAsync(new byte[2], ct).ConfigureAwait(false);
+        await output.WriteAsync(new[] { formatVersion }, 0, 1, ct).ConfigureAwait(false);
+        await output.WriteAsync(new[] { GetAlgorithmId() }, 0, 1, ct).ConfigureAwait(false);
+        await output.WriteAsync(new byte[2], 0, 2, ct).ConfigureAwait(false);
         var buffer = BufferPool.Rent(effectiveChunkSize);
         try {
             int bytesRead;
@@ -70,8 +82,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
                 var encryptedChunk = EncryptChunk(buffer, 0, bytesRead, keyId, key);
                 var lengthBytes = new byte[4];
                 BinaryPrimitives.WriteInt32LittleEndian(lengthBytes, encryptedChunk.Length);
-                await output.WriteAsync(lengthBytes, ct).ConfigureAwait(false);
-                await output.WriteAsync(encryptedChunk, ct).ConfigureAwait(false);
+                await output.WriteAsync(lengthBytes, 0, 4, ct).ConfigureAwait(false);
+                await output.WriteAsync(encryptedChunk, 0, encryptedChunk.Length, ct).ConfigureAwait(false);
             }
         }
         finally {
@@ -162,7 +174,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
                         }
 
                         var decryptedChunk = DecryptChunk(encryptedChunk, 0, chunkLength, keyId, key);
-                        await output.WriteAsync(decryptedChunk, ct).ConfigureAwait(false);
+                        await output.WriteAsync(decryptedChunk, 0, decryptedChunk.Length, ct).ConfigureAwait(false);
                     }
                     finally {
                         BufferPool.Return(encryptedChunk);
@@ -188,7 +200,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
         ArgumentHelpers.ThrowIfNull(data, nameof(data));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
         using var inputStream = new MemoryStream(data);
-        await using var outputStream = File.Create(outputPath);
+        using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
@@ -203,14 +215,14 @@ public abstract class EncryptionServiceBase : IEncryptionService
         ArgumentHelpers.ThrowIfNull(input, nameof(input));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
         ArgumentHelpers.ThrowIfNegative(chunkSize, nameof(chunkSize));
-        await using var outputStream = File.Create(outputPath);
+        using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
     }
 
     public virtual async Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        await using var inputStream = File.OpenRead(inputPath);
+        using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
         return outputStream.ToArray();
@@ -247,8 +259,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
         var outputFile = string.IsNullOrEmpty(outputPath) ? inputPath + FileExtension : outputPath;
-        await using var inputStream = File.OpenRead(inputPath);
-        await using var outputStream = File.Create(outputFile);
+        using var inputStream = File.OpenRead(inputPath);
+        using var outputStream = File.Create(outputFile);
         await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
@@ -260,8 +272,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
-        await using var inputStream = File.OpenRead(inputPath);
-        await using var outputStream = File.Create(outputPath);
+        using var inputStream = File.OpenRead(inputPath);
+        using var outputStream = File.Create(outputPath);
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
     }
 
