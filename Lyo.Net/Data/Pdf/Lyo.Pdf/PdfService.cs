@@ -313,21 +313,23 @@ public class PdfService : IPdfService, IDisposable
         IReadOnlyList<PdfWord> words,
         double yTolerance = 5.0,
         int columnCount = 1,
-        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline)
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
+        IReadOnlyList<char>? keyValueDelimiters = null)
     {
         ArgumentHelpers.ThrowIfNull(words, nameof(words));
         if (words.Count == 0 || inferFlags == PdfInferFormattingFlags.None)
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
+        var delimChars = NormalizeKeyValueDelimiters(keyValueDelimiters);
         var list = words.ToList();
         var bands = ClampKvColumnBandCount(columnCount);
         if (bands <= 1)
-            return InferKeyValuePairsFromFormattingInternal(list, yTolerance, inferFlags);
+            return InferKeyValuePairsFromFormattingInternal(list, yTolerance, inferFlags, delimChars);
 
         var columns = BandWordsIntoVerticalColumns(list, bands);
         var merged = new List<KvColumnResult>(columns.Count);
         for (var i = 0; i < columns.Count; i++) {
-            var dict = InferKeyValuePairsFromFormattingInternal(columns[i], yTolerance, inferFlags);
+            var dict = InferKeyValuePairsFromFormattingInternal(columns[i], yTolerance, inferFlags, delimChars);
             merged.Add(new(i, dict));
         }
 
@@ -338,10 +340,12 @@ public class PdfService : IPdfService, IDisposable
     public ColumnHeader[] InferTableHeadersFromFormatting(
         IReadOnlyList<PdfWord> words,
         double? yTolerance = null,
-        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline)
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
+        IReadOnlyList<char>? keyValueDelimiters = null)
     {
         ArgumentHelpers.ThrowIfNull(words, nameof(words));
-        return InferTableHeadersFromFormattingInternal(words.ToList(), yTolerance, inferFlags);
+        var delimChars = NormalizeKeyValueDelimiters(keyValueDelimiters);
+        return InferTableHeadersFromFormattingInternal(words.ToList(), yTolerance, inferFlags, delimChars);
     }
 
     public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] pdfBytes, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0)
@@ -1210,7 +1214,11 @@ public class PdfService : IPdfService, IDisposable
 
     private static string DedupeNormalizeText(string text) => text.Trim().Replace('\u00a0', ' ');
 
-    private Dictionary<string, string?> InferKeyValuePairsFromFormattingInternal(List<PdfWord> words, double yTolerance, PdfInferFormattingFlags inferFlags)
+    private Dictionary<string, string?> InferKeyValuePairsFromFormattingInternal(
+        List<PdfWord> words,
+        double yTolerance,
+        PdfInferFormattingFlags inferFlags,
+        char[] keyValueDelimiters)
     {
         var tolerance = yTolerance > 0 ? yTolerance : _options.DefaultYTolerance;
         var lines = GroupIntoLines(words, tolerance).OrderByDescending(l => l.Y).ToList();
@@ -1230,7 +1238,7 @@ public class PdfService : IPdfService, IDisposable
             if (string.IsNullOrWhiteSpace(pendingKey))
                 return;
 
-            var key = CanonicalInferredKey(pendingKey!);
+            var key = CanonicalInferredKey(pendingKey!, keyValueDelimiters);
             pendingKey = null;
             var val = string.Join(" ", valueParts).Trim();
             valueParts.Clear();
@@ -1249,14 +1257,14 @@ public class PdfService : IPdfService, IDisposable
                 continue;
 
             var lineText = string.Join(" ", ws.Select(w => w.Text)).Trim();
-            if (useDelimiters && TryParseDelimiterKeyValueLine(lineText, out var delimKey, out var delimVal, out var delimLabelOnly)) {
+            if (useDelimiters && TryParseDelimiterKeyValueLine(lineText, keyValueDelimiters, out var delimKey, out var delimVal, out var delimLabelOnly)) {
                 FlushPending();
                 if (delimLabelOnly) {
                     pendingKey = delimKey;
                     continue;
                 }
 
-                var ckey = CanonicalInferredKey(delimKey!);
+                var ckey = CanonicalInferredKey(delimKey!, keyValueDelimiters);
                 if (!string.IsNullOrEmpty(ckey)) {
                     if (result.TryGetValue(ckey, out var ex) && !string.IsNullOrWhiteSpace(ex))
                         result[ckey] = string.IsNullOrWhiteSpace(delimVal) ? ex : ex + " " + delimVal;
@@ -1303,7 +1311,7 @@ public class PdfService : IPdfService, IDisposable
 
                 var keyText = string.Join(" ", ws.Take(i).Select(w => w.Text)).Trim();
                 var rest = string.Join(" ", ws.Skip(i).Select(w => w.Text)).Trim();
-                var ck = CanonicalInferredKey(keyText);
+                var ck = CanonicalInferredKey(keyText, keyValueDelimiters);
                 if (!string.IsNullOrEmpty(ck)) {
                     if (result.TryGetValue(ck, out var ex) && !string.IsNullOrWhiteSpace(ex))
                         result[ck] = string.IsNullOrWhiteSpace(rest) ? ex : ex + " " + rest;
@@ -1326,8 +1334,36 @@ public class PdfService : IPdfService, IDisposable
     /// <summary>Bounds key/value vertical band count (netstandard2.0 has no Math.Clamp).</summary>
     private static int ClampKvColumnBandCount(int value) => value < 1 ? 1 : (value > 32 ? 32 : value);
 
-    /// <summary>Parses colon- or semicolon-terminated key/value lines (standalone label or inline value).</summary>
-    private static bool TryParseDelimiterKeyValueLine(string lineText, out string? key, out string? value, out bool labelOnly)
+    /// <summary>Distinct printable delimiter characters, order preserved; falls back to <c>:</c> and <c>;</c>.</summary>
+    private static char[] NormalizeKeyValueDelimiters(IReadOnlyList<char>? delimiters)
+    {
+        const int max = 16;
+        if (delimiters is null || delimiters.Count == 0)
+            return [':', ';'];
+
+        var list = new List<char>(Math.Min(delimiters.Count, max));
+        foreach (var c in delimiters) {
+            if (char.IsWhiteSpace(c) || char.IsControl(c))
+                continue;
+
+            if (list.Contains(c))
+                continue;
+
+            list.Add(c);
+            if (list.Count >= max)
+                break;
+        }
+
+        return list.Count > 0 ? list.ToArray() : [':', ';'];
+    }
+
+    /// <summary>Parses punctuation-terminated key/value lines (standalone label or inline value).</summary>
+    private static bool TryParseDelimiterKeyValueLine(
+        string lineText,
+        char[] delimiters,
+        out string? key,
+        out string? value,
+        out bool labelOnly)
     {
         key = null;
         value = null;
@@ -1336,10 +1372,12 @@ public class PdfService : IPdfService, IDisposable
         if (string.IsNullOrEmpty(t))
             return false;
 
-        if (TryParsePunctuationKeyValueLine(t, ':', colonUrlGuard: true, out key, out value, out labelOnly))
-            return true;
+        foreach (var d in delimiters.AsSpan()) {
+            if (TryParsePunctuationKeyValueLine(t, d, colonUrlGuard: d == ':', out key, out value, out labelOnly))
+                return true;
+        }
 
-        return TryParsePunctuationKeyValueLine(t, ';', colonUrlGuard: false, out key, out value, out labelOnly);
+        return false;
     }
 
     /// <param name="colonUrlGuard">When the delimiter is colon, skip lines that look like URLs.</param>
@@ -1409,7 +1447,29 @@ public class PdfService : IPdfService, IDisposable
     /// <summary>Reduces false positives from times (e.g. <c>12:30 PM</c>) while allowing short labels like <c>ID</c>.</summary>
     private static bool LooksPlausibleDelimiterKeyLabel(string k) => k.Any(char.IsLetter);
 
-    private static string CanonicalInferredKey(string key) => key.Trim().TrimEnd(':', ';').Trim();
+    private static string CanonicalInferredKey(string key, char[] delimiterChars)
+    {
+        var k = key.Trim();
+        while (k.Length > 0) {
+            var last = k[k.Length - 1];
+            if (DelimiterSetIndexOf(delimiterChars, last) < 0)
+                break;
+
+            k = k.Substring(0, k.Length - 1).Trim();
+        }
+
+        return k;
+    }
+
+    private static int DelimiterSetIndexOf(char[] delimiterChars, char c)
+    {
+        for (var i = 0; i < delimiterChars.Length; i++) {
+            if (delimiterChars[i] == c)
+                return i;
+        }
+
+        return -1;
+    }
 
     /// <summary>Whether a line still looks like a styled header row (not body text) for the active inference flags.</summary>
     private static bool LineLooksLikeInferenceHeaderRow(PdfTextLine line, PdfInferFormattingFlags inferFlags)
@@ -1474,21 +1534,25 @@ public class PdfService : IPdfService, IDisposable
         return ratio < 0.08;
     }
 
-    /// <summary>Splits a header line on <c>; </c> or <c>: </c> when that yields multiple cells.</summary>
-    private static string[] SplitHeaderLineByDelimiters(string joined)
+    /// <summary>Splits a header line on <c>delimiter + " "</c> for each delimiter in order when that yields multiple cells.</summary>
+    private static string[] SplitHeaderLineByDelimiters(string joined, ReadOnlySpan<char> delimiters)
     {
         var t = joined.Trim();
         if (t.Length == 0)
             return [];
 
-        if (t.IndexOf("; ", StringComparison.Ordinal) >= 0) {
-            var parts = t.Split(new[] { "; " }, StringSplitOptions.None).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
-            if (parts.Length >= 2)
-                return parts;
-        }
+        foreach (var d in delimiters) {
+            var spaced = d + " ";
+            if (d == ':') {
+                // Match legacy behavior: do not split on ": " when the line contains a URL scheme (avoids breaking http://...).
+                if (t.IndexOf("://", StringComparison.Ordinal) >= 0)
+                    continue;
+            }
 
-        if (t.IndexOf("://", StringComparison.Ordinal) < 0 && t.IndexOf(": ", StringComparison.Ordinal) >= 0) {
-            var parts = t.Split(new[] { ": " }, StringSplitOptions.None).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+            if (t.IndexOf(spaced, StringComparison.Ordinal) < 0)
+                continue;
+
+            var parts = t.Split(new[] { spaced }, StringSplitOptions.None).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
             if (parts.Length >= 2)
                 return parts;
         }
@@ -1496,7 +1560,11 @@ public class PdfService : IPdfService, IDisposable
         return [];
     }
 
-    private ColumnHeader[] InferTableHeadersFromFormattingInternal(List<PdfWord> words, double? yTolerance, PdfInferFormattingFlags inferFlags)
+    private ColumnHeader[] InferTableHeadersFromFormattingInternal(
+        List<PdfWord> words,
+        double? yTolerance,
+        PdfInferFormattingFlags inferFlags,
+        char[] keyValueDelimiters)
     {
         if (inferFlags == PdfInferFormattingFlags.None)
             return [];
@@ -1508,6 +1576,7 @@ public class PdfService : IPdfService, IDisposable
 
         var useFontEmphasis = (inferFlags & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) != 0;
         var useDelimiters = (inferFlags & (PdfInferFormattingFlags.Semicolon)) != 0;
+        var delimSpan = keyValueDelimiters.AsSpan();
 
         var bestIdx = 0;
         PdfTextLine? bestLine = null;
@@ -1572,11 +1641,11 @@ public class PdfService : IPdfService, IDisposable
         var joinedBestSingle = string.Join(" ", bestLine.Words.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)).Trim();
 
         if (useDelimiters) {
-            var split = SplitHeaderLineByDelimiters(joinedBlock);
+            var split = SplitHeaderLineByDelimiters(joinedBlock, delimSpan);
             if (split.Length >= 2)
                 return split.Select(s => new ColumnHeader(s)).ToArray();
 
-            split = SplitHeaderLineByDelimiters(joinedBestSingle);
+            split = SplitHeaderLineByDelimiters(joinedBestSingle, delimSpan);
             if (split.Length >= 2)
                 return split.Select(s => new ColumnHeader(s)).ToArray();
         }

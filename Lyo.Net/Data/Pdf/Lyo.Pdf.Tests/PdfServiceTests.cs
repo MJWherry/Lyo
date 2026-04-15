@@ -356,6 +356,22 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
+    public void InferKeyValuePairsFromFormatting_EqualsDelimiter_CustomOrder()
+    {
+        static PdfWord W(string text, double left, double right, double top, double bottom)
+            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+
+        var words = new List<PdfWord> {
+            W("Name = Alice", 10, 100, 200, 190),
+            W("Role = Dev", 10, 100, 170, 160)
+        };
+
+        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Semicolon, ['=']);
+        Assert.True(dict.TryGetValue("Name", out var n) && n != null && n.Contains("Alice", StringComparison.Ordinal));
+        Assert.True(dict.TryGetValue("Role", out var r) && r != null && r.Contains("Dev", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void InferKeyValuePairsFromFormatting_ColonTerminated_NoBold()
     {
         static PdfWord W(string text, double left, double right, double top, double bottom)

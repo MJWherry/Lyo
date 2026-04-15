@@ -34,8 +34,13 @@ public sealed class LyoPdfAnnotationResult
     /// <summary>When extraction is <see cref="PdfAnnotationExtractionType.KeyValue" />, whether values are to the right of keys or on lines below.</summary>
     public PdfKeyValueLayout KeyValueLayout { get; set; } = PdfKeyValueLayout.Horizontal;
 
-    /// <summary>When inferring key/value or table headers without chips, which signals to use (bold, underline, colon/semicolon-terminated labels).</summary>
-    public PdfInferFormattingFlags InferFormattingFlags { get; set; } = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline;
+    /// <summary>When inferring key/value or table headers without chips, which signals to use (bold, underline, optional punctuation-terminated labels).</summary>
+    public PdfInferFormattingFlags InferFormattingFlags { get; set; } = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline;
+
+    /// <summary>
+    /// When <see cref="InferFormattingFlags" /> includes <see cref="PdfInferFormattingFlags.Semicolon" />, key/value and table-header inference tries these punctuation characters as label terminators, in order (e.g. <c>":;=?|"</c>).
+    /// </summary>
+    public string KeyValueInferDelimiters { get; set; } = ":;";
 
     /// <summary>
     /// When extraction is <see cref="PdfAnnotationExtractionType.Table" />, optional header label for the row-key column. When set, only this column is treated as

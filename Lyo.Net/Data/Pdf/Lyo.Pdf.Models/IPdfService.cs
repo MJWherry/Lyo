@@ -121,17 +121,21 @@ public interface IPdfService
         int keyValueColumnCount = 1);
 
     /// <summary>Detects key/value pairs when no keys are provided, using <paramref name="inferFlags" />.</summary>
+    /// <param name="keyValueDelimiters">Punctuation characters to treat as label terminators (order matters); default is colon and semicolon.</param>
     IReadOnlyDictionary<string, string?> InferKeyValuePairsFromFormatting(
         IReadOnlyList<PdfWord> words,
         double yTolerance = 5.0,
         int columnCount = 1,
-        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline);
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
+        IReadOnlyList<char>? keyValueDelimiters = null);
 
     /// <summary>Detects a header row when headers are not provided, using <paramref name="inferFlags" />.</summary>
+    /// <param name="keyValueDelimiters">When delimiter-based inference is enabled, punctuation characters to split on (order matters).</param>
     ColumnHeader[] InferTableHeadersFromFormatting(
         IReadOnlyList<PdfWord> words,
         double? yTolerance = null,
-        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline);
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
+        IReadOnlyList<char>? keyValueDelimiters = null);
 
     Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
         Guid pdfId,

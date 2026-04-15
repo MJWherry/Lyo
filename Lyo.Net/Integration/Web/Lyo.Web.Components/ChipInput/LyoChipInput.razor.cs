@@ -54,6 +54,10 @@ public partial class LyoChipInput : IAsyncDisposable
     [Parameter]
     public bool ShowCloseIcon { get; set; } = true;
 
+    /// <summary>When true, shows a trailing control to remove every chip (and selection) at once.</summary>
+    [Parameter]
+    public bool ShowClearButton { get; set; } = true;
+
     [Parameter]
     public string? ValidationPattern { get; set; }
 
@@ -64,6 +68,22 @@ public partial class LyoChipInput : IAsyncDisposable
     public IValidator<string>? ChipValidator { get; set; }
 
     private IEnumerable<string> EnumeratedValues => Values ?? Enumerable.Empty<string>();
+
+    private bool HasValuesOrSelection
+        => EnumeratedValues.Any() || (SelectableChips && SelectedValues.Any());
+
+    private async Task ClearAllAsync()
+    {
+        _inputValue = "";
+        _inputKey++;
+        _lastValidationError = null;
+        await ValuesChanged.InvokeAsync([]);
+        if (SelectableChips && SelectedValues.Any())
+            await SelectedValuesChanged.InvokeAsync([]);
+
+        _shouldRefocus = true;
+        await InvokeAsync(StateHasChanged);
+    }
 
     public async ValueTask DisposeAsync()
     {

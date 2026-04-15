@@ -49,6 +49,16 @@
                       Class="lyo-chip-input-field"
                       Style="width: 100%;"/>
     </div>
+    @if (ShowClearButton) {
+        <MudTooltip Text="Clear all">
+            <MudIconButton Icon="@Icons.Material.Filled.Clear"
+                           Color="Color.Default"
+                           Size="Size.Small"
+                           Disabled="@(!HasValuesOrSelection)"
+                           OnClick="ClearAllAsync"
+                           aria-label="Clear all"/>
+        </MudTooltip>
+    }
 </div>
 @if (_lastValidationError is not null) {
     <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1 ml-1">@_lastValidationError</MudText>

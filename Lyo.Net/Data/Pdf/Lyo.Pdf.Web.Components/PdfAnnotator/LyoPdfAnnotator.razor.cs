@@ -190,7 +190,8 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             YTolerance = existing?.YTolerance ?? 5.0,
             KeyValueLayout = existing?.KeyValueLayout ?? PdfKeyValueLayout.Horizontal,
             ColumnCount = existing?.ColumnCount ?? 1,
-            InferFormattingFlags = existing?.InferFormattingFlags ?? (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline),
+            InferFormattingFlags = existing?.InferFormattingFlags ?? (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline),
+            KeyValueInferDelimiters = existing?.KeyValueInferDelimiters ?? ":;",
             TableKeyColumnLabel = existing?.TableKeyColumnLabel
         };
 
@@ -241,14 +242,19 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         var knownKeys = result.KnownKeys.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var kvColumnCount = Math.Max(1, result.ColumnCount);
         if (knownKeys.Length == 0) {
-            var inferred = PdfService.InferKeyValuePairsFromFormatting(words, result.YTolerance, kvColumnCount, result.InferFormattingFlags);
+            var inferred = PdfService.InferKeyValuePairsFromFormatting(
+                words,
+                result.YTolerance,
+                kvColumnCount,
+                result.InferFormattingFlags,
+                DelimitersForInference(result));
             result.KeyValuePairs = inferred;
             result.KnownKeys = [.. inferred.Keys];
             result.ExtractedText = inferred.Count == 0
                 ? string.Empty
                 : string.Join(Environment.NewLine, inferred.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
             result.ErrorMessage = inferred.Count == 0
-                ? "Could not infer keys with the selected inference options (bold, underline, colon/semicolon); add keys manually or adjust tolerance/columns."
+                ? "Could not infer keys with the selected inference options (bold, underline, punctuation delimiters); add keys manually or adjust tolerance/columns."
                 : null;
             return;
         }
@@ -263,7 +269,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         var headers = ParseTableHeaders(result.TableHeaders);
         headers = ApplyTableKeyColumnOverride(headers, result.TableKeyColumnLabel);
         if (headers.Length == 0) {
-            headers = PdfService.InferTableHeadersFromFormatting(words, result.YTolerance, result.InferFormattingFlags);
+            headers = PdfService.InferTableHeadersFromFormatting(words, result.YTolerance, result.InferFormattingFlags, DelimitersForInference(result));
             if (headers.Length == 0) {
                 result.ErrorMessage = "Could not infer table headers with the selected inference options; add headers manually.";
                 return;
@@ -372,9 +378,31 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             KeyValueLayout = row.KeyValueLayout,
             ColumnCount = row.ColumnCount,
             InferFormattingFlags = row.InferFormattingFlags,
+            KeyValueInferDelimiters = row.KeyValueInferDelimiters,
             TableKeyColumnLabel = row.TableKeyColumnLabel,
             ColumnTexts = row.ColumnTexts?.ToList()
         };
+
+    /// <summary>Distinct delimiter characters for <see cref="PdfService.InferKeyValuePairsFromFormatting" />, or <c>null</c> to use service defaults.</summary>
+    private static IReadOnlyList<char>? DelimitersForInference(LyoPdfAnnotationResult result)
+    {
+        var s = result.KeyValueInferDelimiters;
+        if (string.IsNullOrEmpty(s))
+            return null;
+
+        var list = new List<char>();
+        foreach (var c in s) {
+            if (char.IsWhiteSpace(c) || char.IsControl(c))
+                continue;
+
+            if (list.Contains(c))
+                continue;
+
+            list.Add(c);
+        }
+
+        return list.Count > 0 ? list : null;
+    }
 
     private sealed record ParsedAnnotation(string Key, int Page, double Left, double Right, double Top, double Bottom);
 }
