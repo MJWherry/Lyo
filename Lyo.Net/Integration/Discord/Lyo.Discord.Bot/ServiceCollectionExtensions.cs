@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         ArgumentHelpers.ThrowIfNull(services, nameof(services));
         ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
         services.Configure<LyoDiscordBotOptions>(configuration.GetSection(sectionName));
+        services.Configure<LyoDiscordClientOptions>(configuration.GetSection(LyoDiscordClientOptions.SectionName));
         services.AddSingleton(p => p.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value);
         services.AddSingleton<ConnectedDiscordClientAccessor>();
         services.AddSingleton<IGuildDiscordNotificationService, GuildDiscordNotificationService>();
@@ -28,10 +29,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TBot>();
         services.AddSingleton<LyoDiscordBotBase>(sp => sp.GetRequiredService<TBot>());
         services.AddSingleton<LyoDiscordClient>(sp => {
-            var opts = sp.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value;
-            var url = string.IsNullOrWhiteSpace(opts.LyoApiBaseUrl) ? "http://localhost:5092/" : opts.LyoApiBaseUrl.TrimEnd('/') + "/";
+            var clientOpts = sp.GetRequiredService<IOptions<LyoDiscordClientOptions>>().Value;
             var lf = sp.GetService<ILoggerFactory>();
-            return new(new() { Url = url }, lf?.CreateLogger<LyoDiscordClient>());
+            return new(clientOpts, lf?.CreateLogger<LyoDiscordClient>());
         });
 
         return services;

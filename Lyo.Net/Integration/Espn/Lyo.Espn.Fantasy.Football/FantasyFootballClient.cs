@@ -21,16 +21,17 @@ public class FantasyFootballClient : ApiClient
     public FantasyFootballClient(FantasyFootballClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
             loggerFactory?.CreateLogger<FantasyFootballClient>() ?? NullLoggerFactory.Instance.CreateLogger<FantasyFootballClient>(),
-            httpClient ?? new HttpClient { BaseAddress = new(options.ApiBaseUrl) },
+            httpClient,
             new() {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = true,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
-            }, new() { BaseUrl = options.ApiBaseUrl, EnsureStatusCode = options.EnsureStatusCode })
+            },
+            options)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ApiBaseUrl, nameof(options.ApiBaseUrl));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));
         _options = options;
         League = new(this);
         Communication = new(this);

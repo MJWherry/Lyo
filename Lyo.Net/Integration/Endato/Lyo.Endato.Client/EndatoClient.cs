@@ -19,13 +19,14 @@ public class EndatoClient : ApiClient
     public EndatoClient(EndatoClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
             loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(),
-            httpClient ?? new HttpClient { BaseAddress = new($"{options.Url}") }, new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } },
-            new() { BaseUrl = options.Url, EnsureStatusCode = options.EnsureStatusCode })
+            httpClient,
+            new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } },
+            options)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));
         _options = options;
         _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
-        HttpClient.BaseAddress = new($"{options.Url}");
         HttpClient.DefaultRequestHeaders.Add("galaxy-ap-password", options.ApPassword);
         HttpClient.DefaultRequestHeaders.Add("galaxy-ap-name", options.ApName);
         Persons = new(this);

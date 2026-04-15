@@ -92,6 +92,10 @@ builder.Services.WithExportService<MyDbContext>();
 // builder.Services.AddLyoDiffServices();
 ```
 
+### `ApiClientOptions` and integration HTTP clients
+
+[`Lyo.Api.Client.ApiClientOptions`](../Lyo.Api.Client/ApiClientOptions.cs) is the shared configuration base for [`ApiClient`](../Lyo.Api.Client/ApiClient.cs) and for integration-specific option types (for example `LyoDiscordClientOptions`, `TypecastClientOptions`) so **`BaseUrl`**, **`EnsureStatusCode`**, **`AcceptEncodings`**, response decompression, and request compression bind under each integration’s configuration section with the same JSON shape as the top-level **`ApiClient`** section.
+
 ## Validation
 
 Endpoints validate requests before running CRUD/query logic (failures surface as **`LyoProblemDetails`** with stable error codes):

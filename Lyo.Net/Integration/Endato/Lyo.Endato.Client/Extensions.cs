@@ -17,7 +17,7 @@ public static class Extensions
     /// <code>
     /// {
     ///   "EndatoClient": {
-    ///     "Url": "https://api.endato.com",
+    ///     "BaseUrl": "https://api.endato.com",
     ///     "ApName": "your-ap-name",
     ///     "ApPassword": "your-ap-password"
     ///   }

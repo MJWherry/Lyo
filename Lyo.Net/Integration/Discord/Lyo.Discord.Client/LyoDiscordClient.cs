@@ -22,12 +22,12 @@ public class LyoDiscordClient : ApiClient
 
     public LyoDiscordClient(LyoDiscordClientOptions options, ILogger<LyoDiscordClient>? logger = null, HttpClient? httpClient = null)
         : base(
-            logger ?? NullLogger<LyoDiscordClient>.Instance, httpClient ?? new HttpClient { BaseAddress = new($"{options.Url}") },
-            new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } }, options.ToApiClientOptions())
+            logger ?? NullLogger<LyoDiscordClient>.Instance,
+            httpClient,
+            new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } },
+            options)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        if (HttpClient.BaseAddress == null && !string.IsNullOrWhiteSpace(options.Url))
-            HttpClient.BaseAddress = new(options.Url.TrimEnd('/') + "/");
 
         Guilds = new(this);
         Users = new(this);

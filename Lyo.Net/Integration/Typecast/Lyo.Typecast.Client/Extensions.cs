@@ -19,7 +19,7 @@ public static class Extensions
     /// {
     ///   "TypecastClient": {
     ///     "ApiKey": "your-api-key",
-    ///     "ApiBaseUrl": "https://api.typecast.ai"
+    ///     "BaseUrl": "https://api.typecast.ai"
     ///   }
     /// }
     /// </code>

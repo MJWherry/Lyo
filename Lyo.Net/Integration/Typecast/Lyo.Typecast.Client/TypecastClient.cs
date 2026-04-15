@@ -25,19 +25,29 @@ public class TypecastClient : ApiClient
     public TypecastClient(TypecastClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
             loggerFactory?.CreateLogger<TypecastClient>() ?? NullLoggerFactory.Instance.CreateLogger<TypecastClient>(),
-            httpClient ?? new HttpClient { BaseAddress = new(options.ApiBaseUrl) },
+            httpClient,
             new() {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
-            }, new() { BaseUrl = options.ApiBaseUrl, EnsureStatusCode = options.EnsureStatusCode })
+            },
+            options)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
         _options = options;
-        HttpClient.BaseAddress = new(options.ApiBaseUrl);
+        HttpClient.BaseAddress = CreateBaseAddress(options);
         HttpClient.DefaultRequestHeaders.Add("X-API-KEY", options.ApiKey);
         TextToSpeech = new(this);
         Voices = new(this);
+    }
+
+    private static Uri CreateBaseAddress(TypecastClientOptions options)
+    {
+        var b = options.BaseUrl?.Trim();
+        if (string.IsNullOrEmpty(b))
+            b = "https://api.typecast.ai";
+
+        return new($"{b.TrimEnd('/')}/");
     }
 }

@@ -1,15 +1,13 @@
+using Lyo.Api.Client;
+
 namespace Lyo.Endato.Client;
 
-public class EndatoClientOptions
+/// <summary>Configuration options for <see cref="EndatoClient" />. Inherits <see cref="ApiClientOptions" />; use <see cref="ApiClientOptions.BaseUrl" /> for the Endato API root.</summary>
+public class EndatoClientOptions : ApiClientOptions
 {
-    public const string SectionName = "EndatoClient";
-
-    public string Url { get; set; } = null!;
+    public new const string SectionName = "EndatoClient";
 
     public string ApName { get; set; } = null!;
 
     public string ApPassword { get; set; } = null!;
-
-    /// <summary>Gets or sets whether to ensure HTTP success status codes (default true). When false, responses are returned regardless of status code.</summary>
-    public bool EnsureStatusCode { get; set; } = true;
 }
