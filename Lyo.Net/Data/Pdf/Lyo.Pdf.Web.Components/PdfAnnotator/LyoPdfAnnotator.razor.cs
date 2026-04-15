@@ -188,8 +188,10 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             KnownKeys = existing?.KnownKeys?.ToList() ?? [],
             TableHeaders = existing?.TableHeaders?.ToList() ?? [],
             YTolerance = existing?.YTolerance ?? 5.0,
-            SplitColumns = existing?.SplitColumns ?? false,
-            ColumnCount = existing?.ColumnCount ?? 1
+            KeyValueLayout = existing?.KeyValueLayout ?? PdfKeyValueLayout.Horizontal,
+            ColumnCount = existing?.ColumnCount ?? 1,
+            InferFormattingFlags = existing?.InferFormattingFlags ?? (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline),
+            TableKeyColumnLabel = existing?.TableKeyColumnLabel
         };
 
     private void ApplyExtraction(Guid leaseId, ParsedAnnotation annotation, LyoPdfAnnotationResult result)
@@ -237,12 +239,21 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
     private void ApplyKeyValueExtraction(IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
     {
         var knownKeys = result.KnownKeys.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var kvColumnCount = Math.Max(1, result.ColumnCount);
         if (knownKeys.Length == 0) {
-            result.ErrorMessage = "Add one or more known keys to run key/value extraction.";
+            var inferred = PdfService.InferKeyValuePairsFromFormatting(words, result.YTolerance, kvColumnCount, result.InferFormattingFlags);
+            result.KeyValuePairs = inferred;
+            result.KnownKeys = [.. inferred.Keys];
+            result.ExtractedText = inferred.Count == 0
+                ? string.Empty
+                : string.Join(Environment.NewLine, inferred.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
+            result.ErrorMessage = inferred.Count == 0
+                ? "Could not infer keys with the selected inference options (bold, underline, colon/semicolon); add keys manually or adjust tolerance/columns."
+                : null;
             return;
         }
 
-        var columns = PdfService.ExtractKeyValuePairs(words, knownKeys, result.YTolerance, result.SplitColumns);
+        var columns = PdfService.ExtractKeyValuePairs(words, knownKeys, result.YTolerance, result.KeyValueLayout, kvColumnCount);
         result.KeyValuePairs = KvColumnResult.Merge(columns);
         result.ExtractedText = result.KeyValuePairs.Count == 0 ? string.Empty : string.Join(Environment.NewLine, result.KeyValuePairs.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
     }
@@ -250,12 +261,22 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
     private void ApplyTableExtraction(IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
     {
         var headers = ParseTableHeaders(result.TableHeaders);
+        headers = ApplyTableKeyColumnOverride(headers, result.TableKeyColumnLabel);
         if (headers.Length == 0) {
-            result.ErrorMessage = "Add one or more table headers to run table extraction.";
-            return;
+            headers = PdfService.InferTableHeadersFromFormatting(words, result.YTolerance, result.InferFormattingFlags);
+            if (headers.Length == 0) {
+                result.ErrorMessage = "Could not infer table headers with the selected inference options; add headers manually.";
+                return;
+            }
+
+            result.TableHeaders = [.. headers.Select(h => h.Label)];
         }
 
-        result.TableRows = PdfService.ExtractTable(words, headers, result.YTolerance);
+        if (string.IsNullOrWhiteSpace(result.TableKeyColumnLabel) && headers.Length > 0)
+            result.TableKeyColumnLabel = headers[0].Label;
+
+        headers = ApplyTableKeyColumnOverride(headers, result.TableKeyColumnLabel);
+        result.TableRows = PdfService.ExtractTable(words, headers, result.YTolerance, result.InferFormattingFlags);
         result.ExtractedText = result.TableRows.Count == 0 ? string.Empty : $"{result.TableRows.Count} row(s) extracted.";
     }
 
@@ -326,6 +347,16 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             .Where(x => !string.IsNullOrWhiteSpace(x.Label))
             .ToArray() ?? [];
 
+    /// <summary>When <paramref name="tableKeyColumnLabel" /> is set, only that header is marked <see cref="ColumnHeader.IsKey" /> (overrides <c>*</c> on chips). When null/empty, callers may treat the first column as the key.</summary>
+    private static ColumnHeader[] ApplyTableKeyColumnOverride(ColumnHeader[] headers, string? tableKeyColumnLabel)
+    {
+        if (headers.Length == 0 || string.IsNullOrWhiteSpace(tableKeyColumnLabel))
+            return headers;
+
+        var k = tableKeyColumnLabel.Trim();
+        return headers.Select(h => new ColumnHeader(h.Label, string.Equals(h.Label, k, StringComparison.OrdinalIgnoreCase))).ToArray();
+    }
+
     private static LyoPdfAnnotationResult CloneResult(LyoPdfAnnotationResult row)
         => new() {
             Key = row.Key,
@@ -338,8 +369,10 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             KnownKeys = row.KnownKeys.ToList(),
             TableHeaders = row.TableHeaders.ToList(),
             YTolerance = row.YTolerance,
-            SplitColumns = row.SplitColumns,
+            KeyValueLayout = row.KeyValueLayout,
             ColumnCount = row.ColumnCount,
+            InferFormattingFlags = row.InferFormattingFlags,
+            TableKeyColumnLabel = row.TableKeyColumnLabel,
             ColumnTexts = row.ColumnTexts?.ToList()
         };
 

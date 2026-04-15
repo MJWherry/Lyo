@@ -1,3 +1,4 @@
+@using Lyo.Pdf.Models
 @using Lyo.Web.Components.ChipInput
 @namespace Lyo.Pdf.Web.Components.PdfAnnotator
 
@@ -32,7 +33,7 @@
                     <ChildContent>
                         <MudStack Spacing="2" Class="pt-2">
                             <MudGrid Spacing="2">
-                                <MudItem xs="12" md="@(row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText ? 4 : 5)">
+                                <MudItem xs="12" md="@(row.ExtractionType is PdfAnnotationExtractionType.BoundingBoxText or PdfAnnotationExtractionType.KeyValue ? 4 : 5)">
                                     <MudSelect T="PdfAnnotationExtractionType"
                                                Label="Type"
                                                Margin="Margin.Dense"
@@ -43,7 +44,7 @@
                                         <MudSelectItem Value="@PdfAnnotationExtractionType.Table">Table</MudSelectItem>
                                     </MudSelect>
                                 </MudItem>
-                                <MudItem xs="12" md="3">
+                                <MudItem xs="12" md="@(row.ExtractionType is PdfAnnotationExtractionType.BoundingBoxText or PdfAnnotationExtractionType.KeyValue ? 2 : 3)">
                                     <MudNumericField T="double"
                                                      Label="Tolerance"
                                                      Margin="Margin.Dense"
@@ -52,19 +53,19 @@
                                                      Value="@row.YTolerance"
                                                      ValueChanged="value => SetYTolerance(row, value)"/>
                                 </MudItem>
-                                @if (row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText) {
+                                @if (row.ExtractionType is PdfAnnotationExtractionType.BoundingBoxText or PdfAnnotationExtractionType.KeyValue) {
                                     <MudItem xs="12" md="2">
                                         <MudNumericField T="int"
                                                          Label="Columns"
                                                          Margin="Margin.Dense"
                                                          Min="1"
                                                          Max="24"
-                                                         HelperText="Multi-column layout"
+                                                         HelperText="@(row.ExtractionType == PdfAnnotationExtractionType.KeyValue ? "Vertical bands for key/value" : "Multi-column layout")"
                                                          Value="@row.ColumnCount"
                                                          ValueChanged="value => SetColumnCount(row, value)"/>
                                     </MudItem>
                                 }
-                                <MudItem xs="12" md="@(row.ExtractionType == PdfAnnotationExtractionType.BoundingBoxText ? 3 : 4)" Class="d-flex align-end">
+                                <MudItem xs="12" md="4" Class="d-flex align-end">
                                     <MudButton Variant="Variant.Filled"
                                                Color="Color.Primary"
                                                FullWidth="true"
@@ -74,26 +75,83 @@
                                 </MudItem>
                             </MudGrid>
 
+                            @if (row.ExtractionType is PdfAnnotationExtractionType.KeyValue or PdfAnnotationExtractionType.Table) {
+                                <MudStack Row="true"
+                                          AlignItems="AlignItems.Center"
+                                          Spacing="2"
+                                          Wrap="Wrap.Wrap"
+                                          Class="mb-1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Infer from</MudText>
+                                    <MudCheckBox T="bool"
+                                                 Label="Bold"
+                                                 Dense="true"
+                                                 Checked="@((row.InferFormattingFlags & PdfInferFormattingFlags.Bold) != 0)"
+                                                 CheckedChanged="v => SetInferBold(row, v)"/>
+                                    <MudCheckBox T="bool"
+                                                 Label="Colon / semicolon"
+                                                 Dense="true"
+                                                 Checked="@((row.InferFormattingFlags & PdfInferFormattingFlags.Semicolon) != 0)"
+                                                 CheckedChanged="v => SetInferSemicolon(row, v)"/>
+                                    <MudCheckBox T="bool"
+                                                 Label="Underline"
+                                                 Dense="true"
+                                                 Checked="@((row.InferFormattingFlags & PdfInferFormattingFlags.Underline) != 0)"
+                                                 CheckedChanged="v => SetInferUnderline(row, v)"/>
+                                </MudStack>
+                            }
+
                             @if (row.ExtractionType == PdfAnnotationExtractionType.KeyValue) {
+                                <MudStack Row="true"
+                                          AlignItems="AlignItems.Center"
+                                          Justify="Justify.SpaceBetween"
+                                          Wrap="Wrap.Wrap"
+                                          Class="mb-1">
+                                    <MudText Typo="Typo.subtitle2">Known keys</MudText>
+                                    <MudButtonGroup OverrideStyles="false"
+                                                    Variant="Variant.Outlined"
+                                                    Size="Size.Small"
+                                                    Class="kv-layout-toggle">
+                                        <MudButton OnClick="@(() => SetKeyValueLayout(row, PdfKeyValueLayout.Horizontal))"
+                                                   Variant="@(row.KeyValueLayout == PdfKeyValueLayout.Horizontal ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(row.KeyValueLayout == PdfKeyValueLayout.Horizontal ? Color.Primary : Color.Default)">
+                                            Horizontal
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => SetKeyValueLayout(row, PdfKeyValueLayout.Vertical))"
+                                                   Variant="@(row.KeyValueLayout == PdfKeyValueLayout.Vertical ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(row.KeyValueLayout == PdfKeyValueLayout.Vertical ? Color.Primary : Color.Default)">
+                                            Vertical
+                                        </MudButton>
+                                    </MudButtonGroup>
+                                </MudStack>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                                    Leave empty to infer labels using the options above (bold vs colon- or semicolon-terminated lines).
+                                </MudText>
                                 <div>
-                                    <MudText Typo="Typo.subtitle2" Class="mb-1">Known keys</MudText>
                                     <LyoChipInput Values="@row.KnownKeys"
                                                   ValuesChanged="values => SetKnownKeys(row, values)"
-                                                  Placeholder="Type a key and press Enter"/>
+                                                  Placeholder="Type a key and press Enter (optional)"/>
                                 </div>
-                                <MudCheckBox T="bool"
-                                             Label="Split columns"
-                                             Dense="true"
-                                             Checked="@row.SplitColumns"
-                                             CheckedChanged="value => SetSplitColumns(row, value)"/>
                             }
                             else if (row.ExtractionType == PdfAnnotationExtractionType.Table) {
                                 <div>
                                     <MudText Typo="Typo.subtitle2" Class="mb-1">Table headers</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                                        Leave empty to infer headers using the options above (bold row vs delimiter-separated text).
+                                    </MudText>
                                     <LyoChipInput Values="@row.TableHeaders"
                                                   ValuesChanged="values => SetTableHeaders(row, values)"
-                                                  Placeholder="Type a header and press Enter"/>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Prefix a header with <code>*</code> to mark a key column.</MudText>
+                                                  SelectableChips="true"
+                                                  SingleSelection="true"
+                                                  SelectedValues="@GetTableKeySelectedChips(row)"
+                                                  SelectedValuesChanged="sel => SetTableKeyChipSelection(row, sel)"
+                                                  Placeholder="Type a header and press Enter (optional)"/>
+                                    <MudTextField T="string"
+                                                  Label="Row key column (optional)"
+                                                  Margin="Margin.Dense"
+                                                  HelperText="Defaults to the first column. Only this header starts a new row; continuation lines merge into that row."
+                                                  Value="@row.TableKeyColumnLabel"
+                                                  ValueChanged="v => SetTableKeyColumn(row, v)"/>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Row key defaults to the first column. Click a header chip to change it, use the field, or prefix a header with <code>*</code>.</MudText>
                                 </div>
                             }
 
@@ -188,7 +246,9 @@
 
     private static string GetExtractionSummary(LyoPdfAnnotationResult row)
         => row.ExtractionType switch {
-            PdfAnnotationExtractionType.KeyValue => $"Key/Value ({row.KnownKeys.Count})",
+            PdfAnnotationExtractionType.KeyValue => (row.KeyValueLayout == PdfKeyValueLayout.Vertical
+                ? "Key/Value vertical"
+                : "Key/Value horizontal") + $" ({row.KnownKeys.Count})" + (row.ColumnCount > 1 ? $", {row.ColumnCount} col" : ""),
             PdfAnnotationExtractionType.Table => $"Table ({row.TableHeaders.Count})",
             PdfAnnotationExtractionType.BoundingBoxText when row.ColumnCount > 1 => $"Plain text ({row.ColumnCount} col)",
             var _ => "Plain Text"
@@ -215,18 +275,71 @@
     private void SetTableHeaders(LyoPdfAnnotationResult row, IEnumerable<string> values)
     {
         row.TableHeaders = values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (row.TableKeyColumnLabel is not null &&
+            !row.TableHeaders.Any(h => string.Equals(h, row.TableKeyColumnLabel, StringComparison.OrdinalIgnoreCase)))
+            row.TableKeyColumnLabel = null;
+
         InvokeAsync(StateHasChanged);
     }
 
-    private void SetSplitColumns(LyoPdfAnnotationResult row, bool value)
+    private static IReadOnlyList<string> GetTableKeySelectedChips(LyoPdfAnnotationResult row)
     {
-        row.SplitColumns = value;
+        var key = row.TableKeyColumnLabel;
+        if (string.IsNullOrWhiteSpace(key) && row.TableHeaders.Count > 0)
+            key = row.TableHeaders[0];
+
+        if (string.IsNullOrWhiteSpace(key))
+            return [];
+
+        var match = row.TableHeaders.FirstOrDefault(h => string.Equals(h, key, StringComparison.OrdinalIgnoreCase));
+        return match is null ? [] : [match];
+    }
+
+    private void SetTableKeyChipSelection(LyoPdfAnnotationResult row, IEnumerable<string> selected)
+    {
+        row.TableKeyColumnLabel = selected.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))?.Trim();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetKeyValueLayout(LyoPdfAnnotationResult row, PdfKeyValueLayout value)
+    {
+        row.KeyValueLayout = value;
         InvokeAsync(StateHasChanged);
     }
 
     private void SetColumnCount(LyoPdfAnnotationResult row, int value)
     {
         row.ColumnCount = value < 1 ? 1 : value;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetInferBold(LyoPdfAnnotationResult row, bool on)
+    {
+        row.InferFormattingFlags = on
+            ? row.InferFormattingFlags | PdfInferFormattingFlags.Bold
+            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Bold;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetInferSemicolon(LyoPdfAnnotationResult row, bool on)
+    {
+        row.InferFormattingFlags = on
+            ? row.InferFormattingFlags | PdfInferFormattingFlags.Semicolon
+            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Semicolon;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetInferUnderline(LyoPdfAnnotationResult row, bool on)
+    {
+        row.InferFormattingFlags = on
+            ? row.InferFormattingFlags | PdfInferFormattingFlags.Underline
+            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Underline;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SetTableKeyColumn(LyoPdfAnnotationResult row, string? value)
+    {
+        row.TableKeyColumnLabel = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         InvokeAsync(StateHasChanged);
     }
 

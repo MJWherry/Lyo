@@ -41,6 +41,12 @@ public class PdfServiceOptions
     public double ValueColumnXTolerance { get; set; } = 20.0;
 
     /// <summary>
+    /// Maximum vertical distance (points) from a key line to the first value line when extracting stacked key/value pairs (covers label-to-field gaps and form-field overlays).
+    /// Default: 120.0
+    /// </summary>
+    public double KeyValueStackedMaxFirstGap { get; set; } = 120.0;
+
+    /// <summary>
     /// Optional per-PDF max size in bytes. If not set or <= 0, SuggestedMaxPdfSizeBytes is used.</summary>
     public long? MaxPdfSizeBytes { get; set; }
 
@@ -52,5 +58,5 @@ public class PdfServiceOptions
     public bool EnableMetrics { get; set; } = false;
 
     public override string ToString()
-        => $"PdfServiceOptions: DefaultYTolerance={DefaultYTolerance}, DefaultKeyValueGap={DefaultKeyValueGap}, BoundingBoxOverlapThreshold={BoundingBoxOverlapThreshold}, TableHeaderMergeThreshold={TableHeaderMergeThreshold}, TableHeaderMatchThreshold={TableHeaderMatchThreshold}, TableColumnXTolerance={TableColumnXTolerance}, MaxContinuationYGap={MaxContinuationYGap}, MaxContinuationXDistance={MaxContinuationXDistance}, ValueColumnXTolerance={ValueColumnXTolerance}, MaxPdfSizeBytes={MaxPdfSizeBytes}, MaxTotalLoadedBytes={MaxTotalLoadedBytes}, EnableMetrics={EnableMetrics}";
+        => $"PdfServiceOptions: DefaultYTolerance={DefaultYTolerance}, DefaultKeyValueGap={DefaultKeyValueGap}, BoundingBoxOverlapThreshold={BoundingBoxOverlapThreshold}, TableHeaderMergeThreshold={TableHeaderMergeThreshold}, TableHeaderMatchThreshold={TableHeaderMatchThreshold}, TableColumnXTolerance={TableColumnXTolerance}, MaxContinuationYGap={MaxContinuationYGap}, MaxContinuationXDistance={MaxContinuationXDistance}, ValueColumnXTolerance={ValueColumnXTolerance}, KeyValueStackedMaxFirstGap={KeyValueStackedMaxFirstGap}, MaxPdfSizeBytes={MaxPdfSizeBytes}, MaxTotalLoadedBytes={MaxTotalLoadedBytes}, EnableMetrics={EnableMetrics}";
 }

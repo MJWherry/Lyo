@@ -72,13 +72,9 @@ public sealed class LocalCacheService : ICacheService
 
     public async Task InvalidateCacheItem(string key)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to invalidate cache item with null or empty key");
-            return;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -102,13 +98,9 @@ public sealed class LocalCacheService : ICacheService
 
     public async Task InvalidateCacheItemByTag(string tag)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
         if (!_enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(tag)) {
-            _logger.LogWarning("Attempted to invalidate cache items with null or empty tag");
-            return;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         var normalizedTag = tag.ToLowerInvariant();
@@ -171,13 +163,9 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -212,14 +200,10 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -253,15 +237,10 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled) {
             var (value, _) = await factory(token).ConfigureAwait(false);
             return value;
-        }
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            var (v, _) = await factory(token).ConfigureAwait(false);
-            return v;
         }
 
         var normalizedKey = key.ToLowerInvariant();
@@ -299,14 +278,10 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -336,13 +311,9 @@ public sealed class LocalCacheService : ICacheService
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -354,7 +325,7 @@ public sealed class LocalCacheService : ICacheService
                 return cached;
             }
 
-            var result = factory(default);
+            var result = factory(CancellationToken.None);
             var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
             SetInternal(normalizedKey, result!, opts.Duration, extraTags);
             stopwatch.Stop();
@@ -366,20 +337,16 @@ public sealed class LocalCacheService : ICacheService
             stopwatch.Stop();
             _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
             _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            return factory(CancellationToken.None);
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -391,7 +358,7 @@ public sealed class LocalCacheService : ICacheService
                 return cached;
             }
 
-            var result = factory(default);
+            var result = factory(CancellationToken.None);
             var opts = new CacheEntryOptions { Duration = effectiveDuration };
             SetInternal(normalizedKey, result!, opts.Duration, extraTags);
             stopwatch.Stop();
@@ -403,21 +370,16 @@ public sealed class LocalCacheService : ICacheService
             stopwatch.Stop();
             _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
             _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            return factory(CancellationToken.None);
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, (TValue? value, string[]? tags)> factory, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled) {
-            var (value, _) = factory(default);
+            var (value, _) = factory(CancellationToken.None);
             return value;
-        }
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            var (v, _) = factory(default);
-            return v;
         }
 
         var normalizedKey = key.ToLowerInvariant();
@@ -430,7 +392,7 @@ public sealed class LocalCacheService : ICacheService
                 return cached;
             }
 
-            var (result, factoryTags) = factory(default);
+            var (result, factoryTags) = factory(CancellationToken.None);
             var effectiveTags = MergeTags(factoryTags, extraTags);
             var opts = new CacheEntryOptions { Duration = _options.DefaultExpiration };
             SetInternal(normalizedKey, result!, opts.Duration, effectiveTags);
@@ -443,21 +405,17 @@ public sealed class LocalCacheService : ICacheService
             stopwatch.Stop();
             _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
             _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            var (v, _) = factory(default);
+            var (v, _) = factory(CancellationToken.None);
             return v;
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -469,7 +427,7 @@ public sealed class LocalCacheService : ICacheService
                 return cached;
             }
 
-            var result = factory(default);
+            var result = factory(CancellationToken.None);
             var opts = new CacheEntryOptions { Duration = typeExpiration };
             SetInternal(normalizedKey, result!, opts.Duration, extraTags);
             stopwatch.Stop();
@@ -481,19 +439,15 @@ public sealed class LocalCacheService : ICacheService
             stopwatch.Stop();
             _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
             _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            return factory(CancellationToken.None);
         }
     }
 
-    public TValue? GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
+    public TValue GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return value;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key");
-            return value;
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -528,13 +482,9 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? tags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return value;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key");
-            return value;
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -564,13 +514,9 @@ public sealed class LocalCacheService : ICacheService
 
     public void Set<T>(string key, T obj, IEnumerable<string>? tags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to set cache value with null or empty key");
-            return;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -621,17 +567,13 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (_payloadCodec == null)
             throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -686,17 +628,13 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (_payloadCodec == null)
             throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -774,17 +712,13 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (_payloadCodec == null || _payloadSerializer == null)
             throw new InvalidOperationException("Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddLocalCache which registers both).");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -801,7 +735,7 @@ public sealed class LocalCacheService : ICacheService
 
                 if (decoded != null) {
                     try {
-                        var deserialized = _payloadSerializer.Deserialize<TValue>(PayloadBytes(decoded.Payload));
+                        var deserialized = _payloadSerializer.Deserialize<TValue>(decoded.Payload);
                         stopwatch.Stop();
                         _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                         _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -846,17 +780,13 @@ public sealed class LocalCacheService : ICacheService
     /// <inheritdoc />
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (_payloadCodec == null)
             throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return PayloadFactoryOnlySync(factory);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayload called with null or empty key, falling back to factory");
-            return PayloadFactoryOnlySync(factory);
-        }
 
         var normalizedKey = key.ToLowerInvariant();
         var stopwatch = Stopwatch.StartNew();
@@ -875,7 +805,7 @@ public sealed class LocalCacheService : ICacheService
                 }
             }
 
-            var plain = factory(default);
+            var plain = factory(CancellationToken.None);
             if (plain == null)
                 return null;
 
@@ -898,16 +828,12 @@ public sealed class LocalCacheService : ICacheService
     /// <inheritdoc />
     public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (_payloadCodec == null)
             throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
 
         if (!_enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to set payload cache with null or empty key");
-            return;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -956,7 +882,7 @@ public sealed class LocalCacheService : ICacheService
         if (plain == null)
             return null;
 
-        return new CacheEntryEnvelope { Payload = plain };
+        return new(plain);
     }
 
     private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(
@@ -967,16 +893,16 @@ public sealed class LocalCacheService : ICacheService
         if (plain == null)
             return null;
 
-        return new CacheEntryEnvelope { Payload = plain };
+        return new(plain);
     }
 
     private static CacheEntryEnvelope? PayloadFactoryOnlySync(Func<CancellationToken, byte[]?> factory)
     {
-        var plain = factory(default);
+        var plain = factory(CancellationToken.None);
         if (plain == null)
             return null;
 
-        return new CacheEntryEnvelope { Payload = plain };
+        return new(plain);
     }
 
     private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(
@@ -986,10 +912,7 @@ public sealed class LocalCacheService : ICacheService
         var (value, _) = await factory(token).ConfigureAwait(false);
         return value;
     }
-
-    private static ReadOnlySpan<byte> PayloadBytes(IReadOnlyList<byte> payload)
-        => payload is byte[] b ? b : payload.ToArray();
-
+    
     private static string[]? MergeTags(string[]? factoryTags, IEnumerable<string>? extraTags)
     {
         var hasFactory = factoryTags is { Length: > 0 };

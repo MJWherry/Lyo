@@ -242,27 +242,40 @@ public class PdfService : IPdfService, IDisposable
         IEnumerable<string> knownKeys,
         int? page = null,
         double yTolerance = 5.0,
-        bool splitColumns = false,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
         CancellationToken ct = default)
-        => await Task.Run(() => ExtractKeyValuePairsInternal(pdfId, knownKeys, page, yTolerance, splitColumns), ct).ConfigureAwait(false);
+        => await Task.Run(() => ExtractKeyValuePairsInternal(pdfId, knownKeys, page, yTolerance, keyValueLayout, keyValueColumnCount), ct).ConfigureAwait(false);
 
-    public IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(Guid pdfId, IEnumerable<string> knownKeys, int? page = null, double yTolerance = 5.0, bool splitColumns = false)
-        => ExtractKeyValuePairsInternal(pdfId, knownKeys, page, yTolerance, splitColumns);
+    public IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        Guid pdfId,
+        IEnumerable<string> knownKeys,
+        int? page = null,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1)
+        => ExtractKeyValuePairsInternal(pdfId, knownKeys, page, yTolerance, keyValueLayout, keyValueColumnCount);
 
     public async Task<IReadOnlyList<KvColumnResult>> ExtractKeyValuePairsAsync(
         IReadOnlyList<PdfWord> words,
         IEnumerable<string> knownKeys,
         double yTolerance = 5.0,
-        bool splitColumns = false,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
         CancellationToken ct = default)
-        => await Task.Run(() => ExtractKeyValuePairs(words, knownKeys, yTolerance, splitColumns), ct).ConfigureAwait(false);
+        => await Task.Run(() => ExtractKeyValuePairs(words, knownKeys, yTolerance, keyValueLayout, keyValueColumnCount), ct).ConfigureAwait(false);
 
-    public IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(IReadOnlyList<PdfWord> words, IEnumerable<string> knownKeys, double yTolerance = 5.0, bool splitColumns = false)
+    public IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        IReadOnlyList<PdfWord> words,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractKeyValueDuration, Constants.Metrics.ExtractKeyValueSuccess, Constants.Metrics.ExtractKeyValueFailure, () => {
                 ArgumentHelpers.ThrowIfNull(words, nameof(words));
                 ArgumentHelpers.ThrowIfNull(knownKeys, nameof(knownKeys));
-                return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, splitColumns);
+                return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, keyValueLayout, keyValueColumnCount);
             });
 
     public async Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
@@ -280,16 +293,56 @@ public class PdfService : IPdfService, IDisposable
         IReadOnlyList<PdfWord> words,
         ColumnHeader[] headers,
         double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
         CancellationToken ct = default)
-        => await Task.Run(() => ExtractTable(words, headers, yTolerance), ct).ConfigureAwait(false);
+        => await Task.Run(() => ExtractTable(words, headers, yTolerance, inferFormattingForHeaderRows), ct).ConfigureAwait(false);
 
-    public IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0)
+    public IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(
+        IReadOnlyList<PdfWord> words,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractTableDuration, Constants.Metrics.ExtractTableSuccess, Constants.Metrics.ExtractTableFailure, () => {
                 ArgumentHelpers.ThrowIfNull(words, nameof(words));
                 ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
-                return ExtractTableFromWords(words.ToList(), headers, yTolerance);
+                return ExtractTableFromWords(words.ToList(), headers, yTolerance, inferFormattingForHeaderRows);
             });
+
+    public IReadOnlyDictionary<string, string?> InferKeyValuePairsFromFormatting(
+        IReadOnlyList<PdfWord> words,
+        double yTolerance = 5.0,
+        int columnCount = 1,
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline)
+    {
+        ArgumentHelpers.ThrowIfNull(words, nameof(words));
+        if (words.Count == 0 || inferFlags == PdfInferFormattingFlags.None)
+            return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        var list = words.ToList();
+        var bands = ClampKvColumnBandCount(columnCount);
+        if (bands <= 1)
+            return InferKeyValuePairsFromFormattingInternal(list, yTolerance, inferFlags);
+
+        var columns = BandWordsIntoVerticalColumns(list, bands);
+        var merged = new List<KvColumnResult>(columns.Count);
+        for (var i = 0; i < columns.Count; i++) {
+            var dict = InferKeyValuePairsFromFormattingInternal(columns[i], yTolerance, inferFlags);
+            merged.Add(new(i, dict));
+        }
+
+        return KvColumnResult.Merge(merged);
+
+    }
+
+    public ColumnHeader[] InferTableHeadersFromFormatting(
+        IReadOnlyList<PdfWord> words,
+        double? yTolerance = null,
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline)
+    {
+        ArgumentHelpers.ThrowIfNull(words, nameof(words));
+        return InferTableHeadersFromFormattingInternal(words.ToList(), yTolerance, inferFlags);
+    }
 
     public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] pdfBytes, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0)
     {
@@ -731,7 +784,7 @@ public class PdfService : IPdfService, IDisposable
     {
         ArgumentHelpers.ThrowIfNull(words, nameof(words));
         ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
-        var (headerCells, formattedRows) = ExtractTableFromWordsFormatted(words.ToList(), headers, yTolerance);
+        var (headerCells, formattedRows) = ExtractTableFromWordsFormatted(words.ToList(), headers, yTolerance, inferFormattingForHeaderRows: null);
         return RowsToDataTable(headers, formattedRows, headerCells);
     }
 
@@ -1016,13 +1069,13 @@ public class PdfService : IPdfService, IDisposable
                             throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
 
                         var pdfPage = document.GetPage(page.Value);
-                        return pdfPage.GetWords().ToPdfWords();
+                        return pdfPage.GetWords().ToPdfWords(pdfPage.Paths);
                     }
 
                     var allWords = new List<PdfWord>();
                     for (var i = 1; i <= document.NumberOfPages; i++) {
                         var pdfPage = document.GetPage(i);
-                        allWords.AddRange(pdfPage.GetWords().ToPdfWords());
+                        allWords.AddRange(pdfPage.GetWords().ToPdfWords(pdfPage.Paths));
                     }
 
                     return allWords;
@@ -1039,13 +1092,13 @@ public class PdfService : IPdfService, IDisposable
                             throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
 
                         var pdfPage = document.GetPage(page.Value);
-                        return GroupIntoLines(pdfPage.GetWords().ToPdfWords(), tolerance);
+                        return GroupIntoLines(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), tolerance);
                     }
 
                     var lines = new List<PdfTextLine>();
                     for (var i = 1; i <= document.NumberOfPages; i++) {
                         var pdfPage = document.GetPage(i);
-                        lines.AddRange(GroupIntoLines(pdfPage.GetWords().ToPdfWords(), tolerance).OrderByDescending(l => l.Y));
+                        lines.AddRange(GroupIntoLines(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), tolerance).OrderByDescending(l => l.Y));
                     }
 
                     return lines;
@@ -1061,7 +1114,7 @@ public class PdfService : IPdfService, IDisposable
 
         for (var pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
             var pdfPage = document.GetPage(pageNumber);
-            lines.AddRange(GroupIntoLines(pdfPage.GetWords().ToPdfWords(), yTolerance).OrderByDescending(l => l.Y));
+            lines.AddRange(GroupIntoLines(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), yTolerance).OrderByDescending(l => l.Y));
         }
 
         return lines;
@@ -1096,7 +1149,7 @@ public class PdfService : IPdfService, IDisposable
                     var overlapThreshold = Math.Max(0, Math.Min(1, _options.BoundingBoxOverlapThreshold));
 
                     // Page-content words: apply overlap threshold (excludes words that barely touch the region)
-                    var pageWords = pdfPage.GetWords().ToPdfWords().ToList();
+                    var pageWords = pdfPage.GetWords().ToPdfWords(pdfPage.Paths).ToList();
                     var filteredPageWords = pageWords.Where(w => w.BoundingBox.OverlapRatio(region.Box) >= overlapThreshold).ToList();
 
                     // Annotation text: use Intersects only (form fields have large rects; user's box may be smaller and fully inside)
@@ -1116,8 +1169,581 @@ public class PdfService : IPdfService, IDisposable
                     }
 
                     var tolerance = yTolerance ?? _options.DefaultYTolerance;
+                    words = DedupeOverlappingDuplicateText(words);
                     return GroupIntoLines(words, tolerance);
                 }));
+
+    /// <summary>When the same text appears twice (drawn text + AcroForm widget), keep the tighter bounding box and drop the duplicate.</summary>
+    private static List<PdfWord> DedupeOverlappingDuplicateText(IReadOnlyList<PdfWord> words)
+    {
+        var candidates = words.Where(w => !string.IsNullOrWhiteSpace(w.Text)).OrderBy(w => w.BoundingBox.Width * w.BoundingBox.Height).ToList();
+        if (candidates.Count <= 1)
+            return candidates;
+
+        var kept = new List<PdfWord>(candidates.Count);
+        foreach (var w in candidates) {
+            var tw = DedupeNormalizeText(w.Text);
+            if (tw.Length == 0) {
+                kept.Add(w);
+                continue;
+            }
+
+            var duplicate = false;
+            foreach (var k in kept) {
+                if (!string.Equals(DedupeNormalizeText(k.Text), tw, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var o1 = k.BoundingBox.OverlapRatio(w.BoundingBox);
+                var o2 = w.BoundingBox.OverlapRatio(k.BoundingBox);
+                if (o1 > 0.35 || o2 > 0.35) {
+                    duplicate = true;
+                    break;
+                }
+            }
+
+            if (!duplicate)
+                kept.Add(w);
+        }
+
+        return kept;
+    }
+
+    private static string DedupeNormalizeText(string text) => text.Trim().Replace('\u00a0', ' ');
+
+    private Dictionary<string, string?> InferKeyValuePairsFromFormattingInternal(List<PdfWord> words, double yTolerance, PdfInferFormattingFlags inferFlags)
+    {
+        var tolerance = yTolerance > 0 ? yTolerance : _options.DefaultYTolerance;
+        var lines = GroupIntoLines(words, tolerance).OrderByDescending(l => l.Y).ToList();
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (inferFlags == PdfInferFormattingFlags.None)
+            return result;
+
+        var useDelimiters = (inferFlags & PdfInferFormattingFlags.Semicolon) != 0;
+        var useFontEmphasis = (inferFlags & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) != 0;
+
+        string? pendingKey = null;
+        var valueParts = new List<string>();
+
+        void FlushPending()
+        {
+            if (string.IsNullOrWhiteSpace(pendingKey))
+                return;
+
+            var key = CanonicalInferredKey(pendingKey!);
+            pendingKey = null;
+            var val = string.Join(" ", valueParts).Trim();
+            valueParts.Clear();
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            if (result.TryGetValue(key, out var existing) && !string.IsNullOrWhiteSpace(existing))
+                result[key] = string.IsNullOrWhiteSpace(val) ? existing : existing + " " + val;
+            else
+                result[key] = string.IsNullOrWhiteSpace(val) ? null : val;
+        }
+
+        foreach (var line in lines) {
+            var ws = line.Words.OrderBy(w => w.BoundingBox.Left).ToList();
+            if (ws.Count == 0)
+                continue;
+
+            var lineText = string.Join(" ", ws.Select(w => w.Text)).Trim();
+            if (useDelimiters && TryParseDelimiterKeyValueLine(lineText, out var delimKey, out var delimVal, out var delimLabelOnly)) {
+                FlushPending();
+                if (delimLabelOnly) {
+                    pendingKey = delimKey;
+                    continue;
+                }
+
+                var ckey = CanonicalInferredKey(delimKey!);
+                if (!string.IsNullOrEmpty(ckey)) {
+                    if (result.TryGetValue(ckey, out var ex) && !string.IsNullOrWhiteSpace(ex))
+                        result[ckey] = string.IsNullOrWhiteSpace(delimVal) ? ex : ex + " " + delimVal;
+                    else
+                        result[ckey] = string.IsNullOrWhiteSpace(delimVal) ? null : delimVal;
+                }
+
+                continue;
+            }
+
+            if (!useFontEmphasis) {
+                if (pendingKey != null)
+                    valueParts.Add(lineText);
+
+                continue;
+            }
+
+            var allE = ws.All(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags));
+            var anyE = ws.Any(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags));
+
+            if (allE) {
+                if (LooksLikeSectionHeader(lineText)) {
+                    FlushPending();
+                    continue;
+                }
+
+                FlushPending();
+                pendingKey = lineText;
+                continue;
+            }
+
+            if (anyE && !allE) {
+                FlushPending();
+                var i = 0;
+                while (i < ws.Count && PdfFontStyleInference.IsInferEmphasizedForFlags(ws[i], inferFlags))
+                    i++;
+
+                if (i == 0) {
+                    if (pendingKey != null)
+                        valueParts.Add(lineText);
+
+                    continue;
+                }
+
+                var keyText = string.Join(" ", ws.Take(i).Select(w => w.Text)).Trim();
+                var rest = string.Join(" ", ws.Skip(i).Select(w => w.Text)).Trim();
+                var ck = CanonicalInferredKey(keyText);
+                if (!string.IsNullOrEmpty(ck)) {
+                    if (result.TryGetValue(ck, out var ex) && !string.IsNullOrWhiteSpace(ex))
+                        result[ck] = string.IsNullOrWhiteSpace(rest) ? ex : ex + " " + rest;
+                    else
+                        result[ck] = string.IsNullOrWhiteSpace(rest) ? null : rest;
+                }
+
+                continue;
+            }
+
+            if (pendingKey != null) {
+                valueParts.Add(lineText);
+            }
+        }
+
+        FlushPending();
+        return result;
+    }
+
+    /// <summary>Bounds key/value vertical band count (netstandard2.0 has no Math.Clamp).</summary>
+    private static int ClampKvColumnBandCount(int value) => value < 1 ? 1 : (value > 32 ? 32 : value);
+
+    /// <summary>Parses colon- or semicolon-terminated key/value lines (standalone label or inline value).</summary>
+    private static bool TryParseDelimiterKeyValueLine(string lineText, out string? key, out string? value, out bool labelOnly)
+    {
+        key = null;
+        value = null;
+        labelOnly = false;
+        var t = lineText.Trim();
+        if (string.IsNullOrEmpty(t))
+            return false;
+
+        if (TryParsePunctuationKeyValueLine(t, ':', colonUrlGuard: true, out key, out value, out labelOnly))
+            return true;
+
+        return TryParsePunctuationKeyValueLine(t, ';', colonUrlGuard: false, out key, out value, out labelOnly);
+    }
+
+    /// <param name="colonUrlGuard">When the delimiter is colon, skip lines that look like URLs.</param>
+    private static bool TryParsePunctuationKeyValueLine(
+        string t,
+        char delimiter,
+        bool colonUrlGuard,
+        out string? key,
+        out string? value,
+        out bool labelOnly)
+    {
+        key = null;
+        value = null;
+        labelOnly = false;
+        if (t.IndexOf(delimiter) < 0)
+            return false;
+
+        if (colonUrlGuard) {
+            if (t.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || t.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (t.IndexOf("://", StringComparison.Ordinal) >= 0 && t.IndexOf(": ", StringComparison.Ordinal) < 0)
+                return false;
+        }
+
+        var delimStr = delimiter.ToString();
+        var spaced = delimStr + " ";
+
+        var trimmedEnd = t.TrimEnd();
+        if (trimmedEnd.EndsWith(delimStr, StringComparison.Ordinal)) {
+            var k = (trimmedEnd.Length <= 1 ? string.Empty : trimmedEnd.Substring(0, trimmedEnd.Length - 1)).Trim();
+            if (!string.IsNullOrEmpty(k) && LooksPlausibleDelimiterKeyLabel(k)) {
+                key = k;
+                value = null;
+                labelOnly = true;
+                return true;
+            }
+        }
+
+        var sp = t.Split(new[] { spaced }, 2, StringSplitOptions.None);
+        if (sp.Length == 2) {
+            var k = sp[0].Trim();
+            var v = sp[1].Trim();
+            if (!string.IsNullOrEmpty(k) && LooksPlausibleDelimiterKeyLabel(k)) {
+                key = k;
+                value = v;
+                labelOnly = false;
+                return true;
+            }
+        }
+
+        var i = t.IndexOf(delimiter);
+        if (i > 0 && i < t.Length - 1) {
+            var k = t.Substring(0, i).Trim();
+            var v = t.Substring(i + 1).Trim();
+            if (!string.IsNullOrEmpty(k) && !string.IsNullOrEmpty(v) && LooksPlausibleDelimiterKeyLabel(k)) {
+                key = k;
+                value = v;
+                labelOnly = false;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Reduces false positives from times (e.g. <c>12:30 PM</c>) while allowing short labels like <c>ID</c>.</summary>
+    private static bool LooksPlausibleDelimiterKeyLabel(string k) => k.Any(char.IsLetter);
+
+    private static string CanonicalInferredKey(string key) => key.Trim().TrimEnd(':', ';').Trim();
+
+    /// <summary>Whether a line still looks like a styled header row (not body text) for the active inference flags.</summary>
+    private static bool LineLooksLikeInferenceHeaderRow(PdfTextLine line, PdfInferFormattingFlags inferFlags)
+    {
+        if (line.Words.Count == 0)
+            return false;
+
+        var emphasized = line.Words.Count(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags));
+        return emphasized / (double)line.Words.Count >= 0.28;
+    }
+
+    private static double InferenceEmphasisRatio(PdfTextLine line, PdfInferFormattingFlags inferFlags)
+    {
+        if (line.Words.Count == 0)
+            return 0;
+
+        var n = line.Words.Count(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags));
+        return n / (double)line.Words.Count;
+    }
+
+    /// <summary>
+    /// Extends a header block with <paramref name="nextLine"/> when it reads as the next row of the same styled header
+    /// (multi-line underline), including rows where PDF emphasis is weaker than <see cref="LineLooksLikeInferenceHeaderRow"/>.
+    /// </summary>
+    private static bool LineQualifiesForHeaderBlockExtension(PdfTextLine? lineAbove, PdfTextLine nextLine, PdfInferFormattingFlags inferFlags)
+    {
+        if (nextLine.Words.Count == 0)
+            return false;
+
+        if (LineLooksLikeInferenceHeaderRow(nextLine, inferFlags))
+            return true;
+
+        if ((inferFlags & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) == 0)
+            return false;
+
+        var nextR = InferenceEmphasisRatio(nextLine, inferFlags);
+        if (nextR < 0.07)
+            return false;
+
+        if (lineAbove != null) {
+            var aboveR = InferenceEmphasisRatio(lineAbove, inferFlags);
+            if (aboveR >= 0.20 && nextR >= 0.08)
+                return true;
+        }
+
+        return nextLine.Words.Any(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags)) && nextR >= 0.10;
+    }
+
+    /// <summary>
+    /// When inferring from bold/underline, lines with almost no matching emphasis are unlikely to be the primary header row
+    /// (they may be body text or a title without the same styling).
+    /// </summary>
+    private static bool LineHasNegligibleInferenceEmphasis(PdfTextLine line, PdfInferFormattingFlags inferFlags)
+    {
+        if (line.Words.Count == 0)
+            return true;
+
+        if ((inferFlags & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) == 0)
+            return false;
+
+        var ratio = line.Words.Count(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags)) / (double)line.Words.Count;
+        return ratio < 0.08;
+    }
+
+    /// <summary>Splits a header line on <c>; </c> or <c>: </c> when that yields multiple cells.</summary>
+    private static string[] SplitHeaderLineByDelimiters(string joined)
+    {
+        var t = joined.Trim();
+        if (t.Length == 0)
+            return [];
+
+        if (t.IndexOf("; ", StringComparison.Ordinal) >= 0) {
+            var parts = t.Split(new[] { "; " }, StringSplitOptions.None).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+            if (parts.Length >= 2)
+                return parts;
+        }
+
+        if (t.IndexOf("://", StringComparison.Ordinal) < 0 && t.IndexOf(": ", StringComparison.Ordinal) >= 0) {
+            var parts = t.Split(new[] { ": " }, StringSplitOptions.None).Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+            if (parts.Length >= 2)
+                return parts;
+        }
+
+        return [];
+    }
+
+    private ColumnHeader[] InferTableHeadersFromFormattingInternal(List<PdfWord> words, double? yTolerance, PdfInferFormattingFlags inferFlags)
+    {
+        if (inferFlags == PdfInferFormattingFlags.None)
+            return [];
+
+        var tolerance = yTolerance ?? _options.DefaultYTolerance;
+        var lines = GroupIntoLines(words, tolerance).OrderByDescending(l => l.Y).ToList();
+        if (lines.Count == 0)
+            return [];
+
+        var useFontEmphasis = (inferFlags & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) != 0;
+        var useDelimiters = (inferFlags & (PdfInferFormattingFlags.Semicolon)) != 0;
+
+        var bestIdx = 0;
+        PdfTextLine? bestLine = null;
+        if (useFontEmphasis) {
+            var scan = Math.Min(8, lines.Count);
+            var scored = new List<(int Idx, double Score)>();
+            for (var li = 0; li < scan; li++) {
+                var line = lines[li];
+                var ws = line.Words;
+                if (ws.Count < 2)
+                    continue;
+
+                // Skip lines that don't match the selected inference styling (e.g. plain body rows when inferring underline).
+                if (LineHasNegligibleInferenceEmphasis(line, inferFlags))
+                    continue;
+
+                var emphasized = ws.Count(w => PdfFontStyleInference.IsInferEmphasizedForFlags(w, inferFlags));
+                var ratio = (double)emphasized / ws.Count;
+                var avgSize = ws.Where(w => w.Format?.FontSize is > 0).Select(w => w.Format!.FontSize!.Value).DefaultIfEmpty(0).Average();
+                var score = ratio * 3.0 + avgSize * 0.05;
+                scored.Add((li, score));
+            }
+
+            if (scored.Count > 0) {
+                var maxScore = scored.Max(s => s.Score);
+                // Among similar scores, prefer the topmost line (smallest index — lines are sorted by descending Y).
+                const double tieEps = 0.08;
+                var best = scored.Where(s => s.Score >= maxScore - tieEps).OrderBy(s => s.Idx).First();
+                bestIdx = best.Idx;
+                bestLine = lines[bestIdx];
+            }
+        }
+
+        if (bestLine == null) {
+            bestLine = lines[0];
+            bestIdx = 0;
+        }
+
+        // Lookahead: include consecutive lines while each still looks like part of the styled header (spacing + formatting).
+        var mergeTh = _options.TableHeaderMergeThreshold;
+        var blockIndices = new List<int> { bestIdx };
+        var i = bestIdx;
+        while (i + 1 < lines.Count
+            && lines[i].Y - lines[i + 1].Y <= mergeTh
+            && LineQualifiesForHeaderBlockExtension(lines[i], lines[i + 1], inferFlags)) {
+            i++;
+            blockIndices.Add(i);
+        }
+
+        i = bestIdx;
+        while (i > 0
+            && lines[i - 1].Y - lines[i].Y <= mergeTh
+            && LineQualifiesForHeaderBlockExtension(lines[i - 1], lines[i], inferFlags)) {
+            i--;
+            blockIndices.Insert(0, i);
+        }
+
+        blockIndices.Sort();
+        var blockLines = blockIndices.Select(idx => lines[idx]).ToList();
+
+        var joinedBlock = string.Join(" ", blockLines.Select(l => string.Join(" ", l.Words.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)))).Trim();
+        var joinedBestSingle = string.Join(" ", bestLine.Words.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)).Trim();
+
+        if (useDelimiters) {
+            var split = SplitHeaderLineByDelimiters(joinedBlock);
+            if (split.Length >= 2)
+                return split.Select(s => new ColumnHeader(s)).ToArray();
+
+            split = SplitHeaderLineByDelimiters(joinedBestSingle);
+            if (split.Length >= 2)
+                return split.Select(s => new ColumnHeader(s)).ToArray();
+        }
+
+        if (useFontEmphasis)
+            return InferColumnHeadersFromEmphasizedBlock(blockLines);
+
+        return [];
+    }
+
+    /// <summary>Infers one column header per horizontal band by clustering words using X gaps (not every word is a column).</summary>
+    private ColumnHeader[] InferColumnHeadersFromEmphasizedBlock(IReadOnlyList<PdfTextLine> blockLines)
+    {
+        if (blockLines.Count == 0)
+            return [];
+
+        var anchor = blockLines.OrderByDescending(l => l.Words.Count).First();
+        var xTol = _options.TableColumnXTolerance;
+        var ordered = anchor.Words.OrderBy(w => w.BoundingBox.Left).ToList();
+        if (ordered.Count == 0)
+            return [];
+
+        var anchorCols = ClusterWordsIntoHeaderColumns(ordered, xTol, blockLines.Count);
+        if (anchorCols.Count == 0)
+            return [];
+
+        // Single header row: column boundaries come from horizontal spacing only.
+        if (blockLines.Count == 1)
+            return BuildColumnHeadersFromGapClusters(anchorCols);
+
+        // Multi-line header: if the anchor line didn't split into columns, try the top physical line.
+        if (anchorCols.Count == 1 && blockLines[0].Words.Count > 0) {
+            var topOrdered = blockLines[0].Words.OrderBy(w => w.BoundingBox.Left).ToList();
+            var topCols = ClusterWordsIntoHeaderColumns(topOrdered, xTol, 1);
+            if (topCols.Count > 1)
+                anchorCols = topCols;
+        }
+
+        if (anchorCols.Count == 1) {
+            var joined = string.Join(" ", anchorCols[0].Select(w => w.Text.Trim()).Where(t => !string.IsNullOrWhiteSpace(t))).Trim();
+            return string.IsNullOrWhiteSpace(joined) ? [] : [new ColumnHeader(joined)];
+        }
+
+        var columnRanges = anchorCols.Select(col => {
+            var left = col.Min(w => w.BoundingBox.Left) - xTol;
+            var right = col.Max(w => w.BoundingBox.Right) + xTol;
+            return (Left: left, Right: right);
+        }).ToList();
+
+        var buckets = Enumerable.Range(0, columnRanges.Count).Select(_ => new List<string>()).ToArray();
+        foreach (var line in blockLines) {
+            foreach (var w in line.Words.OrderBy(x => x.BoundingBox.Left)) {
+                var j = AssignWordToColumnIndex(w, columnRanges);
+                var t = w.Text.Trim();
+                if (!string.IsNullOrWhiteSpace(t))
+                    buckets[j].Add(t);
+            }
+        }
+
+        var headers = new List<ColumnHeader>();
+        foreach (var b in buckets) {
+            if (b.Count == 0)
+                continue;
+
+            var label = string.Join(" ", b);
+            if (!string.IsNullOrWhiteSpace(label))
+                headers.Add(new ColumnHeader(label));
+        }
+
+        return headers.Count > 0 ? headers.ToArray() : [];
+    }
+
+    private List<List<PdfWord>> ClusterWordsIntoHeaderColumns(IReadOnlyList<PdfWord> ordered, double xTol, int blockLineCount)
+    {
+        var words = ordered as List<PdfWord> ?? ordered.ToList();
+        var minGutter = ComputeAdaptiveColumnGutter(ordered, xTol);
+        var cols = SplitWordsIntoColumnsByHorizontalGaps(words, minGutter);
+        if (cols.Count == 1 && ordered.Count >= 3) {
+            minGutter = Math.Max(4.0, minGutter * 0.35);
+            cols = SplitWordsIntoColumnsByHorizontalGaps(words, minGutter);
+        }
+
+        if (cols.Count == 1 && ordered.Count >= 4 && blockLineCount > 1) {
+            minGutter = Math.Max(3.0, minGutter * 0.28);
+            cols = SplitWordsIntoColumnsByHorizontalGaps(words, minGutter);
+        }
+
+        return cols;
+    }
+
+    private static ColumnHeader[] BuildColumnHeadersFromGapClusters(List<List<PdfWord>> clusters)
+    {
+        var labels = clusters
+            .Select(col => string.Join(" ", col.Select(w => w.Text.Trim()).Where(t => !string.IsNullOrWhiteSpace(t))).Trim())
+            .Where(l => l.Length > 0)
+            .ToList();
+        labels = MergeOrphanDtHeaderTokens(labels);
+        return labels.Count == 0 ? [] : labels.Select(l => new ColumnHeader(l)).ToArray();
+    }
+
+    private static double ComputeAdaptiveColumnGutter(IReadOnlyList<PdfWord> wordsSortedLeftToRight, double toleranceFallback)
+    {
+        if (wordsSortedLeftToRight.Count < 2)
+            return Math.Max(12.0, toleranceFallback * 2.0);
+
+        var gaps = new List<double>();
+        for (var i = 1; i < wordsSortedLeftToRight.Count; i++) {
+            var g = wordsSortedLeftToRight[i].BoundingBox.Left - wordsSortedLeftToRight[i - 1].BoundingBox.Right;
+            if (g > 0.5)
+                gaps.Add(g);
+        }
+
+        if (gaps.Count == 0)
+            return Math.Max(12.0, toleranceFallback * 2.0);
+
+        gaps.Sort();
+        var median = gaps[gaps.Count / 2];
+        return Math.Max(8.0, Math.Min(median * 2.5, toleranceFallback * 4.0));
+    }
+
+    private static List<List<PdfWord>> SplitWordsIntoColumnsByHorizontalGaps(IReadOnlyList<PdfWord> sortedLeftToRight, double minGutter)
+    {
+        if (sortedLeftToRight.Count == 0)
+            return [];
+
+        var cols = new List<List<PdfWord>>();
+        var cur = new List<PdfWord> { sortedLeftToRight[0] };
+        for (var i = 1; i < sortedLeftToRight.Count; i++) {
+            var prev = sortedLeftToRight[i - 1];
+            var w = sortedLeftToRight[i];
+            var gap = w.BoundingBox.Left - prev.BoundingBox.Right;
+            if (gap > minGutter) {
+                cols.Add(cur);
+                cur = [w];
+            }
+            else {
+                cur.Add(w);
+            }
+        }
+
+        cols.Add(cur);
+        return cols;
+    }
+
+    private static int AssignWordToColumnIndex(PdfWord w, IReadOnlyList<(double Left, double Right)> columnRanges)
+    {
+        var cx = (w.BoundingBox.Left + w.BoundingBox.Right) * 0.5;
+        for (var j = 0; j < columnRanges.Count; j++) {
+            var r = columnRanges[j];
+            if (cx >= r.Left && cx <= r.Right)
+                return j;
+        }
+
+        var best = 0;
+        var bestD = double.MaxValue;
+        for (var j = 0; j < columnRanges.Count; j++) {
+            var r = columnRanges[j];
+            var center = (r.Left + r.Right) * 0.5;
+            var d = Math.Abs(center - cx);
+            if (d < bestD) {
+                bestD = d;
+                best = j;
+            }
+        }
+
+        return best;
+    }
 
     /// <summary>Gets text from an annotation: Content, /Contents, or /V (form field value). Handles FT=/Tx (text), FT=/Btn (checkbox).</summary>
     private static string? GetAnnotationText(Annotation ann)
@@ -1205,9 +1831,8 @@ public class PdfService : IPdfService, IDisposable
             if (double.TryParse(tfMatch.Groups[3].Value, out var size) && size > 0)
                 fontSize = size;
 
-            var nameLower = fontName.ToLowerInvariant();
-            bold = nameLower.Contains("bold") || nameLower.Contains("-bold");
-            italic = nameLower.Contains("italic") || nameLower.Contains("oblique");
+            bold = PdfFontStyleInference.InferBold(fontName, bold);
+            italic = PdfFontStyleInference.InferItalic(fontName, italic);
         }
 
         // R G B rg - RGB color
@@ -1259,7 +1884,7 @@ public class PdfService : IPdfService, IDisposable
         var endIdx = lines.Count;
         if (!string.IsNullOrWhiteSpace(endText)) {
             var normalizedEnd = endText!.Trim();
-            var found = lines.FindIndex(startIdx + 1, l => l.Text.Trim().Contains(normalizedEnd, StringComparison.OrdinalIgnoreCase));
+            var found = lines.FindIndex(startIdx + 1, l => l.Text.Trim().IndexOf(normalizedEnd, StringComparison.OrdinalIgnoreCase) >= 0);
             if (found >= 0)
                 endIdx = found;
         }
@@ -1267,12 +1892,18 @@ public class PdfService : IPdfService, IDisposable
         return lines.Skip(startIdx).Take(Math.Max(0, endIdx - startIdx)).ToList();
     }
 
-    private IReadOnlyList<KvColumnResult> ExtractKeyValuePairsInternal(Guid pdfId, IEnumerable<string> knownKeys, int? page, double yTolerance, bool splitColumns)
+    private IReadOnlyList<KvColumnResult> ExtractKeyValuePairsInternal(
+        Guid pdfId,
+        IEnumerable<string> knownKeys,
+        int? page,
+        double yTolerance,
+        PdfKeyValueLayout keyValueLayout,
+        int keyValueColumnCount)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractKeyValueDuration, Constants.Metrics.ExtractKeyValueSuccess, Constants.Metrics.ExtractKeyValueFailure, () => {
                 ArgumentHelpers.ThrowIfNull(knownKeys, nameof(knownKeys));
                 var words = GetWordsInternal(pdfId, page);
-                return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, splitColumns);
+                return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, keyValueLayout, keyValueColumnCount);
             });
 
     private (IReadOnlyList<IDataTableCell> HeaderCells, IReadOnlyList<IReadOnlyDictionary<string, IDataTableCell>> Rows) ExtractTableFormattedInternal(
@@ -1291,13 +1922,13 @@ public class PdfService : IPdfService, IDisposable
                                 throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
 
                             var pdfPage = document.GetPage(page.Value);
-                            return ExtractTableFromWordsFormatted(pdfPage.GetWords().ToPdfWords(), headers, yTolerance);
+                            return ExtractTableFromWordsFormatted(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), headers, yTolerance);
                         }
 
                         var allWords = new List<PdfWord>();
                         for (var i = 1; i <= document.NumberOfPages; i++) {
                             var pdfPage = document.GetPage(i);
-                            allWords.AddRange(pdfPage.GetWords().ToPdfWords());
+                            allWords.AddRange(pdfPage.GetWords().ToPdfWords(pdfPage.Paths));
                         }
 
                         return ExtractTableFromWordsFormatted(allWords, headers, yTolerance);
@@ -1584,10 +2215,14 @@ public class PdfService : IPdfService, IDisposable
     }
 
     /// <summary>
-    /// Extracts key/value pairs from words using known keys. Default is single-column (no split). Set splitColumns: true for sections with duplicate keys per column (e.g.
-    /// ATTORNEY INFORMATION with Public Defender and ADA side-by-side) to get each column as a separate KvColumnResult.
+    /// Extracts key/value pairs from words using known keys. Use <paramref name="keyValueColumnCount" /> &gt; 1 to split the region into that many vertical bands (e.g. duplicate keys side by side).
     /// </summary>
-    private IReadOnlyList<KvColumnResult> ExtractKeyValueColumns(IReadOnlyList<PdfWord> words, IEnumerable<string> knownKeys, double? yTolerance = null, bool splitColumns = false)
+    private IReadOnlyList<KvColumnResult> ExtractKeyValueColumns(
+        IReadOnlyList<PdfWord> words,
+        IEnumerable<string> knownKeys,
+        double? yTolerance = null,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1)
     {
         if (words.Count == 0)
             return [new(0, new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase))];
@@ -1595,37 +2230,61 @@ public class PdfService : IPdfService, IDisposable
         var tolerance = yTolerance ?? _options.DefaultYTolerance;
         var aliasToCanonical = BuildKnownKeyAliases(knownKeys);
         var keySet = new HashSet<string>(aliasToCanonical.Keys, StringComparer.OrdinalIgnoreCase);
-        var columnCount = splitColumns ? DetectColumnCountFromKeyAlignment(words.ToList(), keySet, tolerance) : 1;
+        var explicitBands = ClampKvColumnBandCount(keyValueColumnCount);
+        var columnCount = explicitBands > 1 ? explicitBands : 1;
         if (columnCount > 1) {
-            var minX = words.Min(w => w.BoundingBox.Left);
-            var maxX = words.Max(w => w.BoundingBox.Right);
-            var width = maxX - minX;
-            if (width > 0) {
-                var results = new List<KvColumnResult>();
-                for (var col = 0; col < columnCount; col++) {
-                    var colMinX = minX + col * width / columnCount;
-                    var colMaxX = minX + (col + 1) * width / columnCount;
-                    var colWords = words.Where(w => {
-                            var x = w.BoundingBox.Left;
-                            return x >= colMinX && x < colMaxX;
-                        })
-                        .ToList();
-
-                    var dict = ExtractKeyValueFromWords(colWords, aliasToCanonical, keySet, tolerance);
-                    results.Add(new(col, dict));
-                }
-
-                return results;
+            var bandLists = BandWordsIntoVerticalColumns(words.ToList(), columnCount);
+            var results = new List<KvColumnResult>();
+            for (var col = 0; col < bandLists.Count; col++) {
+                var dict = ExtractKeyValueFromWords(bandLists[col], aliasToCanonical, keySet, tolerance, keyValueLayout);
+                results.Add(new(col, dict));
             }
+
+            return results;
         }
 
-        var singleResult = ExtractKeyValueFromWords(words.ToList(), aliasToCanonical, keySet, tolerance);
+        var singleResult = ExtractKeyValueFromWords(words.ToList(), aliasToCanonical, keySet, tolerance, keyValueLayout);
         return [new(0, singleResult)];
     }
 
-    /// <summary>Extracts key/value pairs from a single column of words.</summary>
-    private Dictionary<string, string?> ExtractKeyValueFromWords(List<PdfWord> words, Dictionary<string, string> aliasToCanonical, HashSet<string> keySet, double tolerance)
+    /// <summary>Splits words into <paramref name="columnCount" /> equal-width vertical bands by min/max X in the region.</summary>
+    private static List<List<PdfWord>> BandWordsIntoVerticalColumns(IReadOnlyList<PdfWord> words, int columnCount)
     {
+        if (words.Count == 0 || columnCount <= 1)
+            return [words.ToList()];
+
+        var minX = words.Min(w => w.BoundingBox.Left);
+        var maxX = words.Max(w => w.BoundingBox.Right);
+        var width = maxX - minX;
+        if (width <= 0)
+            return [words.ToList()];
+
+        var results = new List<List<PdfWord>>(columnCount);
+        for (var col = 0; col < columnCount; col++) {
+            var colMinX = minX + col * width / columnCount;
+            var colMaxX = minX + (col + 1) * width / columnCount;
+            var colWords = words.Where(w => {
+                    var x = w.BoundingBox.Left;
+                    return x >= colMinX && x < colMaxX;
+                })
+                .ToList();
+            results.Add(colWords);
+        }
+
+        return results;
+    }
+
+    /// <summary>Extracts key/value pairs from a single column of words.</summary>
+    private Dictionary<string, string?> ExtractKeyValueFromWords(
+        List<PdfWord> words,
+        Dictionary<string, string> aliasToCanonical,
+        HashSet<string> keySet,
+        double tolerance,
+        PdfKeyValueLayout keyValueLayout)
+    {
+        if (keyValueLayout == PdfKeyValueLayout.Vertical)
+            return ExtractKeyValueFromWordsVertical(words, aliasToCanonical, keySet, tolerance);
+
         var continuationYGap = Math.Max(_options.MaxContinuationYGap, tolerance * 3);
         var rawLines = GroupIntoLines(words, tolerance);
         // Don't merge lines for key-value extraction - we want strict line boundaries
@@ -1729,19 +2388,129 @@ public class PdfService : IPdfService, IDisposable
         return result;
     }
 
-    /// <summary>Detects column count from key alignment: max number of keys on any single row (same Y).</summary>
-    private int DetectColumnCountFromKeyAlignment(List<PdfWord> words, HashSet<string> keySet, double tolerance)
+    /// <summary>
+    /// Primarily label-over-value (stacked) fields, but many PDFs mix that with label+value on one line (e.g. "Pages: 13 pages"). Same-line values are taken first; otherwise
+    /// values are read from subsequent lines in the key's horizontal band.
+    /// </summary>
+    private Dictionary<string, string?> ExtractKeyValueFromWordsVertical(
+        List<PdfWord> words,
+        Dictionary<string, string> aliasToCanonical,
+        HashSet<string> keySet,
+        double tolerance)
     {
-        var lines = GroupIntoLines(words, tolerance);
-        var maxKeysPerLine = 0;
-        foreach (var line in lines) {
+        var continuationYGap = Math.Max(_options.MaxContinuationYGap, tolerance * 3);
+        var firstBlockMaxGap = Math.Max(_options.KeyValueStackedMaxFirstGap, Math.Max(continuationYGap * 2, _options.MaxContinuationYGap + tolerance * 4));
+        var rawLines = GroupIntoLines(words, tolerance);
+        var lines = rawLines.OrderByDescending(l => l.Y).ToList();
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        for (var li = 0; li < lines.Count; li++) {
+            var line = lines[li];
             var ws = line.Words.OrderBy(w => w.BoundingBox.Left).ToList();
+            if (ws.Count == 0)
+                continue;
+
             var keySpans = FindAllKeySpans(ws, keySet);
-            if (keySpans.Count > maxKeysPerLine)
-                maxKeysPerLine = keySpans.Count;
+            if (keySpans.Count == 0)
+                continue;
+
+            var keyLefts = keySpans.Select(ks => ws[ks.StartWordIdx].BoundingBox.Left).ToList();
+            var keyY = line.Y;
+            for (var ki = 0; ki < keySpans.Count; ki++) {
+                var ks = keySpans[ki];
+                var canonicalKey = aliasToCanonical.TryGetValue(ks.Key, out var mappedKey) ? mappedKey : ks.Key;
+                var bandLeft = keyLefts[ki] - _options.ValueColumnXTolerance;
+                var bandRight = ki + 1 < keySpans.Count ? keyLefts[ki + 1] - _options.DefaultKeyValueGap : double.MaxValue;
+
+                var sameLineValueWords = GetSameLineValueWordsAfterKey(ws, keySpans, ki, keySet);
+                if (sameLineValueWords.Count > 0) {
+                    var sameLineText = string.Join(" ", sameLineValueWords.Select(w => w.Text)).Trim();
+                    result.TryGetValue(canonicalKey, out var existingSame);
+                    result[canonicalKey] = string.IsNullOrWhiteSpace(existingSame) ? sameLineText : existingSame + " " + sameLineText;
+                    continue;
+                }
+
+                var pieces = new List<string>();
+                double? lastContentY = null;
+                double? valueColumnLeft = null;
+
+                for (var lj = li + 1; lj < lines.Count; lj++) {
+                    var vline = lines[lj];
+                    var vwsOrdered = vline.Words.OrderBy(w => w.BoundingBox.Left).ToList();
+                    if (vwsOrdered.Count == 0)
+                        continue;
+
+                    var gapFromKey = keyY - vline.Y;
+                    if (lastContentY == null) {
+                        if (gapFromKey > firstBlockMaxGap)
+                            break;
+                    }
+                    else if (lastContentY.Value - vline.Y > continuationYGap) {
+                        break;
+                    }
+
+                    if (LooksLikeSectionHeader(vline.Text.Trim()))
+                        break;
+
+                    if (FindAllKeySpans(vwsOrdered, keySet).Count > 0)
+                        break;
+
+                    List<PdfWord> bandWords;
+                    if (valueColumnLeft == null) {
+                        bandWords = vwsOrdered
+                            .Where(w => w.BoundingBox.Left >= bandLeft && w.BoundingBox.Left < bandRight && !keySet.Contains(w.Text.Trim()))
+                            .ToList();
+                        if (bandWords.Count > 0)
+                            valueColumnLeft = bandWords[0].BoundingBox.Left;
+                    }
+                    else {
+                        bandWords = vwsOrdered.Where(w
+                                => w.BoundingBox.Left >= valueColumnLeft.Value - _options.ValueColumnXTolerance &&
+                                w.BoundingBox.Left <= valueColumnLeft.Value + _options.MaxContinuationXDistance &&
+                                !keySet.Contains(w.Text.Trim()))
+                            .ToList();
+                    }
+
+                    if (bandWords.Count == 0)
+                        continue;
+
+                    pieces.Add(string.Join(" ", bandWords.Select(w => w.Text)));
+                    lastContentY = vline.Y;
+                }
+
+                var combined = string.Join(" ", pieces).Trim();
+                if (string.IsNullOrWhiteSpace(combined)) {
+                    if (!result.ContainsKey(canonicalKey))
+                        result[canonicalKey] = null;
+                }
+                else {
+                    result.TryGetValue(canonicalKey, out var existing);
+                    result[canonicalKey] = string.IsNullOrWhiteSpace(existing) ? combined : existing + " " + combined;
+                }
+            }
         }
 
-        return Math.Max(1, maxKeysPerLine);
+        return result;
+    }
+
+    /// <summary>Words on the same line as the key, to the right of the key span (horizontal strip), excluding other keys.</summary>
+    private List<PdfWord> GetSameLineValueWordsAfterKey(List<PdfWord> ws, IReadOnlyList<KeySpan> keySpans, int ki, HashSet<string> keySet)
+    {
+        var claimedIdxs = new HashSet<int>();
+        foreach (var ksp in keySpans) {
+            for (var i = ksp.StartWordIdx; i <= ksp.EndWordIdx; i++)
+                claimedIdxs.Add(i);
+        }
+
+        var keyRights = keySpans.Select(ks => ws[ks.EndWordIdx].BoundingBox.Right).ToList();
+        var keyLefts = keySpans.Select(ks => ws[ks.StartWordIdx].BoundingBox.Left).ToList();
+        var keyRight = keyRights[ki];
+        var nextKeyLeft = ki + 1 < keySpans.Count ? keyLefts[ki + 1] : double.MaxValue;
+        return ws.Select((w, idx) => (Word: w, Idx: idx))
+            .Where(x => !claimedIdxs.Contains(x.Idx) && x.Word.BoundingBox.Left >= keyRight + _options.DefaultKeyValueGap && x.Word.BoundingBox.Left < nextKeyLeft &&
+                !keySet.Contains(x.Word.Text.Trim()))
+            .Select(x => x.Word)
+            .ToList();
     }
 
     private List<KeySpan> FindAllKeySpans(List<PdfWord> words, HashSet<string> keySet)
@@ -1810,7 +2579,8 @@ public class PdfService : IPdfService, IDisposable
     private (IReadOnlyList<IDataTableCell> HeaderCells, IReadOnlyList<IReadOnlyDictionary<string, IDataTableCell>> Rows) ExtractTableFromWordsFormatted(
         IReadOnlyList<PdfWord> words,
         ColumnHeader[] headers,
-        double? yTolerance = null)
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
     {
         if (words.Count == 0 || headers.Length == 0)
             return ([], []);
@@ -1823,33 +2593,32 @@ public class PdfService : IPdfService, IDisposable
         // Find the first matching header row in reading order.
         PdfTextLine? headerLine = null;
         var headerLineIndex = -1;
+        var headerLinesSpanned = 1;
         List<PdfWord> headerWords = new();
         for (var li = 0; li < allLines.Count; li++) {
-            var single = allLines[li];
-            var singleHits = headerLabels.Count(h => LineContainsHeaderLabel(single.Text, h));
-            List<PdfWord> candidateWords = new(single.Words);
-            var candidateHits = singleHits;
-            // Check if next line should be merged (multi-line header)
-            if (li + 1 < allLines.Count) {
-                var next = allLines[li + 1];
-                if (single.Y - next.Y <= _options.TableHeaderMergeThreshold) {
-                    var mergedText = single.Text + " " + next.Text;
-                    var mergedHits = headerLabels.Count(h => LineContainsHeaderLabel(mergedText, h));
-                    if (mergedHits > candidateHits) {
-                        candidateWords = new(single.Words.Concat(next.Words));
-                        candidateHits = mergedHits;
-                    }
-                }
+            var spanWords = new List<PdfWord>(allLines[li].Words);
+            var mergedLines = 1;
+            var j = li;
+            while (j + 1 < allLines.Count
+                && allLines[j].Y - allLines[j + 1].Y <= _options.TableHeaderMergeThreshold
+                && inferFormattingForHeaderRows is PdfInferFormattingFlags hf
+                && (hf & (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline)) != 0
+                && LineQualifiesForHeaderBlockExtension(allLines[j], allLines[j + 1], hf)) {
+                spanWords.AddRange(allLines[j + 1].Words);
+                mergedLines++;
+                j++;
             }
 
-            // Check if this candidate matches enough headers
+            var mergedForHits = string.Join(" ", Enumerable.Range(0, mergedLines).Select(k => allLines[li + k].Text));
+            var candidateHits = headerLabels.Count(h => LineContainsHeaderLabel(mergedForHits, h));
             var minRequired = Math.Ceiling(headerLabels.Length * _options.TableHeaderMatchThreshold);
             if (!(candidateHits >= minRequired))
                 continue;
 
-            headerWords = candidateWords.OrderBy(w => w.BoundingBox.Left).ToList();
-            headerLine = single;
+            headerWords = spanWords.OrderBy(w => w.BoundingBox.Left).ToList();
+            headerLine = allLines[li];
             headerLineIndex = li;
+            headerLinesSpanned = mergedLines;
             break;
         }
 
@@ -1879,7 +2648,8 @@ public class PdfService : IPdfService, IDisposable
             headerCells.Add(BuildCellFromWords(cellWords));
         }
 
-        var dataLines = allLines.Skip(headerLineIndex + 1).ToList();
+        // When the header spans two visual lines, both were merged into headerWords — data must start after the second line.
+        var dataLines = allLines.Skip(headerLineIndex + headerLinesSpanned).ToList();
         var rows = new List<Dictionary<string, IDataTableCell>>();
         foreach (var line in dataLines) {
             if (string.IsNullOrWhiteSpace(line.Text))
@@ -1955,7 +2725,14 @@ public class PdfService : IPdfService, IDisposable
             return DataTableCell.FromValue(text);
 
         return new DataTableCell<string>(
-            text, firstWithFormat.FontSize, firstWithFormat.FontName, firstWithFormat.FontBold, firstWithFormat.FontItalic, null, null, firstWithFormat.FontColor);
+            text,
+            firstWithFormat.FontSize,
+            firstWithFormat.FontName,
+            firstWithFormat.FontBold,
+            firstWithFormat.FontItalic,
+            firstWithFormat.FontUnderline,
+            null,
+            firstWithFormat.FontColor);
     }
 
     private static IDataTableCell CombineCells(IDataTableCell? a, IDataTableCell b)
@@ -1979,9 +2756,13 @@ public class PdfService : IPdfService, IDisposable
         return IsHeaderEchoRow(strRow, headers);
     }
 
-    private IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTableFromWords(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double? yTolerance = null)
+    private IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTableFromWords(
+        IReadOnlyList<PdfWord> words,
+        ColumnHeader[] headers,
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
     {
-        var (_, rows) = ExtractTableFromWordsFormatted(words, headers, yTolerance);
+        var (_, rows) = ExtractTableFromWordsFormatted(words, headers, yTolerance, inferFormattingForHeaderRows);
         return rows.Select(r => (IReadOnlyDictionary<string, string?>)r.ToDictionary(kv => kv.Key, kv => kv.Value.DisplayValue, StringComparer.OrdinalIgnoreCase)).ToList();
     }
 
@@ -2100,8 +2881,12 @@ public class PdfService : IPdfService, IDisposable
     {
         var keys = knownKeys.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         var aliasToCanonical = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in keys)
+        foreach (var key in keys) {
             aliasToCanonical[key] = key;
+            // PDFs often attach ':' to the label word ("Pages:") while users type "Pages".
+            if (!key.EndsWith(":") && !aliasToCanonical.ContainsKey(key + ":"))
+                aliasToCanonical[key + ":"] = key;
+        }
 
         return aliasToCanonical;
     }
@@ -2109,6 +2894,28 @@ public class PdfService : IPdfService, IDisposable
     private static string NormalizeKeyAlias(string text) => new string(text.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
 
     private static string NormalizeToken(string token) => new(token.Where(c => char.IsLetterOrDigit(c) || c == '#').ToArray());
+
+    /// <summary>Merges a trailing "Dt." / "Dt" token into the previous header when PDF word segmentation splits "Offense Dt." into two columns.</summary>
+    private static List<string> MergeOrphanDtHeaderTokens(IReadOnlyList<string> labels)
+    {
+        if (labels.Count < 2)
+            return labels.ToList();
+
+        var list = new List<string>();
+        for (var i = 0; i < labels.Count; i++) {
+            if (i < labels.Count - 1
+                && string.Equals(NormalizeToken(labels[i + 1]), "Dt", StringComparison.OrdinalIgnoreCase)
+                && labels[i + 1].Length <= 12) {
+                list.Add((labels[i].Trim() + " " + labels[i + 1].Trim()).Trim());
+                i++;
+                continue;
+            }
+
+            list.Add(labels[i]);
+        }
+
+        return list;
+    }
 
     private readonly record struct KeySpan(string Key, int StartWordIdx, int EndWordIdx);
 }

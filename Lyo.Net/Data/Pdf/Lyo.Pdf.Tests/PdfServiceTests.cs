@@ -1,3 +1,4 @@
+using Lyo.Common.Records;
 using Lyo.IO.Temp.Models;
 using Lyo.Pdf.Models;
 using Lyo.Testing;
@@ -316,6 +317,111 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
+    public void ExtractKeyValuePairs_VerticalLayout_SameLineValue_ReadsTextAfterKey()
+    {
+        static PdfWord W(string text, double left, double right, double top, double bottom)
+            => new(text, new BoundingBox2D(left, right, top, bottom));
+
+        // Same baseline Y: "Pages:" then value tokens to the right (common in forms).
+        var words = new List<PdfWord> {
+            W("Pages:", 10, 52, 100, 96),
+            W("13", 58, 72, 100, 96),
+            W("pages", 74, 108, 100, 96)
+        };
+
+        var results = _service.ExtractKeyValuePairs(words, ["Pages"], 5.0, PdfKeyValueLayout.Vertical);
+        Assert.Single(results);
+        Assert.True(results[0].Values.TryGetValue("Pages", out var v));
+        Assert.NotNull(v);
+        Assert.Contains("13", v, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InferKeyValuePairsFromFormatting_UsesFontNameBoldVsRegular()
+    {
+        static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
+            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, fontName, fdBold, false));
+
+        // Stacked label (bold) then value (regular), then same-line bold label + regular value.
+        var words = new List<PdfWord> {
+            W("Name", "Lato-Bold", 10, 80, 200, 190, true),
+            W("John", "Lato-Regular", 10, 60, 185, 175, false),
+            W("Role", "Lato-Bold", 10, 50, 170, 160, true),
+            W("Dev", "Lato-Regular", 55, 100, 170, 160, false)
+        };
+
+        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0);
+        Assert.True(dict.TryGetValue("Name", out var n) && n != null && n.Contains("John", StringComparison.Ordinal));
+        Assert.True(dict.TryGetValue("Role", out var r) && r != null && r.Contains("Dev", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void InferKeyValuePairsFromFormatting_ColonTerminated_NoBold()
+    {
+        static PdfWord W(string text, double left, double right, double top, double bottom)
+            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+
+        var words = new List<PdfWord> {
+            W("Department:", 10, 100, 200, 190),
+            W("Engineering", 10, 100, 185, 175),
+            W("Status:", 10, 50, 160, 150),
+            W("Active", 55, 100, 160, 150)
+        };
+
+        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0);
+        Assert.True(dict.TryGetValue("Department", out var d) && d != null && d.Contains("Engineering", StringComparison.Ordinal));
+        Assert.True(dict.TryGetValue("Status", out var s) && s == "Active");
+    }
+
+    [Fact]
+    public void InferKeyValuePairsFromFormatting_None_ReturnsEmpty()
+    {
+        static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
+            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, fontName, fdBold, false));
+
+        var words = new List<PdfWord> {
+            W("Name", "Lato-Bold", 10, 80, 200, 190, true),
+            W("John", "Lato-Regular", 10, 60, 185, 175, false)
+        };
+
+        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.None);
+        Assert.Empty(dict);
+    }
+
+    [Fact]
+    public void InferKeyValuePairsFromFormatting_BoldOnly_IgnoresDelimiterLines()
+    {
+        static PdfWord W(string text, double left, double right, double top, double bottom)
+            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+
+        var words = new List<PdfWord> {
+            W("Department:", 10, 100, 200, 190),
+            W("Engineering", 10, 100, 185, 175)
+        };
+
+        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Bold);
+        Assert.Empty(dict);
+    }
+
+    [Fact]
+    public void ExtractKeyValuePairs_VerticalLayout_ReadsValueBelowKey()
+    {
+        static PdfWord W(string text, double left, double right, double top, double bottom)
+            => new(text, new BoundingBox2D(left, right, top, bottom));
+
+        // Higher top = higher on page; key row then value row below (smaller Y centroid).
+        var words = new List<PdfWord> {
+            W("Field:", 10, 52, 102, 98),
+            W("Hello", 12, 48, 89, 85)
+        };
+
+        var results = _service.ExtractKeyValuePairs(words, ["Field:"], 5.0, PdfKeyValueLayout.Vertical);
+        Assert.Single(results);
+        Assert.True(results[0].Values.TryGetValue("Field:", out var v));
+        Assert.Equal("Hello", v);
+    }
+
+    [Fact]
     public void ExtractKeyValuePairs_EmptyKeys_ReturnsEmptyResult()
     {
         var paths = GetTestPdfPaths();
@@ -454,5 +560,82 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         var sections = new[] { "NO_SUCH_SECTION_123" };
         var section = await _service.GetSectionAsync(lease.Id, "NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Null(section);
+    }
+
+    [Fact]
+    public void InferTableHeadersFromFormatting_TwoLineUnderlinedHeader_MergesStackedLinesIntoColumnLabels()
+    {
+        var ul = new PdfWordFormat(FontUnderline: true);
+        static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
+            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+
+        var words = new List<PdfWord> {
+            W("Case", 10, 35, 102, 98, ul), W("Calendar", 100, 155, 102, 98, ul), W("Schedule", 250, 325, 102, 98, ul),
+            W("Event", 12, 58, 90, 86, ul), W("Type", 105, 148, 90, 86, ul), W("Start", 258, 305, 90, 86, ul),
+        };
+
+        var headers = _service.InferTableHeadersFromFormatting(words, yTolerance: 5.0, PdfInferFormattingFlags.Underline);
+        Assert.Equal(3, headers.Length);
+        Assert.Equal("Case Event", headers[0].Label);
+        Assert.Equal("Calendar Type", headers[1].Label);
+        Assert.Equal("Schedule Start", headers[2].Label);
+    }
+
+    [Fact]
+    public void InferTableHeadersFromFormatting_DoesNotMergeBoldHeaderWithUnstyledDataRowBelow()
+    {
+        var bold = new PdfWordFormat(FontBold: true);
+        static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
+            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+
+        var words = new List<PdfWord> {
+            W("TIMESTAMP", 20, 120, 100, 96, bold),
+            W("AUDIT", 200, 260, 100, 96, bold),
+            W("04/13/2026", 20, 100, 88, 84, null),
+            W("someone", 200, 280, 88, 84, null),
+        };
+
+        var headers = _service.InferTableHeadersFromFormatting(words, yTolerance: 5.0, PdfInferFormattingFlags.Bold);
+        Assert.Equal(2, headers.Length);
+        Assert.Equal("TIMESTAMP", headers[0].Label);
+        Assert.Equal("AUDIT", headers[1].Label);
+    }
+
+    [Fact]
+    public void InferTableHeadersFromFormatting_SecondRowMustMatchInferenceStyleToMerge()
+    {
+        var ul = new PdfWordFormat(FontUnderline: true);
+        static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
+            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+
+        var wordsPlainSecondRow = new List<PdfWord> {
+            W("Case", 10, 45, 102, 98, ul),
+            W("Calendar", 50, 115, 102, 98, ul),
+            W("Schedule", 200, 275, 102, 98, ul),
+            W("Event", 15, 58, 90, 86, null),
+            W("Type", 62, 105, 90, 86, null),
+            W("Start", 208, 265, 90, 86, null),
+        };
+
+        var h1 = _service.InferTableHeadersFromFormatting(wordsPlainSecondRow, yTolerance: 5.0, PdfInferFormattingFlags.Underline);
+        Assert.Equal(3, h1.Length);
+        Assert.Equal("Case", h1[0].Label);
+        Assert.Equal("Calendar", h1[1].Label);
+        Assert.Equal("Schedule", h1[2].Label);
+
+        var wordsBothRowsUnderlined = new List<PdfWord> {
+            W("Case", 10, 45, 102, 98, ul),
+            W("Calendar", 50, 115, 102, 98, ul),
+            W("Schedule", 200, 275, 102, 98, ul),
+            W("Event", 15, 58, 90, 86, ul),
+            W("Type", 62, 105, 90, 86, ul),
+            W("Start", 208, 265, 90, 86, ul),
+        };
+
+        var h2 = _service.InferTableHeadersFromFormatting(wordsBothRowsUnderlined, yTolerance: 5.0, PdfInferFormattingFlags.Underline);
+        Assert.True(h2.Length >= 3);
+        var flat = string.Join(' ', h2.Select(x => x.Label));
+        Assert.Contains("Event", flat, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Case", flat, StringComparison.OrdinalIgnoreCase);
     }
 }

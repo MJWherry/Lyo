@@ -36,65 +36,37 @@ public class CacheServiceEdgeCasesTests : IDisposable
     public void Dispose() => _fusionCache.Dispose();
 
     [Fact]
-    public async Task GetOrSetAsync_WithNullKey_FallsBackToFactory()
+    public async Task GetOrSetAsync_WithNullKey_ThrowsArgumentNullException()
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
-        var callCount = 0;
-
-        // Null key causes exception in ToLowerInvariant(), which is caught and falls back to factory
-        var result = await service.GetOrSetAsync<string>(
-            null!, ct => {
-                callCount++;
-                return Task.FromResult("fallback-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
-
-        Assert.Equal("fallback-value", result);
-        Assert.Equal(1, callCount);
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => {
+            await service.GetOrSetAsync<string>(
+                null!, _ => Task.FromResult("fallback-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
     }
 
     [Fact]
-    public void GetOrSet_WithNullKey_FallsBackToFactory()
+    public void GetOrSet_WithNullKey_ThrowsArgumentNullException()
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
-        var callCount = 0;
-
-        // Null key causes exception in ToLowerInvariant(), which is caught and falls back to factory
-        var result = service.GetOrSet<string>(
-            null!, _ => {
-                callCount++;
-                return "fallback-value";
-            });
-
-        Assert.Equal("fallback-value", result);
-        Assert.Equal(1, callCount);
+        Assert.Throws<ArgumentNullException>(() => service.GetOrSet<string>(null!, _ => "fallback-value"));
     }
 
     [Fact]
-    public void Set_WithNullKey_HandlesGracefully()
+    public void Set_WithNullKey_ThrowsArgumentNullException()
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
-
-        // Set handles null key gracefully (logs warning and returns without throwing)
-        service.Set<string>(null!, "value");
-
-        // Verify it doesn't throw and doesn't cache the value
-        var result = service.GetOrSet<string>(null!, _ => "default");
-        Assert.Equal("default", result);
+        Assert.Throws<ArgumentNullException>(() => service.Set<string>(null!, "value"));
     }
 
     [Fact]
-    public async Task GetOrSetAsync_WithEmptyKey_Works()
+    public async Task GetOrSetAsync_WithEmptyKey_ThrowsArgumentException()
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
-        var callCount = 0;
-        var result = await service.GetOrSetAsync<string>(
-            "", ct => {
-                callCount++;
-                return Task.FromResult("empty-key-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
-
-        Assert.Equal("empty-key-value", result);
-        Assert.Equal(1, callCount);
+        await Assert.ThrowsAsync<ArgumentException>(async () => {
+            await service.GetOrSetAsync<string>(
+                "", _ => Task.FromResult("empty-key-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
     }
 
     [Fact]
@@ -102,7 +74,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-empty-tags";
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, [], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, [], TestContext.Current.CancellationToken).ConfigureAwait(false);
         var result = service.GetOrSet<string>(key, _ => "default");
         Assert.Equal("value", result);
     }
@@ -112,25 +84,33 @@ public class CacheServiceEdgeCasesTests : IDisposable
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-null-tags";
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, null, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var result = service.GetOrSet<string>(key, _ => "default");
         Assert.Equal("value", result);
     }
 
     [Fact]
-    public async Task GetOrSetAsync_WithWhitespaceKey_Works()
+    public async Task GetOrSetAsync_WithWhitespaceKey_ThrowsArgumentException()
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
-        var key = "   ";
-        var callCount = 0;
-        var result = await service.GetOrSetAsync<string>(
-            key, ct => {
-                callCount++;
-                return Task.FromResult("whitespace-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentException>(async () => {
+            await service.GetOrSetAsync<string>(
+                "   ", _ => Task.FromResult("whitespace-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        }).ConfigureAwait(false);
+    }
 
-        Assert.Equal("whitespace-value", result);
-        Assert.Equal(1, callCount);
+    [Fact]
+    public void LocalCacheService_GetOrSet_WithNullKey_ThrowsArgumentNullException()
+    {
+        var service = new LocalCacheService(_memoryCache, _localLogger, _options);
+        Assert.Throws<ArgumentNullException>(() => service.GetOrSet<string>(null!, _ => "x"));
+    }
+
+    [Fact]
+    public void LocalCacheService_Set_WithNullKey_ThrowsArgumentNullException()
+    {
+        var service = new LocalCacheService(_memoryCache, _localLogger, _options);
+        Assert.Throws<ArgumentNullException>(() => service.Set<string>(null!, "value"));
     }
 
     [Fact]
@@ -140,11 +120,11 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var key1 = "TestKey";
         var key2 = "testkey";
         var key3 = "TESTKEY";
-        await service.GetOrSetAsync<string>(key1, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key1, _ => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // All should return the same cached value
-        var result2 = await service.GetOrSetAsync<string>(key2, ct => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result3 = await service.GetOrSetAsync<string>(key3, ct => Task.FromResult("value3")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result2 = await service.GetOrSetAsync<string>(key2, _ => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result3 = await service.GetOrSetAsync<string>(key3, _ => Task.FromResult("value3")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal("value1", result2);
         Assert.Equal("value1", result3);
     }
@@ -157,8 +137,8 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var tag2 = "testtag";
         var key1 = "key1";
         var key2 = "key2";
-        await service.GetOrSetAsync<string>(key1, ct => Task.FromResult("value1")!, [tag1], TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.GetOrSetAsync<string>(key2, ct => Task.FromResult("value2")!, [tag2], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key1, _ => Task.FromResult("value1")!, [tag1], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key2, _ => Task.FromResult("value2")!, [tag2], TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Invalidating by lowercase tag should remove both
         await service.InvalidateCacheItemByTag(tag2.ToLowerInvariant()).ConfigureAwait(false);
@@ -181,9 +161,9 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var key = "type-expiration-test";
         var callCount = 0;
         await service.GetOrSetAsync<TestModels.TestEntity>(
-            key, ct => {
+            key, _ => {
                 callCount++;
-                return Task.FromResult<TestModels.TestEntity>(new() { Id = 1 });
+                return Task.FromResult<TestModels.TestEntity>(new() { Id = 1 })!;
             }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         Assert.Equal(1, callCount);
@@ -192,7 +172,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var cached = await service.GetOrSetAsync<TestModels.TestEntity>(
             key, ct => {
                 callCount++;
-                return Task.FromResult<TestModels.TestEntity>(new() { Id = 2 });
+                return Task.FromResult<TestModels.TestEntity>(new() { Id = 2 })!;
             }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         Assert.NotNull(cached);
@@ -325,7 +305,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
         // Factory throwing exception should propagate
         // FusionCache may call the factory multiple times due to internal retry logic
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.GetOrSetAsync<string>(
-            key, ct => {
+            key, _ => {
                 callCount++;
                 return Task.FromException<string?>(new InvalidOperationException("Factory error"));
             }, token: TestContext.Current.CancellationToken).ConfigureAwait(false));
@@ -337,7 +317,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var callCountBeforeSecond = callCount;
         try {
             await service.GetOrSetAsync<string>(
-                key, ct => {
+                key, _ => {
                     callCount++;
                     return Task.FromException<string?>(new InvalidOperationException("Factory error"));
                 }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -367,7 +347,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "multi-tag-test";
         var tags = new[] { "tag1", "tag2", "tag3" };
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Verify it's cached
         Assert.Equal("value", service.GetOrSet<string>(key, _ => "default"));
@@ -390,7 +370,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
         await Task.Delay(150, TestContext.Current.CancellationToken).ConfigureAwait(false);
 
         // Should call factory again (cache expired)
-        var result = await service.GetOrSetAsync<string>(key, ct => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GetOrSetAsync<string>(key, _ => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal("new-value", result);
     }
 

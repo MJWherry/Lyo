@@ -93,19 +93,45 @@ public interface IPdfService
         IEnumerable<string> knownKeys,
         int? page = null,
         double yTolerance = 5.0,
-        bool splitColumns = false,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
         CancellationToken ct = default);
 
-    IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(Guid pdfId, IEnumerable<string> knownKeys, int? page = null, double yTolerance = 5.0, bool splitColumns = false);
+    IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        Guid pdfId,
+        IEnumerable<string> knownKeys,
+        int? page = null,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1);
 
     Task<IReadOnlyList<KvColumnResult>> ExtractKeyValuePairsAsync(
         IReadOnlyList<PdfWord> words,
         IEnumerable<string> knownKeys,
         double yTolerance = 5.0,
-        bool splitColumns = false,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
         CancellationToken ct = default);
 
-    IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(IReadOnlyList<PdfWord> words, IEnumerable<string> knownKeys, double yTolerance = 5.0, bool splitColumns = false);
+    IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        IReadOnlyList<PdfWord> words,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1);
+
+    /// <summary>Detects key/value pairs when no keys are provided, using <paramref name="inferFlags" />.</summary>
+    IReadOnlyDictionary<string, string?> InferKeyValuePairsFromFormatting(
+        IReadOnlyList<PdfWord> words,
+        double yTolerance = 5.0,
+        int columnCount = 1,
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline);
+
+    /// <summary>Detects a header row when headers are not provided, using <paramref name="inferFlags" />.</summary>
+    ColumnHeader[] InferTableHeadersFromFormatting(
+        IReadOnlyList<PdfWord> words,
+        double? yTolerance = null,
+        PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline);
 
     Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
         Guid pdfId,
@@ -120,9 +146,11 @@ public interface IPdfService
         IReadOnlyList<PdfWord> words,
         ColumnHeader[] headers,
         double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
         CancellationToken ct = default);
 
-    IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0);
+    /// <param name="inferFormattingForHeaderRows">When set (bold and/or underline), consecutive lines are merged into one header only while each line matches that inference styling; the next plain line starts data.</param>
+    IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0, PdfInferFormattingFlags? inferFormattingForHeaderRows = null);
 
     /// <summary>Loads PDF from bytes, extracts table using headers, and returns DataTable result. Unloads the PDF after extraction.</summary>
     Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] pdfBytes, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0);

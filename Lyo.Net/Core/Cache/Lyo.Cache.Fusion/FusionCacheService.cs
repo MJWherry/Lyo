@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,6 +14,9 @@ namespace Lyo.Cache.Fusion;
 public sealed class FusionCacheService : ICacheService
 {
     private const string TagPrefix = "__fc:t:";
+    private const string MsgPayloadCodecRequired = "Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).";
+    private const string MsgTypedPayloadCodecRequired = "Typed payload cache requires ICachePayloadCodec (use AddFusionCache which registers both).";
+    private const string MsgTypedPayloadSerializerRequired = "Typed payload cache requires ICachePayloadSerializer (use AddFusionCache which registers both).";
 
     private readonly bool _enabled;
     private readonly IFusionCache _fusionCache;
@@ -23,6 +27,11 @@ public sealed class FusionCacheService : ICacheService
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
 
+    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
+
+    /// <inheritdoc />
+    public string HealthCheckName => "cache";
+    
     public FusionCacheService(
         IFusionCache fusionCache,
         ILogger<FusionCacheService>? logger = null,
@@ -31,7 +40,8 @@ public sealed class FusionCacheService : ICacheService
         ICachePayloadCodec? payloadCodec = null,
         ICachePayloadSerializer? payloadSerializer = null)
     {
-        _fusionCache = fusionCache ?? throw new ArgumentNullException(nameof(fusionCache));
+        ArgumentHelpers.ThrowIfNull(fusionCache, nameof(fusionCache));
+        _fusionCache = fusionCache;
         _logger = logger ?? NullLogger<FusionCacheService>.Instance;
         _options = options ?? new CacheOptions();
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -118,12 +128,7 @@ public sealed class FusionCacheService : ICacheService
             }
         };
     }
-
-    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
-
-    /// <inheritdoc />
-    public string HealthCheckName => "cache";
-
+    
     /// <inheritdoc />
     public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
@@ -151,11 +156,7 @@ public sealed class FusionCacheService : ICacheService
         if (!_enabled)
             return;
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to invalidate cache item with null or empty key");
-            return;
-        }
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var stopwatch = Stopwatch.StartNew();
         try {
             await _fusionCache.RemoveAsync(key.ToLowerInvariant()).ConfigureAwait(false);
@@ -164,9 +165,7 @@ public sealed class FusionCacheService : ICacheService
             _metrics.IncrementCounter(Constants.Metrics.RemoveSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error invalidating cache item with key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.RemoveDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItem"), (Constants.Metrics.Tags.Key, key)]);
+            RecordInvalidateKeyFailure(stopwatch, ex, key);
             throw;
         }
     }
@@ -176,11 +175,7 @@ public sealed class FusionCacheService : ICacheService
         if (!_enabled)
             return;
 
-        if (string.IsNullOrWhiteSpace(tag)) {
-            _logger.LogWarning("Attempted to invalidate cache items with null or empty tag");
-            return;
-        }
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
         var stopwatch = Stopwatch.StartNew();
         try {
             var beforeCount = _items.Count;
@@ -193,9 +188,8 @@ public sealed class FusionCacheService : ICacheService
             _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error invalidating cache items by tag {CacheTag}", tag);
-            _metrics.RecordError(Constants.Metrics.RemoveByTagDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItemByTag"), (Constants.Metrics.Tags.Tag, tag)]);
+            RecordInvalidateByTagOperationFailure(stopwatch, ex, "InvalidateCacheItemByTag", tag,
+                e => _logger.LogError(e, "Error invalidating cache items by tag {CacheTag}", tag));
             throw;
         }
     }
@@ -233,16 +227,18 @@ public sealed class FusionCacheService : ICacheService
             _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error invalidating cache for type {FullTypeName}", fullTypeName);
-            _metrics.RecordError(Constants.Metrics.RemoveByTagDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheByTypeAsync"), (Constants.Metrics.Tags.Tag, tag)]);
+            RecordInvalidateByTagOperationFailure(
+                stopwatch, ex, "InvalidateCacheByTypeAsync", tag,
+                e => _logger.LogError(e, "Error invalidating cache for type {FullTypeName}", fullTypeName));
             throw;
         }
     }
 
-    public Task InvalidateCacheByTypeAsync(Type type) => InvalidateCacheByTypeAsync(type.FullName ?? type.Name);
+    public Task InvalidateCacheByTypeAsync(Type type) 
+        => InvalidateCacheByTypeAsync(type.FullName ?? type.Name);
 
-    public Task InvalidateCacheByTypeAsync<T>() => InvalidateCacheByTypeAsync(typeof(T));
+    public Task InvalidateCacheByTypeAsync<T>()
+        => InvalidateCacheByTypeAsync(typeof(T));
 
     public async Task InvalidateAllCachedQueriesAsync()
     {
@@ -262,11 +258,9 @@ public sealed class FusionCacheService : ICacheService
             _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error invalidating all cached queries");
-            _metrics.RecordError(
-                Constants.Metrics.RemoveByTagDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateAllCachedQueriesAsync"), (Constants.Metrics.Tags.Tag, tag)]);
-
+            RecordInvalidateByTagOperationFailure(
+                stopwatch, ex, "InvalidateAllCachedQueriesAsync", tag,
+                e => _logger.LogError(e, "Error invalidating all cached queries"));
             throw;
         }
     }
@@ -277,13 +271,9 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -292,7 +282,7 @@ public sealed class FusionCacheService : ICacheService
                     key.ToLowerInvariant(), async (_, ct) => {
                         factoryCalled = true;
                         return await factory(ct).ConfigureAwait(false);
-                    }, (Action<FusionCacheEntryOptions>?)null, extraTags?.Select(i => i.ToLowerInvariant()), token)
+                    }, ((Action<FusionCacheEntryOptions>?)null)!, extraTags?.Select(i => i.ToLowerInvariant()), token)
                 .ConfigureAwait(false);
 
             stopwatch.Stop();
@@ -300,9 +290,7 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
             return await factory(token).ConfigureAwait(false);
         }
     }
@@ -314,14 +302,10 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -338,9 +322,7 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
             return await factory(token).ConfigureAwait(false);
         }
     }
@@ -351,15 +333,10 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled) {
             var (value, _) = await factory(token).ConfigureAwait(false);
             return value;
-        }
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            var (v, _) = await factory(token).ConfigureAwait(false);
-            return v;
         }
 
         var stopwatch = Stopwatch.StartNew();
@@ -372,7 +349,7 @@ public sealed class FusionCacheService : ICacheService
                         var merged = MergeTags(factoryTags, extraTags);
                         ctx.Tags = merged ?? [];
                         return value;
-                    }, (Action<FusionCacheEntryOptions>?)null, null, token)
+                    }, ((Action<FusionCacheEntryOptions>?)null)!, null, token)
                 .ConfigureAwait(false);
 
             stopwatch.Stop();
@@ -380,9 +357,7 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
             var (v, _) = await factory(token).ConfigureAwait(false);
             return v;
         }
@@ -395,14 +370,10 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key, falling back to factory");
-            return await factory(token).ConfigureAwait(false);
-        }
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -419,22 +390,16 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
             return await factory(token).ConfigureAwait(false);
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -443,30 +408,24 @@ public sealed class FusionCacheService : ICacheService
                 key.ToLowerInvariant(), (_, ct) => {
                     factoryCalled = true;
                     return factory(ct);
-                }, (Action<FusionCacheEntryOptions>?)null, extraTags?.Select(i => i.ToLowerInvariant()));
+                }, ((Action<FusionCacheEntryOptions>?)null)!, extraTags?.Select(i => i.ToLowerInvariant()));
 
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
+            return factory(CancellationToken.None);
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -482,24 +441,17 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
+            return factory(CancellationToken.None);
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, (TValue? value, string[]? tags)> factory, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled) {
-            var (value, _) = factory(default);
+            var (value, _) = factory(CancellationToken.None);
             return value;
-        }
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            var (v, _) = factory(default);
-            return v;
         }
 
         var stopwatch = Stopwatch.StartNew();
@@ -512,31 +464,25 @@ public sealed class FusionCacheService : ICacheService
                     var merged = MergeTags(factoryTags, extraTags);
                     ctx.Tags = merged ?? [];
                     return value;
-                }, (Action<FusionCacheEntryOptions>?)null);
+                }, ((Action<FusionCacheEntryOptions>?)null)!);
 
             stopwatch.Stop();
             RecordGetOrSetMetrics(key, factoryCalled, stopwatch.Elapsed);
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            var (v, _) = factory(default);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
+            var (v, _) = factory(CancellationToken.None);
             return v;
         }
     }
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
-            return factory(default);
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key, falling back to factory");
-            return factory(default);
-        }
+            return factory(CancellationToken.None);
 
         var stopwatch = Stopwatch.StartNew();
         var factoryCalled = false;
@@ -552,23 +498,16 @@ public sealed class FusionCacheService : ICacheService
             return result;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
-            return factory(default);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
+            return factory(CancellationToken.None);
         }
     }
 
-    public TValue? GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
+    public TValue GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return value;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSet called with null or empty key");
-            return value;
-        }
-
         var stopwatch = Stopwatch.StartNew();
         try {
             var normalizedKey = key.ToLowerInvariant();
@@ -589,9 +528,7 @@ public sealed class FusionCacheService : ICacheService
             return value;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSet"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSet", key);
             return value;
         }
     }
@@ -603,13 +540,9 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? tags = null,
         CancellationToken token = default)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return value;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetAsync called with null or empty key");
-            return value;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -631,22 +564,16 @@ public sealed class FusionCacheService : ICacheService
             return value;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordGetOrSetFailure(stopwatch, ex, "GetOrSetAsync", key);
             return value;
         }
     }
 
     public void Set<T>(string key, T obj, IEnumerable<string>? tags = null)
     {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to set cache value with null or empty key");
-            return;
-        }
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -656,9 +583,7 @@ public sealed class FusionCacheService : ICacheService
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error setting cache value for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "Set"), (Constants.Metrics.Tags.Key, key)]);
+            RecordSetFailure(stopwatch, ex, key, isPayload: false);
             throw;
         }
     }
@@ -701,16 +626,11 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
 
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
@@ -744,9 +664,7 @@ public sealed class FusionCacheService : ICacheService
             return envelope;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayloadAsync", key);
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
         }
     }
@@ -767,16 +685,11 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
 
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
@@ -811,9 +724,7 @@ public sealed class FusionCacheService : ICacheService
             return envelope;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayloadAsync", key);
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
         }
     }
@@ -856,16 +767,12 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        if (_payloadCodec == null || _payloadSerializer == null)
-            throw new InvalidOperationException("Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddFusionCache which registers both).");
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayloadAsync called with null or empty key, falling back to factory");
-            return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
-        }
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgTypedPayloadCodecRequired);
+        OperationHelpers.ThrowIfNull(_payloadSerializer, MsgTypedPayloadSerializerRequired);
 
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
@@ -884,7 +791,7 @@ public sealed class FusionCacheService : ICacheService
 
                 if (decoded != null) {
                     try {
-                        var deserialized = _payloadSerializer.Deserialize<TValue>(PayloadBytes(decoded.Payload));
+                        var deserialized = _payloadSerializer.Deserialize<TValue>(decoded.Payload);
                         stopwatch.Stop();
                         _metrics.RecordTiming(Constants.Metrics.HitDuration, stopwatch.Elapsed, [(Constants.Metrics.Tags.Key, key)]);
                         _metrics.IncrementCounter(Constants.Metrics.HitSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
@@ -915,9 +822,7 @@ public sealed class FusionCacheService : ICacheService
             return value;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error in GetOrSetPayloadAsync for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayloadAsync"), (Constants.Metrics.Tags.Key, key)]);
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayloadAsync", key);
             return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
         }
     }
@@ -929,16 +834,11 @@ public sealed class FusionCacheService : ICacheService
     /// <inheritdoc />
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return PayloadFactoryOnlySync(factory);
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("GetOrSetPayload called with null or empty key, falling back to factory");
-            return PayloadFactoryOnlySync(factory);
-        }
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
 
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
@@ -959,7 +859,7 @@ public sealed class FusionCacheService : ICacheService
                 }
             }
 
-            var plain = factory(default);
+            var plain = factory(CancellationToken.None);
             if (plain == null)
                 return null;
 
@@ -972,9 +872,7 @@ public sealed class FusionCacheService : ICacheService
             return envelope;
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error in GetOrSetPayload for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, "GetOrSetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            RecordPayloadOuterFailure(stopwatch, ex, "GetOrSetPayload", key);
             return PayloadFactoryOnlySync(factory);
         }
     }
@@ -982,16 +880,11 @@ public sealed class FusionCacheService : ICacheService
     /// <inheritdoc />
     public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
     {
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return;
 
-        if (string.IsNullOrWhiteSpace(key)) {
-            _logger.LogWarning("Attempted to set payload cache with null or empty key");
-            return;
-        }
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
 
         var stopwatch = Stopwatch.StartNew();
         try {
@@ -1002,9 +895,7 @@ public sealed class FusionCacheService : ICacheService
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
         }
         catch (Exception ex) {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error setting payload cache for key {CacheKey}", key);
-            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "SetPayload"), (Constants.Metrics.Tags.Key, key)]);
+            RecordSetFailure(stopwatch, ex, key, isPayload: true);
             throw;
         }
     }
@@ -1013,12 +904,11 @@ public sealed class FusionCacheService : ICacheService
     public bool TryGetPayload(string key, out CacheEntryEnvelope? envelope)
     {
         envelope = null;
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddFusionCache which registers it).");
-
         if (!_enabled || string.IsNullOrWhiteSpace(key))
             return false;
 
+        OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
+        
         try {
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
@@ -1040,7 +930,7 @@ public sealed class FusionCacheService : ICacheService
         if (plain == null)
             return null;
 
-        return new CacheEntryEnvelope { Payload = plain };
+        return new(plain);
     }
 
     private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(
@@ -1050,10 +940,7 @@ public sealed class FusionCacheService : ICacheService
         var (value, _) = await factory(token).ConfigureAwait(false);
         return value;
     }
-
-    private static ReadOnlySpan<byte> PayloadBytes(IReadOnlyList<byte> payload)
-        => payload is byte[] b ? b : payload.ToArray();
-
+    
     private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(
         Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
         CancellationToken token)
@@ -1062,16 +949,13 @@ public sealed class FusionCacheService : ICacheService
         if (plain == null)
             return null;
 
-        return new CacheEntryEnvelope { Payload = plain };
+        return new(plain);
     }
 
     private static CacheEntryEnvelope? PayloadFactoryOnlySync(Func<CancellationToken, byte[]?> factory)
     {
-        var plain = factory(default);
-        if (plain == null)
-            return null;
-
-        return new CacheEntryEnvelope { Payload = plain };
+        var plain = factory(CancellationToken.None);
+        return plain is null ? null : new(plain);
     }
 
     private static string[]? MergeTags(string[]? factoryTags, IEnumerable<string>? extraTags)
@@ -1088,6 +972,52 @@ public sealed class FusionCacheService : ICacheService
             return factoryTags!.Select(t => t.ToLowerInvariant()).ToArray();
 
         return factoryTags!.Concat(extraTags!).Select(t => t.ToLowerInvariant()).Distinct().ToArray();
+    }
+
+    private void RecordInvalidateKeyFailure(Stopwatch stopwatch, Exception ex, string key)
+    {
+        stopwatch.Stop();
+        _logger.LogError(ex, "Error invalidating cache item with key {CacheKey}", key);
+        _metrics.RecordError(Constants.Metrics.RemoveDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItem"), (Constants.Metrics.Tags.Key, key)]);
+    }
+
+    private void RecordInvalidateByTagOperationFailure(
+        Stopwatch stopwatch,
+        Exception ex,
+        string operationName,
+        string tagMetricValue,
+        Action<Exception> logError)
+    {
+        stopwatch.Stop();
+        logError(ex);
+        _metrics.RecordError(Constants.Metrics.RemoveByTagDuration, ex, [(Constants.Metrics.Tags.Operation, operationName), (Constants.Metrics.Tags.Tag, tagMetricValue)]);
+    }
+
+    private void RecordGetOrSetFailure(Stopwatch stopwatch, Exception ex, string operationName, string cacheKey)
+    {
+        stopwatch.Stop();
+        _logger.LogError(ex, "Error getting or setting cache value for key {CacheKey}", cacheKey);
+        _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, operationName), (Constants.Metrics.Tags.Key, cacheKey)]);
+    }
+
+    private void RecordPayloadOuterFailure(Stopwatch stopwatch, Exception ex, string operationName, string cacheKey)
+    {
+        stopwatch.Stop();
+        var asyncOp = operationName.EndsWith("Async", StringComparison.Ordinal);
+        _logger.LogError(ex,
+            asyncOp ? "Error in GetOrSetPayloadAsync for key {CacheKey}" : "Error in GetOrSetPayload for key {CacheKey}",
+            cacheKey);
+        _metrics.RecordError(Constants.Metrics.MissDuration, ex, [
+            (Constants.Metrics.Tags.Operation, operationName),
+            (Constants.Metrics.Tags.Key, cacheKey)]);
+    }
+
+    private void RecordSetFailure(Stopwatch stopwatch, Exception ex, string cacheKey, bool isPayload)
+    {
+        stopwatch.Stop();
+        _logger.LogError(ex, isPayload ? "Error setting payload cache for key {CacheKey}" : "Error setting cache value for key {CacheKey}", cacheKey);
+        var operation = isPayload ? "SetPayload" : "Set";
+        _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, operation), (Constants.Metrics.Tags.Key, cacheKey)]);
     }
 
     private void RecordGetOrSetMetrics(string key, bool factoryCalled, TimeSpan elapsed)

@@ -41,6 +41,10 @@ public partial class LyoChipInput : IAsyncDisposable
     [Parameter]
     public bool SelectableChips { get; set; }
 
+    /// <summary>When true with <see cref="SelectableChips"/>, at most one chip may be selected (click again to clear).</summary>
+    [Parameter]
+    public bool SingleSelection { get; set; }
+
     [Parameter]
     public IEnumerable<string> SelectedValues { get; set; } = [];
 
@@ -204,6 +208,15 @@ public partial class LyoChipInput : IAsyncDisposable
 
         var selected = SelectedValues.ToHashSet();
         var wasSelected = selected.Contains(item);
+        if (SingleSelection) {
+            if (wasSelected)
+                await SelectedValuesChanged.InvokeAsync([]);
+            else
+                await SelectedValuesChanged.InvokeAsync([item]);
+
+            return;
+        }
+
         if (wasSelected)
             selected.Remove(item);
         else

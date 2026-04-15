@@ -52,11 +52,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         }
 
         var framed = CachePayloadFrame.Create(working, flags);
-        var envelope = new CacheEntryEnvelope {
-            Compression = compressionResult,
-            Encryption = encryptionResult,
-            Payload = applicationPlaintext
-        };
+        var envelope = new CacheEntryEnvelope(applicationPlaintext, compressionResult, encryptionResult);
         return (framed, envelope);
     }
 
@@ -77,7 +73,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
             working = _encryption.Decrypt(working, _cacheOptions.Payload.EncryptionKeyId);
         }
         if ((flags & CachePayloadFrame.FlagCompressed) == 0)
-            return new() { Compression = compressionResult, Encryption = encryptionResult, Payload = working };
+            return new(working, compressionResult, encryptionResult);
 
         var compressedCopy = working;
         var decInfo = _compression.Decompress(compressedCopy, out var decompressed);
@@ -85,10 +81,6 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         compressionResult = CompressionResult.FromSuccess(compressedCopy, ci);
         working = decompressed;
 
-        return new() {
-            Compression = compressionResult,
-            Encryption = encryptionResult,
-            Payload = working
-        };
+        return new(working, compressionResult, encryptionResult);
     }
 }

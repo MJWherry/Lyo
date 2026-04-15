@@ -1,3 +1,5 @@
+using Lyo.Pdf.Models;
+
 namespace Lyo.Pdf.Web.Components.PdfAnnotator;
 
 public enum PdfAnnotationExtractionType
@@ -29,7 +31,17 @@ public sealed class LyoPdfAnnotationResult
 
     public double YTolerance { get; set; } = 5.0;
 
-    public bool SplitColumns { get; set; }
+    /// <summary>When extraction is <see cref="PdfAnnotationExtractionType.KeyValue" />, whether values are to the right of keys or on lines below.</summary>
+    public PdfKeyValueLayout KeyValueLayout { get; set; } = PdfKeyValueLayout.Horizontal;
+
+    /// <summary>When inferring key/value or table headers without chips, which signals to use (bold, underline, colon/semicolon-terminated labels).</summary>
+    public PdfInferFormattingFlags InferFormattingFlags { get; set; } = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline;
+
+    /// <summary>
+    /// When extraction is <see cref="PdfAnnotationExtractionType.Table" />, optional header label for the row-key column. When set, only this column is treated as
+    /// <see cref="ColumnHeader.IsKey" /> (continuation lines without this cell merge into the previous row). Overrides <c>*</c> prefix on chips.
+    /// </summary>
+    public string? TableKeyColumnLabel { get; set; }
 
     /// <summary>
     /// When extraction is <see cref="PdfAnnotationExtractionType.BoundingBoxText" />, splits the region into this many vertical columns (≥ 1). Values &gt; 1 use gutter/band

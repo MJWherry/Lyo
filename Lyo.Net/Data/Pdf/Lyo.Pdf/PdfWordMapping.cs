@@ -1,6 +1,7 @@
 using Lyo.Common.Records;
 using Lyo.Pdf.Models;
 using UglyToad.PdfPig.Content;
+using UglyToad.PdfPig.Graphics;
 using UglyToad.PdfPig.Graphics.Colors;
 
 namespace Lyo.Pdf;
@@ -17,6 +18,15 @@ internal static class PdfWordMapping
 
     public static IReadOnlyList<PdfWord> ToPdfWords(this IEnumerable<Word> words) => words.Select(ToPdfWord).ToList();
 
+    public static IReadOnlyList<PdfWord> ToPdfWords(this IEnumerable<Word> words, IReadOnlyList<PdfPath> pagePaths)
+    {
+        var list = words.Select(ToPdfWord).ToList();
+        if (pagePaths == null || pagePaths.Count == 0)
+            return list;
+
+        return PdfUnderlineDetection.ApplyUnderlines(list, pagePaths);
+    }
+
     private static PdfWordFormat? ExtractFormat(Word w)
     {
         if (w.Letters.Count == 0)
@@ -27,7 +37,9 @@ internal static class PdfWordMapping
         var fontSize = letter.PointSize > 0 ? letter.PointSize : (double?)null;
         var fontName = !string.IsNullOrEmpty(letter.FontName) ? letter.FontName : null;
         var fontColor = TryColorToHex(letter.Color);
-        return new(fontSize, fontName, fd.IsBold, fd.IsItalic, fontColor);
+        var bold = PdfFontStyleInference.InferBold(fontName, fd.IsBold);
+        var italic = PdfFontStyleInference.InferItalic(fontName, fd.IsItalic);
+        return new(fontSize, fontName, bold, italic, fontColor);
     }
 
     private static string? TryColorToHex(IColor color)
