@@ -6,6 +6,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
@@ -78,7 +79,9 @@ public class PatchService<TContext>(
                 return result;
             }
 
-            await cache.InvalidateQueryCacheAsync<TDbModel>().ConfigureAwait(false);
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
+                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
+                .ConfigureAwait(false);
             var keys = typeConversion.GetPrimaryKeyValues(entity, context);
             cache.Set(
                 $"entity:{typeof(TDbModel).Name}:keys={string.Join("|", keys.Order().Select(i => i?.ToString()))}", result.NewData!,
@@ -217,8 +220,11 @@ public class PatchService<TContext>(
             var noChange = results.Count(r => r.Result == PatchResultEnum.NoChange);
             var failed = results.Count(r => r.Result == PatchResultEnum.Failed);
             var bulkResult = new PatchBulkResult<TResult>(results, updated, noChange, failed);
-            if (updated > 0)
-                await cache.InvalidateQueryCacheAsync<TDbModel>().ConfigureAwait(false);
+            if (updated > 0) {
+                var keySets = modifiedEntityResultPairs.ConvertAll(p => typeConversion.GetPrimaryKeyValues(p.Entity, context));
+                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct)
+                    .ConfigureAwait(false);
+            }
 
             return bulkResult;
         }
@@ -267,8 +273,9 @@ public class PatchService<TContext>(
             }
         }
 
+        // Partial retry mixes success shapes; use broad type invalidation for correctness.
         if (updated > 0)
-            await cache.InvalidateQueryCacheAsync<TDbModel>().ConfigureAwait(false);
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
 
         return new(results, updated, noChange, failedCount);
     }

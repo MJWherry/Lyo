@@ -245,7 +245,11 @@ public sealed class FusionCacheService : ICacheService
         if (!_enabled)
             return;
 
-        const string tag = "queries";
+        await InvalidateAllCachedQueriesByTagAsync("queries").ConfigureAwait(false);
+    }
+
+    private async Task InvalidateAllCachedQueriesByTagAsync(string tag)
+    {
         var stopwatch = Stopwatch.StartNew();
         try {
             var beforeCount = _items.Count;

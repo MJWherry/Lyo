@@ -6,6 +6,7 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
@@ -25,6 +26,7 @@ public class UpsertService<TContext>(
     IWhereClauseService filterService,
     ITypeConversionService typeConversion,
     BulkOperationOptions bulkOptions,
+    CacheOptions cacheOptions,
     ICacheService cache,
     ICreateService<TContext> createService,
     IServiceProvider serviceProvider,
@@ -55,7 +57,7 @@ public class UpsertService<TContext>(
             var createResult = await CreateInternal<TRequest, TDbModel, TResult>(request, context, before, beforeCreate, after, afterCreate, ct);
             var result = ResultFactory.UpsertCreated(createResult);
             if (result.Result == UpsertResultEnum.Created)
-                await cache.InvalidateQueryCacheAsync<TDbModel>();
+                await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
 
             if (result.Result == UpsertResultEnum.Created)
                 RecordCrudSuccess(operation, typeof(TDbModel));
@@ -77,8 +79,11 @@ public class UpsertService<TContext>(
         // For single upsert, just update the first entity
         var entity = entities[0];
         var upsertResult = await UpsertInternal<TRequest, TDbModel, TResult>(entity, request, context, before, beforeUpdate, after, afterUpdate, ct);
-        if (upsertResult.Result == UpsertResultEnum.Updated)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+        if (upsertResult.Result == UpsertResultEnum.Updated) {
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
+                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
+                .ConfigureAwait(false);
+        }
 
         if (upsertResult.Result == UpsertResultEnum.Failed)
             RecordCrudFailure(operation, typeof(TDbModel));
@@ -239,8 +244,12 @@ public class UpsertService<TContext>(
             var noChange = results.Count(r => r.Result == UpsertResultEnum.NoChange);
             var failed = results.Count(r => r.Result == UpsertResultEnum.Failed);
             var bulkResult = new UpsertBulkResult<TResult>(results, created, updated, noChange, failed);
-            if (created > 0 || updated > 0)
-                await cache.InvalidateQueryCacheAsync<TDbModel>();
+            if (created > 0)
+                await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
+            else if (updated > 0) {
+                var keySets = toUpdate.ConvertAll(t => typeConversion.GetPrimaryKeyValues(t.Entity, context));
+                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct).ConfigureAwait(false);
+            }
 
             return bulkResult;
         }
@@ -301,8 +310,9 @@ public class UpsertService<TContext>(
             }
         }
 
+        // Partial retry: cannot reliably collect distinct PKs for granular invalidation.
         if (created > 0 || updated > 0)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
 
         return new(results, created, updated, noChange, failedCount);
     }

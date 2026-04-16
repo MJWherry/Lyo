@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using EasyCompressor;
+using Lyo.Common.Records;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 using Lyo.Exceptions;
@@ -242,7 +243,7 @@ public sealed class CompressionService : ICompressionService
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.CompressDuration);
         ValidateInput(bytes, nameof(bytes));
-        _logger.LogDebug("Compressing data of length {Length}", bytes.Length);
+        _logger.LogDebug("Compressing data of length {} ({Length})", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.Length), bytes.Length);
         var stopwatch = Stopwatch.StartNew();
         try {
             // Use span for internal operations - EasyCompressor still needs array, but we avoid extra copies
@@ -250,7 +251,7 @@ public sealed class CompressionService : ICompressionService
             stopwatch.Stop();
             var info = new CompressionInfo(bytes.Length, compressed.Length, stopwatch.ElapsedMilliseconds);
             _logger.LogDebug(
-                "Compressed data to length {Length}, ratio {CompressionRatio:P2}, saved {SpaceSavedPercent:P2}, time {TimeMs}ms", compressed.Length, info.CompressionRatio,
+                "Compressed data to length {} ({Length}), ratio {CompressionRatio:P2}, saved {SpaceSavedPercent:P2}, time {TimeMs}ms", FileSizeUnitInfo.FormatBestFitAbbreviation(compressed.Length), compressed.Length, info.CompressionRatio,
                 info.SpaceSavedPercent, info.TimeMs);
 
             _metrics.IncrementCounter(Constants.Metrics.CompressSuccess);

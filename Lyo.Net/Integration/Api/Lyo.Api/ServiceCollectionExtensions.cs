@@ -55,6 +55,7 @@ public static class ServiceCollectionExtensions
             where TContext : DbContext
         {
             services.TryAddSingleton(_ => new BulkOperationOptions());
+            services.TryAddSingleton(_ => new CacheOptions());
             AddQueryOptions(services);
             services.AddScoped<IQueryService<TContext>, QueryService<TContext>>();
             services.AddScoped<ICreateService<TContext>, CreateService<TContext>>();

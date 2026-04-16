@@ -166,19 +166,27 @@ public class QueryService<TContext>(
                     await using var context = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-                    var types = loaderService.GetReferencedTypes<TContext, TDbModel>(context, matIncludes);
-                    var tags = new List<string>(2 + types.Count) { "entities", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}" };
-                    tags.AddRange(types.Select(i => $"entity:{i.Name.ToLowerInvariant()}"));
                     var result = await context.Set<TDbModel>().FindAsync(keys, ct2).ConfigureAwait(false);
-                    if (result is null)
-                        return (default, tags.ToArray());
+                    if (result is not null)
+                        await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 
-                    await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
+                    var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
+                    tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
+                        typeof(TDbModel),
+                        result is null
+                            ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
+                            : typeConversion.GetPrimaryKeyValues(result, context)));
+                    if (result is not null && matIncludes.Count > 0)
+                        QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
+
+                    if (result is null)
+                        return (default, tagSet.ToArray());
+
                     var ctx = new GetContext<TDbModel, TContext>(keys, includeArray, result, context, serviceProvider);
                     before?.Invoke(ctx);
                     var response = MapOrCast<TDbModel, TResult>(Mapper, result);
                     after?.Invoke(ctx);
-                    return (response, tags.ToArray());
+                    return (response, tagSet.ToArray());
                 }, token: ct);
 
             if (cachedResult is null)
@@ -224,15 +232,20 @@ public class QueryService<TContext>(
                     await using var context = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
-                    var types = loaderService.GetReferencedTypes<TContext, TDbModel>(context, matIncludes);
-                    var tags = new List<string>(2 + types.Count) { "entities", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}" };
-                    tags.AddRange(types.Select(i => $"entity:{i.Name.ToLowerInvariant()}"));
                     var result = await context.Set<TDbModel>().FindAsync(keys, ct2).ConfigureAwait(false);
-                    if (result is null)
-                        return (null, tags.ToArray());
+                    if (result is not null)
+                        await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 
-                    await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
-                    return (result, tags.ToArray());
+                    var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
+                    tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
+                        typeof(TDbModel),
+                        result is null
+                            ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
+                            : typeConversion.GetPrimaryKeyValues(result, context)));
+                    if (result is not null && matIncludes.Count > 0)
+                        QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
+
+                    return (result, tagSet.ToArray());
                 }, token: ct);
 
             if (cachedResult is null)
@@ -353,9 +366,6 @@ public class QueryService<TContext>(
                     context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
                     // Include paths are already validated by ProjectedQueryModelValidator above (same paths, same model).
 
-                    var types = loaderService.GetReferencedTypes<TContext, TDbModel>(context, queryRequest.Include);
-                    var tags = new List<string>(3 + types.Count) { "queries", "entities", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}" };
-                    tags.AddRange(types.Select(i => $"entity:{i.Name.ToLowerInvariant()}"));
                     var keysProvided = queryRequest.Keys.Count > 0;
                     var state = keysProvided
                         ? await pathExecutor.ExecuteKeyConstrainedPathAsync(context, queryRequest, defaultOrder, defaultSortDirection, ct2).ConfigureAwait(false)
@@ -367,8 +377,9 @@ public class QueryService<TContext>(
 
                     await ApplyPostLoadIncludesAsync(context, queryResults, queryRequest, keysProvided, state.IsInMemoryResults, ct2).ConfigureAwait(false);
                     ApplyMatchedOnlyFilterIfNeeded(queryRequest, queryResults);
+                    var tags = QueryCacheTagBuilder.BuildBasicQueryTags(queryResults, context, typeConversion, queryRequest.Include);
                     var result = ResultFactory.QuerySuccess(queryRequest, queryResults, queryRequest.Start, queryResults.Length, total, hasMore);
-                    return (result, tags.ToArray());
+                    return (result, tags);
                 }
                 finally {
                     if (ownsContext && context is IAsyncDisposable owned)

@@ -5,6 +5,7 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
@@ -21,6 +22,7 @@ public class UpdateService<TContext>(
     ILyoMapper mapper,
     IWhereClauseService filterService,
     BulkOperationOptions bulkOptions,
+    CacheOptions cacheOptions,
     ITypeConversionService typeConversion,
     ICacheService cache,
     IServiceProvider serviceProvider,
@@ -69,7 +71,8 @@ public class UpdateService<TContext>(
             return result;
         }
 
-        await cache.InvalidateQueryCacheAsync<TDbModel>();
+        await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
+            .ConfigureAwait(false);
         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
         cache.Set(
             $"entity:{typeof(TDbModel).Name}:keys={string.Join("|", entityKeys.Order().Select(i => i?.ToString()))}", result.NewData!,
@@ -200,8 +203,10 @@ public class UpdateService<TContext>(
             var failed = results.Count(r => r.Result == UpdateResultEnum.Failed);
             var noChange = results.Count(r => r.Result == UpdateResultEnum.NoChange);
             var bulkResult = new UpdateBulkResult<TResult>(results, updated, failed, noChange);
-            if (updated > 0)
-                await cache.InvalidateQueryCacheAsync<TDbModel>();
+            if (updated > 0) {
+                var keySets = results.Where(r => r.Result == UpdateResultEnum.Updated && r.Keys is { Count: > 0 }).Select(r => r.Keys!).ToList();
+                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct).ConfigureAwait(false);
+            }
 
             return bulkResult;
         }
@@ -237,8 +242,10 @@ public class UpdateService<TContext>(
         var updated = results.Count(r => r.Result == UpdateResultEnum.Updated);
         var failureCount = results.Count(r => r.Result == UpdateResultEnum.Failed);
         var noChange = results.Count(r => r.Result == UpdateResultEnum.NoChange);
-        if (updated > 0)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+        if (updated > 0) {
+            var keySets = results.Where(r => r.Result == UpdateResultEnum.Updated && r.Keys is { Count: > 0 }).Select(r => r.Keys!).ToList();
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct).ConfigureAwait(false);
+        }
 
         return new(results, updated, failureCount, noChange);
     }

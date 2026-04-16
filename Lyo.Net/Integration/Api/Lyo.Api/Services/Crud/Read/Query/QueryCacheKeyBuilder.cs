@@ -8,7 +8,7 @@ using Lyo.Query.Services.WhereClause;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
-/// <summary>Builds cache keys for query results. Shared by QueryService.</summary>
+/// <summary>Builds cache keys for query results. Shared by QueryService. Tags use <see cref="QueryCacheTagBuilder" />.</summary>
 public static class QueryCacheKeyBuilder
 {
     /// <summary>Cache key for <c>/Query</c> (full entities). Does not include projection dimensions.</summary>

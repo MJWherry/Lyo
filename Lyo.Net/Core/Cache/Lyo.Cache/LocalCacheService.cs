@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -16,14 +17,16 @@ public sealed class LocalCacheService : ICacheService
 
     private readonly bool _enabled;
     private readonly ConcurrentDictionary<CacheItem, byte> _items = new();
-    private readonly ConcurrentDictionary<string, string[]> _keyToTags = new();
+    /// <summary>Bidirectional tag index: cache key → tag set (inner dict keys are tags, O(1) membership).</summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _keyToTags = new();
+    /// <summary>Bidirectional tag index: tag → cache key set (inner dict keys are normalized cache keys).</summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
     private readonly ILogger<LocalCacheService> _logger;
     private readonly IMemoryCache _memoryCache;
     private readonly IMetrics _metrics;
     private readonly CacheOptions _options;
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
 
     public LocalCacheService(
         IMemoryCache memoryCache,
@@ -79,7 +82,7 @@ public sealed class LocalCacheService : ICacheService
         var stopwatch = Stopwatch.StartNew();
         try {
             var normalizedKey = key.ToLowerInvariant();
-            RemoveKeyFromTagMappings(normalizedKey);
+            TagIndexRemoveKey(normalizedKey);
             _memoryCache.Remove(normalizedKey);
             _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
             stopwatch.Stop();
@@ -103,16 +106,14 @@ public sealed class LocalCacheService : ICacheService
             return;
 
         var stopwatch = Stopwatch.StartNew();
-        var normalizedTag = tag.ToLowerInvariant();
+            var normalizedTag = tag.ToLowerInvariant();
         try {
             var beforeCount = _items.Count;
-            if (_tagToKeys.TryRemove(normalizedTag, out var keys)) {
-                foreach (var kvp in keys) {
-                    var key = kvp.Key;
-                    RemoveKeyFromTagMappings(key);
-                    _memoryCache.Remove(key);
-                    _items.TryRemove(CacheItem.Key(key), out var _);
-                }
+            var keysSnapshot = TagIndexGetKeysByTag(normalizedTag).ToArray();
+            foreach (var key in keysSnapshot) {
+                TagIndexRemoveKey(key);
+                _memoryCache.Remove(key);
+                _items.TryRemove(CacheItem.Key(key), out var _);
             }
 
             _items.TryRemove(CacheItem.Tag(TagPrefix + normalizedTag), out var _);
@@ -155,7 +156,10 @@ public sealed class LocalCacheService : ICacheService
 
     public Task InvalidateCacheByTypeAsync<T>() => InvalidateCacheByTypeAsync(typeof(T));
 
-    public Task InvalidateAllCachedQueriesAsync() => InvalidateCacheItemByTag("queries");
+    public async Task InvalidateAllCachedQueriesAsync()
+    {
+        await InvalidateCacheItemByTag("queries").ConfigureAwait(false);
+    }
 
     public async ValueTask<TValue?> GetOrSetAsync<TValue>(
         string key,
@@ -931,37 +935,51 @@ public sealed class LocalCacheService : ICacheService
 
     private void SetInternal<T>(string normalizedKey, T value, TimeSpan duration, IEnumerable<string>? tags)
     {
-        var tagList = tags?.Select(t => t.ToLowerInvariant()).ToArray() ?? [];
-        RemoveKeyFromTagMappings(normalizedKey);
+        var tagList = tags?.Select(t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
+        TagIndexRemoveKey(normalizedKey);
         var entryOptions = new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = duration };
         entryOptions.RegisterPostEvictionCallback((_, _, _, _) => {
-            RemoveKeyFromTagMappings(normalizedKey);
+            TagIndexRemoveKey(normalizedKey);
             _items.TryRemove(CacheItem.Key(normalizedKey), out var _);
         });
 
         _memoryCache.Set(normalizedKey, value, entryOptions);
         _items.TryAdd(CacheItem.Key(normalizedKey), 0);
-        _keyToTags[normalizedKey] = tagList;
-        foreach (var tag in tagList) {
-            var keys = _tagToKeys.GetOrAdd(tag, _ => new());
-            keys[normalizedKey] = 0;
+        TagIndexAdd(normalizedKey, tagList);
+    }
+
+    /// <summary>Bidirectional index: associate a cache key with normalized tags (O(1) per tag).</summary>
+    private void TagIndexAdd(string normalizedKey, string[] normalizedTags)
+    {
+        if (normalizedTags.Length == 0)
+            return;
+
+        var tagSet = _keyToTags.GetOrAdd(normalizedKey, static _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal));
+        foreach (var tag in normalizedTags) {
+            tagSet[tag] = 0;
+            _tagToKeys.GetOrAdd(tag, static _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal))[normalizedKey] = 0;
             _items.TryAdd(CacheItem.Tag(TagPrefix + tag), 0);
         }
     }
 
-    private void RemoveKeyFromTagMappings(string normalizedKey)
+    /// <summary>O(1) key lookup by tag (snapshot of keys currently mapped to the tag).</summary>
+    private IEnumerable<string> TagIndexGetKeysByTag(string normalizedTag)
+        => _tagToKeys.TryGetValue(normalizedTag, out var keys) ? keys.Keys : Enumerable.Empty<string>();
+
+    /// <summary>Removes a cache key from the bidirectional tag index and drops tag markers in <see cref="_items" />.</summary>
+    private void TagIndexRemoveKey(string normalizedKey)
     {
-        if (!_keyToTags.TryRemove(normalizedKey, out var tags))
+        if (!_keyToTags.TryRemove(normalizedKey, out var tagSet))
             return;
 
-        foreach (var tag in tags) {
+        foreach (var tag in tagSet.Keys) {
             if (_tagToKeys.TryGetValue(tag, out var keys)) {
-                keys.TryRemove(normalizedKey, out var _);
-                if (keys.IsEmpty)
-                    _tagToKeys.TryRemove(tag, out var _);
+                keys.TryRemove(normalizedKey, out _);
+                if (keys.Count == 0)
+                    _tagToKeys.TryRemove(tag, out _);
             }
 
-            _items.TryRemove(CacheItem.Tag(TagPrefix + tag), out var _);
+            _items.TryRemove(CacheItem.Tag(TagPrefix + tag), out _);
         }
     }
 }

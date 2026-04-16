@@ -27,6 +27,19 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
         return values;
     }
 
+    public IReadOnlyList<object?> GetPrimaryKeyValues(object entity, DbContext context)
+    {
+        ArgumentHelpers.ThrowIfNull(entity, nameof(entity));
+        var entry = context.Entry(entity);
+        var key = entry.Metadata.FindPrimaryKey();
+        OperationHelpers.ThrowIfNull(key, $"No primary key defined for {entry.Metadata.Name}");
+        var values = new object?[key.Properties.Count];
+        for (var i = 0; i < key.Properties.Count; i++)
+            values[i] = entry.Property(key.Properties[i].Name).CurrentValue;
+
+        return values;
+    }
+
     public object[] ConvertKeysForFind<TEntity>(object[] keys, DbContext context)
     {
         var keyMetadata = GetEntityKeyMetadataCached<TEntity>(context);

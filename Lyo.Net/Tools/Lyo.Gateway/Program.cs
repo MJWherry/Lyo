@@ -37,6 +37,13 @@ using MudBlazor;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLogging(i => i.ClearProviders()
+    .AddSimpleConsole(c => {
+        c.SingleLine = true;
+        c.UseUtcTimestamp = true;
+    })); //logging
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();

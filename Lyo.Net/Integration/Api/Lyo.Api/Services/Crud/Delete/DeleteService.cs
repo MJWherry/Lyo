@@ -4,6 +4,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
@@ -22,6 +23,7 @@ public class DeleteService<TContext>(
     IWhereClauseService filterService,
     ITypeConversionService typeConversion,
     BulkOperationOptions bulkOptions,
+    CacheOptions cacheOptions,
     ICacheService cache,
     IServiceProvider serviceProvider,
     ILogger<DeleteService<TContext>>? logger = null,
@@ -57,9 +59,12 @@ public class DeleteService<TContext>(
         }
 
         await loaderService.LoadIncludes(context, entity, includes, ct);
+        var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, null, entity, context, before, after, ct);
-        if (result.IsSuccess)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+        if (result.IsSuccess) {
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct)
+                .ConfigureAwait(false);
+        }
 
         if (result.IsSuccess)
             RecordCrudSuccess(operation, typeof(TDbModel));
@@ -112,9 +117,12 @@ public class DeleteService<TContext>(
 
         await loaderService.LoadIncludes(context, entity, includes, ct);
         var keys = request.Keys?.FirstOrDefault() ?? [];
+        var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
-        if (result.IsSuccess)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+        if (result.IsSuccess) {
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct)
+                .ConfigureAwait(false);
+        }
 
         if (result.IsSuccess)
             RecordCrudSuccess(operation, typeof(TDbModel));
@@ -181,6 +189,7 @@ public class DeleteService<TContext>(
         try {
             await using var context = await ContextFactory.CreateDbContextAsync(ct);
             var results = new List<DeleteResult<TResult>>();
+            var deletedKeySets = new List<IReadOnlyList<object?>>();
             foreach (var request in requests) {
                 var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct);
                 if (entities.Count == 0) {
@@ -208,6 +217,7 @@ public class DeleteService<TContext>(
                 foreach (var entity in entities) {
                     await loaderService.LoadIncludes(context, entity, includes, ct);
                     var keys = request.Keys?.FirstOrDefault() ?? [];
+                    deletedKeySets.Add(typeConversion.GetPrimaryKeyValues(entity, context));
                     var ctx = new DeleteContext<TDbModel, TContext>(keys, request, entity, context, serviceProvider);
                     before?.Invoke(ctx);
                     var old = MapOrCast<TDbModel, TResult>(Mapper, entity);
@@ -225,7 +235,7 @@ public class DeleteService<TContext>(
             var failed = results.Count(r => !r.IsSuccess);
             var bulkResult = new DeleteBulkResult<TResult>(results, deleted, failed);
             if (deleted > 0)
-                await cache.InvalidateQueryCacheAsync<TDbModel>();
+                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), deletedKeySets, ct).ConfigureAwait(false);
 
             return bulkResult;
         }
@@ -268,7 +278,7 @@ public class DeleteService<TContext>(
         }
 
         if (successCount > 0)
-            await cache.InvalidateQueryCacheAsync<TDbModel>();
+            await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
 
         return new(results, successCount, failureCount);
     }

@@ -10,6 +10,9 @@ public interface ITypeConversionService : IValueConversionService
 
     IReadOnlyList<object?> GetPrimaryKeyValues<TEntity>(TEntity entity, DbContext context);
 
+    /// <summary>Primary key values for any tracked or loaded entity instance (uses EF metadata; supports proxies).</summary>
+    IReadOnlyList<object?> GetPrimaryKeyValues(object entity, DbContext context);
+
     /// <summary>Converts an object array of key values to properly typed objects for EF Core FindAsync</summary>
     object[] ConvertKeysForFind<TEntity>(object[] keys, DbContext context);
 }

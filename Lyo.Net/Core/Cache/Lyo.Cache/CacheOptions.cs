@@ -26,6 +26,12 @@ public class CacheOptions
     /// <summary>Defaults for byte payload cache APIs (compress/encrypt framing).</summary>
     public CachePayloadOptions Payload { get; set; } = new();
 
+    /// <summary>
+    /// When bulk mutations affect more than this many distinct primary keys, list-query cache invalidation falls back to tag <c>entity:&lt;type&gt;</c> instead of per-id tags.
+    /// Used by Lyo.Api CRUD invalidation helpers.
+    /// </summary>
+    public int MaxBulkQueryInvalidationByIdCount { get; set; } = 20;
+
     /// <summary>Type-specific expiration timeouts. Key is the full type name (e.g., "My.Lib.Class") or pattern (e.g., "My.Lib.*"), value is expiration time in minutes.</summary>
     /// <remarks>
     /// Supports exact matches and wildcard patterns: - Exact: "My.Lib.Class" matches exactly "My.Lib.Class" - Wildcard: "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", etc. -
