@@ -624,13 +624,15 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
             => new(text, new(left, right, top, bottom), f);
 
+        // Use the same X banding as TwoLineUnderlinedHeader so horizontal gap clustering yields three columns (tight
+        // first-gap layouts merge into two columns because min gutter is adaptive to median gap).
         var wordsPlainSecondRow = new List<PdfWord> {
-            W("Case", 10, 45, 102, 98, ul),
-            W("Calendar", 50, 115, 102, 98, ul),
-            W("Schedule", 200, 275, 102, 98, ul),
-            W("Event", 15, 58, 90, 86),
-            W("Type", 62, 105, 90, 86),
-            W("Start", 208, 265, 90, 86),
+            W("Case", 10, 35, 102, 98, ul),
+            W("Calendar", 100, 155, 102, 98, ul),
+            W("Schedule", 250, 325, 102, 98, ul),
+            W("Event", 12, 58, 90, 86),
+            W("Type", 105, 148, 90, 86),
+            W("Start", 258, 305, 90, 86),
         };
 
         var h1 = _service.InferTableHeadersFromFormatting(wordsPlainSecondRow, yTolerance: 5.0, PdfInferFormattingFlags.Underline);
@@ -640,12 +642,12 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal("Schedule", h1[2].Label);
 
         var wordsBothRowsUnderlined = new List<PdfWord> {
-            W("Case", 10, 45, 102, 98, ul),
-            W("Calendar", 50, 115, 102, 98, ul),
-            W("Schedule", 200, 275, 102, 98, ul),
-            W("Event", 15, 58, 90, 86, ul),
-            W("Type", 62, 105, 90, 86, ul),
-            W("Start", 208, 265, 90, 86, ul),
+            W("Case", 10, 35, 102, 98, ul),
+            W("Calendar", 100, 155, 102, 98, ul),
+            W("Schedule", 250, 325, 102, 98, ul),
+            W("Event", 12, 58, 90, 86, ul),
+            W("Type", 105, 148, 90, 86, ul),
+            W("Start", 258, 305, 90, 86, ul),
         };
 
         var h2 = _service.InferTableHeadersFromFormatting(wordsBothRowsUnderlined, yTolerance: 5.0, PdfInferFormattingFlags.Underline);
