@@ -340,7 +340,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_UsesFontNameBoldVsRegular()
     {
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
-            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, fontName, fdBold, false));
+            => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
         // Stacked label (bold) then value (regular), then same-line bold label + regular value.
         var words = new List<PdfWord> {
@@ -350,7 +350,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Dev", "Lato-Regular", 55, 100, 170, 160, false)
         };
 
-        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0);
+        var dict = _service.InferKeyValuePairsFromFormatting(words);
         Assert.True(dict.TryGetValue("Name", out var n) && n != null && n.Contains("John", StringComparison.Ordinal));
         Assert.True(dict.TryGetValue("Role", out var r) && r != null && r.Contains("Dev", StringComparison.Ordinal));
     }
@@ -359,7 +359,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_EqualsDelimiter_CustomOrder()
     {
         static PdfWord W(string text, double left, double right, double top, double bottom)
-            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+            => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> {
             W("Name = Alice", 10, 100, 200, 190),
@@ -375,7 +375,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_ColonTerminated_NoBold()
     {
         static PdfWord W(string text, double left, double right, double top, double bottom)
-            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+            => new(text, new(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular"));
 
         var words = new List<PdfWord> {
             W("Department:", 10, 100, 200, 190),
@@ -384,7 +384,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Active", 55, 100, 160, 150)
         };
 
-        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0);
+        var dict = _service.InferKeyValuePairsFromFormatting(words);
         Assert.True(dict.TryGetValue("Department", out var d) && d != null && d.Contains("Engineering", StringComparison.Ordinal));
         Assert.True(dict.TryGetValue("Status", out var s) && s == "Active");
     }
@@ -393,7 +393,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_None_ReturnsEmpty()
     {
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
-            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, fontName, fdBold, false));
+            => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
         var words = new List<PdfWord> {
             W("Name", "Lato-Bold", 10, 80, 200, 190, true),
@@ -408,7 +408,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_BoldOnly_IgnoresDelimiterLines()
     {
         static PdfWord W(string text, double left, double right, double top, double bottom)
-            => new(text, new BoundingBox2D(left, right, top, bottom), new PdfWordFormat(11, "Lato-Regular", false, false));
+            => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> {
             W("Department:", 10, 100, 200, 190),
@@ -544,7 +544,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             return;
 
         using var lease = _service.LoadPdfFromFile(paths[0]);
-        var info = _service.GetPdfInfo(lease.Id);
+        _service.GetPdfInfo(lease.Id);
         var lines = _service.GetLines(lease.Id, 1);
         if (lines.Count == 0)
             return;
@@ -583,7 +583,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     {
         var ul = new PdfWordFormat(FontUnderline: true);
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
-            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+            => new(text, new(left, right, top, bottom), f);
 
         var words = new List<PdfWord> {
             W("Case", 10, 35, 102, 98, ul), W("Calendar", 100, 155, 102, 98, ul), W("Schedule", 250, 325, 102, 98, ul),
@@ -602,13 +602,13 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     {
         var bold = new PdfWordFormat(FontBold: true);
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
-            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+            => new(text, new(left, right, top, bottom), f);
 
         var words = new List<PdfWord> {
             W("TIMESTAMP", 20, 120, 100, 96, bold),
             W("AUDIT", 200, 260, 100, 96, bold),
-            W("04/13/2026", 20, 100, 88, 84, null),
-            W("someone", 200, 280, 88, 84, null),
+            W("04/13/2026", 20, 100, 88, 84),
+            W("someone", 200, 280, 88, 84),
         };
 
         var headers = _service.InferTableHeadersFromFormatting(words, yTolerance: 5.0, PdfInferFormattingFlags.Bold);
@@ -622,15 +622,15 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     {
         var ul = new PdfWordFormat(FontUnderline: true);
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null)
-            => new(text, new BoundingBox2D(left, right, top, bottom), f);
+            => new(text, new(left, right, top, bottom), f);
 
         var wordsPlainSecondRow = new List<PdfWord> {
             W("Case", 10, 45, 102, 98, ul),
             W("Calendar", 50, 115, 102, 98, ul),
             W("Schedule", 200, 275, 102, 98, ul),
-            W("Event", 15, 58, 90, 86, null),
-            W("Type", 62, 105, 90, 86, null),
-            W("Start", 208, 265, 90, 86, null),
+            W("Event", 15, 58, 90, 86),
+            W("Type", 62, 105, 90, 86),
+            W("Start", 208, 265, 90, 86),
         };
 
         var h1 = _service.InferTableHeadersFromFormatting(wordsPlainSecondRow, yTolerance: 5.0, PdfInferFormattingFlags.Underline);

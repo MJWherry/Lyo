@@ -75,8 +75,13 @@ public class UpdateService<TContext>(
             .ConfigureAwait(false);
         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
         cache.Set(
-            $"entity:{typeof(TDbModel).Name}:keys={string.Join("|", entityKeys.Order().Select(i => i?.ToString()))}", result.NewData!,
-            ["entities", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}"]);
+            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys, includes: null, rawResponse: false),
+            result.NewData!,
+            [
+                "entities",
+                QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
+                QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys),
+            ]);
 
         RecordCrudSuccess(operation, typeof(TDbModel));
         return result;

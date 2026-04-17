@@ -54,6 +54,49 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
         return convertedKeys;
     }
 
+    public IReadOnlyList<object?>? TryGetPrimaryKeyValuesFromProjectedDictionary(IReadOnlyDictionary<string, object?> row, Type entityClrType, DbContext context)
+    {
+        ArgumentHelpers.ThrowIfNull(row, nameof(row));
+        ArgumentHelpers.ThrowIfNull(entityClrType, nameof(entityClrType));
+        ArgumentHelpers.ThrowIfNull(context, nameof(context));
+
+        var entityType = context.Model.FindEntityType(entityClrType);
+        var pk = entityType?.FindPrimaryKey();
+        if (pk is null || pk.Properties.Count == 0)
+            return null;
+
+        var values = new object?[pk.Properties.Count];
+        for (var i = 0; i < pk.Properties.Count; i++) {
+            var propertyName = pk.Properties[i].Name;
+            if (!TryGetProjectedRowValue(row, propertyName, out values[i]))
+                return null;
+        }
+
+        return values;
+    }
+
+    private static bool TryGetProjectedRowValue(IReadOnlyDictionary<string, object?> row, string propertyName, out object? value)
+    {
+        if (row.TryGetValue(propertyName, out value))
+            return true;
+
+        foreach (var kv in row) {
+            if (string.Equals(kv.Key, propertyName, StringComparison.OrdinalIgnoreCase)) {
+                value = kv.Value;
+                return true;
+            }
+
+            var suffix = "." + propertyName;
+            if (kv.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
+                value = kv.Value;
+                return true;
+            }
+        }
+
+        value = null;
+        return false;
+    }
+
     public object? ConvertToTargetType(object? value, Type targetType)
     {
         if (value == null)

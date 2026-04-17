@@ -11,6 +11,51 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 /// <summary>Builds cache keys for query results. Shared by QueryService. Tags use <see cref="QueryCacheTagBuilder" />.</summary>
 public static class QueryCacheKeyBuilder
 {
+    /// <summary>
+    /// Cache key for GET-by-primary-key responses. The base segment matches <see cref="QueryCacheTagBuilder.EntityInstanceTag" />
+    /// for the same PK values (EF key order), so <see cref="ICacheService.InvalidateCacheItem" /> and tag invalidation stay aligned.
+    /// </summary>
+    public static string BuildSingleEntityGetCacheKey(
+        Type entityClrType,
+        IReadOnlyList<object?> primaryKeyValuesInEfOrder,
+        IReadOnlyList<string>? includes = null,
+        bool rawResponse = false)
+        => BuildSingleEntityGetCacheKeyCore(entityClrType, primaryKeyValuesInEfOrder, includes, rawResponse);
+
+    /// <inheritdoc cref="BuildSingleEntityGetCacheKey(System.Type,System.Collections.Generic.IReadOnlyList{object?},System.Collections.Generic.IReadOnlyList{string}?,bool)" />
+    public static string BuildSingleEntityGetCacheKey(
+        Type entityClrType,
+        object[] primaryKeyValuesInEfOrder,
+        IReadOnlyList<string>? includes = null,
+        bool rawResponse = false)
+    {
+        var wrapped = new object?[primaryKeyValuesInEfOrder.Length];
+        Array.Copy(primaryKeyValuesInEfOrder, wrapped, primaryKeyValuesInEfOrder.Length);
+        return BuildSingleEntityGetCacheKeyCore(entityClrType, wrapped, includes, rawResponse);
+    }
+
+    /// <summary>
+    /// Shared implementation. Public overloads for PK values as an array vs <see cref="IReadOnlyList{T}" /> must not delegate to each
+    /// other: an array argument can bind to the array overload again and recurse infinitely.
+    /// </summary>
+    private static string BuildSingleEntityGetCacheKeyCore(
+        Type entityClrType,
+        IReadOnlyList<object?> primaryKeyValuesInEfOrder,
+        IReadOnlyList<string>? includes,
+        bool rawResponse)
+    {
+        var key = QueryCacheTagBuilder.EntityInstanceTag(entityClrType, primaryKeyValuesInEfOrder);
+        if (includes is { Count: > 0 }) {
+            var includeKey = string.Join("|", includes.Order(StringComparer.OrdinalIgnoreCase));
+            key += ":include=" + includeKey;
+        }
+
+        if (rawResponse)
+            key += ":raw";
+
+        return key;
+    }
+
     /// <summary>Cache key for <c>/Query</c> (full entities). Does not include projection dimensions.</summary>
     public static string Build<TDb, TResponse>(QueryReq queryRequest)
         where TDb : class

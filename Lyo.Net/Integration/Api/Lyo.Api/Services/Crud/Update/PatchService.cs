@@ -84,8 +84,13 @@ public class PatchService<TContext>(
                 .ConfigureAwait(false);
             var keys = typeConversion.GetPrimaryKeyValues(entity, context);
             cache.Set(
-                $"entity:{typeof(TDbModel).Name}:keys={string.Join("|", keys.Order().Select(i => i?.ToString()))}", result.NewData!,
-                ["entities", $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}"]);
+                QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys, includes: null, rawResponse: false),
+                result.NewData!,
+                [
+                    "entities",
+                    QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
+                    QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys),
+                ]);
 
             RecordCrudSuccess(operation, typeof(TDbModel));
             return result;

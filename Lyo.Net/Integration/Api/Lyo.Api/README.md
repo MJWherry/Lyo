@@ -682,7 +682,7 @@ app.CreateBuilder<...>("/api/items", "Items")
 
 ## Query result caching
 
-**`POST …/Query`** and **`POST …/QueryProject`** both use the same **`IQueryService`** pipeline and the same **`QueryOptions`** singleton. Cached entries are keyed from the request (filters, paging, includes/sort for Query; plus projection **`Select`**, computed fields, and projected row-shape flags for QueryProject — see **`QueryCacheKeyBuilder`**).
+**`POST …/Query`** and **`POST …/QueryProject`** both use the same **`IQueryService`** pipeline and the same **`QueryOptions`** singleton. Cached entries are keyed from the request (filters, paging, includes/sort for Query; plus projection **`Select`**, computed fields, and projected row-shape flags for QueryProject — see **`QueryCacheKeyBuilder`**). Tags for invalidation are built with **`QueryCacheTagBuilder`** (scope tags such as **`queries`** / **`queryproject`**, **`entities`**, type-wide **`entity:{type}`**, per-row **`entity:{type}:{pk}`**, and SQL-projected **`projshape:{sha1}`** fingerprints — see below).
 
 - **Default (`CacheQueryResultsAsUtf8Payload` = `false`)** — **`GetOrSetAsync`** stores **`QueryRes<T>`** / **`ProjectedQueryRes<T>`** with Fusion’s usual serialization for CLR graphs.
 - **Typed payload (`CacheQueryResultsAsUtf8Payload` = `true`)** — **`GetOrSetPayloadAsync<T>`** stores framed bytes via **`ICachePayloadSerializer`** and **`ICachePayloadCodec`** (optional compress/encrypt under **`CacheOptions:Payload`**). The SQL-level QueryProject path and the load-then-project fallback both use this mode when enabled; fallback goes through **`QueryCore`**, which already applies the same flag.
@@ -693,20 +693,37 @@ Register cache before **`AddLyoQueryServices`** / **`AddLyoCrudServices`**. **`A
 
 ### Invalidation on writes (built-in CRUD)
 
-When query caching is enabled, successful writes call **`ICacheService.InvalidateQueryCacheAsync<TDbModel>()`**, which removes cache entries associated with the tag **`entity:{lowercased type name}`**. This runs from the standard **`CreateService`**, **`UpdateService`**, **`PatchService`**, **`DeleteService`**, and **`UpsertService`** pipelines — including bulk operations that complete successfully for the affected entity.
+Invalidation uses **tags** (Fusion **`RemoveByTagAsync`**) and, where useful, **direct cache keys** so a single primary key can clear list queries, **`GET …/{id}`** rows, and projected pages without relying on tag scans alone.
 
-How tags attach to cached reads (see **`QueryService.QueryCore`** and **`Get`** overloads):
+**Granular primary keys — `QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync`**
 
-- **`POST …/Query`** with **`Include`**, and **`GET …/{id}`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type returned by **`loaderService.GetReferencedTypes`** for those include paths. So **`InvalidateQueryCacheAsync<AddressEntity>()`** invalidates not only Address-only queries but also **cached parent queries** (e.g. Person) that **included** Address — the child tag is on the same cache entry.
-- **`POST …/QueryProject`**: the **SQL projection** path uses the same **`GetReferencedTypes`** tagging as **`/Query`** for derived include paths from **`Select`** / **`Where`** (plus **`queries`**, **`queryproject`**, **`entities`**, and root **`entity:{T}`**). The **fallback** path goes through **`QueryCore`** and uses the same pattern. A write on a **related** entity type therefore invalidates matching **`QueryProject`** cache entries as well.
+Used after successful **Patch**, **Update**, **Delete**, and many **Upsert** paths when the affected rows are known. For each distinct primary key (up to **`CacheOptions.MaxBulkQueryInvalidationByIdCount`**; above that it falls back to the broad type tag only):
+
+- **`InvalidateCacheItemByTag`** with **`entity:{lowercased type name}:{pkSegment}`** — removes every cached entry carrying that **instance tag** (list **`/Query`** / **`/QueryProject`** pages that tagged those rows, **`GET`** results that included that entity in the graph, etc.).
+- **`InvalidateCacheItem`** for the **canonical single-entity GET keys** built by **`QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey`**: the base key **matches the instance tag string** (EF key order, same as **`QueryCacheTagBuilder.EntityInstanceTag`**), with optional **`:include=…`** and **`:raw`** suffixes on **`GET`**. Invalidation explicitly removes the **no-`include`** mapped and **`:raw`** entries so **`GET`** by id is cleared even when clients also subscribe by key.
+
+**Broad type sweep — `InvalidateQueryCacheAsync<TDbModel>()`**
+
+Maps to tag **`entity:{lowercased type name}`**. Still used where a **new row** cannot be expressed as existing instance tags (e.g. **`CreateService`** after create) and remains the bulk fallback when too many distinct keys would be invalidated at once.
+
+**Projection shape — `QueryCacheTagBuilder.FormatProjShapeTag` / `projshape:{sha1}`**
+
+SQL-level **`POST …/QueryProject`** cache entries are tagged with a stable **`projshape:…`** fingerprint (sorted select paths, computed fields, zip flag). Call **`QueryCacheInvalidation.InvalidateProjectedQueriesByProjShapeAsync`** to drop every cached page for that grid shape without invalidating unrelated projections.
+
+How tags attach to cached reads (see **`QueryService.QueryCore`**, **`Get`** overloads, and **`QueryCacheTagBuilder`**):
+
+- **`GET …/{id}`** (mapped and raw overloads): cache **key** is **`BuildSingleEntityGetCacheKey`**; tags include **`entity:{type}`** and **`entity:{type}:{pk}`** (plus cascade tags when **`includes`** are used). **Patch** / **Update** **`cache.Set`** for the written DTO uses the **same key shape** and **instance tag** so post-write caches stay aligned.
+- **`POST …/Query`** with **`Include`**, and **`GET`** with **`includes`**: each cached result is tagged with **`entity:{root}`** plus **`entity:{type}`** for every EF entity type from **`loaderService.GetReferencedTypes`**, and **instance tags** for entities in the result. **`InvalidateQueryCacheAsync<AddressEntity>()`** (broad) or **per-key** invalidation for Address rows clears cached parent reads (e.g. Person) that carried **`entity:address:…`** tags.
+- **`POST …/QueryProject`**: the **SQL projection** path adds **`projshape:…`**, **`queryproject`**, **`GetReferencedTypes`** type tags, **instance tags** from projected rows (root and include cascade where applicable), plus the same scope tags as **`/Query`**. The **fallback** path uses **`QueryCore`** tagging. A write on a **related** entity type still invalidates matching **`QueryProject`** entries via shared **`entity:{child}:…`** instance tags.
 
 | Concern | Behavior |
 |--------|----------|
-| **Patch / Upsert / Update / Create / Delete** | **`InvalidateQueryCacheAsync<T>()`** for the written entity type after success |
-| **Unrelated root entity** (e.g. Order vs Person) | **Not** invalidated — different `entity:` tags |
-| **Child entity** updated via **its** endpoint | Clears that type’s tag — **does** invalidate **parent `GET`/`Query`/`QueryProject`** caches whose stored tags include that **`entity:{child}`** (includes / projected navigation paths) |
+| **Patch / Update / Delete / Upsert** (known keys) | **`InvalidateQueryCachesForEntityKeysAsync`** — instance **tag** + **direct GET keys** (canonical mapped + `:raw` without includes); falls back to **`InvalidateQueryCacheAsync<T>()`** when key count exceeds the configured bulk threshold |
+| **Create** | **`InvalidateQueryCacheAsync<T>()`** — broad **`entity:{T}`** (new rows have no prior instance tags) |
+| **Unrelated root entity** (e.g. Order vs Person) | **Not** invalidated by another type’s keys — different **`entity:`** tags / keys |
+| **Child entity** updated via **its** endpoint | Instance tag **`entity:{child}:{pk}`** invalidates **parent** **`GET`/`Query`/`QueryProject`** entries that included that tag |
 
-For extra fan-out (custom rules, raw SQL, or third-party writers), use **Before/After** hooks or **`InvalidateCacheItemByTag`** / **`InvalidateAllCachedQueriesAsync`** as needed.
+For extra fan-out (custom rules, raw SQL, or third-party writers), use **Before/After** hooks or **`InvalidateCacheItem`**, **`InvalidateCacheItemByTag`**, **`InvalidateProjectedQueriesByProjShapeAsync`**, or **`InvalidateAllCachedQueriesAsync`** as needed.
 
 Example (see also **`Lyo.TestApi`** `appsettings.json`):
 
@@ -848,6 +865,8 @@ Top-level `public` types in `*.cs` (*75*). Nested types and file-scoped namespac
 - `PostgresSprocService`
 - `ProjectionService`
 - `QueryCacheKeyBuilder`
+- `QueryCacheInvalidation`
+- `QueryCacheTagBuilder`
 - `QueryEndpointConfigBuilder`
 - `QueryHistoryEndpointConfigBuilder`
 - `QueryHistoryService`

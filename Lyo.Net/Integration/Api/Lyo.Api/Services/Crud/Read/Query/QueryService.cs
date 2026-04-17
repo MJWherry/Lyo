@@ -149,17 +149,20 @@ public class QueryService<TContext>(
             ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
             ArgumentHelpers.ThrowIfNullOrEmpty(keys, nameof(keys));
             using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TResult));
-            var typeName = typeof(TDbModel).Name;
             var matIncludes = includes?.ToList() ?? [];
             var includeArray = matIncludes.Any() ? matIncludes.ToArray() : null;
-            var cacheKey =
-                $"entity:{typeName}:keys={string.Join("|", keys.Order().Select(i => i.ToString()))}{(!matIncludes.Any() ? "" : $":include={string.Join("|", matIncludes.Order().Select(i => i.ToString()))}")}";
 
-            if (matIncludes.Any()) {
-                await using var validationContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-                validationContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                loaderService.ValidateIncludePaths<TContext, TDbModel>(validationContext, matIncludes);
-            }
+            await using var setupContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            setupContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            if (matIncludes.Count > 0)
+                loaderService.ValidateIncludePaths<TContext, TDbModel>(setupContext, matIncludes);
+
+            var pkOrdered = typeConversion.ConvertKeysForFind<TDbModel>(keys, setupContext);
+            var cacheKey = QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(
+                typeof(TDbModel),
+                pkOrdered,
+                matIncludes.Count > 0 ? matIncludes : null,
+                rawResponse: false);
 
             var cachedResult = await cache.GetOrSetAsync<TResult?>(
                 cacheKey, async ct2 => {
@@ -216,16 +219,19 @@ public class QueryService<TContext>(
             ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
             ArgumentHelpers.ThrowIfNullOrEmpty(keys, nameof(keys));
             using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TDbModel));
-            var typeName = typeof(TDbModel).Name;
             var matIncludes = includes?.ToList() ?? [];
-            var cacheKey =
-                $"entity:{typeName}:keys={string.Join("|", keys.Order().Select(i => i.ToString()))}{(!matIncludes.Any() ? "" : $":include={string.Join("|", matIncludes.Order().Select(i => i.ToString()))}")}:raw";
 
-            if (matIncludes.Any()) {
-                await using var validationContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-                validationContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-                loaderService.ValidateIncludePaths<TContext, TDbModel>(validationContext, matIncludes);
-            }
+            await using var setupContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            setupContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+            if (matIncludes.Count > 0)
+                loaderService.ValidateIncludePaths<TContext, TDbModel>(setupContext, matIncludes);
+
+            var pkOrdered = typeConversion.ConvertKeysForFind<TDbModel>(keys, setupContext);
+            var cacheKey = QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(
+                typeof(TDbModel),
+                pkOrdered,
+                matIncludes.Count > 0 ? matIncludes : null,
+                rawResponse: true);
 
             var cachedResult = await cache.GetOrSetAsync<TDbModel?>(
                 cacheKey, async ct2 => {
@@ -513,22 +519,6 @@ public class QueryService<TContext>(
 
                 Logger.LogDebug("Query cache key: {CacheKey}", cacheKey);
                 try {
-                    string[] BuildSqlProjectionCacheTags()
-                    {
-                        var tags = new List<string>(4 + effectiveIncludes.Count) {
-                            "queries",
-                            "queryproject",
-                            "entities",
-                            $"entity:{typeof(TDbModel).Name.ToLowerInvariant()}",
-                        };
-                        if (sharedIncludeValidationAndSqlContext is not null && effectiveIncludes.Count > 0) {
-                            foreach (var refType in loaderService.GetReferencedTypes<TContext, TDbModel>(sharedIncludeValidationAndSqlContext, effectiveIncludes))
-                                tags.Add($"entity:{refType.Name.ToLowerInvariant()}");
-                        }
-
-                        return tags.ToArray();
-                    }
-
                     async Task<(ProjectedQueryRes<object?>? projected, string[]? tags)> BuildSqlProjectedCacheEntryAsync(CancellationToken ct2)
                     {
                         var r = await ExecuteSqlProjectedQueryAsync(
@@ -551,7 +541,33 @@ public class QueryService<TContext>(
                         var projectedSuccess = ResultFactory.ProjectedQuerySuccess(
                             queryRequestForEcho, items, r.Start, items.Count, r.Total, r.HasMore, entityTypes: entityTypes);
 
-                        return (projectedSuccess, BuildSqlProjectionCacheTags());
+                        var ownsTaggingContext = sharedIncludeValidationAndSqlContext is null;
+                        TContext? taggingContext = null;
+                        if (ownsTaggingContext)
+                            taggingContext = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
+
+                        var contextForTags = taggingContext ?? sharedIncludeValidationAndSqlContext!;
+                        try {
+                            IReadOnlyList<Type> referencedIncludeTypes = effectiveIncludes.Count > 0
+                                ? loaderService.GetReferencedTypes<TContext, TDbModel>(contextForTags, effectiveIncludes)
+                                : Array.Empty<Type>();
+
+                            var cacheTags = QueryCacheTagBuilder.BuildProjectedSqlQueryTags<TDbModel>(
+                                items,
+                                contextForTags,
+                                typeConversion,
+                                projectedFieldSpecs,
+                                computedFields,
+                                zipSiblingSelections,
+                                effectiveIncludes,
+                                referencedIncludeTypes);
+
+                            return (projectedSuccess, cacheTags);
+                        }
+                        finally {
+                            if (ownsTaggingContext && taggingContext is IAsyncDisposable asyncTagging)
+                                await asyncTagging.DisposeAsync().ConfigureAwait(false);
+                        }
                     }
 
                     ProjectedQueryRes<object?>? sqlResult;

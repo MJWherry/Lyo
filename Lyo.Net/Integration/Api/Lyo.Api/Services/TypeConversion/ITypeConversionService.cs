@@ -15,4 +15,10 @@ public interface ITypeConversionService : IValueConversionService
 
     /// <summary>Converts an object array of key values to properly typed objects for EF Core FindAsync</summary>
     object[] ConvertKeysForFind<TEntity>(object[] keys, DbContext context);
+
+    /// <summary>
+    /// Reads primary key columns from a projected query row (<see cref="System.Collections.Generic.Dictionary{TKey,TValue}" />)
+    /// when they are present as top-level keys (or keys ending with <c>.PropertyName</c>). Returns null if any key segment is missing.
+    /// </summary>
+    IReadOnlyList<object?>? TryGetPrimaryKeyValuesFromProjectedDictionary(IReadOnlyDictionary<string, object?> row, Type entityClrType, DbContext context);
 }
