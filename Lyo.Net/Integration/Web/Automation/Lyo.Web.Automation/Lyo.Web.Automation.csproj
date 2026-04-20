@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Web.Automation.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0"/>
+        <PackageReference Include="System.Text.Json" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj" />
+    </ItemGroup>
+
+</Project>

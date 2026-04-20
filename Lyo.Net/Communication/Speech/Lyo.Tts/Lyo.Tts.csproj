@@ -17,5 +17,8 @@
         <ProjectReference Include="..\Lyo.Tts.Models\Lyo.Tts.Models.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>
 

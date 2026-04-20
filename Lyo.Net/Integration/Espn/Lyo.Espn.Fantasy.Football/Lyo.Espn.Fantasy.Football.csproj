@@ -15,4 +15,7 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>

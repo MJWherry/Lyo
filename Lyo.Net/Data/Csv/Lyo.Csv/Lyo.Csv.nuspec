@@ -23,6 +23,7 @@
                 <dependency id="System.Text.Encoding.CodePages" version="[10,)"/>
             </group>
             <group targetFramework="netstandard2.0">
+                <dependency id="PolySharp" version="1.15.0"/>
                 <dependency id="CsvHelper" version="[33.1,)"/>
                 <dependency id="Lyo.Common" version="[1.0.71,)"/>
                 <dependency id="Lyo.Csv.Models" version="[1.0.71,)"/>

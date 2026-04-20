@@ -12,4 +12,7 @@
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>

@@ -13,4 +13,7 @@
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>

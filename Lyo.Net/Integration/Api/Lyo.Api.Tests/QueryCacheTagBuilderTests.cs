@@ -77,4 +77,29 @@ public sealed class QueryCacheTagBuilderTests
             QueryCacheTagBuilder.EntityInstanceTag(t, pk) + ":raw",
             QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, includes: null, rawResponse: true));
     }
+
+    [Fact]
+    public void BuildProjectedSqlQueryTagsBroad_IncludesScopeEntitiesShapeAndRefTypes()
+    {
+        var specs = new[] { new ProjectedFieldSpec("a", "A", ["A"]) };
+        var tags = QueryCacheTagBuilder.BuildProjectedSqlQueryTagsBroad<QueryCacheTagBuilderTests>(
+            specs,
+            [],
+            false,
+            [typeof(string)]);
+
+        Assert.Contains(QueryCacheTagBuilder.QueryScopeTag, tags);
+        Assert.Contains(QueryCacheTagBuilder.QueryProjectScopeTag, tags);
+        Assert.Contains("entities", tags);
+        Assert.Contains(QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)), tags);
+        Assert.Contains(QueryCacheTagBuilder.EntityTypeTag(typeof(string)), tags);
+        Assert.Contains(QueryCacheTagBuilder.FormatProjShapeTag(specs, [], false), tags);
+    }
+
+    [Fact]
+    public void BuildSingleEntityGetRootTypeTags_MatchesEntitiesAndType()
+    {
+        var tags = QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<QueryCacheTagBuilderTests>();
+        Assert.Equal(new[] { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)) }, tags);
+    }
 }

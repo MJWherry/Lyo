@@ -77,11 +77,14 @@ public class UpdateService<TContext>(
         cache.Set(
             QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys, includes: null, rawResponse: false),
             result.NewData!,
-            [
-                "entities",
-                QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
-                QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys),
-            ]);
+            cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
+                ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
+                :
+                [
+                    "entities",
+                    QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
+                    QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys),
+                ]);
 
         RecordCrudSuccess(operation, typeof(TDbModel));
         return result;

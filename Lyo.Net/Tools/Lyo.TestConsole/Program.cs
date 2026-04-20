@@ -2,6 +2,7 @@
 
 using System.Linq.Expressions;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Client;
@@ -47,6 +48,8 @@ using Lyo.Profanity;
 using Lyo.QRCode;
 using Lyo.Query.Models.Common;
 using Lyo.Scheduler;
+using Lyo.Web.Automation.Selenium;
+using Lyo.Web.Automation.Selenium.Service;
 using Lyo.ShortUrl;
 using Lyo.ShortUrl.Postgres;
 using Lyo.Sms.Models;
@@ -59,6 +62,9 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
+using Lyo.Web.Automation;
+using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Plan;
 using Lyo.Web.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
@@ -76,7 +82,9 @@ var host = Host.CreateDefaultBuilder(args)
                 c.SingleLine = true;
                 c.UseUtcTimestamp = true;
             })); //logging
-
+        
+        services.AddSeleniumBrowserService();
+        
         services.AddIOTempService(); //temp file management
         services.AddPreviewService(); //preview HTML, images, etc. in browser
         services.AddLyoMetrics(); //metrics
@@ -201,6 +209,10 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
+
+
+
+
 
 var discordBotOpts = host.Services.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value;
 if (!string.IsNullOrWhiteSpace(discordBotOpts.Token)) {

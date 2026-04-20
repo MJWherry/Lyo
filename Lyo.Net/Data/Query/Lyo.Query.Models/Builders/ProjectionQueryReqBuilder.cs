@@ -81,13 +81,13 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
-    public ProjectionQueryReqBuilder AddQuery(WhereClause whereClause)
+    public ProjectionQueryReqBuilder AddWhere(WhereClause whereClause)
     {
         _query.WhereClause = whereClause;
         return this;
     }
 
-    public ProjectionQueryReqBuilder AddQuery(Action<WhereClauseBuilder> configure)
+    public ProjectionQueryReqBuilder AddWhere(Action<WhereClauseBuilder> configure)
     {
         var qb = WhereClauseBuilder.And();
         configure(qb);
@@ -166,13 +166,13 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
             return this;
         }
 
-        public ProjectionQueryReqForBuilder<T> AddQuery(Action<WhereClauseBuilder.WhereClauseBuilderFor<T>> configure)
+        public ProjectionQueryReqForBuilder<T> AddWhere(Action<WhereClauseBuilder.WhereClauseBuilderFor<T>> configure)
         {
             var qb = WhereClauseBuilder.And();
             var typed = qb.For<T>();
             configure(typed);
             var node = qb.Build();
-            _parent.AddQuery(node);
+            _parent.AddWhere(node);
             return this;
         }
 

@@ -18,18 +18,18 @@ public class QueryBuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_AddQuery_BuildsNode()
+    public void QueryReqBuilder_AddWhere_BuildsNode()
     {
         var node = WhereClauseBuilder.And(b => b.Equals("Name", "Joe"));
-        var qr = QueryReqBuilder.New().AddQuery(node).Build();
+        var qr = QueryReqBuilder.New().AddWhere(node).Build();
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("Name", qr.WhereClause!.ToString());
     }
 
     [Fact]
-    public void QueryReqBuilder_AddQuery_WithBuilderFunc()
+    public void QueryReqBuilder_AddWhere_WithBuilderFunc()
     {
-        var qr = QueryReqBuilder.New().AddQuery(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active"))).Build();
+        var qr = QueryReqBuilder.New().AddWhere(b => b.AddCondition("Name", ComparisonOperatorEnum.Equals, "Joe").AddAnd(inner => inner.Equals("Status", "Active"))).Build();
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("Name", qr.WhereClause!.ToString());
         Assert.Contains("Status", qr.WhereClause.ToString());
@@ -71,20 +71,20 @@ public class QueryBuilderTests
     }
 
     [Fact]
-    public void QueryReqBuilder_ForT_AddQuery_UsesQueryPropertyNameAttribute()
+    public void QueryReqBuilder_ForT_AddWhere_UsesQueryPropertyNameAttribute()
     {
         var builder = QueryReqBuilder.New().For<TestEntityWithQueryProp>();
-        builder.AddQuery(q => q.AddEquals(e => e.Charges, "x"));
+        builder.AddWhere(q => q.AddEquals(e => e.Charges, "x"));
         var qr = builder.Done().Build();
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("DocketCharges", qr.WhereClause!.ToString());
     }
 
     [Fact]
-    public void QueryReqBuilder_ForT_AddQuery_BuildsNode()
+    public void QueryReqBuilder_ForT_AddWhere_BuildsNode()
     {
         var builder = QueryReqBuilder.New().For<Person>();
-        builder.AddQuery(q => q.AddEquals(p => p.Name, "Zoe"));
+        builder.AddWhere(q => q.AddEquals(p => p.Name, "Zoe"));
         var qr = builder.Done().Build();
         Assert.NotNull(qr.WhereClause);
         Assert.Contains("Name", qr.WhereClause!.ToString());

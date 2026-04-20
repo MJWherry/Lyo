@@ -9,7 +9,7 @@
         <ProjectReference Include="..\Lyo.Pdf\Lyo.Pdf.csproj"/>
         <ProjectReference Include="..\Lyo.Pdf.Models\Lyo.Pdf.Models.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
-        <ProjectReference Include="..\..\..\Integration\Web\WebRenderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

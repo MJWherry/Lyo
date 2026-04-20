@@ -302,7 +302,7 @@ public sealed class JobScheduler
     private async Task<JobInfo> LoadJobInfoAsync(JobDefinitionRes definition, CancellationToken ct = default)
     {
         var prevRunsQuery = new QueryReqBuilder().AddIncludes(JobRunIncludes)
-            .AddQuery(WhereClauseBuilder.Condition("JobDefinitionId", ComparisonOperatorEnum.Equals, definition.Id.ToString()))
+            .AddWhere(WhereClauseBuilder.Condition("JobDefinitionId", ComparisonOperatorEnum.Equals, definition.Id.ToString()))
             .AddSort("CreatedTimestamp")
             .SetPagination(0, 10)
             .Build();
@@ -317,7 +317,7 @@ public sealed class JobScheduler
                 GroupOperatorEnum.And, prevRunsQuery.WhereClause!,
                 WhereClauseBuilder.Condition("Result", ComparisonOperatorEnum.In, new[] { nameof(JobRunResult.Success), nameof(JobRunResult.SuccessWithWarnings) }));
 
-            var successQuery = new QueryReqBuilder(prevRunsQuery).First().AddQuery(successNode).Build();
+            var successQuery = new QueryReqBuilder(prevRunsQuery).First().AddWhere(successNode).Build();
             var successRes = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsQuery), successQuery, null, ct)
                 .ConfigureAwait(false);
 
@@ -330,7 +330,7 @@ public sealed class JobScheduler
         var failNode = WhereClauseBuilder.CombineAs(
             GroupOperatorEnum.And, prevRunsQuery.WhereClause!, WhereClauseBuilder.Condition("Result", ComparisonOperatorEnum.Equals, nameof(JobRunResult.Failure)));
 
-        var failQuery = new QueryReqBuilder(prevRunsQuery).First().AddQuery(failNode).Build();
+        var failQuery = new QueryReqBuilder(prevRunsQuery).First().AddWhere(failNode).Build();
         var failRes = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsQuery), failQuery, null, ct).ConfigureAwait(false);
         lastFailed = failRes?.Items?.FirstOrDefault();
         return new(definition, null, null, lastRun, lastSuccessful, lastFailed);

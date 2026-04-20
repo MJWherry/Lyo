@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <NuspecFile>Lyo.Web.Automation.Selenium.nuspec</NuspecFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[10,)"/>
+        <PackageReference Include="Selenium.Support" Version="4.*"/>
+        <PackageReference Include="Selenium.WebDriver" Version="4.*"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json" Version="[10,)"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+    </ItemGroup>
+
+</Project>

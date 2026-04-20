@@ -50,7 +50,7 @@
         <ProjectReference Include="..\..\Data\QRCode\Lyo.QRCode.Web.Components\Lyo.QRCode.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
-        <ProjectReference Include="..\..\Integration\Web\WebRenderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\Features\Profanity\Lyo.Profanity\Lyo.Profanity.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>

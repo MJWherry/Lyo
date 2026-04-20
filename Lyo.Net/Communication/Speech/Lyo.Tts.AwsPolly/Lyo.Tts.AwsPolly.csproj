@@ -18,5 +18,8 @@
         <PackageReference Include="AWSSDK.Polly" Version="[4.0,)"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>
 

@@ -21,6 +21,7 @@
                 <dependency id="SmartFormat.NET" version="[3.6,)"/>
             </group>
             <group targetFramework="netstandard2.0">
+                <dependency id="PolySharp" version="1.15.0"/>
                 <dependency id="Lyo.Common" version="[1.0.71,)"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
                 <dependency id="Microsoft.Extensions.DependencyInjection.Abstractions" version="[10,)"/>

@@ -20,3 +20,5 @@ DTOs and builders for **query** requests (`QueryReq`, `ProjectionQueryReq`) and 
 ## Builders
 
 Use **`WhereClauseBuilder`** (and `WhereClauseBuilder.For<T>()` for typed paths) to construct trees in code. Factory helpers include `WhereClauseBuilder.Condition(...)` and `WhereClauseBuilder.ConditionWithSubClause(...)`.
+
+For full **`QueryReq`** / **`ProjectionQueryReq`** objects, use **`QueryReqBuilder`** and **`ProjectionQueryReqBuilder`** (and their **`For<T>()`** nested builders). Attach a filter tree with **`AddWhere`** (overload with a built **`WhereClause`** or a configure action on **`WhereClauseBuilder`**).

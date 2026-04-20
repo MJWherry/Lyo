@@ -33,6 +33,7 @@ public class QueryService<TContext>(
     ITypeConversionService typeConversion,
     ICacheService cache,
     QueryOptions queryOptions,
+    CacheOptions cacheOptions,
     IServiceProvider serviceProvider,
     ILogger<QueryService<TContext>>? logger = null,
     IMetrics? metrics = null)
@@ -173,23 +174,32 @@ public class QueryService<TContext>(
                     if (result is not null)
                         await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 
-                    var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
-                    tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
-                        typeof(TDbModel),
-                        result is null
-                            ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
-                            : typeConversion.GetPrimaryKeyValues(result, context)));
-                    if (result is not null && matIncludes.Count > 0)
-                        QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
+                    string[] cacheTags;
+                    if (cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad)
+                        cacheTags = matIncludes.Count > 0
+                            ? QueryCacheTagBuilder.BuildSingleEntityGetCacheTagsBroad<TContext, TDbModel>(context, loaderService, matIncludes)
+                            : QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>();
+                    else {
+                        var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
+                        tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
+                            typeof(TDbModel),
+                            result is null
+                                ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
+                                : typeConversion.GetPrimaryKeyValues(result, context)));
+                        if (result is not null && matIncludes.Count > 0)
+                            QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
+
+                        cacheTags = tagSet.ToArray();
+                    }
 
                     if (result is null)
-                        return (default, tagSet.ToArray());
+                        return (default, cacheTags);
 
                     var ctx = new GetContext<TDbModel, TContext>(keys, includeArray, result, context, serviceProvider);
                     before?.Invoke(ctx);
                     var response = MapOrCast<TDbModel, TResult>(Mapper, result);
                     after?.Invoke(ctx);
-                    return (response, tagSet.ToArray());
+                    return (response, cacheTags);
                 }, token: ct);
 
             if (cachedResult is null)
@@ -242,16 +252,25 @@ public class QueryService<TContext>(
                     if (result is not null)
                         await loaderService.LoadIncludes(context, result, matIncludes, ct2).ConfigureAwait(false);
 
-                    var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
-                    tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
-                        typeof(TDbModel),
-                        result is null
-                            ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
-                            : typeConversion.GetPrimaryKeyValues(result, context)));
-                    if (result is not null && matIncludes.Count > 0)
-                        QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
+                    string[] cacheTags;
+                    if (cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad)
+                        cacheTags = matIncludes.Count > 0
+                            ? QueryCacheTagBuilder.BuildSingleEntityGetCacheTagsBroad<TContext, TDbModel>(context, loaderService, matIncludes)
+                            : QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>();
+                    else {
+                        var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
+                        tagSet.Add(QueryCacheTagBuilder.EntityInstanceTag(
+                            typeof(TDbModel),
+                            result is null
+                                ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context)
+                                : typeConversion.GetPrimaryKeyValues(result, context)));
+                        if (result is not null && matIncludes.Count > 0)
+                            QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
 
-                    return (result, tagSet.ToArray());
+                        cacheTags = tagSet.ToArray();
+                    }
+
+                    return (result, cacheTags);
                 }, token: ct);
 
             if (cachedResult is null)
@@ -383,7 +402,9 @@ public class QueryService<TContext>(
 
                     await ApplyPostLoadIncludesAsync(context, queryResults, queryRequest, keysProvided, state.IsInMemoryResults, ct2).ConfigureAwait(false);
                     ApplyMatchedOnlyFilterIfNeeded(queryRequest, queryResults);
-                    var tags = QueryCacheTagBuilder.BuildBasicQueryTags(queryResults, context, typeConversion, queryRequest.Include);
+                    var tags = cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
+                        ? QueryCacheTagBuilder.BuildBasicQueryTagsBroad<TContext, TDbModel>(context, loaderService, queryRequest.Include)
+                        : QueryCacheTagBuilder.BuildBasicQueryTags(queryResults, context, typeConversion, queryRequest.Include);
                     var result = ResultFactory.QuerySuccess(queryRequest, queryResults, queryRequest.Start, queryResults.Length, total, hasMore);
                     return (result, tags);
                 }
@@ -552,15 +573,21 @@ public class QueryService<TContext>(
                                 ? loaderService.GetReferencedTypes<TContext, TDbModel>(contextForTags, effectiveIncludes)
                                 : Array.Empty<Type>();
 
-                            var cacheTags = QueryCacheTagBuilder.BuildProjectedSqlQueryTags<TDbModel>(
-                                items,
-                                contextForTags,
-                                typeConversion,
-                                projectedFieldSpecs,
-                                computedFields,
-                                zipSiblingSelections,
-                                effectiveIncludes,
-                                referencedIncludeTypes);
+                            var cacheTags = cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
+                                ? QueryCacheTagBuilder.BuildProjectedSqlQueryTagsBroad<TDbModel>(
+                                    projectedFieldSpecs,
+                                    computedFields,
+                                    zipSiblingSelections,
+                                    referencedIncludeTypes)
+                                : QueryCacheTagBuilder.BuildProjectedSqlQueryTags<TDbModel>(
+                                    items,
+                                    contextForTags,
+                                    typeConversion,
+                                    projectedFieldSpecs,
+                                    computedFields,
+                                    zipSiblingSelections,
+                                    effectiveIncludes,
+                                    referencedIncludeTypes);
 
                             return (projectedSuccess, cacheTags);
                         }

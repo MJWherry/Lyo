@@ -441,7 +441,7 @@ using Lyo.Query.Models.Enums;
 
 var query = QueryReqBuilder.New()
     .AddIncludes("Addresses", "PhoneNumbers")
-    .AddQuery(b => b
+    .AddWhere(b => b
         .Equals("Status", "Active")
         .AddAnd(inner => inner
             .GreaterThan("Age", 18)
@@ -454,12 +454,12 @@ var query = QueryReqBuilder.New()
 var typed = QueryReqBuilder.New()
     .For<Person>()
     .Include(p => p.Addresses)
-    .AddQuery(q => q.AddEquals(p => p.Status, "Active"))
+    .AddWhere(q => q.AddEquals(p => p.Status, "Active"))
     .Done()
     .Build();
 ```
 
-Use **`ProjectionQueryReqBuilder`** when building **`ProjectionQueryReq`** (includes **`AddSelects`**, **`SetZipSiblingCollectionSelections`**, etc.).
+Use **`ProjectionQueryReqBuilder`** when building **`ProjectionQueryReq`** (includes **`AddSelects`**, **`AddWhere`**, **`SetZipSiblingCollectionSelections`**, etc.).
 
 ### QueryRequest Keys (object[][])
 
@@ -690,6 +690,8 @@ app.CreateBuilder<...>("/api/items", "Items")
 With typed payloads, **`CacheOptions:Payload`** can **`AutoCompress`** (above **`AutoCompressMinSizeBytes`**) and, on supported targets, **`AutoEncrypt`** (with **`EncryptionKeyId`** and **`IEncryptionService`**). Those steps run **before** the entry is written to the cache implementation. For a **distributed backplane** (e.g. **Redis** via Fusion’s secondary layer), that means **fewer bytes cross the network** on every cache read/write, which **cuts backplane latency** and bandwidth versus storing large uncompressed JSON blobs. For typical repetitive JSON query results, **lossless compression alone often shrinks stored size on the order of ~90%**, so the win is largest when the API tier and Redis are not co-located or when payload sizes are large.
 
 Register cache before **`AddLyoQueryServices`** / **`AddLyoCrudServices`**. **`AddLyoQueryServices`** registers **`ICachePayloadSerializer`** to match **`JsonOptions`**, so cached payloads stay consistent with API JSON.
+
+**`CacheOptions:QueryCacheTagGranularity`** (default **`Broad`**) controls how list/query/GET entries are tagged in **`QueryCacheTagBuilder`**. **`Broad`** keeps type-wide **`entity:{type}`** (plus scope/shape tags) — less CPU when storing entries; **`Granular`** adds **`entity:{type}:{pk}`** instance tags for finer invalidation. When **`Broad`** is active, **`InvalidateQueryCachesForEntityKeysAsync`** only removes the broad **`entity:{type}`** tag (no per-key work). Set **`Granular`** when you want mutations to bust only affected cached pages.
 
 ### Invalidation on writes (built-in CRUD)
 

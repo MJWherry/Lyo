@@ -9,4 +9,7 @@
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>

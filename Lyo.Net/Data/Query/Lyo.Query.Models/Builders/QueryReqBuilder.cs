@@ -44,13 +44,13 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
         return this;
     }
 
-    public QueryReqBuilder AddQuery(WhereClause whereClause)
+    public QueryReqBuilder AddWhere(WhereClause whereClause)
     {
         _query.WhereClause = whereClause;
         return this;
     }
 
-    public QueryReqBuilder AddQuery(Action<WhereClauseBuilder> configure)
+    public QueryReqBuilder AddWhere(Action<WhereClauseBuilder> configure)
     {
         var qb = WhereClauseBuilder.And();
         configure(qb);
@@ -79,14 +79,12 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
 
     public QueryReqBuilder SetTotalCountMode(QueryTotalCountMode totalCountMode)
     {
-        _query.Options ??= new();
         _query.Options.TotalCountMode = totalCountMode;
         return this;
     }
 
     public QueryReqBuilder SetIncludeFilterMode(QueryIncludeFilterMode includeFilterMode)
     {
-        _query.Options ??= new();
         _query.Options.IncludeFilterMode = includeFilterMode;
         return this;
     }
@@ -97,34 +95,30 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
 
     public override string ToString() => _query.ToString();
 
-    public class QueryReqForBuilder<T>
+    public class QueryReqForBuilder<T>(QueryReqBuilder parent)
     {
-        private readonly QueryReqBuilder _parent;
-
-        public QueryReqForBuilder(QueryReqBuilder parent) => _parent = parent;
-
         public QueryReqForBuilder<T> Include(Expression<Func<T, object?>> selector)
         {
             var path = QueryBuilderExpressionPathHelper.GetPropertyPath(selector);
             if (!string.IsNullOrEmpty(path))
-                _parent.AddIncludes(path);
+                parent.AddIncludes(path);
 
             return this;
         }
 
-        public QueryReqForBuilder<T> AddQuery(Action<WhereClauseBuilder.WhereClauseBuilderFor<T>> configure)
+        public QueryReqForBuilder<T> AddWhere(Action<WhereClauseBuilder.WhereClauseBuilderFor<T>> configure)
         {
             var qb = WhereClauseBuilder.And();
             var typed = qb.For<T>();
             configure(typed);
             var node = qb.Build();
-            _parent.AddQuery(node);
+            parent.AddWhere(node);
             return this;
         }
 
         public QueryReqForBuilder<T> AddSort(SortBy sortBy)
         {
-            _parent.AddSort(sortBy);
+            parent.AddSort(sortBy);
             return this;
         }
 
@@ -132,11 +126,11 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
         {
             var path = QueryBuilderExpressionPathHelper.GetPropertyPath(selector);
             if (!string.IsNullOrEmpty(path))
-                _parent.AddSort(path, direction, priority);
+                parent.AddSort(path, direction, priority);
 
             return this;
         }
 
-        public QueryReqBuilder Done() => _parent;
+        public QueryReqBuilder Done() => parent;
     }
 }

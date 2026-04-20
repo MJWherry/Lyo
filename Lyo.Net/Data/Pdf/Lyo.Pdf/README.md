@@ -48,9 +48,9 @@ public class MyExtractor(IPdfService pdf)
 
 `AddPdfService` registers **`PdfService`** as scoped and **`IPdfService`** to the same instance. For URL loading, register an `HttpClient` (e.g. `services.AddHttpClient(nameof(PdfService), ...)`).
 
-## Pairing with the annotator
+## Pairing with the Blazor annotator
 
-To define regions by drawing boxes in the browser (IDs → `PdfBoundingBox`), use **[Lyo.Pdf.Annotator](../Lyo.Pdf.Annotator/README.md)** and feed those boxes into `GetLinesInBoundingBox` — see the annotator README for a full example.
+To define regions by drawing boxes in the browser (IDs → `PdfBoundingBox`), use **`Lyo.Pdf.Web.Components`** (MudBlazor UI under **`PdfAnnotator/`**). That project absorbed the former standalone **`Lyo.Pdf.Annotator`** package. Feed the resulting boxes into `GetLinesInBoundingBox` / other `IPdfService` region helpers.
 
 ## Dependencies
 

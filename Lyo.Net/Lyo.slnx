@@ -239,6 +239,7 @@
         <File Path=".editorconfig" />
         <File Path="build-nuget.sh" />
         <File Path="Directory.Build.props" />
+        <File Path="Directory.Build.targets" />
     </Folder>
     <Folder Name="/Communication/" />
     <Folder Name="/Communication/Email/">
@@ -265,12 +266,12 @@
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.Web.Components/Lyo.MessageQueue.Web.Components.csproj" />
         <Project Path="Communication/MessageQueue/Lyo.MessageQueue.RabbitMq.Web.Components/Lyo.MessageQueue.RabbitMq.Web.Components.csproj" />
     </Folder>
-    <Folder Name="/Integration/Web/WebRenderer/">
-        <Project Path="Integration/Web/WebRenderer/Lyo.Web.WebRenderer/Lyo.Web.WebRenderer.csproj" />
+    <Folder Name="/Integration/Web/Renderer/">
+        <Project Path="Integration/Web/Renderer/Lyo.Web.WebRenderer/Lyo.Web.WebRenderer.csproj" />
     </Folder>
-    <Folder Name="/Integration/Web/WebReporting/">
-        <Project Path="Integration/Web/WebReporting/Lyo.Web.Reporting.Postgres/Lyo.Web.Reporting.Postgres.csproj" />
-        <Project Path="Integration/Web/WebReporting/Lyo.Web.Reporting/Lyo.Web.Reporting.csproj" />
+    <Folder Name="/Integration/Web/Reporting/">
+        <Project Path="Integration/Web/Reporting/Lyo.Web.Reporting.Postgres/Lyo.Web.Reporting.Postgres.csproj" />
+        <Project Path="Integration/Web/Reporting/Lyo.Web.Reporting/Lyo.Web.Reporting.csproj" />
     </Folder>
     <Folder Name="/Security/" />
     <Folder Name="/Security/Encryption/">
@@ -300,8 +301,11 @@
         <Project Path="Integration/Api/Lyo.Api.Tests/Lyo.Api.Tests.csproj" />
         <Project Path="Integration/Api/Lyo.Api/Lyo.Api.csproj" />
     </Folder>
-    <Folder Name="/Integration/Scraping/">
-        <Project Path="Integration/Scraping/Lyo.Scraping/Lyo.Scraping.csproj" />
+    <Folder Name="/Integration/Web/Automation/">
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation/Lyo.Web.Automation.csproj" />
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Selenium/Lyo.Web.Automation.Selenium.csproj" />
+        <File Path="Integration\Web\Automation\README.md" />
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Playwright/Lyo.Web.Automation.Playwright.csproj" />
     </Folder>
     <Folder Name="/Integration/Espn/">
         <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football/Lyo.Espn.Fantasy.Football.csproj" />

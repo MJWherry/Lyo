@@ -18,7 +18,7 @@ These are the areas that tend to anchor product work; each links to deeper docs 
 | **Query client UI** | Blazor components (e.g. data grid) that speak the same query shapes as the API. | Covered in the Lyo.Api README under *Blazor Components*; [Lyo.Web.Components](Lyo.Net/Integration/Web/Lyo.Web.Components/): Blazor UI aligned with API query shapes. |
 | **File storage** | Pluggable storage with optional compression and encryption, metadata, streaming, and duplicate handling. | [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): abstractions, metadata, compression, encryption. |
 | **Cloud blob backends** | AWS S3–compatible and Azure Blob implementations for the file storage abstractions. | [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage · [Lyo.FileStorage.Azure](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Azure/README.md): Azure Blob |
-| **PDF** | Load PDFs and extract text via **`IPdfService`** (`PdfService`): words/lines, bounding boxes, key–value and table-style extraction, merges. Models in `Lyo.Pdf.Models`; optional Blazor annotator for drawing regions by ID. | [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): PDF service, loading, and extraction. See also [Lyo.Pdf.Annotator](Lyo.Net/Data/Pdf/Lyo.Pdf.Annotator/README.md) for browser-based bounding-box mapping. |
+| **PDF** | Load PDFs and extract text via **`IPdfService`** (`PdfService`): words/lines, bounding boxes, key–value and table-style extraction, merges. Models in `Lyo.Pdf.Models`; **Blazor PDF annotator** (draw regions → `PdfBoundingBox`) ships inside **`Lyo.Pdf.Web.Components`**, not as a separate library. | [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): PDF service, loading, extraction, and how to pair with the annotator. UI: [`Lyo.Pdf.Web.Components`](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/) (`PdfAnnotator/`). |
 | **Encryption** | Authenticated encryption, envelope/two-key patterns, keystore integration. | [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md): authenticated encryption, envelope/two-key, key management. |
 | **Compression** | Multiple algorithms, streams/files, size limits and bomb protections. | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md): algorithms, streams/files, size limits and bomb guards. |
 
@@ -32,7 +32,7 @@ These are the areas that tend to anchor product work; each links to deeper docs 
 | [`Lyo.Net/Core/`](Lyo.Net/Core/) | Cross-cutting primitives: validation, metrics, resilience, exceptions, common types, math/science, people models, geolocation, webhooks, locks, scheduling, streams, date/time, audit, change tracking, health—domain-agnostic building blocks for the rest of the stack. |
 | [`Lyo.Net/Data/`](Lyo.Net/Data/) | Data handling and persistence helpers: file storage (local/S3/Azure), compression, CSV/XLSX/PDF, images, Postgres migration helpers, QR codes, file-system watching, temporary IO, and related parsers/processors. |
 | [`Lyo.Net/Features/`](Lyo.Net/Features/) | Composable product features (often EF-backed): comments, notes, ratings, tags, typed config, contact forms, profanity filter, short URLs—meant to plug into host apps alongside Core and Data. |
-| [`Lyo.Net/Integration/`](Lyo.Net/Integration/) | Application-facing integration: minimal APIs and query (`Lyo.Api`), Blazor web components and reporting, background jobs, Discord bot—wires Core/Data/Features into runnable surfaces. |
+| [`Lyo.Net/Integration/`](Lyo.Net/Integration/) | Application-facing integration: minimal APIs and query (`Lyo.Api`), Blazor web components and reporting, **browser automation** ([`Lyo.Web.Automation`](Lyo.Net/Integration/Web/Automation/README.md): Selenium / Playwright, JSON plans, background jobs, Discord bot—wires Core/Data/Features into runnable surfaces. |
 | [`Lyo.Net/Security/`](Lyo.Net/Security/) | Cryptography (`Lyo.Encryption`) and encryption benchmarks. |
 | [`Lyo.Net/Communication/`](Lyo.Net/Communication/) | Messaging and media delivery: SMTP email, SMS (including Twilio), and text-to-speech providers. |
 | [`Lyo.Net/Tools/`](Lyo.Net/Tools/) | Host apps and utilities (e.g. gateway, test API/console) for trying components end-to-end. |
@@ -93,7 +93,7 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 - [Lyo.Images.Skia](Lyo.Net/Data/Images/Lyo.Images.Skia/README.md): SkiaSharp implementation of `IImageService`.
 - [Lyo.IO.Temp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md): temp files/dirs with sessions and naming strategies.
 - [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): `IPdfService` / `PdfService` — load PDFs, extract text, regions, key–value and tables.
-- [Lyo.Pdf.Annotator](Lyo.Net/Data/Pdf/Lyo.Pdf.Annotator/README.md): browser PDF annotator returning bounding boxes by ID (pairs with `GetLinesInBoundingBox`).
+- [Lyo.Pdf.Web.Components](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/): Blazor **PDF annotator** and related UI (`PdfAnnotator/`; pairs with `GetLinesInBoundingBox`). Former standalone **`Lyo.Pdf.Annotator`** package was folded into this project.
 - [Lyo.Postgres](Lyo.Net/Data/Postgres/Lyo.Postgres/README.md): shared EF Core auto-migration hosted service helpers.
 - [Lyo.QRCode](Lyo.Net/Data/QRCode/Lyo.QRCode/README.md): QR generation (QRCoder), formats, error correction, icons.
 - [Lyo.Xlsx](Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md): Excel import/export with ClosedXML / ExcelDataReader.
@@ -113,11 +113,12 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 ### Integration
 
 - [Lyo.Api](Lyo.Net/Integration/Api/Lyo.Api/README.md): minimal APIs, CRUD, query engine, endpoint builder.
+- [Lyo.Web.Automation](Lyo.Net/Integration/Web/Automation/README.md): serializable **`AutomationPlan`** steps, shared runner, **Selenium** and **Playwright** drivers.
 - [Lyo.Discord.Bot](Lyo.Net/Integration/Discord/Lyo.Discord.Bot/README.md): DSharpPlus bot syncing guilds to your Lyo API.
 - [Lyo.Job.Postgres](Lyo.Net/Integration/Job/Lyo.Job.Postgres/README.md): EF Core job schema and migrations for job management.
 - [Lyo.Job.Scheduler](Lyo.Net/Integration/Job/Lyo.Job.Scheduler/README.md): polls job API, evaluates schedules, RabbitMQ triggers.
-- [Lyo.Web.Reporting.Postgres](Lyo.Net/Integration/Web/WebReporting/Lyo.Web.Reporting.Postgres/README.md): store and load prebuilt reports in PostgreSQL.
-- [Lyo.Web.Reporting](Lyo.Net/Integration/Web/WebReporting/Lyo.Web.Reporting/README.md): fluent Blazor report builder and rendering.
+- [Lyo.Web.Reporting.Postgres](Lyo.Net/Integration/Web/Reporting/Lyo.Web.Reporting.Postgres/README.md): store and load prebuilt reports in PostgreSQL.
+- [Lyo.Web.Reporting](Lyo.Net/Integration/Web/Reporting/Lyo.Web.Reporting/README.md): fluent Blazor report builder and rendering.
 
 ### Security
 

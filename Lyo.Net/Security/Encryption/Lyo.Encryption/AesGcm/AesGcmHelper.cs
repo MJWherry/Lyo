@@ -1,6 +1,3 @@
-#if NET10_0_OR_GREATER
-using System.Security.Cryptography;
-#endif
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
@@ -40,7 +37,6 @@ public static class AesGcmHelper
 #else
         var cipher = new GcmBlockCipher(new AesEngine());
         cipher.Init(true, new AeadParameters(new KeyParameter(key), 128, nonce, null));
-
         var outBuf = new byte[cipher.GetOutputSize(plaintext.Length)];
         var tlen = 0;
         if (plaintext.Length > 0) {
@@ -73,10 +69,8 @@ public static class AesGcmHelper
             var combined = new byte[ciphertext.Length + TagSize];
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
-
             var cipher = new GcmBlockCipher(new AesEngine());
             cipher.Init(false, new AeadParameters(new KeyParameter(key), 128, nonce, null));
-
             var outBuf = new byte[cipher.GetOutputSize(combined.Length)];
             var len = cipher.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
             len += cipher.DoFinal(outBuf, len);

@@ -20,8 +20,10 @@ public static class QueryCacheInvalidation
     }
 
     /// <summary>
-    /// Invalidates cache entries tagged for the given primary keys. When the distinct key count exceeds
-    /// <see cref="CacheOptions.MaxBulkQueryInvalidationByIdCount"/>, falls back to <see cref="QueryCacheTagBuilder.EntityTypeTag" />.
+    /// Invalidates cache entries tagged for the given primary keys. When <see cref="CacheOptions.QueryCacheTagGranularity"/> is
+    /// <see cref="QueryCacheTagGranularity.Broad"/>, only <see cref="QueryCacheTagBuilder.EntityTypeTag" /> is invalidated (no per-id work).
+    /// When granular, when the distinct key count exceeds <see cref="CacheOptions.MaxBulkQueryInvalidationByIdCount"/>, falls back to
+    /// <see cref="QueryCacheTagBuilder.EntityTypeTag" />.
     /// </summary>
     public static async Task InvalidateQueryCachesForEntityKeysAsync(
         ICacheService cache,
@@ -34,6 +36,11 @@ public static class QueryCacheInvalidation
         ArgumentHelpers.ThrowIfNull(cacheOptions, nameof(cacheOptions));
         ArgumentHelpers.ThrowIfNull(entityClrType, nameof(entityClrType));
         ArgumentHelpers.ThrowIfNull(affectedPrimaryKeys, nameof(affectedPrimaryKeys));
+
+        if (cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad) {
+            await cache.InvalidateCacheItemByTag(QueryCacheTagBuilder.EntityTypeTag(entityClrType)).ConfigureAwait(false);
+            return;
+        }
 
         var distinctKeySets = new List<IReadOnlyList<object?>>();
         var seenTags = new HashSet<string>(StringComparer.Ordinal);

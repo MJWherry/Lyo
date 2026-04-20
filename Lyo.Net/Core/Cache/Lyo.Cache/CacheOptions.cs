@@ -28,9 +28,15 @@ public class CacheOptions
 
     /// <summary>
     /// When bulk mutations affect more than this many distinct primary keys, list-query cache invalidation falls back to tag <c>entity:&lt;type&gt;</c> instead of per-id tags.
-    /// Used by Lyo.Api CRUD invalidation helpers.
+    /// Used by Lyo.Api CRUD invalidation helpers. Ignored when <see cref="QueryCacheTagGranularity"/> is <see cref="QueryCacheTagGranularity.Broad"/> (invalidation is always type-wide).
     /// </summary>
     public int MaxBulkQueryInvalidationByIdCount { get; set; } = 20;
+
+    /// <summary>
+    /// How <c>Lyo.Api</c> builds cache tags for query/GET results. <see cref="QueryCacheTagGranularity.Broad"/> uses only <c>entity:&lt;typename&gt;</c>-style tags (and scope/shape tags), reducing tag CPU at the cost of coarser invalidation.
+    /// Default is <see cref="QueryCacheTagGranularity.Broad"/> (non-granular). Set <see cref="QueryCacheTagGranularity.Granular"/> for per-row instance tags and finer invalidation at higher tagging cost.
+    /// </summary>
+    public QueryCacheTagGranularity QueryCacheTagGranularity { get; set; } = QueryCacheTagGranularity.Broad;
 
     /// <summary>Type-specific expiration timeouts. Key is the full type name (e.g., "My.Lib.Class") or pattern (e.g., "My.Lib.*"), value is expiration time in minutes.</summary>
     /// <remarks>

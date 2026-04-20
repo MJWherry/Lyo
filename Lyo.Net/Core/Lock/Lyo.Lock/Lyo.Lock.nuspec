@@ -14,6 +14,7 @@
         <repository type="git" url="https://github.com/mjwherry/Lyo"/>
         <dependencies>
             <group targetFramework="netstandard2.0">
+                <dependency id="PolySharp" version="1.15.0"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
                 <dependency id="Lyo.Metrics" version="[1.0.71,)"/>
                 <dependency id="Microsoft.Extensions.Configuration.Abstractions" version="[10,)"/>

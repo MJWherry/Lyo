@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Lyo.Common.Enums;
 // ReSharper disable StringLiteralTypo
@@ -5,6 +6,7 @@ using Lyo.Common.Enums;
 namespace Lyo.Common.Records;
 
 /// <summary>Represents file type information with MIME types, extensions, and category.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileTypeInfo
 {
     /// <summary>Appended to a single-key ciphertext extension for two-key envelope files (e.g. <c>.ag</c> → <c>.ag2k</c>).</summary>
@@ -45,6 +47,8 @@ public sealed class FileTypeInfo
         Category = category;
         Description = description;
     }
+
+    public override string ToString() => $"{Name} ({MimeType})";
 
     private static string NormalizeExtension(string extension)
     {

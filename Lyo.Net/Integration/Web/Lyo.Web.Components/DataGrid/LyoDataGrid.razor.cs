@@ -490,7 +490,7 @@ public partial class LyoDataGrid<T>
             queryNode = WhereClauseBuilder.FromConditions(activeConditions);
 
         if (queryNode != null)
-            queryBuilder.AddQuery(queryNode);
+            queryBuilder.AddWhere(queryNode);
 
         // Add sorting
         if (_dataGrid?.SortDefinitions?.Any() == true) {

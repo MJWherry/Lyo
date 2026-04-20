@@ -11,4 +11,7 @@
         <ProjectReference Include="..\..\..\Core\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
 </Project>

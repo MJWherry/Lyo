@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Api.Services.Crud;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Query.Models.Common.Request;
@@ -12,6 +14,9 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 /// <summary>Builds cache tags for basic and projected query results. Keys remain in <see cref="QueryCacheKeyBuilder" />.</summary>
 public static class QueryCacheTagBuilder
 {
+    /// <summary>Memoizes projection-shape tags; keys are normalized payloads (same string as pre-hash input).</summary>
+    private static readonly ConcurrentDictionary<string, string> ProjShapeTagMemo = new(StringComparer.Ordinal);
+
     /// <summary>Broad tag for all list-query cache entries (same as SQL projection path and historical convention).</summary>
     public const string QueryScopeTag = "queries";
 
@@ -57,8 +62,10 @@ public static class QueryCacheTagBuilder
 
         parts.Add("zip:" + zipSiblingCollectionSelections);
         var payload = string.Join('\u001e', parts);
-        var hash = SHA1.HashData(Encoding.UTF8.GetBytes(payload));
-        return $"projshape:{Convert.ToHexString(hash).ToLowerInvariant()}";
+        return ProjShapeTagMemo.GetOrAdd(payload, static p => {
+            var hash = SHA1.HashData(Encoding.UTF8.GetBytes(p));
+            return $"projshape:{Convert.ToHexString(hash).ToLowerInvariant()}";
+        });
     }
 
     /// <summary>
@@ -95,6 +102,10 @@ public static class QueryCacheTagBuilder
         if (rootEntityType is null)
             return tagSet.ToArray();
 
+        var projectionChains = includes is { Count: > 0 }
+            ? CompileIncludeNavigationChains(rootEntityType, includes)
+            : null;
+
         foreach (var row in projectedRows) {
             var dict = AsReadOnlyStringDictionary(row);
             if (dict is null)
@@ -104,8 +115,8 @@ public static class QueryCacheTagBuilder
             if (rootPk is not null)
                 tagSet.Add(EntityInstanceTag(rootClr, rootPk));
 
-            if (includes is { Count: > 0 })
-                AppendProjectionIncludeCascadeTags(tagSet, dict, includes, rootEntityType, context, typeConversion);
+            if (projectionChains is not null)
+                AppendProjectionIncludeCascadeTags(tagSet, dict, projectionChains, rootEntityType, context, typeConversion);
         }
 
         return tagSet.ToArray();
@@ -123,15 +134,97 @@ public static class QueryCacheTagBuilder
         where TDbModel : class
     {
         var entityType = typeof(TDbModel);
-        var tagSet = new HashSet<string> { QueryScopeTag, EntityTypeTag(entityType) };
+        var estimated = Math.Clamp(rows.Count * 3 + 8, 16, 8192);
+        var tagSet = new HashSet<string>(estimated, StringComparer.Ordinal) {
+            QueryScopeTag,
+            EntityTypeTag(entityType),
+        };
+
+        var includeChains = includes is { Count: > 0 }
+            ? CompileIncludeNavigationChains(context.Model.FindEntityType(entityType), includes)
+            : null;
+
         foreach (var row in rows) {
             tagSet.Add(EntityInstanceTag(entityType, typeConversion.GetPrimaryKeyValues(row, context)));
-            if (includes is { Count: > 0 })
-                AppendIncludeCascadeTags(tagSet, row, includes, context, typeConversion);
+            if (includeChains is not null)
+                AppendIncludeCascadeTagsCompiled(tagSet, row, includeChains, context, typeConversion);
         }
 
         return tagSet.ToArray();
     }
+
+    /// <summary>
+    /// Type-scoped tags for list queries when <see cref="Lyo.Cache.QueryCacheTagGranularity.Broad" /> is configured:
+    /// <see cref="QueryScopeTag"/>, <c>entities</c>, root <see cref="EntityTypeTag"/>, and one <see cref="EntityTypeTag"/> per include-referenced CLR type (no per-row instance tags).
+    /// </summary>
+    public static string[] BuildBasicQueryTagsBroad<TContext, TDbModel>(
+        TContext context,
+        IEntityLoaderService loader,
+        IReadOnlyList<string>? includes)
+        where TContext : DbContext
+        where TDbModel : class
+    {
+        var tagSet = new HashSet<string>(StringComparer.Ordinal) {
+            QueryScopeTag,
+            "entities",
+            EntityTypeTag(typeof(TDbModel)),
+        };
+
+        if (includes is { Count: > 0 }) {
+            foreach (var t in loader.GetReferencedTypes<TContext, TDbModel>(context, includes))
+                tagSet.Add(EntityTypeTag(t));
+        }
+
+        return tagSet.ToArray();
+    }
+
+    /// <summary>
+    /// Broad tags for SQL-projected pages: scope, <see cref="QueryProjectScopeTag"/>, <c>entities</c>, <see cref="FormatProjShapeTag"/>,
+    /// and <see cref="EntityTypeTag"/> for root and include-referenced types only (no per-row or <see cref="QueryProjectReferencedEntityTag"/> tags).
+    /// </summary>
+    public static string[] BuildProjectedSqlQueryTagsBroad<TDbModel>(
+        IReadOnlyList<ProjectedFieldSpec> projectedFieldSpecs,
+        IReadOnlyList<ComputedField> computedFields,
+        bool zipSiblingCollectionSelections,
+        IReadOnlyList<Type> referencedIncludeEntityTypes)
+        where TDbModel : class
+    {
+        var rootClr = typeof(TDbModel);
+        var tagSet = new HashSet<string>(StringComparer.Ordinal) {
+            QueryScopeTag,
+            QueryProjectScopeTag,
+            "entities",
+            EntityTypeTag(rootClr),
+            FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections),
+        };
+
+        foreach (var refType in referencedIncludeEntityTypes)
+            tagSet.Add(EntityTypeTag(refType));
+
+        return tagSet.ToArray();
+    }
+
+    /// <summary>Broad tags for GET-by-key cache entries: <c>entities</c>, root type, and include-referenced types (no instance tags).</summary>
+    public static string[] BuildSingleEntityGetCacheTagsBroad<TContext, TDbModel>(
+        TContext context,
+        IEntityLoaderService loader,
+        IReadOnlyList<string> matIncludes)
+        where TContext : DbContext
+        where TDbModel : class
+    {
+        var tagSet = new HashSet<string>(StringComparer.Ordinal) { "entities", EntityTypeTag(typeof(TDbModel)) };
+        if (matIncludes.Count > 0) {
+            foreach (var t in loader.GetReferencedTypes<TContext, TDbModel>(context, matIncludes))
+                tagSet.Add(EntityTypeTag(t));
+        }
+
+        return tagSet.ToArray();
+    }
+
+    /// <summary>Broad tags for PATCH/UPDATE refresh of a GET cache entry when includes are not applied (<c>entities</c> + root type only).</summary>
+    public static string[] BuildSingleEntityGetRootTypeTags<TDbModel>()
+        where TDbModel : class
+        => ["entities", EntityTypeTag(typeof(TDbModel))];
 
     /// <summary>Walks validated include paths and tags each referenced entity instance (deduped).</summary>
     public static void AppendIncludeCascadeTags(
@@ -141,6 +234,21 @@ public static class QueryCacheTagBuilder
         DbContext context,
         ITypeConversionService typeConversion)
     {
+        var rootEntry = context.Entry(rootEntity);
+        var chains = CompileIncludeNavigationChains(rootEntry.Metadata, includes);
+        if (chains is not null)
+            AppendIncludeCascadeTagsCompiled(tags, rootEntity, chains, context, typeConversion);
+    }
+
+    /// <summary>
+    /// Resolves each include string to an EF navigation chain once (per call), avoiding repeated string splits and O(n) navigation scans per hop.
+    /// </summary>
+    private static INavigation[][]? CompileIncludeNavigationChains(IEntityType? rootEntityType, IReadOnlyList<string> includes)
+    {
+        if (rootEntityType is null)
+            return null;
+
+        List<INavigation[]>? list = null;
         foreach (var include in includes) {
             if (string.IsNullOrWhiteSpace(include))
                 continue;
@@ -149,94 +257,125 @@ public static class QueryCacheTagBuilder
             if (segments.Length == 0)
                 continue;
 
-            WalkIncludePath(rootEntity, segments, 0);
+            var navigations = new INavigation[segments.Length];
+            var type = rootEntityType;
+            var ok = true;
+            for (var i = 0; i < segments.Length; i++) {
+                var nav = FindNavigationCaseInsensitive(type, segments[i]);
+                if (nav is null) {
+                    ok = false;
+                    break;
+                }
+
+                navigations[i] = nav;
+                type = nav.TargetEntityType;
+            }
+
+            if (!ok)
+                continue;
+
+            list ??= [];
+            list.Add(navigations);
         }
+
+        return list is null ? null : list.ToArray();
+    }
+
+    private static INavigation? FindNavigationCaseInsensitive(IEntityType type, string segment)
+    {
+        var direct = type.FindNavigation(segment);
+        if (direct is not null)
+            return direct;
+
+        foreach (var n in type.GetNavigations()) {
+            if (string.Equals(n.Name, segment, StringComparison.OrdinalIgnoreCase))
+                return n;
+        }
+
+        return null;
+    }
+
+    private static void AppendIncludeCascadeTagsCompiled(
+        HashSet<string> tags,
+        object rootEntity,
+        INavigation[][] chains,
+        DbContext context,
+        ITypeConversionService typeConversion)
+    {
+        foreach (var chain in chains)
+            WalkIncludeChain(rootEntity, chain, 0);
 
         return;
 
-        void WalkIncludePath(object? current, IReadOnlyList<string> segments, int index)
+        void WalkIncludeChain(object? current, INavigation[] segments, int index)
         {
-            if (current is null || index >= segments.Count)
+            if (current is null || index >= segments.Length)
                 return;
 
-            var navName = segments[index];
+            var nav = segments[index];
             var entry = context.Entry(current);
-            var navMeta = entry.Metadata.GetNavigations().FirstOrDefault(n => string.Equals(n.Name, navName, StringComparison.OrdinalIgnoreCase));
-            if (navMeta is null)
-                return;
-
-            var navigation = entry.Navigation(navMeta.Name);
+            var navigation = entry.Navigation(nav.Name);
             // Do not call NavigationEntry.Load() here. QueryService uses NoTracking; EF often reports
             // IsLoaded == false even when Include() already populated the graph, so Load() caused N+1
             // SQL (split-query settings only affect the main Include query shape, not this path).
             var val = navigation.CurrentValue;
             if (val is null)
                 return;
-            var isLast = index == segments.Count - 1;
-            if (val is IEnumerable enumerable && val is not string) {
+
+            var isLast = index == segments.Length - 1;
+            if (val is IEnumerable enumerable && val is not string && val is not byte[]) {
                 foreach (var item in enumerable) {
                     if (item is null)
                         continue;
 
                     TryAddEntityTag(item);
                     if (!isLast)
-                        WalkIncludePath(item, segments, index + 1);
+                        WalkIncludeChain(item, segments, index + 1);
                 }
             }
-            else if (val is not null) {
+            else {
                 TryAddEntityTag(val);
                 if (!isLast)
-                    WalkIncludePath(val, segments, index + 1);
+                    WalkIncludeChain(val, segments, index + 1);
             }
         }
 
         void TryAddEntityTag(object entity)
         {
-            var entry = context.Entry(entity);
-            if (entry.Metadata.FindPrimaryKey() is null)
+            var ent = context.Entry(entity);
+            if (ent.Metadata.FindPrimaryKey() is null)
                 return;
 
-            tags.Add(EntityInstanceTag(entry.Metadata.ClrType, typeConversion.GetPrimaryKeyValues(entity, context)));
+            tags.Add(EntityInstanceTag(ent.Metadata.ClrType, typeConversion.GetPrimaryKeyValues(entity, context)));
         }
     }
 
     private static void AppendProjectionIncludeCascadeTags(
         HashSet<string> tags,
         IReadOnlyDictionary<string, object?> rootRow,
-        IReadOnlyList<string> includes,
+        INavigation[][] chains,
         IEntityType rootEntityType,
         DbContext context,
         ITypeConversionService typeConversion)
     {
-        foreach (var include in includes) {
-            if (string.IsNullOrWhiteSpace(include))
-                continue;
-
-            var segments = include.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (segments.Length == 0)
-                continue;
-
-            WalkProjectionInclude(rootRow, rootEntityType, segments, 0);
-        }
+        foreach (var chain in chains)
+            WalkProjectionInclude(rootRow, rootEntityType, chain, 0);
 
         return;
 
         void WalkProjectionInclude(
             object? node,
             IEntityType sourceEntityType,
-            IReadOnlyList<string> segments,
+            INavigation[] segments,
             int index)
         {
-            if (node is null || index >= segments.Count)
+            if (node is null || index >= segments.Length)
                 return;
 
-            var segment = segments[index];
-            var navigation = sourceEntityType.FindNavigation(segment);
-            if (navigation is null)
-                return;
-
+            var navigation = segments[index];
+            var segment = navigation.Name;
             var targetType = navigation.TargetEntityType;
-            var isLast = index == segments.Count - 1;
+            var isLast = index == segments.Length - 1;
 
             var rowDict = AsReadOnlyStringDictionary(node);
             if (rowDict is null)

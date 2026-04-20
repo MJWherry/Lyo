@@ -496,7 +496,7 @@ public partial class LyoDataGridProjected
             queryNode = WhereClauseBuilder.FromConditions(activeConditions);
 
         if (queryNode != null)
-            queryBuilder.AddQuery(queryNode);
+            queryBuilder.AddWhere(queryNode);
 
         queryBuilder.AddSelects(SelectFields.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).Distinct().ToArray());
         if (_dataGrid?.SortDefinitions?.Any() == true) {

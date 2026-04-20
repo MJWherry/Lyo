@@ -13,6 +13,7 @@
         <tags>home inventory household assets warranty electronics</tags>
         <dependencies>
             <group targetFramework="netstandard2.0">
+                <dependency id="PolySharp" version="1.15.0"/>
                 <dependency id="Lyo.Common" version="[1.0.71,)"/>
                 <dependency id="Lyo.Exceptions" version="[1.0.71,)"/>
             </group>

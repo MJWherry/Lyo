@@ -7,7 +7,18 @@ Local and Fusion-backed **`ICacheService`** implementations with optional **type
 - **`AddLocalCache`** / **`AddLocalCacheFromConfiguration`** — in-process cache; wires **`ICachePayloadCodec`**, **`ICachePayloadSerializer`**, and payload-aware **`ICacheService`**.
 - **`AddFusionCache`** (in **`Lyo.Cache.Fusion`**) — same payload services; **`FusionCacheService`** implements **`GetOrSetPayloadAsync`** and typed **`GetOrSetPayloadAsync<T>`**.
 
-Configure via **`CacheOptions`** (`"CacheOptions"` section): **`DefaultExpiration`**, **`EnableMetrics`**, type expiration maps, and **`Payload`** (see below).
+Configure via **`CacheOptions`** (`"CacheOptions"` section): **`DefaultExpiration`**, **`EnableMetrics`**, type expiration maps, **`QueryCacheTagGranularity`**, and **`Payload`** (see below).
+
+### Query cache tag granularity (`QueryCacheTagGranularity`)
+
+Used by **`Lyo.Api`** when tagging **`POST …/Query`**, **`POST …/QueryProject`**, and **`GET`** cache entries for Fusion **`RemoveByTagAsync`** invalidation.
+
+| Value | Meaning |
+|-------|---------|
+| **`Broad`** (default) | Type-scoped tags (**`entity:{typename}`**, scope/shape tags). Lower CPU when attaching tags on cache write; any mutation to that entity type clears all cached queries/GETs for the type. |
+| **`Granular`** | Adds per-primary-key instance tags (**`entity:{type}:{pk}`**) so invalidation can target only affected pages — higher tagging cost, finer busting. |
+
+Set in configuration as **`"QueryCacheTagGranularity": "Broad"`** or **`"Granular"`**. See **`QueryCacheTagBuilder`** and **`QueryCacheInvalidation`** in **`Lyo.Api`**.
 
 ## Payload pipeline (`CacheOptions.Payload`)
 

@@ -86,11 +86,14 @@ public class PatchService<TContext>(
             cache.Set(
                 QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys, includes: null, rawResponse: false),
                 result.NewData!,
-                [
-                    "entities",
-                    QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
-                    QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys),
-                ]);
+                cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
+                    ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
+                    :
+                    [
+                        "entities",
+                        QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
+                        QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys),
+                    ]);
 
             RecordCrudSuccess(operation, typeof(TDbModel));
             return result;
