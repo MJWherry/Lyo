@@ -2,6 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+            <Description>Barcode generation and reading abstractions for Lyo: includes service interfaces, models, and a fluent builder for barcode requests.</Description>
+        <PackageTags>barcode code128 generator reader abstraction</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,4 +18,8 @@
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

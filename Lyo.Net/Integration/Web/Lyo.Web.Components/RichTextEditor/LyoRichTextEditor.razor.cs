@@ -7,6 +7,11 @@ namespace Lyo.Web.Components;
 
 public partial class LyoRichTextEditor : IAsyncDisposable
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-rich-text-editor" : ElementId.Trim();
+
     private static readonly IReadOnlyList<SelectOption> FontFamilyOptions = [
         new("Arial, Helvetica, sans-serif", "Sans"), new("'Times New Roman', Times, serif", "Serif"), new("Georgia, serif", "Georgia"),
         new("'Courier New', Courier, monospace", "Monospace"), new("Verdana, Geneva, sans-serif", "Verdana")

@@ -5,11 +5,17 @@
         <RootNamespace>Lyo.Webhook.Twilio</RootNamespace>
         <AssemblyName>Lyo.Webhook.Twilio</AssemblyName>
         <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
-        <NuspecFile>Lyo.Webhook.Twilio.nuspec</NuspecFile>
+        <Description>Twilio webhook signature validation (X-Twilio-Signature) for use with Lyo.Webhook.</Description>
+        <PackageTags>webhook twilio hmac security</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Webhook\Lyo.Webhook.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

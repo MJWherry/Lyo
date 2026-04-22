@@ -14,6 +14,8 @@ public static class Constants
         public const string ReflectedMethodPrefix = "reflected_method:";
         public const string CollectionAdjustmentPrefix = "collection_adjustment:";
         public const string OrderMethodPrefix = "order_method:";
+
+        public const string SortKeyLambdaPrefix = "sort_key_lambda:";
     }
 
     /// <summary>Constants for cache service metric names and tags.</summary>

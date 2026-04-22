@@ -1,3 +1,5 @@
+using Lyo.Common.Identifiers;
+
 namespace Lyo.Common.Tests;
 
 public class EntityRefTests

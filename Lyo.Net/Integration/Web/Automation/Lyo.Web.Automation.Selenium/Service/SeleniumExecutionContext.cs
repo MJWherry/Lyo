@@ -1,9 +1,10 @@
-using Lyo.IO.Temp.Models;
+using Lyo.Web.Automation.Logging;
 using Lyo.Web.Automation.Selenium.Browser;
+using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Selenium.Service;
 
-/// <summary>Per-<see cref="ISeleniumBrowserSession" /> paths and temp lifetime (not used for DI-scoped <see cref="LyoBrowser" /> without a session).</summary>
+/// <summary>Per-<see cref="ISeleniumBrowserSession" /> paths and temp lifetime.</summary>
 public sealed class SeleniumExecutionContext : IDisposable, IAsyncDisposable
 {
     private int _disposed;
@@ -11,7 +12,14 @@ public sealed class SeleniumExecutionContext : IDisposable, IAsyncDisposable
     /// <summary>Correlation id for logging and metrics.</summary>
     public Guid SessionId { get; init; }
 
-    /// <summary>Chrome/Edge user-data-dir or Firefox profile directory, when resolved.</summary>
+    /// <summary>
+    /// Per-session root: <c>{ServiceRootDirectory}/session-{SessionId:N}</c>.
+    /// Holds <c>browser-profile/</c>, <c>artifacts/</c>, <c>downloads/</c> and acts as
+    /// the root for plan-run logs, snapshots and variables. Deleted on dispose.
+    /// </summary>
+    public string SessionDirectory { get; init; } = null!;
+
+    /// <summary>Chrome/Edge user-data-dir or Firefox profile directory.</summary>
     public string? BrowserUserDataDirectory { get; init; }
 
     /// <summary>Browser download folder.</summary>
@@ -20,11 +28,17 @@ public sealed class SeleniumExecutionContext : IDisposable, IAsyncDisposable
     /// <summary>WebDriver logs, driver service logs, etc.</summary>
     public string? ArtifactsDirectory { get; init; }
 
-    /// <summary>When non-null, disposed after the browser is torn down.</summary>
-    public IIOTempSession? IoTempSession { get; init; }
+    /// <summary>Per-session file logger provider; writes to <c>{SessionDirectory}/session.log</c>. Disposed with this context.</summary>
+    internal SessionFileLoggerProvider? LoggerProvider { get; init; }
 
-    /// <summary>When <see cref="IoTempSession" /> was not used, this folder is deleted on dispose.</summary>
-    public string? FallbackTempRoot { get; init; }
+    /// <summary>
+    /// Returns a logger that fans output to both <paramref name="baseLogger" /> and the session log file.
+    /// Falls back to <paramref name="baseLogger" /> when no provider is set.
+    /// </summary>
+    internal ILogger BuildLogger(ILogger baseLogger)
+        => LoggerProvider != null
+            ? new CompositeLogger<SeleniumBrowser>(baseLogger, LoggerProvider.CreateLogger(nameof(SeleniumBrowser)))
+            : baseLogger;
 
     /// <inheritdoc />
     public void Dispose()
@@ -32,30 +46,29 @@ public sealed class SeleniumExecutionContext : IDisposable, IAsyncDisposable
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
             return;
 
-        IoTempSession?.Dispose();
-        TryDeleteFallback();
+        LoggerProvider?.Dispose();
+        TryDeleteSessionDir();
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
+            return default;
 
-        if (IoTempSession != null)
-            await IoTempSession.DisposeAsync().ConfigureAwait(false);
-        else
-            TryDeleteFallback();
+        LoggerProvider?.Dispose();
+        TryDeleteSessionDir();
+        return default;
     }
 
-    private void TryDeleteFallback()
+    private void TryDeleteSessionDir()
     {
-        if (string.IsNullOrWhiteSpace(FallbackTempRoot))
+        if (string.IsNullOrWhiteSpace(SessionDirectory))
             return;
 
         try {
-            if (Directory.Exists(FallbackTempRoot))
-                Directory.Delete(FallbackTempRoot, recursive: true);
+            if (Directory.Exists(SessionDirectory))
+                Directory.Delete(SessionDirectory, recursive: true);
         }
         catch {
             // best-effort cleanup

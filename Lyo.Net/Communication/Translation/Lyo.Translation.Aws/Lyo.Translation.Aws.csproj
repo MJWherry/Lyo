@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Translation.Aws.nuspec</NuspecFile>
+        <Description>AWS Translate implementation for the Lyo translation service.</Description>
+        <PackageTags>translation translate aws amazon translate</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

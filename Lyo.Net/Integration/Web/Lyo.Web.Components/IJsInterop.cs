@@ -5,6 +5,9 @@ public interface IJsInterop
 {
     Task SendToClipboard(string text);
 
+    /// <summary>Reads plain text from the browser clipboard (requires user gesture and permission).</summary>
+    Task<string> ReadClipboardTextAsync();
+
     Task<TimeZoneInfo> GetClientTimeZoneInfo();
 
     Task DownloadFileFromStream(Stream stream, string fileName, string fileType);

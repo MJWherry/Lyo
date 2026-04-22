@@ -11,8 +11,7 @@ namespace Lyo.Discord.Bot.Services;
 public sealed class GuildSettingsChangedNotificationHandler(
     ILogger<GuildSettingsChangedNotificationHandler> log,
     IDiffService diffService,
-    IGuildDiscordNotificationService guildNotifications,
-    ConnectedDiscordClientAccessor clientAccessor) : INotificationHandler<GuildSettingsChangedNotification>
+    ILyoDiscordBotGateway discordGateway) : INotificationHandler<GuildSettingsChangedNotification>
 {
     /// <inheritdoc />
     public Task HandleAsync(GuildSettingsChangedNotification notification, CancellationToken cancellationToken = default)
@@ -24,12 +23,11 @@ public sealed class GuildSettingsChangedNotificationHandler(
             "Guild {GuildId} settings changed ({Source}). CommandChannel={CommandChannel}, LogChannel={LogChannel}, AdminRole={AdminRole}, ModRole={ModRole}", notification.GuildId,
             notification.Source, notification.Current.CommandChannelId, notification.Current.LogChannelId, notification.Current.AdminRoleId, notification.Current.ModRoleId);
 
-        var client = clientAccessor.Client;
-        if (client == null)
+        if (!discordGateway.IsConnected)
             return Task.CompletedTask;
 
         var body = FormatChangeDetails(notification.Previous, notification.Current, notification.Source);
-        return guildNotifications.NotifyGuildLogMessageAsync(client, (ulong)notification.GuildId, "Guild settings updated", body, cancellationToken);
+        return discordGateway.NotifyGuildLogMessageAsync((ulong)notification.GuildId, "Guild settings updated", body, cancellationToken);
     }
 
     private static string FormatChangeDetails(DiscordGuildSettings before, DiscordGuildSettings after, string source)

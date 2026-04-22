@@ -8,6 +8,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 
 public partial class SortByList
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private static readonly Regex PropertyPattern = new("^[a-zA-Z.]+$", RegexOptions.Compiled);
 
     private SortDirectionEnum _newDirection = SortDirectionEnum.Desc;

@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.FileMetadataStore.nuspec</NuspecFile>
+        <Description>File store service interface and base implementation for metadata and file tracking.</Description>
+        <PackageTags>file-store metadata tracking</PackageTags>
     </PropertyGroup>
     
     <ItemGroup>

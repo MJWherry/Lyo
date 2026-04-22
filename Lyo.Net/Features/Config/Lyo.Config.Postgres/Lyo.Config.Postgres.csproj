@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Config.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.Config using Entity Framework Core and jsonb-backed typed values.</Description>
+        <PackageTags>config postgres postgresql entityframework ef settings</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,4 +22,8 @@
         <ProjectReference Include="..\Lyo.Config\Lyo.Config.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

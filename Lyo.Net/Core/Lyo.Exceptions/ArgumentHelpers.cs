@@ -327,7 +327,7 @@ public static class ArgumentHelpers
             ThrowArgumentException($"Value cannot be zero.  Actual value: {value}.", paramName);
     }
 
-    /// <summary>Throws an ArgumentException if the value is negative.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is negative.</summary>
     /// <param name="value">The value to check.</param>
     /// <param name="paramName">The parameter name.</param>
     /// <exception cref="ArgumentException">Thrown when value is negative.</exception>
@@ -335,26 +335,30 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNegative<T>(T value, string? paramName = null)
+    public static void ThrowIfNegative<T>(T? value, string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value.CompareTo(default(T)!) < 0)
-            ThrowArgumentException($"Value cannot be negative. Actual value: {value}.", paramName);
+        if(value is null)
+            ThrowArgumentNull(nameof(value));
+        if (value.CompareTo(default(T)) < 0)
+            ThrowArgumentOutsideRange(paramName, value, 1, null, $"Value cannot be negative. Actual value: {value}.");
     }
 
-    /// <summary>Throws an ArgumentException if the value is negative or zero.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the value negative or zero.</summary>
     /// <param name="value">The value to check.</param>
     /// <param name="paramName">The parameter name.</param>
-    /// <exception cref="ArgumentException">Thrown when value is negative or zero.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is negative or zero.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNegativeOrZero<T>(T value, string? paramName = null)
+    public static void ThrowIfNegativeOrZero<T>(T? value, string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value.CompareTo(default(T)!) <= 0)
-            ThrowArgumentException($"Value must be greater than zero. Actual value: {value}.", paramName);
+        if(value is null)
+            ThrowArgumentNull(nameof(value));
+        if (value.CompareTo(default(T)) <= 0)
+            ThrowArgumentOutsideRange(paramName, value, 0, null, $"Value must be greater than zero. Actual value: {value}.");
     }
 
     /// <summary>Throws a FileNotFoundException if the file does not exist.</summary>

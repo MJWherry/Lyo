@@ -6,6 +6,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 
 public partial class ComputedFieldsList
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private string _newName = "";
     private string _newTemplate = "";
 

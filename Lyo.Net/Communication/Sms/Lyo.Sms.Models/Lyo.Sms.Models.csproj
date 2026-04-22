@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Sms.Models.nuspec</NuspecFile>
+        <Description>SMS models (SmsRequest, SmsMessageQueryFilter, Direction, etc.) for Lyo.Sms.</Description>
+        <PackageTags>sms models</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

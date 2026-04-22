@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Cache.nuspec</NuspecFile>
+        <Description>Cache service abstractions and local IMemoryCache implementation.</Description>
+        <PackageTags>cache caching memory</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

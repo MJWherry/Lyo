@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Lock.nuspec</NuspecFile>
+        <Description>Centralized locking service abstractions and local in-memory implementation.</Description>
+        <PackageTags>lock locking distributed mutex</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,4 +19,8 @@
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Tts.AwsPolly.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for AWS Polly text to speech experiences.</Description>
+        <PackageTags>blazor components tts polly mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

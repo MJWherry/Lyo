@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Compression.nuspec</NuspecFile>
+        <Description>A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple algorithms (GZip, Brotli, Deflate, ZLib, Snappier, ZstdSharp, LZ4, LZMA, BZip2, XZ), batch operations, and atomic file operations.</Description>
+        <PackageTags>compression gzip brotli deflate zlib snappy zstd lz4 lzma bzip2 xz</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,4 +33,8 @@
         <PackageReference Include="System.Text.Json" Version="[10,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

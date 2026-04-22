@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.People.Models.nuspec</NuspecFile>
+        <Description>People and person-related models for the Lyo library suite. Includes Person, PersonName, contact info, relationships, employment, identification, and preferences.</Description>
+        <PackageTags>people person models contact employment identification</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,4 +13,8 @@
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

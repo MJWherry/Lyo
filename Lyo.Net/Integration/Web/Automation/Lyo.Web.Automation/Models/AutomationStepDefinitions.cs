@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json.Serialization;
+using Lyo.Web.Automation.Core;
+using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Models;
 

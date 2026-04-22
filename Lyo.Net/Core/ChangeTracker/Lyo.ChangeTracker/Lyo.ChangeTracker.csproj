@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.ChangeTracker.nuspec</NuspecFile>
+        <Description>Generic entity change tracking library built on Lyo.Common.EntityRef. Includes ChangeRecord, IChangeTracker, and NullChangeTracker.</Description>
+        <PackageTags>change-tracking entity-history audit entityref</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -14,4 +16,8 @@
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

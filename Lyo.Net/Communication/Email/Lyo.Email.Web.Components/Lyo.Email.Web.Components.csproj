@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Email.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for email composition, attachments, and delivery result inspection.</Description>
+        <PackageTags>blazor components email mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

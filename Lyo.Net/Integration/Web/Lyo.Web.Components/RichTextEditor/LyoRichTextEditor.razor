@@ -1,7 +1,7 @@
 @using MudBlazor
 @namespace Lyo.Web.Components
 
-<div class="lyo-rte-root" @ref="_rootRef">
+<div id="@RootId" class="lyo-rte-root" @ref="_rootRef">
     @if (!string.IsNullOrWhiteSpace(Label)) {
         <MudText Typo="Typo.subtitle2" Class="mb-1">@Label</MudText>
     }

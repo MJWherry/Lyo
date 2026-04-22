@@ -1,3 +1,4 @@
+using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
@@ -61,7 +62,7 @@ public class OptionsTests : IDisposable
     public void Options_DebounceTimerDelay_Negative_Throws()
     {
         var options = new FileSystemWatcherOptions { DebounceTimerDelay = -1 };
-        Assert.Throws<ArgumentException>(() => new FileSystemWatcher(_tempSession.SessionDirectory, options));
+        Assert.Throws<ArgumentOutsideRangeException>(() => new FileSystemWatcher(_tempSession.SessionDirectory, options));
     }
 
     [Fact]
@@ -132,6 +133,6 @@ public class OptionsTests : IDisposable
     public void DebounceTimerDelay_Setter_Negative_Throws()
     {
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        Assert.Throws<ArgumentException>(() => watcher.DebounceTimerDelay = -1);
+        Assert.Throws<ArgumentOutsideRangeException>(() => watcher.DebounceTimerDelay = -1);
     }
 }

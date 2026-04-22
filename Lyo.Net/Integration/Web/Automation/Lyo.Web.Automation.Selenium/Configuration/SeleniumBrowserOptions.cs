@@ -33,22 +33,41 @@ public class SeleniumBrowserOptions
     public bool MaskSensitiveUrlsInLogs { get; set; }
 
     /// <summary>
-    /// When true (default), session-local paths (profile, downloads, driver logs) are rooted under <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" />
-    /// unless overridden. When <see cref="Lyo.IO.Temp.IIOTempService" /> is not registered, a temp folder under <see cref="Path.GetTempPath" /> is used.
+    /// Root directory for all session subdirectories. Each session creates
+    /// <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>, and <c>downloads/</c> inside.
+    /// Defaults to <c>{tmp}/lyo-web-automation</c>.
     /// </summary>
-    public bool UseIoTempForBrowserPaths { get; set; } = true;
+    public string ServiceRootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-selenium");
 
-    /// <summary>Explicit Chromium/Edge user-data-dir or Firefox profile directory; when null and <see cref="UseIoTempForBrowserPaths" /> is true, resolved under the session temp root.</summary>
+    /// <summary>Explicit Chromium/Edge user-data-dir or Firefox profile directory; when null, resolved as <c>browser-profile/</c> under the session directory.</summary>
     public string? BrowserUserDataDirectory { get; set; }
 
-    /// <summary>Download directory for browser downloads; when null and <see cref="UseIoTempForBrowserPaths" /> is true, resolved under the session temp root.</summary>
+    /// <summary>Download directory for browser downloads; when null, resolved as <c>downloads/</c> under the session directory.</summary>
     public string? DownloadDirectory { get; set; }
 
-    /// <summary>Driver service logs and other artifacts; when null and <see cref="UseIoTempForBrowserPaths" /> is true, resolved under the session temp root.</summary>
+    /// <summary>Driver service logs and other artifacts; when null, resolved as <c>artifacts/</c> under the session directory.</summary>
     public string? ArtifactsDirectory { get; set; }
 
     /// <summary> Chrome WebDriver arguments. </summary>
     public List<string> WebDriverArguments { get; set; } = ["disable-infobars", "disable-extensions", "disable-gpu", "disable-dev-shm-usage", "no-sandbox"];
+
+    /// <summary>
+    /// JavaScript snippets injected into every new document before the page's own scripts run,
+    /// via CDP <c>Page.addScriptToEvaluateOnNewDocument</c>. Only applies to Chrome and Edge.
+    /// Use this to neutralize bot-detection scripts (e.g. anti-DevTools getter traps).
+    /// </summary>
+    public List<string> StartupScripts { get; set; } = [];
+
+    /// <summary>
+    /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol.
+    /// This is required for network request monitoring in
+    /// <see cref="IWebAutomationBrowser.NavigateAsync(string, Func{string, bool}, CancellationToken)" />
+    /// unless a JS request-interception startup script populates <c>window.__lyoCapturedUrls</c>.
+    /// Disable on sites that detect CDP as "DevTools open" and redirect or block scraping.
+    /// When disabled, add a JS interception script to <see cref="StartupScripts" /> so that
+    /// network requests can still be observed without CDP.
+    /// </summary>
+    public bool EnablePerformanceLogging { get; set; } = true;
 
     /// <summary>
     /// Appends a formatted entry to <see cref="WebDriverArguments" />: <c>key=value</c> when <paramref name="value" /> is non-empty; otherwise the key alone (e.g. <c>-headless</c>).
@@ -79,23 +98,25 @@ public class SeleniumBrowserOptions
     /// <summary> Whether to record metrics for scraping operations. </summary>
     public bool EnableMetrics { get; set; } = true;
 
-    /// <summary>Maximum outer attempts for <see cref="LyoBrowser.PollFor" /> (each attempt runs one <see cref="LyoBrowser.WaitFor" />).</summary>
+    /// <summary>Maximum outer attempts for <see cref="SeleniumBrowser.PollFor" /> (each attempt runs one <see cref="SeleniumBrowser.WaitFor" />).</summary>
     public int PollingMaxAttempts { get; set; } = 5;
 
-    /// <summary>Delay between outer attempts for <see cref="LyoBrowser.PollFor" />.</summary>
+    /// <summary>Delay between outer attempts for <see cref="SeleniumBrowser.PollFor" />.</summary>
     public TimeSpan PollingDelayBetweenAttempts { get; set; } = TimeSpan.FromMilliseconds(500);
 
-    /// <summary>Creates a deep copy for an independent browser session or scoped <c>LyoBrowser</c> instance.</summary>
+    /// <summary>Creates a deep copy for an independent browser session or scoped <c>SeleniumBrowser</c> instance.</summary>
     public virtual SeleniumBrowserOptions Clone()
     {
         return new SeleniumBrowserOptions {
             UserAgents = [..UserAgents],
             WebDriverArguments = [..WebDriverArguments],
+            StartupScripts = [..StartupScripts],
+            EnablePerformanceLogging = EnablePerformanceLogging,
             BrowserKind = BrowserKind,
             Headless = Headless,
             RemoteWebDriverUri = RemoteWebDriverUri,
             MaskSensitiveUrlsInLogs = MaskSensitiveUrlsInLogs,
-            UseIoTempForBrowserPaths = UseIoTempForBrowserPaths,
+            ServiceRootDirectory = ServiceRootDirectory,
             BrowserUserDataDirectory = BrowserUserDataDirectory,
             DownloadDirectory = DownloadDirectory,
             ArtifactsDirectory = ArtifactsDirectory,

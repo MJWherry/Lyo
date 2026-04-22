@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.ChangeTracker.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.ChangeTracker using Entity Framework Core. Persists generic EntityRef-based change history with migrations support.</Description>
+        <PackageTags>change-tracker postgres postgresql entityframework ef entityref</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,4 +19,8 @@
         <ProjectReference Include="..\Lyo.ChangeTracker\Lyo.ChangeTracker.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

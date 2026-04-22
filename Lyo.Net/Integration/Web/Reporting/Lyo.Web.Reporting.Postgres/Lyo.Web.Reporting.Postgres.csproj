@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Web.Reporting.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.Web.Reporting for storing and loading prebuilt reports using Entity Framework Core.</Description>
+        <PackageTags>reporting reports postgres postgresql entityframework ef</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,5 +18,9 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>
 

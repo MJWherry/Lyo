@@ -19,6 +19,9 @@ public sealed class PlaywrightBrowserSession : IPlaywrightBrowserSession
     public Guid SessionId => Browser.SessionId;
 
     /// <inheritdoc />
+    public string? SessionDirectory => Browser.ExecutionContext?.SessionDirectory;
+
+    /// <inheritdoc />
     public PlaywrightBrowser Browser { get; }
 
     IWebAutomationBrowser IWebAutomationSession.Browser => Browser;

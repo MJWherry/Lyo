@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Scheduler.nuspec</NuspecFile>
+        <Description>In-process scheduler service for executing actions at scheduled times. Supports SetTimes, Interval, and OneShot schedules with logging, metrics, and optional state persistence.</Description>
+        <PackageTags>scheduler schedule cron job timer</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,4 +19,8 @@
         <ProjectReference Include="..\..\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

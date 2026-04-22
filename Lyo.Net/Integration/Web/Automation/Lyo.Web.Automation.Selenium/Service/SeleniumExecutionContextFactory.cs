@@ -1,38 +1,18 @@
-using Lyo.IO.Temp;
+using Lyo.Web.Automation.Logging;
 using Lyo.Web.Automation.Selenium.Configuration;
 
 namespace Lyo.Web.Automation.Selenium.Service;
 
 internal static class SeleniumExecutionContextFactory
 {
-    public static SeleniumExecutionContext Create(SeleniumBrowserOptions options, IIOTempService? ioTemp, Guid sessionId)
+    public static SeleniumExecutionContext Create(SeleniumBrowserOptions options, Guid sessionId)
     {
-        if (!options.UseIoTempForBrowserPaths) {
-            EnsureOptionalDirs(options.BrowserUserDataDirectory, options.ArtifactsDirectory, options.DownloadDirectory);
-            return new SeleniumExecutionContext {
-                SessionId = sessionId,
-                BrowserUserDataDirectory = options.BrowserUserDataDirectory,
-                DownloadDirectory = options.DownloadDirectory,
-                ArtifactsDirectory = options.ArtifactsDirectory,
-                IoTempSession = null,
-                FallbackTempRoot = null
-            };
-        }
+        var serviceRoot = Path.GetFullPath(options.ServiceRootDirectory);
+        var sessionDir = Path.Combine(serviceRoot, $"session-{sessionId:N}");
+        Directory.CreateDirectory(sessionDir);
 
-        var io = ioTemp?.CreateSession();
-        string root;
-        string? fallback = null;
-        if (io != null) {
-            root = io.SessionDirectory;
-        }
-        else {
-            root = Path.Combine(Path.GetTempPath(), "lyo-scraping", sessionId.ToString("N"));
-            Directory.CreateDirectory(root);
-            fallback = root;
-        }
-
-        string OrSub(string? explicitPath, string defaultSegment) 
-            => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath! : Path.Combine(root, defaultSegment);
+        string OrSub(string? explicitPath, string defaultSegment)
+            => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath! : Path.Combine(sessionDir, defaultSegment);
 
         var browser = OrSub(options.BrowserUserDataDirectory, "browser-profile");
         var artifacts = OrSub(options.ArtifactsDirectory, "artifacts");
@@ -43,19 +23,11 @@ internal static class SeleniumExecutionContextFactory
 
         return new SeleniumExecutionContext {
             SessionId = sessionId,
+            SessionDirectory = sessionDir,
             BrowserUserDataDirectory = browser,
             ArtifactsDirectory = artifacts,
             DownloadDirectory = downloads,
-            IoTempSession = io,
-            FallbackTempRoot = fallback
+            LoggerProvider = new SessionFileLoggerProvider(sessionDir)
         };
-    }
-
-    private static void EnsureOptionalDirs(params string?[] paths)
-    {
-        foreach (var p in paths) {
-            if (!string.IsNullOrWhiteSpace(p))
-                Directory.CreateDirectory(p!);
-        }
     }
 }

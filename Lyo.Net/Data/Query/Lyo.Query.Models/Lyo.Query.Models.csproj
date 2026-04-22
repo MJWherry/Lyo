@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Query.Models.nuspec</NuspecFile>
+        <Description>Query models for building and representing queries - QueryNode, QueryRequest, ConditionNode, SortBy, builders. Shared by Lyo.Query and Lyo.Api.</Description>
+        <PackageTags>query models filter sort</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

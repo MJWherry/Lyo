@@ -12,6 +12,11 @@ namespace Lyo.Web.Components.JsonEditor;
 
 public partial class JsonTreeView : IAsyncDisposable
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-json-tree-view" : ElementId.Trim();
+
     private const int TreeRowItemSize = 28;
 
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal) { "" };

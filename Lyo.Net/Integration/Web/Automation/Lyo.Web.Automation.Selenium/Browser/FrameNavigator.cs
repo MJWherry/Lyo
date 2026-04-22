@@ -1,5 +1,5 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -9,10 +9,10 @@ namespace Lyo.Web.Automation.Selenium.Browser;
 /// <summary>IFrame / nested browsing context switching with optional stack via <see cref="EnterFrame" /> scopes.</summary>
 public sealed class FrameNavigator
 {
-    private readonly LyoBrowser _scraper;
+    private readonly SeleniumBrowser _scraper;
     private int _depth;
 
-    internal FrameNavigator(LyoBrowser scraper)
+    internal FrameNavigator(SeleniumBrowser scraper)
     {
         ArgumentHelpers.ThrowIfNull(scraper, nameof(scraper));
         _scraper = scraper;

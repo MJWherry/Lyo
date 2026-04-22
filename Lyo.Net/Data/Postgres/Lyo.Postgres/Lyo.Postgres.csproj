@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Postgres.nuspec</NuspecFile>
+        <Description>Shared PostgreSQL migration infrastructure for Lyo libraries. Provides IHostedService for running EF Core migrations at application startup.</Description>
+        <PackageTags>postgres postgresql entityframework ef migrations</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,4 +24,8 @@
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

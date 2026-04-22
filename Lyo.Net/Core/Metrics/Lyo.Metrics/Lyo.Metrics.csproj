@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Metrics.nuspec</NuspecFile>
+        <Description>Metrics collection and reporting library with support for counters, timers, and snapshots. Provides a pluggable metrics interface for integration with various metrics backends.</Description>
+        <PackageTags>metrics monitoring counters timers snapshots</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,4 +21,8 @@
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[10,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

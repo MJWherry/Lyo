@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Xlsx.Models.nuspec</NuspecFile>
+        <Description>XLSX models (XlsxCellValue) and DataTable support.</Description>
+        <PackageTags>xlsx tabular models excel</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

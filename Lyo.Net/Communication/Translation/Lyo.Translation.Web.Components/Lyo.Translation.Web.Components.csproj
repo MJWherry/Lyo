@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Translation.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for provider-neutral translation workbenches.</Description>
+        <PackageTags>blazor components translation mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -5,6 +5,9 @@ namespace Lyo.Web.Components.Form;
 
 public partial class LyoForm<TModel>
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     public enum ChangeType
     {
         Create,

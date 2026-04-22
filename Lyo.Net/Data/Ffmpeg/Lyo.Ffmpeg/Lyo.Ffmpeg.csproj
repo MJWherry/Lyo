@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Ffmpeg.nuspec</NuspecFile>
+        <Description>FFmpeg integration for .NET with IAudioPlayer, IAudioProber, IAudioConverter implementations and fluent FFmpegCommandBuilder for building ffmpeg command lines.</Description>
+        <PackageTags>ffmpeg audio video conversion probe player</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

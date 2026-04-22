@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Query.Models.Attributes;
 using static Lyo.Cache.Constants;
@@ -21,6 +22,7 @@ public static class SharedEntityMetadataCache
     private static readonly ConcurrentDictionary<string, MethodInfo> ReflectedMethodCache = new();
     private static readonly ConcurrentDictionary<Type, CollectionMetadata> CollectionAdjustmentCache = new();
     private static readonly ConcurrentDictionary<string, MethodInfo> OrderMethodCache = new();
+    private static readonly ConcurrentDictionary<string, (LambdaExpression Lambda, Type KeyType)> SortKeyLambdaCache = new();
 
     /// <summary>Resolves a property by name. Shared by query and projection services.</summary>
     public static PropertyInfo? ResolveProperty(Type type, string name)
@@ -59,6 +61,10 @@ public static class SharedEntityMetadataCache
     internal static CollectionMetadata GetOrAddCollectionAdjustment(Type type, Func<CollectionMetadata> factory) => CollectionAdjustmentCache.GetOrAdd(type, _ => factory());
 
     public static MethodInfo GetOrAddOrderMethod(string key, Func<MethodInfo> factory) => OrderMethodCache.GetOrAdd(key, _ => factory());
+
+    /// <summary>Memoizes sort key lambda + key CLR type per entity type and property path (OrderBy/ThenBy reuse the same tree).</summary>
+    internal static (LambdaExpression Lambda, Type KeyType) GetOrAddSortKeyLambda(string key, Func<(LambdaExpression Lambda, Type KeyType)> factory)
+        => SortKeyLambdaCache.GetOrAdd(key, _ => factory());
 
     /// <summary>Gets cached AsQueryable method for projection count expressions. Keyed by element type.</summary>
     public static MethodInfo GetProjectionAsQueryableMethod(Type elementType)

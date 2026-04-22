@@ -18,22 +18,23 @@ public class PlaywrightBrowserOptions
     public bool MaskSensitiveUrlsInLogs { get; set; }
 
     /// <summary>
-    /// When true (default), session-local paths are rooted under <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" />
-    /// unless overridden. When <see cref="Lyo.IO.Temp.IIOTempService" /> is not registered, a temp folder under <see cref="Path.GetTempPath" /> is used.
+    /// Root directory for all session subdirectories. Each session creates
+    /// <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>, and <c>downloads/</c> inside.
+    /// Defaults to <c>{tmp}/lyo-web-automation</c>.
     /// </summary>
-    public bool UseIoTempForBrowserPaths { get; set; } = true;
+    public string ServiceRootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-playwright");
 
-    /// <summary>Explicit user data directory for persistent context; when null and <see cref="UseIoTempForBrowserPaths" /> is true, resolved under the session temp root.</summary>
+    /// <summary>Explicit user data directory for persistent context; when null, resolved as <c>browser-profile/</c> under the session directory.</summary>
     public string? BrowserUserDataDirectory { get; set; }
 
-    /// <summary>Download directory for <see cref="Microsoft.Playwright.BrowserNewContextOptions.AcceptDownloads" />.</summary>
+    /// <summary>Download directory; when null, resolved as <c>downloads/</c> under the session directory.</summary>
     public string? DownloadDirectory { get; set; }
 
-    /// <summary>Artifacts directory (HAR, traces, etc.).</summary>
+    /// <summary>Artifacts directory (HAR, traces); when null, resolved as <c>artifacts/</c> under the session directory.</summary>
     public string? ArtifactsDirectory { get; set; }
 
-    /// <summary>Extra launch arguments (Chromium/Edge).</summary>
-    public List<string> LaunchArguments { get; set; } = ["disable-infobars", "disable-extensions", "disable-gpu", "disable-dev-shm-usage", "no-sandbox"];
+    /// <summary>Extra launch arguments (Chromium/Edge). Each entry must start with <c>-</c>; Playwright rejects bare tokens (it treats them as an initial page URL).</summary>
+    public List<string> LaunchArguments { get; set; } = ["--disable-infobars", "--disable-extensions", "--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"];
 
     public List<string> UserAgents { get; set; } = [
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -77,7 +78,7 @@ public class PlaywrightBrowserOptions
             Headless = Headless,
             Channel = Channel,
             MaskSensitiveUrlsInLogs = MaskSensitiveUrlsInLogs,
-            UseIoTempForBrowserPaths = UseIoTempForBrowserPaths,
+            ServiceRootDirectory = ServiceRootDirectory,
             BrowserUserDataDirectory = BrowserUserDataDirectory,
             DownloadDirectory = DownloadDirectory,
             ArtifactsDirectory = ArtifactsDirectory,

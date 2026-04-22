@@ -7,6 +7,9 @@ namespace Lyo.Web.Components.Form;
 public partial class LyoNullableTextField
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public string? Label { get; set; }
 
     [Parameter]

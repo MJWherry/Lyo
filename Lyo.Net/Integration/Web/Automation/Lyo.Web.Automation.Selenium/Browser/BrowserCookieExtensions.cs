@@ -24,7 +24,7 @@ public static class BrowserCookieExtensions
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    extension(LyoBrowser browser)
+    extension(SeleniumBrowser browser)
     {
         /// <summary>Exports all cookies for the current domain context as DTOs.</summary>
         public IReadOnlyList<BrowserCookieRecord> ExportCookieRecords()

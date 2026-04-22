@@ -6,7 +6,7 @@
 @using MudBlazor
 @using Extensions = Extensions
 
-<div style="margin-left: @(Level * 20)px; margin-bottom: 8px;">
+<div id="@RootId" style="margin-left: @(Level * 20)px; margin-bottom: 8px;">
     <MudPaper Elevation="1" Class="pa-3" Style="@GetBorderStyle()">
         <MudStack Spacing="2">
             @if (Node is GroupClause logicalNode) {

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using Lyo.Web.Automation.Core;
 
 namespace Lyo.Web.Automation.Models;
 

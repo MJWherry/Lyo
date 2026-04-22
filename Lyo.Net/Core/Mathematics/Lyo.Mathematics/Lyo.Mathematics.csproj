@@ -2,11 +2,17 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Mathematics.nuspec</NuspecFile>
+        <Description>Core mathematical contracts, units, quantities, vectors, matrices, typed formula models, and production-oriented discovery helpers for the Lyo mathematics stack.</Description>
+        <PackageTags>mathematics math units quantities vectors matrices formulas numerics</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

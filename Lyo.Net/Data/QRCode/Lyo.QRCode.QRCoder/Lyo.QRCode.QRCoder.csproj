@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.QRCode.QRCoder.nuspec</NuspecFile>
+        <Description>QRCoder implementation for Lyo.QRCode - QR code generation service using QRCoder library.</Description>
+        <PackageTags>qrcode qr code generator barcode qrcoder</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

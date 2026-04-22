@@ -1,4 +1,4 @@
-namespace Lyo.Web.Automation;
+namespace Lyo.Web.Automation.Core;
 
 /// <summary>Shared truncation for debugger-friendly <see cref="object.ToString" /> output.</summary>
 internal static class AutomationDisplayText

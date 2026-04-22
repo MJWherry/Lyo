@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+            <Description>Native barcode implementation for Lyo.Barcode - includes Code128 encoding, image rendering, and ZXing-based barcode reading.</Description>
+        <PackageTags>barcode code128 generator reader native zxing</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -185,9 +185,17 @@
         <Project Path="Data/FileSystemWatcher/Lyo.FileSystemWatcher.Tests/Lyo.FileSystemWatcher.Tests.csproj" />
     </Folder>
     <Folder Name="/Features/" />
+    <Folder Name="/Features/Comic/">
+        <Project Path="Features/Comic/Lyo.Comic.Postgres/Lyo.Comic.Postgres.csproj" />
+        <Project Path="Features/Comic/Lyo.Comic/Lyo.Comic.csproj" />
+    </Folder>
     <Folder Name="/Features/Comment/">
         <Project Path="Features/Comment/Lyo.Comment.Postgres/Lyo.Comment.Postgres.csproj" />
         <Project Path="Features/Comment/Lyo.Comment/Lyo.Comment.csproj" />
+    </Folder>
+    <Folder Name="/Features/Favorite/">
+        <Project Path="Features/Favorite/Lyo.Favorite.Postgres/Lyo.Favorite.Postgres.csproj" />
+        <Project Path="Features/Favorite/Lyo.Favorite/Lyo.Favorite.csproj" />
     </Folder>
     <Folder Name="/Features/HomeInventory/">
         <Project Path="Features/HomeInventory/Lyo.HomeInventory.Postgres/Lyo.HomeInventory.Postgres.csproj" />

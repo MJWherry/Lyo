@@ -5,6 +5,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class SelectList
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public IEnumerable<string> Select { get; set; } = [];
 
     [Parameter]

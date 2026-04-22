@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+            <Description>Client library for ESPN fantasy football league data, rosters, players, transactions, and communication endpoints.</Description>
+        <PackageTags>espn fantasy football client api league roster player transactions</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

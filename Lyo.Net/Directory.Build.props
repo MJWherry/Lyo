@@ -4,5 +4,16 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Deterministic>true</Deterministic>
+        <Authors>Matthew Wherry</Authors>
+        <Owners>Matthew Wherry</Owners>
+        <Copyright>Copyright © Lyo</Copyright>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/mjwherry/Lyo</RepositoryUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
+        <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     </PropertyGroup>
 </Project>

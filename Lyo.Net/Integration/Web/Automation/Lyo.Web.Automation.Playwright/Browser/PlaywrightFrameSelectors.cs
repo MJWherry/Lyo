@@ -1,7 +1,7 @@
 using Lyo.Exceptions;
 using Lyo.Web.Automation;
-using Lyo.Web.Automation.Enums;
 using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Playwright.Browser;
 

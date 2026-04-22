@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Email.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL schema and entities for email logging. Consumers map EmailSent events and insert into email_logs / email_attachment_logs.</Description>
+        <PackageTags>email postgres postgresql entityframework ef logging</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

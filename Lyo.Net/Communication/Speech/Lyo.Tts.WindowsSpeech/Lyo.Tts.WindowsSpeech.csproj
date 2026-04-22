@@ -10,7 +10,9 @@
 
     <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Tts.WindowsSpeech.nuspec</NuspecFile>
+        <Description>Windows Speech Synthesis Text-to-Speech service implementation for converting text to speech using Windows built-in SAPI. Windows-only.</Description>
+        <PackageTags>tts text-to-speech windows speech synthesis sapi</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     </PropertyGroup>
 
@@ -35,4 +37,8 @@
     <Target Name="GetTargetPath" Condition="!$([MSBuild]::IsOSPlatform('Windows'))" Returns=""/>
     <Target Name="GetTargetPaths" Condition="!$([MSBuild]::IsOSPlatform('Windows'))" Returns=""/>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

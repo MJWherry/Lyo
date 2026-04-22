@@ -1,4 +1,5 @@
 using Lyo.Common.Enums;
+using Lyo.Exceptions.Models;
 using Xunit;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
@@ -465,7 +466,7 @@ public class DateAndTimeServiceTests
         var endTime = new TimeOnly(17, 0);
         var intervalMinutes = 0;
         var scheduleFlags = DayFlags.EveryDay;
-        Assert.Throws<ArgumentException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, startTime, endTime, intervalMinutes, scheduleFlags));
+        Assert.Throws<ArgumentOutsideRangeException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, startTime, endTime, intervalMinutes, scheduleFlags));
     }
 
     [Fact]
@@ -475,7 +476,7 @@ public class DateAndTimeServiceTests
         var endTime = new TimeOnly(17, 0);
         var intervalMinutes = -10;
         var scheduleFlags = DayFlags.EveryDay;
-        Assert.Throws<ArgumentException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, startTime, endTime, intervalMinutes, scheduleFlags));
+        Assert.Throws<ArgumentOutsideRangeException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, startTime, endTime, intervalMinutes, scheduleFlags));
     }
 
     [Fact]
@@ -515,7 +516,7 @@ public class DateAndTimeServiceTests
         var minuteInterval = 0;
         var scheduleFlags = DayFlags.Weekdays;
         var lastRunDateTime = DateTime.UtcNow.AddHours(-1);
-        Assert.Throws<ArgumentException>(() => DateAndTime.IsPastDue(USState.NY, startTime, endTime, minuteInterval, scheduleFlags, lastRunDateTime));
+        Assert.Throws<ArgumentOutsideRangeException>(() => DateAndTime.IsPastDue(USState.NY, startTime, endTime, minuteInterval, scheduleFlags, lastRunDateTime));
     }
 
     [Fact]
@@ -552,7 +553,7 @@ public class DateAndTimeServiceTests
         var scheduleFlags = DayFlags.Mon;
 
         // Need to enumerate the iterator to trigger validation
-        Assert.Throws<ArgumentException>(() => DateAndTime.GetScheduledTimesForDay(date, startTime, endTime, intervalMinutes, scheduleFlags).ToList());
+        Assert.Throws<ArgumentOutsideRangeException>(() => DateAndTime.GetScheduledTimesForDay(date, startTime, endTime, intervalMinutes, scheduleFlags).ToList());
     }
 
     [Fact]

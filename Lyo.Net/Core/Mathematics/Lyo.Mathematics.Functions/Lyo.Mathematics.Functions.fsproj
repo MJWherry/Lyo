@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Mathematics.Functions.nuspec</NuspecFile>
+        <Description>F# implementations for arithmetic, algebra, statistics, calculus, physics, signal processing, optimization, and numerical tools used by the Lyo mathematics stack.</Description>
+        <PackageTags>mathematics math functions fsharp statistics calculus fft linear-algebra numerics</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -27,5 +29,9 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
         <ProjectReference Include="..\..\Scientific\Lyo.Scientific\Lyo.Scientific.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

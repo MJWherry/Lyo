@@ -176,9 +176,7 @@ public class PdfService : IPdfService, IDisposable
     public async Task<PdfInfo> GetPdfInfoAsync(Guid pdfId, CancellationToken ct = default) => await Task.Run(() => GetPdfInfoInternal(pdfId), ct).ConfigureAwait(false);
 
     public PdfInfo GetPdfInfo(Guid pdfId) => GetPdfInfoInternal(pdfId);
-
-    // ── PDF Content Extraction ───────────────────────────────────────────────────
-
+    
     public async Task<IReadOnlyList<PdfWord>> GetWordsAsync(Guid pdfId, int? page = null, CancellationToken ct = default)
         => await Task.Run(() => GetWordsInternal(pdfId, page), ct).ConfigureAwait(false);
 

@@ -10,7 +10,7 @@ public sealed class SeleniumBrowserSession : ISeleniumBrowserSession
     private readonly Action _onDisposed;
     private int _disposed;
 
-    internal SeleniumBrowserSession(LyoBrowser browser, Action onDisposed)
+    internal SeleniumBrowserSession(SeleniumBrowser browser, Action onDisposed)
     {
         Browser = browser;
         _onDisposed = onDisposed;
@@ -20,7 +20,10 @@ public sealed class SeleniumBrowserSession : ISeleniumBrowserSession
     public Guid SessionId => Browser.SessionId;
 
     /// <inheritdoc />
-    public LyoBrowser Browser { get; }
+    public string? SessionDirectory => Browser.ExecutionContext?.SessionDirectory;
+
+    /// <inheritdoc />
+    public SeleniumBrowser Browser { get; }
 
     IWebAutomationBrowser IWebAutomationSession.Browser => Browser;
 

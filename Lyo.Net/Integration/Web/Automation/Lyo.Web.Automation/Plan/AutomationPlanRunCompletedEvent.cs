@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Plan;
 

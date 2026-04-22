@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Note.nuspec</NuspecFile>
+        <Description>Abstractions for storing and retrieving notes. Uses EntityRef (EntityType + EntityId) for generic entity references.</Description>
+        <PackageTags>note entity-ref generic</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

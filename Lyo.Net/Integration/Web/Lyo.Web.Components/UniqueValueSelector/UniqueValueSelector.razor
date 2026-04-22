@@ -2,7 +2,7 @@
 @using MudBlazor
 @typeparam T
 
-<div class="unique-value-selector">
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-unique-value-selector" class="unique-value-selector">
     <MudTextField @bind-Value="@SearchText"
                   Placeholder="Search values..."
                   Variant="Variant.Outlined"
@@ -78,7 +78,7 @@
             </div>
         }
     </MudPaper>
-</div>
+</LyoElementRoot>
 
 <style>
     .unique-value-selector {

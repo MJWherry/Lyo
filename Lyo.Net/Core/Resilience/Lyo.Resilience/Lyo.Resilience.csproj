@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Resilience.nuspec</NuspecFile>
+        <Description>A thin wrapper around Polly for resilience pipelines with configuration-from-appsettings support and built-in logging.</Description>
+        <PackageTags>resilience polly retry circuit-breaker configuration</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,4 +20,8 @@
         <PackageReference Include="Polly.Extensions" Version="8.*"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

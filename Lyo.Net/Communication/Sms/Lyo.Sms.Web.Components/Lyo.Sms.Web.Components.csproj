@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Sms.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for provider-neutral SMS and MMS composition workflows.</Description>
+        <PackageTags>blazor components sms mms mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

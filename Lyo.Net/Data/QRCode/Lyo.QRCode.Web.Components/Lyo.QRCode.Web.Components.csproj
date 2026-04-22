@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.QRCode.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for QR code generation and preview workflows.</Description>
+        <PackageTags>blazor components qrcode mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

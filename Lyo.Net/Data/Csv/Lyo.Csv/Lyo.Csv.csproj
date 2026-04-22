@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks>
-        <NuspecFile>Lyo.Csv.nuspec</NuspecFile>
+        <Description>CSV processing library using CsvHelper for reading and writing CSV files.</Description>
+        <PackageTags>csv csvhelper parsing</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,4 +23,8 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

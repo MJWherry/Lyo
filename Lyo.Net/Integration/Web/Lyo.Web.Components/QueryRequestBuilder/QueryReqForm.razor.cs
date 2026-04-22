@@ -12,6 +12,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class QueryReqForm
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public QueryReq Request { get; set; } = new();
 
     [Parameter]

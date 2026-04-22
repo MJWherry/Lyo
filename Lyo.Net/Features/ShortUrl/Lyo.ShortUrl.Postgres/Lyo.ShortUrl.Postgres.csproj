@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.ShortUrl.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.ShortUrl using Entity Framework Core.</Description>
+        <PackageTags>url shortener postgres postgresql entityframework ef</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

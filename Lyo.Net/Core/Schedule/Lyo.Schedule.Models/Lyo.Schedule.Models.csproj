@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Schedule.Models.nuspec</NuspecFile>
+        <Description>Shared schedule models for the Lyo library suite. Defines ScheduleDefinition, ScheduleType, and ScheduleDefinitionBuilder used by Lyo.Scheduler, Lyo.Job.Postgres, and other scheduling consumers.</Description>
+        <PackageTags>schedule models scheduling</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

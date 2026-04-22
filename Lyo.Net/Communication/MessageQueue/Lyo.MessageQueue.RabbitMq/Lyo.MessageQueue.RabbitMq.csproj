@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.MessageQueue.RabbitMq.nuspec</NuspecFile>
+        <Description>RabbitMQ implementation of the Lyo MessageQueue service for asynchronous messaging.</Description>
+        <PackageTags>message-queue rabbitmq messaging</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

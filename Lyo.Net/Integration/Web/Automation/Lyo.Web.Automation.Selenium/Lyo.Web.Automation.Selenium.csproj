@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Web.Automation.Selenium.nuspec</NuspecFile>
+        <Description>Selenium WebDriver automation: sessions, polling, tab/frame/alert/keyboard helpers, options and DI registration (Microsoft.Extensions), JSON automation plans, and scripted (delegate) steps.</Description>
+        <PackageTags>selenium webdriver browser-automation web-automation</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

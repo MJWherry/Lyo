@@ -1,5 +1,5 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -7,14 +7,14 @@ using OpenQA.Selenium;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
-/// <summary>Tab/window operations and metadata. Obtain via <see cref="LyoBrowser.Tabs" /> or <see cref="ISeleniumBrowserSession.Tabs" />.</summary>
+/// <summary>Tab/window operations and metadata. Obtain via <see cref="SeleniumBrowser.Tabs" /> or <see cref="ISeleniumBrowserSession.Tabs" />.</summary>
 public sealed class TabManager
 {
-    private readonly LyoBrowser _scraper;
+    private readonly SeleniumBrowser _scraper;
     private readonly ILogger _logger;
     private readonly Dictionary<string, string> _displayNames = new(StringComparer.Ordinal);
 
-    internal TabManager(LyoBrowser scraper, ILogger? logger = null)
+    internal TabManager(SeleniumBrowser scraper, ILogger? logger = null)
     {
         ArgumentHelpers.ThrowIfNull(scraper, nameof(scraper));
         _scraper = scraper;

@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.QRCode.nuspec</NuspecFile>
+        <Description>QR code generation for Lyo: includes an in-library ISO/IEC 18004 encoder (PNG/SVG via BuiltInQRCodeService) plus abstractions. Optional Lyo.QRCode.QRCoder adds JPEG/Bitmap (Windows) and QRCoder-based rendering.</Description>
+        <PackageTags>qrcode qr code generator barcode abstraction</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <DefineConstants>$(DefineConstants);HAS_SPAN</DefineConstants>
     </PropertyGroup>
 
@@ -32,5 +34,9 @@
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>
 

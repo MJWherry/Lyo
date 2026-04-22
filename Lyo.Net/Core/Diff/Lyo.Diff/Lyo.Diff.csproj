@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <RootNamespace>Lyo.Diff</RootNamespace>
+            <Description>Object and text diffing utilities for comparing and detecting changes between values.</Description>
+        <PackageTags>diff compare delta change-detection</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

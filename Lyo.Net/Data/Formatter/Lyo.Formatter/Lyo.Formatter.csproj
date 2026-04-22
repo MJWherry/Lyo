@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks>
-        <NuspecFile>Lyo.Formatter.nuspec</NuspecFile>
+        <Description>Text templating library using SmartFormat for building templates with named placeholders, pluralization, localization, and rich formatting. Add context objects and format templates with minimal, intuitive syntax.</Description>
+        <PackageTags>template smartformat string formatting placeholders</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

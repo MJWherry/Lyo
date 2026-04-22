@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.MessageQueue.RabbitMq.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for RabbitMQ-specific exchanges, bindings, and broker workbenches.</Description>
+        <PackageTags>blazor components rabbitmq messagequeue mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

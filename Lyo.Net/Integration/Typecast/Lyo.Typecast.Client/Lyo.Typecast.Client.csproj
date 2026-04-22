@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Typecast.Client.nuspec</NuspecFile>
+        <Description>Typecast API client for text-to-speech and voice management operations.</Description>
+        <PackageTags>typecast api client tts text-to-speech</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

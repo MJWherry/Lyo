@@ -88,10 +88,11 @@ public sealed class SeleniumBrowserOptionsBuilder
         return this;
     }
 
-    /// <inheritdoc cref="SeleniumBrowserOptions.UseIoTempForBrowserPaths" />
-    public SeleniumBrowserOptionsBuilder UseIoTempForBrowserPaths(bool enabled = true)
+    /// <inheritdoc cref="SeleniumBrowserOptions.ServiceRootDirectory" />
+    public SeleniumBrowserOptionsBuilder ServiceRootDirectory(string path)
     {
-        _options.UseIoTempForBrowserPaths = enabled;
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        _options.ServiceRootDirectory = path;
         return this;
     }
 

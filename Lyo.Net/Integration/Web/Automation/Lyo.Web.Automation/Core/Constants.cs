@@ -1,4 +1,4 @@
-namespace Lyo.Web.Automation;
+namespace Lyo.Web.Automation.Core;
 
 /// <summary>Consolidated constants for the WebAutomation contracts library.</summary>
 public static class Constants

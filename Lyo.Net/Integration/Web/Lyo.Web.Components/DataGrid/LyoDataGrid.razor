@@ -5,6 +5,8 @@
 @using MudBlazor
 @implements IDisposable
 
+@* display:contents keeps toolbar + grid as siblings in the parent layout (avoids breaking flex/dense table CSS) *@
+<LyoElementRoot ElementId="@ElementId" DefaultId="@GridRootElementId.DataGrid(GridKey)" style="display: contents;">
 @* Toolbar *@
 <MudStack Spacing="2" Style="width: 100%; padding: 8px 16px;">
     @* Row 1: Actions *@
@@ -284,3 +286,12 @@
         <MudDataGridPager T="T" Disabled="@_loading" PageSizeOptions="@PageSizes" PageSizeSelector="true"/>
     </PagerContent>
 </MudDataGrid>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>Optional root HTML <c>id</c> override; default is <c>lyo-data-grid-{grid-key}</c> (normalized segment).</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+}

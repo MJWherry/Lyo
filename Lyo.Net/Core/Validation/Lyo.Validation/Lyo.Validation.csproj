@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Validation.nuspec</NuspecFile>
+        <Description>Reusable validators and a fluent builder for validating strongly typed models with structured Result-based failures.</Description>
+        <PackageTags>validation validator fluent rules result</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -6,6 +6,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class KeysList
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public List<object[]> Keys { get; set; } = [];
 
     [Parameter]

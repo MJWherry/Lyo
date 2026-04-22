@@ -1,11 +1,9 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Abstractions;
+using Lyo.Web.Automation.Core;
 using Lyo.Web.Automation.Models;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
@@ -34,6 +32,8 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     private PlaywrightFrameNavigator? _frames;
     private PlaywrightDialogs? _dialogs;
     private PlaywrightKeyboard? _keyboard;
+    private PlaywrightCookieJar? _cookieJar;
+    private PlaywrightHeaderStore? _headerStore;
 
     /// <summary>Creates a browser that will be launched via <see cref="StartBrowserAsync" />.</summary>
     public PlaywrightBrowser(
@@ -44,8 +44,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
         _options = options;
-        _executionContext = executionContext;
-        _logger = logger ?? NullLogger<PlaywrightBrowser>.Instance;
+        _executionContext = executionContext ?? PlaywrightExecutionContextFactory.Create(options, Guid.NewGuid());
+        var baseLogger = logger ?? NullLogger<PlaywrightBrowser>.Instance;
+        _logger = _executionContext.BuildLogger(baseLogger);
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _metricNames = CreateMetricNamesDictionary();
     }
@@ -79,7 +80,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     internal string SessionIdLabel => SessionId == Guid.Empty ? "none" : SessionId.ToString("N");
 
-    /// <summary>Resolved metric name for members of <see cref="Lyo.Web.Automation.Constants.Metrics" /> (Playwright-specific series).</summary>
+    /// <summary>Resolved metric name for members of <see cref="Constants.Metrics" /> (Playwright-specific series).</summary>
     internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
 
     /// <summary>Underlying Playwright page for the active tab.</summary>
@@ -87,6 +88,12 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     /// <summary>Underlying browser context when started.</summary>
     public IBrowserContext? Context => _context;
+
+    /// <inheritdoc />
+    public IBrowserCookies? CookieJar => _context != null ? _cookieJar ??= new PlaywrightCookieJar(this) : null;
+
+    /// <inheritdoc />
+    public IBrowserHeaders? ExtraHeaders => _context != null ? _headerStore ??= new PlaywrightHeaderStore(this) : null;
 
     /// <summary>Tab / page management.</summary>
     public PlaywrightTabManager Tabs => _tabs ??= new PlaywrightTabManager(this, _logger);
@@ -124,6 +131,8 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         _frames = null;
         _dialogs = null;
         _keyboard = null;
+        _cookieJar = null;
+        _headerStore = null;
         if (_ownsPlaywrightStack && _options.CloseOwnedResourcesOnDispose) {
             try {
                 _context?.CloseAsync().GetAwaiter().GetResult();
@@ -162,6 +171,8 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         _frames = null;
         _dialogs = null;
         _keyboard = null;
+        _cookieJar = null;
+        _headerStore = null;
         if (_ownsPlaywrightStack && _options.CloseOwnedResourcesOnDispose) {
             try {
                 if (_context != null)
@@ -251,6 +262,8 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             _frames = null;
             _dialogs = null;
             _keyboard = null;
+            _cookieJar = null;
+            _headerStore = null;
             if (_context != null)
                 await _context.CloseAsync().ConfigureAwait(false);
 
@@ -405,6 +418,16 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationBrowser.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct)
         => GetElementsChainAsync(chain, ct);
+
+    /// <summary>Captures the visible viewport as PNG.</summary>
+    public async Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
+    {
+        EnsureStarted();
+        ct.ThrowIfCancellationRequested();
+        return await _page!.ScreenshotAsync(new PageScreenshotOptions { Type = ScreenshotType.Png }).ConfigureAwait(false);
+    }
+
+    Task<byte[]> IWebAutomationBrowser.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
 
     /// <summary>Polls for a descendant of <paramref name="parent" />; each attempt runs <see cref="GetDescendantElementCoreAsync" />.</summary>
     internal async Task<IWebAutomationElement> PollForDescendantElementAsync(ILocator parent, ElementLocator child, CancellationToken ct = default)
@@ -653,6 +676,28 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             PlaywrightBrowserKind.Webkit => playwright.Webkit,
             _ => throw new ArgumentOutOfRangeException(nameof(_options.BrowserKind), _options.BrowserKind, null)
         };
+    }
+
+    async Task IWebAutomationBrowser.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
+    {
+        EnsureStarted();
+        var done = false;
+
+        void Handle(object? _, IRequest req)
+        {
+            if (!Volatile.Read(ref done) && onRequest(req.Url))
+                Volatile.Write(ref done, true);
+        }
+
+        _page!.Request += Handle;
+        try {
+            await _page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
+            while (!Volatile.Read(ref done))
+                await Task.Delay(50, ct).ConfigureAwait(false);
+        }
+        finally {
+            _page.Request -= Handle;
+        }
     }
 
     private static Dictionary<string, string> CreateMetricNamesDictionary()

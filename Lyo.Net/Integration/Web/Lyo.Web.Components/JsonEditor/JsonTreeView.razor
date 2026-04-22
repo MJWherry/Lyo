@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using MudBlazor
-<div class="lyo-json-tree" style="@($"--lyo-json-font-size: {FontSize};")" @ref="_treeContainerRef">
+<div id="@RootId" class="lyo-json-tree" style="@($"--lyo-json-font-size: {FontSize};")" @ref="_treeContainerRef">
     @if (Root != null) {
         <Virtualize Items="@GetVisibleRows()" ItemSize="@TreeRowItemSize" Context="row" OverscanCount="12">
             <div class="tree-row @(row.PathId == _activeSearchPath ? "tree-row-active-search" : "")" data-path-id="@row.PathId" @key="@row.PathId">

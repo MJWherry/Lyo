@@ -1,6 +1,6 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Enums;
 using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Models.Enums;
 using OpenQA.Selenium;
 
 namespace Lyo.Web.Automation.Selenium.Automation;

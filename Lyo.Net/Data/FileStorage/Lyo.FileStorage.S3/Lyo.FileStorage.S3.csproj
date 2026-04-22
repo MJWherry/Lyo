@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.FileStorage.S3.nuspec</NuspecFile>
+        <Description>S3-compatible file storage (AWS S3, Backblaze B2, MinIO, etc.) for the Lyo FileStorage service using AWSSDK.S3.</Description>
+        <PackageTags>file-storage aws s3 backblaze b2 minio storage</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,4 +24,8 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

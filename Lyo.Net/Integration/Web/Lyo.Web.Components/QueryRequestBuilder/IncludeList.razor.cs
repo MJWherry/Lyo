@@ -5,6 +5,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class IncludeList
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public IEnumerable<string> Include { get; set; } = [];
 
     [Parameter]

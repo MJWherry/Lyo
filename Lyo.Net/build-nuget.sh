@@ -2,15 +2,23 @@
 
 # Build and pack NuGet packages for Lyo libraries
 # Usage:
-#   ./build-nuget.sh                    # Build all packages
+#   ./build-nuget.sh                    # Build all packages (skips unchanged)
 #   ./build-nuget.sh -v 2.0.0           # Build all packages with version 2.0.0
-#   ./build-nuget.sh Lyo.Encryption     # Build specific package
+#   ./build-nuget.sh Lyo.Encryption     # Build specific package (skips unchanged)
 #   ./build-nuget.sh -v 1.5.0 Lyo.Encryption  # Build specific package with version
+#   ./build-nuget.sh -f Lyo.Encryption  # Force build even if no git changes
 #   ./build-nuget.sh -v 1.0.27 Lyo.Sms.Twilio  # Build only SMS packages + deps at 1.0.27
 #
+# Change detection:
+#   Each project's source directory is fingerprinted using git (committed state +
+#   staged/unstaged diffs + untracked file contents). If the fingerprint matches the
+#   last successful build, the project is skipped — no new .nupkg is emitted and the
+#   version number in consuming nuspecs does not need to change.
+#   Use -f / --force to bypass change detection and always rebuild everything.
+#
 # When building specific packages with -v, only that package and its Lyo deps are built.
-# Packaging uses SDK-style `dotnet pack`; project/package dependencies come from the project graph,
-# not from hand-authored nuspec file lists.
+# Packaging uses SDK-style `dotnet pack`; project/package dependencies are derived automatically
+# from ProjectReference items in each csproj — no nuspec files are used.
 #
 # Environment variables:
 #   NUGET_OUTPUT_DIR - Output directory for packages (default: ~/nuget-local)
@@ -24,6 +32,7 @@
 
 # Parse command line arguments
 VERSION="1.0.0"
+FORCE=0
 PATTERNS=()
 
 while [[ $# -gt 0 ]]; do
@@ -31,6 +40,10 @@ while [[ $# -gt 0 ]]; do
         -v|--version)
             VERSION="$2"
             shift 2
+            ;;
+        -f|--force)
+            FORCE=1
+            shift
             ;;
         -h|--help)
             echo "Build and pack NuGet packages for Lyo libraries"
@@ -40,15 +53,23 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  -v, --version VERSION    Specify package version (default: 1.0.0)"
+            echo "  -f, --force             Force build even if no git changes detected"
             echo "  -h, --help              Show this help message"
             echo ""
             echo "Examples:"
-            echo "  $0                                    # Build all packages (version 1.0.0)"
+            echo "  $0                                    # Build all packages (skips unchanged)"
             echo "  $0 -v 2.0.0                          # Build all packages with version 2.0.0"
-            echo "  $0 Lyo.Encryption                    # Build specific package"
+            echo "  $0 Lyo.Encryption                    # Build specific package (skips unchanged)"
             echo "  $0 -v 1.5.0 Lyo.Encryption           # Build specific package with version"
+            echo "  $0 -f Lyo.Encryption                 # Force build ignoring change detection"
             echo "  $0 Lyo.Encryption.*                  # Build all packages matching pattern"
             echo "  $0 Lyo.Encryption Lyo.Compression    # Build multiple packages"
+            echo ""
+            echo "Change detection:"
+            echo "  Projects are fingerprinted via git (commits + dirty files + untracked files)."
+            echo "  If a project's fingerprint hasn't changed since the last successful build,"
+            echo "  it is skipped — no new .nupkg is emitted. State is stored in:"
+            echo "  \$NUGET_OUTPUT_DIR/.build-state"
             echo ""
             echo "Environment variables:"
             echo "  NUGET_OUTPUT_DIR - Output directory (default: ~/nuget-local)"
@@ -71,11 +92,16 @@ BUILD_CONFIG="${BUILD_CONFIG:-Release}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
 
+# Path to the persistent build-state file (one line per project: "Lyo.Foo=<hash>")
+BUILD_STATE_FILE="$NUGET_OUTPUT_DIR/.build-state"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
@@ -94,6 +120,99 @@ print_warning() {
 print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
+
+print_skip() {
+    echo -e "${CYAN}[SKIP]${NC} $1"
+}
+
+print_pack_only() {
+    echo -e "${MAGENTA}[PACK]${NC} $1"
+}
+
+# ---------------------------------------------------------------------------
+# Git change detection
+# ---------------------------------------------------------------------------
+
+# Compute a single fingerprint for a project directory. The hash changes when:
+#   - a new commit touches any file under that directory
+#   - staged or unstaged edits exist in that directory
+#   - new untracked files are present in that directory
+compute_project_hash() {
+    local project_dir="$1"
+    {
+        # Last commit touching this directory
+        git -C "$ROOT_DIR" log -1 --format="%H" -- "$project_dir" 2>/dev/null || echo "no-commits"
+
+        # Full diff (staged + unstaged) against HEAD for this directory
+        git -C "$ROOT_DIR" diff HEAD -- "$project_dir" 2>/dev/null
+
+        # Names and content of untracked files in this directory
+        while IFS= read -r f; do
+            echo "untracked:$f"
+            cat "$ROOT_DIR/$f" 2>/dev/null
+        done < <(git -C "$ROOT_DIR" ls-files --others --exclude-standard -- "$project_dir" 2>/dev/null)
+    } | sha256sum | cut -d' ' -f1
+}
+
+# State file format per line: "Lyo.Foo=<hash>:<version>"
+# Hash covers the source fingerprint; version is the NuGet version used for the last pack.
+
+# Read the stored source hash for a project from the state file.
+get_stored_hash() {
+    local project_name="$1"
+    if [[ -f "$BUILD_STATE_FILE" ]]; then
+        local entry
+        entry=$(grep "^${project_name}=" "$BUILD_STATE_FILE" | tail -1 | cut -d'=' -f2-)
+        echo "${entry%%:*}"
+    fi
+}
+
+# Read the stored version for a project from the state file.
+get_stored_version() {
+    local project_name="$1"
+    if [[ -f "$BUILD_STATE_FILE" ]]; then
+        local entry
+        entry=$(grep "^${project_name}=" "$BUILD_STATE_FILE" | tail -1 | cut -d'=' -f2-)
+        echo "${entry#*:}"
+    fi
+}
+
+# Persist the fingerprint + version for a project after a successful pack.
+save_project_state() {
+    local project_name="$1"
+    local hash="$2"
+    local version="$3"
+    # Remove any previous entry for this project, then append the new one.
+    if [[ -f "$BUILD_STATE_FILE" ]]; then
+        local tmp
+        tmp=$(mktemp)
+        grep -v "^${project_name}=" "$BUILD_STATE_FILE" > "$tmp" || true
+        mv "$tmp" "$BUILD_STATE_FILE"
+    fi
+    echo "${project_name}=${hash}:${version}" >> "$BUILD_STATE_FILE"
+}
+
+# Returns 0 if the project source has changed (needs a build), 1 if unchanged.
+project_source_changed() {
+    local project_name="$1"
+    local project_dir="$2"
+    local current_hash stored_hash
+    current_hash=$(compute_project_hash "$project_dir")
+    stored_hash=$(get_stored_hash "$project_name")
+    [[ "$current_hash" != "$stored_hash" ]]
+}
+
+# Returns 0 if the requested version differs from the last packed version.
+project_version_changed() {
+    local project_name="$1"
+    local stored_version
+    stored_version=$(get_stored_version "$project_name")
+    [[ "$VERSION" != "$stored_version" ]]
+}
+
+# ---------------------------------------------------------------------------
+# Project discovery helpers
+# ---------------------------------------------------------------------------
 
 # Function to get a project name from a project file
 get_project_name() {
@@ -220,7 +339,11 @@ get_project_dependencies() {
     printf '%s\n' "${deps[@]}"
 }
 
-# Function to build a project
+# ---------------------------------------------------------------------------
+# Build / pack
+# ---------------------------------------------------------------------------
+
+# Full rebuild (--no-incremental) — used when source has changed or --force is set.
 build_project() {
     local csproj_file="$1"
     local project_name
@@ -228,15 +351,43 @@ build_project() {
     
     print_info "Building $project_name (version $VERSION)..."
     
-    # Build with output visible on error — Version must be set here (not only on pack) so DLLs match the .nupkg.
-    # AssemblyVersion follows Version (numeric base for semver prereleases) via the .NET SDK.
-    if dotnet build "$csproj_file" -c "$BUILD_CONFIG" --no-incremental "${DOTNET_VERSION_MSBUILD_PROPS[@]}"; then
+    # --no-incremental forces a clean rebuild so DLLs always match the new source.
+    # BuildProjectReferences=false skips rebuilding deps — the script already built
+    # them in dependency order, so their DLLs are present and up to date.
+    # Version must be set here (not only on pack) so assembly metadata stays aligned.
+    if dotnet build "$csproj_file" -c "$BUILD_CONFIG" --no-incremental /p:BuildProjectReferences=false "${DOTNET_VERSION_MSBUILD_PROPS[@]}"; then
         print_success "Built $project_name"
         return 0
     else
         print_error "Failed to build $project_name"
         return 1
     fi
+}
+
+# Incremental build — only used in the pack-only path when bin/Release output is missing
+# (e.g. first-ever build or after a clean). Skipped entirely when DLLs already exist.
+build_project_incremental() {
+    local csproj_file="$1"
+    local project_name
+    project_name=$(get_project_name "$csproj_file")
+    
+    print_info "Building $project_name (incremental, version $VERSION)..."
+    
+    if dotnet build "$csproj_file" -c "$BUILD_CONFIG" /p:BuildProjectReferences=false "${DOTNET_VERSION_MSBUILD_PROPS[@]}"; then
+        print_success "Built $project_name (incremental)"
+        return 0
+    else
+        print_error "Failed to build $project_name"
+        return 1
+    fi
+}
+
+# Returns 0 if bin/Release already contains a DLL for this project (i.e. it has been
+# built at least once and does not need a build before packing).
+has_build_output() {
+    local project_dir="$1"
+    local project_name="$2"
+    ls "$project_dir/bin/Release/"*/"${project_name}.dll" >/dev/null 2>&1
 }
 
 # Function to pack a project
@@ -247,8 +398,7 @@ pack_project() {
     
     print_info "Packing $project_name (version $VERSION)..."
     
-    # Force SDK-style pack so package contents come from the project, not nuspec file globs.
-    if dotnet pack "$csproj_file" -c "$BUILD_CONFIG" --no-build --output "$NUGET_OUTPUT_DIR" "${DOTNET_VERSION_MSBUILD_PROPS[@]}" /p:BuildProjectReferences=false /p:NuspecFile=; then
+    if dotnet pack "$csproj_file" -c "$BUILD_CONFIG" --no-build --output "$NUGET_OUTPUT_DIR" "${DOTNET_VERSION_MSBUILD_PROPS[@]}" /p:BuildProjectReferences=false; then
         print_success "Packed $project_name"
         return 0
     else
@@ -257,16 +407,31 @@ pack_project() {
     fi
 }
 
-# Global visited projects tracker
+# ---------------------------------------------------------------------------
+# Visited / skipped project tracking
+# ---------------------------------------------------------------------------
+
+# Global visited projects tracker (prevents double-processing in recursive deps)
 VISITED_PROJECTS=()
 
-# Function to check if project was already processed
+# Global failed projects tracker (prevents retrying a project that already failed
+# when it is reached again via a different dependent's dependency chain)
+FAILED_PROJECT_PATHS=()
+
+# Global skipped projects tracker (for summary)
+SKIPPED_PROJECTS=()
+
+# Global pack-only projects tracker (source unchanged, version changed)
+PACK_ONLY_PROJECTS=()
+
+# Global built projects tracker (for summary)
+BUILT_PROJECTS=()
+
+# Function to check if project was already processed (success or failure)
 is_visited() {
     local csproj_file="$1"
     for visited in "${VISITED_PROJECTS[@]}"; do
-        if [[ "$visited" == "$csproj_file" ]]; then
-            return 0
-        fi
+        [[ "$visited" == "$csproj_file" ]] && return 0
     done
     return 1
 }
@@ -277,62 +442,132 @@ mark_visited() {
     VISITED_PROJECTS+=("$csproj_file")
 }
 
-# Function to build and pack a project with its dependencies
+# Function to check if project previously failed this session
+is_failed() {
+    local csproj_file="$1"
+    for f in "${FAILED_PROJECT_PATHS[@]}"; do
+        [[ "$f" == "$csproj_file" ]] && return 0
+    done
+    return 1
+}
+
+# Function to record a project as failed (also marks it visited to prevent retries)
+mark_failed() {
+    local csproj_file="$1"
+    FAILED_PROJECT_PATHS+=("$csproj_file")
+    mark_visited "$csproj_file"
+}
+
+# ---------------------------------------------------------------------------
+# Core build-and-pack loop
+# ---------------------------------------------------------------------------
+
+# Build and pack a project with its dependencies (depth-first, deps first).
+# Three outcomes per project (unless --force):
+#   source changed            → full rebuild (--no-incremental) + pack
+#   source unchanged, new ver → incremental build (fast) + pack
+#   source unchanged, same ver→ skip entirely
 build_and_pack_with_deps() {
     local csproj_file="$1"
-    local project_name
+    local project_name project_dir
     project_name=$(get_project_name "$csproj_file")
-    
-    # Check if already processed
+    project_dir=$(dirname "$csproj_file")
+
+    # Already processed this session — success or failure, don't retry
     if is_visited "$csproj_file"; then
+        # Propagate failure if this project previously failed
+        is_failed "$csproj_file" && return 1
         return 0
     fi
-    
-    # Get dependencies
+
+    # Recurse into Lyo dependencies first
     local deps
     deps=$(get_project_dependencies "$csproj_file")
-    
-    # Build dependencies first
     if [[ -n "$deps" ]]; then
         while IFS= read -r dep; do
             if [[ -n "$dep" ]] && [[ -f "$dep" ]]; then
                 if ! build_and_pack_with_deps "$dep"; then
-                    print_error "Failed to build dependency: $dep"
+                    local dep_name
+                    dep_name=$(get_project_name "$dep")
+                    print_error "Failed to build dependency: $dep_name"
+                    mark_failed "$csproj_file"
                     return 1
                 fi
             fi
         done <<< "$deps"
     fi
-    
-    # Build and pack this project
-    if ! build_project "$csproj_file"; then
-        return 1
+
+    # Determine what work is needed (unless --force, which always does a full build+pack)
+    local source_changed=1 version_changed=1
+    if [[ $FORCE -eq 0 ]]; then
+        project_source_changed  "$project_name" "$project_dir" || source_changed=0
+        project_version_changed "$project_name"                 || version_changed=0
     fi
-    
+
+    if [[ $source_changed -eq 0 && $version_changed -eq 0 ]]; then
+        # Nothing changed at all — skip entirely
+        print_skip "$project_name — source and version unchanged"
+        SKIPPED_PROJECTS+=("$project_name")
+        mark_visited "$csproj_file"
+        return 0
+    fi
+
+    if [[ $source_changed -eq 1 ]]; then
+        # Source changed (or --force) — full rebuild so DLLs reflect the new code
+        if ! build_project "$csproj_file"; then
+            mark_failed "$csproj_file"
+            return 1
+        fi
+    else
+        # Source unchanged, only version changed — pack the existing build output.
+        # Only build if bin/Release is missing (first-ever build or after a clean).
+        print_pack_only "$project_name — source unchanged, packing new version $VERSION"
+        if ! has_build_output "$project_dir" "$project_name"; then
+            print_info "No build output found for $project_name, building first..."
+            if ! build_project_incremental "$csproj_file"; then
+                mark_failed "$csproj_file"
+                return 1
+            fi
+        fi
+    fi
+
     if ! pack_project "$csproj_file"; then
+        mark_failed "$csproj_file"
         return 1
     fi
-    
-    # Mark as visited
+
+    # Persist state so future runs know the fingerprint and version we just packed
+    save_project_state "$project_name" "$(compute_project_hash "$project_dir")" "$VERSION"
+
+    if [[ $source_changed -eq 1 ]]; then
+        BUILT_PROJECTS+=("$project_name")
+    else
+        PACK_ONLY_PROJECTS+=("$project_name")
+    fi
     mark_visited "$csproj_file"
-    
     return 0
 }
 
-# Main function
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 main() {
     print_info "Lyo NuGet Package Builder"
     print_info "Output directory: $NUGET_OUTPUT_DIR"
     print_info "Build configuration: $BUILD_CONFIG"
     print_info "Package version: $VERSION"
+    if [[ $FORCE -eq 1 ]]; then
+        print_warning "Change detection disabled (--force)"
+    fi
     echo ""
-    
-    # Create output directory if it doesn't exist
+
+    # Ensure output directory (and therefore the state file location) exists
     mkdir -p "$NUGET_OUTPUT_DIR"
-    
+
     # Determine which projects to build
     local projects_to_build=()
-    
+
     if [[ ${#PATTERNS[@]} -eq 0 ]]; then
         # No arguments - build all packages (Lyo.*)
         print_info "No pattern specified, building all packages..."
@@ -360,63 +595,74 @@ main() {
             done < <(find_projects "$pattern")
         done
     fi
-    
+
     if [[ ${#projects_to_build[@]} -eq 0 ]]; then
         print_warning "No projects found matching the specified pattern(s)"
         exit 1
     fi
-    
+
     # Compute full build set (requested projects + transitive Lyo deps)
     FULL_BUILD_SET=()
     while IFS= read -r project; do
         [[ -n "$project" ]] && FULL_BUILD_SET+=("$(get_project_name "$project")")
     done < <(get_full_build_set "${projects_to_build[@]}")
-    
-    print_info "Found ${#projects_to_build[@]} project(s) to build (${#FULL_BUILD_SET[@]} including deps):"
+
+    print_info "Found ${#projects_to_build[@]} project(s) to evaluate (${#FULL_BUILD_SET[@]} including deps):"
     for project in "${projects_to_build[@]}"; do
         echo "  - $(get_project_name "$project")"
     done
     echo ""
-    
+
     # Build and pack each project
     local failed_projects=()
-    local success_count=0
-    
+
     for project in "${projects_to_build[@]}"; do
-        # Skip if already processed (as a dependency)
+        # Skip if already processed (as a dependency of an earlier top-level project)
         if is_visited "$project"; then
             continue
         fi
-        
-        if build_and_pack_with_deps "$project"; then
-            ((success_count++))
-        else
+
+        if ! build_and_pack_with_deps "$project"; then
             failed_projects+=("$(get_project_name "$project")")
-            print_warning "Skipping remaining dependencies of $(get_project_name "$project")"
+            print_warning "Skipping remaining dependents of $(get_project_name "$project")"
         fi
     done
-    
+
     # Summary
     echo ""
     print_info "Build Summary:"
-    print_success "Successfully built and packed: $success_count package(s)"
-    
+    print_success  "Built and packed (source changed): ${#BUILT_PROJECTS[@]} package(s)"
+    print_pack_only "Pack only (new version, same source): ${#PACK_ONLY_PROJECTS[@]} package(s)"
+    print_skip     "Skipped (source and version unchanged): ${#SKIPPED_PROJECTS[@]} package(s)"
+
+    if [[ ${#PACK_ONLY_PROJECTS[@]} -gt 0 ]]; then
+        for name in "${PACK_ONLY_PROJECTS[@]}"; do
+            echo "  - $name"
+        done
+    fi
+    if [[ ${#SKIPPED_PROJECTS[@]} -gt 0 ]]; then
+        for name in "${SKIPPED_PROJECTS[@]}"; do
+            echo "  - $name"
+        done
+    fi
+
     if [[ ${#failed_projects[@]} -gt 0 ]]; then
-        print_warning "Some projects failed to build:"
+        echo ""
+        print_warning "Failed to build:"
         for failed in "${failed_projects[@]}"; do
             echo "  - $failed"
         done
         print_info "Note: This may be due to SDK version mismatches (e.g., targeting net10.0 with SDK 8.0)"
-        print_info "Successfully built and packed: $success_count package(s)"
         print_info "Packages are available in: $NUGET_OUTPUT_DIR"
         exit 1
     else
-        print_success "All packages built and packed successfully!"
-        print_info "Packages are available in: $NUGET_OUTPUT_DIR"
+        print_success "Done! Packages are available in: $NUGET_OUTPUT_DIR"
+        if [[ $FORCE -eq 0 ]]; then
+            print_info "Tip: run with -f / --force to rebuild all packages regardless of changes."
+        fi
         exit 0
     fi
 }
 
-# Run main function (arguments already parsed into VERSION and PATTERNS)
+# Run main function (arguments already parsed into VERSION, FORCE, and PATTERNS)
 main
-

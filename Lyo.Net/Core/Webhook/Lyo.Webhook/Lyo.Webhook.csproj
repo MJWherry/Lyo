@@ -5,7 +5,9 @@
         <RootNamespace>Lyo.Webhook</RootNamespace>
         <AssemblyName>Lyo.Webhook</AssemblyName>
         <NoWarn>$(NoWarn);SYSLIB0021</NoWarn>
-        <NuspecFile>Lyo.Webhook.nuspec</NuspecFile>
+        <Description>Abstractions, ASP.NET Core mapping, Lyo.Metrics, and logging for inbound webhooks. Provider-specific verifiers live in separate packages.</Description>
+        <PackageTags>webhook hmac security aspnetcore metrics</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,4 +18,8 @@
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

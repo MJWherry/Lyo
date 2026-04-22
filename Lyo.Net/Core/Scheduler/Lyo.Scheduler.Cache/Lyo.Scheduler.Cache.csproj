@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Scheduler.Cache.nuspec</NuspecFile>
+        <Description>Cache-backed state store for Lyo.Scheduler. Persists scheduler state across restarts using Lyo.Cache.</Description>
+        <PackageTags>scheduler cache persistence</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,5 +1,4 @@
 using System.Reflection;
-using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.EventArgs;
@@ -15,15 +14,14 @@ public static class SlashCommandErrorResponder
     private const string GenericUserMessage = "Something went wrong while running that command.";
 
     /// <summary>Subscribes <paramref name="slash" /> to log failures and respond with an ephemeral message when possible.</summary>
-    public static void Subscribe(SlashCommandsExtension slash, ILogger logger, DiscordClient client, IGuildDiscordNotificationService? guildNotifications = null)
+    public static void Subscribe(SlashCommandsExtension slash, ILogger logger, ILyoDiscordBotGateway? discordGateway = null)
     {
         ArgumentHelpers.ThrowIfNull(slash, nameof(slash));
         ArgumentHelpers.ThrowIfNull(logger, nameof(logger));
-        ArgumentHelpers.ThrowIfNull(client, nameof(client));
-        slash.SlashCommandErrored += (_, e) => HandleAsync(e, logger, client, guildNotifications);
+        slash.SlashCommandErrored += (_, e) => HandleAsync(e, logger, discordGateway);
     }
 
-    private static async Task HandleAsync(SlashCommandErrorEventArgs e, ILogger logger, DiscordClient client, IGuildDiscordNotificationService? guildNotifications)
+    private static async Task HandleAsync(SlashCommandErrorEventArgs e, ILogger logger, ILyoDiscordBotGateway? discordGateway)
     {
         var ex = Unwrap(e.Exception);
         var ctx = e.Context;
@@ -31,32 +29,31 @@ public static class SlashCommandErrorResponder
             if (ex is DiscordCommandException dce) {
                 logger.LogWarning(dce, "Slash command failed: {Message}", dce.Message);
                 await TryRespondEphemeralAsync(ctx, dce.Message, logger).ConfigureAwait(false);
-                await TryNotifyGuildAsync(guildNotifications, client, ctx, "Slash command (handled)", dce.Message, null).ConfigureAwait(false);
+                await TryNotifyGuildAsync(discordGateway, ctx, "Slash command (handled)", dce.Message, null).ConfigureAwait(false);
                 return;
             }
 
             logger.LogError(ex, "Slash command failed with an unexpected error");
             await TryRespondEphemeralAsync(ctx, GenericUserMessage, logger).ConfigureAwait(false);
-            await TryNotifyGuildAsync(guildNotifications, client, ctx, "Slash command (unexpected error)", null, ex).ConfigureAwait(false);
+            await TryNotifyGuildAsync(discordGateway, ctx, "Slash command (unexpected error)", null, ex).ConfigureAwait(false);
         }
     }
 
     private static async Task TryNotifyGuildAsync(
-        IGuildDiscordNotificationService? notifications,
-        DiscordClient client,
+        ILyoDiscordBotGateway? gateway,
         InteractionContext ctx,
         string title,
         string? messageBody,
         Exception? exception)
     {
-        if (notifications == null || ctx.Guild == null)
+        if (gateway is not { IsConnected: true } || ctx.Guild == null)
             return;
 
         try {
             if (exception != null)
-                await notifications.NotifyGuildLogErrorAsync(client, ctx.Guild.Id, exception, $"Slash: {ctx.QualifiedName}").ConfigureAwait(false);
+                await gateway.NotifyGuildLogErrorAsync(ctx.Guild.Id, exception, $"Slash: {ctx.QualifiedName}").ConfigureAwait(false);
             else if (messageBody is { Length: > 0 })
-                await notifications.NotifyGuildLogMessageAsync(client, ctx.Guild.Id, title, messageBody).ConfigureAwait(false);
+                await gateway.NotifyGuildLogMessageAsync(ctx.Guild.Id, title, messageBody).ConfigureAwait(false);
         }
         catch {
             // notifier already logs; never fail the interaction path

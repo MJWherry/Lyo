@@ -151,8 +151,6 @@ public sealed class ComputedFieldTests
         Assert.Equal("{NonExistent}", row["Missing"]);
     }
 
-    // --- GetComputedFieldDependencies ---
-
     [Fact]
     public void GetComputedFieldDependencies_ExtractsPlaceholderNames()
     {

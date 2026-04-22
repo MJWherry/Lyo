@@ -2,6 +2,7 @@
 @using MudBlazor
 @using Variant = MudBlazor.Variant
 
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-file-upload">
 <MudStack Row="@InlineLayout" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
 
     <!-- Upload button / drag-drop zone -->
@@ -209,6 +210,7 @@
         }
     }
 </MudStack>
+</LyoElementRoot>
 
 <style>
     /* MudFileUpload renders its own Secondary (grey) chips in .mud-file-upload-files-default-template.

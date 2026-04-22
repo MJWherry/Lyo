@@ -51,7 +51,9 @@ public static class WebDriverFactory
             service.LogPath = Path.Combine(ad, "chromedriver.log");
         }
 
-        return new ChromeDriver(service, o);
+        var driver = new ChromeDriver(service, o);
+        InjectStartupScripts(driver, options.StartupScripts);
+        return driver;
     }
 
     private static EdgeDriver CreateEdge(SeleniumBrowserOptions options, SeleniumExecutionContext? context)
@@ -64,7 +66,21 @@ public static class WebDriverFactory
             service.LogPath = Path.Combine(ad, "msedgedriver.log");
         }
 
-        return new EdgeDriver(service, o);
+        var driver = new EdgeDriver(service, o);
+        InjectStartupScripts(driver, options.StartupScripts);
+        return driver;
+    }
+
+    private static void InjectStartupScripts(OpenQA.Selenium.Chromium.ChromiumDriver driver, IEnumerable<string>? scripts)
+    {
+        if (scripts == null)
+            return;
+
+        foreach (var script in scripts.Where(s => !string.IsNullOrWhiteSpace(s))) {
+            driver.ExecuteCdpCommand(
+                "Page.addScriptToEvaluateOnNewDocument",
+                new Dictionary<string, object?> { { "source", script } });
+        }
     }
 
     private static FirefoxDriver CreateFirefox(SeleniumBrowserOptions options, SeleniumExecutionContext? context)
@@ -106,6 +122,8 @@ public static class WebDriverFactory
                 $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDownloadDirectoryChromium(o, context);
         o.SetLoggingPreference(LogType.Browser, OpenQA.Selenium.LogLevel.All);
+        if (options.EnablePerformanceLogging)
+            o.SetLoggingPreference(LogType.Performance, OpenQA.Selenium.LogLevel.All);
         return o;
     }
 
@@ -134,6 +152,7 @@ public static class WebDriverFactory
                 "--window-size",
                 $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDownloadDirectoryChromium(o, context);
+        o.SetLoggingPreference(LogType.Performance, OpenQA.Selenium.LogLevel.All);
         return o;
     }
 

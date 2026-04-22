@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Ffmpeg.Models.nuspec</NuspecFile>
+        <Description>Models and interfaces for Lyo.Ffmpeg: IAudioPlayer, IAudioProber, IAudioConverter, AudioConversionRequest, AudioConversionOptions, AudioProbeResult, FfmpegOptions.</Description>
+        <PackageTags>ffmpeg audio models options</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

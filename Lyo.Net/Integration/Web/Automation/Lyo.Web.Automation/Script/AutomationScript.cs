@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.Web.Automation.Abstractions;
+using Lyo.Web.Automation.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Script;

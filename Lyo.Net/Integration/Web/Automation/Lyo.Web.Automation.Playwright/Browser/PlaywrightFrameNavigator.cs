@@ -2,7 +2,7 @@ using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation;
 using Lyo.Web.Automation.Models;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;

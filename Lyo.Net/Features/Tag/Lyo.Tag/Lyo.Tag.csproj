@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Tag.nuspec</NuspecFile>
+        <Description>Abstractions for tagging entities across the framework. Uses EntityRef for dynamic entity references.</Description>
+        <PackageTags>tag entity-ref</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

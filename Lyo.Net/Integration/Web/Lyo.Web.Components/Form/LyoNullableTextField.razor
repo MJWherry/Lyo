@@ -1,4 +1,5 @@
 @using MudBlazor
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-nullable-text-field">
 <MudTextField T="string?"
               Label="@Label"
               Value="@(Value ?? "")"
@@ -12,4 +13,5 @@
               Adornment="Adornment.End"
               AdornmentIcon="@Icons.Material.Filled.Clear"
               OnAdornmentClick="HandleClearClick"/>
+</LyoElementRoot>
 

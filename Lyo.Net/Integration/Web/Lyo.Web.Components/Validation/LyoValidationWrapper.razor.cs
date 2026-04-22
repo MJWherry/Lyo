@@ -7,6 +7,9 @@ namespace Lyo.Web.Components.Validation;
 
 public partial class LyoValidationWrapper<T> : ComponentBase
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private T? _previousValue;
     private bool _hasValidated;
 

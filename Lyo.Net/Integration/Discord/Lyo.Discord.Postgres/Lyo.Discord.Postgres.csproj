@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>Lyo.Discord.Postgres</RootNamespace>
-        <NuspecFile>Lyo.Discord.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL persistence for Discord entities (EF Core, schema discord).</Description>
+        <PackageTags>discord postgres postgresql entityframework ef</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -4,6 +4,7 @@
 @using Lyo.Web.Components.Form
 @using Lyo.Web.Components.Validation
 @using MudBlazor
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-query-node-editor" class="lyo-query-node-editor">
 @if (Node is GroupClause) {
     @* GroupClause editor *@
     <MudStack Spacing="3">
@@ -245,5 +246,7 @@ else if (Node is ConditionClause conditionNode) {
         }
     </MudStack>
 }
+
+</LyoElementRoot>
 
 

@@ -1,5 +1,5 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -9,9 +9,9 @@ namespace Lyo.Web.Automation.Selenium.Browser;
 /// <summary>JavaScript alert / confirm / prompt handling (<see cref="ITargetLocator.Alert" />).</summary>
 public sealed class BrowserAlerts
 {
-    private readonly LyoBrowser _browser;
+    private readonly SeleniumBrowser _browser;
 
-    internal BrowserAlerts(LyoBrowser browser)
+    internal BrowserAlerts(SeleniumBrowser browser)
     {
         ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
         _browser = browser;

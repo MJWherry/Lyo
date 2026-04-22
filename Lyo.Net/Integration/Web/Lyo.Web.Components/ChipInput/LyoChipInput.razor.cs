@@ -9,6 +9,11 @@ namespace Lyo.Web.Components.ChipInput;
 
 public partial class LyoChipInput : IAsyncDisposable
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-chip-input" : ElementId.Trim();
+
     private static readonly char[] ValueSeparators = [',', '\uFF0C', ';', '\t', '\n', '\r'];
     private DotNetObjectReference<LyoChipInput>? _dotNetRef;
     private int _inputKey;

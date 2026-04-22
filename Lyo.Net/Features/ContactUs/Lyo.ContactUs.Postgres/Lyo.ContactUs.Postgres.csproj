@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.ContactUs.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.ContactUs using Entity Framework Core.</Description>
+        <PackageTags>contact form contactus postgres postgresql entityframework ef</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

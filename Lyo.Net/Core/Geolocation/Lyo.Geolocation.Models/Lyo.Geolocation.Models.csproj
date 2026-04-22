@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Geolocation.Models.nuspec</NuspecFile>
+        <Description>Geolocation models and data structures for the Lyo library suite.</Description>
+        <PackageTags>geolocation location models</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

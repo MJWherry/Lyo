@@ -1,7 +1,11 @@
 @namespace Lyo.Web.Components.DataGrid
 @using MudBlazor
 
-<span class="d-inline-flex align-center lyo-filter-chip-label" style="gap: 2px; min-width: 0; max-width: 100%;">
+<LyoElementRoot RootTag="span"
+                ElementId="@ElementId"
+                DefaultId="lyo-filter-chip-label"
+                class="d-inline-flex align-center lyo-filter-chip-label"
+                style="gap: 2px; min-width: 0; max-width: 100%;">
 @if (ChipLabelHelper.ShouldTruncate(Text, MaxLength)) {
     <MudTooltip Text="@Text">
         <span style="display:inline-block;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;vertical-align:bottom;">@ChipLabelHelper.TruncateLabel(Text, MaxLength)</span>
@@ -17,7 +21,7 @@
 else {
     <span style="min-width:0;">@Text</span>
 }
-</span>
+</LyoElementRoot>
 
 <MudDialog @bind-Visible="_viewDialogOpen" Options="_viewDialogOptions">
     <TitleContent>Filter</TitleContent>
@@ -30,6 +34,9 @@ else {
 </MudDialog>
 
 @code {
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Parameter]
     [EditorRequired]

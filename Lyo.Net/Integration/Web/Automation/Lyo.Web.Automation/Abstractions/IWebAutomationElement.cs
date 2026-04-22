@@ -32,4 +32,7 @@ public interface IWebAutomationElement
 
     /// <summary>Polls for a descendant of this element matching <paramref name="locator" /> (scoped search).</summary>
     Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default);
+
+    /// <summary>Captures this element as PNG (bounding box in viewport when supported).</summary>
+    Task<byte[]> TakeSnapshotPngAsync(CancellationToken ct = default);
 }

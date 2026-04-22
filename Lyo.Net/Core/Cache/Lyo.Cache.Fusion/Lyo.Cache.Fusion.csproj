@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Cache.Fusion.nuspec</NuspecFile>
+        <Description>FusionCache implementation for Lyo.Cache with Redis backplane support for distributed caching.</Description>
+        <PackageTags>cache caching redis fusioncache</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

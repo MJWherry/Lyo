@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Scientific.Functions.nuspec</NuspecFile>
+        <Description>F# scientific calculations for chemistry, astronomy, thermodynamics, fluid dynamics, compressible flow, and solid mechanics built on top of the Lyo scientific and mathematics contracts.</Description>
+        <PackageTags>scientific functions fsharp chemistry astronomy engineering thermodynamics fluids mechanics</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,5 +21,9 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Scientific\Lyo.Scientific.csproj"/>
         <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

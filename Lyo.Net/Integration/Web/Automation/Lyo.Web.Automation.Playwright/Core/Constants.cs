@@ -1,9 +1,11 @@
+using Lyo.Web.Automation.Core;
+
 namespace Lyo.Web.Automation.Playwright.Core;
 
 /// <summary>Consolidated constants for the WebAutomation.Playwright library.</summary>
 public static class Constants
 {
-    /// <summary>Playwright-specific metric series (see <see cref="Lyo.Web.Automation.Constants.Metrics" /> for logical keys).</summary>
+    /// <summary>Playwright-specific metric series (see <see cref="Automation.Core.Constants.Metrics" /> for logical keys).</summary>
     public static class Metrics
     {
         public const string StartBrowserDuration = "lyo.webautomation.playwright.browser.start.duration";

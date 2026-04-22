@@ -5,7 +5,8 @@
         <RootNamespace>Lyo.DataTable.Models</RootNamespace>
         <AssemblyName>Lyo.DataTable.Models</AssemblyName>
         <PackageId>Lyo.DataTable.Models</PackageId>
-        <NuspecFile>Lyo.DataTable.Models.nuspec</NuspecFile>
+        <Description>Mutable data table with headers, rows, footer, and per-cell formatting. Used for CSV, XLSX, PDF data and programmatic table construction.</Description>
+        <PackageTags>datatable csv xlsx</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using StrongBoxGuid = System.Runtime.CompilerServices.StrongBox<System.Guid>;
 using Lyo.Exceptions;
 using Lyo.Metrics;
-using Wm = Lyo.Web.Automation.Constants;
+using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;

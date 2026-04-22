@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Images.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for image workbenches, sprite animation, and spritesheet extraction.</Description>
+        <PackageTags>blazor components images sprites mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

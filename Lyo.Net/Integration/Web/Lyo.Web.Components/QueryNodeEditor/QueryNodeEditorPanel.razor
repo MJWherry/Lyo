@@ -1,6 +1,6 @@
 @using Lyo.Query.Models.Common
 @using MudBlazor
-<MudContainer Class="query-node-editor-container" Style="padding: 0;">
+<MudContainer id="@RootId" Class="query-node-editor-container" Style="padding: 0;">
     @if (_rootNode != null) {
         <MudGrid Class="query-node-editor-grid">
             @* Left Column - Tree View (1/3) *@

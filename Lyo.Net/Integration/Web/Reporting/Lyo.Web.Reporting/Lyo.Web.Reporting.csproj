@@ -2,6 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+            <Description>Powerful fluent API for building and rendering professional reports in .NET applications. Built on Blazor components with support for sections, columns, grids, content blocks, and metrics visualizations.</Description>
+        <PackageTags>blazor reporting reports charts metrics visualization</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,4 +20,8 @@
         <ProjectReference Include="..\..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

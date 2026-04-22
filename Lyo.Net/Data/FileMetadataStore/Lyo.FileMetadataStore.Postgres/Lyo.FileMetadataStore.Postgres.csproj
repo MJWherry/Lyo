@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.FileMetadataStore.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of the Lyo FileMetadataStore service using Entity Framework Core.</Description>
+        <PackageTags>file-store postgres postgresql entity-framework ef-core</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

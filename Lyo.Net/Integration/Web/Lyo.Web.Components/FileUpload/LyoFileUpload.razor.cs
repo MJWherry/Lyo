@@ -14,6 +14,9 @@ namespace Lyo.Web.Components.FileUpload;
 
 public partial class LyoFileUpload : IDisposable
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     public enum UploadProgressViewType
     {
         None,

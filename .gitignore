@@ -40,7 +40,11 @@ dist-ssr
 *.sln
 *.sw?
 
+#k6 Results
 k6/framework-person/results/*
 
 # Python (Lyo.Net/_scripts helpers)
 Lyo.Net/_scripts/__pycache__/
+
+Lyo.Net/Integration/Scraping/*
+!Lyo.Net/Integration/Scraping/.gitkeep

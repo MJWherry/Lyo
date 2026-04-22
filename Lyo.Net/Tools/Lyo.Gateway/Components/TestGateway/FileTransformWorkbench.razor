@@ -1,3 +1,4 @@
+@using System.Text
 @using Lyo.Common.Records
 @using Lyo.Compression.Models
 @using Lyo.Encryption
@@ -14,15 +15,103 @@
         <div>
             <MudText Typo="Typo.h5">Encryption / Compression</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Choose compression and/or encryption, then run forward or reverse on the uploaded file. When both are selected, forward runs compression then encryption, and
-                reverse runs decryption then decompression.
+                Choose compression and/or encryption, then run forward or reverse on a file or raw text. When both are selected, forward runs compression then encryption, and
+                reverse runs decryption then decompression. In raw text mode, forward uses UTF-8 plaintext in the text box; reverse expects Base64 (type or paste into the text area, or load via <strong>Input from clipboard</strong>; whitespace ignored when decoding).
             </MudText>
         </div>
 
-        <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Outlined="true">
-                    <MudStack Spacing="3">
+        <MudGrid Class="file-transform-workbench-grid" Style="align-items: stretch;">
+            @* Left: input *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Input</MudText>
+                    <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;">
+                        <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.subtitle2">Source</MudText>
+                                <MudButtonGroup OverrideStyles="false"
+                                                Variant="Variant.Outlined"
+                                                Size="Size.Small"
+                                                Class="file-transform-workbench-input-toggle">
+                                    <MudButton OnClick="@(() => OnInputModeToggleClicked(false))"
+                                               Variant="@(!_useRawText ? Variant.Filled : Variant.Outlined)"
+                                               Color="@(!_useRawText ? Color.Primary : Color.Default)">File</MudButton>
+                                    <MudButton OnClick="@(() => OnInputModeToggleClicked(true))"
+                                               Variant="@(_useRawText ? Variant.Filled : Variant.Outlined)"
+                                               Color="@(_useRawText ? Color.Primary : Color.Default)">Raw text</MudButton>
+                                </MudButtonGroup>
+                            </MudStack>
+                            @if (_useRawText) {
+                                @if (_reverse) {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Enter Base64-encoded ciphertext or compressed bytes; whitespace is ignored when decoding. Use the button below to paste from the clipboard.
+                                    </MudText>
+                                    <MudTextField T="string"
+                                                  @bind-Value="_rawText"
+                                                  Label="Input (Base64)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="8"
+                                                  FullWidth="true"
+                                                  HelperText="Paste or type Base64; or load from clipboard below."/>
+                                    @if (!string.IsNullOrEmpty(_rawText)) {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @_rawText.Length characters in input.
+                                        </MudText>
+                                    }
+                                }
+                                else {
+                                    <MudTextField T="string"
+                                                  @bind-Value="_rawText"
+                                                  Label="Input (UTF-8 text)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="8"
+                                                  FullWidth="true"
+                                                  HelperText="Plaintext is encoded as UTF-8 before compress/encrypt. Use the button below to paste from the clipboard."/>
+                                }
+                            }
+                            else {
+                                <LyoFileUpload MaxFiles="1"
+                                               ButtonText="Choose file"
+                                               InlineLayout="true"
+                                               OnClientFileReady="OnClientFileReadyAsync"
+                                               OnClientFileRemoved="OnClientFileRemovedAsync"
+                                               OnUploadStarted="OnUploadStartedAsync"
+                                               OnUploadProgress="OnUploadProgressAsync"
+                                               OnUploadCompleted="OnUploadCompletedAsync"
+                                               OnUploadCancelled="OnUploadCancelledAsync"
+                                               OnUploadFailed="OnUploadFailedAsync"/>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Upload status: @_uploadStatus
+                                </MudText>
+                            }
+                        </MudStack>
+                        @if (_useRawText) {
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Style="flex-shrink:0; margin-top: 4px;">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.ContentPaste"
+                                           OnClick="LoadRawTextFromClipboardAsync"
+                                           Disabled="@_busy">
+                                    Input from clipboard
+                                </MudButton>
+                                @if (!string.IsNullOrEmpty(_rawText)) {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Clear"
+                                                   aria-label="Clear input"
+                                                   Color="Color.Default"
+                                                   Size="Size.Small"
+                                                   OnClick="ClearRawText"/>
+                                }
+                            </MudStack>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            @* Middle: compression + encryption; actions at bottom *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4 file-transform-workbench-settings" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudStack Spacing="3" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                        <MudText Typo="Typo.h6">Compression &amp; encryption</MudText>
                         <MudPaper Class="pa-3" Outlined="true">
                             <MudStack Spacing="2">
                                 <MudSelect T="CompressionAlgorithm?" Label="@(_reverse ? "Decompression algorithm" : "Compression algorithm")" @bind-Value="_compressionAlgorithm">
@@ -36,14 +125,25 @@
 
                         <MudPaper Class="pa-3" Outlined="true">
                             <MudStack Spacing="2">
-                                <MudSwitch T="bool"
-                                           @bind-Value="_useTwoKeyEncryption"
-                                           Color="Color.Primary"
-                                           Label="@(_useTwoKeyEncryption ? "Two-key encryption" : "Normal encryption")"/>
+                                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.subtitle2">Encryption</MudText>
+                                    <MudButtonGroup OverrideStyles="false"
+                                                    Variant="Variant.Outlined"
+                                                    Size="Size.Small"
+                                                    Class="file-transform-workbench-encryption-mode-toggle">
+                                        <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(false))"
+                                                   Variant="@(!_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(!_useTwoKeyEncryption ? Color.Primary : Color.Default)">Normal</MudButton>
+                                        <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(true))"
+                                                   Variant="@(_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
+                                                   Color="@(_useTwoKeyEncryption ? Color.Primary : Color.Default)">Two-key</MudButton>
+                                    </MudButtonGroup>
+                                </MudStack>
 
                                 @if (_useTwoKeyEncryption) {
-                                    <MudGrid>
-                                        <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Data (payload)</MudText>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsTwoKeyDataKeySize ? 6 : 12)">
                                             <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Data decryption algorithm" : "Data encryption algorithm")"
                                                        @bind-Value="_dataEncryptionAlgorithm">
                                                 <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
@@ -53,7 +153,7 @@
                                             </MudSelect>
                                         </MudItem>
                                         @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
-                                            <MudItem xs="12" md="6">
+                                            <MudItem xs="12" sm="6">
                                                 <MudSelect T="AesGcmKeySizeBits" Label="Data AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize">
                                                     @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
                                                         <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
@@ -62,7 +162,7 @@
                                             </MudItem>
                                         }
                                         @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
-                                            <MudItem xs="12" md="6">
+                                            <MudItem xs="12" sm="6">
                                                 <MudSelect T="AesSivKeySizeBits" Label="Data AES-SIV key size" @bind-Value="_dataAesSivKeySize">
                                                     @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
                                                         <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
@@ -70,7 +170,11 @@
                                                 </MudSelect>
                                             </MudItem>
                                         }
-                                        <MudItem xs="12" md="6">
+                                    </MudGrid>
+
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">Key wrapping (KEK)</MudText>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsTwoKeyKekKeySize ? 6 : 12)">
                                             <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Key decryption algorithm" : "Key encryption algorithm")"
                                                        @bind-Value="_keyEncryptionAlgorithm">
                                                 <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
@@ -80,7 +184,7 @@
                                             </MudSelect>
                                         </MudItem>
                                         @if (UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm)) {
-                                            <MudItem xs="12" md="6">
+                                            <MudItem xs="12" sm="6">
                                                 <MudSelect T="AesGcmKeySizeBits" Label="Key AES key size (GCM / CCM)" @bind-Value="_keyAesGcmKeySize">
                                                     @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
                                                         <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
@@ -89,7 +193,7 @@
                                             </MudItem>
                                         }
                                         @if (_keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
-                                            <MudItem xs="12" md="6">
+                                            <MudItem xs="12" sm="6">
                                                 <MudSelect T="AesSivKeySizeBits" Label="Key AES-SIV key size" @bind-Value="_keyAesSivKeySize">
                                                     @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
                                                         <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
@@ -100,27 +204,35 @@
                                     </MudGrid>
                                 }
                                 else {
-                                    <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Decryption algorithm" : "Encryption algorithm")"
-                                               @bind-Value="_dataEncryptionAlgorithm">
-                                        <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
-                                        @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
-                                            <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" sm="@(ShowsNormalKeySize ? 6 : 12)">
+                                            <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Decryption algorithm" : "Encryption algorithm")"
+                                                       @bind-Value="_dataEncryptionAlgorithm">
+                                                <MudSelectItem Value="@((EncryptionAlgorithm?)null)">None</MudSelectItem>
+                                                @foreach (var algorithm in SymmetricWorkbenchAlgorithms) {
+                                                    <MudSelectItem Value="@((EncryptionAlgorithm?)algorithm)">@FormatEncryptionAlgorithmLabel(algorithm)</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesGcmKeySizeBits" Label="AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
                                         }
-                                    </MudSelect>
-                                    @if (UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm)) {
-                                        <MudSelect T="AesGcmKeySizeBits" Label="AES key size (GCM / CCM)" @bind-Value="_dataAesGcmKeySize" Class="mt-2">
-                                            @foreach (var bits in Enum.GetValues<AesGcmKeySizeBits>()) {
-                                                <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    }
-                                    @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
-                                        <MudSelect T="AesSivKeySizeBits" Label="AES-SIV key size" @bind-Value="_dataAesSivKeySize" Class="mt-2">
-                                            @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
-                                                <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    }
+                                        @if (_dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv) {
+                                            <MudItem xs="12" sm="6">
+                                                <MudSelect T="AesSivKeySizeBits" Label="AES-SIV key size" @bind-Value="_dataAesSivKeySize">
+                                                    @foreach (var bits in Enum.GetValues<AesSivKeySizeBits>()) {
+                                                        <MudSelectItem Value="@bits">@((int)bits)-bit</MudSelectItem>
+                                                    }
+                                                </MudSelect>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
                                 }
 
                                 @if (HasEncryptionSelection) {
@@ -136,60 +248,66 @@
                                 }
                             </MudStack>
                         </MudPaper>
+                    </MudStack>
 
-                        <MudPaper Class="pa-3" Outlined="true">
-                            <MudStack Spacing="2">
-                                <MudText Typo="Typo.subtitle2">Input File</MudText>
-                                <LyoFileUpload MaxFiles="1"
-                                               ButtonText="Choose file"
-                                               InlineLayout="true"
-                                               OnClientFileReady="OnClientFileReadyAsync"
-                                               OnClientFileRemoved="OnClientFileRemovedAsync"
-                                               OnUploadStarted="OnUploadStartedAsync"
-                                               OnUploadProgress="OnUploadProgressAsync"
-                                               OnUploadCompleted="OnUploadCompletedAsync"
-                                               OnUploadCancelled="OnUploadCancelledAsync"
-                                               OnUploadFailed="OnUploadFailedAsync"/>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    Upload status: @_uploadStatus
-                                </MudText>
-                            </MudStack>
-                        </MudPaper>
-
-                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center">
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TransformAsync" Disabled="@(_busy || _uploadedFile == null)">
+                    <MudStack Spacing="2" Class="mt-3" Style="flex-shrink:0;">
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TransformAsync" Disabled="@ActionButtonsDisabled">
                                 @GetActionButtonText()
                             </MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ProbeFileAsync" Disabled="@(_busy || _uploadedFile == null)">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ProbeFileAsync" Disabled="@ActionButtonsDisabled">
                                 Probe header / compression
                             </MudButton>
-                            <MudSwitch T="bool" @bind-Value="_reverse" Color="Color.Primary"
-                                       Label="@(_reverse ? "Reverse (decrypt / decompress)" : "Forward (compress / encrypt)")"/>
+                            <MudButtonGroup OverrideStyles="false"
+                                            Variant="Variant.Outlined"
+                                            Size="Size.Small"
+                                            Class="file-transform-workbench-direction-toggle">
+                                <MudButton OnClick="@(() => OnDirectionToggleClicked(false))"
+                                           Variant="@(!_reverse ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(!_reverse ? Color.Primary : Color.Default)">Forward</MudButton>
+                                <MudButton OnClick="@(() => OnDirectionToggleClicked(true))"
+                                           Variant="@(_reverse ? Variant.Filled : Variant.Outlined)"
+                                           Color="@(_reverse ? Color.Primary : Color.Default)">Reverse</MudButton>
+                            </MudButtonGroup>
                         </MudStack>
 
                         @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
-                            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                            <MudAlert Severity="@_statusSeverity" Dense="true" Class="my-1">@_statusMessage</MudAlert>
                         }
                     </MudStack>
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Outlined="true" Style="height: 100%;">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+            @* Right: result *@
+            <MudItem xs="12" md="4" Style="display: flex;">
+                <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2" Style="flex-shrink:0;">
                         <MudText Typo="Typo.h6">Result</MudText>
                         @if (_result != null && _result.OutputBytes.Length > 0) {
-                            <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Result</MudButton>
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="DownloadAsync">Download Result</MudButton>
+                                <MudTooltip Text="@CopyResultTooltip">
+                                    <span>
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Secondary"
+                                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                                   OnClick="CopyResultToClipboardAsync"
+                                                   Disabled="@(!CanCopyResultToClipboard)">
+                                            Copy
+                                        </MudButton>
+                                    </span>
+                                </MudTooltip>
+                            </MudStack>
                         }
                     </MudStack>
 
-                    @if (_result == null) {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Run a transform or use <strong>Probe header / compression</strong> to see the output file and step details here.
-                        </MudText>
-                    }
-                    else {
-                        <MudStack Spacing="2">
+                    <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                        @if (_result == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Run a transform or use <strong>Probe header / compression</strong> to see the output file and step details here.
+                            </MudText>
+                        }
+                        else {
                             <MudText Typo="Typo.subtitle2">@(_result.OutputBytes.Length > 0 ? "Output File" : "Analysis")</MudText>
                             <MudText Typo="Typo.body2">@_result.OutputFileName</MudText>
                             <MudDivider/>
@@ -203,8 +321,8 @@
                                 }
                                 </tbody>
                             </MudSimpleTable>
-                        </MudStack>
-                    }
+                        }
+                    </MudStack>
                 </MudPaper>
             </MudItem>
         </MudGrid>
@@ -242,7 +360,21 @@
 
     private static bool UsesAesGcmOrCcmKeySize(EncryptionAlgorithm? algorithm)
         => algorithm is EncryptionAlgorithm.AesGcm or EncryptionAlgorithm.AesCcm;
+
+    /// <summary>True when the data-encryption row shows a key-size dropdown beside the algorithm (two-key mode).</summary>
+    private bool ShowsTwoKeyDataKeySize
+        => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
+    /// <summary>True when the key-wrapping row shows a key-size dropdown beside the algorithm (two-key mode).</summary>
+    private bool ShowsTwoKeyKekKeySize
+        => UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm) || _keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
+    /// <summary>True when normal (single) mode shows a key-size dropdown beside the algorithm.</summary>
+    private bool ShowsNormalKeySize
+        => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
     private bool _reverse;
+    private bool _useRawText;
+    private string _rawText = string.Empty;
     private TestGatewayTransformResult? _result;
     private string _secret = "change-me";
     private bool _showSecret;
@@ -252,6 +384,130 @@
     private TestGatewayUploadedFile? _uploadedFile;
     private bool _useTwoKeyEncryption;
     private string _uploadStatus = "No file selected.";
+
+    private bool ActionButtonsDisabled
+        => _busy || (!_useRawText && _uploadedFile == null) || (_useRawText && string.IsNullOrWhiteSpace(_rawText));
+
+    private const int MaxClipboardCopyBytes = 512 * 1024;
+
+    private bool CanCopyResultToClipboard
+        => _result != null && _result.OutputBytes.Length > 0 && _result.OutputBytes.Length <= MaxClipboardCopyBytes;
+
+    private string CopyResultTooltip
+        => _result == null || _result.OutputBytes.Length == 0
+            ? string.Empty
+            : _result.OutputBytes.Length > MaxClipboardCopyBytes
+                ? $"Output exceeds {MaxClipboardCopyBytes / 1024} KB — use download."
+                : "Copy as UTF-8 when lossless, otherwise Base64.";
+
+    private void OnTwoKeyEncryptionToggleClicked(bool twoKey)
+    {
+        if (_useTwoKeyEncryption == twoKey)
+            return;
+
+        _useTwoKeyEncryption = twoKey;
+        _result = null;
+    }
+
+    private void OnDirectionToggleClicked(bool reverse)
+    {
+        if (_reverse == reverse)
+            return;
+
+        _reverse = reverse;
+        if (_useRawText) {
+            _rawText = string.Empty;
+            _result = null;
+        }
+    }
+
+    private void OnInputModeToggleClicked(bool rawText)
+    {
+        if (_useRawText == rawText)
+            return;
+
+        _useRawText = rawText;
+        _rawText = string.Empty;
+        _result = null;
+    }
+
+    private void ClearRawText()
+    {
+        _rawText = string.Empty;
+        _result = null;
+    }
+
+    private async Task LoadRawTextFromClipboardAsync()
+    {
+        try {
+            var text = await Js.ReadClipboardTextAsync();
+            _rawText = text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(_rawText)) {
+                SetStatus("Clipboard is empty.", Severity.Warning);
+                return;
+            }
+
+            SetStatus($"Loaded {_rawText.Length} characters from clipboard into the text area.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus($"Could not read clipboard: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task CopyResultToClipboardAsync()
+    {
+        if (_result == null || _result.OutputBytes.Length == 0 || !CanCopyResultToClipboard)
+            return;
+
+        var payload = FormatClipboardPayload(_result.OutputBytes);
+        await Js.SendToClipboard(payload);
+        SetStatus("Copied to clipboard.", Severity.Success);
+    }
+
+    private static string FormatClipboardPayload(byte[] bytes)
+    {
+        if (bytes.Length == 0)
+            return string.Empty;
+
+        return IsLosslessUtf8(bytes) ? Encoding.UTF8.GetString(bytes) : Convert.ToBase64String(bytes);
+    }
+
+    private static bool IsLosslessUtf8(byte[] data)
+        => Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(data)).AsSpan().SequenceEqual(data);
+
+    private bool TryBuildInput(out TestGatewayUploadedFile? input)
+    {
+        input = null;
+        if (!_useRawText) {
+            if (_uploadedFile == null) {
+                SetStatus("Upload a file first.", Severity.Warning);
+                return false;
+            }
+
+            input = _uploadedFile;
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(_rawText)) {
+            SetStatus(_reverse ? "Enter Base64 in the text area or use Input from clipboard." : "Enter text in the raw text area.", Severity.Warning);
+            return false;
+        }
+
+        if (!_reverse) {
+            input = new("input.txt", FileTypeInfo.Txt.MimeType, Encoding.UTF8.GetBytes(_rawText));
+            return true;
+        }
+
+        try {
+            var normalized = _rawText.Trim().Replace("\r", "").Replace("\n", "").Replace(" ", "");
+            input = new("input.bin", FileTypeInfo.Unknown.MimeType, Convert.FromBase64String(normalized));
+            return true;
+        }
+        catch (FormatException) {
+            SetStatus("Reverse mode expects Base64-encoded ciphertext or compressed bytes in the text area.", Severity.Warning);
+            return false;
+        }
+    }
 
     private Task OnClientFileReadyAsync(LocalBrowserFile file)
     {
@@ -303,14 +559,12 @@
 
     private async Task ProbeFileAsync()
     {
-        if (_uploadedFile == null) {
-            SetStatus("Upload a file first.", Severity.Warning);
+        if (!TryBuildInput(out var input) || input == null)
             return;
-        }
 
         _busy = true;
         try {
-            _result = await Task.Run(() => Transformer.ProbeFile(_uploadedFile));
+            _result = await Task.Run(() => Transformer.ProbeFile(input));
             SetStatus("Probe completed.", Severity.Success);
         }
         catch (Exception ex) {
@@ -323,10 +577,8 @@
 
     private async Task TransformAsync()
     {
-        if (_uploadedFile == null) {
-            SetStatus("Upload a file first.", Severity.Warning);
+        if (!TryBuildInput(out var input) || input == null)
             return;
-        }
 
         if (_useTwoKeyEncryption && HasEncryptionSelection && !(_dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue)) {
             SetStatus("Select both data and key algorithms for two-key mode, or leave both as None.", Severity.Warning);
@@ -336,7 +588,7 @@
         var actionLabel = GetActionButtonText();
         _busy = true;
         try {
-            _result = await Transformer.TransformAsync(_uploadedFile, new(_reverse, ApplyCompression, ApplyEncryption, _useTwoKeyEncryption, _secret, _dataEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _keyEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _compressionAlgorithm ?? CompressionAlgorithm.Brotli, _dataAesGcmKeySize, _keyAesGcmKeySize, _dataAesSivKeySize, _keyAesSivKeySize));
+            _result = await Transformer.TransformAsync(input, new(_reverse, ApplyCompression, ApplyEncryption, _useTwoKeyEncryption, _secret, _dataEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _keyEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _compressionAlgorithm ?? CompressionAlgorithm.Brotli, _dataAesGcmKeySize, _keyAesGcmKeySize, _dataAesSivKeySize, _keyAesSivKeySize));
             SetStatus($"{actionLabel} completed.", Severity.Success);
         }
         catch (Exception ex) {

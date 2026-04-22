@@ -15,6 +15,9 @@ public enum JsonEditorViewMode
 
 public partial class JsonEditor<T> : IAsyncDisposable
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private static readonly JsonSerializerOptions DefaultOptions = new() { WriteIndented = true };
     private int _fontSizePx = 13;
     private JsonEditorJsInterop? _jsInterop;

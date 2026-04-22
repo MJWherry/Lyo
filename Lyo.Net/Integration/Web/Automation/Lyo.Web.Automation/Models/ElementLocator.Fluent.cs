@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Models;
 

@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Comment.nuspec</NuspecFile>
+        <Description>Abstractions for storing and retrieving comments. Uses EntityRef for dynamic entity references. Supports reply threads and like/dislike counts.</Description>
+        <PackageTags>comment entity-ref reply like dislike</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

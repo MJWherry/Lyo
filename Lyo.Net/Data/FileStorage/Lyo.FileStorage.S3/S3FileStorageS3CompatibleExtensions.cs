@@ -24,9 +24,7 @@ public static class S3FileStorageS3CompatibleExtensions
 
     /// <summary>Configuration section for Linode Object Storage (set <see cref="S3FileStorageOptions.Region" />, e.g. <c>us-east-1</c>).</summary>
     public const string LinodeObjectStorageConfigurationSectionName = "LinodeObjectStorage";
-
-    // --- Endpoint URL builders (documented provider patterns) ---
-
+    
     /// <summary>Returns a base URL for MinIO when only a host (and optional port) is given without a scheme; otherwise trims and removes a trailing slash.</summary>
     public static string GetMinioServiceUrl(string hostOrUri)
     {
@@ -72,9 +70,7 @@ public static class S3FileStorageS3CompatibleExtensions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(region, nameof(region));
         return $"https://{region.Trim()}.linodeobjects.com";
     }
-
-    // --- Apply defaults onto options (same pattern as Backblaze B2) ---
-
+    
     /// <summary>
     /// Normalizes <see cref="S3FileStorageOptions.ServiceUrl" /> and sets a default <see cref="S3FileStorageOptions.Region" /> for the AWS SDK when using a custom MinIO endpoint.
     /// Does not set <see cref="S3FileStorageOptions.ServiceUrl" /> if it is empty — configure the MinIO server URL explicitly.
@@ -142,8 +138,6 @@ public static class S3FileStorageS3CompatibleExtensions
 
         options.ServiceUrl = GetLinodeObjectStorageServiceUrl(options.Region);
     }
-
-    // --- DI registration (mirrors <see cref="S3FileStorageBackblazeExtensions" />) ---
 
     public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(
         this IServiceCollection services,

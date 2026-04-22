@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Sms.Twilio.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL implementation of Lyo.Sms.Twilio using Entity Framework Core.</Description>
+        <PackageTags>sms twilio postgres postgresql entityframework ef</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

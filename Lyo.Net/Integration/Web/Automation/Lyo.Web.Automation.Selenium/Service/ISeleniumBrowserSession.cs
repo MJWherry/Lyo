@@ -7,8 +7,8 @@ namespace Lyo.Web.Automation.Selenium.Service;
 public interface ISeleniumBrowserSession : IWebAutomationSession
 {
     /// <summary>Strongly typed browser (same instance as <see cref="IWebAutomationSession.Browser" />).</summary>
-    new LyoBrowser Browser { get; }
+    new SeleniumBrowser Browser { get; }
 
-    /// <summary>Tab and window management (same as <see cref="LyoBrowser.Tabs" />).</summary>
+    /// <summary>Tab and window management (same as <see cref="SeleniumBrowser.Tabs" />).</summary>
     TabManager Tabs { get; }
 }

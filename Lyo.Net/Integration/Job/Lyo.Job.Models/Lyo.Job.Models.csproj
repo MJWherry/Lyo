@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Job.Models.nuspec</NuspecFile>
+        <Description>Job management models and DTOs for the Lyo API job management system.</Description>
+        <PackageTags>api jobs job-management models</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

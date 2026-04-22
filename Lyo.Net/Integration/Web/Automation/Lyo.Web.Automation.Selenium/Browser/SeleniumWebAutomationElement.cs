@@ -1,7 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation;
-using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Controls;
 using OpenQA.Selenium;
 
@@ -9,10 +6,10 @@ namespace Lyo.Web.Automation.Selenium.Browser;
 
 internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
 {
-    private readonly LyoBrowser _browser;
+    private readonly SeleniumBrowser _browser;
     private readonly IWebElement _element;
 
-    public SeleniumWebAutomationElement(LyoBrowser browser, IWebElement element)
+    public SeleniumWebAutomationElement(SeleniumBrowser browser, IWebElement element)
     {
         _browser = browser;
         _element = element;
@@ -133,4 +130,16 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
         var el = await _browser.PollForDescendantElementAsync(_element, locator, ct).ConfigureAwait(false);
         return new SeleniumWebAutomationElement(_browser, el);
     }
+
+    /// <inheritdoc />
+    public Task<byte[]> TakeSnapshotPngAsync(CancellationToken ct = default)
+        => Task.Run(
+            () => {
+                ct.ThrowIfCancellationRequested();
+                if (_element is not ITakesScreenshot shot)
+                    throw new NotSupportedException("Element does not support screenshots.");
+
+                return shot.GetScreenshot().AsByteArray;
+            },
+            ct);
 }

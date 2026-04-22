@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Web.WebRenderer.nuspec</NuspecFile>
+        <Description>Web renderer library for server-side rendering using PuppeteerSharp.</Description>
+        <PackageTags>web renderer puppeteer server-side-rendering</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

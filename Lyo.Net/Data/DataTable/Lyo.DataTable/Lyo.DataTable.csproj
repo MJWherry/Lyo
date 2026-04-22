@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.DataTable.nuspec</NuspecFile>
+        <Description>Mutable data table with per-cell and per-row formatting. Used for CSV, XLSX, PDF tabular data and programmatic table construction.</Description>
+        <PackageTags>datatable tabular csv xlsx</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

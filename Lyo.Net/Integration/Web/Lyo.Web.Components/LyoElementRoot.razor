@@ -1,0 +1,37 @@
+@namespace Lyo.Web.Components
+
+@if (string.Equals(RootTag, "span", StringComparison.OrdinalIgnoreCase)) {
+    <span id="@ResolvedId" @attributes="AdditionalAttributes">
+        @ChildContent
+    </span>
+}
+else {
+    <div id="@ResolvedId" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+
+    /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    /// <summary>Used when <see cref="ElementId"/> is null or whitespace.</summary>
+    [Parameter]
+    [EditorRequired]
+    public string DefaultId { get; set; } = default!;
+
+    /// <summary>Root element tag; <c>div</c> (default) or <c>span</c>.</summary>
+    [Parameter]
+    public string RootTag { get; set; } = "div";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string ResolvedId => string.IsNullOrWhiteSpace(ElementId) ? DefaultId : ElementId.Trim();
+
+}

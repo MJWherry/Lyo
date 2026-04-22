@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Metrics.OpenTelemetry.nuspec</NuspecFile>
+        <Description>OpenTelemetry implementation of the Lyo Metrics service for observability and distributed tracing.</Description>
+        <PackageTags>metrics opentelemetry observability tracing</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,4 +18,8 @@
         <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.*"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

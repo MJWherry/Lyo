@@ -3,8 +3,10 @@
 @using Lyo.Web.Components.UniqueValueSelector
 @using MudBlazor
 @* Equal fixed columns: property | operator | values | Add — widths enforced by wrapper divs + FullWidth controls. *@
-<div class="lyo-query-filter-root d-flex align-center flex-nowrap"
-     style="width: 100%; height: 100%; min-width: 0; box-sizing: border-box; column-gap: 8px;">
+<LyoElementRoot ElementId="@ElementId"
+                DefaultId="lyo-query-filter-component"
+                class="lyo-query-filter-root d-flex align-center flex-nowrap"
+                style="width: 100%; height: 100%; min-width: 0; box-sizing: border-box; column-gap: 8px;">
     <div class="lyo-filter-col">
         <MudSelect T="FilterPropertyDefinition"
                    @bind-Value="@_currentProperty"
@@ -202,4 +204,4 @@
                Disabled="@(_currentProperty == null || !IsValidInput())">
         Add
     </MudButton>
-</div>
+</LyoElementRoot>

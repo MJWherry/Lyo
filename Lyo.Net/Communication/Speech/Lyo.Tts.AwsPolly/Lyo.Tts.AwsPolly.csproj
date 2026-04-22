@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Tts.AwsPolly.nuspec</NuspecFile>
+        <Description>AWS Polly Text-to-Speech service implementation for converting text to speech using Amazon Polly.</Description>
+        <PackageTags>tts text-to-speech aws polly speech</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,5 +23,9 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>
 

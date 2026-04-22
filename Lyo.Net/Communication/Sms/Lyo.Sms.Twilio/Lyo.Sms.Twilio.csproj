@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Sms.Twilio.nuspec</NuspecFile>
+        <Description>Twilio implementation of the Lyo SMS service for sending SMS messages via Twilio.</Description>
+        <PackageTags>sms twilio messaging</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,4 +25,8 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

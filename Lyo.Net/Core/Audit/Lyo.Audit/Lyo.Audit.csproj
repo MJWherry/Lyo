@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Audit.nuspec</NuspecFile>
+        <Description>Audit trail library with AuditChange (entity change tracking) and AuditEvent (events to log). AuditChange has type assembly full name, old values, and changed properties. AuditEvent has event type, timestamp, actor, message, and metadata. Includes IAuditRecorder for pluggable storage.</Description>
+        <PackageTags>audit trail change-tracking compliance</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,4 +14,8 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

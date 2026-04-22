@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using MudBlazor
 @typeparam TModel
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-lyo-form">
 <EditForm Model="@Model" OnValidSubmit="@HandleSubmit">
     <CascadingValue Value="this" Name="ChangeTrackingForm" IsFixed="true">
         <MudCard>
@@ -54,3 +55,4 @@
         </MudCard>
     </CascadingValue>
 </EditForm>
+</LyoElementRoot>

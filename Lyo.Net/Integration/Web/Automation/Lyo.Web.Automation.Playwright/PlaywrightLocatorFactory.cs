@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Enums;
 using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Models.Enums;
 using Microsoft.Playwright;
 
 namespace Lyo.Web.Automation.Playwright;

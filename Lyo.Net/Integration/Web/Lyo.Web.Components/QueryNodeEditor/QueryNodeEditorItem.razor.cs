@@ -9,6 +9,11 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditorItem
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-item" : ElementId.Trim();
+
     private bool? _boolValue;
     private string? _csvValue;
     private DateTime? _dateValue;

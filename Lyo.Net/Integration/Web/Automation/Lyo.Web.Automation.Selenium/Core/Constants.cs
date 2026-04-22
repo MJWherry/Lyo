@@ -1,9 +1,11 @@
+using Lyo.Web.Automation.Core;
+
 namespace Lyo.Web.Automation.Selenium.Core;
 
 /// <summary>Consolidated constants for the WebAutomation.Selenium library.</summary>
 public static class Constants
 {
-    /// <summary>Selenium-specific metric series (see <see cref="Lyo.Web.Automation.Constants.Metrics" /> for logical keys).</summary>
+    /// <summary>Selenium-specific metric series (see <see cref="Web.Automation.Core.Constants.Metrics" /> for logical keys).</summary>
     public static class Metrics
     {
         /// <summary>Duration metric for browser start operations.</summary>

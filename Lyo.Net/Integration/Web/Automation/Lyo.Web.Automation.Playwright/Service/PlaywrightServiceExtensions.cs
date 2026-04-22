@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.IO.Temp;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Playwright.Browser;
 using Lyo.Web.Automation.Playwright.Configuration;
@@ -85,7 +84,6 @@ public static class PlaywrightServiceExtensions
     {
         services.AddSingleton<IPlaywrightBrowserService>(sp => new PlaywrightBrowserService(
             sp.GetRequiredService<PlaywrightBrowserOptions>(),
-            sp.GetService<IIOTempService>(),
             sp.GetService<ILoggerFactory>(),
             sp.GetService<IMetrics>()));
     }

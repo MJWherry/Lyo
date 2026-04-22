@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Query.nuspec</NuspecFile>
+        <Description>Query filtering and property comparison services for IQueryable. Uses Lyo.Query.Models for query types.</Description>
+        <PackageTags>query filter linq iqueryable</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

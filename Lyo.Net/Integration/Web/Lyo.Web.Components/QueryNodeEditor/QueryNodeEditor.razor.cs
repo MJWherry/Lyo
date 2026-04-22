@@ -12,6 +12,9 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditor
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private static readonly Regex FieldPattern = new("^[a-zA-Z.]+$", RegexOptions.Compiled);
 
     private static readonly Validator<string> FieldValidator = ValidatorBuilder<string>.Create()

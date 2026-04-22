@@ -4,7 +4,7 @@ using OpenQA.Selenium.Support.UI;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
-/// <summary>Shared single-attempt element wait used by <see cref="LyoBrowser.WaitFor" /> and <see cref="LyoBrowser.GetElementAsync(OpenQA.Selenium.By,System.Threading.CancellationToken)" /> (and chained resolution in <see cref="LyoBrowser" />).</summary>
+/// <summary>Shared single-attempt element wait used by <see cref="SeleniumBrowser.WaitFor" /> and <see cref="SeleniumBrowser.GetElementAsync(OpenQA.Selenium.By,System.Threading.CancellationToken)" /> (and chained resolution in <see cref="SeleniumBrowser" />).</summary>
 internal static class SeleniumPolling
 {
     /// <summary>One bounded <see cref="WebDriverWait" /> for <paramref name="by" />.</summary>

@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>Lyo.FileStorage.Web.Components</RootNamespace>
-        <NuspecFile>Lyo.FileStorage.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for file storage workbenches: upload/save, DEK/KEK migration and rotation, metadata grid, keystore tools.</Description>
+        <PackageTags>blazor components file-storage mudblazor keystore</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

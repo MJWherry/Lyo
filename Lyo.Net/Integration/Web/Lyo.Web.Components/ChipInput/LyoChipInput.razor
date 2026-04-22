@@ -1,6 +1,6 @@
 @using MudBlazor
 @implements IAsyncDisposable
-<div class="lyo-chip-input d-flex flex-wrap gap-2 align-center"
+<div id="@RootId" class="lyo-chip-input d-flex flex-wrap gap-2 align-center"
      style="min-height: 40px; padding: 4px 12px; border: 1px solid @(_lastValidationError is not null ? "var(--mud-palette-error)" : "var(--mud-palette-lines-default)"); border-radius: 4px; background: var(--mud-palette-background); color: var(--mud-palette-text-primary);">
     @foreach (var item in EnumeratedValues) {
         var isSelected = SelectableChips && (SelectedValues?.ToHashSet() ?? new HashSet<string>()).Contains(item);

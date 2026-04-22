@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.MessageQueue.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for provider-neutral message queue dashboards and workbenches.</Description>
+        <PackageTags>blazor components messagequeue mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

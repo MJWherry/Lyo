@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>Lyo.Codes.ZXing</RootNamespace>
+            <Description>ZXing-based barcode and QR code image decoding for Lyo - supports Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix, and QR codes.</Description>
+        <PackageTags>zxing barcode qrcode decoder reader imagesharp</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

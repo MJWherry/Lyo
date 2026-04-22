@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.FileMetadataStore.Sqlite.nuspec</NuspecFile>
+        <Description>SQLite implementation of the Lyo FileMetadataStore service (placeholder package).</Description>
+        <PackageTags>file-store sqlite</PackageTags>
     </PropertyGroup>
 
 </Project>

@@ -1,26 +1,28 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for throwing generic exceptions (FileNotFoundException, DirectoryNotFoundException, UnauthorizedAccessException, IOException).</summary>
 public static class ExceptionThrower
 {
-#if NET6_0_OR_GREATER
     [DoesNotReturn]
+#if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowDirectoryNotFound(string message) => throw new DirectoryNotFoundException(message);
-
-#if NET6_0_OR_GREATER
+    
     [DoesNotReturn]
+#if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowUnauthorizedAccess(string message) => throw new UnauthorizedAccessException(message);
-
-#if NET6_0_OR_GREATER
+    
     [DoesNotReturn]
+#if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowIOException(string message, Exception inner) => throw new IOException(message, inner);

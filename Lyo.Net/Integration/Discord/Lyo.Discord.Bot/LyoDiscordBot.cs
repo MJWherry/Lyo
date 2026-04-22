@@ -25,12 +25,11 @@ public class LyoDiscordBot : LyoDiscordBotBase
         LyoDiscordClient lyoApiClient,
         IGuildDatabaseSyncService sync,
         ILoggerFactory loggerFactory,
-        ConnectedDiscordClientAccessor discordClientAccessor,
         IGuildDiscordNotificationService guildNotifications,
         ICacheService cache,
         INotificationPublisher notificationPublisher,
         IDiffService diffService)
-        : base(options, lyoApiClient, sync, loggerFactory, discordClientAccessor, diffService, guildNotifications)
+        : base(options, lyoApiClient, sync, loggerFactory, diffService, guildNotifications)
     {
         _cache = cache;
         _notificationPublisher = notificationPublisher;
@@ -49,6 +48,6 @@ public class LyoDiscordBot : LyoDiscordBotBase
         services.AddSingleton(_diffService);
         var slash = client.UseSlashCommands(new() { Services = services.BuildServiceProvider() });
         slash.RegisterCommands<GuildSettingsSlashCommands>();
-        SlashCommandErrorResponder.Subscribe(slash, Logger, client, GuildNotifications);
+        SlashCommandErrorResponder.Subscribe(slash, Logger, this);
     }
 }

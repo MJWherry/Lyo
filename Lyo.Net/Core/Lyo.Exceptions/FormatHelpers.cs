@@ -1,9 +1,11 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Lyo.Exceptions.Models;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 
 namespace Lyo.Exceptions;
 
@@ -16,8 +18,9 @@ public static class FormatHelpers
     private static readonly Regex NumericRegex = new(@"^[0-9]+$", RegexOptions.Compiled);
     private static readonly Regex WhitespaceRegex = new(@"\s", RegexOptions.Compiled);
 
-#if NET6_0_OR_GREATER
+
     [DoesNotReturn]
+#if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowInvalidFormat(string message, string? paramName, string? invalidValue, params string[] validFormats)

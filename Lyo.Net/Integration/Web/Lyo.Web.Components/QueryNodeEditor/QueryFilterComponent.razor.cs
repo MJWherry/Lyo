@@ -10,6 +10,9 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryFilterComponent
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private MudMenu? _uniqueValuesMenu;
     private bool? _currentBoolValue;
     private ComparisonOperatorEnum _currentComparison = ComparisonOperatorEnum.Contains;

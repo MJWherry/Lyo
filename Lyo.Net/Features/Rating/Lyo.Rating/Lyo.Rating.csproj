@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Rating.nuspec</NuspecFile>
+        <Description>Abstractions for storing and retrieving ratings. Uses EntityRef (EntityType + EntityId) for generic entity references.</Description>
+        <PackageTags>rating entity-ref generic</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

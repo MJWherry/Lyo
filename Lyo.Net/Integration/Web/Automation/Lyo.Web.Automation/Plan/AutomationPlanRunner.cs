@@ -1,6 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.Web.Automation.Abstractions;
+using Lyo.Web.Automation.Core;
+using Lyo.Web.Automation.Models;
+using Lyo.Web.Automation.Models.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Plan;
@@ -34,6 +38,14 @@ public static class AutomationPlanRunner
         var options = runtime ?? new AutomationPlanRuntimeOptions();
         var hooks = options.Hooks;
         var instr = options.Instrumentation;
+        var dirOpts = options.PlanRunDirectory
+            ?? (session.SessionDirectory is { } sessionDir
+                ? new AutomationPlanRunDirectoryOptions { RootDirectory = sessionDir, NestRunUnderRoot = false }
+                : null);
+        AutomationPlanRunArtifacts? artifacts = null;
+        if (dirOpts != null)
+            artifacts = AutomationPlanRunArtifacts.TryCreate(dirOpts, runId);
+
         var swTotal = Stopwatch.StartNew();
 
         instr?.OnRunStarted(new AutomationPlanRunStartedEvent(runId, plan));
@@ -43,12 +55,22 @@ public static class AutomationPlanRunner
             plan.Name,
             plan.Steps.Count);
 
+        if (artifacts != null) {
+            logger?.LogInformation(
+                "Automation plan run directory {AutomationPlanRunRoot} session={SessionId}",
+                artifacts.RunRoot,
+                session.SessionId);
+            artifacts.LogLine(
+                $"RUN_STARTED plan={plan.Name} steps={plan.Steps.Count} session={session.SessionId} runRoot={artifacts.RunRoot}");
+        }
+
         using (logger?.BeginScope(
                    new Dictionary<string, object?> {
                        ["automation_run_id"] = runId,
                        ["plan_run_id"] = runId,
                        ["session_id"] = session.SessionId,
-                       ["automation_plan"] = plan.Name
+                       ["automation_plan"] = plan.Name,
+                       ["automation_plan_run_root"] = artifacts?.RunRoot
                    })) {
             try {
                 using var planCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -97,8 +119,22 @@ public static class AutomationPlanRunner
                             i,
                             label);
 
+                        artifacts?.LogLine(
+                            $"STEP_START index={i} stepExecutionId={stepExecutionId:N} planStepId={(planStepId == Guid.Empty ? "" : planStepId.ToString("N"))} label={label}");
+
                         if (hooks?.BeforeStepAsync is { } before)
                             await before(stepContext, runCt).ConfigureAwait(false);
+
+                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotBeforeEachStep)
+                            await TryWritePlanStepSnapshotAsync(
+                                    session.Browser,
+                                    artifacts.SnapshotsDirectory,
+                                    i,
+                                    stepExecutionId,
+                                    "before",
+                                    logger,
+                                    runCt)
+                                .ConfigureAwait(false);
 
                         var sw = Stopwatch.StartNew();
                         Exception? failure = null;
@@ -121,7 +157,33 @@ public static class AutomationPlanRunner
                         }
 
                         if (failure != null) {
+                            if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotOnStepFailure)
+                                await TryWritePlanStepSnapshotAsync(
+                                        session.Browser,
+                                        artifacts.SnapshotsDirectory,
+                                        i,
+                                        stepExecutionId,
+                                        "failed",
+                                        logger,
+                                        runCt)
+                                    .ConfigureAwait(false);
+
+                            if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnStepFailure)
+                                await TryWritePlanVariablesAsync(
+                                        artifacts,
+                                        dirOpts,
+                                        state,
+                                        runId,
+                                        i,
+                                        "failed",
+                                        logger,
+                                        runCt)
+                                    .ConfigureAwait(false);
+
                             var stepOutcome = ClassifyStepFailure(failure, runCt);
+
+                            artifacts?.LogLine(
+                                $"STEP_FAILED index={i} stepExecutionId={stepExecutionId:N} durationMs={sw.ElapsedMilliseconds} outcome={stepOutcome} error={failure.GetType().Name}: {failure.Message}");
                             var failCtx = new AutomationPlanStepFailureContext {
                                 RunId = runId,
                                 StepExecutionId = stepExecutionId,
@@ -174,6 +236,29 @@ public static class AutomationPlanRunner
 
                         var stepResult = new AutomationPlanStepResult(sw.Elapsed);
 
+                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotAfterEachSuccessfulStep)
+                            await TryWritePlanStepSnapshotAsync(
+                                    session.Browser,
+                                    artifacts.SnapshotsDirectory,
+                                    i,
+                                    stepExecutionId,
+                                    "after",
+                                    logger,
+                                    runCt)
+                                .ConfigureAwait(false);
+
+                        if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesAfterEachSuccessfulStep)
+                            await TryWritePlanVariablesAsync(
+                                    artifacts,
+                                    dirOpts,
+                                    state,
+                                    runId,
+                                    i,
+                                    "after",
+                                    logger,
+                                    runCt)
+                                .ConfigureAwait(false);
+
                         instr?.OnStepCompleted(
                             new AutomationPlanStepCompletedEvent(
                                 runId,
@@ -204,6 +289,9 @@ public static class AutomationPlanRunner
                             AutomationPlanStepOutcome.Success,
                             sw.ElapsedMilliseconds);
 
+                        artifacts?.LogLine(
+                            $"STEP_COMPLETE index={i} stepExecutionId={stepExecutionId:N} outcome=Success durationMs={sw.ElapsedMilliseconds}");
+
                         if (hooks?.AfterStepAsync is { } after)
                             await after(stepContext, stepResult, runCt).ConfigureAwait(false);
 
@@ -219,6 +307,21 @@ public static class AutomationPlanRunner
                     AutomationPlanRunOutcome.Completed,
                     swTotal.ElapsedMilliseconds);
 
+                if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnRunEnd)
+                    await TryWritePlanVariablesAsync(
+                            artifacts,
+                            dirOpts,
+                            state,
+                            runId,
+                            null,
+                            "final",
+                            logger,
+                            ct)
+                        .ConfigureAwait(false);
+
+                artifacts?.LogLine(
+                    $"RUN_COMPLETED outcome=Completed durationMs={swTotal.ElapsedMilliseconds}");
+
                 return new AutomationPlanRunResult(state.ToSnapshot(), state.ToContext());
             }
             catch (Exception ex) {
@@ -227,6 +330,28 @@ public static class AutomationPlanRunner
                     ? AutomationPlanRunOutcome.Cancelled
                     : AutomationPlanRunOutcome.Faulted;
                 instr?.OnRunCompleted(new AutomationPlanRunCompletedEvent(runId, plan, swTotal.Elapsed, runOutcome));
+
+                if (artifacts != null && dirOpts != null && dirOpts.WriteVariables && dirOpts.VariablesOnRunEnd) {
+                    try {
+                        await TryWritePlanVariablesAsync(
+                                artifacts,
+                                dirOpts,
+                                state,
+                                runId,
+                                null,
+                                runOutcome == AutomationPlanRunOutcome.Cancelled ? "cancelled" : "faulted",
+                                logger,
+                                ct)
+                            .ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) {
+                        // best-effort only
+                    }
+                }
+
+                artifacts?.LogLine(
+                    $"RUN_END outcome={runOutcome} durationMs={swTotal.ElapsedMilliseconds} error={ex.GetType().Name}: {ex.Message}");
+
                 if (runOutcome == AutomationPlanRunOutcome.Cancelled)
                     logger?.LogWarning(
                         ex,
@@ -243,7 +368,72 @@ public static class AutomationPlanRunner
                         swTotal.ElapsedMilliseconds);
                 throw;
             }
+            finally {
+                artifacts?.Dispose();
+            }
         }
+    }
+
+    private static async Task TryWritePlanStepSnapshotAsync(
+        IWebAutomationBrowser browser,
+        string snapshotsDirectory,
+        int stepIndex,
+        Guid stepExecutionId,
+        string phase,
+        ILogger? logger,
+        CancellationToken ct)
+    {
+        try {
+            var bytes = await browser.TakeViewportSnapshotPngAsync(ct).ConfigureAwait(false);
+            Directory.CreateDirectory(snapshotsDirectory);
+            var safePhase = phase.Replace(Path.DirectorySeparatorChar, '_').Replace(Path.AltDirectorySeparatorChar, '_');
+            var fileName = $"{stepIndex:000}_{stepExecutionId:N}_{safePhase}.png";
+            var path = Path.Combine(snapshotsDirectory, fileName);
+            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
+                await fs.WriteAsync(bytes, 0, bytes.Length, ct).ConfigureAwait(false);
+            logger?.LogInformation(
+                "Automation step snapshot {AutomationSnapshotPath} phase={AutomationSnapshotPhase} stepIndex={StepIndex}",
+                path,
+                phase,
+                stepIndex);
+        }
+        catch (OperationCanceledException) {
+            throw;
+        }
+        catch (Exception ex) {
+            logger?.LogWarning(
+                ex,
+                "Automation step snapshot failed phase={AutomationSnapshotPhase} stepIndex={StepIndex}",
+                phase,
+                stepIndex);
+        }
+    }
+
+    private static async Task TryWritePlanVariablesAsync(
+        AutomationPlanRunArtifacts artifacts,
+        AutomationPlanRunDirectoryOptions dirOpts,
+        PlanExecutionState state,
+        Guid runId,
+        int? stepIndex,
+        string phase,
+        ILogger? logger,
+        CancellationToken ct)
+    {
+        var snap = state.ToSnapshot();
+        var fileName = stepIndex is { } idx
+            ? $"step_{idx:000}_{phase}.json"
+            : dirOpts.FinalVariablesFileName;
+
+        await artifacts.TryWriteVariablesAsync(
+                fileName,
+                runId,
+                stepIndex,
+                phase,
+                snap.Strings,
+                snap.StringLists,
+                logger,
+                ct)
+            .ConfigureAwait(false);
     }
 
     private static TimeSpan? EffectiveStepTimeout(AutomationStepDefinition step, AutomationPlanRuntimeOptions options)

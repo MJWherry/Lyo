@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Web.Components.nuspec</NuspecFile>
+        <Description>Blazor components library for the Lyo web UI framework with MudBlazor integration.</Description>
+        <PackageTags>blazor components web ui mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

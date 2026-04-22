@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Pdf.Web.Components.nuspec</NuspecFile>
+        <Description>Reusable Blazor components for PDF workbenches, annotation helpers, and HTML to PDF workflows.</Description>
+        <PackageTags>blazor components pdf annotator mudblazor</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

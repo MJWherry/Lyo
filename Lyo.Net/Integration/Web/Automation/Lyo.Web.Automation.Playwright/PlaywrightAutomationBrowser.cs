@@ -1,3 +1,4 @@
+using System;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Playwright.Browser;
@@ -14,10 +15,23 @@ public sealed class PlaywrightAutomationBrowser(IPage page, float locatorTimeout
     public PlaywrightBrowser Browser => _browser;
 
     /// <inheritdoc />
+    public IBrowserCookies? CookieJar => ((IWebAutomationBrowser)_browser).CookieJar;
+
+    /// <inheritdoc />
+    public IBrowserHeaders? ExtraHeaders => ((IWebAutomationBrowser)_browser).ExtraHeaders;
+
+    /// <inheritdoc />
     public Task NavigateAsync(string url, CancellationToken ct = default) => _browser.NavigateToAsync(url, ct);
 
     /// <inheritdoc />
+    public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default)
+        => ((IWebAutomationBrowser)_browser).NavigateAsync(url, onRequest, ct);
+
+    /// <inheritdoc />
     public Task ReloadAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)_browser).ReloadAsync(ct);
+
+    /// <inheritdoc />
+    public Task<string> GetPageSourceAsync(CancellationToken ct = default) => _browser.GetPageSourceAsync(ct);
 
     /// <inheritdoc />
     public Task<string> GetCurrentUrlAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)_browser).GetCurrentUrlAsync(ct);
@@ -40,4 +54,8 @@ public sealed class PlaywrightAutomationBrowser(IPage page, float locatorTimeout
     /// <inheritdoc />
     public Task<IReadOnlyList<IWebAutomationElement>?> GetElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
         => ((IWebAutomationBrowser)_browser).GetElementsAsync(chain, ct);
+
+    /// <inheritdoc />
+    public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
+        => ((IWebAutomationBrowser)_browser).TakeViewportSnapshotPngAsync(ct);
 }

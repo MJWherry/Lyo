@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Translation.nuspec</NuspecFile>
+        <Description>Base translation service interface and implementation for translating text between languages.</Description>
+        <PackageTags>translation translate language</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

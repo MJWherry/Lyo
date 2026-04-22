@@ -1,4 +1,5 @@
 using DSharpPlus;
+using DSharpPlus.Entities;
 using Lyo.Diff;
 using Lyo.Discord.Bot.Services;
 using Lyo.Discord.Client;
@@ -11,9 +12,10 @@ namespace Lyo.Discord.Bot;
 /// Base Discord bot: connects with DSharpPlus, runs optional database sync via <see cref="IGuildDatabaseSyncService" />, and exposes hooks for derived bots (slash/commands,
 /// interactions, extra events).
 /// </summary>
-public abstract class LyoDiscordBotBase
+public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
 {
     private CancellationToken _runCt;
+    private NativeDiscordClient? _gatewayClient;
 
     protected LyoDiscordBotOptions Options { get; }
 
@@ -29,15 +31,14 @@ public abstract class LyoDiscordBotBase
 
     protected IDiffService DiffService { get; }
 
-    /// <summary>Holds the active gateway client for services that post to guild channels.</summary>
-    protected ConnectedDiscordClientAccessor DiscordClientAccessor { get; }
+    /// <inheritdoc />
+    public bool IsConnected => _gatewayClient != null;
 
     protected LyoDiscordBotBase(
         LyoDiscordBotOptions options,
         LyoDiscordClient lyoApiClient,
         IGuildDatabaseSyncService sync,
         ILoggerFactory loggerFactory,
-        ConnectedDiscordClientAccessor discordClientAccessor,
         IDiffService diffService,
         IGuildDiscordNotificationService? guildNotifications = null)
     {
@@ -45,7 +46,6 @@ public abstract class LyoDiscordBotBase
         LyoApiClient = lyoApiClient;
         Sync = sync;
         Logger = loggerFactory.CreateLogger(GetType());
-        DiscordClientAccessor = discordClientAccessor;
         DiffService = diffService;
         GuildNotifications = guildNotifications;
     }
@@ -57,7 +57,7 @@ public abstract class LyoDiscordBotBase
         var cfg = new DiscordConfiguration { Token = Options.Token, TokenType = TokenType.Bot, Intents = Options.Intents };
         ConfigureDiscordConfiguration(cfg);
         using var client = new NativeDiscordClient(cfg);
-        DiscordClientAccessor.Client = client;
+        _gatewayClient = client;
         try {
             ConfigureDiscordClient(client);
             RegisterDefaultSyncHandlers(client);
@@ -74,8 +74,89 @@ public abstract class LyoDiscordBotBase
             await client.DisconnectAsync().ConfigureAwait(false);
         }
         finally {
-            DiscordClientAccessor.Client = null;
+            _gatewayClient = null;
         }
+    }
+
+    /// <inheritdoc />
+    public Task NotifyGuildLogMessageAsync(ulong guildId, string title, string body, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.CompletedTask;
+
+        return GuildNotifications.NotifyGuildLogMessageAsync(_gatewayClient, guildId, title, body, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task NotifyGuildLogErrorAsync(ulong guildId, Exception exception, string context, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.CompletedTask;
+
+        return GuildNotifications.NotifyGuildLogErrorAsync(_gatewayClient, guildId, exception, context, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendEmbedAsync(ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendEmbedAsync(_gatewayClient, guildId, channelId, embed, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendMessageAsync(
+        ulong guildId,
+        ulong channelId,
+        string? content = null,
+        DiscordEmbed? embed = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, content, embed, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, message, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendEmbedToGuildLogChannelAsync(ulong guildId, DiscordEmbed embed, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendEmbedToGuildLogChannelAsync(_gatewayClient, guildId, embed, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendMessageToGuildLogChannelAsync(
+        ulong guildId,
+        string? content = null,
+        DiscordEmbed? embed = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, content, embed, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    {
+        if (GuildNotifications == null || _gatewayClient == null)
+            return Task.FromResult(false);
+
+        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, message, cancellationToken);
     }
 
     /// <summary>Override to adjust gateway configuration before the native client is constructed.</summary>
@@ -118,8 +199,8 @@ public abstract class LyoDiscordBotBase
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Discord {EventName} sync handler failed", eventName);
-            if (GuildNotifications != null && guildId != 0)
-                _ = GuildNotifications.NotifyGuildLogErrorAsync(discordClient, guildId, ex, $"Sync: {eventName}", _runCt);
+            if (guildId != 0)
+                _ = NotifyGuildLogErrorAsync(guildId, ex, $"Sync: {eventName}", _runCt);
         }
     }
 }

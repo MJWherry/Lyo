@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Xlsx.nuspec</NuspecFile>
+        <Description>Excel (XLSX) processing library using ClosedXML and ExcelDataReader for reading and writing Excel files.</Description>
+        <PackageTags>xlsx excel closedxml exceldatareader</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,4 +21,8 @@
         <ProjectReference Include="..\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

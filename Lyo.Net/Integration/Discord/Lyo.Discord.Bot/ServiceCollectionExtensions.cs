@@ -21,13 +21,13 @@ public static class ServiceCollectionExtensions
         services.Configure<LyoDiscordBotOptions>(configuration.GetSection(sectionName));
         services.Configure<LyoDiscordClientOptions>(configuration.GetSection(LyoDiscordClientOptions.SectionName));
         services.AddSingleton(p => p.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value);
-        services.AddSingleton<ConnectedDiscordClientAccessor>();
         services.AddSingleton<IGuildDiscordNotificationService, GuildDiscordNotificationService>();
         services.AddLyoNotification();
         services.AddSingleton<INotificationHandler<GuildSettingsChangedNotification>, GuildSettingsChangedNotificationHandler>();
         services.AddSingleton<IGuildDatabaseSyncService, GuildDatabaseSyncService>();
         services.AddSingleton<TBot>();
         services.AddSingleton<LyoDiscordBotBase>(sp => sp.GetRequiredService<TBot>());
+        services.AddSingleton<ILyoDiscordBotGateway>(sp => sp.GetRequiredService<LyoDiscordBotBase>());
         services.AddSingleton<LyoDiscordClient>(sp => {
             var clientOpts = sp.GetRequiredService<IOptions<LyoDiscordClientOptions>>().Value;
             var lf = sp.GetService<ILoggerFactory>();

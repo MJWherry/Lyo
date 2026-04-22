@@ -88,4 +88,11 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     /// <inheritdoc />
     public Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator1, CancellationToken ct = default)
         => browser.PollForDescendantElementAsync(locator, locator1, ct);
+
+    /// <inheritdoc />
+    public async Task<byte[]> TakeSnapshotPngAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        return await locator.ScreenshotAsync(new LocatorScreenshotOptions { Type = ScreenshotType.Png }).ConfigureAwait(false);
+    }
 }

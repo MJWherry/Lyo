@@ -54,6 +54,7 @@ internal record PropertyPathMetadata(IReadOnlyList<PropertyInfo> Properties, Typ
 public class BaseWhereClauseService : IWhereClauseService
 {
     private const string MatcherCachePrefix = "filter_matcher";
+    private const string EfPredicateCachePrefix = "filter_ef_predicate";
     private const BindingFlags PropertySearchFlags = BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance;
 
     private static readonly MethodInfo[] QueryableOrderMethods = typeof(Queryable).GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -87,13 +88,7 @@ public class BaseWhereClauseService : IWhereClauseService
 
         using var timer = _metrics.StartTimer(Constants.Metrics.MatchesWhereClauseDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
         try {
-            var cacheKey = GenerateWhereClauseCacheKey<TEntity>(queryNode);
-            var matcher = Cache.GetOrSet<Func<TEntity, bool>>(
-                cacheKey, _ => {
-                    var expr = BuildExpressionFromWhereClause<TEntity>(queryNode);
-                    return expr == null ? _ => true : expr.Compile();
-                }, CacheOptions.DefaultExpiration)!;
-
+            var matcher = GetOrCreateWhereClauseMatcher<TEntity>(queryNode);
             var result = matcher(entity);
             _metrics.IncrementCounter(Constants.Metrics.MatchesWhereClauseSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
             _logger.LogDebug("MatchesWhereClause evaluated for {EntityType}", typeof(TEntity).Name);
@@ -409,7 +404,13 @@ public class BaseWhereClauseService : IWhereClauseService
 
         using var timer = _metrics.StartTimer(Constants.Metrics.ApplyWhereClauseDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
         try {
-            var expression = BuildExpressionFromWhereClause<TEntity>(queryNode, includeSubClauses);
+            var cacheKey = GenerateEfPredicateCacheKey<TEntity>(queryNode, includeSubClauses);
+            var tags = new[] { $"entity:{typeof(TEntity).Name.ToLowerInvariant()}" };
+            var expression = Cache.GetOrSet(
+                cacheKey,
+                _ => BuildExpressionFromWhereClause<TEntity>(queryNode, includeSubClauses)!,
+                typeof(TEntity),
+                tags);
             var result = expression != null ? source.Where(expression) : source;
             _metrics.IncrementCounter(Constants.Metrics.ApplyWhereClauseSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
             _logger.LogDebug("ApplyWhereClause applied to {EntityType}", typeof(TEntity).Name);
@@ -428,11 +429,14 @@ public class BaseWhereClauseService : IWhereClauseService
 
         using var timer = _metrics.StartTimer(Constants.Metrics.SortByPropertyDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
         try {
-            var parameter = Expression.Parameter(typeof(TEntity), "x");
-            var (keySelector, keyType) = BuildKeySelector<TEntity>(propertyName, parameter);
+            var sortKeyCacheKey = $"{EntityMetadata.SortKeyLambdaPrefix}{typeof(TEntity).FullName}:{propertyName}";
+            var (lambda, keyType) = SharedEntityMetadataCache.GetOrAddSortKeyLambda(sortKeyCacheKey, () => {
+                var parameter = Expression.Parameter(typeof(TEntity), "x");
+                var (keySelector, kt) = BuildKeySelector<TEntity>(propertyName, parameter);
+                return (Expression.Lambda(keySelector, parameter), kt);
+            });
             var methodName = GetOrderingMethodName(source, direction ?? SortDirection.Desc);
             var orderMethod = GetQueryableOrderMethodCached<TEntity>(methodName, keyType);
-            var lambda = Expression.Lambda(keySelector, parameter);
             var result = (IQueryable<TEntity>)orderMethod.Invoke(null, [source, lambda])!;
             _metrics.IncrementCounter(Constants.Metrics.SortByPropertySuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
             _logger.LogDebug("SortByProperty applied to {EntityType} by {PropertyName} {Direction}", typeof(TEntity).Name, propertyName, direction ?? SortDirection.Desc);
@@ -818,6 +822,26 @@ public class BaseWhereClauseService : IWhereClauseService
         var sb = new StringBuilder(MatcherCachePrefix);
         sb.Append('_').Append(typeof(TEntity).FullName).Append('_');
         AppendWhereClauseHash(queryNode, sb);
+        return sb.ToString();
+    }
+
+    private Func<TEntity, bool> GetOrCreateWhereClauseMatcher<TEntity>(Models.Common.WhereClause queryNode)
+    {
+        var cacheKey = GenerateWhereClauseCacheKey<TEntity>(queryNode);
+        return Cache.GetOrSet<Func<TEntity, bool>>(
+            cacheKey,
+            _ => {
+                var expr = BuildExpressionFromWhereClause<TEntity>(queryNode);
+                return expr == null ? _ => true : expr.Compile();
+            },
+            CacheOptions.DefaultExpiration)!;
+    }
+
+    private static string GenerateEfPredicateCacheKey<TEntity>(Models.Common.WhereClause queryNode, bool includeSubClauses)
+    {
+        var sb = new StringBuilder(EfPredicateCachePrefix);
+        sb.Append('_').Append(typeof(TEntity).FullName).Append('_').Append(includeSubClauses ? '1' : '0').Append('_');
+        sb.Append(WhereClauseUtils.GetWhereClauseTreeHash(queryNode));
         return sb.ToString();
     }
 
@@ -1342,12 +1366,7 @@ public class BaseWhereClauseService : IWhereClauseService
         if (queryNode == null)
             return true;
 
-        var expr = BuildExpressionFromWhereClause<TEntity>(queryNode);
-        if (expr == null)
-            return true;
-
-        var func = expr.Compile();
-        return func(entity);
+        return GetOrCreateWhereClauseMatcher<TEntity>(queryNode)(entity);
     }
 
     public virtual bool Match<TEntity>(TEntity entity, QueryReq? queryRequest)

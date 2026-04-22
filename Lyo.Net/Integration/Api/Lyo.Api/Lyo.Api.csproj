@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.Api.nuspec</NuspecFile>
+        <Description>Core API library for building RESTful APIs with Entity Framework Core, caching, and mapping support.</Description>
+        <PackageTags>api rest aspnetcore entity-framework caching</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,4 +30,8 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.0.1,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

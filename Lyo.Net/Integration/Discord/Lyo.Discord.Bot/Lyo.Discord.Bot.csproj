@@ -3,7 +3,8 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <RootNamespace>Lyo.Discord.Bot</RootNamespace>
-        <NuspecFile>Lyo.Discord.Bot.nuspec</NuspecFile>
+        <Description>DSharpPlus bot host that syncs Discord guild data to the Lyo API (DI, configuration, extensible base class).</Description>
+        <PackageTags>discord dsharpplus bot sync lyo</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

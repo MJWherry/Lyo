@@ -2,6 +2,7 @@
 @using Lyo.Web.Components.Models
 @using Microsoft.AspNetCore.Components.Web
 @using MudBlazor
+<LyoElementRoot ElementId="@ElementId" DefaultId="lyo-export-column-selector-dialog">
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">
@@ -132,11 +133,15 @@
         </MudButton>
     </DialogActions>
 </MudDialog>
+</LyoElementRoot>
 
 @code {
 
     [CascadingParameter]
     IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     /// <summary>When set, derives AvailableFields from type reflection. Ignored when AvailableFields is provided.</summary>
     [Parameter]

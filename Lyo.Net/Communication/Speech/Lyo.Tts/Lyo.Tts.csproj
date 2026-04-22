@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Tts.nuspec</NuspecFile>
+        <Description>Base Text-to-Speech service interface and implementation for converting text to speech.</Description>
+        <PackageTags>tts text-to-speech speech</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

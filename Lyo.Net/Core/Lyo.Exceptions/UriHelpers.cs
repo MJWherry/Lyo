@@ -1,14 +1,16 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Lyo.Exceptions.Models;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for URI validation and parsing.</summary>
 public static class UriHelpers
 {
-#if NET6_0_OR_GREATER
     [DoesNotReturn]
+#if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowInvalidFormat(string message, string? paramName, string? invalidValue, string expectedFormat)

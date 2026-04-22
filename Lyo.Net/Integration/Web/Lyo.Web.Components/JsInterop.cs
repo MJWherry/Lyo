@@ -9,6 +9,13 @@ public sealed class JsInterop(IJSRuntime js) : IJsInterop
     public async Task SendToClipboard(string text) => await js.InvokeVoidAsync("navigator.clipboard.writeText", text);
 
     /// <inheritdoc />
+    public async Task<string> ReadClipboardTextAsync()
+    {
+        await using var module = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Lyo.Web.Components/scripts/lyoClipboard.js");
+        return await module.InvokeAsync<string>("readText");
+    }
+
+    /// <inheritdoc />
     public async Task<TimeZoneInfo> GetClientTimeZoneInfo()
     {
         var clientTimeZone = await js.InvokeAsync<string>("getClientTimeZone");

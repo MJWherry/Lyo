@@ -10,6 +10,11 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditorPanel
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-panel" : ElementId.Trim();
+
     private WhereClause? _draggedNode;
 
     private WhereClause? _dragOverNode;

@@ -12,6 +12,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class QueryRequestBuilder
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public ProjectionQueryReq Request { get; set; } = new();
 
     [Parameter]

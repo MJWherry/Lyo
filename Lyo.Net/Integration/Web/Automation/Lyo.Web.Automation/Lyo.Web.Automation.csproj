@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Web.Automation.nuspec</NuspecFile>
+        <Description>Shared browser automation models: element locators, JSON automation plans, session abstraction, and plan runners (engine-neutral).</Description>
+        <PackageTags>web-automation browser-automation automation-plans</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.HomeInventory.Postgres.nuspec</NuspecFile>
+        <Description>PostgreSQL storage for Lyo.HomeInventory (EF Core): household items, rooms/locations, quantities, and change history.</Description>
+        <PackageTags>home-inventory postgres postgresql entityframework ef household</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

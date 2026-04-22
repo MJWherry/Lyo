@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <NuspecFile>Lyo.FileStorage.Azure.nuspec</NuspecFile>
+        <Description>Azure Blob Storage implementation of the Lyo FileStorage service for cloud file storage.</Description>
+        <PackageTags>file-storage azure blob storage</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,4 +20,8 @@
         <PackageReference Include="Azure.Storage.Blobs" Version="[12.27,)"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

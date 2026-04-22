@@ -2,7 +2,9 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Lock.Redis.nuspec</NuspecFile>
+        <Description>Redis-based distributed lock implementation for Lyo.Lock. Uses StackExchange.Redis for multi-instance coordination.</Description>
+        <PackageTags>lock locking distributed redis mutex</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,4 +20,8 @@
         <ProjectReference Include="..\Lyo.Lock\Lyo.Lock.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>

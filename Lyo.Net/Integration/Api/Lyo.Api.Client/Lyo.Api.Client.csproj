@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <NuspecFile>Lyo.Api.Client.nuspec</NuspecFile>
+        <Description>API client library for consuming Lyo APIs.</Description>
+        <PackageTags>api client http</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

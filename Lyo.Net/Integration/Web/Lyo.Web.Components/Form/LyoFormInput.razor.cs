@@ -10,6 +10,9 @@ namespace Lyo.Web.Components.Form;
 
 public partial class LyoFormInput<TModel, TValue>
 {
+    [Parameter]
+    public string? ElementId { get; set; }
+
     private readonly Type _propertyType = typeof(TValue);
 
     private TValue? _currentValue;

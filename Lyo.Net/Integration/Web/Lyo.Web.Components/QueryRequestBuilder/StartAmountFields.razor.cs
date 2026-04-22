@@ -5,6 +5,9 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 public partial class StartAmountFields
 {
     [Parameter]
+    public string? ElementId { get; set; }
+
+    [Parameter]
     public int? Start { get; set; }
 
     [Parameter]

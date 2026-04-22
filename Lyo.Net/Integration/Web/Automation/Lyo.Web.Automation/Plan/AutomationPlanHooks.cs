@@ -1,3 +1,6 @@
+using Lyo.Web.Automation.Abstractions;
+using Lyo.Web.Automation.Models;
+
 namespace Lyo.Web.Automation.Plan;
 
 /// <summary>Context for <see cref="AutomationPlanHooks.BeforeStepAsync"/> and <see cref="AutomationPlanHooks.AfterStepAsync"/>.</summary>
