@@ -10,16 +10,13 @@ namespace Lyo.Web.Automation.Playwright.Service;
 /// <inheritdoc cref="IPlaywrightBrowserService" />
 public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
 {
-    private int _activeSessions;
-    private bool _disposed;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly IMetrics? _metrics;
     private readonly PlaywrightBrowserOptions _serviceOptions;
+    private int _activeSessions;
+    private bool _disposed;
 
-    public PlaywrightBrowserService(
-        PlaywrightBrowserOptions serviceOptions,
-        ILoggerFactory? loggerFactory = null,
-        IMetrics? metrics = null)
+    public PlaywrightBrowserService(PlaywrightBrowserOptions serviceOptions, ILoggerFactory? loggerFactory = null, IMetrics? metrics = null)
     {
         ArgumentHelpers.ThrowIfNull(serviceOptions, nameof(serviceOptions));
         _serviceOptions = serviceOptions;
@@ -43,11 +40,6 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
         return new PlaywrightBrowserSession(browser, OnSessionDisposed);
     }
 
-    private void OnSessionDisposed()
-    {
-        Interlocked.Decrement(ref _activeSessions);
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -57,6 +49,8 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
         _disposed = true;
         GC.SuppressFinalize(this);
     }
+
+    private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);
 
     private void ThrowIfDisposed()
     {

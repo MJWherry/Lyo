@@ -1,4 +1,3 @@
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Enums;
@@ -24,7 +23,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryReq { Start = 0, Amount = 500 };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.True(result.Items!.Count >= 1);
@@ -42,7 +43,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "FilterTestA") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.All(result.Items!, i => Assert.Equal("FilterTestA", i.Name));
@@ -174,7 +177,8 @@ public class QueryServicePostgresTests
             Amount = 10,
             Options = new() { IncludeFilterMode = QueryIncludeFilterMode.MatchedOnly },
             Select = ["jobruns.createdby"],
-            WhereClause = WhereClauseBuilder.And(and => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
+            WhereClause = WhereClauseBuilder.And(and
+                => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
         var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -200,7 +204,8 @@ public class QueryServicePostgresTests
             Amount = 10,
             Options = new() { IncludeFilterMode = QueryIncludeFilterMode.MatchedOnly },
             Select = ["jobruns.*"],
-            WhereClause = WhereClauseBuilder.And(and => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
+            WhereClause = WhereClauseBuilder.And(and
+                => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
         var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -572,7 +577,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryReq { Keys = [[defId]], Start = 0, Amount = 10 };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -594,7 +601,9 @@ public class QueryServicePostgresTests
             WhereClause = queryNode
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -616,7 +625,9 @@ public class QueryServicePostgresTests
             WhereClause = queryNode
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Empty(result.Items!);
@@ -632,7 +643,9 @@ public class QueryServicePostgresTests
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.NotEquals("Name", null));
         var broadRequest = new QueryReq { Start = 0, Amount = 500, WhereClause = queryNode };
-        var broadResult = await queryService.Query<JobDefinition, JobDefinitionRes>(broadRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var broadResult = await queryService.Query<JobDefinition, JobDefinitionRes>(broadRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(broadResult.IsSuccess);
         Assert.True(broadResult.Items!.Count >= 2);
         var keyedRequest = new QueryReq {
@@ -642,7 +655,9 @@ public class QueryServicePostgresTests
             WhereClause = queryNode
         };
 
-        var keyedResult = await queryService.Query<JobDefinition, JobDefinitionRes>(keyedRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var keyedResult = await queryService.Query<JobDefinition, JobDefinitionRes>(keyedRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(keyedResult.IsSuccess);
         Assert.Single(keyedResult.Items!);
         Assert.Equal(defId, keyedResult.Items![0].Id);
@@ -658,7 +673,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var unkeyedRequest = new QueryReq { Start = 0, Amount = 500, Include = ["JobDefinition"] };
-        var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(unkeyedResult.IsSuccess);
         Assert.True(unkeyedResult.Items!.Count >= 2);
         var keyedRequest = new QueryReq {
@@ -668,7 +685,9 @@ public class QueryServicePostgresTests
             Include = ["JobDefinition"]
         };
 
-        var keyedResult = await queryService.Query<JobRun, JobRunRes>(keyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var keyedResult = await queryService.Query<JobRun, JobRunRes>(keyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(keyedResult.IsSuccess);
         Assert.Single(keyedResult.Items!);
         Assert.Equal(runId, keyedResult.Items![0].Id);
@@ -683,7 +702,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryReq { Start = 1, Amount = 1, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, "Page") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -705,7 +726,9 @@ public class QueryServicePostgresTests
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, prefix)
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -729,7 +752,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var firstPage = await queryService.Query<JobDefinition, JobDefinitionRes>(firstPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var firstPage = await queryService.Query<JobDefinition, JobDefinitionRes>(firstPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(firstPage.IsSuccess);
         Assert.NotNull(firstPage.Items);
         Assert.Single(firstPage.Items!);
@@ -743,7 +768,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var secondPage = await queryService.Query<JobDefinition, JobDefinitionRes>(secondPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var secondPage = await queryService.Query<JobDefinition, JobDefinitionRes>(secondPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(secondPage.IsSuccess);
         Assert.NotNull(secondPage.Items);
         Assert.Single(secondPage.Items!);
@@ -765,7 +792,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.True(result.Items!.Count >= 2);
@@ -848,7 +877,9 @@ public class QueryServicePostgresTests
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -872,7 +903,9 @@ public class QueryServicePostgresTests
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -889,7 +922,9 @@ public class QueryServicePostgresTests
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.Equals("Name", "NodeMatch").AddAnd(c => c.Equals("Type", "Test")));
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = queryNode };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -906,7 +941,9 @@ public class QueryServicePostgresTests
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.Or(b => b.Equals("Name", "OrFirst").AddOr(c => c.Equals("Name", "OrSecond")));
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = queryNode };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -922,7 +959,9 @@ public class QueryServicePostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Contains, "Middle") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -946,7 +985,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -968,7 +1009,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -993,7 +1036,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1016,7 +1061,9 @@ public class QueryServicePostgresTests
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1040,7 +1087,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1064,7 +1113,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1089,7 +1140,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1112,7 +1165,9 @@ public class QueryServicePostgresTests
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1136,7 +1191,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1162,7 +1219,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1188,7 +1247,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1214,7 +1275,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1240,7 +1303,9 @@ public class QueryServicePostgresTests
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1326,7 +1391,9 @@ public class QueryServicePostgresTests
 
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var queryNode = WhereClauseBuilder.ConditionWithSubClause("Enabled", ComparisonOperatorEnum.Equals, true, WhereClauseBuilder.And(b => b.Equals("JobRuns.CreatedBy", $"order-{suffix}")));
+        var queryNode = WhereClauseBuilder.ConditionWithSubClause(
+            "Enabled", ComparisonOperatorEnum.Equals, true, WhereClauseBuilder.And(b => b.Equals("JobRuns.CreatedBy", $"order-{suffix}")));
+
         var request = new QueryReq {
             Start = 1,
             Amount = 1,

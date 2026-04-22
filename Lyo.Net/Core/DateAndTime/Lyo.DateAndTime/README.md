@@ -5,9 +5,12 @@ mapping support.
 
 ## DateOnly and TimeOnly on .NET Standard 2.0
 
-This library targets **`netstandard2.0`** (and **`net10.0`**). The BCL types **`System.DateOnly`** and **`System.TimeOnly`** are not available on .NET Standard 2.0; they were introduced in .NET 6.
+This library targets **`netstandard2.0`** (and **`net10.0`**). The BCL types **`System.DateOnly`** and **`System.TimeOnly`** are not available on .NET Standard 2.0; they were
+introduced in .NET 6.
 
-For that surface area, the library provides **`DateOnlyModel`** and **`TimeOnlyModel`**: implementations aligned with the `System.DateOnly` / `System.TimeOnly` APIs so consumers on `netstandard2.0` get the same date-only and time-of-day behavior. Scheduling helpers on `DateAndTime` use `System.TimeOnly` when building for .NET 6 or later, and `TimeOnlyModel` when building for .NET Standard 2.0.
+For that surface area, the library provides **`DateOnlyModel`** and **`TimeOnlyModel`**: implementations aligned with the `System.DateOnly` / `System.TimeOnly` APIs so consumers on
+`netstandard2.0` get the same date-only and time-of-day behavior. Scheduling helpers on `DateAndTime` use `System.TimeOnly` when building for .NET 6 or later, and `TimeOnlyModel`
+when building for .NET Standard 2.0.
 
 ## Features
 
@@ -17,7 +20,8 @@ For that surface area, the library provides **`DateOnlyModel`** and **`TimeOnlyM
 - ✅ **Day Flags** - Flexible day-of-week scheduling with flags (weekdays, weekends, specific days)
 - ✅ **Time Windows** - Schedule within time windows with configurable intervals
 - ✅ **Cross-Platform** - Supports .NET Standard 2.0 and .NET 10.0
-- ✅ **DateOnly/TimeOnly Support** - `DateOnlyModel` / `TimeOnlyModel` on .NET Standard 2.0; see [DateOnly and TimeOnly on .NET Standard 2.0](#dateonly-and-timeonly-on-net-standard-20). Scheduling APIs use `System.TimeOnly` on .NET 6+.
+- ✅ **DateOnly/TimeOnly Support** - `DateOnlyModel` / `TimeOnlyModel` on .NET Standard 2.0;
+  see [DateOnly and TimeOnly on .NET Standard 2.0](#dateonly-and-timeonly-on-net-standard-20). Scheduling APIs use `System.TimeOnly` on .NET 6+.
 - ✅ **JSON Serialization** - Built-in JSON converters for DateOnlyModel and TimeOnlyModel
 - ✅ **Simple API** - Easy to use static utility class, no instantiation required
 - ✅ **Error Handling** - Comprehensive error handling with meaningful exceptions
@@ -366,9 +370,6 @@ public string FormatTimeForState(DateTime utcTime, USState state)
     return localTime?.ToString("g") ?? "N/A";
 }
 ```
-
-
-
 
 <!-- LYO_README_SYNC:BEGIN -->
 

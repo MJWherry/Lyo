@@ -1,4 +1,3 @@
-using System.IO;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
@@ -7,16 +6,12 @@ using Lyo.IO.Temp.Models;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using MudBlazor;
 using Variant = MudBlazor.Variant;
 
 namespace Lyo.Web.Components.FileUpload;
 
 public partial class LyoFileUpload : IDisposable
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     public enum UploadProgressViewType
     {
         None,
@@ -27,6 +22,9 @@ public partial class LyoFileUpload : IDisposable
 
     private readonly List<LyoFileUploadState> _fileStates = [];
     private bool _isDragOver;
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -106,16 +104,13 @@ public partial class LyoFileUpload : IDisposable
     public EventCallback<LocalBrowserFile> OnClientFileRemoved { get; set; }
 
     /// <summary>
-    /// When set, the component streams browser files to temp disk instead of buffering in memory.
-    /// The <see cref="OnClientFilePathReady" /> / <see cref="OnClientFilePathRemoved" /> callbacks fire instead of
-    /// <see cref="OnClientFileReady" /> / <see cref="OnClientFileRemoved" />.
+    /// When set, the component streams browser files to temp disk instead of buffering in memory. The <see cref="OnClientFilePathReady" /> /
+    /// <see cref="OnClientFilePathRemoved" /> callbacks fire instead of <see cref="OnClientFileReady" /> / <see cref="OnClientFileRemoved" />.
     /// </summary>
     [Parameter]
     public IIOTempService? TempService { get; set; }
 
-    /// <summary>
-    /// When set (takes precedence over <see cref="TempService" />), staged bytes are written under this IO temp session directory.
-    /// </summary>
+    /// <summary>When set (takes precedence over <see cref="TempService" />), staged bytes are written under this IO temp session directory.</summary>
     [Parameter]
     public IIOTempSession? TempSession { get; set; }
 
@@ -188,7 +183,6 @@ public partial class LyoFileUpload : IDisposable
             try {
                 fileState.Status = LyoFileUploadStatus.Uploading;
                 await NotifyUploadEventAsync(OnUploadStarted, fileState);
-
                 if (TempService != null || TempSession != null)
                     await StreamToTempFileAsync(file, fileState);
                 else
@@ -271,7 +265,12 @@ public partial class LyoFileUpload : IDisposable
                 await OnClientFilePathReady.InvokeAsync(fileState.ClientFilePath);
         }
         catch {
-            try { File.Delete(tempPath); } catch { /* best effort */ }
+            try {
+                File.Delete(tempPath);
+            }
+            catch { /* best effort */
+            }
+
             throw;
         }
     }
@@ -309,7 +308,12 @@ public partial class LyoFileUpload : IDisposable
             await OnClientFileRemoved.InvokeAsync(fileState.ClientFile);
 
         if (fileState.ClientFilePath != null) {
-            try { File.Delete(fileState.ClientFilePath.FilePath); } catch { /* best effort */ }
+            try {
+                File.Delete(fileState.ClientFilePath.FilePath);
+            }
+            catch { /* best effort */
+            }
+
             if (OnClientFilePathRemoved.HasDelegate)
                 await OnClientFilePathRemoved.InvokeAsync(fileState.ClientFilePath);
         }
@@ -326,8 +330,7 @@ public partial class LyoFileUpload : IDisposable
 
     private string GetChipFileNameDisplay(string? fileName) => FormatChipFileNameDisplay(fileName, ChipFileNameMaxLength);
 
-    private bool ShouldShowChipFileNameTooltip(string? fileName)
-        => !string.IsNullOrEmpty(fileName) && fileName.Length > ChipFileNameMaxLength;
+    private bool ShouldShowChipFileNameTooltip(string? fileName) => !string.IsNullOrEmpty(fileName) && fileName.Length > ChipFileNameMaxLength;
 
     /// <summary>Shortens long file names while keeping the extension visible (e.g. <c>my_long_name...jpg</c>).</summary>
     private static string FormatChipFileNameDisplay(string? fileName, int maxLength)
@@ -345,7 +348,6 @@ public partial class LyoFileUpload : IDisposable
         var ext = Path.GetExtension(fileName);
         var dotIdx = fileName.LastIndexOf('.');
         var hasExt = dotIdx > 0 && ext.Length > 0 && dotIdx == fileName.Length - ext.Length;
-
         if (!hasExt || ext.Length >= maxLength - Ellipsis.Length)
             return fileName[..(maxLength - Ellipsis.Length)] + Ellipsis;
 

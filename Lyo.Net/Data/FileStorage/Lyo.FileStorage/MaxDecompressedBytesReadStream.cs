@@ -1,8 +1,6 @@
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Enforces a maximum number of bytes read from the inner stream (decompression bomb / policy limit).
-/// </summary>
+/// <summary>Enforces a maximum number of bytes read from the inner stream (decompression bomb / policy limit).</summary>
 internal sealed class MaxDecompressedBytesReadStream : Stream
 {
     private readonly Stream _inner;
@@ -60,9 +58,10 @@ internal sealed class MaxDecompressedBytesReadStream : Stream
             return;
 
         _totalRead += n;
-        if (_totalRead > _maxBytes)
+        if (_totalRead > _maxBytes) {
             throw new InvalidDataException(
                 $"Decompressed data for file {_fileId} exceeded maximum allowed size ({_maxBytes} bytes). Possible decompression bomb or misconfiguration.");
+        }
     }
 
     public override void Flush() { }

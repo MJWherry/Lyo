@@ -3,66 +3,68 @@
 @using Microsoft.AspNetCore.Components.Web
 @using MudBlazor
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-export-column-selector-dialog">
-<MudDialog>
-    <TitleContent>
-        <MudText Typo="Typo.h6">
-            <MudIcon Icon="Icons.Material.Filled.Reorder" Class="mr-2"/>
-            Select and Order Fields
-        </MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudContainer Style="padding: 0;">
-            <MudStack Spacing="2">
-                <MudAlert Severity="Severity.Info" Dense="true">
-                    <MudText Typo="Typo.caption">
-                        Select fields to export. Drag rows by the grip to reorder (or use arrows). Add custom formatted columns
-                        with SmartFormat templates (e.g. "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}").
-                    </MudText>
-                </MudAlert>
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="Typo.h6">
+                <MudIcon Icon="Icons.Material.Filled.Reorder" Class="mr-2"/>
+                Select and Order Fields
+            </MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudContainer Style="padding: 0;">
+                <MudStack Spacing="2">
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        <MudText Typo="Typo.caption">
+                            Select fields to export. Drag rows by the grip to reorder (or use arrows). Add custom formatted columns
+                            with SmartFormat templates (e.g. "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}").
+                        </MudText>
+                    </MudAlert>
 
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.body2"><strong>@SelectedCount</strong> of @AllItems.Count selected</MudText>
-                    <MudButtonGroup Size="Size.Small" Variant="Variant.Text">
-                        <MudButton OnClick="SelectAll" StartIcon="@Icons.Material.Filled.SelectAll">All</MudButton>
-                        <MudButton OnClick="SelectNone" StartIcon="@Icons.Material.Filled.Deselect">None</MudButton>
-                        @if (AllowCustomColumns) {
-                            <MudButton OnClick="@(() => _showAddCustom = !_showAddCustom)" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary">
-                                Add custom formatted
-                            </MudButton>
-                        }
-                    </MudButtonGroup>
-                </MudStack>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.body2"><strong>@SelectedCount</strong> of @AllItems.Count selected</MudText>
+                        <MudButtonGroup Size="Size.Small" Variant="Variant.Text">
+                            <MudButton OnClick="SelectAll" StartIcon="@Icons.Material.Filled.SelectAll">All</MudButton>
+                            <MudButton OnClick="SelectNone" StartIcon="@Icons.Material.Filled.Deselect">None</MudButton>
+                            @if (AllowCustomColumns) {
+                                <MudButton OnClick="@(() => _showAddCustom = !_showAddCustom)" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary">
+                                    Add custom formatted
+                                </MudButton>
+                            }
+                        </MudButtonGroup>
+                    </MudStack>
 
-                @if (AllowCustomColumns && _showAddCustom) {
-                    <MudPaper Outlined="true" Class="pa-2">
-                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" StretchItems="StretchItems.All">
-                            <MudTextField @bind-Value="_customHeader" Label="Column name" Placeholder="e.g. Full Name" Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense"
-                                          Style="min-width: 140px; flex: 1;"/>
-                            <MudTextField @bind-Value="_customTemplate" Label="Format" Placeholder="{FirstName} {LastName}"
-                                          Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Style="min-width: 200px; flex: 2;"/>
-                            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddCustomColumn" Class="mt-1"
-                                       Disabled="@(string.IsNullOrWhiteSpace(_customHeader) || string.IsNullOrWhiteSpace(_customTemplate))" StartIcon="@Icons.Material.Filled.Add">
-                                Add
-                            </MudButton>
-                        </MudStack>
-                    </MudPaper>
-                }
+                    @if (AllowCustomColumns && _showAddCustom) {
+                        <MudPaper Outlined="true" Class="pa-2">
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" StretchItems="StretchItems.All">
+                                <MudTextField @bind-Value="_customHeader" Label="Column name" Placeholder="e.g. Full Name" Variant="Variant.Outlined" Dense="true"
+                                              Margin="Margin.Dense"
+                                              Style="min-width: 140px; flex: 1;"/>
+                                <MudTextField @bind-Value="_customTemplate" Label="Format" Placeholder="{FirstName} {LastName}"
+                                              Variant="Variant.Outlined" Dense="true" Margin="Margin.Dense" Style="min-width: 200px; flex: 2;"/>
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddCustomColumn" Class="mt-1"
+                                           Disabled="@(string.IsNullOrWhiteSpace(_customHeader) || string.IsNullOrWhiteSpace(_customTemplate))"
+                                           StartIcon="@Icons.Material.Filled.Add">
+                                    Add
+                                </MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    }
 
-                <MudPaper Elevation="1" Style="max-height: 400px; overflow-y: auto;">
-                    <style>
-                        .export-col-drop-target {
-                            box-shadow: inset 0 3px 0 0 var(--mud-palette-primary);
-                        }
-                    </style>
-                    @for (var i = 0; i < AllItems.Count; i++) {
-                        var index = i;
-                        var item = AllItems[i];
-                        <div class="@GetDropRowClass(index)"
-                             style="display: flex; align-items: center; width: 100%; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--mud-palette-table-lines); @GetDraggingRowStyle(index)"
-                             @ondragover:preventDefault="true"
-                             @ondragenter="@(() => OnDragEnterRow(index))"
-                             @ondrop="@(() => OnRowDrop(index))"
-                             @ondrop:preventDefault="true">
+                    <MudPaper Elevation="1" Style="max-height: 400px; overflow-y: auto;">
+                        <style>
+                            .export-col-drop-target {
+                                box-shadow: inset 0 3px 0 0 var(--mud-palette-primary);
+                            }
+                        </style>
+                        @for (var i = 0; i < AllItems.Count; i++) {
+                            var index = i;
+                            var item = AllItems[i];
+                            <div class="@GetDropRowClass(index)"
+                                 style="display: flex; align-items: center; width: 100%; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--mud-palette-table-lines); @GetDraggingRowStyle(index)"
+                                 @ondragover:preventDefault="true"
+                                 @ondragenter="@(() => OnDragEnterRow(index))"
+                                 @ondrop="@(() => OnRowDrop(index))"
+                                 @ondrop:preventDefault="true">
                             <span draggable="true"
                                   title="Drag to reorder"
                                   @ondragstart="@(e => OnRowDragStart(e, index))"
@@ -70,69 +72,69 @@
                                   style="display: inline-flex; align-items: center; cursor: grab; user-select: none; flex-shrink: 0;">
                                 <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary"/>
                             </span>
-                            <MudCheckBox T="bool"
-                                         Value="@item.IsSelected"
-                                         ValueChanged="@(val => ToggleSelection(index, val))"
-                                         Color="Color.Primary"
-                                         Size="Size.Small" Dense/>
-                            <div style="flex: 1; min-width: 0;">
-                                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                    <MudText Typo="Typo.body2"
-                                             Style="@GetRowLabelStyle(item)">
-                                        @item.Header
-                                    </MudText>
-                                    @if (item.IsCustom) {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Text="custom"/>
-                                    }
-                                    @if (item.UncheckedByDefault) {
-                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mud-text-secondary" Text="hidden in grid"/>
-                                    }
+                                <MudCheckBox T="bool"
+                                             Value="@item.IsSelected"
+                                             ValueChanged="@(val => ToggleSelection(index, val))"
+                                             Color="Color.Primary"
+                                             Size="Size.Small" Dense/>
+                                <div style="flex: 1; min-width: 0;">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.body2"
+                                                 Style="@GetRowLabelStyle(item)">
+                                            @item.Header
+                                        </MudText>
+                                        @if (item.IsCustom) {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Text="custom"/>
+                                        }
+                                        @if (item.UncheckedByDefault) {
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mud-text-secondary" Text="hidden in grid"/>
+                                        }
+                                    </MudStack>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.Value</MudText>
+                                </div>
+                                @if (item.IsCustom) {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => RemoveCustom(index))"
+                                                   Title="Remove"/>
+                                }
+                                <MudStack Row="true" Spacing="0">
+                                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => MoveUp(index))"
+                                                   Disabled="@(index == 0)"
+                                                   Title="Move up"/>
+                                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => MoveDown(index))"
+                                                   Disabled="@(index == AllItems.Count - 1)"
+                                                   Title="Move down"/>
                                 </MudStack>
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@item.Value</MudText>
+                                <MudChip T="string" Size="Size.Small"
+                                         Color="@(item.IsSelected ? Color.Success : Color.Default)"
+                                         Text="@(item.IsSelected ? "✓" : "○")"/>
                             </div>
-                            @if (item.IsCustom) {
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                               Size="Size.Small"
-                                               OnClick="@(() => RemoveCustom(index))"
-                                               Title="Remove"/>
-                            }
-                            <MudStack Row="true" Spacing="0">
-                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
-                                               Size="Size.Small"
-                                               OnClick="@(() => MoveUp(index))"
-                                               Disabled="@(index == 0)"
-                                               Title="Move up"/>
-                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
-                                               Size="Size.Small"
-                                               OnClick="@(() => MoveDown(index))"
-                                               Disabled="@(index == AllItems.Count - 1)"
-                                               Title="Move down"/>
-                            </MudStack>
-                            <MudChip T="string" Size="Size.Small"
-                                     Color="@(item.IsSelected ? Color.Success : Color.Default)"
-                                     Text="@(item.IsSelected ? "✓" : "○")"/>
-                        </div>
-                    }
-                </MudPaper>
+                        }
+                    </MudPaper>
 
-                @if (SelectedCount > 0) {
-                    <MudAlert Severity="Severity.Success" Dense="true">
-                        <MudText Typo="Typo.caption">
-                            <strong>Export
-                                order:</strong> @string.Join(" → ", AllItems.Where(p => p.IsSelected).OrderBy(p => p.Order).Select(p => p.Header + (p.IsCustom ? " (custom)" : "")))
-                        </MudText>
-                    </MudAlert>
-                }
-            </MudStack>
-        </MudContainer>
-    </DialogContent>
-    <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="@(SelectedCount == 0)">
-            Export (@SelectedCount)
-        </MudButton>
-    </DialogActions>
-</MudDialog>
+                    @if (SelectedCount > 0) {
+                        <MudAlert Severity="Severity.Success" Dense="true">
+                            <MudText Typo="Typo.caption">
+                                <strong>Export
+                                    order:</strong> @string.Join(" → ", AllItems.Where(p => p.IsSelected).OrderBy(p => p.Order).Select(p => p.Header + (p.IsCustom ? " (custom)" : "")))
+                            </MudText>
+                        </MudAlert>
+                    }
+                </MudStack>
+            </MudContainer>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Disabled="@(SelectedCount == 0)">
+                Export (@SelectedCount)
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
 </LyoElementRoot>
 
 @code {

@@ -16,12 +16,13 @@ public class NativeBarcodeServiceTests
     {
         var service = CreateService();
         var result = await service.GenerateAsync(
-            "TEST1234", BarcodeSymbology.Code128, new() {
-                Format = BarcodeFormat.Bmp,
-                ModuleWidthPixels = 2,
-                BarHeightPixels = 60,
-                QuietZoneModules = 8
-            }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                "TEST1234", BarcodeSymbology.Code128, new() {
+                    Format = BarcodeFormat.Bmp,
+                    ModuleWidthPixels = 2,
+                    BarHeightPixels = 60,
+                    QuietZoneModules = 8
+                }, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);
@@ -38,12 +39,13 @@ public class NativeBarcodeServiceTests
     {
         var service = CreateService();
         var result = await service.GenerateAsync(
-            "X", BarcodeSymbology.Code128, new() {
-                Format = BarcodeFormat.Svg,
-                ModuleWidthPixels = 1,
-                BarHeightPixels = 40,
-                QuietZoneModules = 4
-            }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                "X", BarcodeSymbology.Code128, new() {
+                    Format = BarcodeFormat.Svg,
+                    ModuleWidthPixels = 1,
+                    BarHeightPixels = 40,
+                    QuietZoneModules = 4
+                }, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);
@@ -55,7 +57,9 @@ public class NativeBarcodeServiceTests
     public async Task GenerateAsync_InvalidCharacter_Fails()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("bad\u0001", BarcodeSymbology.Code128, new() { Format = BarcodeFormat.Bmp }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("bad\u0001", BarcodeSymbology.Code128, new() { Format = BarcodeFormat.Bmp }, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.False(result.IsSuccess);
     }
 

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Keystore;
 
@@ -57,6 +56,6 @@ public class AesGcmKeySizeEncryptionTests
         var ks = new LocalKeyStore();
         Assert.Equal(16, new AesGcmEncryptionService(ks, AesGcmKeySizeBits.Bits128).RequiredKeyBytes);
         Assert.Equal(24, new AesGcmEncryptionService(ks, AesGcmKeySizeBits.Bits192).RequiredKeyBytes);
-        Assert.Equal(32, new AesGcmEncryptionService(ks, AesGcmKeySizeBits.Bits256).RequiredKeyBytes);
+        Assert.Equal(32, new AesGcmEncryptionService(ks).RequiredKeyBytes);
     }
 }

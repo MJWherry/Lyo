@@ -13,6 +13,5 @@ internal static class AutomationDisplayText
         return s.Length <= maxChars ? s : s.Substring(0, maxChars) + "…";
     }
 
-    internal static string OptionalName(string? name)
-        => string.IsNullOrWhiteSpace(name) ? "" : $" [{name}]";
+    internal static string OptionalName(string? name) => string.IsNullOrWhiteSpace(name) ? "" : $" [{name}]";
 }

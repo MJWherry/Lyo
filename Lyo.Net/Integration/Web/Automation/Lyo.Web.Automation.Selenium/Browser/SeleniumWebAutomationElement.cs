@@ -20,8 +20,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 _element.Click();
-            },
-            ct);
+            }, ct);
 
     public Task SendKeysAsync(string text, bool clearFirst, CancellationToken ct = default)
     {
@@ -33,8 +32,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
                     new InputControl(_element).SendKeys(text);
                 else
                     _element.SendKeys(text);
-            },
-            ct);
+            }, ct);
     }
 
     public Task SendKeysRawAsync(string keys, CancellationToken ct = default)
@@ -44,8 +42,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 _element.SendKeys(keys);
-            },
-            ct);
+            }, ct);
     }
 
     public Task ClearAsync(CancellationToken ct = default)
@@ -53,16 +50,14 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 _element.Clear();
-            },
-            ct);
+            }, ct);
 
     public Task SubmitAsync(CancellationToken ct = default)
         => Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
                 _element.Submit();
-            },
-            ct);
+            }, ct);
 
     public Task SelectByTextAsync(string text, CancellationToken ct = default)
     {
@@ -71,8 +66,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 new SelectControl(_element).SelectByText(text);
-            },
-            ct);
+            }, ct);
     }
 
     public Task SelectByValueAsync(string value, CancellationToken ct = default)
@@ -82,8 +76,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 new SelectControl(_element).SelectByValue(value);
-            },
-            ct);
+            }, ct);
     }
 
     public Task SelectByIndexAsync(int index, CancellationToken ct = default)
@@ -91,16 +84,14 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 new SelectControl(_element).SelectByIndex(index);
-            },
-            ct);
+            }, ct);
 
     public Task ScrollIntoViewAsync(CancellationToken ct = default)
         => Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
                 _browser.ScrollIntoView(_element);
-            },
-            ct);
+            }, ct);
 
     /// <inheritdoc />
     public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default)
@@ -110,8 +101,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 return _element.GetAttribute(name);
-            },
-            ct);
+            }, ct);
     }
 
     /// <inheritdoc />
@@ -120,8 +110,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             () => {
                 ct.ThrowIfCancellationRequested();
                 return _element.Text;
-            },
-            ct);
+            }, ct);
 
     /// <inheritdoc />
     public async Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default)
@@ -140,6 +129,5 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
                     throw new NotSupportedException("Element does not support screenshots.");
 
                 return shot.GetScreenshot().AsByteArray;
-            },
-            ct);
+            }, ct);
 }

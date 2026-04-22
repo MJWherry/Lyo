@@ -1,12 +1,11 @@
-using System;
 using System.Runtime.CompilerServices;
-using StrongBoxGuid = System.Runtime.CompilerServices.StrongBox<System.Guid>;
 using Lyo.Exceptions;
-using Lyo.Metrics;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
+using StrongBoxGuid = System.Runtime.CompilerServices.StrongBox<System.Guid>;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Playwright.Browser;
 
@@ -15,65 +14,61 @@ public sealed class PlaywrightTabManager
 {
     private static readonly ConditionalWeakTable<IPage, StrongBoxGuid> PageIds = new();
     private readonly PlaywrightBrowser _browser;
-    private readonly ILogger _logger;
     private readonly Dictionary<Guid, string> _displayNames = [];
+    private readonly ILogger _logger;
 
     internal PlaywrightTabManager(PlaywrightBrowser browser, ILogger? logger = null)
     {
         ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
         _browser = browser;
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        _logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>Gets the active tab snapshot.</summary>
     public PlaywrightBrowserTabInfo GetCurrent()
-    {
-        return RunTabRead("get_current", () => {
-            var page = _browser.GetRequiredPage();
-            var ctx = _browser.GetRequiredContext();
-            var pages = ctx.Pages;
-            var handle = GetOrCreatePageId(page);
-            var index = IndexOfPage(pages, page);
-            OperationHelpers.ThrowIf(index < 0, "Current page not in context page list.");
-            _displayNames.TryGetValue(handle, out var dn);
-            return new PlaywrightBrowserTabInfo(index, true, handle.ToString("N"), SafeRead(() => page.Url), SafeReadTitle(page), dn);
-        });
-    }
+        => RunTabRead(
+            "get_current", () => {
+                var page = _browser.GetRequiredPage();
+                var ctx = _browser.GetRequiredContext();
+                var pages = ctx.Pages;
+                var handle = GetOrCreatePageId(page);
+                var index = IndexOfPage(pages, page);
+                OperationHelpers.ThrowIf(index < 0, "Current page not in context page list.");
+                _displayNames.TryGetValue(handle, out var dn);
+                return new PlaywrightBrowserTabInfo(index, true, handle.ToString("N"), SafeRead(() => page.Url), SafeReadTitle(page), dn);
+            });
 
     /// <summary>Lists all pages in the context.</summary>
     public IReadOnlyList<PlaywrightBrowserTabInfo> ListTabs()
-    {
-        return RunTabRead("list_tabs", () => {
-            var ctx = _browser.GetRequiredContext();
-            var pages = ctx.Pages;
-            var active = _browser.GetRequiredPage();
-            var list = new List<PlaywrightBrowserTabInfo>(pages.Count);
-            for (var i = 0; i < pages.Count; i++) {
-                var p = pages[i];
-                var id = GetOrCreatePageId(p);
-                _displayNames.TryGetValue(id, out var dn);
-                list.Add(new PlaywrightBrowserTabInfo(i, ReferenceEquals(p, active), id.ToString("N"), SafeRead(() => p.Url), SafeReadTitle(p), dn));
-            }
+        => RunTabRead(
+            "list_tabs", () => {
+                var ctx = _browser.GetRequiredContext();
+                var pages = ctx.Pages;
+                var active = _browser.GetRequiredPage();
+                var list = new List<PlaywrightBrowserTabInfo>(pages.Count);
+                for (var i = 0; i < pages.Count; i++) {
+                    var p = pages[i];
+                    var id = GetOrCreatePageId(p);
+                    _displayNames.TryGetValue(id, out var dn);
+                    list.Add(new(i, ReferenceEquals(p, active), id.ToString("N"), SafeRead(() => p.Url), SafeReadTitle(p), dn));
+                }
 
-            return list;
-        });
-    }
+                return list;
+            });
 
     public Task<IReadOnlyList<PlaywrightBrowserTabInfo>> ListTabsAsync(CancellationToken ct = default)
         => Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
                 return ListTabs();
-            },
-            ct);
+            }, ct);
 
     public Task<PlaywrightBrowserTabInfo> GetCurrentAsync(CancellationToken ct = default)
         => Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
                 return GetCurrent();
-            },
-            ct);
+            }, ct);
 
     /// <summary>Assigns a friendly display name for a page (keyed by <see cref="PlaywrightBrowserTabInfo.PageKey" />).</summary>
     public void SetDisplayName(string pageKey, string? displayName)
@@ -92,25 +87,21 @@ public sealed class PlaywrightTabManager
 
     /// <summary>Switches to the page at the given 0-based index.</summary>
     public void SwitchTo(int index)
-    {
-        RunTabOp(
-            "switch_index",
-            () => {
+        => RunTabOp(
+            "switch_index", () => {
                 var ctx = _browser.GetRequiredContext();
                 var pages = ctx.Pages;
                 OperationHelpers.ThrowIf(pages.Count == 0, "No pages available.");
                 ArgumentHelpers.ThrowIfNotInRange(index, 0, pages.Count - 1, nameof(index));
                 _browser.SetActivePage(pages[index]);
             });
-    }
 
     public Task SwitchToAsync(int index, CancellationToken ct = default)
         => Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
                 SwitchTo(index);
-            },
-            ct);
+            }, ct);
 
     /// <summary>Switches to the page with the given key (<see cref="PlaywrightBrowserTabInfo.PageKey" />).</summary>
     public void SwitchTo(string pageKey)
@@ -120,8 +111,7 @@ public sealed class PlaywrightTabManager
             throw new ArgumentException("PageKey must be a 32-character hex Guid.", nameof(pageKey));
 
         RunTabOp(
-            "switch_key",
-            () => {
+            "switch_key", () => {
                 foreach (var p in _browser.GetRequiredContext().Pages) {
                     if (GetOrCreatePageId(p) == id) {
                         _browser.SetActivePage(p);
@@ -138,45 +128,38 @@ public sealed class PlaywrightTabManager
     {
         string? key = null;
         await RunTabOpAsync(
-            "open_page",
-            async () => {
-                var page = await _browser.GetRequiredContext().NewPageAsync().ConfigureAwait(false);
-                _browser.SetActivePage(page);
-                if (!string.IsNullOrWhiteSpace(url))
-                    await page.GotoAsync(url!, new PageGotoOptions { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
+                "open_page", async () => {
+                    var page = await _browser.GetRequiredContext().NewPageAsync().ConfigureAwait(false);
+                    _browser.SetActivePage(page);
+                    if (!string.IsNullOrWhiteSpace(url))
+                        await page.GotoAsync(url!, new() { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
 
-                key = GetOrCreatePageId(page).ToString("N");
-            },
-            ct).ConfigureAwait(false);
+                    key = GetOrCreatePageId(page).ToString("N");
+                }, ct)
+            .ConfigureAwait(false);
 
         return key!;
     }
 
     /// <summary>Closes the current page and activates another if any remain.</summary>
     public async Task CloseCurrentAsync(CancellationToken ct = default)
-    {
-        await RunTabOpAsync(
-            "close_current",
-            async () => {
-                var ctx = _browser.GetRequiredContext();
-                var pages = ctx.Pages;
-                OperationHelpers.ThrowIf(pages.Count == 0, "No pages to close.");
-                var current = _browser.GetRequiredPage();
-                var id = GetOrCreatePageId(current);
-                await current.CloseAsync().ConfigureAwait(false);
-                _displayNames.Remove(id);
-                PruneDisplayNames();
-                var remaining = ctx.Pages;
-                if (remaining.Count > 0)
-                    _browser.SetActivePage(remaining[0]);
-            },
-            ct).ConfigureAwait(false);
-    }
+        => await RunTabOpAsync(
+                "close_current", async () => {
+                    var ctx = _browser.GetRequiredContext();
+                    var pages = ctx.Pages;
+                    OperationHelpers.ThrowIf(pages.Count == 0, "No pages to close.");
+                    var current = _browser.GetRequiredPage();
+                    var id = GetOrCreatePageId(current);
+                    await current.CloseAsync().ConfigureAwait(false);
+                    _displayNames.Remove(id);
+                    PruneDisplayNames();
+                    var remaining = ctx.Pages;
+                    if (remaining.Count > 0)
+                        _browser.SetActivePage(remaining[0]);
+                }, ct)
+            .ConfigureAwait(false);
 
-    internal void ClearDisplayNames()
-    {
-        _displayNames.Clear();
-    }
+    internal void ClearDisplayNames() => _displayNames.Clear();
 
     private static Guid GetOrCreatePageId(IPage page)
     {
@@ -184,7 +167,7 @@ public sealed class PlaywrightTabManager
             return box.Value;
 
         var id = Guid.NewGuid();
-        PageIds.Add(page, new StrongBoxGuid(id));
+        PageIds.Add(page, new(id));
         return id;
     }
 
@@ -233,28 +216,26 @@ public sealed class PlaywrightTabManager
     private T RunTabRead<T>(string operation, Func<T> func)
     {
         _logger.LogDebug("Tab read {Operation} starting", operation);
-        using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation))) {
+        using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation)))
             return func();
-        }
     }
 
     private void RunTabOp(string operation, Action action)
     {
         _logger.LogDebug("Tab operation {Operation} starting", operation);
         try {
-            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation))) {
+            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation)))
                 action();
-            }
 
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+
             _logger.LogDebug("Tab operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+
             _browser.Metrics.RecordError(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), ex, PlaywrightMetricTags.ForOperation(_browser, operation));
             _logger.LogWarning(ex, "Tab operation {Operation} failed", operation);
             throw;
@@ -266,23 +247,21 @@ public sealed class PlaywrightTabManager
         _logger.LogDebug("Tab operation {Operation} starting", operation);
         try {
             ct.ThrowIfCancellationRequested();
-            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation))) {
+            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation)))
                 await action().ConfigureAwait(false);
-            }
 
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+
             _logger.LogDebug("Tab operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+
             _browser.Metrics.RecordError(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), ex, PlaywrightMetricTags.ForOperation(_browser, operation));
             _logger.LogWarning(ex, "Tab operation {Operation} failed", operation);
             throw;
         }
     }
-
 }

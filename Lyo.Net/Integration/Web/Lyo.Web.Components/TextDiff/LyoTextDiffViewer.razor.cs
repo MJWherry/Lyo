@@ -7,11 +7,6 @@ namespace Lyo.Web.Components.TextDiff;
 
 public partial class LyoTextDiffViewer : ComponentBase, IAsyncDisposable
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-text-diff-viewer" : ElementId.Trim();
-
     public enum DiffViewMode
     {
         SideBySide = 1,
@@ -71,6 +66,11 @@ public partial class LyoTextDiffViewer : ComponentBase, IAsyncDisposable
     private int _searchTotal;
     private bool _textInitialized;
     private double _topPanePercent = 50;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-text-diff-viewer" : ElementId.Trim();
 
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;

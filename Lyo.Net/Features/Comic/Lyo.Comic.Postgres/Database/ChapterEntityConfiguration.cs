@@ -20,7 +20,6 @@ public sealed class ChapterEntityConfiguration : IEntityTypeConfiguration<Chapte
         builder.Property(e => e.SourceRef).HasColumnName("source_ref");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-
         builder.HasIndex(e => e.SeriesId).HasDatabaseName("ix_comic_chapter_series");
         builder.HasIndex(e => e.VolumeId).HasDatabaseName("ix_comic_chapter_volume");
         // Unique per series + chapter number + language (one translation of each chapter)

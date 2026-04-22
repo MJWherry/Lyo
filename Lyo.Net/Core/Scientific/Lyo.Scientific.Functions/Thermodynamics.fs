@@ -9,6 +9,7 @@ open Lyo.Scientific.Engineering
 type ThermodynamicsFunctions private () =
     static member HeatEnergy(input: HeatTransferInput) =
         let deltaT = input.FinalTemperature.Kelvin - input.InitialTemperature.Kelvin
+
         Energy.FromJoules(
             input.Mass.Kilograms
             * input.SpecificHeatCapacity.JoulesPerKilogramKelvin

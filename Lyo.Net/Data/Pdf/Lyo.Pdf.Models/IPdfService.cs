@@ -153,8 +153,15 @@ public interface IPdfService
         PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
         CancellationToken ct = default);
 
-    /// <param name="inferFormattingForHeaderRows">When set (bold and/or underline), consecutive lines are merged into one header only while each line matches that inference styling; the next plain line starts data.</param>
-    IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0, PdfInferFormattingFlags? inferFormattingForHeaderRows = null);
+    /// <param name="inferFormattingForHeaderRows">
+    /// When set (bold and/or underline), consecutive lines are merged into one header only while each line matches that inference styling; the
+    /// next plain line starts data.
+    /// </param>
+    IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(
+        IReadOnlyList<PdfWord> words,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null);
 
     /// <summary>Loads PDF from bytes, extracts table using headers, and returns DataTable result. Unloads the PDF after extraction.</summary>
     Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] pdfBytes, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0);

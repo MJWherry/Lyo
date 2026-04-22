@@ -21,8 +21,9 @@ public readonly record struct AutomationPlanStepOutcomeRecord(
     public override string ToString()
     {
         var planStep = PlanStepId == Guid.Empty ? "" : $" planStep={PlanStepId:N}";
-        var err = Error is { } e ? AutomationDisplayText.Ellipsis(e.ToString(), 120) : "";
+        var err = Error is { } e ? AutomationDisplayText.Ellipsis(e.ToString()) : "";
         var errSuffix = err.Length > 0 ? $" error={err}" : "";
-        return $"AutomationPlanStepOutcomeRecord run={RunId:N}{planStep} stepExec={StepExecutionId:N} index={StepIndex} outcome={Outcome} duration={Duration} step={Step}{errSuffix}";
+        return
+            $"AutomationPlanStepOutcomeRecord run={RunId:N}{planStep} stepExec={StepExecutionId:N} index={StepIndex} outcome={Outcome} duration={Duration} step={Step}{errSuffix}";
     }
 }

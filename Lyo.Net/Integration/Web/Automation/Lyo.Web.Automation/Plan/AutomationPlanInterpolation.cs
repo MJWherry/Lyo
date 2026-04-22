@@ -5,75 +5,52 @@ using Lyo.Formatter;
 namespace Lyo.Web.Automation.Plan;
 
 /// <summary>
-/// Replaces placeholders in step strings using <see cref="AutomationPlanInterpolationBindings" /> (live run context).
-/// When <see cref="ExpandAsync(string, AutomationPlanInterpolationBindings, IFormatterService?, CancellationToken)" /> is given an <see cref="IFormatterService"/>,
-/// the template is validated with SmartFormat (same engine as <see cref="FormatterService" />) before values are resolved.
+/// Replaces placeholders in step strings using <see cref="AutomationPlanInterpolationBindings" /> (live run context). When
+/// <see cref="ExpandAsync(string, AutomationPlanInterpolationBindings, IFormatterService?, CancellationToken)" /> is given an <see cref="IFormatterService" />, the template is
+/// validated with SmartFormat (same engine as <see cref="FormatterService" />) before values are resolved.
 /// </summary>
 public static class AutomationPlanInterpolation
 {
-    private static readonly Regex SimplePlaceholder = new(
-        @"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SimplePlaceholder = new(@"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex DoubleBracePlaceholder = new(
-        @"\{\{\s*([^}]+?)\s*\}\}",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex DoubleBracePlaceholder = new(@"\{\{\s*([^}]+?)\s*\}\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex SingleBraceToken = new(
-        @"\{(?<inner>[^{}]+)\}",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SingleBraceToken = new(@"\{(?<inner>[^{}]+)\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    /// <summary>
-    /// Expands only simple <c>{{variableName}}</c> placeholders from string variables (legacy, synchronous).
-    /// </summary>
+    /// <summary>Expands only simple <c>{{variableName}}</c> placeholders from string variables (legacy, synchronous).</summary>
     public static string Expand(string template, IReadOnlyDictionary<string, string> strings)
     {
         ArgumentHelpers.ThrowIfNull(template, nameof(template));
         ArgumentHelpers.ThrowIfNull(strings, nameof(strings));
         return SimplePlaceholder.Replace(
-            template,
-            m => {
+            template, m => {
                 var key = m.Groups[1].Value;
-                if (!strings.TryGetValue(key, out var value))
-                    throw new InvalidOperationException(
-                        $"Template references undefined string variable '{{{{{key}}}}}'. Define it with a store or extract step first.");
+                if (!strings.TryGetValue(key, out var value)) {
+                    throw new InvalidOperationException($"Template references undefined string variable '{{{{{key}}}}}'. Define it with a store or extract step first.");
+                }
 
                 return value ?? string.Empty;
             });
     }
 
-    /// <summary>
-    /// Expands placeholders using strings, lists, elements, and optionally the browser.
-    /// </summary>
+    /// <summary>Expands placeholders using strings, lists, elements, and optionally the browser.</summary>
     /// <remarks>
     /// <para><b>Syntax</b>: use <c>{{page.url}}</c> (legacy) or SmartFormat-style <c>{page.url}</c>. Double braces are normalized to single braces before parsing.</para>
-    /// <para>Selector paths (after optional <see cref="IFormatterService"/> validation):</para>
+    /// <para>Selector paths (after optional <see cref="IFormatterService" /> validation):</para>
     /// <list type="bullet">
-    /// <item><c>name</c> — string variable (simple identifier only in legacy <see cref="Expand"/>).</item>
-    /// <item><c>strings.x</c> / <c>str.x</c> — string variable <c>x</c>.</item>
+    /// <item><c>name</c> — string variable (simple identifier only in legacy <see cref="Expand" />).</item> <item><c>strings.x</c> / <c>str.x</c> — string variable <c>x</c>.</item>
     /// <item><c>lists.x</c> / <c>list.x</c> — string-list <c>x</c>, lines joined with newlines.</item>
     /// <item><c>page.url</c>, <c>page.title</c> — current document (requires <see cref="AutomationPlanInterpolationBindings.Browser" />).</item>
-    /// <item><c>elements.ref.text</c> or <c>el.ref.text</c> — visible text of element ref <c>ref</c>.</item>
-    /// <item><c>elements.ref.attr.href</c> — DOM attribute.</item>
+    /// <item><c>elements.ref.text</c> or <c>el.ref.text</c> — visible text of element ref <c>ref</c>.</item> <item><c>elements.ref.attr.href</c> — DOM attribute.</item>
     /// </list>
-    /// If the full selector matches a string variable key (including keys with dots), that value wins first.
-    /// A SmartFormat format specifier after <c>:</c> is ignored for resolution; only the selector before <c>:</c> is used.
+    /// If the full selector matches a string variable key (including keys with dots), that value wins first. A SmartFormat format specifier after <c>:</c> is ignored for resolution; only
+    /// the selector before <c>:</c> is used.
     /// </remarks>
-    public static async Task<string> ExpandAsync(
-        string template,
-        AutomationPlanInterpolationBindings bindings,
-        IFormatterService? formatter,
-        CancellationToken ct = default)
+    public static async Task<string> ExpandAsync(string template, AutomationPlanInterpolationBindings bindings, IFormatterService? formatter, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(template, nameof(template));
         ArgumentHelpers.ThrowIfNull(bindings, nameof(bindings));
-
-        var work = template.IndexOf("{{", StringComparison.Ordinal) >= 0
-            ? DoubleBracePlaceholder.Replace(
-                template,
-                m => "{" + m.Groups[1].Value.Trim() + "}")
-            : template;
-
+        var work = template.IndexOf("{{", StringComparison.Ordinal) >= 0 ? DoubleBracePlaceholder.Replace(template, m => "{" + m.Groups[1].Value.Trim() + "}") : template;
         if (!SingleBraceToken.IsMatch(work))
             return work;
 
@@ -98,14 +75,10 @@ public static class AutomationPlanInterpolation
         if (string.IsNullOrEmpty(template))
             return false;
 
-        return template.IndexOf("{{", StringComparison.Ordinal) >= 0
-            || (template.IndexOf('{') >= 0 && SingleBraceToken.IsMatch(template));
+        return template.IndexOf("{{", StringComparison.Ordinal) >= 0 || (template.IndexOf('{') >= 0 && SingleBraceToken.IsMatch(template));
     }
 
-    private static async Task<string> ResolvePlaceholderAsync(
-        string spec,
-        AutomationPlanInterpolationBindings b,
-        CancellationToken ct)
+    private static async Task<string> ResolvePlaceholderAsync(string spec, AutomationPlanInterpolationBindings b, CancellationToken ct)
     {
         var s = spec.Trim();
         OperationHelpers.ThrowIf(s.Length == 0, "Template placeholder is empty.");
@@ -113,7 +86,9 @@ public static class AutomationPlanInterpolation
             return direct ?? string.Empty;
 
         var parts = s.Split('.').Select(static p => p.Trim()).Where(static p => p.Length > 0).ToArray();
-        OperationHelpers.ThrowIf(parts.Length < 2, $"Template references unknown placeholder '{{{s}}}'. Use a string variable, or forms like strings.x, lists.x, page.url, el.ref.text.");
+        OperationHelpers.ThrowIf(
+            parts.Length < 2, $"Template references unknown placeholder '{{{s}}}'. Use a string variable, or forms like strings.x, lists.x, page.url, el.ref.text.");
+
         var head = parts[0];
         if (head.Equals("strings", StringComparison.OrdinalIgnoreCase) || head.Equals("str", StringComparison.OrdinalIgnoreCase)) {
             OperationHelpers.ThrowIf(parts.Length != 2, $"Invalid strings placeholder '{{{s}}}'.");
@@ -139,7 +114,7 @@ public static class AutomationPlanInterpolation
             var p = parts[1];
             if (p.Equals("url", StringComparison.OrdinalIgnoreCase))
                 return await b.Browser.GetCurrentUrlAsync(ct).ConfigureAwait(false);
-            
+
             if (p.Equals("title", StringComparison.OrdinalIgnoreCase))
                 return await b.Browser.GetTitleAsync(ct).ConfigureAwait(false);
 
@@ -147,7 +122,7 @@ public static class AutomationPlanInterpolation
         }
 
         if (head.Equals("elements", StringComparison.OrdinalIgnoreCase) || head.Equals("el", StringComparison.OrdinalIgnoreCase)) {
-            OperationHelpers.ThrowIf(parts.Length < 3,  $"Invalid element placeholder '{{{s}}}'. Expected el.ref.text or el.ref.attr.name.");
+            OperationHelpers.ThrowIf(parts.Length < 3, $"Invalid element placeholder '{{{s}}}'. Expected el.ref.text or el.ref.attr.name.");
             var refName = parts[1];
             if (!b.Elements.TryGetValue(refName, out var el) || el == null)
                 throw new InvalidOperationException($"Unknown element ref '{refName}'.");
@@ -160,7 +135,7 @@ public static class AutomationPlanInterpolation
             if (parts[2].Equals("attr", StringComparison.OrdinalIgnoreCase)) {
                 OperationHelpers.ThrowIf(parts.Length != 4, $"Invalid element attribute placeholder '{{{s}}}'. Use el.ref.attr.attributeName.");
                 var attr = parts[3];
-                return (await el.GetAttributeAsync(attr, ct).ConfigureAwait(false)) ?? string.Empty;
+                return await el.GetAttributeAsync(attr, ct).ConfigureAwait(false) ?? string.Empty;
             }
 
             throw new InvalidOperationException($"Unknown element field '{parts[2]}' in '{{{s}}}'. Use text or attr.");

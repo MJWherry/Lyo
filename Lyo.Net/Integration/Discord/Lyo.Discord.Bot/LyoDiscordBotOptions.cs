@@ -2,7 +2,10 @@ using DSharpPlus;
 
 namespace Lyo.Discord.Bot;
 
-/// <summary>Configuration for <see cref="LyoDiscordBotBase" /> (Discord token and gateway intents only). The Lyo API HTTP client is configured separately via <see cref="Lyo.Discord.Client.LyoDiscordClientOptions" />.</summary>
+/// <summary>
+/// Configuration for <see cref="LyoDiscordBotBase" /> (Discord token and gateway intents only). The Lyo API HTTP client is configured separately via
+/// <see cref="Lyo.Discord.Client.LyoDiscordClientOptions" />.
+/// </summary>
 public sealed class LyoDiscordBotOptions
 {
     /// <summary>Default configuration section name (matches existing appsettings: <c>DiscordBot</c>).</summary>

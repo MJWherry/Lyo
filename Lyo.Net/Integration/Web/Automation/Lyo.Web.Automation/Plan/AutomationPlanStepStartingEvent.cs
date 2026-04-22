@@ -4,12 +4,7 @@ using Lyo.Web.Automation.Models;
 namespace Lyo.Web.Automation.Plan;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct AutomationPlanStepStartingEvent(
-    Guid RunId,
-    Guid StepExecutionId,
-    Guid PlanStepId,
-    int StepIndex,
-    AutomationStepDefinition Step)
+public readonly record struct AutomationPlanStepStartingEvent(Guid RunId, Guid StepExecutionId, Guid PlanStepId, int StepIndex, AutomationStepDefinition Step)
 {
     /// <inheritdoc />
     public override string ToString()

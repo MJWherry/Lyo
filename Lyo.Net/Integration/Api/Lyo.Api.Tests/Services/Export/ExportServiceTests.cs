@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Api.ApiEndpoint.Config;
+using Lyo.Api.Models;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Export;
 using Lyo.Common.Enums;
@@ -49,7 +49,9 @@ public sealed class ExportServiceTests
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = null };
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(FileTypeInfo.Csv.MimeType, contentType);
@@ -68,7 +70,9 @@ public sealed class ExportServiceTests
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
         var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Contains("First", content);
@@ -89,7 +93,9 @@ public sealed class ExportServiceTests
             Columns = new() { ["Full Name"] = "{FirstName} {LastName}", ["Created"] = "{CreatedAt:yyyy-MM-dd}" }
         };
 
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Contains("Full Name", content);
@@ -110,7 +116,9 @@ public sealed class ExportServiceTests
             Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Xlsx, Columns = new() { ["Full Name"] = "{FirstName} {LastName}", ["Date"] = "{CreatedAt:yyyy-MM-dd}" }
         };
 
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         Assert.Equal(FileTypeInfo.Xlsx.MimeType, contentType);
         Assert.Equal("export.xlsx", fileName);
@@ -124,7 +132,9 @@ public sealed class ExportServiceTests
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Json, Columns = null };
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(FileTypeInfo.Json.MimeType, contentType);
@@ -140,7 +150,9 @@ public sealed class ExportServiceTests
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await using var _ = stream;
         var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Contains("First", content);
@@ -155,7 +167,9 @@ public sealed class ExportServiceTests
         var queryService = new FailingQueryService<TestDbContext>();
         var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        await Assert.ThrowsAsync<ApiErrorException>(() => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ApiErrorException>(()
+                => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken))
+            .ConfigureAwait(false);
     }
 
     private sealed record TestExportItem(Guid Id, string FirstName, string LastName, DateTime CreatedAt);
@@ -246,9 +260,8 @@ public sealed class ExportServiceTests
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
-            => Task.FromResult(ResultFactory.QueryFailure<TResult>(
-                queryRequest,
-                LyoProblemDetails.FromCode(Models.Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
+            => Task.FromResult(
+                ResultFactory.QueryFailure<TResult>(queryRequest, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
 
         public Task<QueryRes<TDbModel>> Query<TDbModel>(
             QueryReq queryRequest,
@@ -256,9 +269,8 @@ public sealed class ExportServiceTests
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
-            => Task.FromResult(ResultFactory.QueryFailure<TDbModel>(
-                queryRequest,
-                LyoProblemDetails.FromCode(Models.Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
+            => Task.FromResult(
+                ResultFactory.QueryFailure<TDbModel>(queryRequest, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
 
         public Task<ProjectedQueryRes<object?>> QueryProjected<TDbModel>(
             ProjectionQueryReq queryRequest,
@@ -266,9 +278,8 @@ public sealed class ExportServiceTests
             SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
-            => Task.FromResult(ResultFactory.ProjectedQueryFailure<object?>(
-                queryRequest,
-                LyoProblemDetails.FromCode(Models.Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
+            => Task.FromResult(
+                ResultFactory.ProjectedQueryFailure<object?>(queryRequest, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Test failure", DateTime.UtcNow)));
 
         public Task<TResult?> Get<TDbModel, TResult>(
             object[] keys,

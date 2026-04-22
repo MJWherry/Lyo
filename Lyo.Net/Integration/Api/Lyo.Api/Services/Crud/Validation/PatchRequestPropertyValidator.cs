@@ -15,22 +15,25 @@ public static class PatchRequestPropertyValidator
             return [];
 
         var errors = new List<ApiError>();
-        var map = typeof(TDbModel).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
-
+        var map = typeof(TDbModel).GetProperties(BindingFlags.Public | BindingFlags.Instance).ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in request.Properties) {
             if (!map.TryGetValue(kvp.Key, out var property) || !property.CanWrite) {
-                errors.Add(new(
-                    Constants.ApiErrorCodes.InvalidField,
-                    $"Property {ValidationFieldFormatter.Quote(kvp.Key)} is not valid or not writable on type '{typeof(TDbModel).Name}'."));
+                errors.Add(
+                    new(
+                        Constants.ApiErrorCodes.InvalidField,
+                        $"Property {ValidationFieldFormatter.Quote(kvp.Key)} is not valid or not writable on type '{typeof(TDbModel).Name}'."));
+
                 continue;
             }
 
             if (kvp.Value == null) {
-                if (property.PropertyType.IsValueType && !property.PropertyType.IsNullable())
-                    errors.Add(new(
-                        Constants.ApiErrorCodes.InvalidField,
-                        $"Cannot set null on non-nullable property {ValidationFieldFormatter.Quote(property.Name)} of type '{property.PropertyType.GetFriendlyTypeName()}' on '{typeof(TDbModel).Name}'."));
+                if (property.PropertyType.IsValueType && !property.PropertyType.IsNullable()) {
+                    errors.Add(
+                        new(
+                            Constants.ApiErrorCodes.InvalidField,
+                            $"Cannot set null on non-nullable property {ValidationFieldFormatter.Quote(property.Name)} of type '{property.PropertyType.GetFriendlyTypeName()}' on '{typeof(TDbModel).Name}'."));
+                }
+
                 continue;
             }
 
@@ -38,9 +41,10 @@ public static class PatchRequestPropertyValidator
                 _ = kvp.Value.ConvertToType(property.PropertyType);
             }
             catch (Exception ex) {
-                errors.Add(new(
-                    Constants.ApiErrorCodes.InvalidField,
-                    $"Value for property {ValidationFieldFormatter.Quote(kvp.Key)} cannot convert to type '{property.PropertyType.GetFriendlyTypeName()}': {ex.Message}"));
+                errors.Add(
+                    new(
+                        Constants.ApiErrorCodes.InvalidField,
+                        $"Value for property {ValidationFieldFormatter.Quote(kvp.Key)} cannot convert to type '{property.PropertyType.GetFriendlyTypeName()}': {ex.Message}"));
             }
         }
 

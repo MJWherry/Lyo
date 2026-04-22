@@ -13,22 +13,13 @@ public interface ILyoDiscordBotGateway
 
     Task<bool> TrySendEmbedAsync(ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken cancellationToken = default);
 
-    Task<bool> TrySendMessageAsync(
-        ulong guildId,
-        ulong channelId,
-        string? content = null,
-        DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default);
+    Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default);
 
     Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken cancellationToken = default);
 
     Task<bool> TrySendEmbedToGuildLogChannelAsync(ulong guildId, DiscordEmbed embed, CancellationToken cancellationToken = default);
 
-    Task<bool> TrySendMessageToGuildLogChannelAsync(
-        ulong guildId,
-        string? content = null,
-        DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default);
+    Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default);
 
     Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, DiscordMessageBuilder message, CancellationToken cancellationToken = default);
 }

@@ -40,8 +40,7 @@ public abstract class BaseService<TContext>(IDbContextFactory<TContext> contextF
     protected static LyoProblemDetails CreateNotFoundError<TDbModel>(IEnumerable<object>? identifiers = null)
         => LyoProblemDetailsBuilder.CreateWithActivity()
             .WithErrorCode(Constants.ApiErrorCodes.NotFound)
-            .WithMessage(
-                $"Entity not found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}{Environment.NewLine}Identifiers={string.Join(',', identifiers ?? [])}")
+            .WithMessage($"Entity not found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}{Environment.NewLine}Identifiers={string.Join(',', identifiers ?? [])}")
             .Build();
 
     protected MetricsTimer StartCrudTimer(string operation, Type databaseType, bool isBulk = false)

@@ -32,9 +32,7 @@ public static class SharedEntityMetadataCache
     public static string NormalizeFieldPath(Type rootType, string path)
         => NormalizedPathCache.GetOrAdd($"{EntityMetadata.NormalizedPathPrefix}{rootType.FullName}:{path}", _ => NormalizeFieldPathCore(rootType, path));
 
-    /// <summary>
-    /// Attempts to normalize a field path without throwing. Failures are not cached (only successful normalizations use <see cref="NormalizedPathCache" />).
-    /// </summary>
+    /// <summary>Attempts to normalize a field path without throwing. Failures are not cached (only successful normalizations use <see cref="NormalizedPathCache" />).</summary>
     public static bool TryNormalizeFieldPath(Type rootType, string path, [NotNullWhen(true)] out string? normalized, [NotNullWhen(false)] out string? errorMessage)
     {
         try {

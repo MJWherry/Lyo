@@ -134,10 +134,11 @@ public class CacheServiceErrorHandlingTests : IDisposable
 
         // First call should work and cache
         var result1 = await service.GetOrSetAsync<string>(
-            key, _ => {
-                callCount++;
-                return Task.FromResult("cached-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, _ => {
+                    callCount++;
+                    return Task.FromResult("cached-value")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         result1.ShouldBe("cached-value");
         callCount.ShouldBe(1);
@@ -151,10 +152,11 @@ public class CacheServiceErrorHandlingTests : IDisposable
 
         // Next call should fallback to factory
         var result2 = await service.GetOrSetAsync<string>(
-            key, _ => {
-                callCount++;
-                return Task.FromResult("new-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, _ => {
+                    callCount++;
+                    return Task.FromResult("new-value")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal("new-value", result2);
         Assert.Equal(2, callCount);

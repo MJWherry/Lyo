@@ -13,9 +13,8 @@ public sealed class PlaywrightExecutionContext : IDisposable, IAsyncDisposable
     public Guid SessionId { get; init; }
 
     /// <summary>
-    /// Per-session root: <c>{ServiceRootDirectory}/session-{SessionId:N}</c>.
-    /// Holds <c>browser-profile/</c>, <c>artifacts/</c>, <c>downloads/</c> and acts as
-    /// the root for plan-run logs, snapshots and variables. Deleted on dispose.
+    /// Per-session root: <c>{ServiceRootDirectory}/session-{SessionId:N}</c>. Holds <c>browser-profile/</c>, <c>artifacts/</c>, <c>downloads/</c> and acts as the root for
+    /// plan-run logs, snapshots and variables. Deleted on dispose.
     /// </summary>
     public string SessionDirectory { get; init; } = null!;
 
@@ -31,25 +30,6 @@ public sealed class PlaywrightExecutionContext : IDisposable, IAsyncDisposable
     /// <summary>Per-session file logger provider; writes to <c>{SessionDirectory}/session.log</c>. Disposed with this context.</summary>
     internal SessionFileLoggerProvider? LoggerProvider { get; init; }
 
-    /// <summary>
-    /// Returns a logger that fans output to both <paramref name="baseLogger" /> and the session log file.
-    /// Falls back to <paramref name="baseLogger" /> when no provider is set.
-    /// </summary>
-    internal ILogger<PlaywrightBrowser> BuildLogger(ILogger<PlaywrightBrowser> baseLogger)
-        => LoggerProvider != null
-            ? new CompositeLogger<PlaywrightBrowser>(baseLogger, LoggerProvider.CreateLogger(nameof(PlaywrightBrowser)))
-            : baseLogger;
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
-
-        LoggerProvider?.Dispose();
-        TryDeleteSessionDir();
-    }
-
     /// <inheritdoc />
     public ValueTask DisposeAsync()
     {
@@ -61,6 +41,20 @@ public sealed class PlaywrightExecutionContext : IDisposable, IAsyncDisposable
         return default;
     }
 
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        LoggerProvider?.Dispose();
+        TryDeleteSessionDir();
+    }
+
+    /// <summary>Returns a logger that fans output to both <paramref name="baseLogger" /> and the session log file. Falls back to <paramref name="baseLogger" /> when no provider is set.</summary>
+    internal ILogger<PlaywrightBrowser> BuildLogger(ILogger<PlaywrightBrowser> baseLogger)
+        => LoggerProvider != null ? new CompositeLogger<PlaywrightBrowser>(baseLogger, LoggerProvider.CreateLogger(nameof(PlaywrightBrowser))) : baseLogger;
+
     private void TryDeleteSessionDir()
     {
         if (string.IsNullOrWhiteSpace(SessionDirectory))
@@ -68,7 +62,7 @@ public sealed class PlaywrightExecutionContext : IDisposable, IAsyncDisposable
 
         try {
             if (Directory.Exists(SessionDirectory))
-                Directory.Delete(SessionDirectory, recursive: true);
+                Directory.Delete(SessionDirectory, true);
         }
         catch {
             // best-effort cleanup

@@ -36,10 +36,12 @@
                             Class="run-endpoint-toggle">
                 <MudButton OnClick="@(() => OnQueryRunModeChanged(QueryWorkbenchRunMode.Query))"
                            Variant="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Variant.Filled : Variant.Outlined)"
-                           Color="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Color.Primary : Color.Default)">/Query</MudButton>
+                           Color="@(Run.RunMode == QueryWorkbenchRunMode.Query ? Color.Primary : Color.Default)">/Query
+                </MudButton>
                 <MudButton OnClick="@(() => OnQueryRunModeChanged(QueryWorkbenchRunMode.QueryProject))"
                            Variant="@(Run.RunMode == QueryWorkbenchRunMode.QueryProject ? Variant.Filled : Variant.Outlined)"
-                           Color="@(Run.RunMode == QueryWorkbenchRunMode.QueryProject ? Color.Primary : Color.Default)">/QueryProject</MudButton>
+                           Color="@(Run.RunMode == QueryWorkbenchRunMode.QueryProject ? Color.Primary : Color.Default)">/QueryProject
+                </MudButton>
             </MudButtonGroup>
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"

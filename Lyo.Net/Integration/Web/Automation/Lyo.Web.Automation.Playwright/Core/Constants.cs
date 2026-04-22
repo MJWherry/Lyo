@@ -1,5 +1,3 @@
-using Lyo.Web.Automation.Core;
-
 namespace Lyo.Web.Automation.Playwright.Core;
 
 /// <summary>Consolidated constants for the WebAutomation.Playwright library.</summary>

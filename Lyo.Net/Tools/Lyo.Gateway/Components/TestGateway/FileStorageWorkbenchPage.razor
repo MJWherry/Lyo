@@ -1,13 +1,13 @@
+@attribute [Route("/" + Constants.Page.FileStorageWorkbench)]
 @using Lyo.FileStorage.Web.Components
-@using Lyo.Gateway.Components.Pages
-@attribute [Route("/" + Lyo.Gateway.Constants.Page.FileStorageWorkbench)]
-@inherits AuthorizedPage
+@using Constants = Lyo.Gateway.Constants
+@inherits Lyo.Gateway.Components.Pages.AuthorizedPage
 
 <PageTitle>File Storage Workbench</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
-    <FileStorageWorkbench FileMetadataQueryRoute="@Lyo.Gateway.Models.Constants.FileStorageWorkbench.FileMetadataRoute"
-                          ProxyDownloadPath="@Lyo.Gateway.Models.Constants.FileStorageWorkbench.ProxyDownloadRoute"/>
+    <FileStorageWorkbench FileMetadataQueryRoute="@Models.Constants.FileStorageWorkbench.FileMetadataRoute"
+                          ProxyDownloadPath="@Models.Constants.FileStorageWorkbench.ProxyDownloadRoute"/>
 </MudContainer>
 
 @code {

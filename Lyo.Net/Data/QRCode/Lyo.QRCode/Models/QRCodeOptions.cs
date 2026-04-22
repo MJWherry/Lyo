@@ -10,10 +10,16 @@ public class QRCodeOptions
     /// <summary>Gets or sets the QR code format (PNG, SVG, etc.). Default: PNG</summary>
     public QRCodeFormat Format { get; set; } = QRCodeFormat.Png;
 
-    /// <summary>Gets or sets the pixel size of each module (square “dot”) in the rendered image—not the total image width/height. Default: 256. Total output size is this value times the number of modules on a side (including quiet zone when drawn).</summary>
+    /// <summary>
+    /// Gets or sets the pixel size of each module (square “dot”) in the rendered image—not the total image width/height. Default: 256. Total output size is this value times the
+    /// number of modules on a side (including quiet zone when drawn).
+    /// </summary>
     public int Size { get; set; } = 256;
 
-    /// <summary>Gets or sets the requested error correction level. Default: Medium. When <see cref="Icon" /> is set, the encoder may use a higher level so larger center logos remain scannable.</summary>
+    /// <summary>
+    /// Gets or sets the requested error correction level. Default: Medium. When <see cref="Icon" /> is set, the encoder may use a higher level so larger center logos remain
+    /// scannable.
+    /// </summary>
     public QRCodeErrorCorrectionLevel ErrorCorrectionLevel { get; set; } = QRCodeErrorCorrectionLevel.Medium;
 
     /// <summary>Gets or sets the dark color (foreground) in hex format (e.g., "#000000"). Default: "#000000"</summary>

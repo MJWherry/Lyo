@@ -15,7 +15,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var req = new QueryReq { Start = DefaultOptions.MinPagingStart - 1, Amount = 10 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
-
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
         Assert.Contains("Start", e.Description, StringComparison.Ordinal);
@@ -26,7 +25,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var req = new QueryReq { Start = DefaultOptions.MaxPagingStart + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
-
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
     }
@@ -36,7 +34,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var req = new QueryReq { Amount = DefaultOptions.MinPagingAmount - 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
-
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
         Assert.Contains("Amount", e.Description, StringComparison.Ordinal);
@@ -47,7 +44,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var req = new QueryReq { Amount = DefaultOptions.MaxPageSize + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
-
         var e = Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, e.Code);
     }
@@ -58,7 +54,6 @@ public sealed class QueryPagingBoundsValidatorTests
         const int cap = 50;
         var req = new QueryReq { Amount = cap + 1 };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, cap);
-
         Assert.Single(errors);
         Assert.Contains($"{cap}", errors[0].Description, StringComparison.Ordinal);
     }
@@ -68,7 +63,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var req = new QueryReq { Start = DefaultOptions.MinPagingStart, Amount = DefaultOptions.MinPagingAmount };
         var errors = QueryPagingBoundsValidator.Validate(req, DefaultOptions, DefaultOptions.MaxPageSize);
-
         Assert.Empty(errors);
     }
 
@@ -77,7 +71,6 @@ public sealed class QueryPagingBoundsValidatorTests
     {
         var q = new HistoryQuery { Amount = 0 };
         var errors = QueryPagingBoundsValidator.Validate(q, DefaultOptions);
-
         Assert.Single(errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidPaging, errors[0].Code);
     }

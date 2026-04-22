@@ -4,15 +4,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.CSharp.RuntimeBinder;
-using MudBlazor;
 
 namespace Lyo.Web.Components.Form;
 
 public partial class LyoFormInput<TModel, TValue>
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     private readonly Type _propertyType = typeof(TValue);
 
     private TValue? _currentValue;
@@ -24,6 +20,9 @@ public partial class LyoFormInput<TModel, TValue>
     private string? _propertyName;
 
     private Type _underlyingType = typeof(TValue);
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [CascadingParameter(Name = "ChangeTrackingForm")]
     public dynamic? ParentForm { get; set; }

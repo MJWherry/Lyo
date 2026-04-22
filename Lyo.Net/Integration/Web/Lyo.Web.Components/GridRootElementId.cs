@@ -11,7 +11,9 @@ internal static class GridRootElementId
 
     private static string ToKebabSegment(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value)) return "default";
+        if (string.IsNullOrWhiteSpace(value))
+            return "default";
+
         var trimmed = value.Trim();
         var sb = new StringBuilder(trimmed.Length + 8);
         var prevWasSep = false;
@@ -21,22 +23,27 @@ internal static class GridRootElementId
                 AppendHyphen(sb, ref prevWasSep);
                 continue;
             }
+
             if (c == '-') {
                 AppendHyphen(sb, ref prevWasSep);
                 continue;
             }
+
             if (char.IsUpper(c)) {
                 if (sb.Length > 0 && !prevWasSep && char.IsLetter(trimmed[i - 1]) && char.IsLower(trimmed[i - 1]))
                     AppendHyphen(sb, ref prevWasSep);
+
                 sb.Append(char.ToLowerInvariant(c));
                 prevWasSep = false;
                 continue;
             }
+
             if (char.IsLetterOrDigit(c)) {
                 sb.Append(char.ToLowerInvariant(c));
                 prevWasSep = false;
                 continue;
             }
+
             AppendHyphen(sb, ref prevWasSep);
         }
 
@@ -50,15 +57,19 @@ internal static class GridRootElementId
             prevWasSep = true;
             return;
         }
+
         sb.Append('-');
         prevWasSep = true;
     }
 
     private static string CollapseHyphens(string s)
     {
-        if (string.IsNullOrEmpty(s)) return s;
+        if (string.IsNullOrEmpty(s))
+            return s;
+
         while (s.Contains("--", StringComparison.Ordinal))
             s = s.Replace("--", "-", StringComparison.Ordinal);
+
         return s.Trim('-');
     }
 }

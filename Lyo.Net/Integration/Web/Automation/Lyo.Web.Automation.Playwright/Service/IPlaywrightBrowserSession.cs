@@ -1,9 +1,7 @@
-using Lyo.Web.Automation;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Playwright.Browser;
 
 namespace Lyo.Web.Automation.Playwright.Service;
-
 
 /// <summary>Playwright browser scope; dispose to release resources. Extends <see cref="IWebAutomationSession" /> with tab management.</summary>
 public interface IPlaywrightBrowserSession : IWebAutomationSession

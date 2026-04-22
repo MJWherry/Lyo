@@ -12,8 +12,8 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 public static class QueryCacheKeyBuilder
 {
     /// <summary>
-    /// Cache key for GET-by-primary-key responses. The base segment matches <see cref="QueryCacheTagBuilder.EntityInstanceTag" />
-    /// for the same PK values (EF key order), so <see cref="ICacheService.InvalidateCacheItem" /> and tag invalidation stay aligned.
+    /// Cache key for GET-by-primary-key responses. The base segment matches <see cref="QueryCacheTagBuilder.EntityInstanceTag" /> for the same PK values (EF key order), so
+    /// <see cref="ICacheService.InvalidateCacheItem" /> and tag invalidation stay aligned.
     /// </summary>
     public static string BuildSingleEntityGetCacheKey(
         Type entityClrType,
@@ -23,11 +23,7 @@ public static class QueryCacheKeyBuilder
         => BuildSingleEntityGetCacheKeyCore(entityClrType, primaryKeyValuesInEfOrder, includes, rawResponse);
 
     /// <inheritdoc cref="BuildSingleEntityGetCacheKey(System.Type,System.Collections.Generic.IReadOnlyList{object?},System.Collections.Generic.IReadOnlyList{string}?,bool)" />
-    public static string BuildSingleEntityGetCacheKey(
-        Type entityClrType,
-        object[] primaryKeyValuesInEfOrder,
-        IReadOnlyList<string>? includes = null,
-        bool rawResponse = false)
+    public static string BuildSingleEntityGetCacheKey(Type entityClrType, object[] primaryKeyValuesInEfOrder, IReadOnlyList<string>? includes = null, bool rawResponse = false)
     {
         var wrapped = new object?[primaryKeyValuesInEfOrder.Length];
         Array.Copy(primaryKeyValuesInEfOrder, wrapped, primaryKeyValuesInEfOrder.Length);
@@ -35,14 +31,10 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Shared implementation. Public overloads for PK values as an array vs <see cref="IReadOnlyList{T}" /> must not delegate to each
-    /// other: an array argument can bind to the array overload again and recurse infinitely.
+    /// Shared implementation. Public overloads for PK values as an array vs <see cref="IReadOnlyList{T}" /> must not delegate to each other: an array argument can bind to the
+    /// array overload again and recurse infinitely.
     /// </summary>
-    private static string BuildSingleEntityGetCacheKeyCore(
-        Type entityClrType,
-        IReadOnlyList<object?> primaryKeyValuesInEfOrder,
-        IReadOnlyList<string>? includes,
-        bool rawResponse)
+    private static string BuildSingleEntityGetCacheKeyCore(Type entityClrType, IReadOnlyList<object?> primaryKeyValuesInEfOrder, IReadOnlyList<string>? includes, bool rawResponse)
     {
         var key = QueryCacheTagBuilder.EntityInstanceTag(entityClrType, primaryKeyValuesInEfOrder);
         if (includes is { Count: > 0 }) {
@@ -91,7 +83,8 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryReq)" /> plus optional projection dimensions.
+    /// Cache key for an entity load that must align with a projected query (load-then-project fallback): same as <see cref="Build{TDb, TResponse}(QueryReq)" /> plus optional
+    /// projection dimensions.
     /// </summary>
     public static string BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(
         QueryReq queryRequest,
@@ -118,8 +111,7 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>Appends QueryProject shape flags so cache entries differ when row columns differ (zip vs parallel sibling collection columns).</summary>
-    public static string AppendProjectedShapeSuffix(string cacheKey, bool zipSiblingCollectionSelections)
-        => $"{cacheKey}:zipSibling={zipSiblingCollectionSelections}";
+    public static string AppendProjectedShapeSuffix(string cacheKey, bool zipSiblingCollectionSelections) => $"{cacheKey}:zipSibling={zipSiblingCollectionSelections}";
 
     public static string BuildTree<TDbModel, TResult>(
         WhereClause? queryTree,
@@ -170,9 +162,6 @@ public static class QueryCacheKeyBuilder
             WhereClause = p.WhereClause,
             Include = [..p.Include],
             SortBy = [..p.SortBy],
-            Options = new() {
-                TotalCountMode = p.Options.TotalCountMode,
-                IncludeFilterMode = p.Options.IncludeFilterMode
-            }
+            Options = new() { TotalCountMode = p.Options.TotalCountMode, IncludeFilterMode = p.Options.IncludeFilterMode }
         };
 }

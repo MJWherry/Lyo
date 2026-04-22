@@ -16,8 +16,8 @@ public sealed class QRCodeBuilder
     private bool? _drawQuietZones;
     private QRCodeErrorCorrectionLevel? _errorCorrectionLevel;
     private QRCodeFormat? _format;
-    private QRCodeIconOptions? _icon;
     private QrFrameLayoutOptions? _frame;
+    private QRCodeIconOptions? _icon;
     private string? _lightColor;
     private int? _size;
 

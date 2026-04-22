@@ -33,10 +33,10 @@ algorithms, batch operations, and atomic file operations.
     - ZLib
     - Snappier (Snappy)
     - ZstdSharp (Zstandard)
-  - LZ4
-  - LZMA
-  - BZip2
-  - XZ
+    - LZ4
+    - LZMA
+    - BZip2
+    - XZ
 
 - **Comprehensive API**
     - Byte array compression/decompression
@@ -718,21 +718,21 @@ The library throws specific exceptions for different error conditions:
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `EasyCompressor` | `[2.1,)` |
-| `EasyCompressor.LZ4` | `[2.1,)` |
-| `EasyCompressor.LZMA` | `[2.1,)` |
-| `EasyCompressor.Snappier` | `[2.1,)` |
-| `EasyCompressor.ZstdSharp` | `[2.1,)` |
-| `Joveler.Compression.XZ` | `5.0.2` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
-| `SharpZipLib` | `1.4.2` |
-| `System.Text.Json` | `[10,)` |
+| Package                                                 | Version  |
+|---------------------------------------------------------|----------|
+| `EasyCompressor`                                        | `[2.1,)` |
+| `EasyCompressor.LZ4`                                    | `[2.1,)` |
+| `EasyCompressor.LZMA`                                   | `[2.1,)` |
+| `EasyCompressor.Snappier`                               | `[2.1,)` |
+| `EasyCompressor.ZstdSharp`                              | `[2.1,)` |
+| `Joveler.Compression.XZ`                                | `5.0.2`  |
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`  |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`  |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`  |
+| `Microsoft.Extensions.Options`                          | `[10,)`  |
+| `SharpZipLib`                                           | `1.4.2`  |
+| `System.Text.Json`                                      | `[10,)`  |
 
 ### Project references
 

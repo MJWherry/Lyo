@@ -4,19 +4,17 @@ namespace Lyo.Encryption.Symmetric.Aes.AesSiv;
 public enum AesSivKeySizeBits
 {
     Bits256 = 256,
-
     Bits384 = 384,
-
     Bits512 = 512
 }
 
 public static class AesSivKeySizeBitsExtensions
 {
-    public static int GetKeyLengthBytes(this AesSivKeySizeBits bits) =>
-        bits switch {
+    public static int GetKeyLengthBytes(this AesSivKeySizeBits bits)
+        => bits switch {
             AesSivKeySizeBits.Bits256 => 32,
             AesSivKeySizeBits.Bits384 => 48,
             AesSivKeySizeBits.Bits512 => 64,
-            _ => throw new ArgumentOutOfRangeException(nameof(bits), bits, null)
+            var _ => throw new ArgumentOutOfRangeException(nameof(bits), bits, null)
         };
 }

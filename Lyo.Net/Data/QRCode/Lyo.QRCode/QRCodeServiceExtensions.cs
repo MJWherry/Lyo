@@ -62,12 +62,8 @@ public static class QRCodeServiceExtensions
         if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
             services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
 
-        services.AddSingleton<IQRCodeService>(sp =>
-            new BuiltInQRCodeService(
-                sp.GetRequiredService<QRCodeServiceOptions>(),
-                sp.GetService<ILogger<BuiltInQRCodeService>>() ?? NullLogger<BuiltInQRCodeService>.Instance,
-                sp.GetService<IMetrics>(),
-                sp.GetService<IImageService>(),
-                sp.GetRequiredService<IQrFrameLayoutService>()));
+        services.AddSingleton<IQRCodeService>(sp => new BuiltInQRCodeService(
+            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<BuiltInQRCodeService>>() ?? NullLogger<BuiltInQRCodeService>.Instance, sp.GetService<IMetrics>(),
+            sp.GetService<IImageService>(), sp.GetRequiredService<IQrFrameLayoutService>()));
     }
 }

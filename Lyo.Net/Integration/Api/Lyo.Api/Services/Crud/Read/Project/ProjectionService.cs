@@ -38,22 +38,6 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     private static readonly Func<object, object?>[][] AnonymousProjectionFieldGetters =
         AnonymousProjectionPropertyCache.Select(propRow => propRow.Select(CompileAnonymousFieldGetter).ToArray()).ToArray();
 
-    /// <summary>
-    /// SmartFormat placeholders in braces, or a single bare dotted property path (no braces) so templates match projected keys and wildcard siblings.
-    /// </summary>
-    private IReadOnlyList<string> GetTemplatePlaceholders(string template)
-    {
-        if (string.IsNullOrWhiteSpace(template) || formatterService is null)
-            return [];
-
-        var fromFormatter = formatterService.GetPlaceholders(template);
-        if (fromFormatter.Count > 0)
-            return fromFormatter;
-
-        var t = template.Trim();
-        return BarePropertyPathRegex.IsMatch(t) ? [t] : [];
-    }
-
     public (IReadOnlyList<ProjectedFieldSpec> Specs, IReadOnlyList<ApiError> PathErrors) ResolveProjectedFields<TDbModel>(
         IEnumerable<string> requestedFields,
         bool allowSelectWildcards = true,
@@ -66,8 +50,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         var specs = new List<ProjectedFieldSpec>();
         var pathErrors = new List<ApiError>();
         foreach (var field in fields) {
-            var ok = pathCache is not null 
-                ? pathCache.TryNormalizeSelectPath<TDbModel>(field, out var normalized, out var errorMessage) 
+            var ok = pathCache is not null
+                ? pathCache.TryNormalizeSelectPath<TDbModel>(field, out var normalized, out var errorMessage)
                 : SharedEntityMetadataCache.TryNormalizeFieldPath(rootType, field, out normalized, out errorMessage);
 
             if (!ok) {
@@ -97,8 +81,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     public SqlProjectionBuildResult<TDbModel> TryBuildSqlProjectionExpression<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, bool projectionPathsAlreadyValidated = false)
         where TDbModel : class
     {
-        if (specs.Count == 0
-            || (!projectionPathsAlreadyValidated && CollectProjectionFieldIssues<TDbModel>(specs, allowSelectWildcards: true).Count > 0))
+        if (specs.Count == 0 || (!projectionPathsAlreadyValidated && CollectProjectionFieldIssues<TDbModel>(specs, true).Count > 0))
             return new(null, null);
 
         var plan = BuildSqlProjectionConversionPlan(typeof(TDbModel), specs);
@@ -139,13 +122,358 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return new(Expression.Lambda<Func<TDbModel, object?>>(body, parameter), plan);
     }
 
+    public IReadOnlyList<object?> ProjectEntities<TDbModel>(
+        IReadOnlyList<TDbModel> items,
+        IReadOnlyList<ProjectedFieldSpec> specs,
+        QueryIncludeFilterMode includeFilterMode,
+        ProjectedFilterConditions filterConditions)
+        where TDbModel : class
+    {
+        var results = new List<object?>(items.Count);
+        foreach (var item in items) {
+            if (specs.Count == 1) {
+                var only = specs[0];
+                var singleValue = ExtractPathValue(item, only.NormalizedParts, 0);
+                if (includeFilterMode == QueryIncludeFilterMode.MatchedOnly)
+                    singleValue = ApplyMatchedOnlyProjectionFilter(singleValue, only, filterConditions);
+
+                results.Add(singleValue);
+                continue;
+            }
+
+            var row = new Dictionary<string, object?>(specs.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (var spec in specs) {
+                var value = ExtractPathValue(item, spec.NormalizedParts, 0);
+                if (includeFilterMode == QueryIncludeFilterMode.MatchedOnly)
+                    value = ApplyMatchedOnlyProjectionFilter(value, spec, filterConditions);
+
+                if (spec.NormalizedParts.Length == 1 && spec.NormalizedParts[0] == "*" && value is IReadOnlyDictionary<string, object?> wildcardMap) {
+                    foreach (var kvp in wildcardMap)
+                        row[kvp.Key] = kvp.Value;
+                }
+                else
+                    row[spec.RequestedPath] = value;
+            }
+
+            results.Add(row);
+        }
+
+        return results;
+    }
+
+    public IReadOnlyList<object?> ConvertSqlProjectedResults(
+        IReadOnlyList<object?> raw,
+        IReadOnlyList<ProjectedFieldSpec> specs,
+        SqlProjectionConversionPlan? conversionPlan = null)
+    {
+        if (specs.Count == 1) {
+            // Normalize collection results (e.g. List<string>) to List<object?> for consistency with in-memory projection
+            var results = new List<object?>(raw.Count);
+            foreach (var item in raw) {
+                if (item is IEnumerable enumerable && item is not string and not byte[]) {
+                    var list = new List<object?>();
+                    foreach (var x in enumerable)
+                        list.Add(x);
+
+                    results.Add(list);
+                }
+                else
+                    results.Add(item);
+            }
+
+            return results;
+        }
+
+        if (conversionPlan == null)
+            return ConvertSqlProjectedResultsLegacy(raw, specs);
+
+        var multiResults = new List<object?>(raw.Count);
+        foreach (var item in raw) {
+            if (item == null) {
+                multiResults.Add(null);
+                continue;
+            }
+
+            var dict = new Dictionary<string, object?>(specs.Count, StringComparer.OrdinalIgnoreCase);
+            var slotCount = conversionPlan.Slots.Count;
+            for (var slotIx = 0; slotIx < slotCount; slotIx++) {
+                var slot = conversionPlan.Slots[slotIx];
+                var slotValue = GetOuterProjectionSlotValue(item, slotIx, slotCount);
+                switch (slot) {
+                    case SqlProjectionSingleSlot(var specIndex):
+                        dict[specs[specIndex].RequestedPath] = slotValue;
+                        break;
+                    case SqlProjectionMergedCollectionSlot(var indices):
+                        ExpandMergedSqlCollectionSlot(dict, specs, slotValue, indices);
+                        break;
+                }
+            }
+
+            multiResults.Add(dict);
+        }
+
+        return multiResults;
+    }
+
+    /// <inheritdoc />
+    public void MergeSiblingCollectionProjectionRows(IReadOnlyList<object?> items, Type entityType, IReadOnlyList<ProjectedFieldSpec> specs, bool zipSiblingCollectionSelections)
+    {
+        if (!zipSiblingCollectionSelections || items.Count == 0)
+            return;
+
+        var groups = ProjectionCollectionZip.PlanMergeGroups(entityType, specs, items);
+        if (groups.Count == 0)
+            return;
+
+        // Shallower merge keys first (e.g. ContactAddresses before ContactAddresses.Address) so parallel columns
+        // are zipped into the scope-wildcard row before any nested merge runs; nested merges under a parent A.*
+        // are skipped separately via MergeKeyIsUnderParentScopeWildcard.
+        var orderedGroups = groups.OrderBy(g => g.MergeKey.Split('.', StringSplitOptions.RemoveEmptyEntries).Length).ToList();
+        ProjectionCollectionZip.ApplyMergeGroupsToRows(items, orderedGroups, specs);
+    }
+
+    /// <inheritdoc />
+    public void StripAutoDerivedDependencyLeavesFromMergedCollections(
+        IReadOnlyList<object?> items,
+        IReadOnlyList<ProjectedFieldSpec> specs,
+        IReadOnlyCollection<string> autoDerivedSelectPaths)
+    {
+        if (autoDerivedSelectPaths.Count == 0 || items.Count == 0)
+            return;
+
+        foreach (var derivedPath in autoDerivedSelectPaths) {
+            var spec = specs.FirstOrDefault(s => string.Equals(s.RequestedPath, derivedPath, StringComparison.OrdinalIgnoreCase));
+            if (spec is null)
+                continue;
+
+            if (spec.NormalizedParts.Length < 2)
+                continue;
+
+            if (ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
+                continue;
+
+            var mergeKey = string.Join(".", spec.NormalizedParts[..^1]);
+            var leaf = spec.NormalizedParts[^1];
+            foreach (var item in items) {
+                if (item is not Dictionary<string, object?> row)
+                    continue;
+
+                if (!row.TryGetValue(mergeKey, out var mergedVal) || mergedVal is null)
+                    continue;
+
+                if (mergedVal is not IList list)
+                    continue;
+
+                foreach (var el in list) {
+                    if (el is Dictionary<string, object?> inner)
+                        inner.Remove(leaf);
+                }
+            }
+        }
+    }
+
+    public ProjectedFilterConditions GetProjectedFilterConditions<TDbModel>(WhereClause? queryNode)
+        where TDbModel : class
+    {
+        var conditions = new List<ProjectedFilterCondition>();
+        if (!WhereClauseUtils.TryExtractConditions(queryNode, out var queryConditions, out var op))
+            return new(conditions, op);
+
+        foreach (var condition in queryConditions) {
+            try {
+                var normalizedField = NormalizeFieldPath(typeof(TDbModel), condition.Field);
+                conditions.Add(new(normalizedField, condition.Comparison, condition.Value));
+            }
+            catch {
+                // Ignore fields that cannot be normalized for projection-level filtering.
+            }
+        }
+
+        return new(conditions, op);
+    }
+
+    public void ApplyMatchedOnlyIncludes<TDbModel>(IReadOnlyList<TDbModel> entities, IEnumerable<string> includes, ProjectedFilterConditions filterConditions)
+        where TDbModel : class
+    {
+        if (entities.Count == 0 || filterConditions.Conditions.Count == 0)
+            return;
+
+        foreach (var includePath in includes.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct(StringComparer.OrdinalIgnoreCase)) {
+            var scope = TryBuildIncludeScope(typeof(TDbModel), includePath);
+            if (scope == null)
+                continue;
+
+            var scopedConditions = filterConditions.Conditions.Where(i => i.NormalizedField.StartsWith(scope.CollectionPath + ".", StringComparison.OrdinalIgnoreCase))
+                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(scope.CollectionPath.Length + 1)..], i.Comparison, i.Value))
+                .ToList();
+
+            if (scopedConditions.Count == 0)
+                continue;
+
+            foreach (var entity in entities)
+                ApplyMatchedOnlyIncludeScope(entity, scope, scopedConditions, filterConditions.Operator);
+        }
+    }
+
+    public IReadOnlyList<object?> ApplyComputedFields(IReadOnlyList<object?> items, IReadOnlyList<ComputedField> computedFields, IReadOnlyList<ProjectedFieldSpec> specs)
+    {
+        if (computedFields.Count == 0 || items.Count == 0)
+            return items;
+
+        if (formatterService is null) {
+            logger?.LogWarning("ComputedFields requested but IFormatterService is not registered; returning items unchanged");
+            return items;
+        }
+
+        var results = new List<object?>(items.Count);
+        foreach (var item in items) {
+            if (item is null) {
+                results.Add(null);
+                continue;
+            }
+
+            var row = PromoteToDictionary(item, specs);
+            foreach (var field in computedFields) {
+                if (string.IsNullOrWhiteSpace(field.Name) || string.IsNullOrWhiteSpace(field.Template))
+                    continue;
+
+                if (TryApplyCollectionParallelComputed(row, field))
+                    continue;
+
+                row[field.Name] = FormatComputedValue(field.Template, row);
+            }
+
+            results.Add(row);
+        }
+
+        return results;
+    }
+
+    public IReadOnlyList<string> GetComputedFieldDependencies(IReadOnlyList<ComputedField> computedFields)
+    {
+        if (formatterService is null || computedFields.Count == 0)
+            return [];
+
+        var fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cf in computedFields) {
+            if (string.IsNullOrWhiteSpace(cf.Template))
+                continue;
+
+            foreach (var placeholder in GetTemplatePlaceholders(cf.Template))
+                fields.Add(placeholder);
+        }
+
+        return [..fields];
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> EnsureSelectIncludesComputedDependencies(ProjectionQueryReq queryRequest)
+    {
+        if (queryRequest.ComputedFields.Count == 0)
+            return [];
+
+        var derived = GetComputedFieldDependencies(queryRequest.ComputedFields);
+        if (derived.Count == 0)
+            return [];
+
+        var added = new List<string>();
+        foreach (var field in derived) {
+            if (SelectListAlreadyContainsPath(queryRequest.Select, field))
+                continue;
+
+            var normalized = field.Trim();
+            if (normalized.Length == 0)
+                continue;
+
+            queryRequest.Select.Add(normalized);
+            added.Add(normalized);
+        }
+
+        return added;
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> GetProjectionEntityTypeNames<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, IReadOnlyList<ComputedField> computedFields)
+        where TDbModel : class
+    {
+        var root = typeof(TDbModel);
+        var set = new HashSet<string>(StringComparer.Ordinal) { root.Name };
+        foreach (var spec in specs)
+            AppendEntityTypesAlongPath(root, spec.NormalizedParts, set);
+
+        foreach (var dep in EnumerateTemplateDependencyPaths(computedFields)) {
+            string normalized;
+            try {
+                normalized = NormalizeFieldPath(root, dep);
+            }
+            catch {
+                continue;
+            }
+
+            var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            AppendEntityTypesAlongPath(root, parts, set);
+        }
+
+        return set.OrderBy(s => s, StringComparer.Ordinal).ToList();
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<ApiError> CollectProjectionFieldIssues<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards = true)
+        where TDbModel : class
+        => CollectProjectionFieldIssues(typeof(TDbModel), specs, allowSelectWildcards);
+
+    /// <inheritdoc />
+    public IReadOnlyList<ApiError> CollectProjectionFieldIssues(Type rootType, IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards = true)
+    {
+        var list = CollectProjectionFieldIssuesList(rootType, specs, allowSelectWildcards);
+        return list.Count == 0 ? Array.Empty<ApiError>() : list;
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<ApiError> ValidateComputedFieldTemplates(IReadOnlyList<ComputedField> computedFields)
+    {
+        if (computedFields.Count == 0 || formatterService is null)
+            return [];
+
+        var errors = new List<ApiError>();
+        foreach (var cf in computedFields) {
+            if (string.IsNullOrWhiteSpace(cf.Name)) {
+                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, "A computed field name is required."));
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(cf.Template)) {
+                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field {ValidationFieldFormatter.Quote(cf.Name)} has an empty template."));
+                continue;
+            }
+
+            if (!formatterService.TryValidateTemplate(cf.Template, out var message))
+                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field {ValidationFieldFormatter.Quote(cf.Name)}: {message}"));
+        }
+
+        return errors.Count == 0 ? [] : errors;
+    }
+
+    /// <summary>SmartFormat placeholders in braces, or a single bare dotted property path (no braces) so templates match projected keys and wildcard siblings.</summary>
+    private IReadOnlyList<string> GetTemplatePlaceholders(string template)
+    {
+        if (string.IsNullOrWhiteSpace(template) || formatterService is null)
+            return [];
+
+        var fromFormatter = formatterService.GetPlaceholders(template);
+        if (fromFormatter.Count > 0)
+            return fromFormatter;
+
+        var t = template.Trim();
+        return BarePropertyPathRegex.IsMatch(t) ? [t] : [];
+    }
+
     /// <summary>Groups sibling collection fields into one slot so EF emits a single join + Select.</summary>
     private static SqlProjectionConversionPlan? BuildSqlProjectionConversionPlan(Type entityType, IReadOnlyList<ProjectedFieldSpec> specs)
     {
         var mergeGroups = ProjectionCollectionZip.PlanMergeGroupsForSqlSlots(entityType, specs);
         var consumed = new bool[specs.Count];
         var slots = new List<SqlProjectionSlot>(specs.Count);
-
         for (var i = 0; i < specs.Count; i++) {
             if (consumed[i])
                 continue;
@@ -252,20 +580,14 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     }
 
     /// <summary>Navigates <paramref name="rootExpr" /> along <paramref name="prefixParts" /> and stops at the collection property (no Select).</summary>
-    private static bool TryBuildExpressionToCollectionNavigation(
-        Expression rootExpr,
-        Type rootType,
-        string[] prefixParts,
-        out Expression collectionExpr,
-        out Type elementType)
+    private static bool TryBuildExpressionToCollectionNavigation(Expression rootExpr, Type rootType, string[] prefixParts, out Expression collectionExpr, out Type elementType)
     {
         collectionExpr = null!;
         elementType = null!;
-
         if (prefixParts.Length == 0)
             return false;
 
-        Expression current = rootExpr;
+        var current = rootExpr;
         var currentType = rootType;
         foreach (var part in prefixParts) {
             if (SharedEntityMetadataCache.IsCollectionType(currentType))
@@ -285,96 +607,6 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         collectionExpr = current;
         elementType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
         return true;
-    }
-
-    public IReadOnlyList<object?> ProjectEntities<TDbModel>(
-        IReadOnlyList<TDbModel> items,
-        IReadOnlyList<ProjectedFieldSpec> specs,
-        QueryIncludeFilterMode includeFilterMode,
-        ProjectedFilterConditions filterConditions)
-        where TDbModel : class
-    {
-        var results = new List<object?>(items.Count);
-        foreach (var item in items) {
-            if (specs.Count == 1) {
-                var only = specs[0];
-                var singleValue = ExtractPathValue(item, only.NormalizedParts, 0);
-                if (includeFilterMode == QueryIncludeFilterMode.MatchedOnly)
-                    singleValue = ApplyMatchedOnlyProjectionFilter(singleValue, only, filterConditions);
-
-                results.Add(singleValue);
-                continue;
-            }
-
-            var row = new Dictionary<string, object?>(specs.Count, StringComparer.OrdinalIgnoreCase);
-            foreach (var spec in specs) {
-                var value = ExtractPathValue(item, spec.NormalizedParts, 0);
-                if (includeFilterMode == QueryIncludeFilterMode.MatchedOnly)
-                    value = ApplyMatchedOnlyProjectionFilter(value, spec, filterConditions);
-
-                if (spec.NormalizedParts.Length == 1 && spec.NormalizedParts[0] == "*" && value is IReadOnlyDictionary<string, object?> wildcardMap) {
-                    foreach (var kvp in wildcardMap)
-                        row[kvp.Key] = kvp.Value;
-                }
-                else
-                    row[spec.RequestedPath] = value;
-            }
-
-            results.Add(row);
-        }
-
-        return results;
-    }
-
-    public IReadOnlyList<object?> ConvertSqlProjectedResults(IReadOnlyList<object?> raw, IReadOnlyList<ProjectedFieldSpec> specs, SqlProjectionConversionPlan? conversionPlan = null)
-    {
-        if (specs.Count == 1) {
-            // Normalize collection results (e.g. List<string>) to List<object?> for consistency with in-memory projection
-            var results = new List<object?>(raw.Count);
-            foreach (var item in raw) {
-                if (item is IEnumerable enumerable && item is not string and not byte[]) {
-                    var list = new List<object?>();
-                    foreach (var x in enumerable)
-                        list.Add(x);
-
-                    results.Add(list);
-                }
-                else
-                    results.Add(item);
-            }
-
-            return results;
-        }
-
-        if (conversionPlan == null)
-            return ConvertSqlProjectedResultsLegacy(raw, specs);
-
-        var multiResults = new List<object?>(raw.Count);
-        foreach (var item in raw) {
-            if (item == null) {
-                multiResults.Add(null);
-                continue;
-            }
-
-            var dict = new Dictionary<string, object?>(specs.Count, StringComparer.OrdinalIgnoreCase);
-            var slotCount = conversionPlan.Slots.Count;
-            for (var slotIx = 0; slotIx < slotCount; slotIx++) {
-                var slot = conversionPlan.Slots[slotIx];
-                var slotValue = GetOuterProjectionSlotValue(item, slotIx, slotCount);
-                switch (slot) {
-                    case SqlProjectionSingleSlot(var specIndex):
-                        dict[specs[specIndex].RequestedPath] = slotValue;
-                        break;
-                    case SqlProjectionMergedCollectionSlot(var indices):
-                        ExpandMergedSqlCollectionSlot(dict, specs, slotValue, indices);
-                        break;
-                }
-            }
-
-            multiResults.Add(dict);
-        }
-
-        return multiResults;
     }
 
     private static IReadOnlyList<object?> ConvertSqlProjectedResultsLegacy(IReadOnlyList<object?> raw, IReadOnlyList<ProjectedFieldSpec> specs)
@@ -417,11 +649,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return getters[slotIndex](item);
     }
 
-    private static void ExpandMergedSqlCollectionSlot(
-        Dictionary<string, object?> dict,
-        IReadOnlyList<ProjectedFieldSpec> specs,
-        object? slotValue,
-        IReadOnlyList<int> indices)
+    private static void ExpandMergedSqlCollectionSlot(Dictionary<string, object?> dict, IReadOnlyList<ProjectedFieldSpec> specs, object? slotValue, IReadOnlyList<int> indices)
     {
         var n = indices.Count;
         var innerGetters = AnonymousProjectionFieldGetters[n - 2];
@@ -447,64 +675,6 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         for (var j = 0; j < n; j++)
             dict[specs[indices[j]].RequestedPath] = lists[j];
     }
-
-    /// <inheritdoc />
-    public void MergeSiblingCollectionProjectionRows(IReadOnlyList<object?> items, Type entityType, IReadOnlyList<ProjectedFieldSpec> specs, bool zipSiblingCollectionSelections)
-    {
-        if (!zipSiblingCollectionSelections || items.Count == 0)
-            return;
-
-        var groups = ProjectionCollectionZip.PlanMergeGroups(entityType, specs, items);
-        if (groups.Count == 0)
-            return;
-
-        // Shallower merge keys first (e.g. ContactAddresses before ContactAddresses.Address) so parallel columns
-        // are zipped into the scope-wildcard row before any nested merge runs; nested merges under a parent A.*
-        // are skipped separately via MergeKeyIsUnderParentScopeWildcard.
-        var orderedGroups = groups
-            .OrderBy(g => g.MergeKey.Split('.', StringSplitOptions.RemoveEmptyEntries).Length)
-            .ToList();
-
-        ProjectionCollectionZip.ApplyMergeGroupsToRows(items, orderedGroups, specs);
-    }
-
-    /// <inheritdoc />
-    public void StripAutoDerivedDependencyLeavesFromMergedCollections(
-        IReadOnlyList<object?> items,
-        IReadOnlyList<ProjectedFieldSpec> specs,
-        IReadOnlyCollection<string> autoDerivedSelectPaths)
-    {
-        if (autoDerivedSelectPaths.Count == 0 || items.Count == 0)
-            return;
-
-        foreach (var derivedPath in autoDerivedSelectPaths) {
-            var spec = specs.FirstOrDefault(s => string.Equals(s.RequestedPath, derivedPath, StringComparison.OrdinalIgnoreCase));
-            if (spec is null)
-                continue;
-            if (spec.NormalizedParts.Length < 2)
-                continue;
-            if (ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
-                continue;
-
-            var mergeKey = string.Join(".", spec.NormalizedParts[..^1]);
-            var leaf = spec.NormalizedParts[^1];
-
-            foreach (var item in items) {
-                if (item is not Dictionary<string, object?> row)
-                    continue;
-                if (!row.TryGetValue(mergeKey, out var mergedVal) || mergedVal is null)
-                    continue;
-                if (mergedVal is not IList list)
-                    continue;
-
-                foreach (var el in list) {
-                    if (el is Dictionary<string, object?> inner)
-                        inner.Remove(leaf);
-                }
-            }
-        }
-    }
-
 
     private static int GetEnumerableLength(object? value)
     {
@@ -546,86 +716,9 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return null;
     }
 
-    public ProjectedFilterConditions GetProjectedFilterConditions<TDbModel>(WhereClause? queryNode)
-        where TDbModel : class
-    {
-        var conditions = new List<ProjectedFilterCondition>();
-        if (!WhereClauseUtils.TryExtractConditions(queryNode, out var queryConditions, out var op))
-            return new(conditions, op);
-
-        foreach (var condition in queryConditions) {
-            try {
-                var normalizedField = NormalizeFieldPath(typeof(TDbModel), condition.Field);
-                conditions.Add(new(normalizedField, condition.Comparison, condition.Value));
-            }
-            catch {
-                // Ignore fields that cannot be normalized for projection-level filtering.
-            }
-        }
-
-        return new(conditions, op);
-    }
-
-    public void ApplyMatchedOnlyIncludes<TDbModel>(IReadOnlyList<TDbModel> entities, IEnumerable<string> includes, ProjectedFilterConditions filterConditions)
-        where TDbModel : class
-    {
-        if (entities.Count == 0 || filterConditions.Conditions.Count == 0)
-            return;
-
-        foreach (var includePath in includes.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct(StringComparer.OrdinalIgnoreCase)) {
-            var scope = TryBuildIncludeScope(typeof(TDbModel), includePath);
-            if (scope == null)
-                continue;
-
-            var scopedConditions = filterConditions.Conditions.Where(i => i.NormalizedField.StartsWith(scope.CollectionPath + ".", StringComparison.OrdinalIgnoreCase))
-                .Select(i => new ProjectedFilterCondition(i.NormalizedField[(scope.CollectionPath.Length + 1)..], i.Comparison, i.Value))
-                .ToList();
-
-            if (scopedConditions.Count == 0)
-                continue;
-
-            foreach (var entity in entities)
-                ApplyMatchedOnlyIncludeScope(entity, scope, scopedConditions, filterConditions.Operator);
-        }
-    }
-
-    public IReadOnlyList<object?> ApplyComputedFields(IReadOnlyList<object?> items, IReadOnlyList<ComputedField> computedFields, IReadOnlyList<ProjectedFieldSpec> specs)
-    {
-        if (computedFields.Count == 0 || items.Count == 0)
-            return items;
-
-        if (formatterService is null) {
-            logger?.LogWarning("ComputedFields requested but IFormatterService is not registered; returning items unchanged");
-            return items;
-        }
-
-        var results = new List<object?>(items.Count);
-        foreach (var item in items) {
-            if (item is null) {
-                results.Add(null);
-                continue;
-            }
-
-            var row = PromoteToDictionary(item, specs);
-            foreach (var field in computedFields) {
-                if (string.IsNullOrWhiteSpace(field.Name) || string.IsNullOrWhiteSpace(field.Template))
-                    continue;
-
-                if (TryApplyCollectionParallelComputed(row, field))
-                    continue;
-
-                row[field.Name] = FormatComputedValue(field.Template, row);
-            }
-
-            results.Add(row);
-        }
-
-        return results;
-    }
-
     /// <summary>
-    /// When every template placeholder is under the same collection path (e.g. <c>docketcharges.description</c> and <c>docketcharges.number</c>),
-    /// format once per index and store a parallel column <c>{prefix}.{computedName}</c> so sibling merge zips it into each collection object.
+    /// When every template placeholder is under the same collection path (e.g. <c>docketcharges.description</c> and <c>docketcharges.number</c>), format once per index and store
+    /// a parallel column <c>{prefix}.{computedName}</c> so sibling merge zips it into each collection object.
     /// </summary>
     private bool TryApplyCollectionParallelComputed(Dictionary<string, object?> row, ComputedField field)
     {
@@ -640,8 +733,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         for (var p = 0; p < placeholders.Count; p++) {
             if (!TryResolveRowValueForTemplate(row, placeholders[p], out var colVal))
                 return false;
+
             if (colVal is string or byte[])
                 return false;
+
             if (colVal is not IEnumerable)
                 return false;
 
@@ -692,75 +787,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return true;
     }
 
-    public IReadOnlyList<string> GetComputedFieldDependencies(IReadOnlyList<ComputedField> computedFields)
-    {
-        if (formatterService is null || computedFields.Count == 0)
-            return [];
-
-        var fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var cf in computedFields) {
-            if (string.IsNullOrWhiteSpace(cf.Template))
-                continue;
-
-            foreach (var placeholder in GetTemplatePlaceholders(cf.Template))
-                fields.Add(placeholder);
-        }
-
-        return [..fields];
-    }
-
-    /// <inheritdoc />
-    public IReadOnlyList<string> EnsureSelectIncludesComputedDependencies(ProjectionQueryReq queryRequest)
-    {
-        if (queryRequest.ComputedFields.Count == 0)
-            return [];
-
-        var derived = GetComputedFieldDependencies(queryRequest.ComputedFields);
-        if (derived.Count == 0)
-            return [];
-
-        var added = new List<string>();
-        foreach (var field in derived) {
-            if (SelectListAlreadyContainsPath(queryRequest.Select, field))
-                continue;
-
-            var normalized = field.Trim();
-            if (normalized.Length == 0)
-                continue;
-
-            queryRequest.Select.Add(normalized);
-            added.Add(normalized);
-        }
-
-        return added;
-    }
-
-    /// <inheritdoc />
-    public IReadOnlyList<string> GetProjectionEntityTypeNames<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, IReadOnlyList<ComputedField> computedFields)
-        where TDbModel : class
-    {
-        var root = typeof(TDbModel);
-        var set = new HashSet<string>(StringComparer.Ordinal) { root.Name };
-        foreach (var spec in specs)
-            AppendEntityTypesAlongPath(root, spec.NormalizedParts, set);
-
-        foreach (var dep in EnumerateTemplateDependencyPaths(computedFields)) {
-            string normalized;
-            try {
-                normalized = NormalizeFieldPath(root, dep);
-            }
-            catch {
-                continue;
-            }
-
-            var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            AppendEntityTypesAlongPath(root, parts, set);
-        }
-
-        return set.OrderBy(s => s, StringComparer.Ordinal).ToList();
-    }
-
-    /// <summary>Placeholder paths from computed templates — same sources as <see cref="GetComputedFieldDependencies" />, but works when <see cref="IFormatterService" /> is not registered.</summary>
+    /// <summary>
+    /// Placeholder paths from computed templates — same sources as <see cref="GetComputedFieldDependencies" />, but works when <see cref="IFormatterService" /> is not
+    /// registered.
+    /// </summary>
     private IEnumerable<string> EnumerateTemplateDependencyPaths(IReadOnlyList<ComputedField> computedFields)
     {
         foreach (var cf in computedFields) {
@@ -780,6 +810,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             var trimmed = cf.Template.Trim();
             if (BarePropertyPathRegex.IsMatch(trimmed)) {
                 yield return trimmed;
+
                 continue;
             }
 
@@ -842,6 +873,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         foreach (var existing in select) {
             if (string.IsNullOrWhiteSpace(existing))
                 continue;
+
             var e = existing.Trim();
             if (string.Equals(e, want, StringComparison.OrdinalIgnoreCase))
                 return true;
@@ -850,8 +882,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 continue;
 
             var basePath = e[..^2];
-            if (want.Length <= basePath.Length
-                || !want.StartsWith(basePath + ".", StringComparison.OrdinalIgnoreCase))
+            if (want.Length <= basePath.Length || !want.StartsWith(basePath + ".", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var rest = want[(basePath.Length + 1)..];
@@ -1134,63 +1165,27 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private PropertyInfo? ResolvePropertyCached(Type type, string name) => SharedEntityMetadataCache.ResolveProperty(type, name);
 
-    /// <inheritdoc />
-    public IReadOnlyList<ApiError> CollectProjectionFieldIssues<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards = true)
-        where TDbModel : class
-        => CollectProjectionFieldIssues(typeof(TDbModel), specs, allowSelectWildcards);
-
-    /// <inheritdoc />
-    public IReadOnlyList<ApiError> CollectProjectionFieldIssues(Type rootType, IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards = true)
-    {
-        var list = CollectProjectionFieldIssuesList(rootType, specs, allowSelectWildcards);
-        return list.Count == 0 ? Array.Empty<ApiError>() : list;
-    }
-
-    /// <inheritdoc />
-    public IReadOnlyList<ApiError> ValidateComputedFieldTemplates(IReadOnlyList<ComputedField> computedFields)
-    {
-        if (computedFields.Count == 0 || formatterService is null)
-            return [];
-
-        var errors = new List<ApiError>();
-        foreach (var cf in computedFields) {
-            if (string.IsNullOrWhiteSpace(cf.Name)) {
-                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, "A computed field name is required."));
-                continue;
-            }
-
-            if (string.IsNullOrWhiteSpace(cf.Template)) {
-                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field {ValidationFieldFormatter.Quote(cf.Name)} has an empty template."));
-                continue;
-            }
-
-            if (!formatterService.TryValidateTemplate(cf.Template, out var message))
-                errors.Add(new(Constants.ApiErrorCodes.InvalidComputedField, $"Computed field {ValidationFieldFormatter.Quote(cf.Name)}: {message}"));
-        }
-
-        return errors.Count == 0 ? [] : errors;
-    }
-
     private static List<ApiError> CollectProjectionFieldIssuesList(Type rootType, IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards)
     {
         var list = new List<ApiError>();
         foreach (var spec in specs) {
             if (!allowSelectWildcards && spec.NormalizedParts.Any(p => p == "*")) {
-                list.Add(new(Constants.ApiErrorCodes.InvalidSelectField,
-                    $"Projection path '{spec.RequestedPath}' uses wildcards but wildcard selection is disabled in API query configuration."));
+                list.Add(
+                    new(
+                        Constants.ApiErrorCodes.InvalidSelectField,
+                        $"Projection path '{spec.RequestedPath}' uses wildcards but wildcard selection is disabled in API query configuration."));
+
                 continue;
             }
 
             if (spec.NormalizedParts.Length == 0) {
-                list.Add(new(Constants.ApiErrorCodes.InvalidSelectField,
-                    $"Projection path '{spec.RequestedPath}' is not valid (empty)."));
+                list.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Projection path '{spec.RequestedPath}' is not valid (empty)."));
                 continue;
             }
 
             if (spec.NormalizedParts.Length == 1 && spec.NormalizedParts[0] == "*") {
                 if (!allowSelectWildcards) {
-                    list.Add(new(Constants.ApiErrorCodes.InvalidSelectField,
-                        $"Projection path '{spec.RequestedPath}' is not valid (wildcard-only)."));
+                    list.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Projection path '{spec.RequestedPath}' is not valid (wildcard-only)."));
                 }
 
                 continue;
@@ -1204,8 +1199,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
                 if (part.Equals("count", StringComparison.OrdinalIgnoreCase) && i > 0) {
                     if (!SharedEntityMetadataCache.IsCollectionType(currentType)) {
-                        list.Add(new(Constants.ApiErrorCodes.InvalidSelectField,
-                            $"Segment 'count' in path '{spec.RequestedPath}' is invalid: type '{GetProjectionEntityDisplayName(currentType)}' is not a collection."));
+                        list.Add(
+                            new(
+                                Constants.ApiErrorCodes.InvalidSelectField,
+                                $"Segment 'count' in path '{spec.RequestedPath}' is invalid: type '{GetProjectionEntityDisplayName(currentType)}' is not a collection."));
                     }
 
                     break;
@@ -1216,8 +1213,11 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
                 var property = SharedEntityMetadataCache.ResolveProperty(currentType, part);
                 if (property == null) {
-                    list.Add(new(Constants.ApiErrorCodes.InvalidSelectField,
-                        $"Entity '{GetProjectionEntityDisplayName(currentType)}' does not have field '{part}' (in path '{spec.RequestedPath}')."));
+                    list.Add(
+                        new(
+                            Constants.ApiErrorCodes.InvalidSelectField,
+                            $"Entity '{GetProjectionEntityDisplayName(currentType)}' does not have field '{part}' (in path '{spec.RequestedPath}')."));
+
                     break;
                 }
 
@@ -1418,7 +1418,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     {
         if (formatterService is null || string.IsNullOrWhiteSpace(template))
             return template;
-        
+
         var placeholders = GetTemplatePlaceholders(template);
         if (placeholders.Count == 0)
             return template;
@@ -1426,11 +1426,10 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         var trimmed = template.Trim();
 
         // Entire template is a bare-dotted path (no braces)
-        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase))
-            return TryResolveRowValueForTemplate(row, placeholders[0], out var val) 
-                ? FormatResolvedValueThroughFormatter(val, optionalFormatSuffix: "") 
-                : string.Empty;
-        
+        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase)) {
+            return TryResolveRowValueForTemplate(row, placeholders[0], out var val) ? FormatResolvedValueThroughFormatter(val, "") : string.Empty;
+        }
+
         // No '.' in placeholder names: SmartFormat resolves placeholders from the row as a flat dictionary (incl. format specs like {CreatedAt:yyyy-MM-dd}).
         if (placeholders.All(p => !p.Contains('.')))
             return formatterService.Format(trimmed, row);
@@ -1439,19 +1438,23 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         // <see cref="TryResolveRowValueForTemplate" />, then format through <see cref="IFormatterService" /> using a synthetic key so dots in paths are not parsed as nesting.
         var result = trimmed;
         foreach (var ph in placeholders.OrderByDescending(p => p.Length)) {
-            result = Regex.Replace(result, @"\{\s*" + Regex.Escape(ph) + @"(\:[^}]+)?\s*\}", m => {
-                if (!TryResolveRowValueForTemplate(row, ph, out var val))
-                    return string.Empty;
+            result = Regex.Replace(
+                result, @"\{\s*" + Regex.Escape(ph) + @"(\:[^}]+)?\s*\}", m => {
+                    if (!TryResolveRowValueForTemplate(row, ph, out var val))
+                        return string.Empty;
 
-                var fmtSuffix = m.Groups[1].Success ? m.Groups[1].Value : "";
-                return FormatResolvedValueThroughFormatter(val, fmtSuffix);
-            }, RegexOptions.IgnoreCase);
+                    var fmtSuffix = m.Groups[1].Success ? m.Groups[1].Value : "";
+                    return FormatResolvedValueThroughFormatter(val, fmtSuffix);
+                }, RegexOptions.IgnoreCase);
         }
 
         return result;
     }
 
-    /// <summary>Formats a resolved value with <see cref="IFormatterService" /> (SmartFormat). <paramref name="optionalFormatSuffix" /> is the optional piece after the placeholder name, e.g. <c>:yyyy-MM-dd</c>, or empty.</summary>
+    /// <summary>
+    /// Formats a resolved value with <see cref="IFormatterService" /> (SmartFormat). <paramref name="optionalFormatSuffix" /> is the optional piece after the placeholder name,
+    /// e.g. <c>:yyyy-MM-dd</c>, or empty.
+    /// </summary>
     private string FormatResolvedValueThroughFormatter(object? val, string optionalFormatSuffix)
     {
         if (val is null)
@@ -1502,7 +1505,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
         return TryResolveTokenFromWildcardSiblingColumn(row, token, out val);
     }
-    
+
     private static bool TryResolveTokenFromCollectionScopeWildcard(Dictionary<string, object?> row, string token, out object? val)
     {
         val = null;
@@ -1525,7 +1528,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
     private static object? GetNestedValueFromProjectedElement(object? el, string[] relativeParts)
     {
-        object? current = el;
+        var current = el;
         foreach (var seg in relativeParts) {
             if (current is null)
                 return null;
@@ -1536,9 +1539,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return current;
     }
 
-    /// <summary>
-    /// When the row has <c>prefix.*</c> (wildcard projection) but the template references <c>prefix.leaf</c>, build a parallel list of leaf values per element.
-    /// </summary>
+    /// <summary>When the row has <c>prefix.*</c> (wildcard projection) but the template references <c>prefix.leaf</c>, build a parallel list of leaf values per element.</summary>
     private static bool TryResolveTokenFromWildcardSiblingColumn(Dictionary<string, object?> row, string token, out object? val)
     {
         val = null;
@@ -1601,8 +1602,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (values.Count == 0)
                 return false;
 
-            var isNegated = comparator is ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith
-                or ComparisonOperatorEnum.NotIn or ComparisonOperatorEnum.NotRegex;
+            var isNegated = comparator is ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.NotStartsWith
+                or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.NotIn or ComparisonOperatorEnum.NotRegex;
 
             return isNegated ? values.All(v => EvaluateScalar(v, comparator, expectedValue)) : values.Any(v => EvaluateScalar(v, comparator, expectedValue));
         }

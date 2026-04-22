@@ -5,9 +5,8 @@ using SysCryptoHashAlgorithm = System.Security.Cryptography.HashAlgorithm;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Wraps a source stream and computes a hash inline as data is read.
-/// On dispose, verifies the computed hash against the expected hash.
-/// This enables true streaming reads with deferred hash verification — no buffering required.
+/// Wraps a source stream and computes a hash inline as data is read. On dispose, verifies the computed hash against the expected hash. This enables true streaming reads with
+/// deferred hash verification — no buffering required.
 /// </summary>
 internal sealed class HashVerifyingReadStream : Stream
 {
@@ -19,16 +18,10 @@ internal sealed class HashVerifyingReadStream : Stream
     private readonly SysCryptoHashAlgorithm _hashAlgorithm;
     private bool _disposed;
 
-    public HashVerifyingReadStream(
-        Stream inner,
-        SysCryptoHashAlgorithm hashAlgorithm,
-        byte[]? expectedHash,
-        bool throwOnMismatch,
-        ILogger logger,
-        Guid fileId)
+    public HashVerifyingReadStream(Stream inner, SysCryptoHashAlgorithm hashAlgorithm, byte[]? expectedHash, bool throwOnMismatch, ILogger logger, Guid fileId)
     {
         _hashAlgorithm = hashAlgorithm;
-        _hashingStream = new HashingStream(inner, hashAlgorithm);
+        _hashingStream = new(inner, hashAlgorithm);
         _expectedHash = expectedHash;
         _throwOnMismatch = throwOnMismatch;
         _logger = logger;
@@ -36,20 +29,21 @@ internal sealed class HashVerifyingReadStream : Stream
     }
 
     public override bool CanRead => _hashingStream.CanRead;
+
     public override bool CanSeek => false;
+
     public override bool CanWrite => false;
+
     public override long Length => _hashingStream.CanSeek ? _hashingStream.Length : throw new NotSupportedException();
 
-    public override long Position
-    {
+    public override long Position {
         get => _hashingStream.CanSeek ? _hashingStream.Position : throw new NotSupportedException();
         set => throw new NotSupportedException();
     }
 
     public override int Read(byte[] buffer, int offset, int count) => _hashingStream.Read(buffer, offset, count);
 
-    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct)
-        => _hashingStream.ReadAsync(buffer, offset, count, ct);
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct) => _hashingStream.ReadAsync(buffer, offset, count, ct);
 
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
@@ -57,8 +51,11 @@ internal sealed class HashVerifyingReadStream : Stream
 #endif
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
     public override void SetLength(long value) => throw new NotSupportedException();
+
     public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
     public override void Flush() { }
 
     protected override void Dispose(bool disposing)
@@ -102,11 +99,15 @@ internal sealed class HashVerifyingReadStream : Stream
 
     private static bool ByteArraysEqual(byte[]? a, byte[]? b)
     {
-        if (a == null || b == null) return a == b;
-        if (a.Length != b.Length) return false;
-        for (var i = 0; i < a.Length; i++) {
-            if (a[i] != b[i]) return false;
-        }
+        if (a == null || b == null)
+            return a == b;
+
+        if (a.Length != b.Length)
+            return false;
+
+        for (var i = 0; i < a.Length; i++)
+            if (a[i] != b[i])
+                return false;
 
         return true;
     }

@@ -8,6 +8,5 @@ namespace Lyo.Web.Automation.Plan;
 public readonly record struct AutomationPlanRunStartedEvent(Guid RunId, AutomationPlan Plan)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"AutomationPlanRunStartedEvent run={RunId:N} plan={Plan}";
+    public override string ToString() => $"AutomationPlanRunStartedEvent run={RunId:N} plan={Plan}";
 }

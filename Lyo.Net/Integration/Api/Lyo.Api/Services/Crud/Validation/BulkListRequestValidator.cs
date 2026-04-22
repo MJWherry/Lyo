@@ -14,11 +14,7 @@ public static class BulkListRequestValidator
     {
         var validator = ValidatorBuilder<BulkListRequestValidatorInput>.Create()
             .RuleFor(x => x.Count)
-            .InclusiveBetween(
-                0,
-                input.MaxAllowed,
-                Constants.ApiErrorCodes.ExceedMaxBulkSize,
-                $"Max bulk request size is {input.MaxAllowed}, {input.Count} requests sent")
+            .InclusiveBetween(0, input.MaxAllowed, Constants.ApiErrorCodes.ExceedMaxBulkSize, $"Max bulk request size is {input.MaxAllowed}, {input.Count} requests sent")
             .Build();
 
         return validator.Validate(input);

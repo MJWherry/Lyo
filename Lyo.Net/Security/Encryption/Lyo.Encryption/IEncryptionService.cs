@@ -32,7 +32,8 @@ public interface IEncryptionService
     /// <param name="key">Optional encryption key. If null and keyId is provided, uses the key from KeyStore.</param>
     /// <returns>Encrypted data.</returns>
     /// <exception cref="ArgumentOutsideRangeException">
-    /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is invalid.
+    /// Thrown when plaintext is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize), or key size is
+    /// invalid.
     /// </exception>
     /// <exception cref="InvalidOperationException">Thrown when no encryption key is available (neither keyId nor key provided, or keyId not found in KeyStore).</exception>
     byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null);
@@ -48,9 +49,9 @@ public interface IEncryptionService
     /// <exception cref="DecryptionFailedException">Thrown when decryption fails due to wrong key, corrupted data, authentication failure, or tampered data</exception>
     byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null);
 
-    /// <summary>Decrypts a contiguous region of <paramref name="buffer"/>. Implementations may override to decrypt without copying the slice to a new array.</summary>
+    /// <summary>Decrypts a contiguous region of <paramref name="buffer" />. Implementations may override to decrypt without copying the slice to a new array.</summary>
     /// <param name="buffer">Buffer containing encrypted data.</param>
-    /// <param name="offset">Start index of the encrypted slice in <paramref name="buffer"/>.</param>
+    /// <param name="offset">Start index of the encrypted slice in <paramref name="buffer" />.</param>
     /// <param name="count">Length of the encrypted slice in bytes.</param>
     /// <param name="keyId">The key identifier to use from the KeyStore. If null, uses the provided key directly.</param>
     /// <param name="key">Optional decryption key. If null and keyId is provided, uses the key from KeyStore.</param>

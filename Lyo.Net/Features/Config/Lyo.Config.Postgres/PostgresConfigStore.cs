@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Common.Identifiers;
 using Lyo.Config.Postgres.Database;
 using Lyo.Exceptions;

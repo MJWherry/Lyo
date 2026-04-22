@@ -61,10 +61,11 @@ public class LocalLockServiceTests
     {
         var executed = false;
         await _service.ExecuteWithLockAsync(
-            "test-key-4", async ct => {
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                executed = true;
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                "test-key-4", async ct => {
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    executed = true;
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         executed.ShouldBeTrue();
     }
@@ -82,7 +83,8 @@ public class LocalLockServiceTests
         var handle = await _service.AcquireAsync("test-key-6", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         handle.ShouldNotBeNull();
         await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteWithLockAsync(
-            "test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestContext.Current.CancellationToken).ConfigureAwait(false));
+                "test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         await handle.ReleaseAsync().ConfigureAwait(false);
     }
@@ -120,7 +122,8 @@ public class LocalLockServiceTests
     public async Task ExecuteWithLockAsync_ReleasesLockOnException()
     {
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.ExecuteWithLockAsync(
-            "test-key-8", _ => throw new InvalidOperationException("test"), ct: TestContext.Current.CancellationToken).ConfigureAwait(false));
+                "test-key-8", _ => throw new InvalidOperationException("test"), ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         var handle = await _service.AcquireAsync("test-key-8", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         handle.ShouldNotBeNull();

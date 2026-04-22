@@ -11,21 +11,21 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
 {
     private const int SaveDebounceMs = 450;
 
-    private CancellationTokenSource? _saveDebounceCts;
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Name", "Name"), new("Id", "Id", FilterPropertyType.Number), new("CreatedAt", "Created At", FilterPropertyType.DateTime),
+        new("IsActive", "Active", FilterPropertyType.Bool), new("Type", "Type")
+    ];
 
     private QueryReq _entityQuery = new() { Start = 0, Amount = 20 };
-    private ProjectionQueryReq _projectionQuery = new() { Start = 0, Amount = 20 };
     private List<string> _includeAll = [];
-    private List<string> _selectAll = [];
     private List<string> _keysAll = [];
+    private ProjectionQueryReq _projectionQuery = new() { Start = 0, Amount = 20 };
     private QueryWorkbenchRunConfiguration _runConfig = new();
-    private QueryWorkbenchRunMode? _trackedRunMode;
     private int _runRestoreKey;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("Name", "Name"), new("Id", "Id", FilterPropertyType.Number), new("CreatedAt", "Created At", FilterPropertyType.DateTime), new("IsActive", "Active", FilterPropertyType.Bool), new("Type", "Type")
-    ];
+    private CancellationTokenSource? _saveDebounceCts;
+    private List<string> _selectAll = [];
+    private QueryWorkbenchRunMode? _trackedRunMode;
 
     [Inject]
     private ClientStore ClientStore { get; set; } = null!;
@@ -43,6 +43,19 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
     [Parameter]
     public Dictionary<string, List<string>>? Routes { get; set; }
 
+    public async ValueTask DisposeAsync()
+    {
+        _saveDebounceCts?.Cancel();
+        _saveDebounceCts?.Dispose();
+        _saveDebounceCts = null;
+        try {
+            await PersistNowAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            Logger.LogDebug(ex, "Query workbench: final save skipped.");
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         var loadedAny = false;
@@ -53,9 +66,9 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
                 if (loaded != null) {
                     loadedAny = true;
                     _projectionQuery = loaded.QueryRequest ?? new ProjectionQueryReq { Start = 0, Amount = 20 };
-                    _projectionQuery.Options ??= new ProjectedQueryRequestOptions();
+                    _projectionQuery.Options ??= new();
                     _entityQuery = loaded.EntityQuery ?? FromProjectionSharedFields(_projectionQuery);
-                    _entityQuery.Options ??= new QueryRequestOptions();
+                    _entityQuery.Options ??= new();
                     _includeAll = loaded.IncludeAll ?? [];
                     _selectAll = loaded.SelectAll ?? [];
                     _keysAll = loaded.KeysAll ?? [];
@@ -70,34 +83,18 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         }
 
         if (!loadedAny) {
-            var hostEndpoints = Routes != null
-                ? QueryWorkbenchRunConfiguration.CloneHostEndpoints(Routes)
-                : new Dictionary<string, List<string>>();
-            _runConfig = QueryWorkbenchHostNormalization.NormalizeRun(new QueryWorkbenchRunConfiguration { HostEndpoints = hostEndpoints });
+            var hostEndpoints = Routes != null ? QueryWorkbenchRunConfiguration.CloneHostEndpoints(Routes) : new();
+            _runConfig = QueryWorkbenchHostNormalization.NormalizeRun(new() { HostEndpoints = hostEndpoints });
         }
 
         await InvokeAsync(StateHasChanged);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _saveDebounceCts?.Cancel();
-        _saveDebounceCts?.Dispose();
-        _saveDebounceCts = null;
-
-        try {
-            await PersistNowAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex) {
-            Logger.LogDebug(ex, "Query workbench: final save skipped.");
-        }
     }
 
     private void SchedulePersist()
     {
         _saveDebounceCts?.Cancel();
         _saveDebounceCts?.Dispose();
-        _saveDebounceCts = new CancellationTokenSource();
+        _saveDebounceCts = new();
         var ct = _saveDebounceCts.Token;
         _ = DebounceSaveAsync(ct);
     }
@@ -126,6 +123,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
             KeysAll = _keysAll,
             Run = _runConfig
         };
+
         var json = JsonSerializer.Serialize(state, JsonOptions);
         await ClientStore.SetQueryWorkbenchStateAsync(json).ConfigureAwait(false);
     }
@@ -217,7 +215,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.WhereClause = source.WhereClause;
         target.Include = source.Include?.ToList() ?? [];
         target.SortBy = source.SortBy?.ToList() ?? [];
-        target.Options ??= new QueryRequestOptions();
+        target.Options ??= new();
         target.Options.TotalCountMode = source.Options.TotalCountMode;
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
     }
@@ -230,7 +228,7 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.WhereClause = source.WhereClause;
         target.Include = source.Include?.ToList() ?? [];
         target.SortBy = source.SortBy?.ToList() ?? [];
-        target.Options ??= new ProjectedQueryRequestOptions();
+        target.Options ??= new();
         target.Options.TotalCountMode = source.Options.TotalCountMode;
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
     }

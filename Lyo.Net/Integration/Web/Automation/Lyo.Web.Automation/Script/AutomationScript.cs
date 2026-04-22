@@ -27,8 +27,7 @@ public sealed class AutomationScriptRetryPolicy
     public TimeSpan DelayBetweenAttempts { get; init; } = TimeSpan.FromSeconds(1);
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"AutomationScriptRetryPolicy maxAttempts={MaxAttempts}, delay={DelayBetweenAttempts}";
+    public override string ToString() => $"AutomationScriptRetryPolicy maxAttempts={MaxAttempts}, delay={DelayBetweenAttempts}";
 }
 
 /// <summary>Fluent configuration for <see cref="AutomationScriptRetryPolicy" /> (similar to query builders).</summary>
@@ -38,8 +37,7 @@ public sealed class AutomationScriptRetryBuilder
 
     public TimeSpan DelayBetweenAttempts { get; set; } = TimeSpan.FromSeconds(1);
 
-    public AutomationScriptRetryPolicy Build()
-        => new() { MaxAttempts = MaxAttempts, DelayBetweenAttempts = DelayBetweenAttempts };
+    public AutomationScriptRetryPolicy Build() => new() { MaxAttempts = MaxAttempts, DelayBetweenAttempts = DelayBetweenAttempts };
 }
 
 /// <summary>Fluent builder for <see cref="AutomationScriptStep" /> sequences.</summary>
@@ -71,24 +69,18 @@ public sealed class AutomationScriptBuilder
     public static AutomationScriptBuilder New() => new();
 }
 
-/// <summary>Runs <see cref="AutomationScriptStep" /> sequences with structured logging scopes and optional retries (calls <see cref="IWebAutomationSession.StartBrowserAsync" /> first).</summary>
+/// <summary>
+/// Runs <see cref="AutomationScriptStep" /> sequences with structured logging scopes and optional retries (calls <see cref="IWebAutomationSession.StartBrowserAsync" />
+/// first).
+/// </summary>
 public static class AutomationScriptRunner
 {
     /// <summary>Executes each step in order using the session's cancellation token.</summary>
-    public static async Task RunAsync(
-        IWebAutomationSession session,
-        IReadOnlyList<AutomationScriptStep> steps,
-        ILogger? logger,
-        CancellationToken ct,
-        string? scriptName = null)
+    public static async Task RunAsync(IWebAutomationSession session, IReadOnlyList<AutomationScriptStep> steps, ILogger? logger, CancellationToken ct, string? scriptName = null)
     {
         ArgumentHelpers.ThrowIfNull(session, nameof(session));
         ArgumentHelpers.ThrowIfNull(steps, nameof(steps));
-        using (logger?.BeginScope(
-                   new Dictionary<string, object?> {
-                       ["session_id"] = session.SessionId,
-                       ["automation_script"] = scriptName
-                   })) {
+        using (logger?.BeginScope(new Dictionary<string, object?> { ["session_id"] = session.SessionId, ["automation_script"] = scriptName })) {
             await session.StartBrowserAsync(ct).ConfigureAwait(false);
             foreach (var step in steps) {
                 ct.ThrowIfCancellationRequested();

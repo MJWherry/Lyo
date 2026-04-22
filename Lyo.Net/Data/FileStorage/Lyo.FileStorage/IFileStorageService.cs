@@ -88,8 +88,8 @@ public interface IFileStorageService : IHealth
         CancellationToken ct = default);
 
     /// <summary>
-    /// Returns a time-limited read URL when the backend supports direct browser access (e.g. S3/Azure presigned GET). The URL refers to the stored object (ciphertext if encrypted). For decrypted downloads use
-    /// <see cref="GetFileStreamAsync"/>. Key material is never embedded in the URL.
+    /// Returns a time-limited read URL when the backend supports direct browser access (e.g. S3/Azure presigned GET). The URL refers to the stored object (ciphertext if
+    /// encrypted). For decrypted downloads use <see cref="GetFileStreamAsync" />. Key material is never embedded in the URL.
     /// </summary>
     Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default);
 

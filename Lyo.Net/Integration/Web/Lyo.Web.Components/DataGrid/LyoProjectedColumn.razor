@@ -77,8 +77,8 @@
     public bool HiddenByDefault { get; set; }
 
     /// <summary>
-    /// When set, builds the cell text from the projected row and raw field value (same object <see cref="ProjectedValueHelper.GetValue"/> uses).
-    /// Use when the default string representation is not enough (e.g. human-readable file size). Ignore the row with <c>_</c> if only the value matters.
+    /// When set, builds the cell text from the projected row and raw field value (same object <see cref="ProjectedValueHelper.GetValue" /> uses). Use when the default string
+    /// representation is not enough (e.g. human-readable file size). Ignore the row with <c>_</c> if only the value matters.
     /// </summary>
     [Parameter]
     public Func<object?, object?, string>? FormattedValue { get; set; }

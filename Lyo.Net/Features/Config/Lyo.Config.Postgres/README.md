@@ -12,11 +12,11 @@ PostgreSQL implementation of `Lyo.Config` for storing typed config definitions b
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.EntityFrameworkCore.Design` | `[10,)` |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`            | `[10,)` |
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
 
 ### Project references
 

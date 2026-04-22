@@ -1,5 +1,5 @@
-@using Microsoft.AspNetCore.Components.Web
 @using MudBlazor
+@using Microsoft.AspNetCore.Components.Web;
 @typeparam T
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-unique-value-selector" class="unique-value-selector">
@@ -55,7 +55,7 @@
                      tabindex="0"
                      class="unique-value-item d-flex align-center pa-2 @(isSelected ? "selected" : "")"
                      @onclick="@(() => ToggleSelection(value))"
-                     @onkeydown="@((KeyboardEventArgs e) => OnRowKeyDown(e, value))">
+                     @onkeydown="@(e => OnRowKeyDown(e, value))">
                     <MudIcon Icon="@(isSelected ? Icons.Material.Filled.CheckBox : Icons.Material.Outlined.CheckBoxOutlineBlank)"
                              Size="Size.Small"
                              Class="flex-shrink-0"

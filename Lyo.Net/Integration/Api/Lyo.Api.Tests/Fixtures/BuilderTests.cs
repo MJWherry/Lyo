@@ -15,7 +15,7 @@ public class BuilderTests
     [Fact]
     public void LyoProblemDetailsBuilder_Builds_WithMessage()
     {
-        var err = LyoProblemDetailsBuilder.CreateWithTrace("t1", "s1").WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidRequest).WithMessage("bad request").Build();
+        var err = LyoProblemDetailsBuilder.CreateWithTrace("t1", "s1").WithErrorCode(Constants.ApiErrorCodes.InvalidRequest).WithMessage("bad request").Build();
         Assert.Equal("bad request", err.Detail);
         Assert.Equal(Constants.ApiErrorCodes.InvalidRequest, err.Errors[0].Code);
         Assert.Equal("t1", err.TraceId);
@@ -25,14 +25,14 @@ public class BuilderTests
     public void LyoProblemDetailsBuilder_AddValidation_CollectsErrors()
     {
         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-            .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidField)
+            .WithErrorCode(Constants.ApiErrorCodes.InvalidField)
             .AddValidation("FieldA", "bad")
             .AddValidation("FieldB", "worse")
             .Build();
 
         Assert.NotEmpty(err.Errors);
         Assert.Equal(2, err.Errors.Count);
-        Assert.Equal(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidField, err.Errors[0].Code);
+        Assert.Equal(Constants.ApiErrorCodes.InvalidField, err.Errors[0].Code);
         Assert.Contains("FieldA", err.Errors[0].Description);
         Assert.Contains(LyoProblemDetailsBuilder.DefaultValidationDetailSummary, err.Detail);
     }
@@ -51,27 +51,27 @@ public class BuilderTests
         Assert.Contains("\"errors\"", json);
         Assert.Contains("\"description\"", json);
         Assert.DoesNotContain("errorCode", json);
-
         var back = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
         Assert.NotNull(back);
         Assert.Equal(original.Detail, back!.Detail);
         Assert.NotEmpty(back.Errors);
         Assert.Single(back.Errors);
-        Assert.Equal(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidSelectField, back.Errors[0].Code);
+        Assert.Equal(Constants.ApiErrorCodes.InvalidSelectField, back.Errors[0].Code);
     }
 
     [Fact]
     public void LyoProblemDetails_Json_WithoutErrorsArray_DeserializesWithEmptyErrors()
     {
         const string json = """
-            {
-              "type": "about:blank",
-              "title": "Bad Request",
-              "status": 400,
-              "detail": "oops",
-              "timestamp": "2026-01-01T00:00:00.0000000Z"
-            }
-            """;
+                            {
+                              "type": "about:blank",
+                              "title": "Bad Request",
+                              "status": 400,
+                              "detail": "oops",
+                              "timestamp": "2026-01-01T00:00:00.0000000Z"
+                            }
+                            """;
+
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
         var back = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
         Assert.NotNull(back);
@@ -162,7 +162,7 @@ public class BuilderTests
     public void LyoProblemDetailsBuilder_FromException_IncludesInner()
     {
         var ex = new InvalidOperationException("boom", new("inner"));
-        var err = LyoProblemDetailsBuilder.FromException(ex, Lyo.Api.Models.Constants.ApiErrorCodes.InvalidOperation).Build();
+        var err = LyoProblemDetailsBuilder.FromException(ex, Constants.ApiErrorCodes.InvalidOperation).Build();
         Assert.Contains("boom", err.Detail);
         Assert.True(err.Errors.Count >= 2);
     }

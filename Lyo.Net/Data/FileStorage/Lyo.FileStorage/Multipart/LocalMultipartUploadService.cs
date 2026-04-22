@@ -16,8 +16,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
     private readonly ILogger<LocalMultipartUploadService> _logger;
-    private readonly IMetrics _metrics;
     private readonly IFileMalwareScanner _malwareScanner;
+    private readonly IMetrics _metrics;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly LocalFileStorageServiceOptions _options;
     private readonly IMultipartUploadSessionStore _sessions;

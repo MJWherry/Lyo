@@ -26,7 +26,7 @@ public static class WebDriverFactory
             SeleniumBrowserKind.Chrome => CreateChrome(options, context),
             SeleniumBrowserKind.Edge => CreateEdge(options, context),
             SeleniumBrowserKind.Firefox => CreateFirefox(options, context),
-            _ => CreateChrome(options, context)
+            var _ => CreateChrome(options, context)
         };
     }
 
@@ -35,7 +35,7 @@ public static class WebDriverFactory
         DriverOptions o = options.BrowserKind switch {
             SeleniumBrowserKind.Edge => BuildEdgeOptions(options, context),
             SeleniumBrowserKind.Firefox => BuildFirefoxOptions(options, context),
-            _ => BuildChromeOptions(options, context)
+            var _ => BuildChromeOptions(options, context)
         };
 
         return new RemoteWebDriver(gridUri, o);
@@ -71,15 +71,13 @@ public static class WebDriverFactory
         return driver;
     }
 
-    private static void InjectStartupScripts(OpenQA.Selenium.Chromium.ChromiumDriver driver, IEnumerable<string>? scripts)
+    private static void InjectStartupScripts(ChromiumDriver driver, IEnumerable<string>? scripts)
     {
         if (scripts == null)
             return;
 
         foreach (var script in scripts.Where(s => !string.IsNullOrWhiteSpace(s))) {
-            driver.ExecuteCdpCommand(
-                "Page.addScriptToEvaluateOnNewDocument",
-                new Dictionary<string, object?> { { "source", script } });
+            driver.ExecuteCdpCommand("Page.addScriptToEvaluateOnNewDocument", new() { { "source", script } });
         }
     }
 
@@ -93,7 +91,7 @@ public static class WebDriverFactory
             service.LogPath = Path.Combine(ad, "geckodriver.log");
         }
 
-        return new FirefoxDriver(service, o);
+        return new(service, o);
     }
 
     private static ChromeOptions BuildChromeOptions(SeleniumBrowserOptions options, SeleniumExecutionContext? context)
@@ -116,14 +114,12 @@ public static class WebDriverFactory
             o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ua));
         }
 
-        o.AddArgument(
-            WebDriverArgumentFormatter.Format(
-                "--window-size",
-                $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
+        o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDownloadDirectoryChromium(o, context);
-        o.SetLoggingPreference(LogType.Browser, OpenQA.Selenium.LogLevel.All);
+        o.SetLoggingPreference(LogType.Browser, LogLevel.All);
         if (options.EnablePerformanceLogging)
-            o.SetLoggingPreference(LogType.Performance, OpenQA.Selenium.LogLevel.All);
+            o.SetLoggingPreference(LogType.Performance, LogLevel.All);
+
         return o;
     }
 
@@ -147,12 +143,9 @@ public static class WebDriverFactory
             o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ua));
         }
 
-        o.AddArgument(
-            WebDriverArgumentFormatter.Format(
-                "--window-size",
-                $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
+        o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDownloadDirectoryChromium(o, context);
-        o.SetLoggingPreference(LogType.Performance, OpenQA.Selenium.LogLevel.All);
+        o.SetLoggingPreference(LogType.Performance, LogLevel.All);
         return o;
     }
 
@@ -164,11 +157,10 @@ public static class WebDriverFactory
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--width", options.BrowserWindowWidth.ToString()));
         o.AddArgument(WebDriverArgumentFormatter.Format("--height", options.BrowserWindowHeight.ToString()));
-
         if (!string.IsNullOrWhiteSpace(context?.BrowserUserDataDirectory)) {
             var ud = context!.BrowserUserDataDirectory!;
             Directory.CreateDirectory(ud);
-            o.Profile = new FirefoxProfile(ud);
+            o.Profile = new(ud);
         }
 
         if (!string.IsNullOrWhiteSpace(context?.DownloadDirectory)) {

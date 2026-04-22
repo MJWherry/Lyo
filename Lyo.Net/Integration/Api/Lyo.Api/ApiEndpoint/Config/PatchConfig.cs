@@ -12,6 +12,6 @@ public sealed record PatchConfig<TEntity, TDbContext>
 
     public EndpointAuth? Auth { get; init; }
 
-    /// <summary>When set, restricts <see cref="PatchRequest.Properties"/> keys by policy or custom logic.</summary>
+    /// <summary>When set, restricts <see cref="PatchRequest.Properties" /> keys by policy or custom logic.</summary>
     public PatchPropertyAuthorization? PropertyAuthorization { get; init; }
 }

@@ -3,14 +3,13 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.ApiEndpoint.Dynamic;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models;
+using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
@@ -295,8 +294,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     }
 
     /// <summary>Fluent CRUD setup: <c>WithCrud(crud =&gt; crud.WithFlags(flags).BeforeCreate(...))</c>.</summary>
-    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(
-        Action<CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>> configure)
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(Action<CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>();
@@ -416,8 +414,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             inheritedAfter = ctx => _updateConfig.After!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services));
 
         _patchConfig = new() {
-            Before = before ?? inheritedBefore, After = after ?? inheritedAfter, Auth = auth, PropertyAuthorization = propertyAuthorization
+            Before = before ?? inheritedBefore,
+            After = after ?? inheritedAfter,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
         };
+
         return this;
     }
 
@@ -441,8 +443,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         }
 
         _patchBulkConfig = new() {
-            Before = before ?? inheritedBefore, After = after ?? inheritedAfter, Auth = auth, PropertyAuthorization = propertyAuthorization
+            Before = before ?? inheritedBefore,
+            After = after ?? inheritedAfter,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
         };
+
         return this;
     }
 
@@ -559,7 +565,10 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var b = new QueryEndpointConfigBuilder<TDbEntity>();
         configure(b);
         _queryConfig = new() {
-            GroupName = groupName, DefaultOrder = ResolveDefaultOrderFromPrimaryKey(), Auth = b.AuthPolicy, EnableComputedFields = b.EnableComputedFields
+            GroupName = groupName,
+            DefaultOrder = ResolveDefaultOrderFromPrimaryKey(),
+            Auth = b.AuthPolicy,
+            EnableComputedFields = b.EnableComputedFields
         };
 
         return this;
@@ -674,9 +683,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     }
 
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatch(PatchConfig<TDbEntity, TDbContext> config, bool inheritUpdate = true)
-    {
-        return WithPatch(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
-    }
+        => WithPatch(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
 
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatch(Action<PatchEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
     {
@@ -688,9 +695,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     }
 
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchBulk(PatchConfig<TDbEntity, TDbContext> config, bool inheritUpdate = true)
-    {
-        return WithPatchBulk(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
-    }
+        => WithPatchBulk(config.Before, config.After, inheritUpdate, config.Auth, config.PropertyAuthorization);
 
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithPatchBulk(Action<PatchEndpointConfigBuilder<TDbEntity, TDbContext>> configure)
     {
@@ -785,8 +790,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var b = new PatchEndpointConfigBuilder<TDbEntity, TDbContext>();
         configure(b);
         var c = b.Build();
-        return WithPatch(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization)
-            .WithPatchBulk(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization);
+        return WithPatch(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization).WithPatchBulk(c.Before, c.After, b.InheritUpdate, c.Auth, c.PropertyAuthorization);
     }
 
     public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithUpsertAndBulk(Action<UpsertEndpointConfigBuilder<TRequest, TDbEntity, TDbContext>> configure)
@@ -897,9 +901,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                         var cfError = ApiErrorResponseFactory.CreateForError(
                             httpContext,
                             LyoProblemDetails.FromCode(
-                                Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery,
-                                "Computed fields are not enabled. Enable via ApiFeatureFlag.ProjectionComputedFields or WithProjectionComputedFields.",
-                                DateTime.UtcNow));
+                                Constants.ApiErrorCodes.InvalidQuery,
+                                "Computed fields are not enabled. Enable via ApiFeatureFlag.ProjectionComputedFields or WithProjectionComputedFields.", DateTime.UtcNow));
 
                         return Results.Json(cfError, statusCode: cfError.Status);
                     }
@@ -1116,12 +1119,12 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPatch(
                 $"{baseRoute}", async (
-                    [FromBody] PatchRequest request,
-                    [FromServices] IPatchService<TDbContext> basicService,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
-                    var fieldAuth = await PatchPropertyAuthorizationApplier
-                        .ApplyAsync(_patchConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), request, ct)
+                        [FromBody] PatchRequest request,
+                        [FromServices] IPatchService<TDbContext> basicService,
+                        HttpContext httpContext,
+                        CancellationToken ct = default)
+                    => {
+                    var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(_patchConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), request, ct)
                         .ConfigureAwait(false);
 
                     if (!fieldAuth.Success) {

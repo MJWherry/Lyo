@@ -26,14 +26,15 @@ public sealed class QueryOptions
     public bool UseNoTrackingWithIdentityResolution { get; init; } = true;
 
     /// <summary>
-    /// When <c>true</c> (default), <c>QueryProject</c> <c>Select</c> may use terminal <c>*</c> (e.g. collection scope wildcards). Set via API host configuration (singleton <see cref="QueryOptions" />).
-    /// When <c>false</c>, paths containing <c>*</c> are rejected.
+    /// When <c>true</c> (default), <c>QueryProject</c> <c>Select</c> may use terminal <c>*</c> (e.g. collection scope wildcards). Set via API host configuration (singleton
+    /// <see cref="QueryOptions" />). When <c>false</c>, paths containing <c>*</c> are rejected.
     /// </summary>
     public bool AllowSelectWildcards { get; init; } = true;
 
     /// <summary>
-    /// When <c>true</c>, query results use typed <c>ICacheService.GetOrSetPayloadAsync&lt;T&gt;</c> (via <see cref="Lyo.Cache.ICachePayloadSerializer" /> and <see cref="Lyo.Cache.ICachePayloadCodec" />;
-    /// optional compress/encrypt per <see cref="Lyo.Cache.CacheOptions.Payload" />) instead of Fusion CLR serialization. Requires cache registration (e.g. <c>AddLocalCache</c> / <c>AddFusionCache</c>).
+    /// When <c>true</c>, query results use typed <c>ICacheService.GetOrSetPayloadAsync&lt;T&gt;</c> (via <see cref="Lyo.Cache.ICachePayloadSerializer" /> and
+    /// <see cref="Lyo.Cache.ICachePayloadCodec" />; optional compress/encrypt per <see cref="Lyo.Cache.CacheOptions.Payload" />) instead of Fusion CLR serialization. Requires cache
+    /// registration (e.g. <c>AddLocalCache</c> / <c>AddFusionCache</c>).
     /// </summary>
     public bool CacheQueryResultsAsUtf8Payload { get; init; }
 

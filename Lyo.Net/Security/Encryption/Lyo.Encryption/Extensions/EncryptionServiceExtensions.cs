@@ -19,8 +19,7 @@ public static class EncryptionServiceExtensions
     /// <summary>Determines the encryption algorithm used by the given encryption service.</summary>
     /// <param name="encryptionService">The encryption service to analyze</param>
     /// <returns>The encryption algorithm, or null if the service type is not recognized</returns>
-    public static EncryptionAlgorithm? DetermineAlgorithm(IEncryptionService? encryptionService)
-        => EncryptionAlgorithmDiscovery.FromEncryptionService(encryptionService);
+    public static EncryptionAlgorithm? DetermineAlgorithm(IEncryptionService? encryptionService) => EncryptionAlgorithmDiscovery.FromEncryptionService(encryptionService);
 
     /// <summary>Determines the Data Encryption Key (DEK) algorithm from a two-key encryption service.</summary>
     /// <param name="twoKeyService">The two-key encryption service to analyze</param>
@@ -38,7 +37,7 @@ public static class EncryptionServiceExtensions
         /// <summary>Adds a keyed two-key encryption service to the service collection using an existing keyed key store.</summary>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="keyStoreName">The key name for the keyed key store service</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size for <see cref="AesGcmEncryptionService"/> when used as DEK/KEK.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size for <see cref="AesGcmEncryptionService" /> when used as DEK/KEK.</param>
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEncryptionServiceKeyed(string keyName, string keyStoreName, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             => services.AddEncryptionServiceKeyed<AesGcmEncryptionService, AesGcmEncryptionService>(keyName, keyStoreName, aesGcmKeySize);
@@ -50,7 +49,7 @@ public static class EncryptionServiceExtensions
         /// <typeparam name="TEncryptionService">The encryption service type for both DEK and KEK operations</typeparam>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="keyStoreName">The key name for the keyed key store service</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size when <typeparamref name="TEncryptionService"/> is <see cref="AesGcmEncryptionService"/>.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size when <typeparamref name="TEncryptionService" /> is <see cref="AesGcmEncryptionService" />.</param>
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEncryptionServiceKeyed<TEncryptionService>(string keyName, string keyStoreName, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TEncryptionService : class, IEncryptionService
@@ -61,9 +60,12 @@ public static class EncryptionServiceExtensions
         /// <typeparam name="TKekService">The Key Encryption Key (KEK) encryption service type</typeparam>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="keyStoreName">The key name for the keyed key store service</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size when DEK or KEK service is <see cref="AesGcmEncryptionService"/>.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size when DEK or KEK service is <see cref="AesGcmEncryptionService" />.</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddEncryptionServiceKeyed<TDekService, TKekService>(string keyName, string keyStoreName, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
+        public IServiceCollection AddEncryptionServiceKeyed<TDekService, TKekService>(
+            string keyName,
+            string keyStoreName,
+            AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TDekService : class, IEncryptionService where TKekService : class, IEncryptionService
         {
             ArgumentHelpers.ThrowIfNull(services, nameof(services));
@@ -91,8 +93,7 @@ public static class EncryptionServiceExtensions
                         if (typeof(TDekService) == typeof(AesSivEncryptionService))
                             return (TDekService)(object)new AesSivEncryptionService(keyStore);
 
-                        throw new InvalidOperationException(
-                            $"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
+                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
                     });
 
                 // Register interface for DEK service
@@ -123,8 +124,7 @@ public static class EncryptionServiceExtensions
                         if (typeof(TKekService) == typeof(AesSivEncryptionService))
                             return (TKekService)(object)new AesSivEncryptionService(keyStore);
 
-                        throw new InvalidOperationException(
-                            $"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
+                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
                     });
             }
 
@@ -147,9 +147,12 @@ public static class EncryptionServiceExtensions
         /// <typeparam name="TKeyStore">The key store type</typeparam>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="configKeyStore">Function to configure the key store (will be registered with keyName)</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size for <see cref="AesGcmEncryptionService"/> when used as DEK/KEK.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size for <see cref="AesGcmEncryptionService" /> when used as DEK/KEK.</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore>(string keyName, Func<IServiceProvider, TKeyStore> configKeyStore, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
+        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore>(
+            string keyName,
+            Func<IServiceProvider, TKeyStore> configKeyStore,
+            AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TKeyStore : class, IKeyStore
             => services.AddEncryptionServiceKeyed<TKeyStore, AesGcmEncryptionService, AesGcmEncryptionService>(keyName, configKeyStore, aesGcmKeySize);
 
@@ -158,9 +161,12 @@ public static class EncryptionServiceExtensions
         /// <typeparam name="TEncryptionService">The encryption service type for both DEK and KEK operations</typeparam>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="configKeyStore">Function to configure the key store (will be registered with keyName)</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size when <typeparamref name="TEncryptionService"/> is <see cref="AesGcmEncryptionService"/>.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size when <typeparamref name="TEncryptionService" /> is <see cref="AesGcmEncryptionService" />.</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore, TEncryptionService>(string keyName, Func<IServiceProvider, TKeyStore> configKeyStore, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
+        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore, TEncryptionService>(
+            string keyName,
+            Func<IServiceProvider, TKeyStore> configKeyStore,
+            AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TKeyStore : class, IKeyStore where TEncryptionService : class, IEncryptionService
             => services.AddEncryptionServiceKeyed<TKeyStore, TEncryptionService, TEncryptionService>(keyName, configKeyStore, aesGcmKeySize);
 
@@ -170,9 +176,12 @@ public static class EncryptionServiceExtensions
         /// <typeparam name="TKekService">The Key Encryption Key (KEK) encryption service type</typeparam>
         /// <param name="keyName">The key name for the keyed encryption service</param>
         /// <param name="configKeyStore">Function to configure the key store (will be registered with keyName)</param>
-        /// <param name="aesGcmKeySize">AES-GCM key size when DEK or KEK service is <see cref="AesGcmEncryptionService"/>.</param>
+        /// <param name="aesGcmKeySize">AES-GCM key size when DEK or KEK service is <see cref="AesGcmEncryptionService" />.</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore, TDekService, TKekService>(string keyName, Func<IServiceProvider, TKeyStore> configKeyStore, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
+        public IServiceCollection AddEncryptionServiceKeyed<TKeyStore, TDekService, TKekService>(
+            string keyName,
+            Func<IServiceProvider, TKeyStore> configKeyStore,
+            AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TKeyStore : class, IKeyStore where TDekService : class, IEncryptionService where TKekService : class, IEncryptionService
         {
             ArgumentHelpers.ThrowIfNull(services, nameof(services));
@@ -209,8 +218,7 @@ public static class EncryptionServiceExtensions
                         if (typeof(TDekService) == typeof(AesSivEncryptionService))
                             return (TDekService)(object)new AesSivEncryptionService(keyStore);
 
-                        throw new InvalidOperationException(
-                            $"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
+                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
                     });
 
                 // Register interface for DEK service
@@ -241,8 +249,7 @@ public static class EncryptionServiceExtensions
                         if (typeof(TKekService) == typeof(AesSivEncryptionService))
                             return (TKekService)(object)new AesSivEncryptionService(keyStore);
 
-                        throw new InvalidOperationException(
-                            $"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
+                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
                     });
             }
 

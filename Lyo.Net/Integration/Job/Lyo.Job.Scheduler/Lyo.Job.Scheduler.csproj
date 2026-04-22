@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-            <Description>Job scheduling and execution service dispatching jobs via RabbitMQ message queue.</Description>
+        <Description>Job scheduling and execution service dispatching jobs via RabbitMQ message queue.</Description>
         <PackageTags>jobs scheduler job-management rabbitmq message-queue</PackageTags>
     </PropertyGroup>
 

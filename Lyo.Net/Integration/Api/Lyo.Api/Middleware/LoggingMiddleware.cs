@@ -33,13 +33,15 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
 
                 var error = apiErrorBuilder.Build();
                 context.Response.StatusCode = 500;
-                var json = JsonSerializer.Serialize(error,
+                var json = JsonSerializer.Serialize(
+                    error,
                     new JsonSerializerOptions {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                         WriteIndented = true,
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                         Converters = { new JsonStringEnumConverter() }
                     });
+
                 await context.Response.WriteAsync(json);
                 logger.LogWarning(error.ToString());
             }
@@ -51,13 +53,15 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
 
                 var error = apiErrorBuilder.Build();
                 context.Response.StatusCode = 500;
-                var json = JsonSerializer.Serialize(error,
+                var json = JsonSerializer.Serialize(
+                    error,
                     new JsonSerializerOptions {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                         WriteIndented = true,
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                         Converters = { new JsonStringEnumConverter() }
                     });
+
                 await context.Response.WriteAsync(json);
                 logger.LogError(ex, "Unmanaged exception caught");
             }

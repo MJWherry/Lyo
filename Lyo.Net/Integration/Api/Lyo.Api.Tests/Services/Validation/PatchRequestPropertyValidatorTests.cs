@@ -7,17 +7,6 @@ namespace Lyo.Api.Tests.Services.Validation;
 
 public sealed class PatchRequestPropertyValidatorTests
 {
-    private sealed class SampleEntity
-    {
-        public int Id { get; set; }
-
-        public string Name { get; set; } = "";
-
-        public int RequiredInt { get; set; }
-
-        public int? NullableInt { get; set; }
-    }
-
     [Fact]
     public void Validate_UnknownProperty_ReturnsInvalidField()
     {
@@ -61,5 +50,16 @@ public sealed class PatchRequestPropertyValidatorTests
 
         var issues = PatchRequestPropertyValidator.Validate<SampleEntity>(req);
         Assert.Empty(issues);
+    }
+
+    private sealed class SampleEntity
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; } = "";
+
+        public int RequiredInt { get; set; }
+
+        public int? NullableInt { get; set; }
     }
 }

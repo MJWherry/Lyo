@@ -102,11 +102,12 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Running);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Running);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -168,11 +169,12 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Queued);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Queued);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -199,12 +201,13 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Running);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-                ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Running);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                    ctx.Entity.StartedTimestamp = DateTime.UtcNow;
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -220,11 +223,12 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Queued);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Queued);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -240,12 +244,13 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Running);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-                ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Running);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                    ctx.Entity.StartedTimestamp = DateTime.UtcNow;
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -264,14 +269,15 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_createService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var runResult = await _createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            runReq, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Finished);
-                ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-                ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-                ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
-                ctx.Entity.Result = nameof(JobRunResultEnum.Success);
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                runReq, ctx => {
+                    ctx.Entity.Id = Guid.NewGuid();
+                    ctx.Entity.State = nameof(JobState.Finished);
+                    ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
+                    ctx.Entity.StartedTimestamp = DateTime.UtcNow;
+                    ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
+                    ctx.Entity.Result = nameof(JobRunResultEnum.Success);
+                }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;

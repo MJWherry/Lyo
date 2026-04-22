@@ -2,19 +2,14 @@
 
 using System.Linq.Expressions;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Client;
 using Lyo.Api.Mapping;
-using Lyo.Api.Services.Crud.Read;
-using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Audit.Postgres;
 using Lyo.Audit.Postgres.Database;
 using Lyo.Cache.Fusion;
-using Lyo.Comment;
 using Lyo.Comment.Postgres;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Compression;
 using Lyo.Csv;
@@ -25,7 +20,6 @@ using Lyo.Email.Postgres;
 using Lyo.Endato.Postgres;
 using Lyo.Espn.Fantasy.Football;
 using Lyo.Ffmpeg;
-using Lyo.Ffmpeg.Models;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
@@ -48,8 +42,6 @@ using Lyo.Profanity;
 using Lyo.QRCode;
 using Lyo.Query.Models.Common;
 using Lyo.Scheduler;
-using Lyo.Web.Automation.Selenium;
-using Lyo.Web.Automation.Selenium.Service;
 using Lyo.ShortUrl;
 using Lyo.ShortUrl.Postgres;
 using Lyo.Sms.Models;
@@ -62,9 +54,7 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
-using Lyo.Web.Automation;
-using Lyo.Web.Automation.Models;
-using Lyo.Web.Automation.Plan;
+using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
@@ -82,9 +72,8 @@ var host = Host.CreateDefaultBuilder(args)
                 c.SingleLine = true;
                 c.UseUtcTimestamp = true;
             })); //logging
-        
+
         services.AddSeleniumBrowserService();
-        
         services.AddIOTempService(); //temp file management
         services.AddPreviewService(); //preview HTML, images, etc. in browser
         services.AddLyoMetrics(); //metrics
@@ -198,7 +187,6 @@ var host = Host.CreateDefaultBuilder(args)
             }));
 
         services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/", TimezoneState = USState.PA });
-
         services.AddFusionCacheFromConfiguration(context.Configuration);
         services.AddLyoQueryServices();
         services.AddLyoDiscordBot<LyoDiscordBot>(context.Configuration);
@@ -209,11 +197,6 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
-
-
-
-
-
 var discordBotOpts = host.Services.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value;
 if (!string.IsNullOrWhiteSpace(discordBotOpts.Token)) {
     using var botCts = new CancellationTokenSource();
@@ -225,5 +208,4 @@ if (!string.IsNullOrWhiteSpace(discordBotOpts.Token)) {
     var bot = host.Services.GetRequiredService<LyoDiscordBot>();
     await bot.RunAsync(botCts.Token).ConfigureAwait(false);
     await host.StopAsync();
-    return;
 }

@@ -190,7 +190,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             YTolerance = existing?.YTolerance ?? 5.0,
             KeyValueLayout = existing?.KeyValueLayout ?? PdfKeyValueLayout.Horizontal,
             ColumnCount = existing?.ColumnCount ?? 1,
-            InferFormattingFlags = existing?.InferFormattingFlags ?? (PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline),
+            InferFormattingFlags = existing?.InferFormattingFlags ?? PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline,
             KeyValueInferDelimiters = existing?.KeyValueInferDelimiters ?? ":;",
             TableKeyColumnLabel = existing?.TableKeyColumnLabel
         };
@@ -242,20 +242,14 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         var knownKeys = result.KnownKeys.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var kvColumnCount = Math.Max(1, result.ColumnCount);
         if (knownKeys.Length == 0) {
-            var inferred = PdfService.InferKeyValuePairsFromFormatting(
-                words,
-                result.YTolerance,
-                kvColumnCount,
-                result.InferFormattingFlags,
-                DelimitersForInference(result));
+            var inferred = PdfService.InferKeyValuePairsFromFormatting(words, result.YTolerance, kvColumnCount, result.InferFormattingFlags, DelimitersForInference(result));
             result.KeyValuePairs = inferred;
             result.KnownKeys = [.. inferred.Keys];
-            result.ExtractedText = inferred.Count == 0
-                ? string.Empty
-                : string.Join(Environment.NewLine, inferred.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
+            result.ExtractedText = inferred.Count == 0 ? string.Empty : string.Join(Environment.NewLine, inferred.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
             result.ErrorMessage = inferred.Count == 0
                 ? "Could not infer keys with the selected inference options (bold, underline, punctuation delimiters); add keys manually or adjust tolerance/columns."
                 : null;
+
             return;
         }
 
@@ -353,7 +347,10 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             .Where(x => !string.IsNullOrWhiteSpace(x.Label))
             .ToArray() ?? [];
 
-    /// <summary>When <paramref name="tableKeyColumnLabel" /> is set, only that header is marked <see cref="ColumnHeader.IsKey" /> (overrides <c>*</c> on chips). When null/empty, callers may treat the first column as the key.</summary>
+    /// <summary>
+    /// When <paramref name="tableKeyColumnLabel" /> is set, only that header is marked <see cref="ColumnHeader.IsKey" /> (overrides <c>*</c> on chips). When null/empty, callers
+    /// may treat the first column as the key.
+    /// </summary>
     private static ColumnHeader[] ApplyTableKeyColumnOverride(ColumnHeader[] headers, string? tableKeyColumnLabel)
     {
         if (headers.Length == 0 || string.IsNullOrWhiteSpace(tableKeyColumnLabel))

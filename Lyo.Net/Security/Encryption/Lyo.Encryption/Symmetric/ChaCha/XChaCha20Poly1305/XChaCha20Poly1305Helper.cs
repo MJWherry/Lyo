@@ -1,6 +1,7 @@
+using System.Security.Cryptography;
+using Lyo.Encryption.Security;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Lyo.Encryption.Security;
 
 namespace Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 
@@ -15,17 +16,14 @@ internal static class XChaCha20Poly1305Helper
         var subkey = new byte[32];
         try {
             HChaCha20.Block(key, nonce24.AsSpan(0, 16), subkey);
-
             var nonce12 = new byte[12];
             nonce12[0] = 0;
             nonce12[1] = 0;
             nonce12[2] = 0;
             nonce12[3] = 0;
             Buffer.BlockCopy(nonce24, 16, nonce12, 4, 8);
-
             var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-            chacha.Init(true, new AeadParameters(new KeyParameter(subkey), 128, nonce12, null));
-
+            chacha.Init(true, new AeadParameters(new(subkey), 128, nonce12, null));
             var outBuf = new byte[chacha.GetOutputSize(plaintext.Length)];
             var tlen = 0;
             if (plaintext.Length > 0) {
@@ -35,7 +33,6 @@ internal static class XChaCha20Poly1305Helper
             }
 
             tlen += chacha.DoFinal(outBuf, tlen);
-
             var ciphertext = new byte[plaintext.Length];
             var tag = new byte[TagSize];
             if (plaintext.Length > 0)
@@ -49,30 +46,25 @@ internal static class XChaCha20Poly1305Helper
         }
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce24) =>
-        Encrypt(plaintext.AsSpan(), key, nonce24);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce24) => Encrypt(plaintext.AsSpan(), key, nonce24);
 
     public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce24)
     {
         var subkey = new byte[32];
         try {
             HChaCha20.Block(key, nonce24.AsSpan(0, 16), subkey);
-
             var nonce12 = new byte[12];
             nonce12[0] = 0;
             nonce12[1] = 0;
             nonce12[2] = 0;
             nonce12[3] = 0;
             Buffer.BlockCopy(nonce24, 16, nonce12, 4, 8);
-
             var combined = new byte[ciphertext.Length + TagSize];
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
-
             try {
                 var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-                chacha.Init(false, new AeadParameters(new KeyParameter(subkey), 128, nonce12, null));
-
+                chacha.Init(false, new AeadParameters(new(subkey), 128, nonce12, null));
                 var outBuf = new byte[chacha.GetOutputSize(combined.Length)];
                 var len = chacha.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
                 len += chacha.DoFinal(outBuf, len);
@@ -81,7 +73,7 @@ internal static class XChaCha20Poly1305Helper
                 return plaintext;
             }
             catch (InvalidCipherTextException ex) {
-                throw new System.Security.Cryptography.CryptographicException("XChaCha20-Poly1305 authentication failed.", ex);
+                throw new CryptographicException("XChaCha20-Poly1305 authentication failed.", ex);
             }
         }
         finally {

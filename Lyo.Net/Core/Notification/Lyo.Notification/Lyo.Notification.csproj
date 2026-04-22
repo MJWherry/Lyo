@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <RootNamespace>Lyo.Notification</RootNamespace>
-            <Description>Notification service interface and base implementation for sending notifications.</Description>
+        <Description>Notification service interface and base implementation for sending notifications.</Description>
         <PackageTags>notification notify alerts</PackageTags>
     </PropertyGroup>
 

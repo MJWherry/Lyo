@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Lyo.Api.Mapping;
+using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
@@ -38,19 +39,13 @@ public class QueryHistoryService<TContext>(
         var pagingErrors = QueryPagingBoundsValidator.Validate(query, queryOptions);
         if (pagingErrors.Count > 0) {
             Logger.LogWarning(
-                "History query paging validation failed for {EntityType}: {IssueCount} issue(s). {Details}",
-                typeof(TDbModel).Name,
-                pagingErrors.Count,
+                "History query paging validation failed for {EntityType}: {IssueCount} issue(s). {Details}", typeof(TDbModel).Name, pagingErrors.Count,
                 string.Join("; ", pagingErrors.Select(static e => $"{e.Code}: {e.Description}")));
 
             RecordCrudFailure(operation, typeof(TDbModel));
             return ResultFactory.QueryHistoryFailure<TResult>(
                 query,
-                LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery)
-                    .WithMessage("Invalid query.")
-                    .AddErrors(pagingErrors)
-                    .Build());
+                LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.").AddErrors(pagingErrors).Build());
         }
 
         try {
@@ -89,7 +84,7 @@ public class QueryHistoryService<TContext>(
         }
         catch (Exception ex) {
             RecordCrudFailure(operation, typeof(TDbModel));
-            return ResultFactory.QueryHistoryFailure<TResult>(query, LogAndReturnApiError(ex, "Query Error", Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery));
+            return ResultFactory.QueryHistoryFailure<TResult>(query, LogAndReturnApiError(ex, "Query Error", Constants.ApiErrorCodes.InvalidQuery));
         }
     }
 

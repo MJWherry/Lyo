@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Enums;
@@ -37,27 +38,6 @@ public class ExportService<TContext>(
     where TContext : DbContext
 {
     private static readonly (string, string)[] ExportTags = [("operation", "export")];
-
-    /// <summary>Export failed after an inner query error — root summary becomes a transport-specific message while preserving <see cref="LyoProblemDetails.Errors" />.</summary>
-    private static LyoProblemDetails AsExportFailure(LyoProblemDetails queryError)
-    {
-        if (queryError.Errors.Count <= 0) {
-            return LyoProblemDetailsBuilder
-                .CreateWithActivity()
-                .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery)
-                .WithMessage("Invalid export request.")
-                .AddApiError(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery, queryError.Detail, queryError.Stacktrace)
-                .Build();
-        }
-
-        var status = LyoProblemDetails.MapErrorCodeToHttpStatus(queryError.Errors[0].Code);
-        return queryError with {
-            Detail = "Invalid export request.",
-            Title = LyoProblemDetails.HttpStatusTitle(status),
-            Status = status
-        };
-
-    }
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
 
     public async Task<(Stream Stream, string ContentType, string FileName)> ExportAsync<TDbEntity, TResponse>(
@@ -69,17 +49,14 @@ public class ExportService<TContext>(
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.Query);
-
         var exportPagingErrors = QueryPagingBoundsValidator.Validate(request.Query, queryOptions, queryOptions.MaxExportSize);
         if (exportPagingErrors.Count > 0) {
             logger?.LogWarning(
-                "Export paging validation failed: {IssueCount} issue(s). {Details}",
-                exportPagingErrors.Count,
+                "Export paging validation failed: {IssueCount} issue(s). {Details}", exportPagingErrors.Count,
                 string.Join("; ", exportPagingErrors.Select(static e => $"{e.Code}: {e.Description}")));
 
-            var problem = LyoProblemDetailsBuilder
-                .CreateWithActivity()
-                .WithErrorCode(Lyo.Api.Models.Constants.ApiErrorCodes.InvalidQuery)
+            var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
                 .WithMessage("Invalid export request.")
                 .AddErrors(exportPagingErrors)
                 .Build();
@@ -123,8 +100,7 @@ public class ExportService<TContext>(
                 var projectedResult = await queryService.QueryProjected<TDbEntity>(query, defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
                 if (!projectedResult.IsSuccess) {
                     _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
-                    var err = projectedResult.Error
-                        ?? LyoProblemDetails.FromCode(Lyo.Api.Models.Constants.ApiErrorCodes.Unknown, "Export query failed.");
+                    var err = projectedResult.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");
                     logger?.LogError("Export query failed: {Error}", err);
                     throw new ApiErrorException(AsExportFailure(err));
                 }
@@ -139,7 +115,7 @@ public class ExportService<TContext>(
             var result = await queryService.Query<TDbEntity, TResponse>(ToQueryReq(query), defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
             if (!result.IsSuccess) {
                 _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
-                var err = result.Error ?? LyoProblemDetails.FromCode(Lyo.Api.Models.Constants.ApiErrorCodes.Unknown, "Export query failed.");
+                var err = result.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");
                 logger?.LogError("Export query failed: {Error}", err);
                 throw new ApiErrorException(AsExportFailure(err));
             }
@@ -155,6 +131,21 @@ public class ExportService<TContext>(
             _metrics.RecordError("api.export.duration", ex, ExportTags);
             throw;
         }
+    }
+
+    /// <summary>Export failed after an inner query error — root summary becomes a transport-specific message while preserving <see cref="LyoProblemDetails.Errors" />.</summary>
+    private static LyoProblemDetails AsExportFailure(LyoProblemDetails queryError)
+    {
+        if (queryError.Errors.Count <= 0) {
+            return LyoProblemDetailsBuilder.CreateWithActivity()
+                .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                .WithMessage("Invalid export request.")
+                .AddApiError(Constants.ApiErrorCodes.InvalidQuery, queryError.Detail, queryError.Stacktrace)
+                .Build();
+        }
+
+        var status = LyoProblemDetails.MapErrorCodeToHttpStatus(queryError.Errors[0].Code);
+        return queryError with { Detail = "Invalid export request.", Title = LyoProblemDetails.HttpStatusTitle(status), Status = status };
     }
 
     private static IReadOnlyList<(string Header, string Value)>? GetExportColumnRows(ExportRequest request)
@@ -374,10 +365,7 @@ public class ExportService<TContext>(
         => new() {
             Start = source.Start,
             Amount = source.Amount,
-            Options = new() {
-                TotalCountMode = source.Options.TotalCountMode,
-                IncludeFilterMode = source.Options.IncludeFilterMode
-            },
+            Options = new() { TotalCountMode = source.Options.TotalCountMode, IncludeFilterMode = source.Options.IncludeFilterMode },
             WhereClause = source.WhereClause,
             Include = [..source.Include],
             Keys = [..source.Keys.Select(k => k.ToArray())],

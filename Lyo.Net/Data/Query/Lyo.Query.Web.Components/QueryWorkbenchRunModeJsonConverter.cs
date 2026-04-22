@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Lyo.Query.Web.Components;
 
-/// <summary>Accepts legacy <c>QuerySelect</c> string/ordinal from persisted workbench JSON after the route was renamed to <see cref="QueryWorkbenchRunMode.QueryProject"/>.</summary>
+/// <summary>Accepts legacy <c>QuerySelect</c> string/ordinal from persisted workbench JSON after the route was renamed to <see cref="QueryWorkbenchRunMode.QueryProject" />.</summary>
 public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWorkbenchRunMode>
 {
     public override QueryWorkbenchRunMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -18,8 +18,7 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
                     return QueryWorkbenchRunMode.Query;
 
                 // Legacy persisted name before /QueryProject
-                if (s.Equals("QuerySelect", StringComparison.OrdinalIgnoreCase)
-                    || s.Equals("QueryProject", StringComparison.OrdinalIgnoreCase))
+                if (s.Equals("QuerySelect", StringComparison.OrdinalIgnoreCase) || s.Equals("QueryProject", StringComparison.OrdinalIgnoreCase))
                     return QueryWorkbenchRunMode.QueryProject;
 
                 break;
@@ -38,8 +37,9 @@ public sealed class QueryWorkbenchRunModeJsonConverter : JsonConverter<QueryWork
         var name = value switch {
             QueryWorkbenchRunMode.Query => nameof(QueryWorkbenchRunMode.Query),
             QueryWorkbenchRunMode.QueryProject => nameof(QueryWorkbenchRunMode.QueryProject),
-            _ => nameof(QueryWorkbenchRunMode.Query)
+            var _ => nameof(QueryWorkbenchRunMode.Query)
         };
+
         writer.WriteStringValue(name);
     }
 }

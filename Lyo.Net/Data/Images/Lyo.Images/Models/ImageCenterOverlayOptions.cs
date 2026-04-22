@@ -12,6 +12,9 @@ public sealed class ImageCenterOverlayOptions
     /// <summary>Border/fill color in <c>#RRGGBB</c> or <c>#RGB</c> form (used for pad behind overlay and stroke).</summary>
     public string BorderColorHex { get; set; } = "#FFFFFF";
 
-    /// <summary>If set (positive), the background image is resized to this square (pixels) before compositing. Must be the actual target canvas size—do not pass unrelated scales (e.g. QR “pixels per module”).</summary>
+    /// <summary>
+    /// If set (positive), the background image is resized to this square (pixels) before compositing. Must be the actual target canvas size—do not pass unrelated scales (e.g. QR
+    /// “pixels per module”).
+    /// </summary>
     public int? BackgroundSquareSize { get; set; }
 }

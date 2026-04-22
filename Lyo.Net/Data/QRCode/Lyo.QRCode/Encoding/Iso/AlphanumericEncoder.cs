@@ -15,7 +15,7 @@ internal sealed partial class QrIsoEncoder
             => [
 #else
         internal static readonly byte[] _map = [
-#endif 
+#endif
                 // 0..31
                 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
                 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,

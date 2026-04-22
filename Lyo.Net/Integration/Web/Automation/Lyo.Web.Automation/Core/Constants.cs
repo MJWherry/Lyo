@@ -4,8 +4,8 @@ namespace Lyo.Web.Automation.Core;
 public static class Constants
 {
     /// <summary>
-    /// Base metric names (logical contract). Implementations map <see cref="Metrics" /> member names to
-    /// provider-specific series (e.g. Selenium: <c>lyo.webautomation.selenium.*</c>, Playwright: <c>lyo.webautomation.playwright.*</c>) via each browser’s metric dictionary.
+    /// Base metric names (logical contract). Implementations map <see cref="Metrics" /> member names to provider-specific series (e.g. Selenium:
+    /// <c>lyo.webautomation.selenium.*</c>, Playwright: <c>lyo.webautomation.playwright.*</c>) via each browser’s metric dictionary.
     /// </summary>
     public static class Metrics
     {

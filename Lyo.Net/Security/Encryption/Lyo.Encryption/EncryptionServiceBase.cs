@@ -21,6 +21,9 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// <summary>The options used to configure this encryption service.</summary>
     protected readonly EncryptionServiceOptions Options;
 
+    /// <summary>Algorithm for stream headers and discovery; matches the stream format algorithm byte.</summary>
+    public EncryptionAlgorithm AlgorithmKind => (EncryptionAlgorithm)GetAlgorithmId();
+
     /// <summary>Initializes a new instance of EncryptionServiceBase.</summary>
     /// <param name="options">The options to configure this encryption service. Must not be null.</param>
     /// <param name="keyStore">The key store to use for retrieving encryption keys. Can be null if service doesn't use KeyStore.</param>
@@ -44,8 +47,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     public abstract byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null);
 
     /// <inheritdoc />
-    public virtual byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
-        => Encrypt(plaintext.ToArray(), keyId, key);
+    public virtual byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null) => Encrypt(plaintext.ToArray(), keyId, key);
 
     /// <inheritdoc />
     public virtual byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null)
@@ -227,9 +229,6 @@ public abstract class EncryptionServiceBase : IEncryptionService
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
         return outputStream.ToArray();
     }
-
-    /// <summary>Algorithm for stream headers and discovery; matches the stream format algorithm byte.</summary>
-    public EncryptionAlgorithm AlgorithmKind => (EncryptionAlgorithm)GetAlgorithmId();
 
     /// <summary>Gets the algorithm identifier for this encryption service. Used in stream format header for versioning and compatibility.</summary>
     protected virtual byte GetAlgorithmId() => 0; // Default, override in derived classes

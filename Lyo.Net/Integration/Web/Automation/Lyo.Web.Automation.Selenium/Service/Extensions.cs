@@ -1,6 +1,5 @@
 using Lyo.Exceptions;
 using Lyo.Metrics;
-using Lyo.Web.Automation;
 using Lyo.Web.Automation.Selenium.Browser;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +30,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Registers <see cref="SeleniumBrowserOptions" />, scoped <see cref="SeleniumBrowser" />, and singleton <see cref="ISeleniumBrowserService" /> for session-based usage (see <see cref="ISeleniumBrowserService.CreateSession" />).
+    /// Registers <see cref="SeleniumBrowserOptions" />, scoped <see cref="SeleniumBrowser" />, and singleton <see cref="ISeleniumBrowserService" /> for session-based usage (see
+    /// <see cref="ISeleniumBrowserService.CreateSession" />).
     /// </summary>
     public static IServiceCollection AddSeleniumBrowserService(this IServiceCollection services, Action<SeleniumBrowserOptions>? configure = null)
     {
@@ -52,23 +52,19 @@ public static class Extensions
         return services;
     }
 
-    /// <summary>
-    /// Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no <c>IOptions&lt;T&gt;</c>).
-    /// </summary>
+    /// <summary>Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no <c>IOptions&lt;T&gt;</c>).</summary>
     /// <param name="configSectionName">Defaults to <see cref="SeleniumBrowserOptions.SectionName" />.</param>
-    public static IServiceCollection AddSeleniumBrowserServiceFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string? configSectionName = null)
+    public static IServiceCollection AddSeleniumBrowserServiceFromConfiguration(this IServiceCollection services, IConfiguration configuration, string? configSectionName = null)
     {
         ArgumentHelpers.ThrowIfNull(services, nameof(services));
         ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
         var sectionName = string.IsNullOrWhiteSpace(configSectionName) ? SeleniumBrowserOptions.SectionName : configSectionName!;
         services.AddSingleton(_ => {
             var o = new SeleniumBrowserOptions();
-            ConfigurationBinder.Bind(configuration.GetSection(sectionName), o);
+            configuration.GetSection(sectionName).Bind(o);
             return o;
         });
+
         services.AddScoped(RegisterSeleniumBrowser);
         RegisterSeleniumBrowserServiceSingleton(services);
         return services;
@@ -102,16 +98,13 @@ public static class Extensions
             configure?.Invoke(options);
             return options;
         });
+
         services.AddScoped(RegisterSeleniumBrowser);
     }
 
     private static void RegisterSeleniumBrowserServiceSingleton(IServiceCollection services)
-    {
-        services.AddSingleton<ISeleniumBrowserService>(sp => new SeleniumBrowserService(
-            sp.GetRequiredService<SeleniumBrowserOptions>(),
-            sp.GetService<ILoggerFactory>(),
-            sp.GetService<IMetrics>()));
-    }
+        => services.AddSingleton<ISeleniumBrowserService>(sp => new SeleniumBrowserService(
+            sp.GetRequiredService<SeleniumBrowserOptions>(), sp.GetService<ILoggerFactory>(), sp.GetService<IMetrics>()));
 
     private static SeleniumBrowserOptions CreateOptionsFromBuilder(Action<SeleniumBrowserOptionsBuilder> configure)
     {

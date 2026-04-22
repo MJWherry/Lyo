@@ -53,18 +53,20 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key = $"both-getorset-async-{implementation}";
         var expectedValue = "cached-value";
         var result = await service.GetOrSetAsync<string>(
-            key, async ct => {
-                await Task.Delay(5, ct).ConfigureAwait(false);
-                return expectedValue;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(5, ct).ConfigureAwait(false);
+                    return expectedValue;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         result.ShouldBe(expectedValue);
         var callCount = 0;
         var cachedResult = await service.GetOrSetAsync<string>(
-            key, async ct => {
-                callCount++;
-                return "different";
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    callCount++;
+                    return "different";
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0);

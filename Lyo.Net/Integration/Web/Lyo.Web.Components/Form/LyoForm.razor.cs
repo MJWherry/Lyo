@@ -1,13 +1,9 @@
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Web.Components.Form;
 
 public partial class LyoForm<TModel>
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     public enum ChangeType
     {
         Create,
@@ -17,6 +13,9 @@ public partial class LyoForm<TModel>
 
     private readonly Dictionary<string, PropertyChange> _changes = new();
     private readonly List<OperationChange> _operations = [];
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Inject]
     private IDialogService DialogService { get; set; } = default!;

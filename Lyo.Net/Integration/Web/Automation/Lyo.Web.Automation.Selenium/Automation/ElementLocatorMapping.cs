@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
 using OpenQA.Selenium;
 
@@ -20,7 +19,7 @@ internal static class ElementLocatorMapping
             ElementLocatorKind.PartialLinkText => By.PartialLinkText(locator.Value),
             ElementLocatorKind.ClassName => By.ClassName(locator.Value),
             ElementLocatorKind.TagName => By.TagName(locator.Value),
-            _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, "Unknown locator kind.")
+            var _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, "Unknown locator kind.")
         };
     }
 }

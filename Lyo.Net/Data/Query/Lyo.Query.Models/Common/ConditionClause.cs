@@ -8,7 +8,7 @@ namespace Lyo.Query.Models.Common;
 public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 {
     public string Field { get; set; }
-    
+
     public ComparisonOperatorEnum Comparison { get; set; }
 
     public object? Value { get; set; }

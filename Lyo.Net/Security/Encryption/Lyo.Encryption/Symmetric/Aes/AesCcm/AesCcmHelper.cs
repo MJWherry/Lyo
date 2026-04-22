@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
@@ -23,7 +24,7 @@ internal static class AesCcmHelper
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)
     {
         var cipher = new CcmBlockCipher(new AesEngine());
-        cipher.Init(true, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+        cipher.Init(true, new AeadParameters(new(key), 128, nonce, null));
         byte[] packed;
         if (plaintext.Length == 0)
             packed = cipher.ProcessPacket([], 0, 0);
@@ -42,8 +43,7 @@ internal static class AesCcmHelper
         return (ciphertext, tag);
     }
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) =>
-        Encrypt(plaintext.AsSpan(), key, nonce);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);
 
     public static byte[] Decrypt(byte[] ciphertext, byte[] tag, byte[] key, byte[] nonce)
     {
@@ -51,13 +51,12 @@ internal static class AesCcmHelper
             var combined = new byte[ciphertext.Length + TagSize];
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
-
             var cipher = new CcmBlockCipher(new AesEngine());
-            cipher.Init(false, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+            cipher.Init(false, new AeadParameters(new(key), 128, nonce, null));
             return cipher.ProcessPacket(combined, 0, combined.Length);
         }
         catch (InvalidCipherTextException ex) {
-            throw new System.Security.Cryptography.CryptographicException("AES-CCM authentication failed.", ex);
+            throw new CryptographicException("AES-CCM authentication failed.", ex);
         }
     }
 }

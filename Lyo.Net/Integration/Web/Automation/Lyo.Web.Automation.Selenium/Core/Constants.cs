@@ -1,5 +1,3 @@
-using Lyo.Web.Automation.Core;
-
 namespace Lyo.Web.Automation.Selenium.Core;
 
 /// <summary>Consolidated constants for the WebAutomation.Selenium library.</summary>

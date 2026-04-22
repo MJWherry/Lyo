@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.Metrics;
@@ -13,15 +14,18 @@ namespace Lyo.IO.Temp.Models;
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempSession : IIOTempSession
 {
+    private const int DisposeRetryCount = 3;
+    private const int DisposeRetryDelayMs = 150;
+
     private static long _nameSequence;
     private readonly List<string> _directories = [];
     private readonly List<string> _files = [];
     private readonly ILogger<IOTempSession> _logger;
     private readonly IMetrics _metrics;
     private readonly Action<string>? _onDispose;
-
     private readonly IOTempSessionOptions _options;
     private bool _disposed;
+    private long _totalBytesUsed;
 
     public IOTempSession(IOTempSessionOptions? options = null, ILogger<IOTempSession>? logger = null, IMetrics? metrics = null, Action<string>? onDispose = null)
     {
@@ -75,9 +79,12 @@ public sealed class IOTempSession : IIOTempSession
         ArgumentHelpers.ThrowIfNull(text, nameof(text));
         var stopwatch = Stopwatch.StartNew();
         try {
+            var sizeBytes = Encoding.UTF8.GetByteCount(text);
+            ValidateFileSize(sizeBytes);
             var path = ResolvePath(null, false);
             File.WriteAllText(path, text);
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, sizeBytes);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -99,6 +106,7 @@ public sealed class IOTempSession : IIOTempSession
             var path = ResolvePath(name, false);
             File.WriteAllBytes(path, data.ToArray());
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, data.Length);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -123,6 +131,7 @@ public sealed class IOTempSession : IIOTempSession
             using var fs = File.Create(path);
             data.CopyTo(fs);
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, data.Length);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -141,6 +150,8 @@ public sealed class IOTempSession : IIOTempSession
         ArgumentHelpers.ThrowIfNull(text, nameof(text));
         var stopwatch = Stopwatch.StartNew();
         try {
+            var sizeBytes = Encoding.UTF8.GetByteCount(text);
+            ValidateFileSize(sizeBytes);
             var path = ResolvePath(null, false);
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             await File.WriteAllTextAsync(path, text, ct);
@@ -153,6 +164,7 @@ public sealed class IOTempSession : IIOTempSession
                 .ConfigureAwait(false);
 #endif
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, sizeBytes);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -183,6 +195,7 @@ public sealed class IOTempSession : IIOTempSession
                 .ConfigureAwait(false);
 #endif
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, data.Length);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -212,6 +225,7 @@ public sealed class IOTempSession : IIOTempSession
             await data.CopyToAsync(fs, 81920, ct).ConfigureAwait(false);
 #endif
             _files.Add(path);
+            Interlocked.Add(ref _totalBytesUsed, data.Length);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateFileSuccess);
             return path;
@@ -271,15 +285,12 @@ public sealed class IOTempSession : IIOTempSession
         _disposed = true;
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (Directory.Exists(SessionDirectory))
-                Directory.Delete(SessionDirectory, true);
-
+            DeleteDirectoryWithRetry(SessionDirectory, _logger, DisposeRetryCount, DisposeRetryDelayMs);
             _metrics.RecordTiming(Constants.Metrics.DisposeSessionDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.DisposeSessionSuccess);
         }
         catch (Exception ex) {
-            //todo possibly try a poll approach here
-            _logger.LogError(ex, "Couldn't delete session directory {SessionDirectory} during Dispose. This may lead to orphaned temp files.", SessionDirectory);
+            _logger.LogError(ex, "Couldn't delete session directory {SessionDirectory} after {Retries} attempts during Dispose. Directory may be orphaned.", SessionDirectory, DisposeRetryCount);
             _metrics.RecordError(Constants.Metrics.DisposeSessionDuration, ex);
             _metrics.IncrementCounter(Constants.Metrics.DisposeSessionFailure);
         }
@@ -288,30 +299,15 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        var stopwatch = Stopwatch.StartNew();
-        await Task.Run(() => {
-            try {
-                if (Directory.Exists(SessionDirectory))
-                    Directory.Delete(SessionDirectory, true);
-
-                _metrics.RecordTiming(Constants.Metrics.DisposeSessionDuration, stopwatch.Elapsed);
-                _metrics.IncrementCounter(Constants.Metrics.DisposeSessionSuccess);
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Couldn't delete session directory {SessionDirectory} during DisposeAsync. This may lead to orphaned temp files.", SessionDirectory);
-                _metrics.RecordError(Constants.Metrics.DisposeSessionDuration, ex);
-                _metrics.IncrementCounter(Constants.Metrics.DisposeSessionFailure);
-            }
-            finally {
-                _onDispose?.Invoke(SessionDirectory);
-            }
-        });
+        // Directory.Delete has no true async equivalent; calling Dispose() is the correct pattern.
+        Dispose();
+#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        return ValueTask.CompletedTask;
+#else
+        return new ValueTask(Task.CompletedTask);
+#endif
     }
 
 #endregion
@@ -367,12 +363,88 @@ public sealed class IOTempSession : IIOTempSession
 
     private void ValidateFileSize(long sizeBytes)
     {
-        if (sizeBytes <= _options.MaxFileSizeBytes)
+        // Per-file hard limit: no overflow strategy can free space for a single oversized file.
+        if (_options.MaxFileSizeBytes.HasValue && sizeBytes > _options.MaxFileSizeBytes.Value)
+            throw new InvalidOperationException(
+                $"File size {sizeBytes:N0} bytes exceeds the per-file limit of {_options.MaxFileSizeBytes.Value:N0} bytes.");
+
+        if (_options.MaxTotalSizeBytes == null)
             return;
 
-        OperationHelpers.ThrowIf(
-            _options.OverflowStrategy == TempOverflowStrategy.ThrowException,
-            $"File size {sizeBytes} bytes exceeds the maximum allowed size of {_options.MaxFileSizeBytes} bytes.");
+        var projectedTotal = Interlocked.Read(ref _totalBytesUsed) + sizeBytes;
+        if (projectedTotal <= _options.MaxTotalSizeBytes.Value)
+            return;
+
+        switch (_options.OverflowStrategy) {
+            case TempOverflowStrategy.ThrowException:
+                throw new InvalidOperationException(
+                    $"Adding {sizeBytes:N0} bytes would exceed session total limit of {_options.MaxTotalSizeBytes.Value:N0} bytes (current: {Interlocked.Read(ref _totalBytesUsed):N0} bytes).");
+            case TempOverflowStrategy.DeleteOldest:
+            case TempOverflowStrategy.DeleteLargest:
+                FreeTotalSpaceFor(sizeBytes);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(_options.OverflowStrategy), _options.OverflowStrategy, null);
+        }
+    }
+
+    private void FreeTotalSpaceFor(long requiredBytes)
+    {
+        var needed = Interlocked.Read(ref _totalBytesUsed) + requiredBytes - _options.MaxTotalSizeBytes!.Value;
+        if (needed <= 0)
+            return;
+
+        var sessionDir = new DirectoryInfo(SessionDirectory);
+        if (!sessionDir.Exists)
+            return;
+
+        var candidates = _options.OverflowStrategy == TempOverflowStrategy.DeleteOldest
+            ? sessionDir.EnumerateFiles().OrderBy(f => f.CreationTimeUtc).ToList()
+            : sessionDir.EnumerateFiles().OrderByDescending(f => f.Length).ToList();
+
+        var freed = 0L;
+        foreach (var file in candidates) {
+            if (freed >= needed)
+                break;
+
+            var fileSize = file.Length;
+            try {
+                file.Delete();
+                _files.Remove(file.FullName);
+                Interlocked.Add(ref _totalBytesUsed, -fileSize);
+                freed += fileSize;
+                _logger.LogInformation("Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", file.FullName, fileSize, SessionDirectory);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to delete {FilePath} during overflow cleanup in session {SessionDirectory}", file.FullName, SessionDirectory);
+            }
+        }
+
+        if (freed < needed)
+            throw new InvalidOperationException(
+                $"Could not free sufficient space: needed {needed:N0} bytes freed, freed {freed:N0} bytes. Session total limit: {_options.MaxTotalSizeBytes.Value:N0} bytes.");
+    }
+
+    private static void DeleteDirectoryWithRetry(string path, ILogger logger, int retries, int retryDelayMs)
+    {
+        Exception? lastEx = null;
+        for (var attempt = 1; attempt <= retries; attempt++) {
+            try {
+                if (Directory.Exists(path))
+                    Directory.Delete(path, true);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                lastEx = ex;
+                if (attempt < retries) {
+                    logger.LogDebug("Delete attempt {Attempt}/{Retries} failed for {Path}, retrying in {Delay}ms", attempt, retries, path, retryDelayMs);
+                    Thread.Sleep(retryDelayMs);
+                }
+            }
+        }
+
+        if (lastEx != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(lastEx).Throw();
     }
 
     private void ThrowIfDisposed()

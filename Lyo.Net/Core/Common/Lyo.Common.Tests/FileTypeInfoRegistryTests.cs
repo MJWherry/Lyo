@@ -41,8 +41,7 @@ public class FileTypeInfoRegistryTests
     public void FileTypeInfo_FromExtension_LyoTwoKeyEnvelope_MapsMultipleExtensions()
     {
         Assert.Same(FileTypeInfo.LyoTwoKeyEnvelope, FileTypeInfo.FromExtension(FileTypeInfo.LyoTwoKeyEnvelope.DefaultExtension));
-        Assert.Same(FileTypeInfo.LyoTwoKeyEnvelope, FileTypeInfo.FromExtension(
-            FileTypeInfo.LyoChaCha20Poly1305.DefaultExtension + FileTypeInfo.TwoKeyEnvelopeSuffix));
+        Assert.Same(FileTypeInfo.LyoTwoKeyEnvelope, FileTypeInfo.FromExtension(FileTypeInfo.LyoChaCha20Poly1305.DefaultExtension + FileTypeInfo.TwoKeyEnvelopeSuffix));
     }
 
     [Fact]

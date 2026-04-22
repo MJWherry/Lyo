@@ -2,9 +2,13 @@
 
 This is a continual work-in-progress personal development workspace; it also serves as my portfolio for .NET libraries and related tooling.
 
-This repository is a .NET-focused toolkit of libraries and apps for business data: APIs with a rich query model, durable file handling, document parsing, and cross-cutting infrastructure (security, compression, observability, and more). Most code lives under [`Lyo.Net/`](Lyo.Net/).
+This repository is a .NET-focused toolkit of libraries and apps for business data: APIs with a rich query model, durable file handling, document parsing, and cross-cutting
+infrastructure (security, compression, observability, and more). Most code lives under [`Lyo.Net/`](Lyo.Net/).
 
-**Note:** Generative AI tools were used to help build and maintain parts of this codebase where scale made that practical—notably complex numerical packages such as **Mathematics** and **Scientific** (including their function libraries), **documentation** (including long-form package READMEs), **test** projects and libraries, and **some JavaScript** (for example in load-testing scripts, Blazor companion scripts, or other web-related assets). Human review still applies; treat those areas with the same scrutiny you would for any large or subtle code.
+**Note:** Generative AI tools were used to help build and maintain parts of this codebase where scale made that practical—notably complex numerical packages such as **Mathematics**
+and **Scientific** (including their function libraries), **documentation** (including long-form package READMEs), **test** projects and libraries, and **some JavaScript** (for
+example in load-testing scripts, Blazor companion scripts, or other web-related assets). Human review still applies; treat those areas with the same scrutiny you would for any
+large or subtle code.
 
 ---
 
@@ -12,33 +16,34 @@ This repository is a .NET-focused toolkit of libraries and apps for business dat
 
 These are the areas that tend to anchor product work; each links to deeper docs where they exist in-tree.
 
-| Area | What it is | Documentation |
-|------|----------------|---------------|
-| **API & query** | Minimal APIs and CRUD built on EF Core, plus a **Query** engine (filters, includes, **projection** with optional **computed columns**, **`entityTypes`** metadata on projected responses, bulk operations, exports). | [Lyo.Api](Lyo.Net/Integration/Api/Lyo.Api/README.md): RESTful minimal APIs, CRUD, query and projection. |
-| **Query client UI** | Blazor components (e.g. data grid) that speak the same query shapes as the API. | Covered in the Lyo.Api README under *Blazor Components*; [Lyo.Web.Components](Lyo.Net/Integration/Web/Lyo.Web.Components/): Blazor UI aligned with API query shapes. |
-| **File storage** | Pluggable storage with optional compression and encryption, metadata, streaming, and duplicate handling. | [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): abstractions, metadata, compression, encryption. |
-| **Cloud blob backends** | AWS S3–compatible and Azure Blob implementations for the file storage abstractions. | [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage · [Lyo.FileStorage.Azure](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Azure/README.md): Azure Blob |
-| **PDF** | Load PDFs and extract text via **`IPdfService`** (`PdfService`): words/lines, bounding boxes, key–value and table-style extraction, merges. Models in `Lyo.Pdf.Models`; **Blazor PDF annotator** (draw regions → `PdfBoundingBox`) ships inside **`Lyo.Pdf.Web.Components`**, not as a separate library. | [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): PDF service, loading, extraction, and how to pair with the annotator. UI: [`Lyo.Pdf.Web.Components`](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/) (`PdfAnnotator/`). |
-| **Encryption** | Authenticated encryption, envelope/two-key patterns, keystore integration. | [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md): authenticated encryption, envelope/two-key, key management. |
-| **Compression** | Multiple algorithms, streams/files, size limits and bomb protections. | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md): algorithms, streams/files, size limits and bomb guards. |
+| Area                    | What it is                                                                                                                                                                                                                                                                                               | Documentation                                                                                                                                                                                                    |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **API & query**         | Minimal APIs and CRUD built on EF Core, plus a **Query** engine (filters, includes, **projection** with optional **computed columns**, **`entityTypes`** metadata on projected responses, bulk operations, exports).                                                                                     | [Lyo.Api](Lyo.Net/Integration/Api/Lyo.Api/README.md): RESTful minimal APIs, CRUD, query and projection.                                                                                                          |
+| **Query client UI**     | Blazor components (e.g. data grid) that speak the same query shapes as the API.                                                                                                                                                                                                                          | Covered in the Lyo.Api README under *Blazor Components*; [Lyo.Web.Components](Lyo.Net/Integration/Web/Lyo.Web.Components/): Blazor UI aligned with API query shapes.                                             |
+| **File storage**        | Pluggable storage with optional compression and encryption, metadata, streaming, and duplicate handling.                                                                                                                                                                                                 | [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): abstractions, metadata, compression, encryption.                                                                                          |
+| **Cloud blob backends** | AWS S3–compatible and Azure Blob implementations for the file storage abstractions.                                                                                                                                                                                                                      | [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage · [Lyo.FileStorage.Azure](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Azure/README.md): Azure Blob               |
+| **PDF**                 | Load PDFs and extract text via **`IPdfService`** (`PdfService`): words/lines, bounding boxes, key–value and table-style extraction, merges. Models in `Lyo.Pdf.Models`; **Blazor PDF annotator** (draw regions → `PdfBoundingBox`) ships inside **`Lyo.Pdf.Web.Components`**, not as a separate library. | [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): PDF service, loading, extraction, and how to pair with the annotator. UI: [`Lyo.Pdf.Web.Components`](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/) (`PdfAnnotator/`). |
+| **Encryption**          | Authenticated encryption, envelope/two-key patterns, keystore integration.                                                                                                                                                                                                                               | [Lyo.Encryption](Lyo.Net/Security/Encryption/README.md): authenticated encryption, envelope/two-key, key management.                                                                                             |
+| **Compression**         | Multiple algorithms, streams/files, size limits and bomb protections.                                                                                                                                                                                                                                    | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md): algorithms, streams/files, size limits and bomb guards.                                                                                   |
 
 ---
 
 ## Repository layout (high level)
 
-| Path | Comment |
-|------|--------|
-| [`Lyo.Net/`](Lyo.Net/) | Main .NET solution root: shared props, solution file, and libraries grouped by the subfolders below. |
-| [`Lyo.Net/Core/`](Lyo.Net/Core/) | Cross-cutting primitives: validation, metrics, resilience, exceptions, common types, math/science, people models, geolocation, webhooks, locks, scheduling, streams, date/time, audit, change tracking, health—domain-agnostic building blocks for the rest of the stack. |
-| [`Lyo.Net/Data/`](Lyo.Net/Data/) | Data handling and persistence helpers: file storage (local/S3/Azure), compression, CSV/XLSX/PDF, images, Postgres migration helpers, QR codes, file-system watching, temporary IO, and related parsers/processors. |
-| [`Lyo.Net/Features/`](Lyo.Net/Features/) | Composable product features (often EF-backed): comments, notes, ratings, tags, typed config, contact forms, profanity filter, short URLs—meant to plug into host apps alongside Core and Data. |
-| [`Lyo.Net/Integration/`](Lyo.Net/Integration/) | Application-facing integration: minimal APIs and query (`Lyo.Api`), Blazor web components and reporting, **browser automation** ([`Lyo.Web.Automation`](Lyo.Net/Integration/Web/Automation/README.md): Selenium / Playwright, JSON plans, background jobs, Discord bot—wires Core/Data/Features into runnable surfaces. |
-| [`Lyo.Net/Security/`](Lyo.Net/Security/) | Cryptography (`Lyo.Encryption`) and encryption benchmarks. |
-| [`Lyo.Net/Communication/`](Lyo.Net/Communication/) | Messaging and media delivery: SMTP email, SMS (including Twilio), and text-to-speech providers. |
-| [`Lyo.Net/Tools/`](Lyo.Net/Tools/) | Host apps and utilities (e.g. gateway, test API/console) for trying components end-to-end. |
-| [`k6/`](k6/) | Load-testing scripts; see [k6 framework: Person Query API](k6/framework-person/README.md) and [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md). |
+| Path                                               | Comment                                                                                                                                                                                                                                                                                                                 |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`Lyo.Net/`](Lyo.Net/)                             | Main .NET solution root: shared props, solution file, and libraries grouped by the subfolders below.                                                                                                                                                                                                                    |
+| [`Lyo.Net/Core/`](Lyo.Net/Core/)                   | Cross-cutting primitives: validation, metrics, resilience, exceptions, common types, math/science, people models, geolocation, webhooks, locks, scheduling, streams, date/time, audit, change tracking, health—domain-agnostic building blocks for the rest of the stack.                                               |
+| [`Lyo.Net/Data/`](Lyo.Net/Data/)                   | Data handling and persistence helpers: file storage (local/S3/Azure), compression, CSV/XLSX/PDF, images, Postgres migration helpers, QR codes, file-system watching, temporary IO, and related parsers/processors.                                                                                                      |
+| [`Lyo.Net/Features/`](Lyo.Net/Features/)           | Composable product features (often EF-backed): comments, notes, ratings, tags, typed config, contact forms, profanity filter, short URLs—meant to plug into host apps alongside Core and Data.                                                                                                                          |
+| [`Lyo.Net/Integration/`](Lyo.Net/Integration/)     | Application-facing integration: minimal APIs and query (`Lyo.Api`), Blazor web components and reporting, **browser automation** ([`Lyo.Web.Automation`](Lyo.Net/Integration/Web/Automation/README.md): Selenium / Playwright, JSON plans, background jobs, Discord bot—wires Core/Data/Features into runnable surfaces. |
+| [`Lyo.Net/Security/`](Lyo.Net/Security/)           | Cryptography (`Lyo.Encryption`) and encryption benchmarks.                                                                                                                                                                                                                                                              |
+| [`Lyo.Net/Communication/`](Lyo.Net/Communication/) | Messaging and media delivery: SMTP email, SMS (including Twilio), and text-to-speech providers.                                                                                                                                                                                                                         |
+| [`Lyo.Net/Tools/`](Lyo.Net/Tools/)                 | Host apps and utilities (e.g. gateway, test API/console) for trying components end-to-end.                                                                                                                                                                                                                              |
+| [`k6/`](k6/)                                       | Load-testing scripts; see [k6 framework: Person Query API](k6/framework-person/README.md) and [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md).                                                                                                                                        |
 
-Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo.Something`). The sections below list **every** in-repo `README.md` beside a library, grouped by top-level area.
+Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo.Something`). The sections below list **every** in-repo `README.md` beside a library, grouped by
+top-level area.
 
 ---
 
@@ -88,12 +93,14 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 - [Lyo.FileStorage.Azure](Lyo.Net/Data/FileStorage/Lyo.FileStorage.Azure/README.md): Azure Blob backend for file storage.
 - [Lyo.FileStorage](Lyo.Net/Data/FileStorage/Lyo.FileStorage/README.md): file storage abstractions, metadata, compression, encryption.
 - [Lyo.FileStorage.S3](Lyo.Net/Data/FileStorage/Lyo.FileStorage.S3/README.md): S3-compatible storage (AWS, B2, MinIO).
-- [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md) ([overview](Lyo.Net/Data/FileSystemWatcher/README.md)): snapshot-based file watching, debounce, move detection.
+- [Lyo.FileSystemWatcher](Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher/README.md) ([overview](Lyo.Net/Data/FileSystemWatcher/README.md)): snapshot-based file watching,
+  debounce, move detection.
 - [Lyo.Images](Lyo.Net/Data/Images/Lyo.Images/README.md): image ops with ImageSharp (resize, crop, watermark).
 - [Lyo.Images.Skia](Lyo.Net/Data/Images/Lyo.Images.Skia/README.md): SkiaSharp implementation of `IImageService`.
 - [Lyo.IO.Temp](Lyo.Net/Data/IOTemp/Lyo.IO.Temp/README.md): temp files/dirs with sessions and naming strategies.
 - [Lyo.Pdf](Lyo.Net/Data/Pdf/Lyo.Pdf/README.md): `IPdfService` / `PdfService` — load PDFs, extract text, regions, key–value and tables.
-- [Lyo.Pdf.Web.Components](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/): Blazor **PDF annotator** and related UI (`PdfAnnotator/`; pairs with `GetLinesInBoundingBox`). Former standalone **`Lyo.Pdf.Annotator`** package was folded into this project.
+- [Lyo.Pdf.Web.Components](Lyo.Net/Data/Pdf/Lyo.Pdf.Web.Components/): Blazor **PDF annotator** and related UI (`PdfAnnotator/`; pairs with `GetLinesInBoundingBox`). Former
+  standalone **`Lyo.Pdf.Annotator`** package was folded into this project.
 - [Lyo.Postgres](Lyo.Net/Data/Postgres/Lyo.Postgres/README.md): shared EF Core auto-migration hosted service helpers.
 - [Lyo.QRCode](Lyo.Net/Data/QRCode/Lyo.QRCode/README.md): QR generation (QRCoder), formats, error correction, icons.
 - [Lyo.Xlsx](Lyo.Net/Data/Xlsx/Lyo.Xlsx/README.md): Excel import/export with ClosedXML / ExcelDataReader.
@@ -132,7 +139,8 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 ### Load testing (k6)
 
 - [k6 framework: Person Query API](k6/framework-person/README.md): k6 workloads and query shapes against `TestApi` persons.
-- [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md): latest archived run metrics and comparison to common API stacks (Hasura/PostgREST, typical ORM APIs, etc.).
+- [K6 benchmark analysis](Lyo.Net/Integration/Api/Lyo.Api/K6_BENCHMARK_ANALYSIS.md): latest archived run metrics and comparison to common API stacks (Hasura/PostgREST, typical ORM
+  APIs, etc.).
 
 ---
 
@@ -144,8 +152,10 @@ Individual projects are mostly **one folder per NuGet-style package** (e.g. `Lyo
 
 ## Contributing
 
-The license does **not** require users of the library to send changes back—that keeps adoption easy for companies and side projects. We still **welcome** fixes and improvements; see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+The license does **not** require users of the library to send changes back—that keeps adoption easy for companies and side projects. We still **welcome** fixes and improvements;
+see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](LICENSE) ([view on apache.org](https://www.apache.org/licenses/LICENSE-2.0)). You may use Lyo in commercial and closed-source software; see the license for attribution and redistribution requirements. Replace “The Lyo authors” in [`LICENSE`](LICENSE) if you want a specific copyright line.
+Licensed under the [Apache License, Version 2.0](LICENSE) ([view on apache.org](https://www.apache.org/licenses/LICENSE-2.0)). You may use Lyo in commercial and closed-source
+software; see the license for attribution and redistribution requirements. Replace “The Lyo authors” in [`LICENSE`](LICENSE) if you want a specific copyright line.

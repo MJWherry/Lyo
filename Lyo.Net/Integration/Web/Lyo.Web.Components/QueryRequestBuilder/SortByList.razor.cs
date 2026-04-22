@@ -8,15 +8,15 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 
 public partial class SortByList
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     private static readonly Regex PropertyPattern = new("^[a-zA-Z.]+$", RegexOptions.Compiled);
 
     private SortDirectionEnum _newDirection = SortDirectionEnum.Desc;
     private int? _newPriority;
 
     private string _newProperty = "";
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Parameter]
     public List<SortBy> Items { get; set; } = [];

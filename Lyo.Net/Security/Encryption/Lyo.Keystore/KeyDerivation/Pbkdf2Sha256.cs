@@ -2,13 +2,14 @@ using System.Security.Cryptography;
 
 namespace Lyo.Keystore.KeyDerivation;
 
-/// <summary>PBKDF2 with HMAC-SHA256 (RFC 2898) for targets without <see cref="Rfc2898DeriveBytes(byte[], byte[], int, HashAlgorithmName)"/>.</summary>
+/// <summary>PBKDF2 with HMAC-SHA256 (RFC 2898) for targets without <see cref="Rfc2898DeriveBytes(byte[], byte[], int, HashAlgorithmName)" />.</summary>
 internal static class Pbkdf2Sha256
 {
     public static byte[] DeriveBytes(byte[] password, byte[] salt, int iterations, int dkLen)
     {
         if (iterations < 1)
             throw new ArgumentOutOfRangeException(nameof(iterations));
+
         if (dkLen < 1)
             throw new ArgumentOutOfRangeException(nameof(dkLen));
 
@@ -39,7 +40,6 @@ internal static class Pbkdf2Sha256
         buffer[saltLen + 1] = (byte)(block >> 16);
         buffer[saltLen + 2] = (byte)(block >> 8);
         buffer[saltLen + 3] = (byte)block;
-
         var u = hmac.ComputeHash(buffer);
         var result = (byte[])u.Clone();
         for (var i = 1; i < iterations; i++) {

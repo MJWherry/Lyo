@@ -93,7 +93,7 @@ public sealed class WindowsSpeechTtsService : TtsServiceBase<WindowsTtsRequest>
         }
 
         if (int.TryParse(request.SpeechRate, out var rate))
-            synthesizer.Rate =Clamp(rate, -10, 10);
+            synthesizer.Rate = Clamp(rate, -10, 10);
 
         if (int.TryParse(request.Volume, out var volume))
             synthesizer.Volume = Clamp(volume, 0, 100);
@@ -167,4 +167,3 @@ public sealed class WindowsSpeechTtsService : TtsServiceBase<WindowsTtsRequest>
         => value.CompareTo(min) < 0 ? min : value.CompareTo(max) > 0 ? max : value;
 }
 #endif
-

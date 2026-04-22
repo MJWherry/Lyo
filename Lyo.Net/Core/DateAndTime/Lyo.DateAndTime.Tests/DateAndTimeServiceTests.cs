@@ -180,7 +180,6 @@ public class DateAndTimeServiceTests
         // "2 days ago" case could be Saturday with the next slot Monday 9 AM — not yet elapsed).
         var lastRunDay = DateTime.UtcNow.AddDays(-10).Date;
         var lastRunDateTime = new DateTime(lastRunDay.Year, lastRunDay.Month, lastRunDay.Day, 8, 0, 0, DateTimeKind.Utc);
-
         var result = DateAndTime.IsPastDue(USState.NY, scheduleTimes, scheduleFlags, lastRunDateTime);
         Assert.True(result, $"Expected past due with last run {lastRunDateTime:o} UTC (10+ days ago, weekday slots should have elapsed).");
     }

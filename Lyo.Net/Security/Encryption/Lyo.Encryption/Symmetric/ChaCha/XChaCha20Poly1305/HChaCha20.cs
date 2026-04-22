@@ -27,7 +27,6 @@ internal static class HChaCha20
         st[13] = BinaryPrimitives.ReadUInt32LittleEndian(nonce16.Slice(4, 4));
         st[14] = BinaryPrimitives.ReadUInt32LittleEndian(nonce16.Slice(8, 4));
         st[15] = BinaryPrimitives.ReadUInt32LittleEndian(nonce16.Slice(12, 4));
-
         var x0 = st[0];
         var x1 = st[1];
         var x2 = st[2];
@@ -44,7 +43,6 @@ internal static class HChaCha20
         var x13 = st[13];
         var x14 = st[14];
         var x15 = st[15];
-
         for (var r = 20; r > 0; r -= 2) {
             x0 += x4;
             x12 = R(x12 ^ x0, 16);
@@ -54,7 +52,6 @@ internal static class HChaCha20
             x14 = R(x14 ^ x2, 16);
             x3 += x7;
             x15 = R(x15 ^ x3, 16);
-
             x8 += x12;
             x4 = R(x4 ^ x8, 12);
             x9 += x13;
@@ -63,7 +60,6 @@ internal static class HChaCha20
             x6 = R(x6 ^ x10, 12);
             x11 += x15;
             x7 = R(x7 ^ x11, 12);
-
             x0 += x4;
             x12 = R(x12 ^ x0, 8);
             x1 += x5;
@@ -72,7 +68,6 @@ internal static class HChaCha20
             x14 = R(x14 ^ x2, 8);
             x3 += x7;
             x15 = R(x15 ^ x3, 8);
-
             x8 += x12;
             x4 = R(x4 ^ x8, 7);
             x9 += x13;
@@ -81,7 +76,6 @@ internal static class HChaCha20
             x6 = R(x6 ^ x10, 7);
             x11 += x15;
             x7 = R(x7 ^ x11, 7);
-
             x0 += x5;
             x15 = R(x15 ^ x0, 16);
             x1 += x6;
@@ -90,7 +84,6 @@ internal static class HChaCha20
             x13 = R(x13 ^ x2, 16);
             x3 += x4;
             x14 = R(x14 ^ x3, 16);
-
             x10 += x15;
             x5 = R(x5 ^ x10, 12);
             x11 += x12;
@@ -99,7 +92,6 @@ internal static class HChaCha20
             x7 = R(x7 ^ x8, 12);
             x9 += x14;
             x4 = R(x4 ^ x9, 12);
-
             x0 += x5;
             x15 = R(x15 ^ x0, 8);
             x1 += x6;
@@ -108,7 +100,6 @@ internal static class HChaCha20
             x13 = R(x13 ^ x2, 8);
             x3 += x4;
             x14 = R(x14 ^ x3, 8);
-
             x10 += x15;
             x5 = R(x5 ^ x10, 7);
             x11 += x12;

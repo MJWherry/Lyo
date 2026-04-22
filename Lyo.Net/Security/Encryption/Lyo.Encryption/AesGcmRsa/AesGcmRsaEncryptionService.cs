@@ -18,11 +18,10 @@ namespace Lyo.Encryption.AesGcmRsa;
 /// </summary>
 public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposable
 {
+    private readonly int _aesKeyLengthBytes;
     private readonly RSAEncryptionPadding _padding;
 
     private readonly RSA _rsa;
-
-    private readonly int _aesKeyLengthBytes;
 
     private bool _disposed;
 
@@ -209,9 +208,9 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
                 // keyNonce = [key bytes][nonce bytes]
                 // Nonce is always 12 bytes, so key is the rest
                 var keySize = keyNonce.Length - AesGcmHelper.NonceSize;
-                if (keySize != _aesKeyLengthBytes)
-                    throw new DecryptionFailedException(
-                        $"Invalid decrypted AES key size: {keySize} bytes. Expected {_aesKeyLengthBytes} bytes for this service configuration.");
+                if (keySize != _aesKeyLengthBytes) {
+                    throw new DecryptionFailedException($"Invalid decrypted AES key size: {keySize} bytes. Expected {_aesKeyLengthBytes} bytes for this service configuration.");
+                }
 
                 aesKey = new byte[keySize];
                 Buffer.BlockCopy(keyNonce, 0, aesKey, 0, keySize);

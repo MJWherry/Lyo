@@ -23,12 +23,12 @@ using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.TestApi;
 using Lyo.TestApi.FileStorageWorkbench;
 using Lyo.Xlsx;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.ResponseCompression;
 using Scalar.AspNetCore;
 using Constants = Lyo.TestApi.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddLogging(i => i.ClearProviders()
     .AddSimpleConsole(c => {
         c.SingleLine = true;
@@ -36,9 +36,10 @@ builder.Services.AddLogging(i => i.ClearProviders()
     })); //logging
 
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = long.MaxValue);
-builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options => {
+builder.Services.Configure<FormOptions>(options => {
     options.MultipartBodyLengthLimit = long.MaxValue;
 });
+
 builder.Services.AddOpenApi();
 builder.Services.AddResponseCompression(options => {
     options.EnableForHttps = true;
@@ -71,7 +72,6 @@ builder.Services.ConfigureHttpJsonOptions(options => {
 });
 
 builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("QueryOptions"));
-
 builder.Services.ConfigureMapster();
 var connStr = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5437;Database=postgres;Username=root_remote;Password=password";
 builder.Services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });

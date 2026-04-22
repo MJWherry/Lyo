@@ -244,7 +244,7 @@ public sealed class PatchConfigBuilder<TEntity, TContext>
         return this;
     }
 
-    /// <summary>Builds <see cref="PatchPropertyAuthorization"/> from policy-to-property mappings.</summary>
+    /// <summary>Builds <see cref="PatchPropertyAuthorization" /> from policy-to-property mappings.</summary>
     public PatchConfigBuilder<TEntity, TContext> PropertyAuthorization(Action<PatchPropertyAuthorizationBuilder> configure)
     {
         _propertyAuthorization = PatchPropertyAuthorization.ForPolicies(configure);

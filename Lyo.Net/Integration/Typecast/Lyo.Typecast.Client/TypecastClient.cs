@@ -24,15 +24,13 @@ public class TypecastClient : ApiClient
     /// <param name="httpClient">Optional HTTP client. If not provided, a new instance will be created.</param>
     public TypecastClient(TypecastClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
-            loggerFactory?.CreateLogger<TypecastClient>() ?? NullLoggerFactory.Instance.CreateLogger<TypecastClient>(),
-            httpClient,
+            loggerFactory?.CreateLogger<TypecastClient>() ?? NullLoggerFactory.Instance.CreateLogger<TypecastClient>(), httpClient,
             new() {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
-            },
-            options)
+            }, options)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
         _options = options;

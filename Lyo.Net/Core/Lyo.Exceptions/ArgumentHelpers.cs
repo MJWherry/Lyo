@@ -338,8 +338,9 @@ public static class ArgumentHelpers
     public static void ThrowIfNegative<T>(T? value, string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if(value is null)
+        if (value is null)
             ThrowArgumentNull(nameof(value));
+
         if (value.CompareTo(default(T)) < 0)
             ThrowArgumentOutsideRange(paramName, value, 1, null, $"Value cannot be negative. Actual value: {value}.");
     }
@@ -355,8 +356,9 @@ public static class ArgumentHelpers
     public static void ThrowIfNegativeOrZero<T>(T? value, string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if(value is null)
+        if (value is null)
             ThrowArgumentNull(nameof(value));
+
         if (value.CompareTo(default(T)) <= 0)
             ThrowArgumentOutsideRange(paramName, value, 0, null, $"Value must be greater than zero. Actual value: {value}.");
     }

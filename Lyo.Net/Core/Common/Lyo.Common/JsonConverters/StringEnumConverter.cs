@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 #if NET9_0_OR_GREATER
+using System.Text;
 using System.Runtime.CompilerServices;
 #endif
 

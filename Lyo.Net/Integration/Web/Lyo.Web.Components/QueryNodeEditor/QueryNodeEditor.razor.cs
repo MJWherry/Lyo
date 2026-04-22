@@ -12,9 +12,6 @@ namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditor
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     private static readonly Regex FieldPattern = new("^[a-zA-Z.]+$", RegexOptions.Compiled);
 
     private static readonly Validator<string> FieldValidator = ValidatorBuilder<string>.Create()
@@ -23,6 +20,9 @@ public partial class QueryNodeEditor
         .Build();
 
     private LyoValidationWrapper<string>? _fieldValidationRef;
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Parameter]
     public WhereClause Node { get; set; } = null!;
@@ -67,7 +67,7 @@ public partial class QueryNodeEditor
                 $"{groupClause.Operator} ({groupClause.Children?.Count ?? 0} condition{((groupClause.Children?.Count ?? 0) != 1 ? "s" : "")}){GetDescriptionSuffix(groupClause.Description)}",
             ConditionClause conditionClause =>
                 $"{conditionClause.Field} {conditionClause.Comparison}{GetConditionValueSuffix(conditionClause.Value)}{GetDescriptionSuffix(conditionClause.Description)}",
-            _ => node.ToString() ?? "Unknown"
+            var _ => node.ToString() ?? "Unknown"
         };
 
     private static string GetConditionValueSuffix(object? value) => value != null ? $" {value}" : " null";

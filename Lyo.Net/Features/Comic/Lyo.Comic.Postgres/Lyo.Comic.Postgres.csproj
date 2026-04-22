@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-            <Description>PostgreSQL implementation of Lyo.Comic using Entity Framework Core. Stores comic series, volumes, chapters, and alternate titles.</Description>
+        <Description>PostgreSQL implementation of Lyo.Comic using Entity Framework Core. Stores comic series, volumes, chapters, and alternate titles.</Description>
         <PackageTags>comic manga postgres postgresql entityframework ef</PackageTags>
     </PropertyGroup>
 

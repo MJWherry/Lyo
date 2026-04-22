@@ -591,9 +591,6 @@ requested, processing stops and partial results are returned.
 - `TestConnectionAsync` throws `OperationCanceledException` if cancelled
 - Bulk operations check cancellation between emails and stop early if cancelled
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -604,11 +601,11 @@ requested, processing stops and partial results are returned.
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `MailKit` | `[4.15,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
+| Package                                                | Version   |
+|--------------------------------------------------------|-----------|
+| `MailKit`                                              | `[4.15,)` |
+| `Microsoft.Extensions.Logging.Abstractions`            | `[10,)`   |
+| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)`   |
 
 ### Project references
 

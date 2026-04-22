@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-            <Description>Reusable Blazor components for barcode generation and preview workflows.</Description>
+        <Description>Reusable Blazor components for barcode generation and preview workflows.</Description>
         <PackageTags>blazor components barcode mudblazor</PackageTags>
     </PropertyGroup>
 
@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MudBlazor" Version="[9,)"/>
+        <PackageReference Include="MudBlazor" Version="[9.3,)"/>
     </ItemGroup>
 
 </Project>

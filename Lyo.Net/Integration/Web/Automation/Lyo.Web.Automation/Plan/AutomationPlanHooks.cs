@@ -3,7 +3,7 @@ using Lyo.Web.Automation.Models;
 
 namespace Lyo.Web.Automation.Plan;
 
-/// <summary>Context for <see cref="AutomationPlanHooks.BeforeStepAsync"/> and <see cref="AutomationPlanHooks.AfterStepAsync"/>.</summary>
+/// <summary>Context for <see cref="AutomationPlanHooks.BeforeStepAsync" /> and <see cref="AutomationPlanHooks.AfterStepAsync" />.</summary>
 public class AutomationPlanStepContext
 {
     public Guid RunId { get; init; }
@@ -29,16 +29,11 @@ public sealed class AutomationPlanStepFailureContext : AutomationPlanStepContext
     public Exception Exception { get; init; } = null!;
 }
 
-/// <summary>Outcome of a single step after it finishes without throwing (passed to <see cref="AutomationPlanHooks.AfterStepAsync"/>).</summary>
+/// <summary>Outcome of a single step after it finishes without throwing (passed to <see cref="AutomationPlanHooks.AfterStepAsync" />).</summary>
 public readonly record struct AutomationPlanStepResult(TimeSpan Duration);
 
-/// <summary>Correlation fields for nested logging during a step (file I/O, downloads) when the ambient logger scope may not flow (e.g. <see cref="Task.Run"/>).</summary>
-public readonly record struct AutomationPlanStepLogScope(
-    Guid RunId,
-    Guid StepExecutionId,
-    Guid PlanStepId,
-    int StepIndex,
-    string StepLabel);
+/// <summary>Correlation fields for nested logging during a step (file I/O, downloads) when the ambient logger scope may not flow (e.g. <see cref="Task.Run" />).</summary>
+public readonly record struct AutomationPlanStepLogScope(Guid RunId, Guid StepExecutionId, Guid PlanStepId, int StepIndex, string StepLabel);
 
 /// <summary>Optional callbacks around each step and on failure (screenshots, tracing, custom metrics).</summary>
 public sealed class AutomationPlanHooks

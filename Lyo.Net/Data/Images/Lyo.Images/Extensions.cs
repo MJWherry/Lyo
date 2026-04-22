@@ -1,4 +1,3 @@
-using System.Linq;
 using Lyo.Exceptions;
 using Lyo.Images.Models;
 using Lyo.Images.Sprite;

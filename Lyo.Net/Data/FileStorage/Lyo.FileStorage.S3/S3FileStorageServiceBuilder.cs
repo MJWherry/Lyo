@@ -3,12 +3,11 @@ using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
-using Lyo.FileStorage.S3.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
+using Lyo.FileStorage.S3.Multipart;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,12 +16,11 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>
-/// Builder for configuring S3 file storage and its dependencies. <see cref="Build" /> also ensures an <see cref="IMultipartUploadSessionStore" />
-/// is registered when missing (in-memory fallback), and registers keyed <see cref="S3MultipartUploadService" /> for the same key when not already present.
-/// Usage examples: // Use existing keyed services: services.AddS3FileStorageServiceKeyed("client-files")
-/// .UseFileMetadataStore("postgres-filemetadatastore") .UseEncryptionService("two-key-aws") .ConfigureS3FileStorage("S3FileStorageOptions") .Build(configuration); // Use factory
-/// functions: services.AddS3FileStorageServiceKeyed("client-files") .ConfigureFileMetadataStore(provider => new LocalFileMetadataStore("/path")) .ConfigureEncryptionService(provider
-/// => provider.GetRequiredService
+/// Builder for configuring S3 file storage and its dependencies. <see cref="Build" /> also ensures an <see cref="IMultipartUploadSessionStore" /> is registered when missing
+/// (in-memory fallback), and registers keyed <see cref="S3MultipartUploadService" /> for the same key when not already present. Usage examples: // Use existing keyed services:
+/// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .UseEncryptionService("two-key-aws")
+/// .ConfigureS3FileStorage("S3FileStorageOptions") .Build(configuration); // Use factory functions: services.AddS3FileStorageServiceKeyed("client-files")
+/// .ConfigureFileMetadataStore(provider => new LocalFileMetadataStore("/path")) .ConfigureEncryptionService(provider => provider.GetRequiredService
 /// <ITwoKeyEncryptionService>
 /// ()) .ConfigureS3FileStorage(options => { options.BucketName = "my-bucket"; }) .Build(configuration); // Mix and match:
 /// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .ConfigureEncryptionService(provider =>
@@ -32,8 +30,6 @@ public sealed class S3FileStorageServiceBuilder
 {
     private readonly string _keyName;
     private readonly IServiceCollection _services;
-    private string? _s3FileStorageConfigSection;
-    private Action<S3FileStorageOptions>? _s3FileStorageConfigure;
     private string? _encryptionServiceConfigSection;
     private Func<IServiceProvider, ITwoKeyEncryptionService>? _encryptionServiceFactory;
     private string? _encryptionServiceKeyName;
@@ -42,6 +38,8 @@ public sealed class S3FileStorageServiceBuilder
     private string? _metadataStoreConfigSection;
     private Func<IServiceProvider, IFileMetadataStore>? _metadataStoreFactory;
     private string? _metadataStoreKeyName;
+    private string? _s3FileStorageConfigSection;
+    private Action<S3FileStorageOptions>? _s3FileStorageConfigure;
 
     internal S3FileStorageServiceBuilder(IServiceCollection services, string keyName)
     {

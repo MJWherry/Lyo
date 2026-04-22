@@ -4,16 +4,11 @@ using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 using Lyo.Web.Components.UniqueValueSelector;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryFilterComponent
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private MudMenu? _uniqueValuesMenu;
     private bool? _currentBoolValue;
     private ComparisonOperatorEnum _currentComparison = ComparisonOperatorEnum.Contains;
     private string? _currentCsvValue;
@@ -26,6 +21,11 @@ public partial class QueryFilterComponent
 
     private List<ConditionClause> _filters = [];
     private bool _isLoadingUniqueValues;
+
+    private MudMenu? _uniqueValuesMenu;
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Parameter]
     [EditorRequired]
@@ -54,8 +54,9 @@ public partial class QueryFilterComponent
     }
 
     private static bool ShouldUseTextInput(FilterPropertyDefinition property, ComparisonOperatorEnum comparator)
-        => property.Type is FilterPropertyType.String && comparator is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.Equals or ComparisonOperatorEnum.NotEquals
-            or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.EndsWith or ComparisonOperatorEnum.NotEndsWith;
+        => property.Type is FilterPropertyType.String && comparator is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.Equals
+            or ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.EndsWith
+            or ComparisonOperatorEnum.NotEndsWith;
 
     private Task OnUniqueValuesChanged(IEnumerable<string?> values)
     {

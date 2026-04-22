@@ -13,10 +13,11 @@ public sealed class ResilienceTests
         var executor = sp.GetRequiredService<IResilientExecutor>();
         var executed = false;
         await executor.ExecuteAsync(
-            _ => {
-                executed = true;
-                return Task.CompletedTask;
-            }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                _ => {
+                    executed = true;
+                    return Task.CompletedTask;
+                }, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(executed);
     }

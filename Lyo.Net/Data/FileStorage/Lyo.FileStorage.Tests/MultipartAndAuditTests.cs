@@ -21,7 +21,9 @@ public class MultipartAndAuditTests
             var payload = "hello multipart"u8.ToArray();
             await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestContext.Current.CancellationToken).ConfigureAwait(false);
             var meta = await multipart.CompleteAsync(
-                new() { SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "n/a" } } }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                    new() { SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "n/a" } } },
+                    TestContext.Current.CancellationToken)
+                .ConfigureAwait(false);
 
             Assert.Equal(begin.TargetFileId, meta.Id);
             var got = await storage.GetFileAsync(meta.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);

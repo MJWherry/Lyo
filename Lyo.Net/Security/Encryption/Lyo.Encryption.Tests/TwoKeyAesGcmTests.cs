@@ -517,7 +517,6 @@ public class TwoKeyAesGcmTests
         // Read KEK algorithm ID (AES-GCM = 0)
         var kekAlgorithmId = br.ReadByte();
         Assert.Equal(0, kekAlgorithmId);
-
         Assert.Equal(32, br.ReadByte()); // DekKeyMaterialBytes
 
         // Read keyId length
@@ -570,7 +569,6 @@ public class TwoKeyAesGcmTests
         // Read KEK algorithm ID (AES-GCM = 0)
         var kekAlgorithmId = br.ReadByte();
         Assert.Equal(0, kekAlgorithmId);
-
         Assert.Equal(32, br.ReadByte()); // DekKeyMaterialBytes (ChaCha DEK)
     }
 

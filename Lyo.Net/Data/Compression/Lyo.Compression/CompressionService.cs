@@ -251,8 +251,8 @@ public sealed class CompressionService : ICompressionService
             stopwatch.Stop();
             var info = new CompressionInfo(bytes.Length, compressed.Length, stopwatch.ElapsedMilliseconds);
             _logger.LogDebug(
-                "Compressed data to length {} ({Length}), ratio {CompressionRatio:P2}, saved {SpaceSavedPercent:P2}, time {TimeMs}ms", FileSizeUnitInfo.FormatBestFitAbbreviation(compressed.Length), compressed.Length, info.CompressionRatio,
-                info.SpaceSavedPercent, info.TimeMs);
+                "Compressed data to length {} ({Length}), ratio {CompressionRatio:P2}, saved {SpaceSavedPercent:P2}, time {TimeMs}ms",
+                FileSizeUnitInfo.FormatBestFitAbbreviation(compressed.Length), compressed.Length, info.CompressionRatio, info.SpaceSavedPercent, info.TimeMs);
 
             _metrics.IncrementCounter(Constants.Metrics.CompressSuccess);
             _metrics.RecordGauge(Constants.Metrics.CompressRatio, info.CompressionRatio);

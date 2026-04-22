@@ -18,8 +18,13 @@ namespace Lyo.Api.Tests;
 public class DynamicCrudApiPostgresTests : IDisposable
 {
     private const string BaseRoute = "/api/Job/JobDefinition";
-    /// <summary>Match <see cref="Microsoft.AspNetCore.Http.Json.JsonOptions"/> defaults on the test host: case-insensitive names, numeric enums (same as <c>PostAsJsonAsync</c> without custom options).</summary>
+
+    /// <summary>
+    /// Match <see cref="Microsoft.AspNetCore.Http.Json.JsonOptions" /> defaults on the test host: case-insensitive names, numeric enums (same as <c>PostAsJsonAsync</c> without
+    /// custom options).
+    /// </summary>
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
     private readonly HttpClient _client;
 
     private readonly ApiPostgresFixture _fixture;

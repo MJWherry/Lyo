@@ -1,8 +1,6 @@
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Wraps a <see cref="PipeReader"/> stream backed by an in-flight async pipeline; cancels and awaits the pipeline on dispose.
-/// </summary>
+/// <summary>Wraps a <see cref="PipeReader" /> stream backed by an in-flight async pipeline; cancels and awaits the pipeline on dispose.</summary>
 internal sealed class PipelineFileReadStream : Stream
 {
     private readonly Stream _inner;
@@ -70,8 +68,7 @@ internal sealed class PipelineFileReadStream : Stream
             catch (OperationCanceledException) {
                 // Expected when the reader is closed early.
             }
-            catch (AggregateException ex) when (ex.InnerException is OperationCanceledException) {
-            }
+            catch (AggregateException ex) when (ex.InnerException is OperationCanceledException) { }
 
             _cts.Dispose();
         }

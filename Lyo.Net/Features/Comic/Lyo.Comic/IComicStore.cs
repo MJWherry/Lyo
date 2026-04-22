@@ -17,7 +17,7 @@ public interface IComicStore
 
     /// <summary>Deletes a series and all of its alternate titles, volumes, and chapters.</summary>
     Task DeleteSeriesAsync(Guid id, CancellationToken ct = default);
-    
+
     /// <summary>Inserts or updates a volume.</summary>
     Task SaveVolumeAsync(ComicVolume volume, CancellationToken ct = default);
 
@@ -29,23 +29,17 @@ public interface IComicStore
 
     /// <summary>Deletes a volume and all of its chapters.</summary>
     Task DeleteVolumeAsync(Guid id, CancellationToken ct = default);
-    
+
     /// <summary>Inserts or updates a chapter.</summary>
     Task SaveChapterAsync(ComicChapter chapter, CancellationToken ct = default);
 
     /// <summary>Gets a chapter by id. Returns null if not found.</summary>
     Task<ComicChapter?> GetChapterByIdAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>
-    /// Gets all chapters for a series, optionally filtered by language.
-    /// Results are ordered by chapter number ascending, then by language.
-    /// </summary>
+    /// <summary>Gets all chapters for a series, optionally filtered by language. Results are ordered by chapter number ascending, then by language.</summary>
     Task<IReadOnlyList<ComicChapter>> GetChaptersBySeriesAsync(Guid seriesId, string? language = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Gets all chapters belonging to a volume, optionally filtered by language.
-    /// Results are ordered by chapter number ascending.
-    /// </summary>
+    /// <summary>Gets all chapters belonging to a volume, optionally filtered by language. Results are ordered by chapter number ascending.</summary>
     Task<IReadOnlyList<ComicChapter>> GetChaptersByVolumeAsync(Guid volumeId, string? language = null, CancellationToken ct = default);
 
     /// <summary>Deletes a chapter by id.</summary>

@@ -447,12 +447,12 @@ and maintains no shared mutable state between method calls.
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `CsvHelper` | `[33.1,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `System.Text.Encoding.CodePages` | `[10,)` |
+| Package                                                 | Version   |
+|---------------------------------------------------------|-----------|
+| `CsvHelper`                                             | `[33.1,)` |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
+| `System.Text.Encoding.CodePages`                        | `[10,)`   |
 
 ### Project references
 

@@ -4,9 +4,7 @@ using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Error;
-using ApiErrCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Api.Services.Crud.Create;
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Job.Models.Enums;
@@ -17,6 +15,7 @@ using Lyo.MessageQueue.RabbitMq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using UUIDNext;
+using ApiErrCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Constants = Lyo.Job.Models.Constants;
 using JobRun = Lyo.Job.Postgres.Database.JobRun;
 using JobRunLog = Lyo.Job.Postgres.Database.JobRunLog;
@@ -193,10 +192,7 @@ public class JobService(
     private LyoProblemDetails LogAndReturnApiError(string message, string code = ApiErrCodes.Unknown, LogLevel level = LogLevel.Warning)
     {
         logger.Log(level, message);
-        return LyoProblemDetailsBuilder.CreateWithTrace(Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString())
-            .WithErrorCode(code)
-            .WithMessage(message)
-            .Build();
+        return LyoProblemDetailsBuilder.CreateWithTrace(Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString()).WithErrorCode(code).WithMessage(message).Build();
     }
 
     private async Task<bool> MqCreateJobRun(JobRunRes jobRun)

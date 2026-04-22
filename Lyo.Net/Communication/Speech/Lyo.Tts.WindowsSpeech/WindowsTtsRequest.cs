@@ -3,7 +3,7 @@ using Lyo.Tts.Models;
 
 namespace Lyo.Tts.WindowsSpeech;
 
-public class WindowsTtsRequest:TtsRequest
+public class WindowsTtsRequest : TtsRequest
 {
     public string VoiceId { get; set; } = null!;
 

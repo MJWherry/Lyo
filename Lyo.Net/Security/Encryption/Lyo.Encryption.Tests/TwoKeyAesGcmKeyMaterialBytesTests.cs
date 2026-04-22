@@ -1,13 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
 
 namespace Lyo.Encryption.Tests;
 
-/// <summary>Two-key envelope with non-default AES-GCM DEK sizes; asserts <see cref="TwoKeyEncryptionResult.DekKeyMaterialBytes"/>.</summary>
+/// <summary>Two-key envelope with non-default AES-GCM DEK sizes; asserts <see cref="TwoKeyEncryptionResult.DekKeyMaterialBytes" />.</summary>
 public class TwoKeyAesGcmKeyMaterialBytesTests
 {
     [Theory]

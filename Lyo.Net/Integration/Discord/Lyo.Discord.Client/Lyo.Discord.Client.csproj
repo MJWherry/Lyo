@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <RootNamespace>Lyo.Discord.Client</RootNamespace>
-            <Description>Discord API client for querying Discord data via the Lyo API.</Description>
+        <Description>Discord API client for querying Discord data via the Lyo API.</Description>
         <PackageTags>discord client api</PackageTags>
     </PropertyGroup>
 

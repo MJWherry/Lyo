@@ -17,7 +17,12 @@ public sealed class FavoriteEntityConfiguration : IEntityTypeConfiguration<Favor
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_favorite_for_entity");
         builder.HasIndex(e => new { e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_favorite_from_entity");
-        builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId, e.FromEntityType, e.FromEntityId })
+        builder.HasIndex(e => new {
+                e.ForEntityType,
+                e.ForEntityId,
+                e.FromEntityType,
+                e.FromEntityId
+            })
             .IsUnique()
             .HasDatabaseName("uq_favorite_for_from_entity");
     }

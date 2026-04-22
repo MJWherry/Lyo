@@ -1,4 +1,5 @@
 using System.Collections;
+using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
 using Microsoft.AspNetCore.Http;
 
@@ -8,7 +9,7 @@ public static class ApiErrorResponseFactory
 {
     public static LyoProblemDetails CreateForError(HttpContext httpContext, LyoProblemDetails? error, IEnumerable<object?>? keys = null)
     {
-        var source = error ?? LyoProblemDetails.FromCode(Models.Constants.ApiErrorCodes.Unknown, "Request failed.");
+        var source = error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Request failed.");
         var instance = httpContext.Request.Path.HasValue ? httpContext.Request.Path.Value : null;
         var extensions = source.Extensions != null ? new Dictionary<string, object?>(source.Extensions) : new Dictionary<string, object?>();
         AddKeysExtension(extensions, keys);
@@ -21,12 +22,7 @@ public static class ApiErrorResponseFactory
         var extensions = new Dictionary<string, object?>();
         AddKeysExtension(extensions, keys);
         return LyoProblemDetails.FromCode(
-            Models.Constants.ApiErrorCodes.NotFound,
-            detail ?? "Resource was not found.",
-            DateTime.UtcNow,
-            httpContext.TraceIdentifier,
-            instance,
-            extensions);
+            Constants.ApiErrorCodes.NotFound, detail ?? "Resource was not found.", DateTime.UtcNow, httpContext.TraceIdentifier, instance, extensions);
     }
 
     private static void AddKeysExtension(IDictionary<string, object?> extensions, IEnumerable<object?>? keys)

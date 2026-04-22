@@ -50,13 +50,13 @@ The service can be configured via options or dependency injection. AWS credentia
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `AWSSDK.Polly` | `[4.0,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
+| Package                                           | Version  |
+|---------------------------------------------------|----------|
+| `AWSSDK.Polly`                                    | `[4.0,)` |
+| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`  |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`  |
+| `Microsoft.Extensions.Logging.Abstractions`       | `[10,)`  |
+| `Microsoft.Extensions.Options`                    | `[10,)`  |
 
 ### Project references
 

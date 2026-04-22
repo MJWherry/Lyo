@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -17,16 +16,19 @@ public sealed class LocalCacheService : ICacheService
 
     private readonly bool _enabled;
     private readonly ConcurrentDictionary<CacheItem, byte> _items = new();
+
     /// <summary>Bidirectional tag index: cache key → tag set (inner dict keys are tags, O(1) membership).</summary>
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _keyToTags = new();
-    /// <summary>Bidirectional tag index: tag → cache key set (inner dict keys are normalized cache keys).</summary>
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
+
     private readonly ILogger<LocalCacheService> _logger;
     private readonly IMemoryCache _memoryCache;
     private readonly IMetrics _metrics;
     private readonly CacheOptions _options;
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
+
+    /// <summary>Bidirectional tag index: tag → cache key set (inner dict keys are normalized cache keys).</summary>
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
 
     public LocalCacheService(
         IMemoryCache memoryCache,
@@ -106,7 +108,7 @@ public sealed class LocalCacheService : ICacheService
             return;
 
         var stopwatch = Stopwatch.StartNew();
-            var normalizedTag = tag.ToLowerInvariant();
+        var normalizedTag = tag.ToLowerInvariant();
         try {
             var beforeCount = _items.Count;
             var keysSnapshot = TagIndexGetKeysByTag(normalizedTag).ToArray();
@@ -156,10 +158,7 @@ public sealed class LocalCacheService : ICacheService
 
     public Task InvalidateCacheByTypeAsync<T>() => InvalidateCacheByTypeAsync(typeof(T));
 
-    public async Task InvalidateAllCachedQueriesAsync()
-    {
-        await InvalidateCacheItemByTag("queries").ConfigureAwait(false);
-    }
+    public async Task InvalidateAllCachedQueriesAsync() => await InvalidateCacheItemByTag("queries").ConfigureAwait(false);
 
     public async ValueTask<TValue?> GetOrSetAsync<TValue>(
         string key,
@@ -694,8 +693,7 @@ public sealed class LocalCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct)
-            => (await factory(ct).ConfigureAwait(false), null);
+        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct) => (await factory(ct).ConfigureAwait(false), null);
 
         return GetOrSetPayloadAsync(key, AsTuple, duration, extraTags, token);
     }
@@ -889,9 +887,7 @@ public sealed class LocalCacheService : ICacheService
         return new(plain);
     }
 
-    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(
-        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
-        CancellationToken token)
+    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory, CancellationToken token)
     {
         var (plain, _) = await factory(token).ConfigureAwait(false);
         if (plain == null)
@@ -909,14 +905,12 @@ public sealed class LocalCacheService : ICacheService
         return new(plain);
     }
 
-    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(
-        Func<CancellationToken, Task<(T? value, string[]? tags)>> factory,
-        CancellationToken token)
+    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(Func<CancellationToken, Task<(T? value, string[]? tags)>> factory, CancellationToken token)
     {
         var (value, _) = await factory(token).ConfigureAwait(false);
         return value;
     }
-    
+
     private static string[]? MergeTags(string[]? factoryTags, IEnumerable<string>? extraTags)
     {
         var hasFactory = factoryTags is { Length: > 0 };
@@ -954,17 +948,16 @@ public sealed class LocalCacheService : ICacheService
         if (normalizedTags.Length == 0)
             return;
 
-        var tagSet = _keyToTags.GetOrAdd(normalizedKey, static _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal));
+        var tagSet = _keyToTags.GetOrAdd(normalizedKey, static _ => new(StringComparer.Ordinal));
         foreach (var tag in normalizedTags) {
             tagSet[tag] = 0;
-            _tagToKeys.GetOrAdd(tag, static _ => new ConcurrentDictionary<string, byte>(StringComparer.Ordinal))[normalizedKey] = 0;
+            _tagToKeys.GetOrAdd(tag, static _ => new(StringComparer.Ordinal))[normalizedKey] = 0;
             _items.TryAdd(CacheItem.Tag(TagPrefix + tag), 0);
         }
     }
 
     /// <summary>O(1) key lookup by tag (snapshot of keys currently mapped to the tag).</summary>
-    private IEnumerable<string> TagIndexGetKeysByTag(string normalizedTag)
-        => _tagToKeys.TryGetValue(normalizedTag, out var keys) ? keys.Keys : Enumerable.Empty<string>();
+    private IEnumerable<string> TagIndexGetKeysByTag(string normalizedTag) => _tagToKeys.TryGetValue(normalizedTag, out var keys) ? keys.Keys : Enumerable.Empty<string>();
 
     /// <summary>Removes a cache key from the bidirectional tag index and drops tag markers in <see cref="_items" />.</summary>
     private void TagIndexRemoveKey(string normalizedKey)
@@ -974,12 +967,12 @@ public sealed class LocalCacheService : ICacheService
 
         foreach (var tag in tagSet.Keys) {
             if (_tagToKeys.TryGetValue(tag, out var keys)) {
-                keys.TryRemove(normalizedKey, out _);
+                keys.TryRemove(normalizedKey, out var _);
                 if (keys.Count == 0)
-                    _tagToKeys.TryRemove(tag, out _);
+                    _tagToKeys.TryRemove(tag, out var _);
             }
 
-            _items.TryRemove(CacheItem.Tag(TagPrefix + tag), out _);
+            _items.TryRemove(CacheItem.Tag(TagPrefix + tag), out var _);
         }
     }
 }

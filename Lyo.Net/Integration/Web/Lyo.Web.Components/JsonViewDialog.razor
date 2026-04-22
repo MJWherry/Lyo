@@ -6,27 +6,27 @@
 @typeparam T
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-json-view-dialog">
-<MudDialog>
-    <DialogContent>
-        @if (parseError != null) {
-            <MudAlert Severity="Severity.Error">
-                <MudText Typo="Typo.body2">Invalid JSON: @parseError</MudText>
-            </MudAlert>
-        }
-        else if (rootNode != null) {
-            <JsonTreeView Root="@rootNode"/>
-        }
-        else {
-            <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display</MudText>
-        }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
-            Copy JSON
-        </MudButton>
-        <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
-    </DialogActions>
-</MudDialog>
+    <MudDialog>
+        <DialogContent>
+            @if (parseError != null) {
+                <MudAlert Severity="Severity.Error">
+                    <MudText Typo="Typo.body2">Invalid JSON: @parseError</MudText>
+                </MudAlert>
+            }
+            else if (rootNode != null) {
+                <JsonTreeView Root="@rootNode"/>
+            }
+            else {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No data to display</MudText>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CopyToClipboard" StartIcon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary">
+                Copy JSON
+            </MudButton>
+            <MudButton OnClick="Close" Color="Color.Default">Close</MudButton>
+        </DialogActions>
+    </MudDialog>
 </LyoElementRoot>
 
 @code {

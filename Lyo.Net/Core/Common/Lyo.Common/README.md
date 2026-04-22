@@ -54,8 +54,8 @@ var path = Utilities.GetPropertyPath(x => x.Address.Street); // "Address.Street"
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package            | Version |
+|--------------------|---------|
 | `System.Text.Json` | `[10,)` |
 
 ### Project references

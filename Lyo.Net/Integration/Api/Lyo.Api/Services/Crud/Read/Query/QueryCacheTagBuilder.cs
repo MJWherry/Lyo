@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Api.Services.Crud;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Query.Models.Common.Request;
@@ -14,44 +13,34 @@ namespace Lyo.Api.Services.Crud.Read.Query;
 /// <summary>Builds cache tags for basic and projected query results. Keys remain in <see cref="QueryCacheKeyBuilder" />.</summary>
 public static class QueryCacheTagBuilder
 {
-    /// <summary>Memoizes projection-shape tags; keys are normalized payloads (same string as pre-hash input).</summary>
-    private static readonly ConcurrentDictionary<string, string> ProjShapeTagMemo = new(StringComparer.Ordinal);
-
     /// <summary>Broad tag for all list-query cache entries (same as SQL projection path and historical convention).</summary>
     public const string QueryScopeTag = "queries";
 
     /// <summary>Tag for SQL-level projected query cache entries.</summary>
     public const string QueryProjectScopeTag = "queryproject";
 
-    /// <summary>Tag for all cached entries scoped to a root entity CLR type (e.g. <c>entity:widget</c>).</summary>
-    public static string EntityTypeTag(Type entityClrType)
-        => $"entity:{entityClrType.Name.ToLowerInvariant()}";
+    /// <summary>Memoizes projection-shape tags; keys are normalized payloads (same string as pre-hash input).</summary>
+    private static readonly ConcurrentDictionary<string, string> ProjShapeTagMemo = new(StringComparer.Ordinal);
 
-    /// <summary>
-    /// Stable segment for primary key values (composite: <c>|</c>-joined in EF key property order, same as <see cref="ITypeConversionService.GetPrimaryKeyValues{TEntity}" />).
-    /// </summary>
-    public static string FormatPrimaryKeySegment(IReadOnlyList<object?> keyValues)
-        => string.Join("|", keyValues.Select(k => k?.ToString() ?? "null"));
+    /// <summary>Tag for all cached entries scoped to a root entity CLR type (e.g. <c>entity:widget</c>).</summary>
+    public static string EntityTypeTag(Type entityClrType) => $"entity:{entityClrType.Name.ToLowerInvariant()}";
+
+    /// <summary>Stable segment for primary key values (composite: <c>|</c>-joined in EF key property order, same as <see cref="ITypeConversionService.GetPrimaryKeyValues{TEntity}" />).</summary>
+    public static string FormatPrimaryKeySegment(IReadOnlyList<object?> keyValues) => string.Join("|", keyValues.Select(k => k?.ToString() ?? "null"));
 
     /// <summary>Tag for one entity instance: <c>entity:&lt;type&gt;:&lt;pkSegment&gt;</c>.</summary>
     public static string EntityInstanceTag(Type entityClrType, IReadOnlyList<object?> primaryKeyValues)
         => $"{EntityTypeTag(entityClrType)}:{FormatPrimaryKeySegment(primaryKeyValues)}";
 
     /// <summary>
-    /// QueryProject-only tag: an include-derived or projected navigation touched this CLR type. Used when projected rows cannot carry
-    /// <see cref="EntityInstanceTag" /> (e.g. single-field SQL projection returns scalars/lists). Patch invalidates this so related rows bust
-    /// without using <see cref="EntityTypeTag" /> (which would clear unrelated list-query caches for the same type).
+    /// QueryProject-only tag: an include-derived or projected navigation touched this CLR type. Used when projected rows cannot carry <see cref="EntityInstanceTag" /> (e.g.
+    /// single-field SQL projection returns scalars/lists). Patch invalidates this so related rows bust without using <see cref="EntityTypeTag" /> (which would clear unrelated list-query
+    /// caches for the same type).
     /// </summary>
-    public static string QueryProjectReferencedEntityTag(Type entityClrType)
-        => $"qprefentity:{entityClrType.Name.ToLowerInvariant()}";
+    public static string QueryProjectReferencedEntityTag(Type entityClrType) => $"qprefentity:{entityClrType.Name.ToLowerInvariant()}";
 
-    /// <summary>
-    /// Fingerprint tag for the projection column set (select + computed + zip shape). Uses SHA-1 of a normalized payload (not for security).
-    /// </summary>
-    public static string FormatProjShapeTag(
-        IReadOnlyList<ProjectedFieldSpec> projectedFieldSpecs,
-        IReadOnlyList<ComputedField> computedFields,
-        bool zipSiblingCollectionSelections)
+    /// <summary>Fingerprint tag for the projection column set (select + computed + zip shape). Uses SHA-1 of a normalized payload (not for security).</summary>
+    public static string FormatProjShapeTag(IReadOnlyList<ProjectedFieldSpec> projectedFieldSpecs, IReadOnlyList<ComputedField> computedFields, bool zipSiblingCollectionSelections)
     {
         var parts = new List<string>();
         foreach (var spec in projectedFieldSpecs.OrderBy(s => s.NormalizedPath, StringComparer.OrdinalIgnoreCase))
@@ -62,16 +51,17 @@ public static class QueryCacheTagBuilder
 
         parts.Add("zip:" + zipSiblingCollectionSelections);
         var payload = string.Join('\u001e', parts);
-        return ProjShapeTagMemo.GetOrAdd(payload, static p => {
-            var hash = SHA1.HashData(Encoding.UTF8.GetBytes(p));
-            return $"projshape:{Convert.ToHexString(hash).ToLowerInvariant()}";
-        });
+        return ProjShapeTagMemo.GetOrAdd(
+            payload, static p => {
+                var hash = SHA1.HashData(Encoding.UTF8.GetBytes(p));
+                return $"projshape:{Convert.ToHexString(hash).ToLowerInvariant()}";
+            });
     }
 
     /// <summary>
-    /// Tags for SQL-projected query pages: scope tags, <see cref="FormatProjShapeTag" />, root and cascade instance tags from projected row dictionaries,
-    /// broad <c>entity:&lt;refType&gt;</c> tags for include-derived types, and <see cref="QueryProjectReferencedEntityTag" /> for patch invalidation
-    /// when instance tags cannot be derived from row shape.
+    /// Tags for SQL-projected query pages: scope tags, <see cref="FormatProjShapeTag" />, root and cascade instance tags from projected row dictionaries, broad
+    /// <c>entity:&lt;refType&gt;</c> tags for include-derived types, and <see cref="QueryProjectReferencedEntityTag" /> for patch invalidation when instance tags cannot be derived from
+    /// row shape.
     /// </summary>
     public static string[] BuildProjectedSqlQueryTags<TDbModel>(
         IReadOnlyList<object?> projectedRows,
@@ -90,7 +80,7 @@ public static class QueryCacheTagBuilder
             QueryProjectScopeTag,
             "entities",
             EntityTypeTag(rootClr),
-            FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections),
+            FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections)
         };
 
         foreach (var refType in referencedIncludeEntityTypes) {
@@ -102,10 +92,7 @@ public static class QueryCacheTagBuilder
         if (rootEntityType is null)
             return tagSet.ToArray();
 
-        var projectionChains = includes is { Count: > 0 }
-            ? CompileIncludeNavigationChains(rootEntityType, includes)
-            : null;
-
+        var projectionChains = includes is { Count: > 0 } ? CompileIncludeNavigationChains(rootEntityType, includes) : null;
         foreach (var row in projectedRows) {
             var dict = AsReadOnlyStringDictionary(row);
             if (dict is null)
@@ -123,8 +110,8 @@ public static class QueryCacheTagBuilder
     }
 
     /// <summary>
-    /// Tags for a cached basic query page: <see cref="QueryScopeTag"/>, <see cref="EntityTypeTag" />, one <see cref="EntityInstanceTag" /> per root row,
-    /// and cascade <see cref="EntityInstanceTag" /> for every entity reached via <paramref name="includes" /> (including collection items).
+    /// Tags for a cached basic query page: <see cref="QueryScopeTag" />, <see cref="EntityTypeTag" />, one <see cref="EntityInstanceTag" /> per root row, and cascade
+    /// <see cref="EntityInstanceTag" /> for every entity reached via <paramref name="includes" /> (including collection items).
     /// </summary>
     public static string[] BuildBasicQueryTags<TDbModel>(
         IReadOnlyList<TDbModel> rows,
@@ -135,15 +122,8 @@ public static class QueryCacheTagBuilder
     {
         var entityType = typeof(TDbModel);
         var estimated = Math.Clamp(rows.Count * 3 + 8, 16, 8192);
-        var tagSet = new HashSet<string>(estimated, StringComparer.Ordinal) {
-            QueryScopeTag,
-            EntityTypeTag(entityType),
-        };
-
-        var includeChains = includes is { Count: > 0 }
-            ? CompileIncludeNavigationChains(context.Model.FindEntityType(entityType), includes)
-            : null;
-
+        var tagSet = new HashSet<string>(estimated, StringComparer.Ordinal) { QueryScopeTag, EntityTypeTag(entityType) };
+        var includeChains = includes is { Count: > 0 } ? CompileIncludeNavigationChains(context.Model.FindEntityType(entityType), includes) : null;
         foreach (var row in rows) {
             tagSet.Add(EntityInstanceTag(entityType, typeConversion.GetPrimaryKeyValues(row, context)));
             if (includeChains is not null)
@@ -154,22 +134,13 @@ public static class QueryCacheTagBuilder
     }
 
     /// <summary>
-    /// Type-scoped tags for list queries when <see cref="Lyo.Cache.QueryCacheTagGranularity.Broad" /> is configured:
-    /// <see cref="QueryScopeTag"/>, <c>entities</c>, root <see cref="EntityTypeTag"/>, and one <see cref="EntityTypeTag"/> per include-referenced CLR type (no per-row instance tags).
+    /// Type-scoped tags for list queries when <see cref="Lyo.Cache.QueryCacheTagGranularity.Broad" /> is configured: <see cref="QueryScopeTag" />, <c>entities</c>, root
+    /// <see cref="EntityTypeTag" />, and one <see cref="EntityTypeTag" /> per include-referenced CLR type (no per-row instance tags).
     /// </summary>
-    public static string[] BuildBasicQueryTagsBroad<TContext, TDbModel>(
-        TContext context,
-        IEntityLoaderService loader,
-        IReadOnlyList<string>? includes)
-        where TContext : DbContext
-        where TDbModel : class
+    public static string[] BuildBasicQueryTagsBroad<TContext, TDbModel>(TContext context, IEntityLoaderService loader, IReadOnlyList<string>? includes)
+        where TContext : DbContext where TDbModel : class
     {
-        var tagSet = new HashSet<string>(StringComparer.Ordinal) {
-            QueryScopeTag,
-            "entities",
-            EntityTypeTag(typeof(TDbModel)),
-        };
-
+        var tagSet = new HashSet<string>(StringComparer.Ordinal) { QueryScopeTag, "entities", EntityTypeTag(typeof(TDbModel)) };
         if (includes is { Count: > 0 }) {
             foreach (var t in loader.GetReferencedTypes<TContext, TDbModel>(context, includes))
                 tagSet.Add(EntityTypeTag(t));
@@ -179,8 +150,8 @@ public static class QueryCacheTagBuilder
     }
 
     /// <summary>
-    /// Broad tags for SQL-projected pages: scope, <see cref="QueryProjectScopeTag"/>, <c>entities</c>, <see cref="FormatProjShapeTag"/>,
-    /// and <see cref="EntityTypeTag"/> for root and include-referenced types only (no per-row or <see cref="QueryProjectReferencedEntityTag"/> tags).
+    /// Broad tags for SQL-projected pages: scope, <see cref="QueryProjectScopeTag" />, <c>entities</c>, <see cref="FormatProjShapeTag" />, and <see cref="EntityTypeTag" /> for
+    /// root and include-referenced types only (no per-row or <see cref="QueryProjectReferencedEntityTag" /> tags).
     /// </summary>
     public static string[] BuildProjectedSqlQueryTagsBroad<TDbModel>(
         IReadOnlyList<ProjectedFieldSpec> projectedFieldSpecs,
@@ -195,7 +166,7 @@ public static class QueryCacheTagBuilder
             QueryProjectScopeTag,
             "entities",
             EntityTypeTag(rootClr),
-            FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections),
+            FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections)
         };
 
         foreach (var refType in referencedIncludeEntityTypes)
@@ -205,12 +176,8 @@ public static class QueryCacheTagBuilder
     }
 
     /// <summary>Broad tags for GET-by-key cache entries: <c>entities</c>, root type, and include-referenced types (no instance tags).</summary>
-    public static string[] BuildSingleEntityGetCacheTagsBroad<TContext, TDbModel>(
-        TContext context,
-        IEntityLoaderService loader,
-        IReadOnlyList<string> matIncludes)
-        where TContext : DbContext
-        where TDbModel : class
+    public static string[] BuildSingleEntityGetCacheTagsBroad<TContext, TDbModel>(TContext context, IEntityLoaderService loader, IReadOnlyList<string> matIncludes)
+        where TContext : DbContext where TDbModel : class
     {
         var tagSet = new HashSet<string>(StringComparer.Ordinal) { "entities", EntityTypeTag(typeof(TDbModel)) };
         if (matIncludes.Count > 0) {
@@ -227,12 +194,7 @@ public static class QueryCacheTagBuilder
         => ["entities", EntityTypeTag(typeof(TDbModel))];
 
     /// <summary>Walks validated include paths and tags each referenced entity instance (deduped).</summary>
-    public static void AppendIncludeCascadeTags(
-        HashSet<string> tags,
-        object rootEntity,
-        IReadOnlyList<string> includes,
-        DbContext context,
-        ITypeConversionService typeConversion)
+    public static void AppendIncludeCascadeTags(HashSet<string> tags, object rootEntity, IReadOnlyList<string> includes, DbContext context, ITypeConversionService typeConversion)
     {
         var rootEntry = context.Entry(rootEntity);
         var chains = CompileIncludeNavigationChains(rootEntry.Metadata, includes);
@@ -240,9 +202,7 @@ public static class QueryCacheTagBuilder
             AppendIncludeCascadeTagsCompiled(tags, rootEntity, chains, context, typeConversion);
     }
 
-    /// <summary>
-    /// Resolves each include string to an EF navigation chain once (per call), avoiding repeated string splits and O(n) navigation scans per hop.
-    /// </summary>
+    /// <summary>Resolves each include string to an EF navigation chain once (per call), avoiding repeated string splits and O(n) navigation scans per hop.</summary>
     private static INavigation[][]? CompileIncludeNavigationChains(IEntityType? rootEntityType, IReadOnlyList<string> includes)
     {
         if (rootEntityType is null)
@@ -295,12 +255,7 @@ public static class QueryCacheTagBuilder
         return null;
     }
 
-    private static void AppendIncludeCascadeTagsCompiled(
-        HashSet<string> tags,
-        object rootEntity,
-        INavigation[][] chains,
-        DbContext context,
-        ITypeConversionService typeConversion)
+    private static void AppendIncludeCascadeTagsCompiled(HashSet<string> tags, object rootEntity, INavigation[][] chains, DbContext context, ITypeConversionService typeConversion)
     {
         foreach (var chain in chains)
             WalkIncludeChain(rootEntity, chain, 0);
@@ -363,11 +318,7 @@ public static class QueryCacheTagBuilder
 
         return;
 
-        void WalkProjectionInclude(
-            object? node,
-            IEntityType sourceEntityType,
-            INavigation[] segments,
-            int index)
+        void WalkProjectionInclude(object? node, IEntityType sourceEntityType, INavigation[] segments, int index)
         {
             if (node is null || index >= segments.Length)
                 return;
@@ -376,7 +327,6 @@ public static class QueryCacheTagBuilder
             var segment = navigation.Name;
             var targetType = navigation.TargetEntityType;
             var isLast = index == segments.Length - 1;
-
             var rowDict = AsReadOnlyStringDictionary(node);
             if (rowDict is null)
                 return;
@@ -422,13 +372,11 @@ public static class QueryCacheTagBuilder
     }
 
     private static IReadOnlyDictionary<string, object?>? AsReadOnlyStringDictionary(object? node)
-    {
-        return node switch {
+        => node switch {
             IReadOnlyDictionary<string, object?> d => d,
             IDictionary<string, object?> mutable => new Dictionary<string, object?>(mutable, StringComparer.OrdinalIgnoreCase),
-            _ => null,
+            var _ => null
         };
-    }
 
     private static bool TryGetProjectionNavigationValue(IReadOnlyDictionary<string, object?> dict, string segment, out object? value)
     {

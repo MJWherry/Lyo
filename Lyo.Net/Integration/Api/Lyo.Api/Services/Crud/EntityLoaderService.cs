@@ -1,4 +1,3 @@
-using System.Linq;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
@@ -66,13 +65,14 @@ public class EntityLoaderService : IEntityLoaderService
         where TContext : DbContext where TDbModel : class
     {
         var errors = CollectIncludePathErrors<TContext, TDbModel>(context, includes);
-        if (errors.Count > 0)
+        if (errors.Count > 0) {
             throw new ApiErrorException(
                 LyoProblemDetailsBuilder.CreateWithActivity()
                     .WithErrorCode(Constants.ApiErrorCodes.InvalidInclude)
                     .WithMessage("One or more include paths are invalid.")
                     .AddErrors(errors.Select(e => new ApiError(e.Code, e.Message, e.StackTrace)))
                     .Build());
+        }
     }
 
     public IReadOnlyList<Error> CollectIncludePathErrors<TContext, TDbModel>(TContext context, IEnumerable<string> includes)
@@ -86,9 +86,10 @@ public class EntityLoaderService : IEntityLoaderService
         foreach (var include in includes.Where(i => !string.IsNullOrWhiteSpace(i))) {
             var corrected = FixIncludePathCase(entityType, include);
             if (corrected == null) {
-                list.Add(new Error(
-                    $"Include path {ValidationFieldFormatter.Quote(include)} is not a valid navigation path on type '{typeof(TDbModel).Name}'.",
-                    Constants.ApiErrorCodes.InvalidInclude));
+                list.Add(
+                    new(
+                        $"Include path {ValidationFieldFormatter.Quote(include)} is not a valid navigation path on type '{typeof(TDbModel).Name}'.",
+                        Constants.ApiErrorCodes.InvalidInclude));
             }
         }
 

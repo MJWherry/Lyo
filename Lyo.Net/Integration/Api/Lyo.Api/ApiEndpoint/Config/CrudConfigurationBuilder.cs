@@ -1,37 +1,36 @@
-using Lyo.Api.ApiEndpoint;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
-/// <summary>Fluent builder for <c>WithCrud</c> on the API endpoint builder. Call <see cref="WithFlags"/> first.</summary>
+/// <summary>Fluent builder for <c>WithCrud</c> on the API endpoint builder. Call <see cref="WithFlags" /> first.</summary>
 public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     where TDbContext : DbContext where TDbEntity : class
 {
-    private ApiFeatureFlag _flags;
-    private bool _flagsSet;
+    private Action<CreateContext<TRequest, TDbEntity, TDbContext>>? _afterCreate;
+    private Action<DeleteContext<TDbEntity, TDbContext>>? _afterDelete;
 
     private Action<GetContext<TDbEntity, TDbContext>>? _afterGet;
-    private Action<CreateContext<TRequest, TDbEntity, TDbContext>>? _afterCreate;
-    private Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? _afterUpdate;
     private Action<PatchContext<TDbEntity, TDbContext>>? _afterPatch;
+    private Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? _afterUpdate;
     private Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? _afterUpsert;
-    private Action<DeleteContext<TDbEntity, TDbContext>>? _afterDelete;
-    private Action<GetContext<TDbEntity, TDbContext>>? _beforeGet;
     private Action<CreateContext<TRequest, TDbEntity, TDbContext>>? _beforeCreate;
-    private Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? _beforeUpdate;
-    private Action<PatchContext<TDbEntity, TDbContext>>? _beforePatch;
-    private Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? _beforeUpsert;
     private Action<DeleteContext<TDbEntity, TDbContext>>? _beforeDelete;
-
-    private string[]? _deleteIncludes;
-    private MetadataConfiguration<TDbContext, TDbEntity>? _metadata;
+    private Action<GetContext<TDbEntity, TDbContext>>? _beforeGet;
+    private Action<PatchContext<TDbEntity, TDbContext>>? _beforePatch;
+    private Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? _beforeUpdate;
+    private Action<UpsertContext<TRequest, TDbEntity, TDbContext>>? _beforeUpsert;
 
     private EndpointAuth? _createAuth;
     private EndpointAuth? _createBulkAuth;
     private EndpointAuth? _deleteAuth;
     private EndpointAuth? _deleteBulkAuth;
+
+    private string[]? _deleteIncludes;
     private EndpointAuth? _exportAuth;
+    private ApiFeatureFlag _flags;
+    private bool _flagsSet;
     private EndpointAuth? _getAuth;
+    private MetadataConfiguration<TDbContext, TDbEntity>? _metadata;
     private EndpointAuth? _metadataAuth;
     private EndpointAuth? _patchAuth;
     private EndpointAuth? _patchBulkAuth;
@@ -195,11 +194,14 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
         return this;
     }
 
-    /// <summary>Policy-based allowed patch properties (same as <see cref="PatchPropertyAuthorization.ForPolicies"/>). For a custom delegate, pass a built <see cref="PatchPropertyAuthorization"/> to the other overload.</summary>
+    /// <summary>
+    /// Policy-based allowed patch properties (same as <see cref="PatchPropertyAuthorization.ForPolicies" />). For a custom delegate, pass a built
+    /// <see cref="PatchPropertyAuthorization" /> to the other overload.
+    /// </summary>
     public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> PatchPropertyAuthorization(Action<PatchPropertyAuthorizationBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        _patchPropertyAuthorization = global::Lyo.Api.ApiEndpoint.Config.PatchPropertyAuthorization.ForPolicies(configure);
+        _patchPropertyAuthorization = Config.PatchPropertyAuthorization.ForPolicies(configure);
         return this;
     }
 

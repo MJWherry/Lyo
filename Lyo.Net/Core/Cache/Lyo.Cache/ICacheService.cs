@@ -75,7 +75,7 @@ public interface ICacheService : IHealth
     /// <summary>Tries to read a cached value without invoking a factory. Returns false when the key is missing, expired, or cache is disabled.</summary>
     bool TryGetValue<T>(string key, out T? value);
 
-    /// <summary>Gets or sets framed byte payload (see <see cref="CacheOptions.Payload"/>). Requires <see cref="ICachePayloadCodec"/> registration.</summary>
+    /// <summary>Gets or sets framed byte payload (see <see cref="CacheOptions.Payload" />). Requires <see cref="ICachePayloadCodec" /> registration.</summary>
     ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
         string key,
         Func<CancellationToken, Task<byte[]?>> factory,
@@ -90,7 +90,7 @@ public interface ICacheService : IHealth
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default);
 
-    /// <summary>Gets or sets framed byte payload; factory returns plaintext bytes and tags (merged with <paramref name="extraTags"/>).</summary>
+    /// <summary>Gets or sets framed byte payload; factory returns plaintext bytes and tags (merged with <paramref name="extraTags" />).</summary>
     ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
         string key,
         Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
@@ -105,9 +105,7 @@ public interface ICacheService : IHealth
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default);
 
-    /// <summary>
-    /// Serializes <typeparamref name="TValue"/> with <see cref="ICachePayloadSerializer"/>, frames with <see cref="ICachePayloadCodec"/>, and returns the deserialized value.
-    /// </summary>
+    /// <summary>Serializes <typeparamref name="TValue" /> with <see cref="ICachePayloadSerializer" />, frames with <see cref="ICachePayloadCodec" />, and returns the deserialized value.</summary>
     ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
         string key,
         Func<CancellationToken, Task<TValue?>> factory,
@@ -122,7 +120,7 @@ public interface ICacheService : IHealth
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default);
 
-    /// <summary>Like the byte-tuple payload overload, but serializes <typeparamref name="TValue"/> and merges tags.</summary>
+    /// <summary>Like the byte-tuple payload overload, but serializes <typeparamref name="TValue" /> and merges tags.</summary>
     ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
         string key,
         Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,

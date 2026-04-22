@@ -158,10 +158,10 @@ bool DeleteReportAsync(
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
 
 ### Project references
 

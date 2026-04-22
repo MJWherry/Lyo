@@ -83,9 +83,6 @@ var thumbnailBytes = await imageService.GenerateThumbnailAsync(
 - .NET 10.0 or later
 - SkiaSharp 2.88.x or later
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -96,15 +93,15 @@ var thumbnailBytes = await imageService.GenerateThumbnailAsync(
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `MetadataExtractor` | `2.9.0` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
+| `MetadataExtractor`                                     | `2.9.0` |
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `SkiaSharp` | `3.*` |
-| `SkiaSharp.NativeAssets.Linux.NoDependencies` | `3.*` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| `SkiaSharp`                                             | `3.*`   |
+| `SkiaSharp.NativeAssets.Linux.NoDependencies`           | `3.*`   |
 
 ### Project references
 

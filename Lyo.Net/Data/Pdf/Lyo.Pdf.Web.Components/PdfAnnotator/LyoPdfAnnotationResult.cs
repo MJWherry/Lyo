@@ -38,7 +38,8 @@ public sealed class LyoPdfAnnotationResult
     public PdfInferFormattingFlags InferFormattingFlags { get; set; } = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Underline;
 
     /// <summary>
-    /// When <see cref="InferFormattingFlags" /> includes <see cref="PdfInferFormattingFlags.Semicolon" />, key/value and table-header inference tries these punctuation characters as label terminators, in order (e.g. <c>":;=?|"</c>).
+    /// When <see cref="InferFormattingFlags" /> includes <see cref="PdfInferFormattingFlags.Semicolon" />, key/value and table-header inference tries these punctuation
+    /// characters as label terminators, in order (e.g. <c>":;=?|"</c>).
     /// </summary>
     public string KeyValueInferDelimiters { get; set; } = ":;";
 

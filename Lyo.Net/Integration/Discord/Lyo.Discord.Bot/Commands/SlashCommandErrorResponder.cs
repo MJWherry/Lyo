@@ -39,12 +39,7 @@ public static class SlashCommandErrorResponder
         }
     }
 
-    private static async Task TryNotifyGuildAsync(
-        ILyoDiscordBotGateway? gateway,
-        InteractionContext ctx,
-        string title,
-        string? messageBody,
-        Exception? exception)
+    private static async Task TryNotifyGuildAsync(ILyoDiscordBotGateway? gateway, InteractionContext ctx, string title, string? messageBody, Exception? exception)
     {
         if (gateway is not { IsConnected: true } || ctx.Guild == null)
             return;

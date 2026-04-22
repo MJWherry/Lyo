@@ -83,13 +83,13 @@ For very large Excel files, consider using streaming operations or processing in
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `ClosedXML` | `[0.99,)` |
-| `ExcelDataReader` | `[3.8,)` |
-| `ExcelDataReader.DataSet` | `[3.8,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
+| Package                                                 | Version   |
+|---------------------------------------------------------|-----------|
+| `ClosedXML`                                             | `[0.99,)` |
+| `ExcelDataReader`                                       | `[3.8,)`  |
+| `ExcelDataReader.DataSet`                               | `[3.8,)`  |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
 
 ### Project references
 

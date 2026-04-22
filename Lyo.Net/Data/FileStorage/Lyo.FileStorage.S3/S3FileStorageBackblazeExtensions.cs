@@ -11,8 +11,9 @@ public static class S3FileStorageBackblazeExtensions
     public const string BackblazeFileStorageConfigurationSectionName = "BackblazeFileStorage";
 
     /// <summary>
-    /// Sets <see cref="S3FileStorageOptions.ServiceUrl" /> to the B2 S3 endpoint for <see cref="S3FileStorageOptions.Region" /> when <see cref="S3FileStorageOptions.ServiceUrl" />
-    /// is not already set. Use B2 application key id and key as <see cref="S3FileStorageOptions.AccessKeyId" /> and <see cref="S3FileStorageOptions.SecretAccessKey" />.
+    /// Sets <see cref="S3FileStorageOptions.ServiceUrl" /> to the B2 S3 endpoint for <see cref="S3FileStorageOptions.Region" /> when
+    /// <see cref="S3FileStorageOptions.ServiceUrl" /> is not already set. Use B2 application key id and key as <see cref="S3FileStorageOptions.AccessKeyId" /> and
+    /// <see cref="S3FileStorageOptions.SecretAccessKey" />.
     /// </summary>
     public static void ApplyBackblazeB2Defaults(this S3FileStorageOptions options)
     {

@@ -57,21 +57,23 @@ public class CacheServiceTests : IDisposable
         var key = "test-key-1";
         var expectedValue = "test-value";
         var result = await service.GetOrSetAsync<string>(
-            key, async ct => {
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                return expectedValue;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    return expectedValue;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         result.ShouldBe(expectedValue);
 
         // Second call should return cached value (factory shouldn't be called again)
         var callCount = 0;
         var cachedResult = await service.GetOrSetAsync<string>(
-            key, async ct => {
-                callCount++;
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                return "different-value";
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    callCount++;
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    return "different-value";
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0); // Factory should not be called
@@ -85,16 +87,18 @@ public class CacheServiceTests : IDisposable
         var key = "test-key-2";
         var callCount = 0;
         var result1 = await service.GetOrSetAsync<string>(
-            key, ct => {
-                callCount++;
-                return Task.FromResult("value-1")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, ct => {
+                    callCount++;
+                    return Task.FromResult("value-1")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         var result2 = await service.GetOrSetAsync<string>(
-            key, ct => {
-                callCount++;
-                return Task.FromResult("value-2")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, ct => {
+                    callCount++;
+                    return Task.FromResult("value-2")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         result1.ShouldBe("value-1");
         result2.ShouldBe("value-2");
@@ -249,10 +253,11 @@ public class CacheServiceTests : IDisposable
 
         // First call should work
         var result1 = await service.GetOrSetAsync<string>(
-            key, ct => {
-                callCount++;
-                return Task.FromResult("value-1")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, ct => {
+                    callCount++;
+                    return Task.FromResult("value-1")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         result1.ShouldBe("value-1");
         callCount.ShouldBe(1);
@@ -260,13 +265,14 @@ public class CacheServiceTests : IDisposable
         // Simulate cache failure by using a different key and forcing an error
         // The fallback should call factory again
         var result2 = await service.GetOrSetAsync<string>(
-            key + "-new", ct => {
-                callCount++;
-                if (callCount == 1)
-                    throw new("Cache error");
+                key + "-new", ct => {
+                    callCount++;
+                    if (callCount == 1)
+                        throw new("Cache error");
 
-                return Task.FromResult("value-2")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                    return Task.FromResult("value-2")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         // Should fallback to factory and get value-2
         result2.ShouldBe("value-2");
@@ -310,10 +316,11 @@ public class CacheServiceTests : IDisposable
         await cts.CancelAsync().ConfigureAwait(false);
         var ex = await ExceptionAssertions.ThrowsAsync<TaskCanceledException>(async () => {
             await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    await Task.Delay(1000, ct).ConfigureAwait(false);
-                    return "value";
-                }, token: cts.Token).ConfigureAwait(false);
+                    key, async ct => {
+                        await Task.Delay(1000, ct).ConfigureAwait(false);
+                        return "value";
+                    }, token: cts.Token)
+                .ConfigureAwait(false);
         });
 
         ex.ShouldNotBeNull();

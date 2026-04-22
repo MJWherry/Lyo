@@ -9,9 +9,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileMetadataStore.Postgres;
 
 /// <summary>
-/// Builder for configuring PostgreSQL file metadata store with its dependencies. <see cref="Build" /> also registers
-/// <see cref="PostgresMultipartUploadSessionStore" /> as <see cref="IMultipartUploadSessionStore" /> when none is already registered.
-/// Usage examples: // Use configuration section:
+/// Builder for configuring PostgreSQL file metadata store with its dependencies. <see cref="Build" /> also registers <see cref="PostgresMultipartUploadSessionStore" /> as
+/// <see cref="IMultipartUploadSessionStore" /> when none is already registered. Usage examples: // Use configuration section:
 /// services.AddPostgresFileMetadataStoreKeyed("postgres-metadata") .ConfigurePostgresFileStore("PostgresFileStore") .Build(); // Use action to configure:
 /// services.AddPostgresFileMetadataStoreKeyed("postgres-metadata") .ConfigurePostgresFileStore(options => { options.ConnectionString = "Host=localhost;...";
 /// options.EnableAutoMigrations = true; }) .Build();

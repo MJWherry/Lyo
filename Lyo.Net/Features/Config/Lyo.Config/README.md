@@ -87,8 +87,8 @@ at deploy time.
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package            | Version |
+|--------------------|---------|
 | `System.Text.Json` | `[10,)` |
 
 ### Project references

@@ -25,7 +25,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         });
 
         _logger = loggerFactory.CreateLogger<CsvService>();
-        _tempSession = new IOTempSession(new(){ FileExtension = ".csv" }, loggerFactory.CreateLogger<IOTempSession>());
+        _tempSession = new IOTempSession(new() { FileExtension = ".csv" }, loggerFactory.CreateLogger<IOTempSession>());
     }
 
     public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
@@ -770,10 +770,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var chunks = new List<List<Person>>();
         await svc.ProcessFileInChunksAsync<Person>(
-            tempFile, 3, async chunk => {
-                chunks.Add(chunk.ToList());
-                await Task.CompletedTask.ConfigureAwait(false);
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                tempFile, 3, async chunk => {
+                    chunks.Add(chunk.ToList());
+                    await Task.CompletedTask.ConfigureAwait(false);
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal(4, chunks.Count); // 3 + 3 + 3 + 1
         Assert.Equal(3, chunks[0].Count);
@@ -791,10 +792,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         using var ms = new MemoryStream(bytes);
         var chunks = new List<List<Person>>();
         await svc.ProcessStreamInChunksAsync<Person>(
-            ms, 2, async chunk => {
-                chunks.Add(chunk.ToList());
-                await Task.CompletedTask.ConfigureAwait(false);
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                ms, 2, async chunk => {
+                    chunks.Add(chunk.ToList());
+                    await Task.CompletedTask.ConfigureAwait(false);
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal(4, chunks.Count); // 2 + 2 + 2 + 1
     }

@@ -3,17 +3,11 @@ using Lyo.Validation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Web.Components.ChipInput;
 
 public partial class LyoChipInput : IAsyncDisposable
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-chip-input" : ElementId.Trim();
-
     private static readonly char[] ValueSeparators = [',', '\uFF0C', ';', '\t', '\n', '\r'];
     private DotNetObjectReference<LyoChipInput>? _dotNetRef;
     private int _inputKey;
@@ -24,6 +18,11 @@ public partial class LyoChipInput : IAsyncDisposable
     private ElementReference _rootRef;
     private bool _shouldRefocus;
     private MudTextField<string>? _textFieldRef;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-chip-input" : ElementId.Trim();
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
@@ -46,7 +45,7 @@ public partial class LyoChipInput : IAsyncDisposable
     [Parameter]
     public bool SelectableChips { get; set; }
 
-    /// <summary>When true with <see cref="SelectableChips"/>, at most one chip may be selected (click again to clear).</summary>
+    /// <summary>When true with <see cref="SelectableChips" />, at most one chip may be selected (click again to clear).</summary>
     [Parameter]
     public bool SingleSelection { get; set; }
 
@@ -74,21 +73,7 @@ public partial class LyoChipInput : IAsyncDisposable
 
     private IEnumerable<string> EnumeratedValues => Values ?? Enumerable.Empty<string>();
 
-    private bool HasValuesOrSelection
-        => EnumeratedValues.Any() || (SelectableChips && SelectedValues.Any());
-
-    private async Task ClearAllAsync()
-    {
-        _inputValue = "";
-        _inputKey++;
-        _lastValidationError = null;
-        await ValuesChanged.InvokeAsync([]);
-        if (SelectableChips && SelectedValues.Any())
-            await SelectedValuesChanged.InvokeAsync([]);
-
-        _shouldRefocus = true;
-        await InvokeAsync(StateHasChanged);
-    }
+    private bool HasValuesOrSelection => EnumeratedValues.Any() || (SelectableChips && SelectedValues.Any());
 
     public async ValueTask DisposeAsync()
     {
@@ -102,6 +87,19 @@ public partial class LyoChipInput : IAsyncDisposable
 
             _pasteModule = null;
         }
+    }
+
+    private async Task ClearAllAsync()
+    {
+        _inputValue = "";
+        _inputKey++;
+        _lastValidationError = null;
+        await ValuesChanged.InvokeAsync([]);
+        if (SelectableChips && SelectedValues.Any())
+            await SelectedValuesChanged.InvokeAsync([]);
+
+        _shouldRefocus = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -256,9 +254,7 @@ public partial class LyoChipInput : IAsyncDisposable
         if (ChipValidator is not null) {
             var result = ChipValidator.Validate(value);
             if (!result.IsSuccess) {
-                var message = result.Errors is { Count: > 0 }
-                    ? string.Join("; ", result.Errors.Select(e => e.Message))
-                    : $"'{value}' is not valid.";
+                var message = result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors.Select(e => e.Message)) : $"'{value}' is not valid.";
                 return (false, message);
             }
 

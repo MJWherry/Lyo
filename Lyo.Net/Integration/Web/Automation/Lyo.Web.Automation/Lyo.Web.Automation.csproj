@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj" />
+        <ProjectReference Include="..\..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
     </ItemGroup>
 
 </Project>

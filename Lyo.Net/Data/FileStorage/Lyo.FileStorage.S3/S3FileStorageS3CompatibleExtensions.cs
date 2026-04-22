@@ -24,7 +24,7 @@ public static class S3FileStorageS3CompatibleExtensions
 
     /// <summary>Configuration section for Linode Object Storage (set <see cref="S3FileStorageOptions.Region" />, e.g. <c>us-east-1</c>).</summary>
     public const string LinodeObjectStorageConfigurationSectionName = "LinodeObjectStorage";
-    
+
     /// <summary>Returns a base URL for MinIO when only a host (and optional port) is given without a scheme; otherwise trims and removes a trailing slash.</summary>
     public static string GetMinioServiceUrl(string hostOrUri)
     {
@@ -70,10 +70,10 @@ public static class S3FileStorageS3CompatibleExtensions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(region, nameof(region));
         return $"https://{region.Trim()}.linodeobjects.com";
     }
-    
+
     /// <summary>
-    /// Normalizes <see cref="S3FileStorageOptions.ServiceUrl" /> and sets a default <see cref="S3FileStorageOptions.Region" /> for the AWS SDK when using a custom MinIO endpoint.
-    /// Does not set <see cref="S3FileStorageOptions.ServiceUrl" /> if it is empty — configure the MinIO server URL explicitly.
+    /// Normalizes <see cref="S3FileStorageOptions.ServiceUrl" /> and sets a default <see cref="S3FileStorageOptions.Region" /> for the AWS SDK when using a custom MinIO
+    /// endpoint. Does not set <see cref="S3FileStorageOptions.ServiceUrl" /> if it is empty — configure the MinIO server URL explicitly.
     /// </summary>
     public static void ApplyMinioDefaults(this S3FileStorageOptions options)
     {
@@ -106,8 +106,8 @@ public static class S3FileStorageS3CompatibleExtensions
     }
 
     /// <summary>
-    /// Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.ProviderAccountId" /> when the URL is not already set.
-    /// Optionally set <see cref="S3FileStorageOptions.Region" /> to <c>auto</c> for R2 if your tooling expects a region string.
+    /// Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.ProviderAccountId" /> when the URL is not already set. Optionally set
+    /// <see cref="S3FileStorageOptions.Region" /> to <c>auto</c> for R2 if your tooling expects a region string.
     /// </summary>
     public static void ApplyCloudflareR2Defaults(this S3FileStorageOptions options)
     {
@@ -166,7 +166,10 @@ public static class S3FileStorageS3CompatibleExtensions
         string configSectionName = DigitalOceanSpacesFileStorageConfigurationSectionName)
         => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyDigitalOceanSpacesDefaults());
 
-    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(this IServiceCollection services, string keyName, Action<S3FileStorageOptions> configure)
+    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(
+        this IServiceCollection services,
+        string keyName,
+        Action<S3FileStorageOptions> configure)
         => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyDigitalOceanSpacesDefaults());
 
     public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(
@@ -196,7 +199,10 @@ public static class S3FileStorageS3CompatibleExtensions
         string configSectionName = LinodeObjectStorageConfigurationSectionName)
         => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyLinodeObjectStorageDefaults());
 
-    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(this IServiceCollection services, string keyName, Action<S3FileStorageOptions> configure)
+    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(
+        this IServiceCollection services,
+        string keyName,
+        Action<S3FileStorageOptions> configure)
         => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyLinodeObjectStorageDefaults());
 
     private static S3FileStorageServiceBuilder AddKeyedForApply(

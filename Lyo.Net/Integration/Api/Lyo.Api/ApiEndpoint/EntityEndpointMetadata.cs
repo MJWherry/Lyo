@@ -53,4 +53,5 @@ internal sealed record EntityEndpointMetadata<TContext>(
     DynamicMethodCache Cache,
     PatchPropertyAuthorization? PatchPropertyAuthorization,
     Delegate? AdaptedPatchBefore,
-    Delegate? AdaptedPatchAfter) where TContext : DbContext;
+    Delegate? AdaptedPatchAfter)
+    where TContext : DbContext;

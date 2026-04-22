@@ -8,6 +8,7 @@ using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Create;
 
@@ -239,7 +240,7 @@ public class CreateService<TContext>(
             return ResultFactory.CreateSuccess(result);
         }
         catch (Exception ex) {
-            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Individual Create Error", Models.Constants.ApiErrorCodes.InvalidCreateRequest));
+            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Individual Create Error", Constants.ApiErrorCodes.InvalidCreateRequest));
         }
     }
 
@@ -262,7 +263,7 @@ public class CreateService<TContext>(
             return ResultFactory.CreateSuccess(result);
         }
         catch (Exception ex) {
-            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Create Error", Models.Constants.ApiErrorCodes.InvalidCreateRequest));
+            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Create Error", Constants.ApiErrorCodes.InvalidCreateRequest));
         }
     }
 }

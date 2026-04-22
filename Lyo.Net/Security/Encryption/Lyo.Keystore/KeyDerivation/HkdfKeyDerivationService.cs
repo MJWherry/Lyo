@@ -56,7 +56,6 @@ public class HkdfKeyDerivationService : IKeyDerivationService
         // HKDF doesn't use iterations - it's a single-pass algorithm
         // Use the info parameter for context binding (RFC 5869)
         var info = Encoding.UTF8.GetBytes(DefaultInfo);
-
 #if NET10_0_OR_GREATER
         var prk = HKDF.Extract(_hashAlgorithm, password, actualSalt);
         return HKDF.Expand(_hashAlgorithm, prk, actualKeySize, info);

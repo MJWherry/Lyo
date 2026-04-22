@@ -20,6 +20,7 @@ public static class KeyValidator
     {
         if (key == null)
             throw new ArgumentNullException(nameof(key));
+
         if (key.Length != expectedSize)
             throw new InvalidKeyException($"Key size ({key.Length} bytes) does not match expected size ({expectedSize} bytes).");
     }
@@ -67,6 +68,7 @@ public static class KeyValidator
     {
         if (key == null)
             throw new ArgumentNullException(nameof(key));
+
         if (!IsStrongKey(key))
             throw new InvalidKeyException("Key appears to be weak (low entropy). Use a cryptographically secure random key generator.");
     }

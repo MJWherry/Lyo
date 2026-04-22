@@ -92,10 +92,11 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
         var key = $"both-execute-{implementation}-{Guid.NewGuid():N}";
         var executed = false;
         await service.ExecuteWithLockAsync(
-            key, async ct => {
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                executed = true;
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    executed = true;
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         executed.ShouldBeTrue();
     }

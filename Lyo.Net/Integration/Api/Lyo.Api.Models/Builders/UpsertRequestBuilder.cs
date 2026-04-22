@@ -29,7 +29,8 @@ public class UpsertRequestBuilder<T>
         return this;
     }
 
-    public UpsertRequestBuilder<T> WithId(string propertyName, object value, bool overwrite = false) => WithIdentifier(propertyName, ComparisonOperatorEnum.Equals, value, overwrite);
+    public UpsertRequestBuilder<T> WithId(string propertyName, object value, bool overwrite = false)
+        => WithIdentifier(propertyName, ComparisonOperatorEnum.Equals, value, overwrite);
 
     public UpsertRequestBuilder<T> WithId(object value, bool overwrite = false) => WithId("Id", value, overwrite);
 

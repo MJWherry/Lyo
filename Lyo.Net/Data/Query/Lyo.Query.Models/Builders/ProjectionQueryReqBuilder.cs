@@ -103,7 +103,8 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
         return this;
     }
 
-    public ProjectionQueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null) => AddSort(new(propertyName, direction, priority));
+    public ProjectionQueryReqBuilder AddSort(string propertyName, SortDirection direction = SortDirection.Desc, int? priority = null)
+        => AddSort(new(propertyName, direction, priority));
 
     public ProjectionQueryReqBuilder SetPagination(int start, int amount)
     {

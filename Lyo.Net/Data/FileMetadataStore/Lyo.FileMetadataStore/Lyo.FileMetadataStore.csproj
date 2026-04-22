@@ -5,7 +5,7 @@
         <Description>File store service interface and base implementation for metadata and file tracking.</Description>
         <PackageTags>file-store metadata tracking</PackageTags>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
@@ -18,7 +18,7 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="System.Text.Json" Version="[10,)"/>
     </ItemGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>

@@ -36,14 +36,11 @@ internal static class FusionCacheRegistration
                 sp.GetRequiredService<ICompressionService>(),
                 sp.GetService<Encryption.IEncryptionService>())
 #else
-            new CachePayloadCodec(
-                sp.GetRequiredService<CacheOptions>(),
-                sp.GetRequiredService<ICompressionService>())
+                new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>())
 #endif
         );
 
         svc.TryAddSingleton(CachePayloadSerializerRegistration.Create);
-
         var fusionCacheBuilder = FusionCacheServiceCollectionExtensions.AddFusionCache(svc);
         if (configureFusionCache != null)
             fusionCacheBuilder.WithOptions(configureFusionCache);

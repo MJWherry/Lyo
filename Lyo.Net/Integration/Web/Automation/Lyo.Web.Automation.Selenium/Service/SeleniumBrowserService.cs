@@ -10,16 +10,13 @@ namespace Lyo.Web.Automation.Selenium.Service;
 /// <inheritdoc cref="ISeleniumBrowserService" />
 public sealed class SeleniumBrowserService : ISeleniumBrowserService
 {
-    private int _activeSessions;
-    private bool _disposed;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly IMetrics? _metrics;
     private readonly SeleniumBrowserOptions _serviceOptions;
+    private int _activeSessions;
+    private bool _disposed;
 
-    public SeleniumBrowserService(
-        SeleniumBrowserOptions serviceOptions,
-        ILoggerFactory? loggerFactory = null,
-        IMetrics? metrics = null)
+    public SeleniumBrowserService(SeleniumBrowserOptions serviceOptions, ILoggerFactory? loggerFactory = null, IMetrics? metrics = null)
     {
         ArgumentHelpers.ThrowIfNull(serviceOptions, nameof(serviceOptions));
         _serviceOptions = serviceOptions;
@@ -43,11 +40,6 @@ public sealed class SeleniumBrowserService : ISeleniumBrowserService
         return new SeleniumBrowserSession(scraper, OnSessionDisposed);
     }
 
-    private void OnSessionDisposed()
-    {
-        Interlocked.Decrement(ref _activeSessions);
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -57,6 +49,8 @@ public sealed class SeleniumBrowserService : ISeleniumBrowserService
         _disposed = true;
         GC.SuppressFinalize(this);
     }
+
+    private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);
 
     private void ThrowIfDisposed()
     {

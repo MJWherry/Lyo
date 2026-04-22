@@ -1,4 +1,3 @@
-using Lyo.FileStorage;
 using Lyo.Keystore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

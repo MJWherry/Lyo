@@ -1,5 +1,5 @@
-using System.Linq;
 using Lyo.Compression;
+using Lyo.Encryption;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,17 +14,10 @@ namespace Lyo.Cache;
 public static class CacheServiceExtensions
 {
     private static void RegisterCachePayloadCodec(IServiceCollection services)
-    {
-        services.AddSingleton<ICachePayloadCodec>(sp =>
-            new CachePayloadCodec(
-                sp.GetRequiredService<CacheOptions>(),
-                sp.GetRequiredService<ICompressionService>(),
-                sp.GetService<Lyo.Encryption.IEncryptionService>())
-        );
-    }
+        => services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
+            sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>()));
 
-    private static void RegisterCachePayloadSerializer(IServiceCollection services)
-        => services.TryAddSingleton<ICachePayloadSerializer>(CachePayloadSerializerRegistration.Create);
+    private static void RegisterCachePayloadSerializer(IServiceCollection services) => services.TryAddSingleton(CachePayloadSerializerRegistration.Create);
 
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)

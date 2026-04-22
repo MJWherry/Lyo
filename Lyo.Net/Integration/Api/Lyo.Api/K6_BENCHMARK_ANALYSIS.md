@@ -8,17 +8,17 @@
 
 ## Test Environment
 
-| Spec            | Value                                                                         |
-|-----------------|-------------------------------------------------------------------------------|
-| **CPU**         | Intel Core Ultra 7 155U (12 cores / 14 threads, up to 4.8 GHz) — laptop-class |
-| **RAM**         | 62 GB                                                                         |
-| **Database**    | PostgreSQL (localhost:5437)                                                   |
-| **OS**          | Linux 6.8.0-106-generic, x86_64                                               |
-| **Disk**        | 1.8 TB root partition, 721 GB free                                            |
-| **Dataset**     | Large PostgreSQL graph (representative counts): **~135k** `person` (29 columns); **~815k** `contact_address` (10) + **~815k** `address` (21); **~480k** `contact_phone_number` (10) + **~460k** `phone_number` (9); **~285k** `contact_email_address` (11) + **~285k** `email_address` (6) |
-| **Compression** | Brotli enabled (API-side), `Accept-Encoding: br, gzip, deflate` on client     |
-| **Query cache tags** | **`CacheOptions:QueryCacheTagGranularity`** = **`Broad`** (default) — type-scoped **`entity:{type}`** tags only; lower CPU on cache writes than **`Granular`** per-row instance tags |
-| **DTO mapping** | **`Lyo.TestApi`** uses **Mapster** (`MapsterLyoMapper` implementing **`ILyoMapper`**) for entity ↔ API model mapping — adds overhead vs manual mapping or a leaner alternative |
+| Spec                 | Value                                                                                                                                                                                                                                                                                      |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **CPU**              | Intel Core Ultra 7 155U (12 cores / 14 threads, up to 4.8 GHz) — laptop-class                                                                                                                                                                                                              |
+| **RAM**              | 62 GB                                                                                                                                                                                                                                                                                      |
+| **Database**         | PostgreSQL (localhost:5437)                                                                                                                                                                                                                                                                |
+| **OS**               | Linux 6.8.0-106-generic, x86_64                                                                                                                                                                                                                                                            |
+| **Disk**             | 1.8 TB root partition, 721 GB free                                                                                                                                                                                                                                                         |
+| **Dataset**          | Large PostgreSQL graph (representative counts): **~135k** `person` (29 columns); **~815k** `contact_address` (10) + **~815k** `address` (21); **~480k** `contact_phone_number` (10) + **~460k** `phone_number` (9); **~285k** `contact_email_address` (11) + **~285k** `email_address` (6) |
+| **Compression**      | Brotli enabled (API-side), `Accept-Encoding: br, gzip, deflate` on client                                                                                                                                                                                                                  |
+| **Query cache tags** | **`CacheOptions:QueryCacheTagGranularity`** = **`Broad`** (default) — type-scoped **`entity:{type}`** tags only; lower CPU on cache writes than **`Granular`** per-row instance tags                                                                                                       |
+| **DTO mapping**      | **`Lyo.TestApi`** uses **Mapster** (`MapsterLyoMapper` implementing **`ILyoMapper`**) for entity ↔ API model mapping — adds overhead vs manual mapping or a leaner alternative                                                                                                             |
 
 > **Important**: API, database, and k6 load generator all share the same 12-core laptop CPU.
 > This makes results **pessimistic** — production deployments with separated infrastructure would perform better.
@@ -31,7 +31,8 @@ The `Person` entity is moderately complex:
 
 - **29 columns** (26 scalar + 3 JSONB)
 - **7 navigation properties** in the domain model
-- **PostgreSQL indexes** (typical TestApi / `people.person`): `PK_person`, `ix_person_created_timestamp`, `ix_person_first_name`, `ix_person_is_active`, `ix_person_last_name`, `ix_person_last_name_first_name`
+- **PostgreSQL indexes** (typical TestApi / `people.person`): `PK_person`, `ix_person_created_timestamp`, `ix_person_first_name`, `ix_person_is_active`, `ix_person_last_name`,
+  `ix_person_last_name_first_name`
 
 The heavy-include tests exercise 3 include paths, each of which traverses a **join table** before reaching the target entity — making each include a **two-hop navigation**:
 
@@ -76,24 +77,27 @@ related records across 6 child/grandchild tables.
 | **Success rate**      | **100%**                    |
 | **Avg response size** | 247 KB                      |
 
-**Assessment**: Excellent. Five different query types — including dynamically compiled expression trees, query node filters, sort chains, and regex-based subqueries — stay in a tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass.
+**Assessment**: Excellent. Five different query types — including dynamically compiled expression trees, query node filters, sort chains, and regex-based subqueries — stay in a
+tight band at sustained 20 req/s. Zero failures. Randomized start/amount for cache bypass.
 
 ---
 
 ### Scenario 02 — Stress Heavy Includes
 
-| Metric                | Value                          |
-|-----------------------|--------------------------------|
-| **Avg latency**       | 92.6 ms                        |
-| **Median latency**    | 71.9 ms                        |
-| **p95 latency**       | 244 ms                         |
-| **p99 latency**       | 372 ms                         |
-| **Max latency**       | 1,059 ms                       |
-| **Throughput**        | 181.4 req/s (87,087 requests)  |
-| **Success rate**      | **100%**                       |
-| **Avg response size** | 601 KB                         |
+| Metric                | Value                         |
+|-----------------------|-------------------------------|
+| **Avg latency**       | 92.6 ms                       |
+| **Median latency**    | 71.9 ms                       |
+| **p95 latency**       | 244 ms                        |
+| **p99 latency**       | 372 ms                        |
+| **Max latency**       | 1,059 ms                      |
+| **Throughput**        | 181.4 req/s (87,087 requests) |
+| **Success rate**      | **100%**                      |
+| **Avg response size** | 601 KB                        |
 
-**Assessment**: Strong under concurrent load. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). This archive completes more stress-stage iterations than the April 2026 baseline (higher aggregate throughput); API, Postgres, and k6 still share CPU while ramping to 40 VUs — use this scenario for **stress**, not apples-to-apples with single-request localhost timings.
+**Assessment**: Strong under concurrent load. Realistic workload: 100–300 items, 3 tables (person → contact_addresses → address). This archive completes more stress-stage
+iterations than the April 2026 baseline (higher aggregate throughput); API, Postgres, and k6 still share CPU while ramping to 40 VUs — use this scenario for **stress**, not
+apples-to-apples with single-request localhost timings.
 
 ---
 
@@ -116,19 +120,21 @@ related records across 6 child/grandchild tables.
 
 ### Scenario 04 — Soak Mixed Leak Watch
 
-| Metric                | Value                           |
-|-----------------------|---------------------------------|
-| **Avg latency**       | 85.4 ms                         |
-| **Median latency**    | 32.3 ms                         |
-| **p95 latency**       | 395 ms                          |
-| **p99 latency**       | 1,113 ms                        |
-| **Max latency**       | 4,199 ms                        |
-| **Throughput**        | 42.2 req/s (303,896 requests)   |
-| **Duration**          | 2 hours (configured)            |
-| **Success rate**      | **100%** (all k6 checks passed) |
+| Metric                | Value                                |
+|-----------------------|--------------------------------------|
+| **Avg latency**       | 85.4 ms                              |
+| **Median latency**    | 32.3 ms                              |
+| **p95 latency**       | 395 ms                               |
+| **p99 latency**       | 1,113 ms                             |
+| **Max latency**       | 4,199 ms                             |
+| **Throughput**        | 42.2 req/s (303,896 requests)        |
+| **Duration**          | 2 hours (configured)                 |
+| **Success rate**      | **100%** (all k6 checks passed)      |
 | **Avg response size** | 607 KB (range varies by query shape) |
 
-**Assessment**: Very strong. Long soak with mixed load and periodic heavy-include spikes; hundreds of thousands of requests with no failed checks. Randomized queries limit hot-cache repeat hits. Average latency is lower than some prior archives; **p95 is higher** than the April 2026 baseline because the mix includes more time in heavier shapes — compare tails across runs with care.
+**Assessment**: Very strong. Long soak with mixed load and periodic heavy-include spikes; hundreds of thousands of requests with no failed checks. Randomized queries limit
+hot-cache repeat hits. Average latency is lower than some prior archives; **p95 is higher** than the April 2026 baseline because the mix includes more time in heavier shapes —
+compare tails across runs with care.
 
 ---
 
@@ -154,45 +160,49 @@ comparator — holds ~18 ms p95 at sustained 20 req/s. The SQL-first subquery pu
 
 ### Lightweight Queries (Scenarios 01, 03, 05)
 
-| System / Stack                                    | Comparable Workload                            | Typical p95 Latency |
-|---------------------------------------------------|------------------------------------------------|---------------------|
-| **Lyo Query API** (this run, EF Core + dynamic expressions) | Mixed / spike / subquery workloads (see scenarios) | **~9–29 ms** scenario-dependent |
-| **Hasura / PostgREST** (direct PG → JSON, no ORM) | Filters + sorts + pagination                   | 5–30 ms             |
-| **GraphQL** (Hasura — same stack as above)        | Auto-generated GraphQL over PostgreSQL         | 5–30 ms             |
+| System / Stack                                                         | Comparable Workload                                  | Typical p95 Latency                                                                                        |
+|------------------------------------------------------------------------|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| **Lyo Query API** (this run, EF Core + dynamic expressions)            | Mixed / spike / subquery workloads (see scenarios)   | **~9–29 ms** scenario-dependent                                                                            |
+| **Hasura / PostgREST** (direct PG → JSON, no ORM)                      | Filters + sorts + pagination                         | 5–30 ms                                                                                                    |
+| **GraphQL** (Hasura — same stack as above)                             | Auto-generated GraphQL over PostgreSQL               | 5–30 ms                                                                                                    |
 | **GraphQL** (Apollo / Hot Chocolate / gqlgen + hand-written resolvers) | List + filter + sort + pagination as field resolvers | **40–250 ms** with solid batching (DataLoader, lookahead); **200 ms–2s+** with N+1 or cold resolver chains |
-| **Typical EF Core REST API**                      | Dynamic filters + pagination                   | 50–200 ms           |
-| **Django REST Framework**                         | QuerySet filters + pagination                  | 50–300 ms           |
-| **Ruby on Rails**                                 | ActiveRecord scopes + pagination               | 80–400 ms           |
-| **Spring Boot + JPA/Hibernate**                   | JPQL with dynamic predicates                   | 30–150 ms           |
+| **Typical EF Core REST API**                                           | Dynamic filters + pagination                         | 50–200 ms                                                                                                  |
+| **Django REST Framework**                                              | QuerySet filters + pagination                        | 50–300 ms                                                                                                  |
+| **Ruby on Rails**                                                      | ActiveRecord scopes + pagination                     | 80–400 ms                                                                                                  |
+| **Spring Boot + JPA/Hibernate**                                        | JPQL with dynamic predicates                         | 30–150 ms                                                                                                  |
 
-Lyo remains **at the top end of ORM-based frameworks** for these query shapes and **in the same order of magnitude** as thin Postgres-to-JSON gateways for comparable payload sizes on local hardware.
+Lyo remains **at the top end of ORM-based frameworks** for these query shapes and **in the same order of magnitude** as thin Postgres-to-JSON gateways for comparable payload sizes
+on local hardware.
 
-**GraphQL nuance**: *Hasura* is already GraphQL-first; its row above is the apples-to-apples comparison for “declarative query over Postgres.” *Application-layer* GraphQL (custom resolvers) spans a wider band because **resolver shape, DataLoader usage, and query-plan depth** dominate—similar to why ORM-heavy REST APIs vary. Lyo’s `QueryRequest` is **one round trip with a single SQL plan** for the tested shapes, which is closer to Hasura/PostgREST ergonomically than to a deep GraphQL resolver tree.
+**GraphQL nuance**: *Hasura* is already GraphQL-first; its row above is the apples-to-apples comparison for “declarative query over Postgres.” *Application-layer* GraphQL (custom
+resolvers) spans a wider band because **resolver shape, DataLoader usage, and query-plan depth** dominate—similar to why ORM-heavy REST APIs vary. Lyo’s `QueryRequest` is **one
+round trip with a single SQL plan** for the tested shapes, which is closer to Hasura/PostgREST ergonomically than to a deep GraphQL resolver tree.
 
 ### Heavy Include / Navigation Queries (Scenario 02)
 
-| System / Stack                               | Comparable Workload                             | Typical Behavior                       |
-|----------------------------------------------|-------------------------------------------------|----------------------------------------|
-| **Lyo Query API** (this run)                 | 3 tables, 100–300 rows, ~601 KB, up to 40 VUs   | **~93 ms avg, p95 ~244 ms, 100% within 2.5 s SLA** |
-| **EF Core API** (typical)                    | 5–7 table includes, 500–2000 rows               | 2–10s depending on depth and row count |
-| **Django + select_related/prefetch_related** | 2000 rows + 3 FK joins                          | 3–10s                                  |
-| **Rails + includes (eager load)**            | 2000 rows + 3 associations                      | 5–15s                                  |
-| **GraphQL (Apollo + DataLoader)**            | Nested resolvers, 3 levels deep                 | 1–5s (with batching), 10–30s (without) |
-| **GraphQL (Hasura)**                         | Nested object queries, 3 levels (same engine as lightweight row) | 500 ms–2 s (Postgres-bound, no ORM) |
-| **GraphQL (Hot Chocolate / gqlgen, custom)** | Manual nested field resolvers + batching        | Often **2–15s** if batching misses; highly team-dependent |
+| System / Stack                               | Comparable Workload                                              | Typical Behavior                                          |
+|----------------------------------------------|------------------------------------------------------------------|-----------------------------------------------------------|
+| **Lyo Query API** (this run)                 | 3 tables, 100–300 rows, ~601 KB, up to 40 VUs                    | **~93 ms avg, p95 ~244 ms, 100% within 2.5 s SLA**        |
+| **EF Core API** (typical)                    | 5–7 table includes, 500–2000 rows                                | 2–10s depending on depth and row count                    |
+| **Django + select_related/prefetch_related** | 2000 rows + 3 FK joins                                           | 3–10s                                                     |
+| **Rails + includes (eager load)**            | 2000 rows + 3 associations                                       | 5–15s                                                     |
+| **GraphQL (Apollo + DataLoader)**            | Nested resolvers, 3 levels deep                                  | 1–5s (with batching), 10–30s (without)                    |
+| **GraphQL (Hasura)**                         | Nested object queries, 3 levels (same engine as lightweight row) | 500 ms–2 s (Postgres-bound, no ORM)                       |
+| **GraphQL (Hot Chocolate / gqlgen, custom)** | Manual nested field resolvers + batching                         | Often **2–15s** if batching misses; highly team-dependent |
 
-The realistic include workload remains **production-appropriate** (pagination band, single primary include path). Heavier multi-include graphs are still possible; cap page size and include depth in public APIs.
+The realistic include workload remains **production-appropriate** (pagination band, single primary include path). Heavier multi-include graphs are still possible; cap page size and
+include depth in public APIs.
 
 ---
 
 ## Grades
 
-| Category                                                        | Grade | Notes                                                       |
-|-----------------------------------------------------------------|-------|-------------------------------------------------------------|
-| Simple queries (filters, sorts, pagination)                     | **A** | ~18 ms avg mixed load; aligns with strong ORM-class APIs   |
-| Complex query compilation (subqueries, regex, expression trees) | **A** | ~13 ms avg / ~18 ms p95 subquery scenario                   |
-| Spike/burst handling                                            | **A** | ~9 ms p95 on spike scenario; no errors                      |
-| Sustained load stability                                        | **A** | 2 h soak, 304K+ requests, 100% k6 checks                     |
+| Category                                                        | Grade | Notes                                                                                                   |
+|-----------------------------------------------------------------|-------|---------------------------------------------------------------------------------------------------------|
+| Simple queries (filters, sorts, pagination)                     | **A** | ~18 ms avg mixed load; aligns with strong ORM-class APIs                                                |
+| Complex query compilation (subqueries, regex, expression trees) | **A** | ~13 ms avg / ~18 ms p95 subquery scenario                                                               |
+| Spike/burst handling                                            | **A** | ~9 ms p95 on spike scenario; no errors                                                                  |
+| Sustained load stability                                        | **A** | 2 h soak, 304K+ requests, 100% k6 checks                                                                |
 | Realistic include loads (3-table, 100–300 rows, high VUs)       | **A** | 100% within SLA; stress stage throughput higher than older archives — compare duration/iteration counts |
 
 ---
@@ -200,10 +210,17 @@ The realistic include workload remains **production-appropriate** (pagination ba
 ## Caveats
 
 1. **Shared hardware**: All three components (API, PostgreSQL, k6) compete for 12 CPU cores. Dedicated infrastructure would improve all numbers, especially under high concurrency.
-2. **Run-to-run variance**: Laptop thermals, background processes, and cache state change absolute milliseconds. Use trends and scenario comparisons, not a single number in isolation.
-3. **Dataset size**: This is **not** a toy database — person rows are in the **hundreds of thousands**, with **hundreds of thousands to ~800k** rows in major join tables (addresses, phones, emails). Latency still depends on **predicate selectivity**, **sort/index alignment**, and **page size** (`Start`/`Amount`); k6 scenarios use bounded windows, not full-table materialization of the graph. On a machine with ample RAM, hot indexes and pages may cache well, but **cold paths, large offsets, or missing index support** remain expensive at this scale.
+2. **Run-to-run variance**: Laptop thermals, background processes, and cache state change absolute milliseconds. Use trends and scenario comparisons, not a single number in
+   isolation.
+3. **Dataset size**: This is **not** a toy database — person rows are in the **hundreds of thousands**, with **hundreds of thousands to ~800k** rows in major join tables (
+   addresses, phones, emails). Latency still depends on **predicate selectivity**, **sort/index alignment**, and **page size** (`Start`/`Amount`); k6 scenarios use bounded windows,
+   not full-table materialization of the graph. On a machine with ample RAM, hot indexes and pages may cache well, but **cold paths, large offsets, or missing index support**
+   remain expensive at this scale.
 4. **Localhost networking**: Zero network latency between k6 → API and API → PostgreSQL. Real deployments would add 0.5–2ms per hop.
 5. **Scenario 02**: Realistic workload (100–300 items, 3 tables). Older 7-table, ~2000-row stress cases are more demanding; production workloads typically use smaller
    page sizes and fewer includes.
-6. **Mapster in TestApi**: Benchmarks use the stock **`Lyo.TestApi`** host, which maps through **Mapster**. That cost is included in every response; a host with hand-written mapping, source-generated maps, or a different library could shift CPU and allocation profiles (and thus latency) up or down.
-7. **Query cache tag granularity**: This run uses **`Broad`** (the library default) — type-wide tags only. **`Granular`** adds per-row instance tags (more CPU when storing cache entries, finer invalidation). A prior stressed laptop run with **`Granular`** showed heavy cache-tag overhead under load; **`Broad`** is the safer default for throughput-oriented hosts unless you rely on surgical invalidation.
+6. **Mapster in TestApi**: Benchmarks use the stock **`Lyo.TestApi`** host, which maps through **Mapster**. That cost is included in every response; a host with hand-written
+   mapping, source-generated maps, or a different library could shift CPU and allocation profiles (and thus latency) up or down.
+7. **Query cache tag granularity**: This run uses **`Broad`** (the library default) — type-wide tags only. **`Granular`** adds per-row instance tags (more CPU when storing cache
+   entries, finer invalidation). A prior stressed laptop run with **`Granular`** showed heavy cache-tag overhead under load; **`Broad`** is the safer default for
+   throughput-oriented hosts unless you rely on surgical invalidation.

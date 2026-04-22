@@ -15,7 +15,6 @@ using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
-using MudBlazor;
 using CommonExtensions = Lyo.Common.Extensions;
 using SortDirection = MudBlazor.SortDirection;
 using LyoProjectionQueryReqBuilder = Lyo.Query.Models.Builders.ProjectionQueryReqBuilder;
@@ -546,7 +545,6 @@ public partial class LyoDataGridProjected
             await _dataGrid.ReloadServerData();
     }
 
-
     private async Task OnSearchDebounced(string value)
     {
         _refocusSearchAfterLoad = true;
@@ -594,8 +592,7 @@ public partial class LyoDataGridProjected
     {
         var displayName = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field)?.DisplayName ?? condition.Field;
         var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
-        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, compact: true);
-
+        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, true);
         return $"{displayName} {comparatorText} {valueText}";
     }
 
@@ -603,8 +600,7 @@ public partial class LyoDataGridProjected
     {
         var displayName = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field)?.DisplayName ?? condition.Field;
         var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
-        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, compact: false);
-
+        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, false);
         return $"{displayName} {comparatorText} {valueText}";
     }
 
@@ -826,10 +822,7 @@ public partial class LyoDataGridProjected
         // Let the menu popover finish closing so it does not intercept clicks on the dialog.
         await Task.Yield();
         await Task.Delay(10);
-
-        var parameters = new DialogParameters<JsonViewDialog<object?>> {
-            { i => i.Data, data },
-        };
+        var parameters = new DialogParameters<JsonViewDialog<object?>> { { i => i.Data, data } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         await DialogService.ShowAsync(typeof(JsonViewDialog<object?>), title, parameters, options);
     }

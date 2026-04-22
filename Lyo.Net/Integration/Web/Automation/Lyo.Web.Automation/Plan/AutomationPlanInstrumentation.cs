@@ -14,7 +14,8 @@ public interface IAutomationPlanInstrumentation
     void OnRunCompleted(in AutomationPlanRunCompletedEvent e);
 
     /// <summary>
-    /// Called exactly once after each step finishes (success or failure). Use for counters, histograms of <see cref="AutomationPlanStepOutcomeRecord.Duration"/>, and outcome labels.
+    /// Called exactly once after each step finishes (success or failure). Use for counters, histograms of <see cref="AutomationPlanStepOutcomeRecord.Duration" />, and outcome
+    /// labels.
     /// </summary>
     void OnStepOutcome(in AutomationPlanStepOutcomeRecord e);
 }

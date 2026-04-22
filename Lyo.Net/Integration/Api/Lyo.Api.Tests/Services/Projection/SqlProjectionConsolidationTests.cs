@@ -1,4 +1,3 @@
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Project;
 
 namespace Lyo.Api.Tests.Services.Projection;
@@ -6,35 +5,6 @@ namespace Lyo.Api.Tests.Services.Projection;
 /// <summary>Verifies sibling collection fields share one LINQ Select (single join) in SQL projection.</summary>
 public sealed class SqlProjectionConsolidationTests
 {
-    private sealed class Charge
-    {
-        public string? Code { get; set; }
-        public string? Number { get; set; }
-    }
-
-    private sealed class Docket
-    {
-        public Guid Id { get; set; }
-        public List<Charge> DocketCharges { get; set; } = [];
-    }
-
-    private sealed class NestedAddr
-    {
-        public string? StreetName { get; set; }
-        public string? StreetType { get; set; }
-    }
-
-    private sealed class NestedContactAddr
-    {
-        public string? Id { get; set; }
-        public NestedAddr? Address { get; set; }
-    }
-
-    private sealed class NestedPerson
-    {
-        public List<NestedContactAddr> ContactAddresses { get; set; } = [];
-    }
-
     [Fact]
     public void TryBuildSqlProjectionExpression_MergesSiblingCollectionPathsIntoOneSlot()
     {
@@ -42,7 +12,6 @@ public sealed class SqlProjectionConsolidationTests
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Code", "DocketCharges.Number"]);
         Assert.Empty(pathErrors);
         var build = service.TryBuildSqlProjectionExpression<Docket>(specs);
-
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Single(build.ConversionPlan!.Slots);
@@ -59,7 +28,6 @@ public sealed class SqlProjectionConsolidationTests
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["Id", "DocketCharges.Code"]);
         Assert.Empty(pathErrors);
         var build = service.TryBuildSqlProjectionExpression<Docket>(specs);
-
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Equal(2, build.ConversionPlan!.Slots.Count);
@@ -74,7 +42,6 @@ public sealed class SqlProjectionConsolidationTests
         var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.*"]);
         Assert.Empty(pathErrors);
         var build = service.TryBuildSqlProjectionExpression<NestedPerson>(specs);
-
         Assert.Null(build.Projection);
         Assert.Null(build.ConversionPlan);
     }
@@ -86,7 +53,6 @@ public sealed class SqlProjectionConsolidationTests
         var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.Address.StreetName", "ContactAddresses.Address.StreetType"]);
         Assert.Empty(pathErrors);
         var build = service.TryBuildSqlProjectionExpression<NestedPerson>(specs);
-
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Single(build.ConversionPlan!.Slots);
@@ -98,14 +64,11 @@ public sealed class SqlProjectionConsolidationTests
     public void TryBuildSqlProjectionExpression_UnifiedRootCollection_MergesOneSlot()
     {
         var service = new ProjectionService();
-        var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>([
-            "ContactAddresses.Id",
-            "ContactAddresses.Address.StreetType",
-            "ContactAddresses.Address.StreetName",
-        ]);
+        var (specs, pathErrors) =
+            service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.Id", "ContactAddresses.Address.StreetType", "ContactAddresses.Address.StreetName"]);
+
         Assert.Empty(pathErrors);
         var build = service.TryBuildSqlProjectionExpression<NestedPerson>(specs);
-
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Single(build.ConversionPlan!.Slots);
@@ -119,7 +82,7 @@ public sealed class SqlProjectionConsolidationTests
         var service = new ProjectionService();
         var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.*"]);
         Assert.Empty(pathErrors);
-        var issues = service.CollectProjectionFieldIssues<NestedPerson>(specs, allowSelectWildcards: true);
+        var issues = service.CollectProjectionFieldIssues<NestedPerson>(specs, true);
         Assert.Empty(issues);
     }
 
@@ -127,8 +90,41 @@ public sealed class SqlProjectionConsolidationTests
     public void ResolveProjectedFields_RejectsWildcardsInPathWhenDisabled()
     {
         var service = new ProjectionService();
-        var (_, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.*"], allowSelectWildcards: false);
+        var (_, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.*"], false);
         Assert.Single(pathErrors);
         Assert.Contains("wildcard", pathErrors[0].Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class Charge
+    {
+        public string? Code { get; set; }
+
+        public string? Number { get; set; }
+    }
+
+    private sealed class Docket
+    {
+        public Guid Id { get; set; }
+
+        public List<Charge> DocketCharges { get; set; } = [];
+    }
+
+    private sealed class NestedAddr
+    {
+        public string? StreetName { get; set; }
+
+        public string? StreetType { get; set; }
+    }
+
+    private sealed class NestedContactAddr
+    {
+        public string? Id { get; set; }
+
+        public NestedAddr? Address { get; set; }
+    }
+
+    private sealed class NestedPerson
+    {
+        public List<NestedContactAddr> ContactAddresses { get; set; } = [];
     }
 }

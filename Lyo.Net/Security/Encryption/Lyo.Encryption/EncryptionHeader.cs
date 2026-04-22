@@ -3,12 +3,12 @@ using System.Text;
 namespace Lyo.Encryption;
 
 /// <summary>
-/// Represents the encryption header for two-key encrypted stream files. Format version <see cref="StreamFormatVersion.V1"/>:
+/// Represents the encryption header for two-key encrypted stream files. Format version <see cref="StreamFormatVersion.V1" />:
 /// [FormatVersion:1][DEKAlgorithmId:1][KEKAlgorithmId:1][DekKeyMaterialBytes:1][KeyIdLength:4][KeyId][KeyVersionLength:4][KeyVersion][EncryptedDEKLength:4][EncryptedDEK].
 /// </summary>
 public sealed record EncryptionHeader
 {
-    /// <summary>First byte of the header; use <see cref="StreamFormatVersion.V1"/>.</summary>
+    /// <summary>First byte of the header; use <see cref="StreamFormatVersion.V1" />.</summary>
     public byte FormatVersion { get; init; } = (byte)StreamFormatVersion.V1;
 
     public byte DekAlgorithmId { get; init; }
@@ -30,12 +30,11 @@ public sealed record EncryptionHeader
         var formatVersion = reader.ReadByte();
         if (formatVersion != (byte)StreamFormatVersion.V1)
             throw new InvalidDataException($"Unsupported encryption header format version: {formatVersion}.");
+
         var dekAlgorithmId = reader.ReadByte();
         var kekAlgorithmId = reader.ReadByte();
         var dekKeyMaterialBytes = reader.ReadByte();
-
         TwoKeyDekValidation.ValidateHeader(dekAlgorithmId, dekKeyMaterialBytes);
-
         var keyIdLen = reader.ReadInt32();
         if (keyIdLen is < 0 or > 1024)
             throw new InvalidDataException($"Invalid key ID length: {keyIdLen}. Maximum allowed: 1024 bytes.");
@@ -78,7 +77,7 @@ public sealed record EncryptionHeader
         return Read(stream);
     }
 
-    /// <summary>Writes the encryption header to a BinaryWriter (format version <see cref="StreamFormatVersion.V1"/>).</summary>
+    /// <summary>Writes the encryption header to a BinaryWriter (format version <see cref="StreamFormatVersion.V1" />).</summary>
     public void Write(BinaryWriter writer)
     {
         var keyIdBytes = string.IsNullOrEmpty(KeyId) ? [] : Encoding.UTF8.GetBytes(KeyId);
@@ -106,7 +105,7 @@ public sealed record EncryptionHeader
         Write(writer);
     }
 
-    /// <summary>Writes the encryption header to a List&lt;byte&gt; (format version <see cref="StreamFormatVersion.V1"/>).</summary>
+    /// <summary>Writes the encryption header to a List&lt;byte&gt; (format version <see cref="StreamFormatVersion.V1" />).</summary>
     public void Write(List<byte> buffer)
     {
         var keyIdBytes = string.IsNullOrEmpty(KeyId) ? [] : Encoding.UTF8.GetBytes(KeyId);

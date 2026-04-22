@@ -235,14 +235,14 @@ Logger category: `Lyo.Resilience.{PipelineName}`
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection` | `[10,)` |
-| `Microsoft.Extensions.Http` | `[10,)` |
-| `Polly` | `8.*` |
-| `Polly.Extensions` | `8.*` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| `Microsoft.Extensions.DependencyInjection`        | `[10,)` |
+| `Microsoft.Extensions.Http`                       | `[10,)` |
+| `Polly`                                           | `8.*`   |
+| `Polly.Extensions`                                | `8.*`   |
 
 ### Project references
 

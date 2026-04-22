@@ -243,7 +243,8 @@ public static class ReportExamples
             .AddSection(
                 "API Request Counters", s => s.AddCounterChartByPrefix(metrics, "api.", "API Request Counters").AddText("These counters track all API-related request metrics."))
             .AddSection(
-                "Selected Counters", s => s.AddCounterChart(metrics, "Key API Metrics", ["api.requests.total", "api.requests.errors", "api.requests.success"])
+                "Selected Counters",
+                s => s.AddCounterChart(metrics, "Key API Metrics", ["api.requests.total", "api.requests.errors", "api.requests.success"])
                     .AddText("Focus on the most critical API metrics."))
             .AddSection(
                 "System Health Gauges",

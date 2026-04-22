@@ -32,14 +32,15 @@ public sealed class MessageQueueTests
         var cts = new CancellationTokenSource();
         var receivedCount = 0;
         _ = service.SubscribeToQueue(
-            "test-queue", async data => {
-                received.Add(data);
-                receivedCount++;
-                if (receivedCount >= 2)
-                    cts.Cancel();
+                "test-queue", async data => {
+                    received.Add(data);
+                    receivedCount++;
+                    if (receivedCount >= 2)
+                        cts.Cancel();
 
-                return false;
-            }, cts.Token).ConfigureAwait(false);
+                    return false;
+                }, cts.Token)
+            .ConfigureAwait(false);
 
         await Task.Delay(500, cts.Token).ContinueWith(_ => { }, TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(2, received.Count);
@@ -98,10 +99,11 @@ public sealed class MessageQueueTests
         await mq.SendToQueue("requeue-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}")).ConfigureAwait(false);
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueue(
-            "requeue-test", async _ => {
-                callCount++;
-                return callCount < 2;
-            }, cts.Token).ConfigureAwait(false);
+                "requeue-test", async _ => {
+                    callCount++;
+                    return callCount < 2;
+                }, cts.Token)
+            .ConfigureAwait(false);
 
         await Task.Delay(500, cts.Token).ConfigureAwait(false);
         Assert.Equal(2, callCount);

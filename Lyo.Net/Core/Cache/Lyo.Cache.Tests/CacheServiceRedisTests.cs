@@ -40,21 +40,23 @@ public class CacheServiceRedisTests : IAsyncLifetime
         var expectedValue = "redis-cached-value";
         var callCount = 0;
         var result = await _cacheService.GetOrSetAsync<string>(
-            key, async ct => {
-                callCount++;
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                return expectedValue;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    callCount++;
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    return expectedValue;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal(expectedValue, result);
         Assert.Equal(1, callCount);
 
         // Second call should use cache
         var cachedResult = await _cacheService.GetOrSetAsync<string>(
-            key, _ => {
-                callCount++;
-                return Task.FromResult("different-value")!;
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, _ => {
+                    callCount++;
+                    return Task.FromResult("different-value")!;
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal(expectedValue, cachedResult);
         Assert.Equal(1, callCount); // Factory should not be called again

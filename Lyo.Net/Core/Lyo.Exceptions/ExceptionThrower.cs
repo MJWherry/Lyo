@@ -14,13 +14,13 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     private static void ThrowDirectoryNotFound(string message) => throw new DirectoryNotFoundException(message);
-    
+
     [DoesNotReturn]
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     private static void ThrowUnauthorizedAccess(string message) => throw new UnauthorizedAccessException(message);
-    
+
     [DoesNotReturn]
 #if NET6_0_OR_GREATER
     [StackTraceHidden]

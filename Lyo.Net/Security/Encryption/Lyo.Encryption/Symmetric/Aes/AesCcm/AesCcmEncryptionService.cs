@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Records;
-using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
 using Lyo.Exceptions;
@@ -9,9 +8,7 @@ using Lyo.Keystore;
 
 namespace Lyo.Encryption.Symmetric.Aes.AesCcm;
 
-/// <summary>
-/// AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.
-/// </summary>
+/// <summary>AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.</summary>
 public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     public AesCcmEncryptionService(IKeyStore keyStore)

@@ -44,12 +44,7 @@ internal static class QrCodeIconComposer
             var pct = QRCodeIconOptions.ClampIconSizePercent(icon.IconSizePercent);
             // Do not set BackgroundSquareSize: options.Size is pixels-per-module, not the rendered PNG side length.
             // Resizing the QR to that value destroys module alignment and breaks scans / logo placement.
-            var overlayOpts = new ImageCenterOverlayOptions {
-                OverlaySizePercent = pct,
-                DrawOverlayBorder = icon.DrawIconBorder,
-                BorderColorHex = lightColorHex
-            };
-
+            var overlayOpts = new ImageCenterOverlayOptions { OverlaySizePercent = pct, DrawOverlayBorder = icon.DrawIconBorder, BorderColorHex = lightColorHex };
             var result = await images.CompositeCenterOverlayPngAsync(qrPngBytes, rawIcon, overlayOpts, ct).ConfigureAwait(false);
             if (!result.IsSuccess || result.Data == null) {
                 logger?.LogWarning("Failed to apply QR icon: {Errors}", result.Errors);
@@ -103,7 +98,9 @@ internal static class QrCodeIconComposer
                 ? $"  <rect x=\"{ix - 1}\" y=\"{iy - 1}\" width=\"{iconSize + 2}\" height=\"{iconSize + 2}\" fill=\"none\" stroke=\"{lightColorHex}\" stroke-width=\"2\"/>\n"
                 : "";
 
-            var img = $"  <image href=\"data:{FileTypeInfo.Png.MimeType};base64,{b64}\" x=\"{ix}\" y=\"{iy}\" width=\"{iconSize}\" height=\"{iconSize}\" preserveAspectRatio=\"xMidYMid meet\"/>\n";
+            var img =
+                $"  <image href=\"data:{FileTypeInfo.Png.MimeType};base64,{b64}\" x=\"{ix}\" y=\"{iy}\" width=\"{iconSize}\" height=\"{iconSize}\" preserveAspectRatio=\"xMidYMid meet\"/>\n";
+
             var sb = new StringBuilder(svg.Length + 256);
             sb.Append(svg.AsSpan(0, idx));
             sb.Append(border);

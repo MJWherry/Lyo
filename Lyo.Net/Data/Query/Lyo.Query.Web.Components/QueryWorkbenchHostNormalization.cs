@@ -20,9 +20,8 @@ public static class QueryWorkbenchHostNormalization
         if (dict.Count == 0)
             return run with { HostEndpoints = dict, SelectedHost = string.IsNullOrWhiteSpace(run.SelectedHost) ? null : run.SelectedHost, Route = run.Route.Trim() };
 
-        string? selected = run.SelectedHost;
-        if (selected == null
-            || !dict.Keys.Any(k => string.Equals(NormalizeBaseUrl(k), NormalizeBaseUrl(selected), StringComparison.OrdinalIgnoreCase)))
+        var selected = run.SelectedHost;
+        if (selected == null || !dict.Keys.Any(k => string.Equals(NormalizeBaseUrl(k), NormalizeBaseUrl(selected), StringComparison.OrdinalIgnoreCase)))
             selected = dict.Keys.First();
 
         var matchKey = dict.Keys.First(k => string.Equals(NormalizeBaseUrl(k), NormalizeBaseUrl(selected), StringComparison.OrdinalIgnoreCase));

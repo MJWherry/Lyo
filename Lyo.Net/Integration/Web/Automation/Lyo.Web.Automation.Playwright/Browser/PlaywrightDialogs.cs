@@ -1,4 +1,3 @@
-using System.Threading;
 using Lyo.Exceptions;
 using Microsoft.Playwright;
 
@@ -19,10 +18,8 @@ public sealed class PlaywrightDialogs
     public IDisposable AutoAcceptAll()
     {
         var page = _browser.GetRequiredPage();
-        void Handler(object? _, IDialog d)
-        {
-            _ = d.AcceptAsync();
-        }
+
+        void Handler(object? _, IDialog d) => _ = d.AcceptAsync();
 
         page.Dialog += Handler;
         return new ActionDisposable(() => page.Dialog -= Handler);
@@ -32,6 +29,7 @@ public sealed class PlaywrightDialogs
     public void AcceptNext()
     {
         var page = _browser.GetRequiredPage();
+
         void Handler(object? _, IDialog d)
         {
             page.Dialog -= Handler;
@@ -46,6 +44,7 @@ public sealed class PlaywrightDialogs
     {
         var page = _browser.GetRequiredPage();
         var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
         void Handler(object? _, IDialog d)
         {
             page.Dialog -= Handler;

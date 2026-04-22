@@ -5,12 +5,15 @@ using Lyo.Exceptions;
 namespace Lyo.Web.Automation.Models;
 
 /// <summary>
-/// Ordered locator path from the current browsing context (page or iframe) to a target element:
-/// each segment is resolved relative to the previous one (Selenium: nested <c>FindElement</c>; Playwright: chained <c>ILocator</c>).
+/// Ordered locator path from the current browsing context (page or iframe) to a target element: each segment is resolved relative to the previous one (Selenium: nested
+/// <c>FindElement</c>; Playwright: chained <c>ILocator</c>).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ElementLocatorChain
 {
+    /// <summary>Locator segments from outermost (within the current document / frame) to innermost.</summary>
+    public IReadOnlyList<ElementLocator> Segments { get; }
+
     /// <summary>JSON / deserialization constructor.</summary>
     [JsonConstructor]
     public ElementLocatorChain(IReadOnlyList<ElementLocator> segments)
@@ -27,7 +30,7 @@ public sealed class ElementLocatorChain
     public static implicit operator ElementLocatorChain(ElementLocator locator)
     {
         ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
-        return new ElementLocatorChain(locator);
+        return new(locator);
     }
 
     /// <summary>Appends a segment (fluent: <c>loc.Then(...).Then(...)</c>).</summary>
@@ -40,15 +43,11 @@ public sealed class ElementLocatorChain
             merged[i] = Segments[i]!;
 
         merged[Segments.Count] = next;
-        return new ElementLocatorChain(merged);
+        return new(merged);
     }
 
-    /// <summary>Locator segments from outermost (within the current document / frame) to innermost.</summary>
-    public IReadOnlyList<ElementLocator> Segments { get; }
-
     /// <inheritdoc />
-    public override string ToString()
-        => string.Join(" -> ", Segments.Select(static s => s.ToString()));
+    public override string ToString() => string.Join(" -> ", Segments.Select(static s => s.ToString()));
 
     private static void ValidateSegments(IReadOnlyList<ElementLocator> segments)
     {

@@ -93,6 +93,6 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     public async Task<byte[]> TakeSnapshotPngAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return await locator.ScreenshotAsync(new LocatorScreenshotOptions { Type = ScreenshotType.Png }).ConfigureAwait(false);
+        return await locator.ScreenshotAsync(new() { Type = ScreenshotType.Png }).ConfigureAwait(false);
     }
 }

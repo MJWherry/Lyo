@@ -1,8 +1,8 @@
 namespace Lyo.Api.Client;
 
 /// <summary>
-/// HTTP transport and JSON request options for <see cref="ApiClient" />. Also the shared base type for integration-specific option classes (e.g. Discord, Typecast) that subclass
-/// <see cref="ApiClient" /> so compression, Accept-Encoding, and <see cref="BaseUrl" /> bind consistently from configuration.
+/// HTTP transport and JSON request options for <see cref="ApiClient" />. Also the shared base type for integration-specific option classes (e.g. Discord, Typecast) that
+/// subclass <see cref="ApiClient" /> so compression, Accept-Encoding, and <see cref="BaseUrl" /> bind consistently from configuration.
 /// </summary>
 public class ApiClientOptions
 {

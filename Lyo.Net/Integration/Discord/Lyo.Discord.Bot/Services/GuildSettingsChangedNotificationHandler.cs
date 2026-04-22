@@ -8,10 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Discord.Bot.Services;
 
 /// <summary>Logs guild settings changes to <see cref="ILogger" /> and to the guild log channel when a client is connected.</summary>
-public sealed class GuildSettingsChangedNotificationHandler(
-    ILogger<GuildSettingsChangedNotificationHandler> log,
-    IDiffService diffService,
-    ILyoDiscordBotGateway discordGateway) : INotificationHandler<GuildSettingsChangedNotification>
+public sealed class GuildSettingsChangedNotificationHandler(ILogger<GuildSettingsChangedNotificationHandler> log, IDiffService diffService, ILyoDiscordBotGateway discordGateway)
+    : INotificationHandler<GuildSettingsChangedNotification>
 {
     /// <inheritdoc />
     public Task HandleAsync(GuildSettingsChangedNotification notification, CancellationToken cancellationToken = default)

@@ -1,9 +1,9 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Interactions;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
@@ -40,11 +40,12 @@ public sealed class BrowserKeyboard
     {
         ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
         ct.ThrowIfCancellationRequested();
-        RunKb("actions_perform", () => {
-            var actions = new Actions(_browser.GetRequiredDriver());
-            configure(actions);
-            actions.Perform();
-        });
+        RunKb(
+            "actions_perform", () => {
+                var actions = new Actions(_browser.GetRequiredDriver());
+                configure(actions);
+                actions.Perform();
+            });
     }
 
     private void RunKb(string operation, Action action)
@@ -52,9 +53,8 @@ public sealed class BrowserKeyboard
         var log = _browser.Logger;
         log.LogDebug("Keyboard operation {Operation} starting", operation);
         try {
-            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.KeyboardOperationDuration)), SeleniumMetricTags.ForOperation(_browser, operation))) {
+            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.KeyboardOperationDuration)), SeleniumMetricTags.ForOperation(_browser, operation)))
                 action();
-            }
 
             log.LogDebug("Keyboard operation {Operation} completed", operation);
         }

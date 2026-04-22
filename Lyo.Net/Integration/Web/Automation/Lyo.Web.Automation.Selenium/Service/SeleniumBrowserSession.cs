@@ -1,5 +1,3 @@
-using Lyo.Web.Automation;
-using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Selenium.Browser;
 
 namespace Lyo.Web.Automation.Selenium.Service;

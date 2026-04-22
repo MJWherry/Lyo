@@ -50,16 +50,12 @@ public static class SetupEndpoints
         public WebApplication BuildPersonGroup()
         {
             //app.MapDynamicCrudEndpoints<PeopleDbContext>(c => c.BaseRoute = "Person");
-            
             app.CreateBuilder<PeopleDbContext, PersonEntity, PersonReq, PersonRes, Guid>(Constants.Person.Route, "Person")
-                .WithCrud(crud => crud
-                    .WithFlags(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate)
+                .WithCrud(crud => crud.WithFlags(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate)
                     .BeforeCreate(ctx => ctx.Entity.Id = Uuid.NewDatabaseFriendly(Database.PostgreSql)))
                 .WithMetadata()
                 .WithProjectionComputedFields()
                 .Build();
-            
-            
 
             app.MapGet(
                     "info/{schema}/{table}/{column}/GetUniqueCounts", async (

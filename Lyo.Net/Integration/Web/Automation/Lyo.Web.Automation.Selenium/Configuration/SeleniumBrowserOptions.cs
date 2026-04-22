@@ -6,8 +6,8 @@ namespace Lyo.Web.Automation.Selenium.Configuration;
 
 /// <summary>Application-wide defaults for browser automation (timeouts, window size, polling, metrics).</summary>
 /// <remarks>
-/// HTTP request headers are not represented here: ChromeDriver does not apply arbitrary default headers to navigations without Chrome DevTools Protocol.
-/// Set user agent via <see cref="UserAgents" /> and WebDriver/Chrome flags via <see cref="WebDriverArguments" />.
+/// HTTP request headers are not represented here: ChromeDriver does not apply arbitrary default headers to navigations without Chrome DevTools Protocol. Set user agent via
+/// <see cref="UserAgents" /> and WebDriver/Chrome flags via <see cref="WebDriverArguments" />.
 /// </remarks>
 public class SeleniumBrowserOptions
 {
@@ -33,9 +33,8 @@ public class SeleniumBrowserOptions
     public bool MaskSensitiveUrlsInLogs { get; set; }
 
     /// <summary>
-    /// Root directory for all session subdirectories. Each session creates
-    /// <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>, and <c>downloads/</c> inside.
-    /// Defaults to <c>{tmp}/lyo-web-automation</c>.
+    /// Root directory for all session subdirectories. Each session creates <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>,
+    /// and <c>downloads/</c> inside. Defaults to <c>{tmp}/lyo-web-automation</c>.
     /// </summary>
     public string ServiceRootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-selenium");
 
@@ -52,31 +51,18 @@ public class SeleniumBrowserOptions
     public List<string> WebDriverArguments { get; set; } = ["disable-infobars", "disable-extensions", "disable-gpu", "disable-dev-shm-usage", "no-sandbox"];
 
     /// <summary>
-    /// JavaScript snippets injected into every new document before the page's own scripts run,
-    /// via CDP <c>Page.addScriptToEvaluateOnNewDocument</c>. Only applies to Chrome and Edge.
-    /// Use this to neutralize bot-detection scripts (e.g. anti-DevTools getter traps).
+    /// JavaScript snippets injected into every new document before the page's own scripts run, via CDP <c>Page.addScriptToEvaluateOnNewDocument</c>. Only applies to Chrome and
+    /// Edge. Use this to neutralize bot-detection scripts (e.g. anti-DevTools getter traps).
     /// </summary>
     public List<string> StartupScripts { get; set; } = [];
 
     /// <summary>
-    /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol.
-    /// This is required for network request monitoring in
-    /// <see cref="IWebAutomationBrowser.NavigateAsync(string, Func{string, bool}, CancellationToken)" />
-    /// unless a JS request-interception startup script populates <c>window.__lyoCapturedUrls</c>.
-    /// Disable on sites that detect CDP as "DevTools open" and redirect or block scraping.
-    /// When disabled, add a JS interception script to <see cref="StartupScripts" /> so that
-    /// network requests can still be observed without CDP.
+    /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol. This is required for network request monitoring in
+    /// <see cref="IWebAutomationBrowser.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception startup script populates
+    /// <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script to
+    /// <see cref="StartupScripts" /> so that network requests can still be observed without CDP.
     /// </summary>
     public bool EnablePerformanceLogging { get; set; } = true;
-
-    /// <summary>
-    /// Appends a formatted entry to <see cref="WebDriverArguments" />: <c>key=value</c> when <paramref name="value" /> is non-empty; otherwise the key alone (e.g. <c>-headless</c>).
-    /// </summary>
-    public SeleniumBrowserOptions AddArgument(string key, string? value = null)
-    {
-        WebDriverArguments.Add(WebDriverArgumentFormatter.Format(key, value));
-        return this;
-    }
 
     /// <summary> Browser window size (width, height). </summary>
     public int BrowserWindowWidth { get; set; } = 1280;
@@ -104,10 +90,19 @@ public class SeleniumBrowserOptions
     /// <summary>Delay between outer attempts for <see cref="SeleniumBrowser.PollFor" />.</summary>
     public TimeSpan PollingDelayBetweenAttempts { get; set; } = TimeSpan.FromMilliseconds(500);
 
+    /// <summary>
+    /// Appends a formatted entry to <see cref="WebDriverArguments" />: <c>key=value</c> when <paramref name="value" /> is non-empty; otherwise the key alone (e.g.
+    /// <c>-headless</c>).
+    /// </summary>
+    public SeleniumBrowserOptions AddArgument(string key, string? value = null)
+    {
+        WebDriverArguments.Add(WebDriverArgumentFormatter.Format(key, value));
+        return this;
+    }
+
     /// <summary>Creates a deep copy for an independent browser session or scoped <c>SeleniumBrowser</c> instance.</summary>
     public virtual SeleniumBrowserOptions Clone()
-    {
-        return new SeleniumBrowserOptions {
+        => new() {
             UserAgents = [..UserAgents],
             WebDriverArguments = [..WebDriverArguments],
             StartupScripts = [..StartupScripts],
@@ -130,10 +125,7 @@ public class SeleniumBrowserOptions
             PollingMaxAttempts = PollingMaxAttempts,
             PollingDelayBetweenAttempts = PollingDelayBetweenAttempts
         };
-    }
 }
 
 /// <summary>Per-session browser configuration. Pass to <see cref="ISeleniumBrowserService.CreateSession" /> to override service defaults for one session.</summary>
-public sealed class SeleniumSessionOptions : SeleniumBrowserOptions
-{
-}
+public sealed class SeleniumSessionOptions : SeleniumBrowserOptions { }

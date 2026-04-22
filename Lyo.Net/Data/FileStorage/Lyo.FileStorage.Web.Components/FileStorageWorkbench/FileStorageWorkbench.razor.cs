@@ -1,10 +1,8 @@
-using System.Linq;
 using Lyo.Api.Client;
-using Lyo.Web.Components;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
 using Lyo.Keystore;
+using Lyo.Web.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -13,14 +11,32 @@ namespace Lyo.FileStorage.Web.Components;
 
 public partial class FileStorageWorkbench : ComponentBase
 {
-    [Inject] public FileStorageWorkbenchServiceResolver Resolver { get; set; } = default!;
-    [Inject] public IApiClient ApiClient { get; set; } = default!;
-    [Inject] public IIOTempService TempService { get; set; } = default!;
-    [Inject] public IJsInterop Js { get; set; } = default!;
-    [Inject] public IJSRuntime JsRuntime { get; set; } = default!;
-    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] public ISnackbar Snackbar { get; set; } = default!;
-    [Inject] public IDialogService DialogService { get; set; } = default!;
+    private List<string> _availableKeyIds = [];
+    private Dictionary<string, List<string>> _availableKeyVersions = new(StringComparer.Ordinal);
+
+    [Inject]
+    public FileStorageWorkbenchServiceResolver Resolver { get; set; } = default!;
+
+    [Inject]
+    public IApiClient ApiClient { get; set; } = default!;
+
+    [Inject]
+    public IIOTempService TempService { get; set; } = default!;
+
+    [Inject]
+    public IJsInterop Js { get; set; } = default!;
+
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; } = default!;
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    public ISnackbar Snackbar { get; set; } = default!;
+
+    [Inject]
+    public IDialogService DialogService { get; set; } = default!;
 
     /// <summary>API route segment for file metadata QueryProject (e.g. <c>Workbench/FileStorage/FileMetadata</c>).</summary>
     [Parameter]
@@ -30,35 +46,28 @@ public partial class FileStorageWorkbench : ComponentBase
     [Parameter]
     public string ProxyDownloadPath { get; set; } = "filestorage-download";
 
-    [Parameter] public string Title { get; set; } = "File Storage Workbench";
+    [Parameter]
+    public string Title { get; set; } = "File Storage Workbench";
 
-    [Parameter] public string Description { get; set; } =
+    [Parameter]
+    public string Description { get; set; } =
         "Inspect the configured file storage and keystore implementations, save and retrieve files, rotate keys, and optionally browse metadata/key inventories through an API-backed query service.";
 
-    private IFileStorageService? _fileStorage;
-    private IKeyStore? _keyStore;
-    private IKeyInventoryStore? _inventoryStore;
-    private IFileStorageWorkbenchQueryService? _queryService;
-    private LocalKeyStore? _localKeyStore;
+    public IFileStorageService? FileStorage { get; private set; }
 
-    private List<string> _availableKeyIds = [];
-    private Dictionary<string, List<string>> _availableKeyVersions = new(StringComparer.Ordinal);
+    public IKeyStore? KeyStore { get; private set; }
 
-    public IFileStorageService? FileStorage => _fileStorage;
+    public IKeyInventoryStore? InventoryStore { get; private set; }
 
-    public IKeyStore? KeyStore => _keyStore;
+    public IFileStorageWorkbenchQueryService? QueryService { get; private set; }
 
-    public IKeyInventoryStore? InventoryStore => _inventoryStore;
-
-    public IFileStorageWorkbenchQueryService? QueryService => _queryService;
-
-    public LocalKeyStore? LocalKeyStore => _localKeyStore;
+    public LocalKeyStore? LocalKeyStore { get; private set; }
 
     public IReadOnlyList<string> AvailableKeyIds => _availableKeyIds;
 
-    public string? FileStorageImplementationName => _fileStorage?.GetType().Name;
+    public string? FileStorageImplementationName => FileStorage?.GetType().Name;
 
-    public string? KeyStoreImplementationName => _keyStore?.GetType().Name;
+    public string? KeyStoreImplementationName => KeyStore?.GetType().Name;
 
     public string DescribeFileStorageResolution() => Resolver.DescribeFileStorageResolution();
 
@@ -100,27 +109,27 @@ public partial class FileStorageWorkbench : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        _fileStorage = Resolver.TryGetFileStorageService();
-        _keyStore = Resolver.TryGetKeyStore();
-        _inventoryStore = _keyStore as IKeyInventoryStore;
-        _queryService = Resolver.TryGetQueryService();
-        _localKeyStore = _keyStore as LocalKeyStore;
+        FileStorage = Resolver.TryGetFileStorageService();
+        KeyStore = Resolver.TryGetKeyStore();
+        InventoryStore = KeyStore as IKeyInventoryStore;
+        QueryService = Resolver.TryGetQueryService();
+        LocalKeyStore = KeyStore as LocalKeyStore;
         await RefreshKeyInventoryAsync();
     }
 
     public async Task RefreshKeyInventoryAsync()
     {
-        if (_inventoryStore == null) {
+        if (InventoryStore == null) {
             _availableKeyIds = [];
-            _availableKeyVersions = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            _availableKeyVersions = new(StringComparer.Ordinal);
             await InvokeAsync(StateHasChanged);
             return;
         }
 
-        var keyIds = (await _inventoryStore.GetAvailableKeyIdsAsync()).Distinct(StringComparer.Ordinal).OrderBy(keyId => keyId).ToList();
+        var keyIds = (await InventoryStore.GetAvailableKeyIdsAsync()).Distinct(StringComparer.Ordinal).OrderBy(keyId => keyId).ToList();
         var versionsByKey = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (var keyId in keyIds) {
-            var versions = (await _inventoryStore.GetAvailableVersionsAsync(keyId)).Distinct(StringComparer.Ordinal).OrderBy(version => version).ToList();
+            var versions = (await InventoryStore.GetAvailableVersionsAsync(keyId)).Distinct(StringComparer.Ordinal).OrderBy(version => version).ToList();
             versionsByKey[keyId] = versions;
         }
 

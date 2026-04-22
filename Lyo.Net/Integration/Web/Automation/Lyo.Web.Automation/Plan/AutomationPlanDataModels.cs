@@ -16,7 +16,7 @@ public sealed class AutomationPlanRuntimeOptions
     /// <summary>Maximum duration for the entire plan (combined with the run <see cref="CancellationToken" />).</summary>
     public TimeSpan? PlanTimeout { get; init; }
 
-    /// <summary>Default maximum duration for each step when the step does not set <see cref="Lyo.Web.Automation.Models.AutomationStepDefinition.StepTimeout"/>.</summary>
+    /// <summary>Default maximum duration for each step when the step does not set <see cref="Lyo.Web.Automation.Models.AutomationStepDefinition.StepTimeout" />.</summary>
     public TimeSpan? DefaultStepTimeout { get; init; }
 
     /// <summary>Optional callbacks around each step.</summary>
@@ -26,14 +26,14 @@ public sealed class AutomationPlanRuntimeOptions
     public IAutomationPlanInstrumentation? Instrumentation { get; init; }
 
     /// <summary>
-    /// When set, each run creates a directory (see <see cref="AutomationPlanRunDirectoryOptions"/>) with optional
-    /// <c>logs/</c> transcript, <c>snapshots/</c> PNGs, and <c>variables/</c> JSON. When <see langword="null"/>, no run-scoped files are written.
+    /// When set, each run creates a directory (see <see cref="AutomationPlanRunDirectoryOptions" />) with optional <c>logs/</c> transcript, <c>snapshots/</c> PNGs, and
+    /// <c>variables/</c> JSON. When <see langword="null" />, no run-scoped files are written.
     /// </summary>
     public AutomationPlanRunDirectoryOptions? PlanRunDirectory { get; init; }
 
     /// <summary>
-    /// When set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion.
-    /// Placeholders use single braces, e.g. <c>{page.url}</c>, or legacy double braces <c>{{page.url}}</c> which are normalized first.
+    /// When set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, e.g. <c>{page.url}</c>, or
+    /// legacy double braces <c>{{page.url}}</c> which are normalized first.
     /// </summary>
     public IFormatterService? Formatter { get; init; }
 
@@ -43,20 +43,18 @@ public sealed class AutomationPlanRuntimeOptions
 }
 
 /// <summary>
-/// Disk layout for a single plan run (not serialized). Default layout:
-/// <c>{<see cref="RootDirectory"/>}/{run id}/logs/run.log</c>,
-/// <c>…/snapshots/*.png</c>,
+/// Disk layout for a single plan run (not serialized). Default layout: <c>{<see cref="RootDirectory" />}/{run id}/logs/run.log</c>, <c>…/snapshots/*.png</c>,
 /// <c>…/variables/*.json</c> when nesting is enabled.
 /// </summary>
 public sealed class AutomationPlanRunDirectoryOptions
 {
-    /// <summary>Parent folder for runs. When <see cref="NestRunUnderRoot"/> is true, each run uses a subfolder here.</summary>
+    /// <summary>Parent folder for runs. When <see cref="NestRunUnderRoot" /> is true, each run uses a subfolder here.</summary>
     public required string RootDirectory { get; init; }
 
-    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory"/>, folder)</c> where folder is <see cref="RunFolderName"/> or the run id.</summary>
+    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory" />, folder)</c> where folder is <see cref="RunFolderName" /> or the run id.</summary>
     public bool NestRunUnderRoot { get; init; } = true;
 
-    /// <summary>When <see cref="NestRunUnderRoot"/> is true, names the run subfolder; default is the run <c>Guid</c> (<c>N</c> format).</summary>
+    /// <summary>When <see cref="NestRunUnderRoot" /> is true, names the run subfolder; default is the run <c>Guid</c> (<c>N</c> format).</summary>
     public string? RunFolderName { get; init; }
 
     /// <summary>Subdirectory under the run root for the text transcript.</summary>
@@ -68,16 +66,16 @@ public sealed class AutomationPlanRunDirectoryOptions
     /// <summary>Subdirectory under the run root for variable JSON dumps.</summary>
     public string VariablesSubdirectory { get; init; } = "variables";
 
-    /// <summary>UTF-8 line log of run and step events (under <see cref="LogsSubdirectory"/>).</summary>
+    /// <summary>UTF-8 line log of run and step events (under <see cref="LogsSubdirectory" />).</summary>
     public bool WriteRunLogFile { get; init; } = true;
 
-    /// <summary>File name for <see cref="WriteRunLogFile"/>.</summary>
+    /// <summary>File name for <see cref="WriteRunLogFile" />.</summary>
     public string RunLogFileName { get; init; } = "run.log";
 
-    /// <summary>Viewport PNGs via <see cref="IWebAutomationBrowser.TakeViewportSnapshotPngAsync"/>.</summary>
+    /// <summary>Viewport PNGs via <see cref="IWebAutomationBrowser.TakeViewportSnapshotPngAsync" />.</summary>
     public bool WriteSnapshots { get; init; } = true;
 
-    /// <summary>Capture before each step body (after <see cref="AutomationPlanHooks.BeforeStepAsync"/>).</summary>
+    /// <summary>Capture before each step body (after <see cref="AutomationPlanHooks.BeforeStepAsync" />).</summary>
     public bool SnapshotBeforeEachStep { get; init; }
 
     /// <summary>Capture after each successful step.</summary>
@@ -95,10 +93,10 @@ public sealed class AutomationPlanRunDirectoryOptions
     /// <summary>Write <c>step_{index:000}_failed.json</c> when a step throws.</summary>
     public bool VariablesOnStepFailure { get; init; } = true;
 
-    /// <summary>Write <see cref="FinalVariablesFileName"/> when the run finishes or faults (best-effort).</summary>
+    /// <summary>Write <see cref="FinalVariablesFileName" /> when the run finishes or faults (best-effort).</summary>
     public bool VariablesOnRunEnd { get; init; } = true;
 
-    /// <summary>File name under <see cref="VariablesSubdirectory"/> for the last variable snapshot.</summary>
+    /// <summary>File name under <see cref="VariablesSubdirectory" /> for the last variable snapshot.</summary>
     public string FinalVariablesFileName { get; init; } = "final.json";
 }
 
@@ -106,19 +104,16 @@ public sealed class AutomationPlanRunDirectoryOptions
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanExecutionSnapshot
 {
-    public AutomationPlanExecutionSnapshot(
-        IReadOnlyDictionary<string, string> strings,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> stringLists)
+    public IReadOnlyDictionary<string, string> Strings { get; }
+
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> StringLists { get; }
+
+    public AutomationPlanExecutionSnapshot(IReadOnlyDictionary<string, string> strings, IReadOnlyDictionary<string, IReadOnlyList<string>> stringLists)
     {
         Strings = strings;
         StringLists = stringLists;
     }
 
-    public IReadOnlyDictionary<string, string> Strings { get; }
-
-    public IReadOnlyDictionary<string, IReadOnlyList<string>> StringLists { get; }
-
     /// <inheritdoc />
-    public override string ToString()
-        => $"AutomationPlanExecutionSnapshot strings={Strings.Count}, stringLists={StringLists.Count}";
+    public override string ToString() => $"AutomationPlanExecutionSnapshot strings={Strings.Count}, stringLists={StringLists.Count}";
 }

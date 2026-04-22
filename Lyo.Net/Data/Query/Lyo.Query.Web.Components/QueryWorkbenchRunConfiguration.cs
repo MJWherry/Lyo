@@ -19,7 +19,5 @@ public sealed record QueryWorkbenchRunConfiguration
     public JsonEditorViewMode RequestEditorViewMode { get; init; } = JsonEditorViewMode.Tree;
 
     public static Dictionary<string, List<string>> CloneHostEndpoints(Dictionary<string, List<string>> source)
-    {
-        return source.ToDictionary(static kvp => kvp.Key, kvp => kvp.Value.ToList());
-    }
+        => source.ToDictionary(static kvp => kvp.Key, kvp => kvp.Value.ToList());
 }

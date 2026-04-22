@@ -36,7 +36,12 @@ public class WhereClauseBuilder
     }
 
     /// <summary>Adds a condition with a SubQuery for two-phase execution (root in DB, subquery in-memory).</summary>
-    public WhereClauseBuilder AddConditionWithSubClause(string field, ComparisonOperatorEnum op, object? value, Action<WhereClauseBuilder> configureSubClause, string? description = null)
+    public WhereClauseBuilder AddConditionWithSubClause(
+        string field,
+        ComparisonOperatorEnum op,
+        object? value,
+        Action<WhereClauseBuilder> configureSubClause,
+        string? description = null)
     {
         var subBuilder = And();
         configureSubClause(subBuilder);
@@ -387,7 +392,8 @@ public class WhereClauseBuilder
 
         public WhereClauseBuilderFor<T> LessThan<TProp>(Expression<Func<T, TProp>> selector, TProp? value) => AddCondition(selector, ComparisonOperatorEnum.LessThan, value);
 
-        public WhereClauseBuilderFor<T> LessThanOrEqual<TProp>(Expression<Func<T, TProp>> selector, TProp? value) => AddCondition(selector, ComparisonOperatorEnum.LessThanOrEqual, value);
+        public WhereClauseBuilderFor<T> LessThanOrEqual<TProp>(Expression<Func<T, TProp>> selector, TProp? value)
+            => AddCondition(selector, ComparisonOperatorEnum.LessThanOrEqual, value);
 
         public WhereClauseBuilderFor<T> Contains(Expression<Func<T, string>> selector, params string[] values)
         {

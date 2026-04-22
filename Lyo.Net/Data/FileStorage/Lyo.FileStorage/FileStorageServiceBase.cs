@@ -28,18 +28,6 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 {
     private const int CopyToBufferSizeBytes = 81920;
 
-    private static Task DisposeStreamAsync(Stream? stream)
-    {
-        if (stream == null)
-            return Task.CompletedTask;
-#if NET5_0_OR_GREATER
-        return stream.DisposeAsync().AsTask();
-#else
-        stream.Dispose();
-        return Task.CompletedTask;
-#endif
-    }
-
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
     protected readonly ICompressionService? CompressionService;
     protected readonly IFileContentPolicy ContentPolicy;
@@ -694,15 +682,14 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var pipePlain = new Pipe();
         var pipelineTask = RunStreamingDecodePipelineAsync(storageStream, metadata, pipePlain.Writer, chunkSize, linkedCts.Token);
-
         Stream decoded = new PipelineFileReadStream(pipePlain.Reader.AsStream(), pipelineTask, linkedCts);
         if (Options.MaxDecompressedFileSize is { } maxDecompressed)
             decoded = new MaxDecompressedBytesReadStream(decoded, maxDecompressed, fileId);
 
         sw.Stop();
         Logger.LogInformation(
-            "Retrieved file {FileId} as stream (encrypted={Encrypted}, compressed={Compressed}); streaming decode via pipes", fileId, metadata.IsEncrypted,
-            metadata.IsCompressed);
+            "Retrieved file {FileId} as stream (encrypted={Encrypted}, compressed={Compressed}); streaming decode via pipes", fileId, metadata.IsEncrypted, metadata.IsCompressed);
+
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.GetSuccess)]);
         await RaiseFileAuditAsync(
                 new(
@@ -713,92 +700,6 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         var verifyHashAlgo = (metadata.HashAlgorithm ?? HashAlgorithm.Sha256).Create();
         FileRetrieved?.Invoke(this, new(fileId, metadata.OriginalFileSize, metadata.IsCompressed, metadata.IsEncrypted));
         return new HashVerifyingReadStream(decoded, verifyHashAlgo, metadata.OriginalFileHash, Options.ThrowOnHashMismatch, Logger, fileId);
-    }
-
-    /// <summary>Decrypts and/or decompresses from storage into <paramref name="plainWriter"/> using pipes so work runs concurrently with the HTTP response (backpressure).</summary>
-    private async Task RunStreamingDecodePipelineAsync(
-        Stream storageStream,
-        FileStoreResult metadata,
-        PipeWriter plainWriter,
-        int? chunkSize,
-        CancellationToken ct)
-    {
-        using (storageStream) {
-            if (metadata.IsEncrypted && metadata.IsCompressed) {
-                OperationHelpers.ThrowIfNull(
-                    TwoKeyEncryptionService,
-                    $"File {metadata.Id} is encrypted but no encryption service is configured. " +
-                    "Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
-                OperationHelpers.ThrowIfNull(
-                    CompressionService,
-                    $"File {metadata.Id} is compressed but no compression service is configured. " +
-                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
-
-                if (storageStream.CanSeek)
-                    storageStream.Position = 0;
-
-                var pipeCompressed = new Pipe();
-                await Task.WhenAll(
-                        DecryptStorageIntoCompressedPipeAsync(storageStream, pipeCompressed, TwoKeyEncryptionService!, ct),
-                        DecompressCompressedPipeToPlainAsync(pipeCompressed, plainWriter, CompressionService!, chunkSize, ct))
-                    .ConfigureAwait(false);
-                Logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt + decompress)", metadata.Id);
-                return;
-            }
-
-            if (metadata.IsEncrypted) {
-                OperationHelpers.ThrowIfNull(
-                    TwoKeyEncryptionService,
-                    $"File {metadata.Id} is encrypted but no encryption service is configured. " +
-                    "Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
-
-                if (storageStream.CanSeek)
-                    storageStream.Position = 0;
-
-                try {
-                    using (var plainOut = plainWriter.AsStream(true))
-                        await TwoKeyEncryptionService!.DecryptToStreamAsync(storageStream, plainOut, null, null, ct).ConfigureAwait(false);
-
-                    await plainWriter.CompleteAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
-                    throw;
-                }
-
-                Logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt only)", metadata.Id);
-                return;
-            }
-
-            if (metadata.IsCompressed) {
-                OperationHelpers.ThrowIfNull(
-                    CompressionService,
-                    $"File {metadata.Id} is compressed but no compression service is configured. " +
-                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
-
-                if (storageStream.CanSeek)
-                    storageStream.Position = 0;
-
-                try {
-                    using (var plainOut = plainWriter.AsStream(true))
-                        await CompressionService!.DecompressAsync(storageStream, plainOut, chunkSize, ct).ConfigureAwait(false);
-
-                    await plainWriter.CompleteAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
-                    throw;
-                }
-
-                Logger.LogDebug("Stream pipeline complete for file {FileId} (decompress only)", metadata.Id);
-                return;
-            }
-
-            await plainWriter.CompleteAsync(
-                    new InvalidOperationException(
-                        $"File {metadata.Id} was expected to be encrypted and/or compressed for streaming decode, but metadata flags do not indicate either."))
-                .ConfigureAwait(false);
-        }
     }
 
     /// <inheritdoc />
@@ -832,10 +733,11 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             FileDeleted?.Invoke(this, new(fileId, deleted));
             Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.DeleteSuccess)]);
             Metrics.RecordHistogram(MetricNames[nameof(Constants.Metrics.DeleteDurationMs)], sw.ElapsedMilliseconds);
-            await RaiseFileAuditAsync(new(
-                    FileAuditEventType.Delete, DateTime.UtcNow, fileId, metadata.TenantId, OperationContextAccessor.Current?.ActorId, metadata.DataEncryptionKeyId,
-                    metadata.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
-            .ConfigureAwait(false);
+            await RaiseFileAuditAsync(
+                    new(
+                        FileAuditEventType.Delete, DateTime.UtcNow, fileId, metadata.TenantId, OperationContextAccessor.Current?.ActorId, metadata.DataEncryptionKeyId,
+                        metadata.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
+                .ConfigureAwait(false);
 
             return deleted;
         }
@@ -1046,6 +948,101 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             .ConfigureAwait(false);
 
         return rotResult;
+    }
+
+    private static Task DisposeStreamAsync(Stream? stream)
+    {
+        if (stream == null)
+            return Task.CompletedTask;
+#if NET5_0_OR_GREATER
+        return stream.DisposeAsync().AsTask();
+#else
+        stream.Dispose();
+        return Task.CompletedTask;
+#endif
+    }
+
+    /// <summary>Decrypts and/or decompresses from storage into <paramref name="plainWriter" /> using pipes so work runs concurrently with the HTTP response (backpressure).</summary>
+    private async Task RunStreamingDecodePipelineAsync(Stream storageStream, FileStoreResult metadata, PipeWriter plainWriter, int? chunkSize, CancellationToken ct)
+    {
+        using (storageStream) {
+            if (metadata.IsEncrypted && metadata.IsCompressed) {
+                OperationHelpers.ThrowIfNull(
+                    TwoKeyEncryptionService,
+                    $"File {metadata.Id} is encrypted but no encryption service is configured. " +
+                    "Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
+
+                OperationHelpers.ThrowIfNull(
+                    CompressionService,
+                    $"File {metadata.Id} is compressed but no compression service is configured. " +
+                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
+
+                if (storageStream.CanSeek)
+                    storageStream.Position = 0;
+
+                var pipeCompressed = new Pipe();
+                await Task.WhenAll(
+                        DecryptStorageIntoCompressedPipeAsync(storageStream, pipeCompressed, TwoKeyEncryptionService!, ct),
+                        DecompressCompressedPipeToPlainAsync(pipeCompressed, plainWriter, CompressionService!, chunkSize, ct))
+                    .ConfigureAwait(false);
+
+                Logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt + decompress)", metadata.Id);
+                return;
+            }
+
+            if (metadata.IsEncrypted) {
+                OperationHelpers.ThrowIfNull(
+                    TwoKeyEncryptionService,
+                    $"File {metadata.Id} is encrypted but no encryption service is configured. " +
+                    "Provide an ITwoKeyEncryptionService instance when creating FileStorageService to decrypt encrypted files.");
+
+                if (storageStream.CanSeek)
+                    storageStream.Position = 0;
+
+                try {
+                    using (var plainOut = plainWriter.AsStream(true))
+                        await TwoKeyEncryptionService!.DecryptToStreamAsync(storageStream, plainOut, null, null, ct).ConfigureAwait(false);
+
+                    await plainWriter.CompleteAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
+                    throw;
+                }
+
+                Logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt only)", metadata.Id);
+                return;
+            }
+
+            if (metadata.IsCompressed) {
+                OperationHelpers.ThrowIfNull(
+                    CompressionService,
+                    $"File {metadata.Id} is compressed but no compression service is configured. " +
+                    "Provide an ICompressionService instance when creating FileStorageService to decompress compressed files.");
+
+                if (storageStream.CanSeek)
+                    storageStream.Position = 0;
+
+                try {
+                    using (var plainOut = plainWriter.AsStream(true))
+                        await CompressionService!.DecompressAsync(storageStream, plainOut, chunkSize, ct).ConfigureAwait(false);
+
+                    await plainWriter.CompleteAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex) {
+                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
+                    throw;
+                }
+
+                Logger.LogDebug("Stream pipeline complete for file {FileId} (decompress only)", metadata.Id);
+                return;
+            }
+
+            await plainWriter.CompleteAsync(
+                    new InvalidOperationException(
+                        $"File {metadata.Id} was expected to be encrypted and/or compressed for streaming decode, but metadata flags do not indicate either."))
+                .ConfigureAwait(false);
+        }
     }
 
     protected string? ResolveTenantId(string? explicitTenantId) => explicitTenantId ?? OperationContextAccessor.Current?.TenantId;
@@ -1276,11 +1273,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         CancellationToken ct)
         => encryptionService.EncryptToStreamAsync(pipeReader, encryptedHashStream, keyId, null, chunkSize, ct);
 
-    private static async Task DecryptStorageIntoCompressedPipeAsync(
-        Stream storageStream,
-        Pipe pipeCompressed,
-        ITwoKeyEncryptionService twoKey,
-        CancellationToken ct)
+    private static async Task DecryptStorageIntoCompressedPipeAsync(Stream storageStream, Pipe pipeCompressed, ITwoKeyEncryptionService twoKey, CancellationToken ct)
     {
         try {
             using (var w = pipeCompressed.Writer.AsStream(true))
@@ -1469,8 +1462,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
             var pipelineOutputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
             try {
-                var pipelineResult = await SaveWithCompressEncryptPipelineAsync(
-                        inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, ct)
+                var pipelineResult = await SaveWithCompressEncryptPipelineAsync(inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, ct)
                     .ConfigureAwait(false);
 
                 originalHash = pipelineResult.OriginalHash;
@@ -1491,10 +1483,10 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 sourceFileHash = encryptedHash;
                 finalSize = await GetStorageSizeAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
                 var metadata = new FileStoreResult(
-                    fileId, originalFileName, originalSize, originalHash!, sourceFileName, finalSize, sourceFileHash!, compress, compressionAlgorithm,
-                    compressedSize, compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey,
-                    dataEncryptionKeyId, dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, Options.HashAlgorithm, contentType, tenantId,
-                    availability, dekKeyMaterialBytes);
+                    fileId, originalFileName, originalSize, originalHash!, sourceFileName, finalSize, sourceFileHash!, compress, compressionAlgorithm, compressedSize,
+                    compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey, dataEncryptionKeyId,
+                    dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, Options.HashAlgorithm, contentType, tenantId, availability,
+                    dekKeyMaterialBytes);
 
                 await MetadataService.SaveMetadataAsync(fileId, metadata, ct).ConfigureAwait(false);
                 FileSaved?.Invoke(this, new(fileId, metadata, originalSize, finalSize, compress, encrypt));
@@ -1618,15 +1610,14 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             int hashRead;
             while ((hashRead = await inputStream.ReadAsync(hashBuffer, 0, hashBufferSize, ct).ConfigureAwait(false)) > 0)
                 hashAlgoForCompute.TransformBlock(hashBuffer, 0, hashRead, null, 0);
+
             hashAlgoForCompute.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
             originalHash = hashAlgoForCompute.Hash!;
 #endif
-            
             var metadata = new FileStoreResult(
-                fileId, originalFileName, originalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress,
-                compressionAlgorithm, compressedSize, compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash,
-                encryptedDataEncryptionKey, dataEncryptionKeyId, dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, hashAlg, contentType, tenantId,
-                availability, dekKeyMaterialBytes);
+                fileId, originalFileName, originalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress, compressionAlgorithm, compressedSize,
+                compressedHash, encrypt, dataEncryptionKeyAlgorithm, keyEncryptionKeyAlgorithm, encryptedSize, encryptedHash, encryptedDataEncryptionKey, dataEncryptionKeyId,
+                dataEncryptionKeyVersion, keyEncryptionKeySalt, timestamp, normalizedPathPrefix, hashAlg, contentType, tenantId, availability, dekKeyMaterialBytes);
 
             // Save metadata using metadata service
             await MetadataService.SaveMetadataAsync(fileId, metadata, ct).ConfigureAwait(false);
@@ -1641,7 +1632,10 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         }
     }
 
-    /// <summary>Sets stored <see cref="FileStoreResult.ContentType" /> from a known extension (via <see cref="FileTypeInfo.FromFilePath" />), then a known declared MIME, then the declared value, then <see cref="FileTypeInfo.Unknown" />.</summary>
+    /// <summary>
+    /// Sets stored <see cref="FileStoreResult.ContentType" /> from a known extension (via <see cref="FileTypeInfo.FromFilePath" />), then a known declared MIME, then the
+    /// declared value, then <see cref="FileTypeInfo.Unknown" />.
+    /// </summary>
     protected static string ResolveStoredContentType(string? declaredContentType, string? originalFileName)
     {
         var fromName = FileTypeInfo.FromFilePath(originalFileName);
@@ -1660,15 +1654,15 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
     protected static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)
         => fileExtension switch {
-            _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
+            var _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
 #if !NETSTANDARD2_0
             _ when fileExtension == BrotliExtension => CompressionAlgorithm.Brotli,
             _ when fileExtension == ZLibExtension => CompressionAlgorithm.ZLib,
 #endif
-            _ when fileExtension == DeflateExtension => CompressionAlgorithm.Deflate,
-            _ when fileExtension == SnappierExtension => CompressionAlgorithm.Snappier,
-            _ when fileExtension == ZstdSharpExtension => CompressionAlgorithm.ZstdSharp,
-            _ => null
+            var _ when fileExtension == DeflateExtension => CompressionAlgorithm.Deflate,
+            var _ when fileExtension == SnappierExtension => CompressionAlgorithm.Snappier,
+            var _ when fileExtension == ZstdSharpExtension => CompressionAlgorithm.ZstdSharp,
+            var _ => null
         };
 
     protected static byte[] ComputeHash(byte[] data, HashAlgorithm algorithm = HashAlgorithm.Sha256)
@@ -1693,9 +1687,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         return true;
     }
 
-    /// <summary>
-    /// Buffer for the sequential compress/hash/encrypt path. Large or compressed payloads use a temp file so we do not hold the full plaintext or compressed blob in memory.
-    /// </summary>
+    /// <summary>Buffer for the sequential compress/hash/encrypt path. Large or compressed payloads use a temp file so we do not hold the full plaintext or compressed blob in memory.</summary>
     private static Stream CreateSequentialStagingStream(long originalSize, bool compress)
     {
         const long largePlainThresholdBytes = 64L * 1024 * 1024;
@@ -1706,7 +1698,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                 return new MemoryStream();
 
             var cap = (int)Math.Min(originalSize, int.MaxValue);
-            return new MemoryStream(capacity: cap);
+            return new MemoryStream(cap);
         }
 
         var path = Path.Combine(Path.GetTempPath(), $"lyo-fs-staging-{Guid.NewGuid():N}.tmp");

@@ -99,8 +99,6 @@ public interface IImageService
     /// </summary>
     Task<Result<byte[]>> CompositeCenterOverlayPngAsync(byte[] backgroundPng, byte[] overlayImageBytes, ImageCenterOverlayOptions options, CancellationToken ct = default);
 
-    /// <summary>
-    /// Draws a decorative frame around a square QR PNG (badge, rounded panel, or stroked border). Requires <see cref="SixLabors.Fonts" /> at runtime for captioned styles.
-    /// </summary>
+    /// <summary>Draws a decorative frame around a square QR PNG (badge, rounded panel, or stroked border). Requires <see cref="SixLabors.Fonts" /> at runtime for captioned styles.</summary>
     Task<Result<byte[]>> CompositeQrFramePngAsync(byte[] qrPng, QrFrameLayoutOptions options, CancellationToken ct = default);
 }

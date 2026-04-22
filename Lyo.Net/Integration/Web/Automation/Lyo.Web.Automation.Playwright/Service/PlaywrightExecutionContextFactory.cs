@@ -1,4 +1,3 @@
-using Lyo.Web.Automation.Logging;
 using Lyo.Web.Automation.Playwright.Configuration;
 
 namespace Lyo.Web.Automation.Playwright.Service;
@@ -11,8 +10,7 @@ internal static class PlaywrightExecutionContextFactory
         var sessionDir = Path.Combine(serviceRoot, $"session-{sessionId:N}");
         Directory.CreateDirectory(sessionDir);
 
-        string OrSub(string? explicitPath, string defaultSegment)
-            => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath! : Path.Combine(sessionDir, defaultSegment);
+        string OrSub(string? explicitPath, string defaultSegment) => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath! : Path.Combine(sessionDir, defaultSegment);
 
         var browser = OrSub(options.BrowserUserDataDirectory, "browser-profile");
         var artifacts = OrSub(options.ArtifactsDirectory, "artifacts");
@@ -20,14 +18,13 @@ internal static class PlaywrightExecutionContextFactory
         Directory.CreateDirectory(browser);
         Directory.CreateDirectory(artifacts);
         Directory.CreateDirectory(downloads);
-
-        return new PlaywrightExecutionContext {
+        return new() {
             SessionId = sessionId,
             SessionDirectory = sessionDir,
             BrowserUserDataDirectory = browser,
             ArtifactsDirectory = artifacts,
             DownloadDirectory = downloads,
-            LoggerProvider = new SessionFileLoggerProvider(sessionDir)
+            LoggerProvider = new(sessionDir)
         };
     }
 }

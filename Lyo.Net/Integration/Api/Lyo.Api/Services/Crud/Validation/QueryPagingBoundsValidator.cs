@@ -15,10 +15,7 @@ public static class QueryPagingBoundsValidator
         => ValidatePaging(request.Start, request.Amount, options, maxAmount);
 
     /// <summary>Temporal/history query: same bounds as list/query paging.</summary>
-    public static IReadOnlyList<ApiError> Validate(HistoryQuery query, QueryOptions options)
-        => ValidatePaging(query.Start, query.Amount, options, options.MaxPageSize);
-
-    private sealed record SingleInt(int Value);
+    public static IReadOnlyList<ApiError> Validate(HistoryQuery query, QueryOptions options) => ValidatePaging(query.Start, query.Amount, options, options.MaxPageSize);
 
     private static List<ApiError> ValidatePaging(int? start, int? amount, QueryOptions options, int maxAmount)
     {
@@ -27,27 +24,23 @@ public static class QueryPagingBoundsValidator
             var r = ValidatorBuilder<SingleInt>.Create()
                 .RuleFor(x => x.Value)
                 .InclusiveBetween(
-                    options.MinPagingStart,
-                    options.MaxPagingStart,
-                    Constants.ApiErrorCodes.InvalidPaging,
+                    options.MinPagingStart, options.MaxPagingStart, Constants.ApiErrorCodes.InvalidPaging,
                     $"Start must be between {options.MinPagingStart} and {options.MaxPagingStart} inclusive (received {start.Value}).")
                 .Build()
-                .Validate(new SingleInt(start.Value));
+                .Validate(new(start.Value));
 
             if (!r.IsSuccess && r.Errors is { Count: > 0 } e)
-                errors.Add(new ApiError(e[0].Code, e[0].Message));
+                errors.Add(new(e[0].Code, e[0].Message));
         }
 
         if (amount.HasValue) {
             var r = ValidatorBuilder<SingleInt>.Create()
                 .RuleFor(x => x.Value)
                 .InclusiveBetween(
-                    options.MinPagingAmount,
-                    maxAmount,
-                    Constants.ApiErrorCodes.InvalidPaging,
+                    options.MinPagingAmount, maxAmount, Constants.ApiErrorCodes.InvalidPaging,
                     $"Amount must be between {options.MinPagingAmount} and {maxAmount} inclusive (received {amount.Value}).")
                 .Build()
-                .Validate(new SingleInt(amount.Value));
+                .Validate(new(amount.Value));
 
             if (!r.IsSuccess && r.Errors is { Count: > 0 } e)
                 errors.Add(new(e[0].Code, e[0].Message));
@@ -55,4 +48,6 @@ public static class QueryPagingBoundsValidator
 
         return errors;
     }
+
+    private sealed record SingleInt(int Value);
 }

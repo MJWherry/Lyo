@@ -14,8 +14,8 @@ namespace Lyo.Discord.Bot;
 /// </summary>
 public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
 {
-    private CancellationToken _runCt;
     private NativeDiscordClient? _gatewayClient;
+    private CancellationToken _runCt;
 
     protected LyoDiscordBotOptions Options { get; }
 
@@ -30,9 +30,6 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
     protected IGuildDiscordNotificationService? GuildNotifications { get; }
 
     protected IDiffService DiffService { get; }
-
-    /// <inheritdoc />
-    public bool IsConnected => _gatewayClient != null;
 
     protected LyoDiscordBotBase(
         LyoDiscordBotOptions options,
@@ -50,33 +47,8 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
         GuildNotifications = guildNotifications;
     }
 
-    /// <summary>Runs until <paramref name="cancellationToken" /> is cancelled: connect, block, disconnect.</summary>
-    public virtual async Task RunAsync(CancellationToken cancellationToken)
-    {
-        _runCt = cancellationToken;
-        var cfg = new DiscordConfiguration { Token = Options.Token, TokenType = TokenType.Bot, Intents = Options.Intents };
-        ConfigureDiscordConfiguration(cfg);
-        using var client = new NativeDiscordClient(cfg);
-        _gatewayClient = client;
-        try {
-            ConfigureDiscordClient(client);
-            RegisterDefaultSyncHandlers(client);
-            RegisterAdditionalHandlers(client);
-            await client.ConnectAsync().ConfigureAwait(false);
-            Logger.LogInformation("Discord bot connected. Cancel the host token to stop.");
-            try {
-                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) {
-                // shutdown
-            }
-
-            await client.DisconnectAsync().ConfigureAwait(false);
-        }
-        finally {
-            _gatewayClient = null;
-        }
-    }
+    /// <inheritdoc />
+    public bool IsConnected => _gatewayClient != null;
 
     /// <inheritdoc />
     public Task NotifyGuildLogMessageAsync(ulong guildId, string title, string body, CancellationToken cancellationToken = default)
@@ -106,12 +78,7 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageAsync(
-        ulong guildId,
-        ulong channelId,
-        string? content = null,
-        DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
@@ -138,11 +105,7 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageToGuildLogChannelAsync(
-        ulong guildId,
-        string? content = null,
-        DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
@@ -157,6 +120,34 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
             return Task.FromResult(false);
 
         return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, message, cancellationToken);
+    }
+
+    /// <summary>Runs until <paramref name="cancellationToken" /> is cancelled: connect, block, disconnect.</summary>
+    public virtual async Task RunAsync(CancellationToken cancellationToken)
+    {
+        _runCt = cancellationToken;
+        var cfg = new DiscordConfiguration { Token = Options.Token, TokenType = TokenType.Bot, Intents = Options.Intents };
+        ConfigureDiscordConfiguration(cfg);
+        using var client = new NativeDiscordClient(cfg);
+        _gatewayClient = client;
+        try {
+            ConfigureDiscordClient(client);
+            RegisterDefaultSyncHandlers(client);
+            RegisterAdditionalHandlers(client);
+            await client.ConnectAsync().ConfigureAwait(false);
+            Logger.LogInformation("Discord bot connected. Cancel the host token to stop.");
+            try {
+                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                // shutdown
+            }
+
+            await client.DisconnectAsync().ConfigureAwait(false);
+        }
+        finally {
+            _gatewayClient = null;
+        }
     }
 
     /// <summary>Override to adjust gateway configuration before the native client is constructed.</summary>

@@ -199,9 +199,7 @@ public sealed class JobScheduler
         _logger.LogInformation("Updating job definitions");
         _jobs.Clear();
         var query = new QueryReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
-        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct)
-            .ConfigureAwait(false);
-
+        var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
         if (results?.Items == null || !results.IsSuccess) {
             _logger.LogWarning("No definitions loaded or query failed");
             return;
@@ -318,9 +316,7 @@ public sealed class JobScheduler
                 WhereClauseBuilder.Condition("Result", ComparisonOperatorEnum.In, new[] { nameof(JobRunResult.Success), nameof(JobRunResult.SuccessWithWarnings) }));
 
             var successQuery = new QueryReqBuilder(prevRunsQuery).First().AddWhere(successNode).Build();
-            var successRes = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsQuery), successQuery, null, ct)
-                .ConfigureAwait(false);
-
+            var successRes = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsQuery), successQuery, null, ct).ConfigureAwait(false);
             lastSuccessful = successRes?.Items?.FirstOrDefault();
         }
 

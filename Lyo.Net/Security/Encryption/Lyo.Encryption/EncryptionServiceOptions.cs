@@ -17,7 +17,7 @@ public class EncryptionServiceOptions
     /// <summary>Gets or sets the file extension used for encrypted files (e.g., ".ag", ".rsa", ".chacha"). Required.</summary>
     public string FileExtension { get; set; } = string.Empty;
 
-    /// <summary>AES-GCM key size for <see cref="AesGcm.AesGcmEncryptionService"/> / hybrid AES paths. Ignored by non-AES services.</summary>
+    /// <summary>AES-GCM key size for <see cref="AesGcm.AesGcmEncryptionService" /> / hybrid AES paths. Ignored by non-AES services.</summary>
     public AesGcmKeySizeBits AesGcmKeySize { get; set; } = AesGcmKeySizeBits.Bits256;
 
     /// <summary>AES-SIV key size (RFC 5297: 32/48/64-byte keys). Ignored by non-SIV services.</summary>

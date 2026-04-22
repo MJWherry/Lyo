@@ -22,7 +22,7 @@ internal static class PlaywrightLocatorFactory
             ElementLocatorKind.PartialLinkText => page.GetByText(new Regex(Regex.Escape(locator.Value))),
             ElementLocatorKind.ClassName => page.Locator($".{CssEscapeClass(locator.Value)}"),
             ElementLocatorKind.TagName => page.Locator(locator.Value),
-            _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
+            var _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
         };
     }
 
@@ -40,7 +40,7 @@ internal static class PlaywrightLocatorFactory
             ElementLocatorKind.PartialLinkText => frame.GetByText(new Regex(Regex.Escape(locator.Value))),
             ElementLocatorKind.ClassName => frame.Locator($".{CssEscapeClass(locator.Value)}"),
             ElementLocatorKind.TagName => frame.Locator(locator.Value),
-            _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
+            var _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
         };
     }
 
@@ -59,16 +59,13 @@ internal static class PlaywrightLocatorFactory
             ElementLocatorKind.PartialLinkText => root.GetByText(new Regex(Regex.Escape(locator.Value))),
             ElementLocatorKind.ClassName => root.Locator($".{CssEscapeClass(locator.Value)}"),
             ElementLocatorKind.TagName => root.Locator(locator.Value),
-            _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
+            var _ => throw new ArgumentOutOfRangeException(nameof(locator), locator.Kind, null)
         };
     }
 
-    private static string CssIdSelector(string id)
-        => $"[id=\"{CssEscape(id)}\"]";
+    private static string CssIdSelector(string id) => $"[id=\"{CssEscape(id)}\"]";
 
-    private static string CssEscape(string value)
-        => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    private static string CssEscape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
-    private static string CssEscapeClass(string value)
-        => string.Join(".", value.Split([' '], StringSplitOptions.RemoveEmptyEntries).Select(CssEscape));
+    private static string CssEscapeClass(string value) => string.Join(".", value.Split([' '], StringSplitOptions.RemoveEmptyEntries).Select(CssEscape));
 }

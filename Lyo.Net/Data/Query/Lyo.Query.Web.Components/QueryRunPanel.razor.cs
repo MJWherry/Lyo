@@ -16,17 +16,12 @@ public partial class QueryRunPanel : IAsyncDisposable
 {
     private const string SplitterModuleUrl = "/_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js";
 
-    private sealed class HostEndpointRow
-    {
-        public string Host { get; set; } = "";
-
-        public string EndpointsCsv { get; set; } = "";
-    }
-
     private string? _error;
+    private List<HostEndpointRow> _hostRows = [];
     private bool _isResizing;
     private long? _lastResponseElapsedMs;
     private int? _lastResponseSizeBytes;
+    private int _lastRestoreKey = int.MinValue;
     private bool _loading;
     private string? _requestEditorParseError;
     private int _requestEditorRenderKey;
@@ -40,8 +35,6 @@ public partial class QueryRunPanel : IAsyncDisposable
     private string? _resultRawText;
     private ElementReference _splitContainerRef;
     private IJSObjectReference? _splitterModule;
-    private List<HostEndpointRow> _hostRows = [];
-    private int _lastRestoreKey = int.MinValue;
 
     [Inject]
     private IHttpClientFactory HttpClientFactory { get; set; } = null!;
@@ -105,9 +98,7 @@ public partial class QueryRunPanel : IAsyncDisposable
     }
 
     private static List<HostEndpointRow> HostRowsFrom(Dictionary<string, List<string>> dict)
-        => dict.Count == 0
-            ? []
-            : dict.Select(kvp => new HostEndpointRow { Host = kvp.Key, EndpointsCsv = string.Join(", ", kvp.Value) }).ToList();
+        => dict.Count == 0 ? [] : dict.Select(kvp => new HostEndpointRow { Host = kvp.Key, EndpointsCsv = string.Join(", ", kvp.Value) }).ToList();
 
     private async Task NotifyRunChangedAsync(QueryWorkbenchRunConfiguration next)
     {
@@ -146,7 +137,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             var pathRoute = route + "/" + GetEndpointSegment();
             var uri = $"{baseUrl}/{pathRoute}";
             var httpClient = HttpClientFactory.CreateClient();
-            var json = JsonSerializer.Serialize(
+            var json =  JsonSerializer.Serialize(
                 Run.RunMode == QueryWorkbenchRunMode.Query ? (object)EntityRequest : ProjectionRequest,
                 JsonOptions);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -336,9 +327,7 @@ public partial class QueryRunPanel : IAsyncDisposable
     private QueryRequestScoreBreakdown GetCurrentScoreBreakdown()
     {
         try {
-            return Run.RunMode == QueryWorkbenchRunMode.Query
-                ? QueryRequestScorer.ScoreDetailed(EntityRequest)
-                : QueryRequestScorer.ScoreDetailed(ProjectionRequest);
+            return Run.RunMode == QueryWorkbenchRunMode.Query ? QueryRequestScorer.ScoreDetailed(EntityRequest) : QueryRequestScorer.ScoreDetailed(ProjectionRequest);
         }
         catch {
             return QueryRequestScoreBreakdown.Empty();
@@ -377,7 +366,8 @@ public partial class QueryRunPanel : IAsyncDisposable
             return [];
 
         foreach (var kvp in Run.HostEndpoints) {
-            if (string.Equals(QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key), QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost!), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(
+                QueryWorkbenchHostNormalization.NormalizeBaseUrl(kvp.Key), QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost!), StringComparison.OrdinalIgnoreCase))
                 return kvp.Value is { Count: > 0 } ? kvp.Value : [];
         }
 
@@ -386,7 +376,7 @@ public partial class QueryRunPanel : IAsyncDisposable
 
     private async Task AddHostRow()
     {
-        _hostRows.Add(new HostEndpointRow());
+        _hostRows.Add(new());
         await CommitHostRowsAsync();
     }
 
@@ -396,21 +386,18 @@ public partial class QueryRunPanel : IAsyncDisposable
         await CommitHostRowsAsync();
     }
 
-    private void OnHostRowFocusOut()
-        => _ = CommitHostRowsAsync();
+    private void OnHostRowFocusOut() => _ = CommitHostRowsAsync();
 
     private async Task CommitHostRowsAsync()
     {
         var dict = BuildDictFromRows(_hostRows);
-        string? newSelected = Run.SelectedHost != null ? QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost) : null;
+        var newSelected = Run.SelectedHost != null ? QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost) : null;
         if (dict.Count > 0) {
-            if (newSelected == null
-                || !dict.Keys.Any(k => string.Equals(QueryWorkbenchHostNormalization.NormalizeBaseUrl(k), newSelected, StringComparison.OrdinalIgnoreCase)))
+            if (newSelected == null || !dict.Keys.Any(k => string.Equals(QueryWorkbenchHostNormalization.NormalizeBaseUrl(k), newSelected, StringComparison.OrdinalIgnoreCase)))
                 newSelected = QueryWorkbenchHostNormalization.NormalizeBaseUrl(dict.Keys.First());
         }
-        else {
+        else
             newSelected = null;
-        }
 
         var route = Run.Route;
         if (newSelected != null && dict.Count > 0) {
@@ -431,11 +418,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             if (string.IsNullOrWhiteSpace(host))
                 continue;
 
-            var parts = (row.EndpointsCsv ?? "")
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Where(static s => s.Length > 0)
-                .ToList();
-
+            var parts = (row.EndpointsCsv ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(static s => s.Length > 0).ToList();
             if (parts.Count == 0)
                 continue;
 
@@ -445,4 +428,10 @@ public partial class QueryRunPanel : IAsyncDisposable
         return d;
     }
 
+    private sealed class HostEndpointRow
+    {
+        public string Host { get; set; } = "";
+
+        public string EndpointsCsv { get; set; } = "";
+    }
 }

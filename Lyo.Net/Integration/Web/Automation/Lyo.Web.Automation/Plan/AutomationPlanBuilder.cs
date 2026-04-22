@@ -9,22 +9,22 @@ namespace Lyo.Web.Automation.Plan;
 /// <summary>Fluent construction of an <see cref="AutomationPlan" /> (same step types as JSON deserialization).</summary>
 public sealed class AutomationPlanBuilder
 {
-    private readonly List<AutomationStepDefinition> _steps = new();
     private readonly string? _name;
+    private readonly List<AutomationStepDefinition> _steps = new();
 
     private AutomationPlanBuilder(string? name) => _name = name;
 
     /// <summary>Starts a named or unnamed plan.</summary>
     public static AutomationPlanBuilder New(string? name = null) => new(name);
 
-    /// <summary>Builds the plan with an immutable step list and a time-ordered <see cref="AutomationStepDefinition.StepId"/> for any step that did not set one.</summary>
+    /// <summary>Builds the plan with an immutable step list and a time-ordered <see cref="AutomationStepDefinition.StepId" /> for any step that did not set one.</summary>
     public AutomationPlan Build()
     {
         var finalized = new List<AutomationStepDefinition>(_steps.Count);
         foreach (var step in _steps)
             finalized.Add(step.StepId is { } id && id != Guid.Empty ? step : step with { StepId = AutomationGuid.CreateTimeOrdered() });
 
-        return new AutomationPlan(_name, new ReadOnlyCollection<AutomationStepDefinition>(finalized));
+        return new(_name, new ReadOnlyCollection<AutomationStepDefinition>(finalized));
     }
 
     /// <summary>Navigate; <paramref name="url" /> may include <c>{{variableName}}</c> placeholders filled from saved string variables.</summary>
@@ -96,12 +96,7 @@ public sealed class AutomationPlanBuilder
     }
 
     /// <summary>Stores attribute or visible text from one element ref into a string variable.</summary>
-    public AutomationPlanBuilder ExtractElementData(
-        string elementRefName,
-        string variableName,
-        ElementDataExtractKind kind,
-        string? attributeName = null,
-        string? stepName = null)
+    public AutomationPlanBuilder ExtractElementData(string elementRefName, string variableName, ElementDataExtractKind kind, string? attributeName = null, string? stepName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(elementRefName, nameof(elementRefName));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(variableName, nameof(variableName));
@@ -124,12 +119,7 @@ public sealed class AutomationPlanBuilder
     }
 
     /// <inheritdoc cref="ExtractElementData" />
-    public AutomationPlanBuilder StoreFromElement(
-        string elementRefName,
-        string variableName,
-        ElementDataExtractKind kind,
-        string? attributeName = null,
-        string? stepName = null)
+    public AutomationPlanBuilder StoreFromElement(string elementRefName, string variableName, ElementDataExtractKind kind, string? attributeName = null, string? stepName = null)
         => ExtractElementData(elementRefName, variableName, kind, attributeName, stepName);
 
     /// <summary>Stores a literal string (may contain <c>{{var}}</c> expanded from existing string variables).</summary>
@@ -186,12 +176,7 @@ public sealed class AutomationPlanBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(urlListVariableName, nameof(urlListVariableName));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetDirectory, nameof(targetDirectory));
-        _steps.Add(new DownloadUrlsToDirectoryAutomationStep(
-            urlListVariableName,
-            targetDirectory,
-            fileNamePrefix,
-            stepName,
-            urlListFromCompletedStepIndex));
+        _steps.Add(new DownloadUrlsToDirectoryAutomationStep(urlListVariableName, targetDirectory, fileNamePrefix, stepName, urlListFromCompletedStepIndex));
         return this;
     }
 }

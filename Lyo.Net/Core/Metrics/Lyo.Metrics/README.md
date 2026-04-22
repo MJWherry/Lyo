@@ -607,9 +607,6 @@ public class MyBackgroundService : BackgroundService
 }
 ```
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -620,12 +617,12 @@ public class MyBackgroundService : BackgroundService
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
+| `Microsoft.Extensions.Options`                          | `[10,)` |
+| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10,)` |
 
 ### Project references
 

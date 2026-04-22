@@ -27,13 +27,15 @@ public static class QueryRequestScorer
         const int selectScore = 0;
         const int computedFieldsScore = 0;
         var totalCountModeScore = ScoreTotalCountMode(request.Options.TotalCountMode);
-        var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) = AnalyzeWhereClause(request.WhereClause);
+        var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) =
+            AnalyzeWhereClause(request.WhereClause);
+
         var whereClauseScore = ScoreWhereClause(nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
         var total = pagingScore + keysScore + sortScore + includeScore + selectScore + computedFieldsScore + totalCountModeScore + whereClauseScore;
         return new(
-            total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0, request.Amount ?? 0,
-            includeCount, includeMaxDepth, includeTotalPathSegments, sortCount, request.Keys.Count, nodeCount,
-            conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
+            total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0,
+            request.Amount ?? 0, includeCount, includeMaxDepth, includeTotalPathSegments, sortCount, request.Keys.Count, nodeCount, conditionCount, groupClauseCount, maxDepth,
+            subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
     }
 
     public static QueryRequestScoreBreakdown ScoreDetailed(ProjectionQueryReq? request)
@@ -48,13 +50,15 @@ public static class QueryRequestScorer
         var selectScore = ScorePathList(request.Select, out var selectCount, out var selectMaxDepth, out var selectTotalPathSegments);
         var computedFieldsScore = ScoreComputedFields(request.ComputedFields);
         var totalCountModeScore = ScoreTotalCountMode(request.Options.TotalCountMode);
-        var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) = AnalyzeWhereClause(request.WhereClause);
+        var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) =
+            AnalyzeWhereClause(request.WhereClause);
+
         var whereClauseScore = ScoreWhereClause(nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
         var total = pagingScore + keysScore + sortScore + includeScore + selectScore + computedFieldsScore + totalCountModeScore + whereClauseScore;
         return new(
-            total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0, request.Amount ?? 0,
-            includeCount + selectCount, Math.Max(includeMaxDepth, selectMaxDepth), includeTotalPathSegments + selectTotalPathSegments, sortCount, request.Keys.Count, nodeCount,
-            conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
+            total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0,
+            request.Amount ?? 0, includeCount + selectCount, Math.Max(includeMaxDepth, selectMaxDepth), includeTotalPathSegments + selectTotalPathSegments, sortCount,
+            request.Keys.Count, nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor);
     }
 
     private static int ScorePaging(int? start, int? amount)
@@ -194,8 +198,8 @@ public static class QueryRequestScorer
         return score;
     }
 
-    private static (int NodeCount, int ConditionCount, int GroupClauseCount, int MaxDepth, int SubClauseCount, int MaxSubClauseDepth, int MaxGroupBranchingFactor, int ComparisonScore)
-        AnalyzeWhereClause(WhereClause? root)
+    private static (int NodeCount, int ConditionCount, int GroupClauseCount, int MaxDepth, int SubClauseCount, int MaxSubClauseDepth, int MaxGroupBranchingFactor, int
+        ComparisonScore) AnalyzeWhereClause(WhereClause? root)
     {
         if (root is null)
             return (0, 0, 0, 0, 0, 0, 0, 0);

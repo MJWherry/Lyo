@@ -23,7 +23,7 @@ public static class Utilities
                     sizeLookup.Add(entry.FileSize.Value);
                     if (entry.Fingerprint != null) {
                         if (!fingerprintLookup.TryGetValue(entry.Fingerprint, out var sizeSet)) {
-                            sizeSet = new HashSet<long>();
+                            sizeSet = new();
                             fingerprintLookup[entry.Fingerprint] = sizeSet;
                         }
 
@@ -37,7 +37,7 @@ public static class Utilities
         var fileCount = 0;
         var directoryCount = 0;
         WalkDirectory(root, enableHashing, pathComparison, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, ref fileCount, ref directoryCount);
-        return new SnapshotTree(path, pathComparison, root, fileCount, directoryCount);
+        return new(path, pathComparison, root, fileCount, directoryCount);
     }
 
     private static void WalkDirectory(
@@ -86,7 +86,6 @@ public static class Utilities
             string? hash = null;
             string? fingerprint = null;
             long? fileSize = null;
-
             var canReuseFromOld = false;
             var metadataOnlyFingerprint = false;
             DirectorySnapshotEntry? oldEntry = null;
@@ -108,7 +107,6 @@ public static class Utilities
             }
             else if (enableHashing) {
                 fileSize = fileInfo.Length;
-
                 try {
                     var fingerprintBytes = Fingerprint(file, fileSize.Value, ct).GetAwaiter().GetResult();
                     if (fingerprintBytes != null && fingerprintBytes.Length > 0) {
@@ -156,7 +154,7 @@ public static class Utilities
             if (string.IsNullOrEmpty(fileName))
                 continue;
 
-            node.Files[fileName] = new DirectorySnapshotEntry(file, fileInfo, hash, fingerprint, fileSize);
+            node.Files[fileName] = new(file, fileInfo, hash, fingerprint, fileSize);
             fileCount++;
         }
     }
@@ -170,7 +168,6 @@ public static class Utilities
         var stringComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         var changes = new List<FileSystemChangeInfo>();
         var processedPaths = new HashSet<string>(stringComparer);
-
         var fileHashLookup = oldTree.EnumerateFiles()
             .Where(e => e.Entry.Info is FileInfo && e.Entry.Hash != null)
             .GroupBy(e => e.Entry.Hash!)
@@ -186,7 +183,6 @@ public static class Utilities
             if (TryGetSnapshotEntry(oldTree, path, out var value) && value != null) {
                 if (entry.Info is FileInfo fileInfo && value.Info is FileInfo oldFileInfo) {
                     var hasChanged = false;
-
                     if (entry.FileSize.HasValue && value.FileSize.HasValue) {
                         if (entry.FileSize.Value != value.FileSize.Value)
                             hasChanged = true;
@@ -298,7 +294,7 @@ public static class Utilities
             return true;
 
         if (tree.TryGetDirectory(path, out var node) && node != null) {
-            entry = new DirectorySnapshotEntry(node.FullPath, new DirectoryInfo(node.FullPath));
+            entry = new(node.FullPath, new DirectoryInfo(node.FullPath));
             return true;
         }
 
@@ -310,7 +306,8 @@ public static class Utilities
     private static IEnumerable<(string Path, DirectorySnapshotEntry Entry)> EnumerateNewSnapshotEntries(SnapshotDirectoryNode root)
     {
         foreach (var sub in root.Directories.Values) {
-            yield return (sub.FullPath, new DirectorySnapshotEntry(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+            yield return (sub.FullPath, new(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+
             foreach (var pair in EnumerateNewSnapshotEntries(sub))
                 yield return pair;
         }
@@ -319,11 +316,7 @@ public static class Utilities
             yield return (fileEntry.Path, fileEntry);
     }
 
-    public static string? FindBestMatch(
-        List<string> candidates,
-        string newPath,
-        SnapshotTree newTree,
-        StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
+    public static string? FindBestMatch(List<string> candidates, string newPath, SnapshotTree newTree, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         if (candidates.Count == 0)
             return null;
@@ -348,7 +341,6 @@ public static class Utilities
     {
         var newDirName = Path.GetFileName(newEntry.Path);
         var newParent = Path.GetDirectoryName(newEntry.Path) ?? "";
-
         var renameCandidate = oldTree.EnumerateDirectoryNodes()
             .Select(n => n.FullPath)
             .Where(e => string.Equals(Path.GetDirectoryName(e) ?? "", newParent, pathComparison))
@@ -364,25 +356,18 @@ public static class Utilities
             .FirstOrDefault(e => !newTree.ContainsPath(e) && !processedPaths.Contains(e));
     }
 
-    public static bool HasDirectoryChanged(
-        string dirPath,
-        SnapshotTree oldTree,
-        SnapshotTree newTree,
-        StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
+    public static bool HasDirectoryChanged(string dirPath, SnapshotTree oldTree, SnapshotTree newTree, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         var stringComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         oldTree.TryGetDirectory(dirPath, out var oldNode);
         newTree.TryGetDirectory(dirPath, out var newNode);
-
         var oldChildren = new HashSet<string>(GetDirectChildPaths(oldNode, stringComparer), stringComparer);
         var newChildren = new HashSet<string>(GetDirectChildPaths(newNode, stringComparer), stringComparer);
-
         if (!oldChildren.SetEquals(newChildren))
             return true;
 
         return oldChildren.Any(child => {
-            if (!oldTree.TryGetFile(child, out var oldEntry) || !newTree.TryGetFile(child, out var newEntry) || oldEntry!.Info is not FileInfo ||
-                newEntry!.Info is not FileInfo)
+            if (!oldTree.TryGetFile(child, out var oldEntry) || !newTree.TryGetFile(child, out var newEntry) || oldEntry!.Info is not FileInfo || newEntry!.Info is not FileInfo)
                 return false;
 
             if (oldEntry.Hash != null && newEntry.Hash != null)
@@ -416,10 +401,7 @@ public static class Utilities
         }
     }
 
-    public static (int fileCount, int dirCount) GetSnapshotCounts(
-        string directoryPath,
-        SnapshotTree snapshot,
-        StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
+    public static (int fileCount, int dirCount) GetSnapshotCounts(string directoryPath, SnapshotTree snapshot, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         if (!snapshot.TryGetDirectory(directoryPath, out var node) || node is null)
             return (0, 0);
@@ -478,7 +460,6 @@ public static class Utilities
         const long veryLargeThreshold = 1024 * 1024 * 1024; // 1GB
         const int sampleSize = 128; // Smaller chunks for faster I/O
         const int veryLargeSampleSize = 64; // Minimal read for very large files
-
         if (fileSize > veryLargeThreshold) {
             var fileInfo = new FileInfo(path);
             var combined = new byte[8 + veryLargeSampleSize + 8];

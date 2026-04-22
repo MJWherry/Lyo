@@ -1,6 +1,7 @@
 # Lyo.Favorite.Postgres
 
-PostgreSQL implementation of Lyo.Favorite using Entity Framework Core. Persists favorites to `favorite.favorite` table with migrations support. Favorites have **For** (what is being favorited) and **From** (who favorited it) entity references. A unique constraint prevents duplicate favorites for the same pair.
+PostgreSQL implementation of Lyo.Favorite using Entity Framework Core. Persists favorites to `favorite.favorite` table with migrations support. Favorites have **For** (what is
+being favorited) and **From** (who favorited it) entity references. A unique constraint prevents duplicate favorites for the same pair.
 
 ## Usage
 
@@ -80,11 +81,11 @@ var count = await favoriteStore.GetCountForEntityAsync(
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.EntityFrameworkCore.Design` | `[10,)` |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`            | `[10,)` |
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
 
 ### Project references
 

@@ -59,7 +59,6 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
         ArgumentHelpers.ThrowIfNull(row, nameof(row));
         ArgumentHelpers.ThrowIfNull(entityClrType, nameof(entityClrType));
         ArgumentHelpers.ThrowIfNull(context, nameof(context));
-
         var entityType = context.Model.FindEntityType(entityClrType);
         var pk = entityType?.FindPrimaryKey();
         if (pk is null || pk.Properties.Count == 0)
@@ -73,28 +72,6 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
         }
 
         return values;
-    }
-
-    private static bool TryGetProjectedRowValue(IReadOnlyDictionary<string, object?> row, string propertyName, out object? value)
-    {
-        if (row.TryGetValue(propertyName, out value))
-            return true;
-
-        foreach (var kv in row) {
-            if (string.Equals(kv.Key, propertyName, StringComparison.OrdinalIgnoreCase)) {
-                value = kv.Value;
-                return true;
-            }
-
-            var suffix = "." + propertyName;
-            if (kv.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
-                value = kv.Value;
-                return true;
-            }
-        }
-
-        value = null;
-        return false;
     }
 
     public object? ConvertToTargetType(object? value, Type targetType)
@@ -152,6 +129,28 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
             return false;
 
         return obj is IEnumerable;
+    }
+
+    private static bool TryGetProjectedRowValue(IReadOnlyDictionary<string, object?> row, string propertyName, out object? value)
+    {
+        if (row.TryGetValue(propertyName, out value))
+            return true;
+
+        foreach (var kv in row) {
+            if (string.Equals(kv.Key, propertyName, StringComparison.OrdinalIgnoreCase)) {
+                value = kv.Value;
+                return true;
+            }
+
+            var suffix = "." + propertyName;
+            if (kv.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) {
+                value = kv.Value;
+                return true;
+            }
+        }
+
+        value = null;
+        return false;
     }
 
     private EntityKeyMetadata GetEntityKeyMetadataCached<TEntity>(DbContext context)

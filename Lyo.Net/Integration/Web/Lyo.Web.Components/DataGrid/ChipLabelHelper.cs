@@ -28,12 +28,11 @@ public static class ChipLabelHelper
         return text[..(maxLength - ellipsis.Length)] + ellipsis;
     }
 
-    public static bool ShouldTruncate(string? text, int maxLength)
-        => !string.IsNullOrEmpty(text) && text.Length > maxLength;
+    public static bool ShouldTruncate(string? text, int maxLength) => !string.IsNullOrEmpty(text) && text.Length > maxLength;
 
     /// <summary>
-    /// Formats a filter condition value (handles <see cref="JsonElement"/>, collections, etc.).
-    /// Use <paramref name="compact"/> for chip labels; use <c>false</c> for dialogs that must list every value.
+    /// Formats a filter condition value (handles <see cref="JsonElement" />, collections, etc.). Use <paramref name="compact" /> for chip labels; use <c>false</c> for dialogs
+    /// that must list every value.
     /// </summary>
     public static string FormatFilterValue(object? value, bool compact = true)
     {
@@ -77,8 +76,7 @@ public static class ChipLabelHelper
     }
 
     private static string FormatJsonElement(JsonElement je, bool compact)
-    {
-        return je.ValueKind switch {
+        => je.ValueKind switch {
             JsonValueKind.Null => "null",
             JsonValueKind.String => je.GetString() ?? "",
             JsonValueKind.Number => je.ToString(),
@@ -86,17 +84,14 @@ public static class ChipLabelHelper
             JsonValueKind.False => "false",
             JsonValueKind.Array => FormatJsonArray(je, compact),
             JsonValueKind.Object => je.ToString(),
-            _ => je.ToString()
+            var _ => je.ToString()
         };
-    }
 
     private static string FormatJsonArray(JsonElement arr, bool compact)
     {
         var items = new List<string>();
         foreach (var el in arr.EnumerateArray()) {
-            var s = el.ValueKind == JsonValueKind.String
-                ? el.GetString() ?? ""
-                : FormatJsonElement(el, compact);
+            var s = el.ValueKind == JsonValueKind.String ? el.GetString() ?? "" : FormatJsonElement(el, compact);
             items.Add(s);
         }
 

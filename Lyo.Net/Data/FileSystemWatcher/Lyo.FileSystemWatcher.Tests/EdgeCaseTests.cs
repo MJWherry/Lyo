@@ -191,7 +191,9 @@ public class EdgeCaseTests : IDisposable
         var eventFired = false;
         using var watcher = new FileSystemWatcher(longPath);
         watcher.FileCreated += (_, _) => eventFired = true;
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir0", "subdir1", "subdir2", "subdir3", "subdir4", fileName), TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir0", "subdir1", "subdir2", "subdir3", "subdir4", fileName), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
         Assert.True(eventFired);
     }

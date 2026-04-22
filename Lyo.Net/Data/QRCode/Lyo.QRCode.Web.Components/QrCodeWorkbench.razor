@@ -1,6 +1,5 @@
 @using System.Text
 @using Lyo.Images
-@using Lyo.Images.Models
 @using Lyo.QRCode.Models
 @using MudBlazor.Utilities
 @inject IQRCodeService QrCodeService
@@ -57,7 +56,9 @@
                         <MudText Typo="Typo.subtitle2">Center logo</MudText>
                         @if (LogoSupported) {
                             <MudStack Spacing="2">
-                                <InputFile OnChange="OnLogoFileChangedAsync" accept="@string.Join(',', FileTypeInfo.Png.MimeType, FileTypeInfo.Jpeg.MimeType, FileTypeInfo.Gif.MimeType, FileTypeInfo.Webp.MimeType, FileTypeInfo.Svg.MimeType)" class="mb-1"/>
+                                <InputFile OnChange="OnLogoFileChangedAsync"
+                                           accept="@string.Join(',', FileTypeInfo.Png.MimeType, FileTypeInfo.Jpeg.MimeType, FileTypeInfo.Gif.MimeType, FileTypeInfo.Webp.MimeType, FileTypeInfo.Svg.MimeType)"
+                                           class="mb-1"/>
                                 @if (_logoBytes is { Length: > 0 }) {
                                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -68,10 +69,12 @@
                                 }
                                 <MudStack Spacing="1">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        Logo keeps its colors (RGB); transparent areas show the QR background. Logo size is capped at @QRCodeIconOptions.MaxIconSizePercent%—larger overlays are not reliable even at max error correction. Very small pixels-per-module values need a smaller logo %.
+                                        Logo keeps its colors (RGB); transparent areas show the QR background. Logo size is capped at @QRCodeIconOptions.MaxIconSizePercent%—larger
+                                        overlays are not reliable even at max error correction. Very small pixels-per-module values need a smaller logo %.
                                     </MudText>
                                     <MudText Typo="Typo.body2">Logo size (@_iconSizePercent% of QR)</MudText>
-                                    <MudSlider T="int" @bind-Value="_iconSizePercent" Min="1" Max="@QRCodeIconOptions.MaxIconSizePercent" Step="1" ValueLabel="true" Color="Color.Primary"
+                                    <MudSlider T="int" @bind-Value="_iconSizePercent" Min="1" Max="@QRCodeIconOptions.MaxIconSizePercent" Step="1" ValueLabel="true"
+                                               Color="Color.Primary"
                                                Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
                                     <MudCheckBox T="bool" Label="Logo border" @bind-Value="_drawIconBorder" Disabled="@(_logoBytes == null || _logoBytes.Length == 0)"/>
                                 </MudStack>
@@ -93,14 +96,17 @@
                                 style="width:100%;min-height:40px;padding:8px 12px;border-radius:var(--mud-default-borderradius);border:1px solid var(--mud-palette-lines-default);background:var(--mud-palette-surface);color:var(--mud-palette-text-primary);"
                                 disabled="@(_format != QRCodeFormat.Png)"
                                 @bind="_frameStyleInt">
-                            @foreach (QrFrameStyle st in Enum.GetValues<QrFrameStyle>()) {
+                            @foreach (var st in Enum.GetValues<QrFrameStyle>()) {
                                 <option value="@((int)st)">@FrameStyleLabel(st)</option>
                             }
                         </select>
                         @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
-                            <MudTextField T="string" Label="Caption text" @bind-Value="_frameCaption" Variant="Variant.Outlined" HelperText="Shown in the header (badge) or below the QR (border style)"/>
+                            <MudTextField T="string" Label="Caption text" @bind-Value="_frameCaption" Variant="Variant.Outlined"
+                                          HelperText="Shown in the header (badge) or below the QR (border style)"/>
+
                             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
-                                <MudColorPicker Label="Header / bar" @bind-Value="_frameHeaderBg" Disabled="@(SelectedFrameStyle == QrFrameStyle.SimpleRoundedPanel || SelectedFrameStyle == QrFrameStyle.BorderOnly)"/>
+                                <MudColorPicker Label="Header / bar" @bind-Value="_frameHeaderBg"
+                                                Disabled="@(SelectedFrameStyle == QrFrameStyle.SimpleRoundedPanel || SelectedFrameStyle == QrFrameStyle.BorderOnly)"/>
                                 <MudColorPicker Label="Caption color" @bind-Value="_frameCaptionColor"/>
                                 <MudColorPicker Label="Panel background" @bind-Value="_framePanelBg"/>
                             </MudStack>
@@ -214,8 +220,7 @@
 
     private bool LogoSupported => _format is QRCodeFormat.Png or QRCodeFormat.Svg;
 
-    private QrFrameStyle SelectedFrameStyle
-        => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
+    private QrFrameStyle SelectedFrameStyle => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
 
     private async Task OnLogoFileChangedAsync(InputFileChangeEventArgs e)
     {
@@ -293,7 +298,6 @@
 
             // Do not pass options.Frame to IQRCodeService: apply the decorative frame here after PNG bytes exist.
             // That guarantees the workbench preview matches the selection even if the hosted QR service omits framing.
-
             var result = await QrCodeService.GenerateAsync(_data, options);
             if (!result.IsSuccess) {
                 SetStatus(LyoResultErrorFormatter.FormatErrors(result.Errors), Severity.Error);

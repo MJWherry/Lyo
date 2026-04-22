@@ -4,17 +4,11 @@ using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using MudBlazor;
 
 namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditorPanel
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-panel" : ElementId.Trim();
-
     private WhereClause? _draggedNode;
 
     private WhereClause? _dragOverNode;
@@ -26,6 +20,11 @@ public partial class QueryNodeEditorPanel
     private WhereClause? _selectedNode;
 
     private IReadOnlyCollection<TreeItemData<WhereClauseTreeItem>> _treeItems = new List<TreeItemData<WhereClauseTreeItem>>();
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-panel" : ElementId.Trim();
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;

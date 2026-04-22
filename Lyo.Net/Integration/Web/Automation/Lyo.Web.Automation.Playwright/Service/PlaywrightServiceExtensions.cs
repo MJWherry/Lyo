@@ -20,7 +20,8 @@ public static class PlaywrightServiceExtensions
     }
 
     /// <summary>
-    /// Registers <see cref="PlaywrightBrowserOptions" />, scoped <see cref="PlaywrightBrowser" />, and singleton <see cref="IPlaywrightBrowserService" /> for session-based usage.
+    /// Registers <see cref="PlaywrightBrowserOptions" />, scoped <see cref="PlaywrightBrowser" />, and singleton <see cref="IPlaywrightBrowserService" /> for session-based
+    /// usage.
     /// </summary>
     public static IServiceCollection AddPlaywrightBrowserService(this IServiceCollection services, Action<PlaywrightBrowserOptions>? configure = null)
     {
@@ -31,19 +32,17 @@ public static class PlaywrightServiceExtensions
     }
 
     /// <summary>Binds <paramref name="configuration" /> to <see cref="PlaywrightBrowserOptions" /> and registers Playwright services.</summary>
-    public static IServiceCollection AddPlaywrightBrowserServiceFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string? configSectionName = null)
+    public static IServiceCollection AddPlaywrightBrowserServiceFromConfiguration(this IServiceCollection services, IConfiguration configuration, string? configSectionName = null)
     {
         ArgumentHelpers.ThrowIfNull(services, nameof(services));
         ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
         var sectionName = string.IsNullOrWhiteSpace(configSectionName) ? PlaywrightBrowserOptions.SectionName : configSectionName!;
         services.AddSingleton(_ => {
             var o = new PlaywrightBrowserOptions();
-            ConfigurationBinder.Bind(configuration.GetSection(sectionName), o);
+            configuration.GetSection(sectionName).Bind(o);
             return o;
         });
+
         services.AddScoped(RegisterPlaywrightBrowser);
         RegisterPlaywrightBrowserServiceSingleton(services);
         return services;
@@ -77,16 +76,13 @@ public static class PlaywrightServiceExtensions
             configure?.Invoke(options);
             return options;
         });
+
         services.AddScoped(RegisterPlaywrightBrowser);
     }
 
     private static void RegisterPlaywrightBrowserServiceSingleton(IServiceCollection services)
-    {
-        services.AddSingleton<IPlaywrightBrowserService>(sp => new PlaywrightBrowserService(
-            sp.GetRequiredService<PlaywrightBrowserOptions>(),
-            sp.GetService<ILoggerFactory>(),
-            sp.GetService<IMetrics>()));
-    }
+        => services.AddSingleton<IPlaywrightBrowserService>(sp => new PlaywrightBrowserService(
+            sp.GetRequiredService<PlaywrightBrowserOptions>(), sp.GetService<ILoggerFactory>(), sp.GetService<IMetrics>()));
 
     private static PlaywrightBrowser RegisterPlaywrightBrowser(IServiceProvider sp)
     {

@@ -23,8 +23,8 @@ public sealed class AzureMultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
     private readonly ILogger<AzureMultipartUploadService> _logger;
-    private readonly IMetrics _metrics;
     private readonly IFileMalwareScanner _malwareScanner;
+    private readonly IMetrics _metrics;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly AzureFileStorageOptions _options;
     private readonly IMultipartUploadSessionStore _sessions;

@@ -4,21 +4,13 @@ using Lyo.Query.Services.WhereClause;
 namespace Lyo.Api.Services.Crud.Read.Project;
 
 /// <summary>
-/// Zips parallel IEnumerable columns (one list per selected path) into nested objects under collection roots.
-/// Model: every field path is <c>segment.segment.leaf</c>; merge keys are prefixes that end at an <see cref="ICollection{T}" />
-/// on the entity graph. Planning runs once per query shape; application runs per row.
+/// Zips parallel IEnumerable columns (one list per selected path) into nested objects under collection roots. Model: every field path is <c>segment.segment.leaf</c>; merge
+/// keys are prefixes that end at an <see cref="ICollection{T}" /> on the entity graph. Planning runs once per query shape; application runs per row.
 /// </summary>
 internal static class ProjectionCollectionZip
 {
-    internal sealed record SiblingCollectionMergeGroup(string MergeKey, IReadOnlyList<ProjectedFieldSpec> Specs);
-
-    /// <summary>
-    /// Builds merge steps: unified root collection (mixed path depths), sibling merges under a common prefix, then augment from parallel columns (incl. computed).
-    /// </summary>
-    internal static IReadOnlyList<SiblingCollectionMergeGroup> PlanMergeGroups(
-        Type entityType,
-        IReadOnlyList<ProjectedFieldSpec> specs,
-        IReadOnlyList<object?> items)
+    /// <summary>Builds merge steps: unified root collection (mixed path depths), sibling merges under a common prefix, then augment from parallel columns (incl. computed).</summary>
+    internal static IReadOnlyList<SiblingCollectionMergeGroup> PlanMergeGroups(Type entityType, IReadOnlyList<ProjectedFieldSpec> specs, IReadOnlyList<object?> items)
     {
         var unifiedGroups = FindUnifiedRootCollectionMergeGroups(entityType, specs);
         var unifiedRootKeys = unifiedGroups.Select(g => g.MergeKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -30,9 +22,8 @@ internal static class ProjectionCollectionZip
     }
 
     /// <summary>
-    /// SQL slot planning matches row zip (unified root + sibling groups) but never augments from a sample row.
-    /// Unified-root groups must be included here; otherwise every path under the same collection root is excluded from
-    /// <see cref="FindSiblingCollectionMergeGroups" /> and EF gets one slot per field (multiple joins / wider shapes).
+    /// SQL slot planning matches row zip (unified root + sibling groups) but never augments from a sample row. Unified-root groups must be included here; otherwise every path
+    /// under the same collection root is excluded from <see cref="FindSiblingCollectionMergeGroups" /> and EF gets one slot per field (multiple joins / wider shapes).
     /// </summary>
     internal static IReadOnlyList<SiblingCollectionMergeGroup> PlanMergeGroupsForSqlSlots(Type entityType, IReadOnlyList<ProjectedFieldSpec> specs)
     {
@@ -48,10 +39,7 @@ internal static class ProjectionCollectionZip
         return merged;
     }
 
-    internal static void ApplyMergeGroupsToRows(
-        IReadOnlyList<object?> items,
-        IReadOnlyList<SiblingCollectionMergeGroup> orderedGroups,
-        IReadOnlyList<ProjectedFieldSpec> allSpecs)
+    internal static void ApplyMergeGroupsToRows(IReadOnlyList<object?> items, IReadOnlyList<SiblingCollectionMergeGroup> orderedGroups, IReadOnlyList<ProjectedFieldSpec> allSpecs)
     {
         foreach (var item in items) {
             if (item is Dictionary<string, object?> dict)
@@ -72,11 +60,11 @@ internal static class ProjectionCollectionZip
             var specPaths = new HashSet<string>(group.Specs.Select(s => s.RequestedPath), StringComparer.OrdinalIgnoreCase);
             var scopeWildcardSpec = group.Specs.FirstOrDefault(s => string.Equals(s.NormalizedParts[^1], "*", StringComparison.Ordinal));
             var collectionPrefix = GetCollectionRequestedPathPrefix(group.Specs[0].RequestedPath);
-
             var extraZipColumns = new List<(string RowKey, string RelativePath)>();
             foreach (var kvp in row) {
                 if (specPaths.Contains(kvp.Key))
                     continue;
+
                 if (kvp.Value is string or byte[] or not IEnumerable)
                     continue;
 
@@ -141,11 +129,10 @@ internal static class ProjectionCollectionZip
                     }
                     else if (IsUnifiedRootCollectionMergeGroup(group)) {
                         var req = spec.RequestedPath;
-                        var tail = req.Length > mergeKey.Length + 1
-                            && req.StartsWith(mergeKey, StringComparison.OrdinalIgnoreCase)
-                            && req[mergeKey.Length] == '.'
+                        var tail = req.Length > mergeKey.Length + 1 && req.StartsWith(mergeKey, StringComparison.OrdinalIgnoreCase) && req[mergeKey.Length] == '.'
                             ? req[(mergeKey.Length + 1)..]
                             : leafName;
+
                         var cell = GetElementAtIndex(colVal, i);
                         if (tail.Contains('.', StringComparison.Ordinal))
                             AssignNestedProperty(obj, tail, cell);
@@ -200,17 +187,18 @@ internal static class ProjectionCollectionZip
         foreach (var kv in parent) {
             if (!string.Equals(kv.Key, segment, StringComparison.OrdinalIgnoreCase))
                 continue;
+
             if (kv.Value is Dictionary<string, object?> d) {
                 child = d;
                 return true;
             }
 
-            child = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            child = new(StringComparer.OrdinalIgnoreCase);
             parent[kv.Key] = child;
             return true;
         }
 
-        child = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        child = new(StringComparer.OrdinalIgnoreCase);
         parent[segment] = child;
         return true;
     }
@@ -233,6 +221,7 @@ internal static class ProjectionCollectionZip
         foreach (var spec in specs) {
             if (spec.NormalizedParts.Length < 2)
                 continue;
+
             if (NormalizedPartsContainWildcard(spec.NormalizedParts))
                 continue;
 
@@ -256,10 +245,7 @@ internal static class ProjectionCollectionZip
             if (bucket.Any(s => NormalizedPartsContainWildcard(s.NormalizedParts)))
                 continue;
 
-            var distinctParentPaths = bucket
-                .Select(s => string.Join(".", s.NormalizedParts[..^1]))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var distinctParentPaths = bucket.Select(s => string.Join(".", s.NormalizedParts[..^1])).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             if (distinctParentPaths.Count <= 1)
                 continue;
 
@@ -303,8 +289,7 @@ internal static class ProjectionCollectionZip
             if (NormalizedPartsContainWildcard(spec.NormalizedParts))
                 continue;
 
-            if (excludeFirstSegmentsFromUnifiedMerge != null
-                && excludeFirstSegmentsFromUnifiedMerge.Contains(spec.NormalizedParts[0]))
+            if (excludeFirstSegmentsFromUnifiedMerge != null && excludeFirstSegmentsFromUnifiedMerge.Contains(spec.NormalizedParts[0]))
                 continue;
 
             var prefixKey = string.Join(".", spec.NormalizedParts, 0, spec.NormalizedParts.Length - 1);
@@ -352,12 +337,14 @@ internal static class ProjectionCollectionZip
         foreach (var spec in specs) {
             if (spec.NormalizedParts.Length < 2)
                 continue;
+
             if (!string.Equals(spec.NormalizedParts[^1], "*", StringComparison.Ordinal))
                 continue;
 
             var scope = string.Join(".", spec.NormalizedParts[..^1]);
             if (scope.Length == 0)
                 continue;
+
             if (mergeKey.Length > scope.Length && mergeKey.StartsWith(scope + ".", StringComparison.OrdinalIgnoreCase))
                 return true;
         }
@@ -384,8 +371,7 @@ internal static class ProjectionCollectionZip
         if (!string.Equals(g.MergeKey, firstSeg, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (!g.Specs.All(s =>
-                s.NormalizedParts.Length >= 2 && string.Equals(s.NormalizedParts[0], firstSeg, StringComparison.OrdinalIgnoreCase)))
+        if (!g.Specs.All(s => s.NormalizedParts.Length >= 2 && string.Equals(s.NormalizedParts[0], firstSeg, StringComparison.OrdinalIgnoreCase)))
             return false;
 
         var parentPaths = g.Specs.Select(s => string.Join(".", s.NormalizedParts[..^1])).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -428,7 +414,6 @@ internal static class ProjectionCollectionZip
     {
         var existingKeys = new HashSet<string>(existingGroups.Select(g => g.MergeKey), StringComparer.OrdinalIgnoreCase);
         var added = new List<SiblingCollectionMergeGroup>();
-
         Dictionary<string, object?>? firstDict = null;
         foreach (var item in items) {
             if (item is Dictionary<string, object?> d) {
@@ -557,7 +542,7 @@ internal static class ProjectionCollectionZip
         foreach (var x in enumerable) {
             if (i == index)
                 return x;
-            
+
             i++;
         }
 
@@ -569,4 +554,6 @@ internal static class ProjectionCollectionZip
         var i = fullPath.LastIndexOf('.');
         return i <= 0 ? fullPath : fullPath[..i];
     }
+
+    internal sealed record SiblingCollectionMergeGroup(string MergeKey, IReadOnlyList<ProjectedFieldSpec> Specs);
 }

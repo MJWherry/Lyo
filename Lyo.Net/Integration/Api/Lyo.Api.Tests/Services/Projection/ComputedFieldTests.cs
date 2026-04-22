@@ -1,4 +1,3 @@
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Formatter;
 using Lyo.Query.Models.Common.Request;
@@ -205,13 +204,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_AppendsMissingPaths()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["Id"],
-            ComputedFields = [new("Full", "{FirstName} {LastName}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["Id"], ComputedFields = [new("Full", "{FirstName} {LastName}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Equal(2, added.Count);
         Assert.Contains("FirstName", request.Select, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("LastName", request.Select, StringComparer.OrdinalIgnoreCase);
@@ -223,13 +217,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_DoesNotDuplicateExistingSelect()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["Id", "FirstName"],
-            ComputedFields = [new("Full", "{FirstName} {LastName}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["Id", "FirstName"], ComputedFields = [new("Full", "{FirstName} {LastName}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Single(added);
         Assert.Contains("LastName", added, StringComparer.OrdinalIgnoreCase);
     }
@@ -238,13 +227,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_DoesNotAppendPlaceholderPathAlreadyInSelect_EvenWithDifferentCasingOrWhitespace()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["  docketcharges.number  "],
-            ComputedFields = [new("a", "{docketcharges.number} - {docketcharges.description}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["  docketcharges.number  "], ComputedFields = [new("a", "{docketcharges.number} - {docketcharges.description}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Single(added);
         Assert.Equal("docketcharges.description", added[0].Trim(), StringComparer.OrdinalIgnoreCase);
     }
@@ -253,13 +237,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_AppendsNestedLeaf_WhenOnlyCollectionScopeWildcardPresent()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["contactaddresses.*"],
-            ComputedFields = [new("n", "{contactaddresses.address.streettype}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["contactaddresses.*"], ComputedFields = [new("n", "{contactaddresses.address.streettype}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Single(added);
         Assert.Contains("contactaddresses.address.streettype", request.Select, StringComparer.OrdinalIgnoreCase);
     }
@@ -268,13 +247,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_CollectionWildcardCoversOnlySingleSegmentUnderCollection()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["contactaddresses.*"],
-            ComputedFields = [new("t", "{contactaddresses.type}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["contactaddresses.*"], ComputedFields = [new("t", "{contactaddresses.type}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Empty(added);
     }
 
@@ -282,13 +256,8 @@ public sealed class ComputedFieldTests
     public void EnsureSelectIncludesComputedDependencies_AddressBranchWildcardCoversLeafUnderAddress()
     {
         var service = new ProjectionService(_formatter);
-        var request = new ProjectionQueryReq {
-            Select = ["contactaddresses.address.*"],
-            ComputedFields = [new("x", "{contactaddresses.address.streetname}")]
-        };
-
+        var request = new ProjectionQueryReq { Select = ["contactaddresses.address.*"], ComputedFields = [new("x", "{contactaddresses.address.streetname}")] };
         var added = service.EnsureSelectIncludesComputedDependencies(request);
-
         Assert.Empty(added);
     }
 }

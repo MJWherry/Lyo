@@ -87,10 +87,11 @@ public class CacheServiceMetricsTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var key = "duration-test-key";
         await service.GetOrSetAsync<string>(
-            key, async ct => {
-                await Task.Delay(50, ct).ConfigureAwait(false);
-                return "value";
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(50, ct).ConfigureAwait(false);
+                    return "value";
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.True(metrics.MissTimings.Count > 0);
         var miss = metrics.MissTimings.FirstOrDefault(m => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key]
@@ -257,7 +258,8 @@ public class CacheServiceMetricsTests : IDisposable
         // Actually, let's simulate by disabling cache after setup, but that won't work
         // Instead, let's test with a factory that throws
         try {
-            await service.GetOrSetAsync<string>(key, ct => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await service.GetOrSetAsync<string>(key, ct => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken)
+                .ConfigureAwait(false);
         }
         catch (InvalidOperationException) {
             // Expected

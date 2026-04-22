@@ -618,7 +618,9 @@ public class CompressionServiceTests : IDisposable
         var maxSize = 1024L; // 1 KB
         var service = new CompressionService(_logger, new() { MaxInputSize = maxSize });
         var tempFile = await _tempSession.CreateFileAsync(new('X', (int)(maxSize + 1)), TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var exception = await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.CompressFileAsync(tempFile, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        var exception = await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.CompressFileAsync(tempFile, ct: TestContext.Current.CancellationToken))
+            .ConfigureAwait(false);
+
         Assert.NotNull(exception);
         Assert.Equal(maxSize + 1, exception.ActualValue);
     }

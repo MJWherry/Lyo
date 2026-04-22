@@ -118,7 +118,8 @@ public sealed class TestApiFileStorageService : IFileStorageService
         CancellationToken ct = default)
     {
         await using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, true);
-        return await SaveFromStreamAsync(stream, stream.Length, originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, ct: ct)
+        return await SaveFromStreamAsync(
+                stream, stream.Length, originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, ct: ct)
             .ConfigureAwait(false);
     }
 
@@ -164,8 +165,14 @@ public sealed class TestApiFileStorageService : IFileStorageService
     private string BuildUri(string relativePath) => $"{_routePrefix}/{relativePath}";
 
     private string BuildSaveStreamUri(
-        string? originalFileName, bool compress, bool encrypt, string? keyId,
-        string? pathPrefix, int? chunkSize, string? contentType, string? tenantId)
+        string? originalFileName,
+        bool compress,
+        bool encrypt,
+        string? keyId,
+        string? pathPrefix,
+        int? chunkSize,
+        string? contentType,
+        string? tenantId)
     {
         var parts = new List<string>();
         if (!string.IsNullOrEmpty(originalFileName))
@@ -173,7 +180,6 @@ public sealed class TestApiFileStorageService : IFileStorageService
 
         parts.Add($"compress={compress.ToString().ToLowerInvariant()}");
         parts.Add($"encrypt={encrypt.ToString().ToLowerInvariant()}");
-
         if (!string.IsNullOrEmpty(keyId))
             parts.Add($"keyId={Uri.EscapeDataString(keyId)}");
 

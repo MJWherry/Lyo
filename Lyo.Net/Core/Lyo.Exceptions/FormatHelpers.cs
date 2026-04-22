@@ -18,7 +18,6 @@ public static class FormatHelpers
     private static readonly Regex NumericRegex = new(@"^[0-9]+$", RegexOptions.Compiled);
     private static readonly Regex WhitespaceRegex = new(@"\s", RegexOptions.Compiled);
 
-
     [DoesNotReturn]
 #if NET6_0_OR_GREATER
     [StackTraceHidden]

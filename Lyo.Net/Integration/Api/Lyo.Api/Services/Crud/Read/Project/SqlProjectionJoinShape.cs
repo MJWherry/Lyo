@@ -2,22 +2,16 @@ using Lyo.Query.Services.WhereClause;
 
 namespace Lyo.Api.Services.Crud.Read.Project;
 
-/// <summary>
-/// Detects SQL-level projected shapes that fan out relational rows (collection navigations), so callers can prefer split queries.
-/// </summary>
+/// <summary>Detects SQL-level projected shapes that fan out relational rows (collection navigations), so callers can prefer split queries.</summary>
 internal static class SqlProjectionJoinShape
 {
-    /// <summary>
-    /// True when the projection likely causes one-to-many joins or multiple result rows per root (reader fan-out).
-    /// </summary>
-    internal static bool LikelyCausesReaderFanOut(Type entityType, SqlProjectionConversionPlan? plan, IReadOnlyList<ProjectedFieldSpec> specs) 
-        => plan?.Slots.Any(s => s is SqlProjectionMergedCollectionSlot) == true 
-            || specs.Where(spec => !ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
-                .Any(spec => FieldPathCrossesCollectionNavigation(entityType, spec.NormalizedParts));
+    /// <summary>True when the projection likely causes one-to-many joins or multiple result rows per root (reader fan-out).</summary>
+    internal static bool LikelyCausesReaderFanOut(Type entityType, SqlProjectionConversionPlan? plan, IReadOnlyList<ProjectedFieldSpec> specs)
+        => plan?.Slots.Any(s => s is SqlProjectionMergedCollectionSlot) == true || specs
+            .Where(spec => !ProjectionCollectionZip.NormalizedPartsContainWildcard(spec.NormalizedParts))
+            .Any(spec => FieldPathCrossesCollectionNavigation(entityType, spec.NormalizedParts));
 
-    /// <summary>
-    /// True when the path traverses a collection navigation (same row multiplication as a join to a child table).
-    /// </summary>
+    /// <summary>True when the path traverses a collection navigation (same row multiplication as a join to a child table).</summary>
     private static bool FieldPathCrossesCollectionNavigation(Type rootType, string[] parts)
     {
         if (parts.Length == 0)

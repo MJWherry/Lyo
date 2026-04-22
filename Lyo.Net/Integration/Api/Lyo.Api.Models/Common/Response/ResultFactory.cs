@@ -7,14 +7,7 @@ namespace Lyo.Api.Models.Common.Response;
 
 public static class ResultFactory
 {
-    public static QueryRes<T> QuerySuccess<T>(
-        QueryReq queryRequest,
-        IReadOnlyList<T> items,
-        int? start,
-        int? amount,
-        int? total,
-        bool? hasMore = null,
-        int? queryScore = null)
+    public static QueryRes<T> QuerySuccess<T>(QueryReq queryRequest, IReadOnlyList<T> items, int? start, int? amount, int? total, bool? hasMore = null, int? queryScore = null)
         => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? QueryRequestScorer.Score(queryRequest), null);
 
     public static QueryRes<T> QueryFailure<T>(QueryReq queryRequest, LyoProblemDetails error, int? queryScore = null)
@@ -31,7 +24,11 @@ public static class ResultFactory
         IReadOnlyList<string>? entityTypes = null)
         => new(queryRequest, true, items, start, amount, total, hasMore, queryScore ?? QueryRequestScorer.Score(queryRequest), null, entityTypes);
 
-    public static ProjectedQueryRes<T> ProjectedQueryFailure<T>(ProjectionQueryReq queryRequest, LyoProblemDetails error, int? queryScore = null, IReadOnlyList<string>? entityTypes = null)
+    public static ProjectedQueryRes<T> ProjectedQueryFailure<T>(
+        ProjectionQueryReq queryRequest,
+        LyoProblemDetails error,
+        int? queryScore = null,
+        IReadOnlyList<string>? entityTypes = null)
         => new(queryRequest, false, null, null, null, null, null, queryScore ?? QueryRequestScorer.Score(queryRequest), error, entityTypes);
 
     // Create

@@ -49,6 +49,7 @@ type AstronomyFunctions private () =
 
     static member OrbitalPeriod(centralMass: Mass, orbitalRadius: Length) =
         let radius = orbitalRadius.Meters
+
         TimeInterval.FromSeconds(
             2.0
             * ScientificConstants.Pi

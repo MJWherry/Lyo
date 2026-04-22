@@ -20,7 +20,6 @@ using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
-using MudBlazor;
 using CommonExtensions = Lyo.Common.Extensions;
 using SortDirection = MudBlazor.SortDirection;
 using LyoQueryReqBuilder = Lyo.Query.Models.Builders.QueryReqBuilder;
@@ -556,7 +555,6 @@ public partial class LyoDataGrid<T>
 
 #region Search and Filters
 
-
     private async Task OnSearchDebounced(string value)
     {
         _refocusSearchAfterLoad = true;
@@ -606,8 +604,7 @@ public partial class LyoDataGrid<T>
         var propertyDef = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field);
         var displayName = propertyDef?.DisplayName ?? condition.Field;
         var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
-        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, compact: true);
-
+        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, true);
         return $"{displayName} {comparatorText} {valueText}";
     }
 
@@ -617,8 +614,7 @@ public partial class LyoDataGrid<T>
         var propertyDef = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field);
         var displayName = propertyDef?.DisplayName ?? condition.Field;
         var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
-        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, compact: false);
-
+        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, false);
         return $"{displayName} {comparatorText} {valueText}";
     }
 
@@ -848,7 +844,7 @@ public partial class LyoDataGrid<T>
         }
 
         var exportRequest = new ExportRequest { Query = ToProjectionQueryReq(query), Format = format, ColumnList = columnList };
-        var bytes = await ApiClient.PostAsBinaryAsync<ExportRequest>(ExportRoute!, exportRequest, ct: _cts.Token);
+        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute!, exportRequest, ct: _cts.Token);
         using var stream = new MemoryStream(bytes);
         stream.Position = 0;
         await Js.DownloadFileFromStreamReference(stream, $"export.{flag.ToString().ToLowerInvariant()}", Enum.Parse<MimeType>(flag.ToString()).ToString().ToLowerInvariant());
@@ -880,10 +876,7 @@ public partial class LyoDataGrid<T>
             WhereClause = q.WhereClause,
             Include = q.Include,
             SortBy = q.SortBy,
-            Options = new ProjectedQueryRequestOptions {
-                TotalCountMode = q.Options.TotalCountMode,
-                IncludeFilterMode = q.Options.IncludeFilterMode
-            }
+            Options = new() { TotalCountMode = q.Options.TotalCountMode, IncludeFilterMode = q.Options.IncludeFilterMode }
         };
 
     private async Task<List<T>> GetAllItemsForExport()
@@ -957,10 +950,7 @@ public partial class LyoDataGrid<T>
         // dialog and block expand / inline-edit clicks (MudMenu + MudDialog interaction).
         await Task.Yield();
         await Task.Delay(10);
-
-        var parameters = new DialogParameters<JsonViewDialog<TModel>> {
-            { i => i.Data, data },
-        };
+        var parameters = new DialogParameters<JsonViewDialog<TModel>> { { i => i.Data, data } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
         await DialogService.ShowAsync(typeof(JsonViewDialog<TModel>), title, parameters, options);
     }

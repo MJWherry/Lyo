@@ -3,20 +3,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Read;
 
-/// <summary>
-/// Counts root entities without inflating totals when filters use joins that duplicate parent rows.
-/// </summary>
+/// <summary>Counts root entities without inflating totals when filters use joins that duplicate parent rows.</summary>
 public static class QueryRootCountHelper
 {
     /// <summary>
-    /// Returns the number of distinct root entities matching <paramref name="queryable" />.
-    /// For a single-column primary key this uses <c>SELECT COUNT(*) FROM (SELECT DISTINCT pk ...)</c>.
-    /// Composite keys fall back to <see cref="EntityFrameworkQueryableExtensions.CountAsync{TSource}(IQueryable{TSource},CancellationToken)" />.
+    /// Returns the number of distinct root entities matching <paramref name="queryable" />. For a single-column primary key this uses
+    /// <c>SELECT COUNT(*) FROM (SELECT DISTINCT pk ...)</c>. Composite keys fall back to
+    /// <see cref="EntityFrameworkQueryableExtensions.CountAsync{TSource}(IQueryable{TSource},CancellationToken)" />.
     /// </summary>
-    public static Task<int> CountDistinctRootEntitiesAsync<TDbModel>(
-        DbContext context,
-        IQueryable<TDbModel> queryable,
-        CancellationToken ct)
+    public static Task<int> CountDistinctRootEntitiesAsync<TDbModel>(DbContext context, IQueryable<TDbModel> queryable, CancellationToken ct)
         where TDbModel : class
     {
         var entityType = context.Model.FindEntityType(typeof(TDbModel));
@@ -35,10 +30,7 @@ public static class QueryRootCountHelper
         return (Task<int>)method.Invoke(null, [queryable, keyName, ct])!;
     }
 
-    private static Task<int> CountDistinctSinglePkAsync<TDbModel, TKey>(
-        IQueryable<TDbModel> queryable,
-        string keyName,
-        CancellationToken ct)
+    private static Task<int> CountDistinctSinglePkAsync<TDbModel, TKey>(IQueryable<TDbModel> queryable, string keyName, CancellationToken ct)
         where TDbModel : class
     {
         var keySelector = QueryKeyExpressionBuilder.BuildEfKeySelector<TDbModel, TKey>(keyName);

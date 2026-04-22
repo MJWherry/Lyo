@@ -108,7 +108,10 @@ public class ApiClient : IApiClient
     }
 
     /// <inheritdoc />
-    public async Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public async Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(
+        string uri,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
             UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));

@@ -287,8 +287,8 @@ For detailed benchmark results, see [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.m
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package           | Version  |
+|-------------------|----------|
 | `BenchmarkDotNet` | `0.15.8` |
 
 ### Project references

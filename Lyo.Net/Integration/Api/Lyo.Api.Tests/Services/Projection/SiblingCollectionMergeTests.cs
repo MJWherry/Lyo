@@ -1,5 +1,4 @@
 using System.Collections;
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Formatter;
 using Lyo.Query.Models.Common.Request;
@@ -9,19 +8,6 @@ namespace Lyo.Api.Tests.Services.Projection;
 
 public sealed class SiblingCollectionMergeTests
 {
-    private sealed class Charge
-    {
-        public string? Description { get; set; }
-        public string? Code { get; set; }
-        public string? Number { get; set; }
-    }
-
-    private sealed class Docket
-    {
-        public Guid Id { get; set; }
-        public List<Charge> DocketCharges { get; set; } = [];
-    }
-
     /// <summary>Nested scope: collection → navigation → leaves zip when only one Select path exists but computed adds a parallel column.</summary>
     [Fact]
     public void MergeSiblingCollectionProjectionRows_Zips_OneSelectPlusParallelComputed_NestedPrefix()
@@ -30,12 +16,11 @@ public sealed class SiblingCollectionMergeTests
         var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.Address.CreatedTimestamp"]);
         Assert.Empty(pathErrors);
         var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-            ["ContactAddresses.Address.CreatedTimestamp"] = new[] { "2026-01-01", "2026-01-02" },
-            ["ContactAddresses.Address.a"] = new[] { "Broad St", "Main Ave" }
+            ["ContactAddresses.Address.CreatedTimestamp"] = new[] { "2026-01-01", "2026-01-02" }, ["ContactAddresses.Address.a"] = new[] { "Broad St", "Main Ave" }
         };
-        var items = new List<object?> { row };
-        service.MergeSiblingCollectionProjectionRows(items, typeof(NestedPerson), specs, zipSiblingCollectionSelections: true);
 
+        var items = new List<object?> { row };
+        service.MergeSiblingCollectionProjectionRows(items, typeof(NestedPerson), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.CreatedTimestamp"));
         Assert.True(outRow.TryGetValue("ContactAddresses.Address", out var mergedObj));
@@ -45,24 +30,6 @@ public sealed class SiblingCollectionMergeTests
         Assert.Equal("Broad St", list[0]["a"]?.ToString());
         Assert.Equal("2026-01-02", list[1]["CreatedTimestamp"]?.ToString());
         Assert.Equal("Main Ave", list[1]["a"]?.ToString());
-    }
-
-    private sealed class NestedAddr
-    {
-        public string? CreatedTimestamp { get; set; }
-        public string? StreetName { get; set; }
-        public string? StreetType { get; set; }
-    }
-
-    private sealed class NestedContactAddr
-    {
-        public string? Id { get; set; }
-        public NestedAddr? Address { get; set; }
-    }
-
-    private sealed class NestedPerson
-    {
-        public List<NestedContactAddr> ContactAddresses { get; set; } = [];
     }
 
     /// <summary><c>contactaddresses.*</c> + computed parallel <c>contactaddresses.address.n</c> → nested <c>Address.n</c> per row.</summary>
@@ -76,22 +43,18 @@ public sealed class SiblingCollectionMergeTests
         var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
             ["ContactAddresses.*"] = new object?[] {
                 new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-                    ["Id"] = "1",
-                    ["Type"] = "Home",
-                    ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["StreetType"] = "St" }
+                    ["Id"] = "1", ["Type"] = "Home", ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["StreetType"] = "St" }
                 },
                 new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-                    ["Id"] = "2",
-                    ["Type"] = "Work",
-                    ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["StreetType"] = "Ave" }
+                    ["Id"] = "2", ["Type"] = "Work", ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["StreetType"] = "Ave" }
                 }
             }
         };
+
         var items = new List<object?> { row };
         var computedFields = new List<ComputedField> { new("n", "{contactaddresses.address.streettype}") };
         var afterComputed = service.ApplyComputedFields(items, computedFields, specs);
-        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, zipSiblingCollectionSelections: true);
-
+        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.*"));
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
@@ -106,29 +69,28 @@ public sealed class SiblingCollectionMergeTests
     }
 
     /// <summary>
-    /// Mixed depths under the same collection (id on row + address.streetname) → one <c>ContactAddresses</c> array, not parallel <c>contactaddresses.id</c> + <c>ContactAddresses.Address</c>.
+    /// Mixed depths under the same collection (id on row + address.streetname) → one <c>ContactAddresses</c> array, not parallel <c>contactaddresses.id</c> +
+    /// <c>ContactAddresses.Address</c>.
     /// </summary>
     [Fact]
     public void MergeSiblingCollectionProjectionRows_UnifiedRoot_ZipsIdWithNestedAddressAndComputed()
     {
         var formatter = new FormatterService();
         var service = new ProjectionService(formatter);
-        var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>([
-            "ContactAddresses.Id",
-            "ContactAddresses.Address.StreetName",
-            "ContactAddresses.Address.StreetType"
-        ]);
+        var (specs, pathErrors) =
+            service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.Id", "ContactAddresses.Address.StreetName", "ContactAddresses.Address.StreetType"]);
+
         Assert.Empty(pathErrors);
         var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
             ["ContactAddresses.Id"] = new[] { "ca-1", "ca-2" },
             ["ContactAddresses.Address.StreetName"] = new[] { "Hollywood", "Oak" },
             ["ContactAddresses.Address.StreetType"] = new[] { "Blvd", "Dr" }
         };
+
         var items = new List<object?> { row };
         var computedFields = new List<ComputedField> { new("n", "{contactaddresses.address.streettype}") };
         var afterComputed = service.ApplyComputedFields(items, computedFields, specs);
-        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, zipSiblingCollectionSelections: true);
-
+        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Id"));
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
@@ -147,8 +109,8 @@ public sealed class SiblingCollectionMergeTests
     }
 
     /// <summary>
-    /// With <c>contactaddresses.*</c> plus explicit nested leaves, do not create a separate merge at <c>contactaddresses.address</c>
-    /// (empty <c>ContactAddresses.Address</c> at root); zip stays under <c>ContactAddresses</c> with nested <c>address.n</c>.
+    /// With <c>contactaddresses.*</c> plus explicit nested leaves, do not create a separate merge at <c>contactaddresses.address</c> (empty <c>ContactAddresses.Address</c> at
+    /// root); zip stays under <c>ContactAddresses</c> with nested <c>address.n</c>.
     /// </summary>
     [Fact]
     public void MergeSiblingCollectionProjectionRows_ScopeWildcardPlusNestedAddressLeaves_NoDuplicateContactAddressesAddressMerge()
@@ -162,25 +124,20 @@ public sealed class SiblingCollectionMergeTests
                 new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
                     ["Id"] = "1",
                     ["Type"] = "Home",
-                    ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-                        ["StreetName"] = "Hollywood",
-                        ["StreetType"] = "St"
-                    }
+                    ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["StreetName"] = "Hollywood", ["StreetType"] = "St" }
                 }
             },
             ["ContactAddresses.Address.StreetName"] = new[] { "Hollywood" },
             ["ContactAddresses.Address.StreetType"] = new[] { "St" }
         };
+
         var items = new List<object?> { row };
         var computedFields = new List<ComputedField> { new("n", "{contactaddresses.address.streettype}") };
         var afterComputed = service.ApplyComputedFields(items, computedFields, specs);
-        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, zipSiblingCollectionSelections: true);
-
+        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(NestedPerson), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
-        Assert.DoesNotContain(outRow, kvp =>
-            string.Equals(kvp.Key, "ContactAddresses.Address", StringComparison.OrdinalIgnoreCase)
-            && kvp.Value is IList l && l.Count == 0);
+        Assert.DoesNotContain(outRow, kvp => string.Equals(kvp.Key, "ContactAddresses.Address", StringComparison.OrdinalIgnoreCase) && kvp.Value is IList l && l.Count == 0);
         Assert.True(outRow.TryGetValue("ContactAddresses", out var mergedObj));
         var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
         Assert.Single(list!);
@@ -202,9 +159,9 @@ public sealed class SiblingCollectionMergeTests
             },
             ["ContactAddresses.Address.a"] = new[] { "Main St", "Oak Ave" }
         };
-        var items = new List<object?> { row };
-        service.MergeSiblingCollectionProjectionRows(items, typeof(NestedPerson), specs, zipSiblingCollectionSelections: true);
 
+        var items = new List<object?> { row };
+        service.MergeSiblingCollectionProjectionRows(items, typeof(NestedPerson), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.*"));
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.a"));
@@ -223,16 +180,9 @@ public sealed class SiblingCollectionMergeTests
         var service = new ProjectionService();
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Code", "DocketCharges.Number"]);
         Assert.Empty(pathErrors);
-        var entity = new Docket {
-            DocketCharges = [
-                new Charge { Code = "A", Number = "1" },
-                new Charge { Code = "B", Number = "2" }
-            ]
-        };
-
-        var items = service.ProjectEntities([entity], specs, QueryIncludeFilterMode.Full, new([], default));
-        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, zipSiblingCollectionSelections: true);
-
+        var entity = new Docket { DocketCharges = [new() { Code = "A", Number = "1" }, new() { Code = "B", Number = "2" }] };
+        var items = service.ProjectEntities([entity], specs, QueryIncludeFilterMode.Full, new([]));
+        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, true);
         var row = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.False(row.ContainsKey("DocketCharges.Code"));
         Assert.False(row.ContainsKey("DocketCharges.Number"));
@@ -252,11 +202,8 @@ public sealed class SiblingCollectionMergeTests
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Code"]);
         Assert.Empty(pathErrors);
         // Single-path ProjectEntities returns the raw value (not a dictionary row); use an explicit row to test merge behavior.
-        var items = new List<object?> {
-            new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["DocketCharges.Code"] = new[] { "A" } }
-        };
-        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, zipSiblingCollectionSelections: true);
-
+        var items = new List<object?> { new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["DocketCharges.Code"] = new[] { "A" } } };
+        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, true);
         var row = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.True(row.ContainsKey("DocketCharges.Code"));
         Assert.False(row.ContainsKey("DocketCharges"));
@@ -268,15 +215,9 @@ public sealed class SiblingCollectionMergeTests
         var service = new ProjectionService();
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Code", "DocketCharges.Number"]);
         Assert.Empty(pathErrors);
-        var entity = new Docket {
-            DocketCharges = [
-                new Charge { Code = "A", Number = "1" }
-            ]
-        };
-
-        var items = service.ProjectEntities([entity], specs, QueryIncludeFilterMode.Full, new([], default));
-        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, zipSiblingCollectionSelections: false);
-
+        var entity = new Docket { DocketCharges = [new() { Code = "A", Number = "1" }] };
+        var items = service.ProjectEntities([entity], specs, QueryIncludeFilterMode.Full, new([]));
+        service.MergeSiblingCollectionProjectionRows(items, typeof(Docket), specs, false);
         var row = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.True(row.ContainsKey("DocketCharges.Code"));
         Assert.True(row.ContainsKey("DocketCharges.Number"));
@@ -291,14 +232,13 @@ public sealed class SiblingCollectionMergeTests
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Description", "DocketCharges.Number"]);
         Assert.Empty(pathErrors);
         var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-            ["DocketCharges.Description"] = new[] { "A", "B" },
-            ["DocketCharges.Number"] = new[] { 1, 2 }
+            ["DocketCharges.Description"] = new[] { "A", "B" }, ["DocketCharges.Number"] = new[] { 1, 2 }
         };
+
         var items = new List<object?> { row };
         var computedFields = new List<ComputedField> { new("a", "{docketcharges.description} {docketcharges.number}") };
         var afterComputed = service.ApplyComputedFields(items, computedFields, specs);
-        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, zipSiblingCollectionSelections: true);
-
+        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, true);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("a"));
         Assert.True(outRow.TryGetValue("DocketCharges", out var mergedObj));
@@ -316,19 +256,14 @@ public sealed class SiblingCollectionMergeTests
         var (specs, pathErrors) = service.ResolveProjectedFields<Docket>(["DocketCharges.Description", "DocketCharges.Number"]);
         Assert.Empty(pathErrors);
         var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-            ["DocketCharges.Description"] = new[] { "A", "B" },
-            ["DocketCharges.Number"] = new[] { 1, 2 }
+            ["DocketCharges.Description"] = new[] { "A", "B" }, ["DocketCharges.Number"] = new[] { 1, 2 }
         };
+
         var items = new List<object?> { row };
         var computedFields = new List<ComputedField> { new("a", "{docketcharges.description} {docketcharges.number}") };
         var afterComputed = service.ApplyComputedFields(items, computedFields, specs);
-        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, zipSiblingCollectionSelections: true);
-
-        service.StripAutoDerivedDependencyLeavesFromMergedCollections(
-            afterComputed,
-            specs,
-            ["DocketCharges.Description", "DocketCharges.Number"]);
-
+        service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, true);
+        service.StripAutoDerivedDependencyLeavesFromMergedCollections(afterComputed, specs, ["DocketCharges.Description", "DocketCharges.Number"]);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(outRow["DocketCharges"]);
         Assert.Equal(2, list!.Count);
@@ -336,5 +271,42 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(list[0].ContainsKey("Number"));
         Assert.True(list[0].ContainsKey("a"));
         Assert.Equal("A 1", list[0]["a"]?.ToString());
+    }
+
+    private sealed class Charge
+    {
+        public string? Description { get; set; }
+
+        public string? Code { get; set; }
+
+        public string? Number { get; set; }
+    }
+
+    private sealed class Docket
+    {
+        public Guid Id { get; set; }
+
+        public List<Charge> DocketCharges { get; set; } = [];
+    }
+
+    private sealed class NestedAddr
+    {
+        public string? CreatedTimestamp { get; set; }
+
+        public string? StreetName { get; set; }
+
+        public string? StreetType { get; set; }
+    }
+
+    private sealed class NestedContactAddr
+    {
+        public string? Id { get; set; }
+
+        public NestedAddr? Address { get; set; }
+    }
+
+    private sealed class NestedPerson
+    {
+        public List<NestedContactAddr> ContactAddresses { get; set; } = [];
     }
 }

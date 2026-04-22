@@ -1,9 +1,8 @@
 using Lyo.Exceptions;
-using Lyo.Metrics;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Playwright.Browser;
 
@@ -24,11 +23,10 @@ public sealed class PlaywrightKeyboard
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         ct.ThrowIfCancellationRequested();
         await RunKbAsync(
-            "press",
-            async () => {
-                await _browser.GetRequiredPage().Keyboard.PressAsync(key).ConfigureAwait(false);
-            },
-            ct).ConfigureAwait(false);
+                "press", async () => {
+                    await _browser.GetRequiredPage().Keyboard.PressAsync(key).ConfigureAwait(false);
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <summary>Types a string of characters.</summary>
@@ -37,11 +35,10 @@ public sealed class PlaywrightKeyboard
         ArgumentHelpers.ThrowIfNull(text, nameof(text));
         ct.ThrowIfCancellationRequested();
         await RunKbAsync(
-            "type",
-            async () => {
-                await _browser.GetRequiredPage().Keyboard.TypeAsync(text).ConfigureAwait(false);
-            },
-            ct).ConfigureAwait(false);
+                "type", async () => {
+                    await _browser.GetRequiredPage().Keyboard.TypeAsync(text).ConfigureAwait(false);
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     private async Task RunKbAsync(string operation, Func<Task> action, CancellationToken ct)
@@ -50,9 +47,8 @@ public sealed class PlaywrightKeyboard
         log.LogDebug("Keyboard operation {Operation} starting", operation);
         try {
             ct.ThrowIfCancellationRequested();
-            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.KeyboardOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation))) {
+            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.KeyboardOperationDuration)), PlaywrightMetricTags.ForOperation(_browser, operation)))
                 await action().ConfigureAwait(false);
-            }
 
             log.LogDebug("Keyboard operation {Operation} completed", operation);
         }

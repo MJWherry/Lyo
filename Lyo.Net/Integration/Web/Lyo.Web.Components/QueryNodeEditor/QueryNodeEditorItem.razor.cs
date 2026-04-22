@@ -3,17 +3,11 @@ using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Web.Components.QueryNodeEditor;
 
 public partial class QueryNodeEditorItem
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-item" : ElementId.Trim();
-
     private bool? _boolValue;
     private string? _csvValue;
     private DateTime? _dateValue;
@@ -21,6 +15,11 @@ public partial class QueryNodeEditorItem
 
     private FilterPropertyDefinition? _selectedProperty;
     private string? _stringValue;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-query-node-editor-item" : ElementId.Trim();
 
     [Parameter]
     public WhereClause Node { get; set; } = null!;

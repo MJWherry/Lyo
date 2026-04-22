@@ -44,7 +44,7 @@ public static class ProjectedValueHelper
         return v.ToString() ?? string.Empty;
     }
 
-    /// <summary>Best-effort conversion for projected values (JSON numbers often arrive as strings; <see cref="JsonElement"/> is handled).</summary>
+    /// <summary>Best-effort conversion for projected values (JSON numbers often arrive as strings; <see cref="JsonElement" /> is handled).</summary>
     public static long GetInt64(object? value)
     {
         if (TryGetInt64(value, out var l))
@@ -53,7 +53,7 @@ public static class ProjectedValueHelper
         return 0;
     }
 
-    /// <inheritdoc cref="GetInt64"/>
+    /// <inheritdoc cref="GetInt64" />
     public static bool TryGetInt64(object? value, out long result)
     {
         result = 0;
@@ -97,9 +97,9 @@ public static class ProjectedValueHelper
     {
         result = 0;
         return je.ValueKind switch {
-            JsonValueKind.Number => je.TryGetInt64(out result) || je.TryGetUInt64(out var u) && TryCastULong(u, out result),
+            JsonValueKind.Number => je.TryGetInt64(out result) || (je.TryGetUInt64(out var u) && TryCastULong(u, out result)),
             JsonValueKind.String => long.TryParse(je.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out result),
-            _ => false
+            var _ => false
         };
     }
 
@@ -114,7 +114,7 @@ public static class ProjectedValueHelper
         return true;
     }
 
-    /// <summary>Coerces a projected field value to <typeparamref name="T"/> for typed column formatters.</summary>
+    /// <summary>Coerces a projected field value to <typeparamref name="T" /> for typed column formatters.</summary>
     public static T ConvertTo<T>(object? raw)
     {
         if (raw is T ok)
@@ -130,6 +130,7 @@ public static class ProjectedValueHelper
             raw = JsonElementToDotNet(je);
             if (raw is T t2)
                 return t2;
+
             if (raw is null)
                 return default!;
         }
@@ -142,14 +143,15 @@ public static class ProjectedValueHelper
         }
     }
 
-    private static object? JsonElementToDotNet(JsonElement je) => je.ValueKind switch {
-        JsonValueKind.String => je.GetString(),
-        JsonValueKind.Number => je.TryGetInt64(out var l) ? l : je.GetDouble(),
-        JsonValueKind.True => true,
-        JsonValueKind.False => false,
-        JsonValueKind.Null or JsonValueKind.Undefined => null,
-        _ => je
-    };
+    private static object? JsonElementToDotNet(JsonElement je)
+        => je.ValueKind switch {
+            JsonValueKind.String => je.GetString(),
+            JsonValueKind.Number => je.TryGetInt64(out var l) ? l : je.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
+            var _ => je
+        };
 
     private static object? GetFromJsonElement(JsonElement je, string fieldName)
     {

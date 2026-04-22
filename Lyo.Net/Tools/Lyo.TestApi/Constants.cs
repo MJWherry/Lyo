@@ -10,7 +10,6 @@ public static class Constants
         public const string Email = "PersonEmail";
     }
 
-    
     public static class Twilio
     {
         public const string Route = "Twilio";

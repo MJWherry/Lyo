@@ -7,7 +7,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Cache;
 
-/// <summary>Default <see cref="ICachePayloadCodec"/> using <see cref="ICompressionService"/> and optionally <see cref="IEncryptionService"/>.</summary>
+/// <summary>Default <see cref="ICachePayloadCodec" /> using <see cref="ICompressionService" /> and optionally <see cref="IEncryptionService" />.</summary>
 public sealed class CachePayloadCodec : ICachePayloadCodec
 {
     private readonly CacheOptions _cacheOptions;
@@ -22,8 +22,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
     }
 
     /// <inheritdoc />
-    public byte[] Encode(ReadOnlySpan<byte> plaintext)
-        => EncodeReturningEnvelope(plaintext).Framed;
+    public byte[] Encode(ReadOnlySpan<byte> plaintext) => EncodeReturningEnvelope(plaintext).Framed;
 
     /// <inheritdoc />
     public (byte[] Framed, CacheEntryEnvelope Envelope) EncodeReturningEnvelope(ReadOnlySpan<byte> plaintext)
@@ -34,7 +33,6 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         var working = applicationPlaintext;
         CompressionResult? compressionResult = null;
         EncryptionResult? encryptionResult = null;
-
         if (o.AutoCompress && plaintext.Length >= o.AutoCompressMinSizeBytes) {
             var compressInfo = _compression.Compress(working, out var compressed);
             if (compressed.Length < working.Length) {
@@ -62,7 +60,6 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         ArgumentHelpers.ThrowIfNull(framed, nameof(framed));
         CachePayloadFrame.Parse(framed, out var flags, out var payloadSpan);
         var working = payloadSpan.ToArray();
-
         CompressionResult? compressionResult = null;
         EncryptionResult? encryptionResult = null;
         if ((flags & CachePayloadFrame.FlagEncrypted) != 0) {
@@ -72,6 +69,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
             encryptionResult = EncryptionResult.FromSuccess(working, _cacheOptions.Payload.EncryptionKeyId);
             working = _encryption.Decrypt(working, _cacheOptions.Payload.EncryptionKeyId);
         }
+
         if ((flags & CachePayloadFrame.FlagCompressed) == 0)
             return new(working, compressionResult, encryptionResult);
 
@@ -80,7 +78,6 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
         var ci = new CompressionInfo(decInfo.DecompressedSize, decInfo.CompressedSize, decInfo.DecompressionTimeMs);
         compressionResult = CompressionResult.FromSuccess(compressedCopy, ci);
         working = decompressed;
-
         return new(working, compressionResult, encryptionResult);
     }
 }

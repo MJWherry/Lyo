@@ -20,6 +20,7 @@ type PhysicsFunctions private () =
     static member AverageVelocity(input: AverageVelocityInput) =
         let seconds =
             Guard.positiveFinite "input.ElapsedTime.Seconds" input.ElapsedTime.Seconds
+
         Velocity(input.Distance.Meters / seconds)
 
     static member Work(force: Force, distance: Length) = Energy(force.Newtons * distance.Meters)

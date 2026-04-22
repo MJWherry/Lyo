@@ -55,7 +55,8 @@ public class LocalKeyedSemaphoreServiceTests
         var handle = await _service.AcquireAsync("semaphore-key-4", 2, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken).ConfigureAwait(false);
         handle.ShouldNotBeNull();
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AcquireAsync(
-            "semaphore-key-4", 3, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken).ConfigureAwait(false));
+                "semaphore-key-4", 3, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         Assert.Contains("max concurrency 2", ex.Message, StringComparison.Ordinal);
         await handle.ReleaseAsync().ConfigureAwait(false);
@@ -76,10 +77,11 @@ public class LocalKeyedSemaphoreServiceTests
     {
         var executed = false;
         await _service.ExecuteAsync(
-            "semaphore-key-5", 2, async ct => {
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                executed = true;
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                "semaphore-key-5", 2, async ct => {
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    executed = true;
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         executed.ShouldBeTrue();
     }
@@ -97,7 +99,8 @@ public class LocalKeyedSemaphoreServiceTests
         var handle = await _service.AcquireAsync("semaphore-key-7", 1, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken).ConfigureAwait(false);
         handle.ShouldNotBeNull();
         await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteAsync(
-            "semaphore-key-7", 1, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken).ConfigureAwait(false));
+                "semaphore-key-7", 1, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         await handle.ReleaseAsync().ConfigureAwait(false);
     }
@@ -108,7 +111,8 @@ public class LocalKeyedSemaphoreServiceTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AcquireAsync(null!, 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
         await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("", 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
         await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("   ", 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _service.AcquireAsync("semaphore-key-8", 0, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _service.AcquireAsync("semaphore-key-8", 0, ct: TestContext.Current.CancellationToken).AsTask())
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -139,7 +143,9 @@ public class LocalKeyedSemaphoreServiceTests
         handle.ShouldNotBeNull();
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(10);
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => await _service.AcquireAsync("semaphore-key-10", 1, TimeSpan.FromSeconds(30), cts.Token)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<OperationCanceledException>(async () => await _service.AcquireAsync("semaphore-key-10", 1, TimeSpan.FromSeconds(30), cts.Token))
+            .ConfigureAwait(false);
+
         await handle.ReleaseAsync().ConfigureAwait(false);
     }
 }

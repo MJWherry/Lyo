@@ -1,8 +1,6 @@
-using System.Linq;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Components;
@@ -13,28 +11,29 @@ namespace Lyo.FileStorage.Web.Components;
 
 public partial class FileStoreKeysTab : ComponentBase
 {
-    [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    private bool _browseKeysBusy;
+    private string? _currentKeyVersion;
+    private bool? _inspectedKeyExists;
+    private KeyMetadata? _inspectedKeyMetadata;
+    private string _keyAdditionalDataJson = "{}";
+    private string _keyAlgorithm = string.Empty;
 
     private bool _keyBusy;
-    private bool _browseKeysBusy;
-    private string _keyIdInput = string.Empty;
-    private string _keyVersionInput = string.Empty;
-    private string _keySecret = string.Empty;
-    private bool _showSecret;
-    private bool? _inspectedKeyExists;
-    private string? _currentKeyVersion;
-    private string? _resolvedKeyVersion;
-    private string? _resolvedKeyFingerprint;
-    private byte[]? _resolvedSalt;
-    private KeyMetadata? _inspectedKeyMetadata;
-    private string _keyAlgorithm = string.Empty;
     private string _keyExpiresAtText = string.Empty;
-    private string _keyAdditionalDataJson = "{}";
-    private string _keySearchText = string.Empty;
-    private int _keySearchTake = 25;
+    private string _keyIdInput = string.Empty;
     private List<FileStorageWorkbenchKeyRecord> _keySearchResults = [];
+    private int _keySearchTake = 25;
+    private string _keySearchText = string.Empty;
+    private string _keySecret = string.Empty;
+    private string _keyVersionInput = string.Empty;
     private List<string> _localKeyVersions = [];
+    private string? _resolvedKeyFingerprint;
+    private string? _resolvedKeyVersion;
+    private byte[]? _resolvedSalt;
+    private bool _showSecret;
+
+    [CascadingParameter]
+    public FileStorageWorkbench Workbench { get; set; } = default!;
 
     private async Task InspectKeyAsync()
     {
@@ -201,7 +200,8 @@ public partial class FileStoreKeysTab : ComponentBase
 
         DateTime? expiresAt = null;
         var parsedExpiresAt = default(DateTime);
-        if (!string.IsNullOrWhiteSpace(_keyExpiresAtText) && !DateTime.TryParse(_keyExpiresAtText, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out parsedExpiresAt)) {
+        if (!string.IsNullOrWhiteSpace(_keyExpiresAtText) && !DateTime.TryParse(
+            _keyExpiresAtText, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out parsedExpiresAt)) {
             Workbench.SetStatus("Expires at must be blank or a valid UTC date/time.", Severity.Warning);
             return;
         }
@@ -213,12 +213,13 @@ public partial class FileStoreKeysTab : ComponentBase
         try {
             var currentMetadata = await keyStore.GetKeyMetadataAsync(_keyIdInput, version).ConfigureAwait(false);
             await keyStore.SetKeyMetadataAsync(
-                _keyIdInput, version, new() {
-                    CreatedAt = currentMetadata?.CreatedAt ?? DateTime.UtcNow,
-                    Algorithm = NullIfWhiteSpace(_keyAlgorithm),
-                    ExpiresAt = expiresAt,
-                    AdditionalData = additionalData
-                }).ConfigureAwait(false);
+                    _keyIdInput, version, new() {
+                        CreatedAt = currentMetadata?.CreatedAt ?? DateTime.UtcNow,
+                        Algorithm = NullIfWhiteSpace(_keyAlgorithm),
+                        ExpiresAt = expiresAt,
+                        AdditionalData = additionalData
+                    })
+                .ConfigureAwait(false);
 
             _keyVersionInput = version;
             await InspectKeyAsync().ConfigureAwait(false);
@@ -285,7 +286,10 @@ public partial class FileStoreKeysTab : ComponentBase
 
             var take = Math.Clamp(_keySearchTake, 1, 250);
             var available = Workbench.AvailableKeyIds;
-            var matchingKeyIds = available.Where(keyId => string.IsNullOrWhiteSpace(_keySearchText) || keyId.Contains(_keySearchText, StringComparison.OrdinalIgnoreCase)).OrderBy(keyId => keyId).ToList();
+            var matchingKeyIds = available.Where(keyId => string.IsNullOrWhiteSpace(_keySearchText) || keyId.Contains(_keySearchText, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(keyId => keyId)
+                .ToList();
+
             var results = new List<FileStorageWorkbenchKeyRecord>();
             foreach (var keyId in matchingKeyIds) {
                 var currentVersion = await keyStore.GetCurrentVersionAsync(keyId).ConfigureAwait(false);
@@ -333,7 +337,9 @@ public partial class FileStoreKeysTab : ComponentBase
         _inspectedKeyMetadata = metadata;
         _keyAlgorithm = metadata?.Algorithm ?? string.Empty;
         _keyExpiresAtText = metadata?.ExpiresAt?.ToString("O") ?? string.Empty;
-        _keyAdditionalDataJson = metadata?.AdditionalData == null || metadata.AdditionalData.Count == 0 ? "{}" : JsonSerializer.Serialize(metadata.AdditionalData, new JsonSerializerOptions { WriteIndented = true });
+        _keyAdditionalDataJson = metadata?.AdditionalData == null || metadata.AdditionalData.Count == 0
+            ? "{}"
+            : JsonSerializer.Serialize(metadata.AdditionalData, new JsonSerializerOptions { WriteIndented = true });
     }
 
     private static string? NullIfWhiteSpace(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

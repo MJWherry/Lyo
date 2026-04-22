@@ -6,5 +6,6 @@ public sealed class ApiErrorException : Exception
     public LyoProblemDetails ProblemDetails { get; }
 
     public ApiErrorException(LyoProblemDetails problemDetails)
-        : base(problemDetails.Detail) => ProblemDetails = problemDetails;
+        : base(problemDetails.Detail)
+        => ProblemDetails = problemDetails;
 }

@@ -3,10 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Comic;
 
 /// <summary>
-/// Represents a single chapter of a comic series in a specific language.
-/// Chapter numbers use decimal to accommodate half-chapters (e.g. 10.5).
-/// A series may have the same chapter number in multiple languages; each combination
-/// is a distinct record so the store can track per-language availability independently.
+/// Represents a single chapter of a comic series in a specific language. Chapter numbers use decimal to accommodate half-chapters (e.g. 10.5). A series may have the same
+/// chapter number in multiple languages; each combination is a distinct record so the store can track per-language availability independently.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicChapter
@@ -35,10 +33,7 @@ public sealed class ComicChapter
     /// <summary>Gets or sets the original release date of this chapter. Time portion is ignored; treat as date only.</summary>
     public DateTime? PublishedDate { get; set; }
 
-    /// <summary>
-    /// Gets or sets an opaque reference to the source this chapter was ingested from
-    /// (e.g. a scraper site identifier, URL, or external ID). Null for internally created records.
-    /// </summary>
+    /// <summary>Gets or sets an opaque reference to the source this chapter was ingested from (e.g. a scraper site identifier, URL, or external ID). Null for internally created records.</summary>
     public string? SourceRef { get; set; }
 
     /// <summary>Gets or sets when this record was created.</summary>

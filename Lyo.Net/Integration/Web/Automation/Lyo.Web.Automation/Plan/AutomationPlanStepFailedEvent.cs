@@ -21,6 +21,7 @@ public readonly record struct AutomationPlanStepFailedEvent(
     {
         var planStep = PlanStepId == Guid.Empty ? "" : $" planStep={PlanStepId:N}";
         var ex = AutomationDisplayText.Ellipsis(Exception.ToString(), 160);
-        return $"AutomationPlanStepFailedEvent run={RunId:N} stepExec={StepExecutionId:N}{planStep} index={StepIndex} outcome={Outcome} duration={Duration} step={Step} exception={ex}";
+        return
+            $"AutomationPlanStepFailedEvent run={RunId:N} stepExec={StepExecutionId:N}{planStep} index={StepIndex} outcome={Outcome} duration={Duration} step={Step} exception={ex}";
     }
 }

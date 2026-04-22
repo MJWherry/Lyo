@@ -236,8 +236,7 @@ public class SmsServiceEventTests
         };
 
         SmsMessageBuilder[] builders = [
-            SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), 
-            SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2"),
+            SmsMessageBuilder.New().SetTo("+15551111111").SetBody("Message 1"), SmsMessageBuilder.New().SetTo("+15552222222").SetBody("Message 2"),
             SmsMessageBuilder.New().SetTo("+15553333333").SetBody("Message 3")
         ];
 

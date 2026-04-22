@@ -1,18 +1,18 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenQA.Selenium;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
 /// <summary>Tab/window operations and metadata. Obtain via <see cref="SeleniumBrowser.Tabs" /> or <see cref="ISeleniumBrowserSession.Tabs" />.</summary>
 public sealed class TabManager
 {
-    private readonly SeleniumBrowser _scraper;
-    private readonly ILogger _logger;
     private readonly Dictionary<string, string> _displayNames = new(StringComparer.Ordinal);
+    private readonly ILogger _logger;
+    private readonly SeleniumBrowser _scraper;
 
     internal TabManager(SeleniumBrowser scraper, ILogger? logger = null)
     {
@@ -23,44 +23,42 @@ public sealed class TabManager
 
     /// <summary>Gets the active tab snapshot (title, URL, display name, index).</summary>
     public BrowserTabInfo GetCurrent()
-    {
-        return RunTabRead<BrowserTabInfo>("get_current", () => {
-            var driver = _scraper.GetRequiredDriver();
-            var handle = driver.CurrentWindowHandle;
-            var handles = driver.WindowHandles.ToList();
-            var index = handles.IndexOf(handle);
-            OperationHelpers.ThrowIf(index < 0, "Current window handle not in tab list.");
-            _displayNames.TryGetValue(handle, out var dn);
-            return new(index, true, handle, SafeRead(() => driver.Url), SafeRead(() => driver.Title), dn);
-        });
-    }
+        => RunTabRead<BrowserTabInfo>(
+            "get_current", () => {
+                var driver = _scraper.GetRequiredDriver();
+                var handle = driver.CurrentWindowHandle;
+                var handles = driver.WindowHandles.ToList();
+                var index = handles.IndexOf(handle);
+                OperationHelpers.ThrowIf(index < 0, "Current window handle not in tab list.");
+                _displayNames.TryGetValue(handle, out var dn);
+                return new(index, true, handle, SafeRead(() => driver.Url), SafeRead(() => driver.Title), dn);
+            });
 
     /// <summary>Lists all tabs with URL/title (briefly switches through each tab to read metadata, then restores the original tab).</summary>
     public IReadOnlyList<BrowserTabInfo> ListTabs()
-    {
-        return RunTabRead<IReadOnlyList<BrowserTabInfo>>("list_tabs", () => {
-            var driver = _scraper.GetRequiredDriver();
-            var handles = driver.WindowHandles.ToList();
-            if (handles.Count == 0)
-                return Array.Empty<BrowserTabInfo>();
+        => RunTabRead<IReadOnlyList<BrowserTabInfo>>(
+            "list_tabs", () => {
+                var driver = _scraper.GetRequiredDriver();
+                var handles = driver.WindowHandles.ToList();
+                if (handles.Count == 0)
+                    return Array.Empty<BrowserTabInfo>();
 
-            var original = driver.CurrentWindowHandle;
-            var list = new List<BrowserTabInfo>(handles.Count);
-            try {
-                for (var i = 0; i < handles.Count; i++) {
-                    var h = handles[i];
-                    driver.SwitchTo().Window(h);
-                    _displayNames.TryGetValue(h, out var dn);
-                    list.Add(new(i, h == original, h, SafeRead(() => driver.Url), SafeRead(() => driver.Title), dn));
+                var original = driver.CurrentWindowHandle;
+                var list = new List<BrowserTabInfo>(handles.Count);
+                try {
+                    for (var i = 0; i < handles.Count; i++) {
+                        var h = handles[i];
+                        driver.SwitchTo().Window(h);
+                        _displayNames.TryGetValue(h, out var dn);
+                        list.Add(new(i, h == original, h, SafeRead(() => driver.Url), SafeRead(() => driver.Title), dn));
+                    }
                 }
-            }
-            finally {
-                driver.SwitchTo().Window(original);
-            }
+                finally {
+                    driver.SwitchTo().Window(original);
+                }
 
-            return list;
-        });
-    }
+                return list;
+            });
 
     /// <summary>Async variant of <see cref="ListTabs" />.</summary>
     public Task<IReadOnlyList<BrowserTabInfo>> ListTabsAsync(CancellationToken ct = default)
@@ -68,8 +66,7 @@ public sealed class TabManager
             () => {
                 ct.ThrowIfCancellationRequested();
                 return ListTabs();
-            },
-            ct);
+            }, ct);
 
     /// <summary>Async variant of <see cref="GetCurrent" />.</summary>
     public Task<BrowserTabInfo> GetCurrentAsync(CancellationToken ct = default)
@@ -77,8 +74,7 @@ public sealed class TabManager
             () => {
                 ct.ThrowIfCancellationRequested();
                 return GetCurrent();
-            },
-            ct);
+            }, ct);
 
     /// <summary>Assigns a friendly display name for a tab (keyed by window handle).</summary>
     public void SetDisplayName(string windowHandle, string? displayName)
@@ -94,17 +90,14 @@ public sealed class TabManager
 
     /// <summary>Switches to the tab at the given 0-based index.</summary>
     public void SwitchTo(int index)
-    {
-        RunTabOp(
-            "switch_index",
-            () => {
+        => RunTabOp(
+            "switch_index", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var handles = driver.WindowHandles.ToList();
                 OperationHelpers.ThrowIf(handles.Count == 0, "No browser tabs available.");
                 ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1, nameof(index));
                 driver.SwitchTo().Window(handles[index]);
             });
-    }
 
     /// <summary>Async variant of <see cref="SwitchTo(int)" />.</summary>
     public Task SwitchToAsync(int index, CancellationToken ct = default)
@@ -112,8 +105,7 @@ public sealed class TabManager
             () => {
                 ct.ThrowIfCancellationRequested();
                 SwitchTo(index);
-            },
-            ct);
+            }, ct);
 
     /// <summary>Switches to the tab with the given window handle.</summary>
     public void SwitchTo(string windowHandle)
@@ -123,16 +115,14 @@ public sealed class TabManager
     }
 
     /// <summary>Switches to the first tab whose <see cref="BrowserTabInfo.DisplayName" /> matches using ordinal comparison.</summary>
-    public void SwitchToDisplayName(string displayName)
-        => SwitchToDisplayName(displayName, StringComparison.Ordinal);
+    public void SwitchToDisplayName(string displayName) => SwitchToDisplayName(displayName, StringComparison.Ordinal);
 
     /// <summary>Switches to the first tab whose <see cref="BrowserTabInfo.DisplayName" /> matches.</summary>
     public void SwitchToDisplayName(string displayName, StringComparison comparison)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
         RunTabOp(
-            "switch_display_name",
-            () => {
+            "switch_display_name", () => {
                 foreach (var kv in _displayNames) {
                     if (string.Equals(kv.Value, displayName, comparison)) {
                         _scraper.GetRequiredDriver().SwitchTo().Window(kv.Key);
@@ -153,9 +143,7 @@ public sealed class TabManager
             if (!predicate(t))
                 continue;
 
-            RunTabOp(
-                "switch_predicate",
-                () => _scraper.GetRequiredDriver().SwitchTo().Window(t.WindowHandle));
+            RunTabOp("switch_predicate", () => _scraper.GetRequiredDriver().SwitchTo().Window(t.WindowHandle));
             tab = t with { IsActive = true };
             return true;
         }
@@ -168,8 +156,7 @@ public sealed class TabManager
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandleToKeep, nameof(windowHandleToKeep));
         RunTabOp(
-            "close_all_except",
-            () => {
+            "close_all_except", () => {
                 while (true) {
                     var hs = _scraper.GetRequiredDriver().WindowHandles.ToList();
                     var victim = hs.FirstOrDefault(h => h != windowHandleToKeep);
@@ -183,10 +170,8 @@ public sealed class TabManager
 
     /// <summary>Closes every tab except the currently active one.</summary>
     public void CloseAllExceptCurrent()
-    {
-        RunTabOp(
-            "close_all_except_current",
-            () => {
+        => RunTabOp(
+            "close_all_except_current", () => {
                 var keep = _scraper.GetRequiredDriver().CurrentWindowHandle;
                 while (true) {
                     var hs = _scraper.GetRequiredDriver().WindowHandles.ToList();
@@ -197,7 +182,6 @@ public sealed class TabManager
                     CloseSingleTabByHandle(victim);
                 }
             });
-    }
 
     /// <summary>Opens a new tab. Optionally navigates to a URL. Returns the new window handle.</summary>
     public string OpenNewTab(string? url = null)
@@ -212,8 +196,7 @@ public sealed class TabManager
     {
         string? result = null;
         RunTabOp(
-            "open_tab_native",
-            () => {
+            "open_tab_native", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var before = new HashSet<string>(driver.WindowHandles, StringComparer.Ordinal);
                 try {
@@ -238,8 +221,7 @@ public sealed class TabManager
     {
         string? result = null;
         RunTabOp(
-            "open_window_native",
-            () => {
+            "open_window_native", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var before = new HashSet<string>(driver.WindowHandles, StringComparer.Ordinal);
                 try {
@@ -275,8 +257,7 @@ public sealed class TabManager
                 () => {
                     ct.ThrowIfCancellationRequested();
                     return string.IsNullOrWhiteSpace(url) ? OpenNewTabNative() : OpenNewTab(url);
-                },
-                ct)
+                }, ct)
             .ConfigureAwait(false);
 
         await _scraper.WaitForDocumentReadyAsync(ct).ConfigureAwait(false);
@@ -285,10 +266,8 @@ public sealed class TabManager
 
     /// <summary>Closes the current tab and switches to another if any remain.</summary>
     public void CloseCurrent()
-    {
-        RunTabOp(
-            "close_current",
-            () => {
+        => RunTabOp(
+            "close_current", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var handle = driver.CurrentWindowHandle;
                 var handles = driver.WindowHandles.ToList();
@@ -300,29 +279,24 @@ public sealed class TabManager
                 if (remaining.Count > 0)
                     driver.SwitchTo().Window(remaining[0]);
             });
-    }
 
     /// <summary>Closes the tab at the given index.</summary>
     public void Close(int index)
-    {
-        RunTabOp(
-            "close_index",
-            () => {
+        => RunTabOp(
+            "close_index", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var handles = driver.WindowHandles.ToList();
                 OperationHelpers.ThrowIf(handles.Count == 0, "No tabs to close.");
                 ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1, nameof(index));
                 CloseSingleTabByHandle(handles[index]);
             });
-    }
 
     /// <summary>Closes the tab with the given window handle.</summary>
     public void Close(string windowHandle)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle, nameof(windowHandle));
         RunTabOp(
-            "close_handle",
-            () => {
+            "close_handle", () => {
                 var driver = _scraper.GetRequiredDriver();
                 var handles = driver.WindowHandles.ToList();
                 OperationHelpers.ThrowIf(handles.IndexOf(windowHandle) < 0, "Unknown window handle.");
@@ -331,15 +305,9 @@ public sealed class TabManager
     }
 
     /// <summary>Raw window handles in tab bar order (current driver API).</summary>
-    public IReadOnlyList<string> GetWindowHandles()
-    {
-        return RunTabRead<IReadOnlyList<string>>("get_window_handles", () => _scraper.GetRequiredDriver().WindowHandles.ToList());
-    }
+    public IReadOnlyList<string> GetWindowHandles() => RunTabRead<IReadOnlyList<string>>("get_window_handles", () => _scraper.GetRequiredDriver().WindowHandles.ToList());
 
-    internal void ClearDisplayNames()
-    {
-        _displayNames.Clear();
-    }
+    internal void ClearDisplayNames() => _displayNames.Clear();
 
     private static string OpenNewTabHandle(IWebDriver driver, string newHandle)
     {
@@ -382,9 +350,7 @@ public sealed class TabManager
     private void OpenNewWindowFallback(IWebDriver driver, string? url)
     {
         var openUrl = string.IsNullOrWhiteSpace(url) ? "about:blank" : url!;
-        ((IJavaScriptExecutor)driver).ExecuteScript(
-            "window.open(arguments[0], '_blank', 'popup,width=800,height=600');",
-            openUrl);
+        ((IJavaScriptExecutor)driver).ExecuteScript("window.open(arguments[0], '_blank', 'popup,width=800,height=600');", openUrl);
         var handles = driver.WindowHandles.ToList();
         if (handles.Count > 0)
             driver.SwitchTo().Window(handles[handles.Count - 1]);
@@ -393,28 +359,26 @@ public sealed class TabManager
     private T RunTabRead<T>(string operation, Func<T> func)
     {
         _logger.LogDebug("Tab read {Operation} starting", operation);
-        using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation))) {
+        using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation)))
             return func();
-        }
     }
 
     private void RunTabOp(string operation, Action action)
     {
         _logger.LogDebug("Tab operation {Operation} starting", operation);
         try {
-            using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation))) {
+            using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation)))
                 action();
-            }
 
             _scraper.Metrics.IncrementCounter(
-                _scraper.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "success") }));
+                _scraper.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "success") }));
+
             _logger.LogDebug("Tab operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _scraper.Metrics.IncrementCounter(
-                _scraper.ResolveMetric(nameof(Wm.Metrics.TabOperation)),
-                tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "failure") }));
+                _scraper.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "failure") }));
+
             _scraper.Metrics.RecordError(_scraper.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), ex, SeleniumMetricTags.ForOperation(_scraper, operation));
             _logger.LogWarning(ex, "Tab operation {Operation} failed", operation);
             throw;

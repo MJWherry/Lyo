@@ -6,8 +6,7 @@ namespace Lyo.Common.Tests;
 public class NanoIdTests
 {
     [Fact]
-    public void Create_DefaultLength_Returns21Characters() =>
-        Assert.Equal(NanoId.DefaultSize, NanoId.Create().Length);
+    public void Create_DefaultLength_Returns21Characters() => Assert.Equal(NanoId.DefaultSize, NanoId.Create().Length);
 
     [Fact]
     public void Create_CustomLength_ReturnsCorrectLength()
@@ -53,28 +52,25 @@ public class NanoIdTests
     }
 
     [Fact]
-    public void Create_ZeroSize_Throws() =>
-        Assert.Throws<ArgumentOutsideRangeException>(() => NanoId.Create(0));
+    public void Create_ZeroSize_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => NanoId.Create(0));
 
     [Fact]
-    public void Create_NegativeSize_Throws() =>
-        Assert.Throws<ArgumentOutsideRangeException>(() => NanoId.Create(-1));
+    public void Create_NegativeSize_Throws() => Assert.Throws<ArgumentOutsideRangeException>(() => NanoId.Create(-1));
 
     [Fact]
-    public void Create_EmptyAlphabet_Throws() =>
-        Assert.Throws<ArgumentException>(() => NanoId.Create("", 10));
+    public void Create_EmptyAlphabet_Throws() => Assert.Throws<ArgumentException>(() => NanoId.Create("", 10));
 
     [Fact]
-    public void Create_AlphabetOver255Chars_Throws() =>
-        Assert.Throws<ArgumentException>(() => NanoId.Create(new string('a', 256), 10));
+    public void Create_AlphabetOver255Chars_Throws() => Assert.Throws<ArgumentException>(() => NanoId.Create(new('a', 256), 10));
 
     [Fact]
     public void Create_UniformDistribution_NoCharExcludedForPowerOfTwoAlphabet()
     {
         var counts = new Dictionary<char, int>();
-        for (var i = 0; i < 1000; i++)
+        for (var i = 0; i < 1000; i++) {
             foreach (var c in NanoId.Create(21))
                 counts[c] = counts.GetValueOrDefault(c) + 1;
+        }
 
         foreach (var c in NanoId.DefaultAlphabet)
             Assert.True(counts.GetValueOrDefault(c) > 0, $"Character '{c}' never appeared.");
@@ -94,12 +90,10 @@ public class NanoIdTests
     }
 
     [Fact]
-    public void CreateBulk_AllValidChars() =>
-        Assert.All(NanoId.CreateBulk(50), id => Assert.All(id, c => Assert.Contains(c, NanoId.DefaultAlphabet)));
+    public void CreateBulk_AllValidChars() => Assert.All(NanoId.CreateBulk(50), id => Assert.All(id, c => Assert.Contains(c, NanoId.DefaultAlphabet)));
 
     [Fact]
-    public void CreateBulk_CustomSize_ReturnsCorrectLength() =>
-        Assert.All(NanoId.CreateBulk(20, 10), id => Assert.Equal(10, id.Length));
+    public void CreateBulk_CustomSize_ReturnsCorrectLength() => Assert.All(NanoId.CreateBulk(20, 10), id => Assert.Equal(10, id.Length));
 
     [Fact]
     public void CreateBulk_CustomAlphabet_UsesOnlyThoseChars()

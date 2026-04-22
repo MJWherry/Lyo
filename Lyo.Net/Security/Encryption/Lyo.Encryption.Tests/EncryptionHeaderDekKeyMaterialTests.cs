@@ -1,5 +1,3 @@
-using Lyo.Encryption;
-
 namespace Lyo.Encryption.Tests;
 
 public class EncryptionHeaderDekKeyMaterialTests

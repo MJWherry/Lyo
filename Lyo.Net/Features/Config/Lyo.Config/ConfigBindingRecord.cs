@@ -1,4 +1,3 @@
-using Lyo.Common;
 using Lyo.Common.Identifiers;
 
 namespace Lyo.Config;

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq;
 using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Images;
@@ -22,11 +21,11 @@ namespace Lyo.QRCode;
 public class BuiltInQRCodeService : IQRCodeService
 {
     private readonly IImageService? _imageService;
-    private readonly IQrFrameLayoutService? _qrFrameLayout;
     private readonly ILogger<BuiltInQRCodeService> _logger;
     private readonly Dictionary<string, string> _metricNames;
     private readonly IMetrics _metrics;
     private readonly QRCodeServiceOptions _options;
+    private readonly IQrFrameLayoutService? _qrFrameLayout;
 
     public BuiltInQRCodeService(
         QRCodeServiceOptions options,
@@ -213,6 +212,7 @@ public class BuiltInQRCodeService : IQRCodeService
                 throw new InvalidOperationException(
                     "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
             }
+
             if (!framed.IsSuccess || framed.Data == null) {
                 var msg = framed.Errors is { Count: > 0 } ? string.Join("; ", framed.Errors.Select(e => e.Message)) : "Unknown error";
                 throw new InvalidOperationException($"Failed to apply QR frame: {msg}");

@@ -3,9 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Comic;
 
 /// <summary>
-/// Represents a collected volume of a comic series.
-/// Volumes are optional — many serialized series (especially manga) group chapters into volumes,
-/// while webtoons and some Western comics may not use volumes at all.
+/// Represents a collected volume of a comic series. Volumes are optional — many serialized series (especially manga) group chapters into volumes, while webtoons and some
+/// Western comics may not use volumes at all.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ComicVolume
@@ -22,10 +21,7 @@ public sealed class ComicVolume
     /// <summary>Gets or sets the volume title (e.g. "Volume 1: The Beginning"), if any.</summary>
     public string? Title { get; set; }
 
-    /// <summary>
-    /// Gets or sets a reference to the cover image in file storage.
-    /// Format is determined by the consuming application (e.g. a file storage key or URI).
-    /// </summary>
+    /// <summary>Gets or sets a reference to the cover image in file storage. Format is determined by the consuming application (e.g. a file storage key or URI).</summary>
     public string? CoverImageRef { get; set; }
 
     /// <summary>Gets or sets the original publication date of this volume. Time portion is ignored; treat as date only.</summary>

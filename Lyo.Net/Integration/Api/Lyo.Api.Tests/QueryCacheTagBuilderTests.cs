@@ -6,10 +6,7 @@ namespace Lyo.Api.Tests;
 public sealed class QueryCacheTagBuilderTests
 {
     [Fact]
-    public void EntityTypeTag_UsesLowercaseClrName()
-    {
-        Assert.Equal("entity:querycachetagbuildertests", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)));
-    }
+    public void EntityTypeTag_UsesLowercaseClrName() => Assert.Equal("entity:querycachetagbuildertests", QueryCacheTagBuilder.EntityTypeTag(typeof(QueryCacheTagBuilderTests)));
 
     [Fact]
     public void FormatPrimaryKeySegment_JoinsCompositeKeysWithPipe()
@@ -26,22 +23,13 @@ public sealed class QueryCacheTagBuilderTests
     }
 
     [Fact]
-    public void QueryScopeTag_IsQueries()
-    {
-        Assert.Equal("queries", QueryCacheTagBuilder.QueryScopeTag);
-    }
+    public void QueryScopeTag_IsQueries() => Assert.Equal("queries", QueryCacheTagBuilder.QueryScopeTag);
 
     [Fact]
     public void FormatProjShapeTag_IsStableAcrossSelectOrder()
     {
-        var specs1 = new[] {
-            new ProjectedFieldSpec("a", "Alpha", ["Alpha"]),
-            new ProjectedFieldSpec("b", "Beta", ["Beta"]),
-        };
-        var specs2 = new[] {
-            new ProjectedFieldSpec("b", "Beta", ["Beta"]),
-            new ProjectedFieldSpec("a", "Alpha", ["Alpha"]),
-        };
+        var specs1 = new[] { new ProjectedFieldSpec("a", "Alpha", ["Alpha"]), new ProjectedFieldSpec("b", "Beta", ["Beta"]) };
+        var specs2 = new[] { new ProjectedFieldSpec("b", "Beta", ["Beta"]), new ProjectedFieldSpec("a", "Alpha", ["Alpha"]) };
         var shape1 = QueryCacheTagBuilder.FormatProjShapeTag(specs1, [], false);
         var shape2 = QueryCacheTagBuilder.FormatProjShapeTag(specs2, [], false);
         Assert.Equal(shape1, shape2);
@@ -53,9 +41,7 @@ public sealed class QueryCacheTagBuilderTests
     {
         var specsA = new[] { new ProjectedFieldSpec("a", "A", ["A"]) };
         var specsB = new[] { new ProjectedFieldSpec("b", "B", ["B"]) };
-        Assert.NotEqual(
-            QueryCacheTagBuilder.FormatProjShapeTag(specsA, [], false),
-            QueryCacheTagBuilder.FormatProjShapeTag(specsB, [], false));
+        Assert.NotEqual(QueryCacheTagBuilder.FormatProjShapeTag(specsA, [], false), QueryCacheTagBuilder.FormatProjShapeTag(specsB, [], false));
     }
 
     [Fact]
@@ -63,9 +49,7 @@ public sealed class QueryCacheTagBuilderTests
     {
         var t = typeof(QueryCacheTagBuilderTests);
         object?[] pk = [42];
-        Assert.Equal(
-            QueryCacheTagBuilder.EntityInstanceTag(t, pk),
-            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, includes: null, rawResponse: false));
+        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk), QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, null, false));
     }
 
     [Fact]
@@ -73,21 +57,14 @@ public sealed class QueryCacheTagBuilderTests
     {
         var t = typeof(QueryCacheTagBuilderTests);
         object?[] pk = [7];
-        Assert.Equal(
-            QueryCacheTagBuilder.EntityInstanceTag(t, pk) + ":raw",
-            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, includes: null, rawResponse: true));
+        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk) + ":raw", QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, null, true));
     }
 
     [Fact]
     public void BuildProjectedSqlQueryTagsBroad_IncludesScopeEntitiesShapeAndRefTypes()
     {
         var specs = new[] { new ProjectedFieldSpec("a", "A", ["A"]) };
-        var tags = QueryCacheTagBuilder.BuildProjectedSqlQueryTagsBroad<QueryCacheTagBuilderTests>(
-            specs,
-            [],
-            false,
-            [typeof(string)]);
-
+        var tags = QueryCacheTagBuilder.BuildProjectedSqlQueryTagsBroad<QueryCacheTagBuilderTests>(specs, [], false, [typeof(string)]);
         Assert.Contains(QueryCacheTagBuilder.QueryScopeTag, tags);
         Assert.Contains(QueryCacheTagBuilder.QueryProjectScopeTag, tags);
         Assert.Contains("entities", tags);

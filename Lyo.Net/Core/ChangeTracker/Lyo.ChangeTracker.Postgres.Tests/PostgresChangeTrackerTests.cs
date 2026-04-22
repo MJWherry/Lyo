@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
-using Lyo.Common;
 using Lyo.Common.Identifiers;
 using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;

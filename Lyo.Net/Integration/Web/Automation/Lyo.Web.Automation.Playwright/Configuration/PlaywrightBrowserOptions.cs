@@ -18,9 +18,8 @@ public class PlaywrightBrowserOptions
     public bool MaskSensitiveUrlsInLogs { get; set; }
 
     /// <summary>
-    /// Root directory for all session subdirectories. Each session creates
-    /// <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>, and <c>downloads/</c> inside.
-    /// Defaults to <c>{tmp}/lyo-web-automation</c>.
+    /// Root directory for all session subdirectories. Each session creates <c>{ServiceRootDirectory}/session-{sessionId}/</c> with <c>browser-profile/</c>, <c>artifacts/</c>,
+    /// and <c>downloads/</c> inside. Defaults to <c>{tmp}/lyo-web-automation</c>.
     /// </summary>
     public string ServiceRootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-playwright");
 
@@ -36,9 +35,7 @@ public class PlaywrightBrowserOptions
     /// <summary>Extra launch arguments (Chromium/Edge). Each entry must start with <c>-</c>; Playwright rejects bare tokens (it treats them as an initial page URL).</summary>
     public List<string> LaunchArguments { get; set; } = ["--disable-infobars", "--disable-extensions", "--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox"];
 
-    public List<string> UserAgents { get; set; } = [
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    ];
+    public List<string> UserAgents { get; set; } = ["Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"];
 
     /// <summary>Viewport width in CSS pixels.</summary>
     public int ViewportWidth { get; set; } = 1280;
@@ -49,7 +46,10 @@ public class PlaywrightBrowserOptions
     /// <summary>Default timeout for navigations (milliseconds).</summary>
     public int NavigationTimeoutMs { get; set; } = 30_000;
 
-    /// <summary>Default timeout for locator actions and <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementAsync" /> / <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementsAsync" /> (milliseconds).</summary>
+    /// <summary>
+    /// Default timeout for locator actions and <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementAsync" /> /
+    /// <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementsAsync" /> (milliseconds).
+    /// </summary>
     public float LocatorDefaultTimeoutMs { get; set; } = 30_000f;
 
     /// <summary>Maximum outer attempts for poll retries (each attempt runs one locator wait).</summary>
@@ -72,8 +72,7 @@ public class PlaywrightBrowserOptions
 
     /// <summary>Creates a deep copy for an independent session.</summary>
     public virtual PlaywrightBrowserOptions Clone()
-    {
-        return new PlaywrightBrowserOptions {
+        => new() {
             BrowserKind = BrowserKind,
             Headless = Headless,
             Channel = Channel,
@@ -95,7 +94,6 @@ public class PlaywrightBrowserOptions
             IgnoreHttpsErrors = IgnoreHttpsErrors,
             CloseOwnedResourcesOnDispose = CloseOwnedResourcesOnDispose
         };
-    }
 }
 
 /// <summary>Per-session overrides for <see cref="Service.IPlaywrightBrowserService.CreateSession" />.</summary>

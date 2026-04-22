@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
@@ -23,13 +22,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 {
     // Stream format V1: [FormatVersion: 1 byte][DEKAlgorithmId: 1 byte][KEKAlgorithmId: 1 byte][DekKeyMaterialBytes: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][EncryptedDEKLength: 4 bytes][EncryptedDEK][Chunks...]
     private const byte CurrentFormatVersion = (byte)StreamFormatVersion.V1;
-
-    private static int GetDekKeyMaterialSize(IEncryptionService dekEncryptionService)
-    {
-        if (dekEncryptionService is ISymmetricKeyMaterialSize s)
-            return s.RequiredKeyBytes;
-        return 32;
-    }
 
     private readonly TDataEncryptionService _dekEncryptionService; // For encrypting data with DEK
 
@@ -195,9 +187,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             kekBytes = kek;
         else if (keyId != null) {
             // Get KEK from keystore using keyId and optional version
-            kekBytes = !string.IsNullOrWhiteSpace(keyVersion) 
-                ? _keyStore.GetKey(keyId, keyVersion) 
-                : _keyStore.GetCurrentKey(keyId);
+            kekBytes = !string.IsNullOrWhiteSpace(keyVersion) ? _keyStore.GetKey(keyId, keyVersion) : _keyStore.GetCurrentKey(keyId);
         }
         else
             throw new InvalidOperationException("Either keyId or kek must be provided for decryption.");
@@ -504,12 +494,10 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
                 throw new EndOfStreamException("Unexpected end of stream while reading KEK algorithm ID.");
 
             var kekAlgorithmId = versionBuffer[0];
-
             if (await input.ReadAsync(versionBuffer, 0, 1, ct).ConfigureAwait(false) != 1)
                 throw new EndOfStreamException("Unexpected end of stream while reading DEK key material length.");
 
             var dekKeyMaterialBytes = versionBuffer[0];
-
             TwoKeyDekValidation.ValidateHeader(dekAlgorithmId, dekKeyMaterialBytes);
 
             // Validate algorithm IDs match expected services
@@ -886,8 +874,15 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
     }
 
-    private static EncryptionAlgorithm? DetermineAlgorithm(IEncryptionService? encryptionService)
-        => EncryptionAlgorithmDiscovery.FromEncryptionService(encryptionService);
+    private static int GetDekKeyMaterialSize(IEncryptionService dekEncryptionService)
+    {
+        if (dekEncryptionService is ISymmetricKeyMaterialSize s)
+            return s.RequiredKeyBytes;
+
+        return 32;
+    }
+
+    private static EncryptionAlgorithm? DetermineAlgorithm(IEncryptionService? encryptionService) => EncryptionAlgorithmDiscovery.FromEncryptionService(encryptionService);
 
     /// <summary>Optimized encryption path for small files to reduce overhead.</summary>
     private TwoKeyEncryptionResult EncryptSmall(byte[] bytes, string? keyId, byte[]? kek)

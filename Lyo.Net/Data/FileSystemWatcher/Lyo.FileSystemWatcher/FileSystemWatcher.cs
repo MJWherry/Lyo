@@ -285,10 +285,7 @@ public class FileSystemWatcher : IDisposable
         }
     }
 
-    private void CheckDirectoryChanges(
-        SnapshotTree oldSnapshot,
-        SnapshotTree newSnapshot,
-        List<FileSystemChangeInfo> existingChanges)
+    private void CheckDirectoryChanges(SnapshotTree oldSnapshot, SnapshotTree newSnapshot, List<FileSystemChangeInfo> existingChanges)
     {
         var stringComparer = _options.PathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         var affectedDirs = new HashSet<string>(stringComparer);

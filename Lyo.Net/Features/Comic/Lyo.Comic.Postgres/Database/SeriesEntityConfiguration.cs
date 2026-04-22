@@ -19,11 +19,9 @@ public sealed class SeriesEntityConfiguration : IEntityTypeConfiguration<SeriesE
         builder.Property(e => e.PublishedYear).HasColumnName("published_year");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-
         builder.HasIndex(e => e.Slug).IsUnique().HasDatabaseName("ix_comic_series_slug");
         builder.HasIndex(e => e.ComicType).HasDatabaseName("ix_comic_series_type");
         builder.HasIndex(e => e.Status).HasDatabaseName("ix_comic_series_status");
-
         builder.HasMany(e => e.AlternateTitles).WithOne(a => a.Series).HasForeignKey(a => a.SeriesId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(e => e.Volumes).WithOne(v => v.Series).HasForeignKey(v => v.SeriesId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(e => e.Chapters).WithOne(c => c.Series).HasForeignKey(c => c.SeriesId).OnDelete(DeleteBehavior.Cascade);

@@ -13,5 +13,5 @@ public enum PdfInferFormattingFlags
     Semicolon = 1 << 1,
 
     /// <summary>Use vector underlines (horizontal strokes under glyph bands) as emphasis.</summary>
-    Underline = 1 << 2,
+    Underline = 1 << 2
 }

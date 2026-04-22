@@ -811,9 +811,6 @@ var report = ReportBuilder<MyOptions>.New()
 6. **Consistent Styling** - Use consistent styling across reports
 7. **Filter Metrics** - Use filtering options to show only relevant metrics
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -824,8 +821,8 @@ var report = ReportBuilder<MyOptions>.New()
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                               | Version |
+|---------------------------------------|---------|
 | `Microsoft.AspNetCore.Components.Web` | `[10,)` |
 
 ### Project references

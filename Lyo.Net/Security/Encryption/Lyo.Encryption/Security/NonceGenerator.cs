@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 

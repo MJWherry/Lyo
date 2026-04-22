@@ -1,14 +1,13 @@
 using Lyo.Api.Services.Crud;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
-using System.Text.Json;
 using Lyo.Api.Services.Crud.Read;
-using Lyo.Cache;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
 using Lyo.Api.Services.TypeConversion;
+using Lyo.Cache;
 using Lyo.Diff;
 using Lyo.Query;
 using Lyo.Query.Services.ValueConversion;
@@ -34,8 +33,8 @@ public static class ServiceCollectionExtensions
         /// </summary>
         public IServiceCollection AddLyoQueryServices()
         {
-            AddQueryOptions(services);
-            AddApiHostCachePayloadSerializer(services);
+            IServiceCollection.AddQueryOptions(services);
+            IServiceCollection.AddApiHostCachePayloadSerializer(services);
             services.AddSingleton<ITypeConversionService, TypeConversionService>()
                 .AddSingleton<IValueConversionService>(sp => sp.GetRequiredService<ITypeConversionService>())
                 .AddSingleton<IEntityLoaderService, EntityLoaderService>()
@@ -56,7 +55,7 @@ public static class ServiceCollectionExtensions
         {
             services.TryAddSingleton(_ => new BulkOperationOptions());
             services.TryAddSingleton(_ => new CacheOptions());
-            AddQueryOptions(services);
+            IServiceCollection.AddQueryOptions(services);
             services.AddScoped<IQueryService<TContext>, QueryService<TContext>>();
             services.AddScoped<ICreateService<TContext>, CreateService<TContext>>();
             services.AddScoped<IPatchService<TContext>, PatchService<TContext>>();
@@ -91,7 +90,7 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
-        static void AddQueryOptions(IServiceCollection serviceCollection)
+        private static void AddQueryOptions(IServiceCollection serviceCollection)
         {
             serviceCollection.AddOptions<QueryOptions>();
             serviceCollection.Configure<QueryOptions>(_ => { });
@@ -99,15 +98,13 @@ public static class ServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Registers <see cref="ICachePayloadSerializer" /> using the host’s <see cref="JsonOptions" /> serializer settings (fallback: <see cref="CachePayloadSerializerRegistration.DefaultJsonOptions" />).
+        /// Registers <see cref="ICachePayloadSerializer" /> using the host’s <see cref="JsonOptions" /> serializer settings (fallback:
+        /// <see cref="CachePayloadSerializerRegistration.DefaultJsonOptions" />).
         /// </summary>
-        static void AddApiHostCachePayloadSerializer(IServiceCollection serviceCollection)
-        {
-            serviceCollection.AddSingleton<ICachePayloadSerializer>(static sp => {
-                var opts = sp.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions
-                    ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
+        private static void AddApiHostCachePayloadSerializer(IServiceCollection serviceCollection)
+            => serviceCollection.AddSingleton<ICachePayloadSerializer>(static sp => {
+                var opts = sp.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
                 return new SystemTextJsonCachePayloadSerializer(opts);
             });
-        }
     }
 }

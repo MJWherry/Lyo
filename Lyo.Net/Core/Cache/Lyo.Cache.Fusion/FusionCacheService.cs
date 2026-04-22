@@ -27,11 +27,6 @@ public sealed class FusionCacheService : ICacheService
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
 
-    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
-
-    /// <inheritdoc />
-    public string HealthCheckName => "cache";
-    
     public FusionCacheService(
         IFusionCache fusionCache,
         ILogger<FusionCacheService>? logger = null,
@@ -128,7 +123,12 @@ public sealed class FusionCacheService : ICacheService
             }
         };
     }
-    
+
+    public IReadOnlyCollection<CacheItem> Items => _items.Keys.ToList().AsReadOnly();
+
+    /// <inheritdoc />
+    public string HealthCheckName => "cache";
+
     /// <inheritdoc />
     public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
@@ -188,8 +188,9 @@ public sealed class FusionCacheService : ICacheService
             _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
         }
         catch (Exception ex) {
-            RecordInvalidateByTagOperationFailure(stopwatch, ex, "InvalidateCacheItemByTag", tag,
-                e => _logger.LogError(e, "Error invalidating cache items by tag {CacheTag}", tag));
+            RecordInvalidateByTagOperationFailure(
+                stopwatch, ex, "InvalidateCacheItemByTag", tag, e => _logger.LogError(e, "Error invalidating cache items by tag {CacheTag}", tag));
+
             throw;
         }
     }
@@ -228,17 +229,15 @@ public sealed class FusionCacheService : ICacheService
         }
         catch (Exception ex) {
             RecordInvalidateByTagOperationFailure(
-                stopwatch, ex, "InvalidateCacheByTypeAsync", tag,
-                e => _logger.LogError(e, "Error invalidating cache for type {FullTypeName}", fullTypeName));
+                stopwatch, ex, "InvalidateCacheByTypeAsync", tag, e => _logger.LogError(e, "Error invalidating cache for type {FullTypeName}", fullTypeName));
+
             throw;
         }
     }
 
-    public Task InvalidateCacheByTypeAsync(Type type) 
-        => InvalidateCacheByTypeAsync(type.FullName ?? type.Name);
+    public Task InvalidateCacheByTypeAsync(Type type) => InvalidateCacheByTypeAsync(type.FullName ?? type.Name);
 
-    public Task InvalidateCacheByTypeAsync<T>()
-        => InvalidateCacheByTypeAsync(typeof(T));
+    public Task InvalidateCacheByTypeAsync<T>() => InvalidateCacheByTypeAsync(typeof(T));
 
     public async Task InvalidateAllCachedQueriesAsync()
     {
@@ -246,27 +245,6 @@ public sealed class FusionCacheService : ICacheService
             return;
 
         await InvalidateAllCachedQueriesByTagAsync("queries").ConfigureAwait(false);
-    }
-
-    private async Task InvalidateAllCachedQueriesByTagAsync(string tag)
-    {
-        var stopwatch = Stopwatch.StartNew();
-        try {
-            var beforeCount = _items.Count;
-            await _fusionCache.RemoveByTagAsync(tag).ConfigureAwait(false);
-            stopwatch.Stop();
-            var itemsRemoved = Math.Max(0, beforeCount - _items.Count);
-            var tags = new[] { (Constants.Metrics.Tags.Tag, tag) };
-            _metrics.RecordTiming(Constants.Metrics.RemoveByTagDuration, stopwatch.Elapsed, tags);
-            _metrics.IncrementCounter(Constants.Metrics.RemoveByTagSuccess, 1, tags);
-            _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
-        }
-        catch (Exception ex) {
-            RecordInvalidateByTagOperationFailure(
-                stopwatch, ex, "InvalidateAllCachedQueriesAsync", tag,
-                e => _logger.LogError(e, "Error invalidating all cached queries"));
-            throw;
-        }
     }
 
     public async ValueTask<TValue?> GetOrSetAsync<TValue>(
@@ -512,6 +490,7 @@ public sealed class FusionCacheService : ICacheService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
         if (!_enabled)
             return value;
+
         var stopwatch = Stopwatch.StartNew();
         try {
             var normalizedKey = key.ToLowerInvariant();
@@ -587,7 +566,7 @@ public sealed class FusionCacheService : ICacheService
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
         }
         catch (Exception ex) {
-            RecordSetFailure(stopwatch, ex, key, isPayload: false);
+            RecordSetFailure(stopwatch, ex, key, false);
             throw;
         }
     }
@@ -635,7 +614,6 @@ public sealed class FusionCacheService : ICacheService
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
-
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         var stopwatch = Stopwatch.StartNew();
@@ -694,7 +672,6 @@ public sealed class FusionCacheService : ICacheService
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
-
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         var stopwatch = Stopwatch.StartNew();
@@ -749,8 +726,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct)
-            => (await factory(ct).ConfigureAwait(false), null);
+        async Task<(TValue? value, string[]? tags)> AsTuple(CancellationToken ct) => (await factory(ct).ConfigureAwait(false), null);
 
         return GetOrSetPayloadAsync(key, AsTuple, duration, extraTags, token);
     }
@@ -777,7 +753,6 @@ public sealed class FusionCacheService : ICacheService
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgTypedPayloadCodecRequired);
         OperationHelpers.ThrowIfNull(_payloadSerializer, MsgTypedPayloadSerializerRequired);
-
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         var stopwatch = Stopwatch.StartNew();
@@ -843,7 +818,6 @@ public sealed class FusionCacheService : ICacheService
             return PayloadFactoryOnlySync(factory);
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
-
         var normalizedKey = key.ToLowerInvariant();
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         var stopwatch = Stopwatch.StartNew();
@@ -889,7 +863,6 @@ public sealed class FusionCacheService : ICacheService
             return;
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
-
         var stopwatch = Stopwatch.StartNew();
         try {
             var framed = _payloadCodec.Encode(plaintext);
@@ -899,7 +872,7 @@ public sealed class FusionCacheService : ICacheService
             _metrics.IncrementCounter(Constants.Metrics.SetSuccess, 1, [(Constants.Metrics.Tags.Key, key)]);
         }
         catch (Exception ex) {
-            RecordSetFailure(stopwatch, ex, key, isPayload: true);
+            RecordSetFailure(stopwatch, ex, key, true);
             throw;
         }
     }
@@ -912,7 +885,6 @@ public sealed class FusionCacheService : ICacheService
             return false;
 
         OperationHelpers.ThrowIfNull(_payloadCodec, MsgPayloadCodecRequired);
-        
         try {
             var normalizedKey = key.ToLowerInvariant();
             var cachedValue = _fusionCache.TryGet<byte[]>(normalizedKey);
@@ -928,6 +900,25 @@ public sealed class FusionCacheService : ICacheService
         }
     }
 
+    private async Task InvalidateAllCachedQueriesByTagAsync(string tag)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try {
+            var beforeCount = _items.Count;
+            await _fusionCache.RemoveByTagAsync(tag).ConfigureAwait(false);
+            stopwatch.Stop();
+            var itemsRemoved = Math.Max(0, beforeCount - _items.Count);
+            var tags = new[] { (Constants.Metrics.Tags.Tag, tag) };
+            _metrics.RecordTiming(Constants.Metrics.RemoveByTagDuration, stopwatch.Elapsed, tags);
+            _metrics.IncrementCounter(Constants.Metrics.RemoveByTagSuccess, 1, tags);
+            _metrics.RecordGauge(Constants.Metrics.RemoveByTagItemsRemoved, itemsRemoved, tags);
+        }
+        catch (Exception ex) {
+            RecordInvalidateByTagOperationFailure(stopwatch, ex, "InvalidateAllCachedQueriesAsync", tag, e => _logger.LogError(e, "Error invalidating all cached queries"));
+            throw;
+        }
+    }
+
     private static async Task<CacheEntryEnvelope?> PayloadFactoryOnlyAsync(Func<CancellationToken, Task<byte[]?>> factory, CancellationToken token)
     {
         var plain = await factory(token).ConfigureAwait(false);
@@ -937,17 +928,13 @@ public sealed class FusionCacheService : ICacheService
         return new(plain);
     }
 
-    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(
-        Func<CancellationToken, Task<(T? value, string[]? tags)>> factory,
-        CancellationToken token)
+    private static async Task<T?> SerializedPayloadTupleFactoryOnlyAsync<T>(Func<CancellationToken, Task<(T? value, string[]? tags)>> factory, CancellationToken token)
     {
         var (value, _) = await factory(token).ConfigureAwait(false);
         return value;
     }
-    
-    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(
-        Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
-        CancellationToken token)
+
+    private static async Task<CacheEntryEnvelope?> PayloadTupleFactoryOnlyAsync(Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory, CancellationToken token)
     {
         var (plain, _) = await factory(token).ConfigureAwait(false);
         if (plain == null)
@@ -985,12 +972,7 @@ public sealed class FusionCacheService : ICacheService
         _metrics.RecordError(Constants.Metrics.RemoveDuration, ex, [(Constants.Metrics.Tags.Operation, "InvalidateCacheItem"), (Constants.Metrics.Tags.Key, key)]);
     }
 
-    private void RecordInvalidateByTagOperationFailure(
-        Stopwatch stopwatch,
-        Exception ex,
-        string operationName,
-        string tagMetricValue,
-        Action<Exception> logError)
+    private void RecordInvalidateByTagOperationFailure(Stopwatch stopwatch, Exception ex, string operationName, string tagMetricValue, Action<Exception> logError)
     {
         stopwatch.Stop();
         logError(ex);
@@ -1008,12 +990,8 @@ public sealed class FusionCacheService : ICacheService
     {
         stopwatch.Stop();
         var asyncOp = operationName.EndsWith("Async", StringComparison.Ordinal);
-        _logger.LogError(ex,
-            asyncOp ? "Error in GetOrSetPayloadAsync for key {CacheKey}" : "Error in GetOrSetPayload for key {CacheKey}",
-            cacheKey);
-        _metrics.RecordError(Constants.Metrics.MissDuration, ex, [
-            (Constants.Metrics.Tags.Operation, operationName),
-            (Constants.Metrics.Tags.Key, cacheKey)]);
+        _logger.LogError(ex, asyncOp ? "Error in GetOrSetPayloadAsync for key {CacheKey}" : "Error in GetOrSetPayload for key {CacheKey}", cacheKey);
+        _metrics.RecordError(Constants.Metrics.MissDuration, ex, [(Constants.Metrics.Tags.Operation, operationName), (Constants.Metrics.Tags.Key, cacheKey)]);
     }
 
     private void RecordSetFailure(Stopwatch stopwatch, Exception ex, string cacheKey, bool isPayload)

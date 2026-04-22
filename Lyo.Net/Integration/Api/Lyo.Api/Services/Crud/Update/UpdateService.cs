@@ -1,8 +1,8 @@
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
+using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
@@ -14,6 +14,7 @@ using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
@@ -47,7 +48,7 @@ public class UpdateService<TContext>(
         var entities = await FindEntitiesByRequest<TRequest, TDbModel>(context, request, ct);
         if (entities.Count == 0) {
             var keys = request.Keys ?? [];
-            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError("Not Found", Models.Constants.ApiErrorCodes.NotFound));
+            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError("Not Found", Constants.ApiErrorCodes.NotFound));
         }
 
         if (entities.Count > 1) {
@@ -55,7 +56,7 @@ public class UpdateService<TContext>(
             return ResultFactory.UpdateFailure<TResult>(
                 keys,
                 LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                    .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                     .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                     .Build());
         }
@@ -73,18 +74,13 @@ public class UpdateService<TContext>(
 
         await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
             .ConfigureAwait(false);
+
         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
         cache.Set(
-            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys, includes: null, rawResponse: false),
-            result.NewData!,
+            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys, null, false), result.NewData!,
             cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
                 ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
-                :
-                [
-                    "entities",
-                    QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
-                    QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys),
-                ]);
+                : ["entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)), QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys)]);
 
         RecordCrudSuccess(operation, typeof(TDbModel));
         return result;
@@ -155,7 +151,7 @@ public class UpdateService<TContext>(
                 if (entities.Count == 0) {
                     var keys = request.Keys ?? [];
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for update.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
@@ -166,7 +162,7 @@ public class UpdateService<TContext>(
                 if (entities.Count > 1) {
                     var keys = request.Keys ?? [];
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                         .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
@@ -277,7 +273,7 @@ public class UpdateService<TContext>(
                     if (entities.Count == 0) {
                         var keys = request.Keys ?? [];
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                            .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                             .WithMessage($"Entity not found for update.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -289,7 +285,7 @@ public class UpdateService<TContext>(
                     if (entities.Count > 1) {
                         var keys = request.Keys ?? [];
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                             .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -371,7 +367,7 @@ public class UpdateService<TContext>(
                 return ResultFactory.UpdateFailure<TResult>(
                     keys,
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for update.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -380,7 +376,7 @@ public class UpdateService<TContext>(
                 return ResultFactory.UpdateFailure<TResult>(
                     keys,
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                         .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -391,7 +387,7 @@ public class UpdateService<TContext>(
         }
         catch (Exception ex) {
             var keys = request.Keys ?? [];
-            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError(ex, "Individual Update Error", Models.Constants.ApiErrorCodes.InvalidUpdateRequest));
+            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError(ex, "Individual Update Error", Constants.ApiErrorCodes.InvalidUpdateRequest));
         }
     }
 
@@ -455,7 +451,7 @@ public class UpdateService<TContext>(
             return ResultFactory.UpdateSuccess(keys, oldData, newData, resultState);
         }
         catch (Exception ex) {
-            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError(ex, "Update Error", Models.Constants.ApiErrorCodes.InvalidUpdateRequest));
+            return ResultFactory.UpdateFailure<TResult>(keys, LogAndReturnApiError(ex, "Update Error", Constants.ApiErrorCodes.InvalidUpdateRequest));
         }
     }
 }

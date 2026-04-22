@@ -5,8 +5,8 @@ namespace Lyo.Web.Automation.Logging;
 internal sealed class SessionFileLogger : ILogger
 {
     private readonly string _category;
-    private readonly StreamWriter _writer;
     private readonly object _gate;
+    private readonly StreamWriter _writer;
 
     public SessionFileLogger(string category, StreamWriter writer, object gate)
     {
@@ -15,18 +15,13 @@ internal sealed class SessionFileLogger : ILogger
         _gate = gate;
     }
 
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+    public IDisposable? BeginScope<TState>(TState state)
+        where TState : notnull
         => NullScope.Instance;
 
-    public bool IsEnabled(LogLevel logLevel)
-        => logLevel != LogLevel.None;
+    public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None;
 
-    public void Log<TState>(
-        LogLevel logLevel,
-        EventId eventId,
-        TState state,
-        Exception? exception,
-        Func<TState, Exception?, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         if (!IsEnabled(logLevel))
             return;
@@ -36,13 +31,13 @@ internal sealed class SessionFileLogger : ILogger
             return;
 
         var levelShort = logLevel switch {
-            LogLevel.Trace       => "TRC",
-            LogLevel.Debug       => "DBG",
+            LogLevel.Trace => "TRC",
+            LogLevel.Debug => "DBG",
             LogLevel.Information => "INF",
-            LogLevel.Warning     => "WRN",
-            LogLevel.Error       => "ERR",
-            LogLevel.Critical    => "CRT",
-            _                    => logLevel.ToString()
+            LogLevel.Warning => "WRN",
+            LogLevel.Error => "ERR",
+            LogLevel.Critical => "CRT",
+            var _ => logLevel.ToString()
         };
 
         lock (_gate) {
@@ -55,6 +50,7 @@ internal sealed class SessionFileLogger : ILogger
     private sealed class NullScope : IDisposable
     {
         public static readonly NullScope Instance = new();
+
         public void Dispose() { }
     }
 }

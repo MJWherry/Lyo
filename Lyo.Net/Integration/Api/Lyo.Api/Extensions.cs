@@ -26,7 +26,7 @@ public static class Extensions
         TypeCode.Decimal
     };
 
-    public static LyoProblemDetails ApiErrorFromException(Exception ex, string? message = null, string errorCode = Lyo.Api.Models.Constants.ApiErrorCodes.Unknown)
+    public static LyoProblemDetails ApiErrorFromException(Exception ex, string? message = null, string errorCode = Constants.ApiErrorCodes.Unknown)
         => LyoProblemDetailsBuilder.CreateWithTrace(Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString())
             .WithErrorCode(errorCode)
             .WithMessage(message ?? ex.Message)

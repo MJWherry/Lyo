@@ -1,20 +1,11 @@
 namespace Lyo.FileSystemWatcher;
 
 /// <summary>
-/// Hierarchical snapshot of a directory: one <see cref="SnapshotDirectoryNode"/> per subdirectory, with files grouped by parent directory. Avoids storing a flat map keyed by full path.
+/// Hierarchical snapshot of a directory: one <see cref="SnapshotDirectoryNode" /> per subdirectory, with files grouped by parent directory. Avoids storing a flat map keyed
+/// by full path.
 /// </summary>
 public sealed class SnapshotTree
 {
-    public SnapshotTree(string rootPath, StringComparison pathComparison, SnapshotDirectoryNode root, int fileCount, int directoryCount)
-    {
-        RootPath = rootPath;
-        PathComparison = pathComparison;
-        SegmentComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-        Root = root;
-        FileCount = fileCount;
-        DirectoryCount = directoryCount;
-    }
-
     public string RootPath { get; }
 
     public StringComparison PathComparison { get; }
@@ -30,12 +21,22 @@ public sealed class SnapshotTree
     /// <summary>Files plus directories (excluding the snapshot root node), matching prior flat dictionary key count.</summary>
     public int TotalEntryCount => FileCount + DirectoryCount;
 
+    public SnapshotTree(string rootPath, StringComparison pathComparison, SnapshotDirectoryNode root, int fileCount, int directoryCount)
+    {
+        RootPath = rootPath;
+        PathComparison = pathComparison;
+        SegmentComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+        Root = root;
+        FileCount = fileCount;
+        DirectoryCount = directoryCount;
+    }
+
     public bool ContainsPath(string fullPath)
     {
-        if (TryGetDirectory(fullPath, out _))
+        if (TryGetDirectory(fullPath, out var _))
             return true;
 
-        return TryGetFile(fullPath, out _);
+        return TryGetFile(fullPath, out var _);
     }
 
     public bool TryGetFile(string fullPath, out DirectorySnapshotEntry? entry)
@@ -106,7 +107,8 @@ public sealed class SnapshotTree
     private IEnumerable<(string Path, DirectorySnapshotEntry Entry)> EnumerateDirectoryAndFileEntries(SnapshotDirectoryNode dir)
     {
         foreach (var sub in dir.Directories.Values) {
-            yield return (sub.FullPath, new DirectorySnapshotEntry(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+            yield return (sub.FullPath, new(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+
             foreach (var pair in EnumerateDirectoryAndFileEntries(sub))
                 yield return pair;
         }
@@ -119,6 +121,7 @@ public sealed class SnapshotTree
     {
         foreach (var sub in Root.Directories.Values) {
             yield return sub;
+
             foreach (var n in EnumerateDirectoryNodes(sub))
                 yield return n;
         }
@@ -128,6 +131,7 @@ public sealed class SnapshotTree
     {
         foreach (var sub in dir.Directories.Values) {
             yield return sub;
+
             foreach (var n in EnumerateDirectoryNodes(sub))
                 yield return n;
         }
@@ -143,16 +147,12 @@ public sealed class SnapshotTree
         if (!f.StartsWith(r, comparison))
             return false;
 
-        return f.Length == r.Length
-            || f[r.Length] == Path.DirectorySeparatorChar
-            || f[r.Length] == Path.AltDirectorySeparatorChar;
+        return f.Length == r.Length || f[r.Length] == Path.DirectorySeparatorChar || f[r.Length] == Path.AltDirectorySeparatorChar;
     }
 
-    internal static bool PathsEqual(string a, string b, StringComparison comparison)
-        => string.Equals(TrimSeparators(a), TrimSeparators(b), comparison);
+    internal static bool PathsEqual(string a, string b, StringComparison comparison) => string.Equals(TrimSeparators(a), TrimSeparators(b), comparison);
 
-    internal static string TrimSeparators(string path)
-        => path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+    internal static string TrimSeparators(string path) => path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
     /// <summary>Returns path segments from the first segment below root to the target (directory or file name segments).</summary>
     internal static bool TryGetSegmentsBelowRoot(string rootPath, string fullPath, StringComparison comparison, out string[] segments)
@@ -172,10 +172,7 @@ public sealed class SnapshotTree
             return true;
         }
 
-        segments = remainder.Split(
-            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
-            StringSplitOptions.RemoveEmptyEntries);
-
+        segments = remainder.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
         return true;
     }
 }

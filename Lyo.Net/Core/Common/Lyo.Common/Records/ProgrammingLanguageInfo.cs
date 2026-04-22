@@ -18,12 +18,6 @@ public sealed record ProgrammingLanguageInfo(
     bool IsStylesheet,
     string[] Aliases)
 {
-    public string CanonicalName => ShortName;
-
-    public string? PrimaryExtension => FileExtensions.FirstOrDefault();
-
-    public override string ToString() => $"{Name} ({ShortName})";
-
     public static readonly ProgrammingLanguageInfo Unknown = new(
         "Unknown", "unknown", "unknown", "Unknown or unspecified language", [], "Unknown", false, false, false, false, ["unknown", "unspecified"]);
 
@@ -161,6 +155,10 @@ public sealed record ProgrammingLanguageInfo(
     private static readonly Dictionary<string, ProgrammingLanguageInfo> _byAlias = new(StringComparer.OrdinalIgnoreCase);
     private static readonly List<ProgrammingLanguageInfo> _allLanguages = new();
 
+    public string CanonicalName => ShortName;
+
+    public string? PrimaryExtension => FileExtensions.FirstOrDefault();
+
     /// <summary>Gets all registered programming language metadata records.</summary>
     public static IReadOnlyList<ProgrammingLanguageInfo> All => _allLanguages;
 
@@ -186,6 +184,8 @@ public sealed record ProgrammingLanguageInfo(
                 _byExtension[NormalizeExtension(extension)] = language;
         }
     }
+
+    public override string ToString() => $"{Name} ({ShortName})";
 
     public static ProgrammingLanguageInfo FromName(string? name)
     {

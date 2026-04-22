@@ -1,13 +1,11 @@
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Images;
 using Lyo.Images.Models;
 using Lyo.Metrics;
-using Lyo.QRCode;
 using Lyo.QRCode.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

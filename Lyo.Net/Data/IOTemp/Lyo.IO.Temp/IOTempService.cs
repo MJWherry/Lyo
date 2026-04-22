@@ -29,7 +29,8 @@ public sealed class IOTempService : IIOTempService
     public IOTempService(IOTempServiceOptions? options = null, ILogger<IOTempService>? logger = null, IMetrics? metrics = null, ILoggerFactory? loggerFactory = null)
     {
         _options = options ?? new IOTempServiceOptions();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.RootDirectory, nameof(_options.RootDirectory));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.TempRoot, nameof(_options.TempRoot));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.DirectoryName, nameof(_options.DirectoryName));
         _logger = logger ?? NullLogger<IOTempService>.Instance;
         _loggerFactory = loggerFactory;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -112,15 +113,16 @@ public sealed class IOTempService : IIOTempService
 
 #region Cleanup
 
-    public void Cleanup() => Cleanup(TimeSpan.Zero);
+    public void Cleanup() => Cleanup(_options.FileLifetime ?? TimeSpan.Zero);
 
-    public Task CleanupAsync(CancellationToken ct = default) => CleanupAsync(TimeSpan.Zero, ct);
+    public Task CleanupAsync(CancellationToken ct = default) => CleanupAsync(_options.FileLifetime ?? TimeSpan.Zero, ct);
 
-    public Task CleanupAsync(TimeSpan olderThan, CancellationToken ct = default) => Task.Run(() => Cleanup(olderThan), ct);
+    public Task CleanupAsync(TimeSpan olderThan, CancellationToken ct = default) => Task.Run(() => Cleanup(olderThan, ct), ct);
 
-    private void Cleanup(TimeSpan olderThan)
+    private void Cleanup(TimeSpan olderThan, CancellationToken ct = default)
     {
         ThrowIfDisposed();
+        ct.ThrowIfCancellationRequested();
         var stopwatch = Stopwatch.StartNew();
         var deletedDirectories = 0;
         var deletedFiles = 0;
@@ -132,6 +134,7 @@ public sealed class IOTempService : IIOTempService
 
         var cutoff = DateTimeOffset.UtcNow - olderThan;
         foreach (var dir in root.EnumerateDirectories()) {
+            ct.ThrowIfCancellationRequested();
             if (dir.CreationTimeUtc > cutoff)
                 continue;
 
@@ -153,6 +156,7 @@ public sealed class IOTempService : IIOTempService
         }
 
         foreach (var file in root.EnumerateFiles()) {
+            ct.ThrowIfCancellationRequested();
             if (file.CreationTimeUtc > cutoff)
                 continue;
 
@@ -169,7 +173,7 @@ public sealed class IOTempService : IIOTempService
         }
 
         _logger.LogInformation(
-            "IO temp cleanup completed. Deleted {DirectoryCount} directories and {FileCount} files from {RootDirectory}", deletedDirectories, deletedFiles, _options.RootDirectory);
+            "IO temp cleanup completed. Deleted {DirectoryCount} directories and {FileCount} files from {ServiceDirectory}", deletedDirectories, deletedFiles, ServiceDirectory);
 
         _metrics.RecordTiming(Constants.Metrics.CleanupDuration, stopwatch.Elapsed);
         _metrics.IncrementCounter(Constants.Metrics.CleanupSuccess);
@@ -237,6 +241,7 @@ public sealed class IOTempService : IIOTempService
                 DirectorySuffix = _options.DirectorySuffix,
                 DirectoryNamingStrategy = _options.DirectoryNamingStrategy,
                 MaxFileSizeBytes = _options.MaxFileSizeBytes,
+                MaxTotalSizeBytes = _options.MaxTotalSizeBytes,
                 OverflowStrategy = _options.OverflowStrategy
             };
         }
@@ -252,6 +257,7 @@ public sealed class IOTempService : IIOTempService
             DirectorySuffix = overrides.DirectorySuffix ?? _options.DirectorySuffix,
             DirectoryNamingStrategy = overrides.DirectoryNamingStrategy,
             MaxFileSizeBytes = overrides.MaxFileSizeBytes ?? _options.MaxFileSizeBytes,
+            MaxTotalSizeBytes = overrides.MaxTotalSizeBytes ?? _options.MaxTotalSizeBytes,
             OverflowStrategy = overrides.OverflowStrategy
         };
     }
@@ -345,9 +351,7 @@ public sealed class IOTempService : IIOTempService
         _disposed = true;
         var stopwatch = Stopwatch.StartNew();
         try {
-            if (Directory.Exists(ServiceDirectory))
-                Directory.Delete(ServiceDirectory, true);
-
+            DeleteDirectoryWithRetry(ServiceDirectory, _logger);
             _activeSessions.Clear();
             _logger.LogInformation("Disposed IO temp service directory {ServiceDirectory}", ServiceDirectory);
             _metrics.RecordTiming(Constants.Metrics.DisposeServiceDirectoryDuration, stopwatch.Elapsed);
@@ -355,10 +359,32 @@ public sealed class IOTempService : IIOTempService
             _metrics.RecordGauge(Constants.Metrics.ActiveSessionCount, 0);
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Failed to dispose IO temp service directory {ServiceDirectory}", ServiceDirectory);
+            _logger.LogError(ex, "Failed to dispose IO temp service directory {ServiceDirectory} after retries", ServiceDirectory);
             _metrics.RecordError(Constants.Metrics.DisposeServiceDirectoryDuration, ex);
             _metrics.IncrementCounter(Constants.Metrics.DisposeServiceDirectoryFailure);
         }
+    }
+
+    private static void DeleteDirectoryWithRetry(string path, ILogger logger, int retries = 3, int retryDelayMs = 150)
+    {
+        Exception? lastEx = null;
+        for (var attempt = 1; attempt <= retries; attempt++) {
+            try {
+                if (Directory.Exists(path))
+                    Directory.Delete(path, true);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+                lastEx = ex;
+                if (attempt < retries) {
+                    logger.LogDebug("Delete attempt {Attempt}/{Retries} failed for {Path}, retrying in {Delay}ms", attempt, retries, path, retryDelayMs);
+                    Thread.Sleep(retryDelayMs);
+                }
+            }
+        }
+
+        if (lastEx != null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(lastEx).Throw();
     }
 
 #endregion

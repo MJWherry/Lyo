@@ -1,5 +1,4 @@
 #if NET10_0_OR_GREATER
-using System.Security.Cryptography;
 #endif
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
@@ -14,15 +13,14 @@ public static class ChaCha20Poly1305Helper
 
     public const int TagSize = 16; // 128 bits
 
-    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) =>
-        Encrypt(plaintext.AsSpan(), key, nonce);
+    public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);
 
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)
     {
 #if NET10_0_OR_GREATER
         var tag = new byte[TagSize];
         var ciphertext = new byte[plaintext.Length];
-        using var chacha = new global::System.Security.Cryptography.ChaCha20Poly1305(key);
+        using var chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
         chacha.Encrypt(nonce, plaintext, ciphertext, tag);
         return (ciphertext, tag);
 #else
@@ -53,7 +51,7 @@ public static class ChaCha20Poly1305Helper
     {
 #if NET10_0_OR_GREATER
         var plaintext = new byte[ciphertext.Length];
-        using var chacha = new global::System.Security.Cryptography.ChaCha20Poly1305(key);
+        using var chacha = new System.Security.Cryptography.ChaCha20Poly1305(key);
         chacha.Decrypt(nonce, ciphertext, tag, plaintext);
         return plaintext;
 #else

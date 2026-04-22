@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Query.Models.Common;
 
 namespace Lyo.Query.Models.Common.Request;
 

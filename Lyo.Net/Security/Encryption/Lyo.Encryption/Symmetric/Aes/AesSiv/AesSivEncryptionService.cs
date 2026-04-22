@@ -9,8 +9,8 @@ using Lyo.Keystore;
 namespace Lyo.Encryption.Symmetric.Aes.AesSiv;
 
 /// <summary>
-/// AES-SIV (RFC 5297) via Dorssel.Security.Cryptography.AesExtra. The 16-byte synthetic IV is stored in the header "nonce" field; ciphertext is the CTR payload only (no separate tag).
-/// V1 uses empty associated data (<see cref="ReadOnlySpan{T}.Empty"/>).
+/// AES-SIV (RFC 5297) via Dorssel.Security.Cryptography.AesExtra. The 16-byte synthetic IV is stored in the header "nonce" field; ciphertext is the CTR payload only (no
+/// separate tag). V1 uses empty associated data (<see cref="ReadOnlySpan{T}.Empty" />).
 /// </summary>
 public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
@@ -192,12 +192,9 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             headerKeyVersion = null;
 
         var nonceLength = br.ReadInt32();
-        ArgumentHelpers.ThrowIfNotInRange(
-            nonceLength, SivSize, SivSize, nameof(ms), $"Invalid synthetic IV length: {nonceLength}. Expected {SivSize} bytes.");
-
+        ArgumentHelpers.ThrowIfNotInRange(nonceLength, SivSize, SivSize, nameof(ms), $"Invalid synthetic IV length: {nonceLength}. Expected {SivSize} bytes.");
         var sivBlock = br.ReadBytes(nonceLength);
         var body = br.ReadBytes((int)(ms.Length - ms.Position));
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;
@@ -233,6 +230,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         try {
             using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
                 siv.Decrypt(combined.AsSpan(), plaintext.AsSpan(), ReadOnlySpan<byte>.Empty);
+
             return plaintext;
         }
         catch (CryptographicException ex) {

@@ -58,7 +58,8 @@ public class TwilioSmsServiceTests
     public async Task SendAsync_NullBuilder_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await ExceptionAssertions.ThrowsAsync<ArgumentNullException>(async () => await service.SendAsync((SmsMessageBuilder)null!, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await ExceptionAssertions.ThrowsAsync<ArgumentNullException>(async () => await service.SendAsync((SmsMessageBuilder)null!, ct: TestContext.Current.CancellationToken))
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -98,7 +99,8 @@ public class TwilioSmsServiceTests
     public async Task SendBulkAsync_NullBuilders_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((IEnumerable<SmsMessageBuilder>)null!, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((IEnumerable<SmsMessageBuilder>)null!, TestContext.Current.CancellationToken))
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -258,7 +260,8 @@ public class TwilioSmsServiceTests
     public async Task SendMmsAsync_NullMediaUrls_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendMmsAsync("+15551234567", (IEnumerable<string>)null!, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendMmsAsync("+15551234567", (IEnumerable<string>)null!, ct: TestContext.Current.CancellationToken))
+            .ConfigureAwait(false);
     }
 
     [Fact]

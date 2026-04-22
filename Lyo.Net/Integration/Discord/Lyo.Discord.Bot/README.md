@@ -1,7 +1,8 @@
 # Lyo.Discord.Bot
 
 Library (not an executable) that runs a **DSharpPlus** Discord bot and **upserts** guild data into your Lyo API (`Lyo.Discord.Client` → PostgreSQL-backed `Discord/*` endpoints).
-Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve services from DI, and call `RunAsync`.
+Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord token under **`DiscordBot`**, the Lyo API HTTP client under **`LyoDiscordClient`**, resolve
+services from DI, and call `RunAsync`.
 
 ## Configuration
 
@@ -12,7 +13,8 @@ Use it as a **base** so host apps (e.g. `Lyo.TestConsole`) configure the Discord
 | `Token`   | Discord bot token.                                                                                                     |
 | `Intents` | Optional. Gateway intents; default is `Guilds \| GuildMembers`. For JSON, use the numeric flags value Discord expects. |
 
-**`LyoDiscordClient`** (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits **`ApiClientOptions`** — set **`BaseUrl`** (default `http://localhost:5092/` if omitted), plus compression, **`AcceptEncodings`**, **`EnsureStatusCode`**, etc.
+**`LyoDiscordClient`** (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits *
+*`ApiClientOptions`** — set **`BaseUrl`** (default `http://localhost:5092/` if omitted), plus compression, **`AcceptEncodings`**, **`EnsureStatusCode`**, etc.
 
 ## Registration
 
@@ -96,20 +98,20 @@ The database schema itself lives in **Lyo.Discord.Postgres**; this package only 
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `DSharpPlus` | `4.5.1` |
-| `DSharpPlus.CommandsNext` | `4.5.1` |
-| `DSharpPlus.Interactivity` | `4.5.1` |
-| `DSharpPlus.SlashCommands` | `4.5.1` |
-| `Microsoft.Extensions.Caching.Memory` | `[10.0.1,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10.0.1,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10.0.1,)` |
-| `Microsoft.Extensions.DependencyInjection` | `[10.0.1,)` |
+| Package                                                 | Version     |
+|---------------------------------------------------------|-------------|
+| `DSharpPlus`                                            | `4.5.1`     |
+| `DSharpPlus.CommandsNext`                               | `4.5.1`     |
+| `DSharpPlus.Interactivity`                              | `4.5.1`     |
+| `DSharpPlus.SlashCommands`                              | `4.5.1`     |
+| `Microsoft.Extensions.Caching.Memory`                   | `[10.0.1,)` |
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10.0.1,)` |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10.0.1,)` |
+| `Microsoft.Extensions.DependencyInjection`              | `[10.0.1,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10.0.1,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
-| `Microsoft.Extensions.Options` | `[10.0.1,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10.0.1,)` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10.0.1,)` |
+| `Microsoft.Extensions.Options`                          | `[10.0.1,)` |
+| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10.0.1,)` |
 
 ### Project references
 

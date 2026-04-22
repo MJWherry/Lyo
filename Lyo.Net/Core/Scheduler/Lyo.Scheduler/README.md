@@ -72,8 +72,8 @@ await scheduler.StartAsync();
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                     | Version |
+|---------------------------------------------|---------|
 | `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
 
 ### Project references

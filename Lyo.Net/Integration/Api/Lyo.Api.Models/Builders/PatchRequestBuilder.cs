@@ -119,7 +119,8 @@ public class PatchRequestBuilder
 
     public static PatchRequestBuilder ForIds<T>(IEnumerable<T> ids) => new PatchRequestBuilder().WithIds(ids);
 
-    public static PatchRequestBuilder ForIdentifier(string propertyName, object value) => new PatchRequestBuilder().WithIdentifier(propertyName, ComparisonOperatorEnum.Equals, value);
+    public static PatchRequestBuilder ForIdentifier(string propertyName, object value)
+        => new PatchRequestBuilder().WithIdentifier(propertyName, ComparisonOperatorEnum.Equals, value);
 
     public override string ToString() => $"AllowMultiple={_allowMultiple} Identifiers={_identifiers.Count} Properties={_properties.Count}";
 }

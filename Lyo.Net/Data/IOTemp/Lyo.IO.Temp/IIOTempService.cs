@@ -5,6 +5,9 @@ namespace Lyo.IO.Temp;
 // ReSharper disable once InconsistentNaming
 public interface IIOTempService : IDisposable
 {
+    /// <summary>The per-instance subdirectory under the root that this service owns.</summary>
+    string ServiceDirectory { get; }
+
     int ActiveSessionCount { get; }
 
     // Session-based (primary usage)

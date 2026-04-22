@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Diagnostics;
 using Lyo.Api.Models.Error;
 using Lyo.Exceptions;
@@ -11,17 +10,18 @@ public sealed class LyoProblemDetailsBuilder
     /// <summary>Default root <see cref="LyoProblemDetails.Detail" /> when the problem is driven only by <see cref="LyoProblemDetails.Errors" />.</summary>
     public const string DefaultValidationDetailSummary = "One or more validation errors occurred.";
 
-    private string _errorCode = Constants.ApiErrorCodes.Unknown;
     private readonly List<ApiError> _errors = [];
     private string _detail = string.Empty;
-    private string? _spanId;
-    private DateTime? _timestamp;
-    private string? _traceId;
-    private string? _instance;
-    private int? _status;
-    private string _title = "Request Failed";
-    private string _type = "about:blank";
+
+    private string _errorCode = Constants.ApiErrorCodes.Unknown;
     private Dictionary<string, object?> _extensions = [];
+    private string? _instance;
+    private string? _spanId;
+    private int? _status;
+    private DateTime? _timestamp;
+    private string _title = "Request Failed";
+    private string? _traceId;
+    private string _type = "about:blank";
 
     public static LyoProblemDetailsBuilder Create() => new();
 
@@ -38,11 +38,9 @@ public sealed class LyoProblemDetailsBuilder
 
     public static LyoProblemDetailsBuilder FromException(Exception ex, string? errorCode = null)
     {
-        var code = errorCode
-            ?? (ex is LFException lf ? lf.ErrorCode : null)
-            ?? Constants.ApiErrorCodes.Unknown;
+        var code = errorCode ?? (ex is LFException lf ? lf.ErrorCode : null) ?? Constants.ApiErrorCodes.Unknown;
         var b = CreateWithActivity().WithErrorCode(code);
-        for (Exception? e = ex; e != null; e = e.InnerException)
+        for (var e = ex; e != null; e = e.InnerException)
             b.AddApiError(code, e.Message, e.StackTrace);
 
         return b.WithDetail(ex.Message);
@@ -128,7 +126,7 @@ public sealed class LyoProblemDetailsBuilder
     public LyoProblemDetailsBuilder AddApiError(string code, string description, string? stacktrace = null)
     {
         ArgumentHelpers.ThrowIfNullReturn(description, nameof(description));
-        _errors.Add(new ApiError(code, description, stacktrace));
+        _errors.Add(new(code, description, stacktrace));
         return this;
     }
 
@@ -168,25 +166,13 @@ public sealed class LyoProblemDetailsBuilder
             if (string.IsNullOrEmpty(detail))
                 detail = DefaultValidationDetailSummary;
         }
-        else if (string.IsNullOrEmpty(detail)) {
+        else if (string.IsNullOrEmpty(detail))
             OperationHelpers.ThrowIfNullOrEmpty(_detail, "Detail (or WithMessage) is required to build LyoProblemDetails when there are no errors.");
-        }
 
-        IReadOnlyList<ApiError> errors = _errors.Count > 0 ? _errors : [new ApiError(_errorCode, detail, null)];
-
+        IReadOnlyList<ApiError> errors = _errors.Count > 0 ? _errors : [new(_errorCode, detail)];
         var status = _status ?? LyoProblemDetails.MapErrorCodeToHttpStatus(_errorCode);
-
-        return new LyoProblemDetails(
-            detail,
-            status,
-            _timestamp ?? DateTime.UtcNow,
-            errors,
-            _title,
-            _type,
-            _instance,
-            _traceId,
-            _spanId,
-            null,
+        return new(
+            detail, status, _timestamp ?? DateTime.UtcNow, errors, _title, _type, _instance, _traceId, _spanId, null,
             _extensions.Count > 0 ? new Dictionary<string, object?>(_extensions) : null);
     }
 

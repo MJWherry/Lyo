@@ -1,17 +1,17 @@
 using Lyo.Common;
 using Lyo.Validation;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Web.Components.Validation;
 
 public partial class LyoValidationWrapper<T> : ComponentBase
 {
-    [Parameter]
-    public string? ElementId { get; set; }
+    private bool _hasValidated;
 
     private T? _previousValue;
-    private bool _hasValidated;
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = default!;
@@ -82,7 +82,6 @@ public partial class LyoValidationWrapper<T> : ComponentBase
         }
 
         Result<T>? result = null;
-
         if (Validator is not null)
             result = Validator.Validate(Value);
         else if (ValidationFunc is not null)
@@ -95,7 +94,6 @@ public partial class LyoValidationWrapper<T> : ComponentBase
 
         var errors = result.Errors ?? [];
         SetResult(result.IsSuccess, errors);
-
         if (!result.IsSuccess && ShowSnackbar) {
             foreach (var error in errors)
                 Snackbar.Add(error.Message, Severity.Error);
@@ -106,10 +104,8 @@ public partial class LyoValidationWrapper<T> : ComponentBase
     {
         var validChanged = IsValid != isValid;
         var errorsChanged = !ReferenceEquals(Errors, errors);
-
         IsValid = isValid;
         Errors = errors;
-
         if (validChanged && IsValidChanged.HasDelegate)
             _ = IsValidChanged.InvokeAsync(isValid);
 

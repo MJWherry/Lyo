@@ -1,8 +1,8 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
@@ -10,16 +10,15 @@ namespace Lyo.Web.Automation.Selenium.Browser;
 public sealed class FrameNavigator
 {
     private readonly SeleniumBrowser _scraper;
-    private int _depth;
+
+    /// <summary>Number of nested <see cref="SwitchToFrame(OpenQA.Selenium.IWebElement)" /> levels from default content.</summary>
+    public int Depth { get; private set; }
 
     internal FrameNavigator(SeleniumBrowser scraper)
     {
         ArgumentHelpers.ThrowIfNull(scraper, nameof(scraper));
         _scraper = scraper;
     }
-
-    /// <summary>Number of nested <see cref="SwitchToFrame(OpenQA.Selenium.IWebElement)" /> levels from default content.</summary>
-    public int Depth => _depth;
 
     /// <summary>Switches to the frame located by <paramref name="by" /> (must be visible).</summary>
     public void SwitchToFrame(By by)
@@ -34,32 +33,31 @@ public sealed class FrameNavigator
     public void SwitchToFrame(IWebElement frame)
     {
         ArgumentHelpers.ThrowIfNull(frame, nameof(frame));
-        RunFrameOp("switch_frame", () => {
-            _scraper.GetRequiredDriver().SwitchTo().Frame(frame);
-            _depth++;
-        });
+        RunFrameOp(
+            "switch_frame", () => {
+                _scraper.GetRequiredDriver().SwitchTo().Frame(frame);
+                Depth++;
+            });
     }
 
     /// <summary>Moves one level up (parent frame), or throws if already at default content for this navigator.</summary>
     public void SwitchToParentFrame()
-    {
-        RunFrameOp("parent_frame", () => {
-            if (_depth <= 0)
-                throw new InvalidOperationException("Already at default content (no parent frame).");
+        => RunFrameOp(
+            "parent_frame", () => {
+                if (Depth <= 0)
+                    throw new InvalidOperationException("Already at default content (no parent frame).");
 
-            _scraper.GetRequiredDriver().SwitchTo().ParentFrame();
-            _depth--;
-        });
-    }
+                _scraper.GetRequiredDriver().SwitchTo().ParentFrame();
+                Depth--;
+            });
 
     /// <summary>Returns to the top-level document (clears depth).</summary>
     public void SwitchToDefaultContent()
-    {
-        RunFrameOp("default_content", () => {
-            _scraper.GetRequiredDriver().SwitchTo().DefaultContent();
-            _depth = 0;
-        });
-    }
+        => RunFrameOp(
+            "default_content", () => {
+                _scraper.GetRequiredDriver().SwitchTo().DefaultContent();
+                Depth = 0;
+            });
 
     /// <summary>Async variant of <see cref="SwitchToFrame(OpenQA.Selenium.By)" />.</summary>
     public Task SwitchToFrameAsync(By by, CancellationToken ct = default)
@@ -67,8 +65,7 @@ public sealed class FrameNavigator
             () => {
                 ct.ThrowIfCancellationRequested();
                 SwitchToFrame(by);
-            },
-            ct);
+            }, ct);
 
     /// <summary>Enters a frame and returns a scope that calls <see cref="SwitchToParentFrame" /> on dispose.</summary>
     public FrameScope EnterFrame(By by)
@@ -83,7 +80,7 @@ public sealed class FrameNavigator
     public FrameScope EnterFrame(IWebElement frame)
     {
         SwitchToFrame(frame);
-        return new FrameScope(this);
+        return new(this);
     }
 
     /// <summary>Async <see cref="EnterFrame(OpenQA.Selenium.By)" />.</summary>
@@ -100,19 +97,18 @@ public sealed class FrameNavigator
         var log = _scraper.Logger;
         log.LogDebug("Frame operation {Operation} starting", operation);
         try {
-            using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation))) {
+            using (_scraper.Metrics.StartTimer(_scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperationDuration)), SeleniumMetricTags.ForOperation(_scraper, operation)))
                 action();
-            }
 
             _scraper.Metrics.IncrementCounter(
-                _scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperation)),
-                tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "success") }));
+                _scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperation)), tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "success") }));
+
             log.LogDebug("Frame operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _scraper.Metrics.IncrementCounter(
-                _scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperation)),
-                tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "failure") }));
+                _scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperation)), tags: SeleniumMetricTags.ForOperation(_scraper, operation, new[] { ("result", "failure") }));
+
             _scraper.Metrics.RecordError(_scraper.ResolveMetric(nameof(Wm.Metrics.FrameOperationDuration)), ex, SeleniumMetricTags.ForOperation(_scraper, operation));
             log.LogWarning(ex, "Frame operation {Operation} failed", operation);
             throw;
@@ -126,10 +122,7 @@ public sealed class FrameScope : IDisposable
     private readonly FrameNavigator _navigator;
     private int _disposed;
 
-    internal FrameScope(FrameNavigator navigator)
-    {
-        _navigator = navigator;
-    }
+    internal FrameScope(FrameNavigator navigator) => _navigator = navigator;
 
     /// <inheritdoc />
     public void Dispose()

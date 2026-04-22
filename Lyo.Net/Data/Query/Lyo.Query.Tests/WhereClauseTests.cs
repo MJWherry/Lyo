@@ -451,12 +451,12 @@ public class WhereClauseTests : WhereClauseServiceTests
     [Fact]
     public void GroupClause_Equals_SameStructure_IsEqual()
     {
-        var a = new GroupClause(GroupOperatorEnum.And, null,
-            new ConditionClause("Name", ComparisonOperatorEnum.Equals, "x"),
-            new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 5));
-        var b = new GroupClause(GroupOperatorEnum.And, null,
-            new ConditionClause("Name", ComparisonOperatorEnum.Equals, "x"),
-            new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 5));
+        var a = new GroupClause(
+            GroupOperatorEnum.And, null, new ConditionClause("Name", ComparisonOperatorEnum.Equals, "x"), new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 5));
+
+        var b = new GroupClause(
+            GroupOperatorEnum.And, null, new ConditionClause("Name", ComparisonOperatorEnum.Equals, "x"), new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 5));
+
         Assert.Equal(a, b);
         Assert.Equal(a.GetHashCode(), b.GetHashCode());
     }
@@ -473,14 +473,14 @@ public class WhereClauseTests : WhereClauseServiceTests
     [Fact]
     public void GroupClause_Equals_NestedGroup_IsEqual()
     {
-        var inner = new GroupClause(GroupOperatorEnum.Or, null,
-            new ConditionClause("A", ComparisonOperatorEnum.Equals, 1),
-            new ConditionClause("B", ComparisonOperatorEnum.Equals, 2));
+        var inner = new GroupClause(
+            GroupOperatorEnum.Or, null, new ConditionClause("A", ComparisonOperatorEnum.Equals, 1), new ConditionClause("B", ComparisonOperatorEnum.Equals, 2));
+
         var a = new GroupClause(GroupOperatorEnum.And, null, inner);
-        var b = new GroupClause(GroupOperatorEnum.And, null,
-            new GroupClause(GroupOperatorEnum.Or, null,
-                new ConditionClause("A", ComparisonOperatorEnum.Equals, 1),
-                new ConditionClause("B", ComparisonOperatorEnum.Equals, 2)));
+        var b = new GroupClause(
+            GroupOperatorEnum.And, null,
+            new GroupClause(GroupOperatorEnum.Or, null, new ConditionClause("A", ComparisonOperatorEnum.Equals, 1), new ConditionClause("B", ComparisonOperatorEnum.Equals, 2)));
+
         Assert.Equal(a, b);
     }
 }

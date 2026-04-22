@@ -61,8 +61,8 @@ var url = await azureFileStorage.GetPreSignedUrlAsync(fileId, TimeSpan.FromHours
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package               | Version    |
+|-----------------------|------------|
 | `Azure.Storage.Blobs` | `[12.27,)` |
 
 ### Project references

@@ -10,6 +10,5 @@ public class QRCodeIconOptionsTests
     [InlineData(30, 30)]
     [InlineData(31, 30)]
     [InlineData(50, 30)]
-    public void ClampIconSizePercent_ClampToSupportedRange(int input, int expected)
-        => Assert.Equal(expected, QRCodeIconOptions.ClampIconSizePercent(input));
+    public void ClampIconSizePercent_ClampToSupportedRange(int input, int expected) => Assert.Equal(expected, QRCodeIconOptions.ClampIconSizePercent(input));
 }

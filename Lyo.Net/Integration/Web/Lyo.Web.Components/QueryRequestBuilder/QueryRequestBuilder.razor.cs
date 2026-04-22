@@ -54,7 +54,7 @@ public partial class QueryRequestBuilder
     [Parameter]
     public EventCallback<bool> UseQueryProjectChanged { get; set; }
 
-    protected override void OnParametersSet() => Request.Options ??= new ProjectedQueryRequestOptions();
+    protected override void OnParametersSet() => Request.Options ??= new();
 
     private async Task OnEndpointToggleClicked(bool useProject)
     {
@@ -104,7 +104,7 @@ public partial class QueryRequestBuilder
 
     private async Task OnZipSiblingCollectionSelectionsChanged(bool value)
     {
-        Request.Options ??= new ProjectedQueryRequestOptions();
+        Request.Options ??= new();
         Request.Options.ZipSiblingCollectionSelections = value;
         await RequestChanged.InvokeAsync(Request);
     }

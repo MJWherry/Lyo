@@ -90,7 +90,8 @@ public class QueryRequestScorerTests
     {
         var noSubQuery = new QueryReq {
             WhereClause = new GroupClause(
-                GroupOperatorEnum.And, [new ConditionClause("FirstName", ComparisonOperatorEnum.NotEquals, null), new ConditionClause("LastName", ComparisonOperatorEnum.NotEquals, null)])
+                GroupOperatorEnum.And,
+                [new ConditionClause("FirstName", ComparisonOperatorEnum.NotEquals, null), new ConditionClause("LastName", ComparisonOperatorEnum.NotEquals, null)])
         };
 
         var withSubQuery = new QueryReq {
@@ -119,7 +120,10 @@ public class QueryRequestScorerTests
     public void ScoreDetailed_ComputedFields_BasePerTemplatePlusUniquePlaceholders()
     {
         var without = new ProjectionQueryReq { Amount = 100, Select = ["FirstName"] };
-        var with = new ProjectionQueryReq { Amount = 100, Select = ["FirstName"], ComputedFields = [new("FullName", "{LastName}, {FirstName}"), new("Greeting", "Hello {FirstName}")] };
+        var with = new ProjectionQueryReq {
+            Amount = 100, Select = ["FirstName"], ComputedFields = [new("FullName", "{LastName}, {FirstName}"), new("Greeting", "Hello {FirstName}")]
+        };
+
         var a = QueryRequestScorer.ScoreDetailed(without);
         var b = QueryRequestScorer.ScoreDetailed(with);
         Assert.Equal(0, a.ComputedFieldsScore);
@@ -131,9 +135,9 @@ public class QueryRequestScorerTests
     [Fact]
     public void ScoreDetailed_TotalCountModeExactCostsMoreThanNone()
     {
-        var none = new QueryReq { Options = new QueryRequestOptions { TotalCountMode = QueryTotalCountMode.None } };
-        var hasMore = new QueryReq { Options = new QueryRequestOptions { TotalCountMode = QueryTotalCountMode.HasMore } };
-        var exact = new QueryReq { Options = new QueryRequestOptions { TotalCountMode = QueryTotalCountMode.Exact } };
+        var none = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.None } };
+        var hasMore = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.HasMore } };
+        var exact = new QueryReq { Options = new() { TotalCountMode = QueryTotalCountMode.Exact } };
         var noneScore = QueryRequestScorer.ScoreDetailed(none);
         var hasMoreScore = QueryRequestScorer.ScoreDetailed(hasMore);
         var exactScore = QueryRequestScorer.ScoreDetailed(exact);

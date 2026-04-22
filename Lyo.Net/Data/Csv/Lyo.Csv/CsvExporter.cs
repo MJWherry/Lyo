@@ -536,8 +536,11 @@ internal sealed class CsvExporter : ICsvExporter
         await csv.FlushAsync().ConfigureAwait(false);
     }
 
-    public async Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, Func<T, string>> columnFormatters, Stream csvStream, CancellationToken ct =
- default)
+    public async Task ExportToCsvStreamAsync<T>(
+        IEnumerable<T> data,
+        IReadOnlyDictionary<string, Func<T, string>> columnFormatters,
+        Stream csvStream,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data, nameof(data));
         ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters, nameof(columnFormatters));

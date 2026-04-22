@@ -8,12 +8,12 @@ namespace Lyo.Web.Automation.Selenium.Browser;
 /// <summary>Serializable cookie for export/import (e.g. auth state between runs).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BrowserCookieRecord(
-    string Name, 
-    string Value, 
-    string? Domain = null, 
-    string? Path = null, 
-    bool? Secure = null, 
-    bool? IsHttpOnly = null, 
+    string Name,
+    string Value,
+    string? Domain = null,
+    string? Path = null,
+    bool? Secure = null,
+    bool? IsHttpOnly = null,
     long? ExpiryUnixSeconds = null)
 {
     public override string ToString() => $"{Name}:{Value}";
@@ -23,6 +23,9 @@ public sealed record BrowserCookieRecord(
 public static class BrowserCookieExtensions
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
+    private static BrowserCookieRecord ToRecord(Cookie c)
+        => new(c.Name, c.Value, c.Domain, c.Path, c.Secure, c.IsHttpOnly, c.Expiry.HasValue ? new DateTimeOffset(c.Expiry.Value).ToUnixTimeSeconds() : null);
 
     extension(SeleniumBrowser browser)
     {
@@ -58,18 +61,10 @@ public static class BrowserCookieExtensions
             ArgumentHelpers.ThrowIfNull(cookies, nameof(cookies));
             var driver = browser.GetRequiredDriver();
             foreach (var c in cookies) {
-                var expiry = c.ExpiryUnixSeconds is { } ux
-                    ? DateTimeOffset.FromUnixTimeSeconds(ux).UtcDateTime
-                    : (DateTime?)null;
-
+                var expiry = c.ExpiryUnixSeconds is { } ux ? DateTimeOffset.FromUnixTimeSeconds(ux).UtcDateTime : (DateTime?)null;
                 var sel = new Cookie(c.Name, c.Value, c.Domain ?? "", c.Path ?? "/", expiry);
                 driver.Manage().Cookies.AddCookie(sel);
             }
         }
     }
-
-    private static BrowserCookieRecord ToRecord(Cookie c) 
-        => new(c.Name, c.Value, c.Domain, c.Path, c.Secure, c.IsHttpOnly, c.Expiry.HasValue 
-            ? new DateTimeOffset(c.Expiry.Value).ToUnixTimeSeconds() 
-            : null);
 }

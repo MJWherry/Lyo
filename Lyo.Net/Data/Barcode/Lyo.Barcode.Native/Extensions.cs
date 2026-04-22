@@ -30,9 +30,7 @@ public static class Extensions
         }
 
         /// <param name="configSectionName">Defaults to <see cref="BarcodeServiceOptions.SectionName" />.</param>
-        public IServiceCollection AddNativeBarcodeServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = BarcodeServiceOptions.SectionName)
+        public IServiceCollection AddNativeBarcodeServiceFromConfiguration(IConfiguration configuration, string configSectionName = BarcodeServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services, nameof(services));
             ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));

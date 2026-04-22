@@ -42,8 +42,8 @@ var result = validator.Validate(new CreateUserRequest { Name = "Matt", Email = "
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                             | Version |
+|-------------------------------------|---------|
 | `System.ComponentModel.Annotations` | `5.0.0` |
 
 ### Project references

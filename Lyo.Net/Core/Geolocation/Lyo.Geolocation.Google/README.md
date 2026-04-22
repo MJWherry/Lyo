@@ -60,9 +60,9 @@ additional Google Maps functionality if needed.
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Geo.Google` | `2.*` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Geo.Google`                                | `2.*`   |
 | `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
 
 ### Project references

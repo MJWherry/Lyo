@@ -1,6 +1,6 @@
 @namespace Lyo.Web.Components.DataGrid
-@typeparam TValue
 @using MudBlazor
+@typeparam TValue
 <TemplateColumn T="object?"
                 Title="@Title"
                 Sortable="@Sortable"
@@ -83,12 +83,16 @@
     [Parameter]
     public bool HiddenByDefault { get; set; }
 
-    /// <summary>When set, formats the cell from the field value alone (coerced to <typeparamref name="TValue"/>). Prefer this over <see cref="FormattedValue"/> when you do not need the row.</summary>
+    /// <summary>
+    /// When set, formats the cell from the field value alone (coerced to <typeparamref name="TValue" />). Prefer this over <see cref="FormattedValue" /> when you do not need the
+    /// row.
+    /// </summary>
     [Parameter]
     public Func<TValue, string>? Format { get; set; }
 
     /// <summary>
-    /// When set (and <see cref="Format"/> is null), formats the cell using the projected row and the field value coerced to <typeparamref name="TValue"/> (see <see cref="ProjectedValueHelper.ConvertTo{T}"/>).
+    /// When set (and <see cref="Format" /> is null), formats the cell using the projected row and the field value coerced to <typeparamref name="TValue" /> (see
+    /// <see cref="ProjectedValueHelper.ConvertTo{T}" />).
     /// </summary>
     [Parameter]
     public Func<object?, TValue, string>? FormattedValue { get; set; }

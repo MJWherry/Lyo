@@ -5,13 +5,13 @@ namespace Lyo.Web.Components.UniqueValueSelector;
 
 public partial class UniqueValueSelector<T>
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
     private List<SpUniqueValueCount> _filteredItems = new();
 
     private string _searchText = string.Empty;
     private HashSet<string> _selectedValues = [];
+
+    [Parameter]
+    public string? ElementId { get; set; }
 
     [Parameter]
     [EditorRequired]

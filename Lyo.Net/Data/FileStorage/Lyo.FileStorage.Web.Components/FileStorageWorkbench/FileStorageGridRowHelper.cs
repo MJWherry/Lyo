@@ -36,6 +36,5 @@ public static class FileStorageGridRowHelper
         return false;
     }
 
-    public static object[] GetFileRowKey(object? item)
-        => TryGetFileIdFromRow(item, out var id) ? [id.ToString()] : [];
+    public static object[] GetFileRowKey(object? item) => TryGetFileIdFromRow(item, out var id) ? [id.ToString()] : [];
 }

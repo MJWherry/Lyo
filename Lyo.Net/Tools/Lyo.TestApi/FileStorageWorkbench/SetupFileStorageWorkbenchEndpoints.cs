@@ -46,8 +46,7 @@ public static class SetupFileStorageWorkbenchEndpoints
     }
 
     /// <summary>API QueryProject results for file metadata are cached; invalidate after any mutating file operation so grids see new rows.</summary>
-    private static Task InvalidateFileMetadataQueryCacheAsync(ICacheService cache)
-        => cache.InvalidateQueryCacheAsync<FileMetadataEntity>();
+    private static Task InvalidateFileMetadataQueryCacheAsync(ICacheService cache) => cache.InvalidateQueryCacheAsync<FileMetadataEntity>();
 
     extension(WebApplication app)
     {
@@ -72,23 +71,24 @@ public static class SetupFileStorageWorkbenchEndpoints
                 });
 
             group.MapPost(
-                "files/save-stream", async (
-                    IFormFile file,
-                    [FromQuery] string? originalFileName,
-                    [FromQuery] bool compress,
-                    [FromQuery] bool encrypt,
-                    [FromQuery] string? keyId,
-                    [FromQuery] string? pathPrefix,
-                    [FromQuery] int? chunkSize,
-                    [FromQuery] string? contentType,
-                    [FromQuery] string? tenantId,
-                    IServiceProvider services,
-                    ICacheService cache,
-                    CancellationToken ct) => {
-                    var fileStorage = GetFileStorage(services);
-                    return await SaveStreamFromFormAsync(
-                        file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);
-                }).DisableAntiforgery();
+                    "files/save-stream", async (
+                        IFormFile file,
+                        [FromQuery] string? originalFileName,
+                        [FromQuery] bool compress,
+                        [FromQuery] bool encrypt,
+                        [FromQuery] string? keyId,
+                        [FromQuery] string? pathPrefix,
+                        [FromQuery] int? chunkSize,
+                        [FromQuery] string? contentType,
+                        [FromQuery] string? tenantId,
+                        IServiceProvider services,
+                        ICacheService cache,
+                        CancellationToken ct) => {
+                        var fileStorage = GetFileStorage(services);
+                        return await SaveStreamFromFormAsync(
+                            file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);
+                    })
+                .DisableAntiforgery();
 
             group.MapGet(
                 "files/{fileId:guid}/presigned-read", async (Guid fileId, double? expiresHours, string? pathPrefix, IServiceProvider services, CancellationToken ct) => {
@@ -153,7 +153,6 @@ public static class SetupFileStorageWorkbenchEndpoints
                     var fileStorage = GetFileStorage(services);
                     var metadata = await fileStorage.GetMetadataAsync(fileId, ct);
                     var fileName = metadata.OriginalFileName ?? metadata.SourceFileName;
-
                     if (!metadata.IsEncrypted && !metadata.IsCompressed) {
                         // Plain files: try presigned URL redirect to avoid any server-side buffering.
                         try {
@@ -347,28 +346,30 @@ public static class SetupFileStorageWorkbenchEndpoints
             return app;
         }
 
-        /// <summary>POST /upload/file — same contract as Workbench/FileStorage/files/save-stream for callers that hit Test API directly (e.g. Gateway without nesting under the workbench prefix).</summary>
+        /// <summary>
+        /// POST /upload/file — same contract as Workbench/FileStorage/files/save-stream for callers that hit Test API directly (e.g. Gateway without nesting under the workbench
+        /// prefix).
+        /// </summary>
         public WebApplication BuildDirectFileUploadEndpoint()
         {
             app.MapPost(
-                Constants.DirectFileUpload.FilePath,
-                async (
-                    IFormFile file,
-                    [FromQuery] string? originalFileName,
-                    [FromQuery] bool compress,
-                    [FromQuery] bool encrypt,
-                    [FromQuery] string? keyId,
-                    [FromQuery] string? pathPrefix,
-                    [FromQuery] int? chunkSize,
-                    [FromQuery] string? contentType,
-                    [FromQuery] string? tenantId,
-                    IServiceProvider services,
-                    ICacheService cache,
-                    CancellationToken ct) => {
-                    var fileStorage = GetFileStorage(services);
-                    return await SaveStreamFromFormAsync(
-                        file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);
-                })
+                    Constants.DirectFileUpload.FilePath, async (
+                        IFormFile file,
+                        [FromQuery] string? originalFileName,
+                        [FromQuery] bool compress,
+                        [FromQuery] bool encrypt,
+                        [FromQuery] string? keyId,
+                        [FromQuery] string? pathPrefix,
+                        [FromQuery] int? chunkSize,
+                        [FromQuery] string? contentType,
+                        [FromQuery] string? tenantId,
+                        IServiceProvider services,
+                        ICacheService cache,
+                        CancellationToken ct) => {
+                        var fileStorage = GetFileStorage(services);
+                        return await SaveStreamFromFormAsync(
+                            file, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, fileStorage, cache, ct);
+                    })
                 .DisableAntiforgery()
                 .WithTags("DirectFileUpload");
 

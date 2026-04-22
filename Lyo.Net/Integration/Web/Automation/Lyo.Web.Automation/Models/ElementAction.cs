@@ -21,16 +21,14 @@ public abstract record ElementAction;
 public sealed record ClickElementAction(bool ScrollIntoView = true) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"click (scrollIntoView: {ScrollIntoView})";
+    public override string ToString() => $"click (scrollIntoView: {ScrollIntoView})";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record InputTextElementAction(string Text, bool ClearFirst = true) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"inputText (clearFirst: {ClearFirst}, text: {AutomationDisplayText.Ellipsis(Text, 48)})";
+    public override string ToString() => $"inputText (clearFirst: {ClearFirst}, text: {AutomationDisplayText.Ellipsis(Text, 48)})";
 }
 
 /// <summary>Sends keys without clearing first (use for special key sequences).</summary>
@@ -38,46 +36,40 @@ public sealed record InputTextElementAction(string Text, bool ClearFirst = true)
 public sealed record SendKeysElementAction(string Keys) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"sendKeys ({AutomationDisplayText.Ellipsis(Keys, 64)})";
+    public override string ToString() => $"sendKeys ({AutomationDisplayText.Ellipsis(Keys, 64)})";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ClearElementAction : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => "clear";
+    public override string ToString() => "clear";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record SubmitElementAction : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => "submit";
+    public override string ToString() => "submit";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record SelectByTextElementAction(string Text) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"selectByText ({AutomationDisplayText.Ellipsis(Text, 64)})";
+    public override string ToString() => $"selectByText ({AutomationDisplayText.Ellipsis(Text, 64)})";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record SelectByValueElementAction(string Value) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"selectByValue ({AutomationDisplayText.Ellipsis(Value, 64)})";
+    public override string ToString() => $"selectByValue ({AutomationDisplayText.Ellipsis(Value, 64)})";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record SelectByIndexElementAction(int Index) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"selectByIndex ({Index})";
+    public override string ToString() => $"selectByIndex ({Index})";
 }

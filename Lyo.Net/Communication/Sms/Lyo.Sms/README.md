@@ -520,10 +520,10 @@ All bulk SMS operations, rate limiting, and common functionality are automatical
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
 
 ### Project references
 

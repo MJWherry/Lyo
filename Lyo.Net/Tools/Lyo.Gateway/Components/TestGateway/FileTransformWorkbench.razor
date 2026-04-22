@@ -1,5 +1,4 @@
 @using System.Text
-@using Lyo.Common.Records
 @using Lyo.Compression.Models
 @using Lyo.Encryption
 @using Lyo.Encryption.Symmetric.Aes.AesSiv
@@ -16,7 +15,8 @@
             <MudText Typo="Typo.h5">Encryption / Compression</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
                 Choose compression and/or encryption, then run forward or reverse on a file or raw text. When both are selected, forward runs compression then encryption, and
-                reverse runs decryption then decompression. In raw text mode, forward uses UTF-8 plaintext in the text box; reverse expects Base64 (type or paste into the text area, or load via <strong>Input from clipboard</strong>; whitespace ignored when decoding).
+                reverse runs decryption then decompression. In raw text mode, forward uses UTF-8 plaintext in the text box; reverse expects Base64 (type or paste into the text
+                area, or load via <strong>Input from clipboard</strong>; whitespace ignored when decoding).
             </MudText>
         </div>
 
@@ -35,10 +35,12 @@
                                                 Class="file-transform-workbench-input-toggle">
                                     <MudButton OnClick="@(() => OnInputModeToggleClicked(false))"
                                                Variant="@(!_useRawText ? Variant.Filled : Variant.Outlined)"
-                                               Color="@(!_useRawText ? Color.Primary : Color.Default)">File</MudButton>
+                                               Color="@(!_useRawText ? Color.Primary : Color.Default)">File
+                                    </MudButton>
                                     <MudButton OnClick="@(() => OnInputModeToggleClicked(true))"
                                                Variant="@(_useRawText ? Variant.Filled : Variant.Outlined)"
-                                               Color="@(_useRawText ? Color.Primary : Color.Default)">Raw text</MudButton>
+                                               Color="@(_useRawText ? Color.Primary : Color.Default)">Raw text
+                                    </MudButton>
                                 </MudButtonGroup>
                             </MudStack>
                             @if (_useRawText) {
@@ -46,6 +48,7 @@
                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                         Enter Base64-encoded ciphertext or compressed bytes; whitespace is ignored when decoding. Use the button below to paste from the clipboard.
                                     </MudText>
+
                                     <MudTextField T="string"
                                                   @bind-Value="_rawText"
                                                   Label="Input (Base64)"
@@ -53,6 +56,7 @@
                                                   Lines="8"
                                                   FullWidth="true"
                                                   HelperText="Paste or type Base64; or load from clipboard below."/>
+
                                     @if (!string.IsNullOrEmpty(_rawText)) {
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                                             @_rawText.Length characters in input.
@@ -80,6 +84,7 @@
                                                OnUploadCompleted="OnUploadCompletedAsync"
                                                OnUploadCancelled="OnUploadCancelledAsync"
                                                OnUploadFailed="OnUploadFailedAsync"/>
+
                                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                                     Upload status: @_uploadStatus
                                 </MudText>
@@ -133,15 +138,18 @@
                                                     Class="file-transform-workbench-encryption-mode-toggle">
                                         <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(false))"
                                                    Variant="@(!_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
-                                                   Color="@(!_useTwoKeyEncryption ? Color.Primary : Color.Default)">Normal</MudButton>
+                                                   Color="@(!_useTwoKeyEncryption ? Color.Primary : Color.Default)">Normal
+                                        </MudButton>
                                         <MudButton OnClick="@(() => OnTwoKeyEncryptionToggleClicked(true))"
                                                    Variant="@(_useTwoKeyEncryption ? Variant.Filled : Variant.Outlined)"
-                                                   Color="@(_useTwoKeyEncryption ? Color.Primary : Color.Default)">Two-key</MudButton>
+                                                   Color="@(_useTwoKeyEncryption ? Color.Primary : Color.Default)">Two-key
+                                        </MudButton>
                                     </MudButtonGroup>
                                 </MudStack>
 
                                 @if (_useTwoKeyEncryption) {
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Data (payload)</MudText>
+
                                     <MudGrid Spacing="2">
                                         <MudItem xs="12" sm="@(ShowsTwoKeyDataKeySize ? 6 : 12)">
                                             <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Data decryption algorithm" : "Data encryption algorithm")"
@@ -173,6 +181,7 @@
                                     </MudGrid>
 
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">Key wrapping (KEK)</MudText>
+
                                     <MudGrid Spacing="2">
                                         <MudItem xs="12" sm="@(ShowsTwoKeyKekKeySize ? 6 : 12)">
                                             <MudSelect T="EncryptionAlgorithm?" Label="@(_reverse ? "Key decryption algorithm" : "Key encryption algorithm")"
@@ -264,10 +273,12 @@
                                             Class="file-transform-workbench-direction-toggle">
                                 <MudButton OnClick="@(() => OnDirectionToggleClicked(false))"
                                            Variant="@(!_reverse ? Variant.Filled : Variant.Outlined)"
-                                           Color="@(!_reverse ? Color.Primary : Color.Default)">Forward</MudButton>
+                                           Color="@(!_reverse ? Color.Primary : Color.Default)">Forward
+                                </MudButton>
                                 <MudButton OnClick="@(() => OnDirectionToggleClicked(true))"
                                            Variant="@(_reverse ? Variant.Filled : Variant.Outlined)"
-                                           Color="@(_reverse ? Color.Primary : Color.Default)">Reverse</MudButton>
+                                           Color="@(_reverse ? Color.Primary : Color.Default)">Reverse
+                                </MudButton>
                             </MudButtonGroup>
                         </MudStack>
 
@@ -309,8 +320,11 @@
                         }
                         else {
                             <MudText Typo="Typo.subtitle2">@(_result.OutputBytes.Length > 0 ? "Output File" : "Analysis")</MudText>
+
                             <MudText Typo="Typo.body2">@_result.OutputFileName</MudText>
+
                             <MudDivider/>
+
                             <MudSimpleTable Dense="true">
                                 <tbody>
                                 @foreach (var detail in _result.Details) {
@@ -339,14 +353,7 @@
     private AesSivKeySizeBits _dataAesSivKeySize = AesSivKeySizeBits.Bits256;
     private AesSivKeySizeBits _keyAesSivKeySize = AesSivKeySizeBits.Bits256;
 
-    private static readonly EncryptionAlgorithm[] SymmetricWorkbenchAlgorithms =
-    [
-        EncryptionAlgorithm.AesGcm,
-        EncryptionAlgorithm.ChaCha20Poly1305,
-        EncryptionAlgorithm.AesCcm,
-        EncryptionAlgorithm.AesSiv,
-        EncryptionAlgorithm.XChaCha20Poly1305
-    ];
+    private static readonly EncryptionAlgorithm[] SymmetricWorkbenchAlgorithms = [EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305];
 
     private static string FormatEncryptionAlgorithmLabel(EncryptionAlgorithm a)
         => a switch {
@@ -355,23 +362,20 @@
             EncryptionAlgorithm.AesCcm => "AES-CCM",
             EncryptionAlgorithm.AesSiv => "AES-SIV",
             EncryptionAlgorithm.XChaCha20Poly1305 => "XChaCha20-Poly1305",
-            _ => a.ToString()
+            var _ => a.ToString()
         };
 
-    private static bool UsesAesGcmOrCcmKeySize(EncryptionAlgorithm? algorithm)
-        => algorithm is EncryptionAlgorithm.AesGcm or EncryptionAlgorithm.AesCcm;
+    private static bool UsesAesGcmOrCcmKeySize(EncryptionAlgorithm? algorithm) => algorithm is EncryptionAlgorithm.AesGcm or EncryptionAlgorithm.AesCcm;
 
     /// <summary>True when the data-encryption row shows a key-size dropdown beside the algorithm (two-key mode).</summary>
-    private bool ShowsTwoKeyDataKeySize
-        => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+    private bool ShowsTwoKeyDataKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
 
     /// <summary>True when the key-wrapping row shows a key-size dropdown beside the algorithm (two-key mode).</summary>
-    private bool ShowsTwoKeyKekKeySize
-        => UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm) || _keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+    private bool ShowsTwoKeyKekKeySize => UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm) || _keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
 
     /// <summary>True when normal (single) mode shows a key-size dropdown beside the algorithm.</summary>
-    private bool ShowsNormalKeySize
-        => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+    private bool ShowsNormalKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
     private bool _reverse;
     private bool _useRawText;
     private string _rawText = string.Empty;
@@ -385,20 +389,13 @@
     private bool _useTwoKeyEncryption;
     private string _uploadStatus = "No file selected.";
 
-    private bool ActionButtonsDisabled
-        => _busy || (!_useRawText && _uploadedFile == null) || (_useRawText && string.IsNullOrWhiteSpace(_rawText));
+    private bool ActionButtonsDisabled => _busy || (!_useRawText && _uploadedFile == null) || (_useRawText && string.IsNullOrWhiteSpace(_rawText));
 
     private const int MaxClipboardCopyBytes = 512 * 1024;
 
-    private bool CanCopyResultToClipboard
-        => _result != null && _result.OutputBytes.Length > 0 && _result.OutputBytes.Length <= MaxClipboardCopyBytes;
+    private bool CanCopyResultToClipboard => _result != null && _result.OutputBytes.Length > 0 && _result.OutputBytes.Length <= MaxClipboardCopyBytes;
 
-    private string CopyResultTooltip
-        => _result == null || _result.OutputBytes.Length == 0
-            ? string.Empty
-            : _result.OutputBytes.Length > MaxClipboardCopyBytes
-                ? $"Output exceeds {MaxClipboardCopyBytes / 1024} KB — use download."
-                : "Copy as UTF-8 when lossless, otherwise Base64.";
+    private string CopyResultTooltip => _result == null || _result.OutputBytes.Length == 0 ? string.Empty : _result.OutputBytes.Length > MaxClipboardCopyBytes ? $"Output exceeds {MaxClipboardCopyBytes / 1024} KB — use download." : "Copy as UTF-8 when lossless, otherwise Base64.";
 
     private void OnTwoKeyEncryptionToggleClicked(bool twoKey)
     {
@@ -472,8 +469,7 @@
         return IsLosslessUtf8(bytes) ? Encoding.UTF8.GetString(bytes) : Convert.ToBase64String(bytes);
     }
 
-    private static bool IsLosslessUtf8(byte[] data)
-        => Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(data)).AsSpan().SequenceEqual(data);
+    private static bool IsLosslessUtf8(byte[] data) => Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(data)).AsSpan().SequenceEqual(data);
 
     private bool TryBuildInput(out TestGatewayUploadedFile? input)
     {

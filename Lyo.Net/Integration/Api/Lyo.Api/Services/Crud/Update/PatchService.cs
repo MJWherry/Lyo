@@ -15,6 +15,7 @@ using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
@@ -63,7 +64,7 @@ public class PatchService<TContext>(
                 return ResultFactory.PatchFailure<TResult>(
                     LogAndReturnApiError(
                         $"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}",
-                        Models.Constants.ApiErrorCodes.InvalidOperation));
+                        Constants.ApiErrorCodes.InvalidOperation));
             }
 
             // For single entity patch, just patch the first one
@@ -79,21 +80,15 @@ public class PatchService<TContext>(
                 return result;
             }
 
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
-                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
                 .ConfigureAwait(false);
+
             var keys = typeConversion.GetPrimaryKeyValues(entity, context);
             cache.Set(
-                QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys, includes: null, rawResponse: false),
-                result.NewData!,
+                QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys, null, false), result.NewData!,
                 cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
                     ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
-                    :
-                    [
-                        "entities",
-                        QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
-                        QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys),
-                    ]);
+                    : ["entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)), QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys)]);
 
             RecordCrudSuccess(operation, typeof(TDbModel));
             return result;
@@ -101,7 +96,7 @@ public class PatchService<TContext>(
         catch (LFException ex) {
             Logger.LogWarning(ex, "Business logic error during patch operation for {EntityType}: {ErrorCode}", entityTypeName, ex.ErrorCode);
             RecordCrudFailure(operation, typeof(TDbModel));
-            return ResultFactory.PatchFailure<TResult>(LogAndReturnApiError(ex, "Patch Error", Models.Constants.ApiErrorCodes.InvalidPatchRequest));
+            return ResultFactory.PatchFailure<TResult>(LogAndReturnApiError(ex, "Patch Error", Constants.ApiErrorCodes.InvalidPatchRequest));
         }
         catch (Exception ex) {
             Logger.LogError(ex, "Unexpected error during patch operation for {EntityType}", entityTypeName);
@@ -126,7 +121,7 @@ public class PatchService<TContext>(
         var responseTypeName = typeof(TResult).Name;
         using var scope = BeginActionScope("PATCH BULK", typeof(PatchRequest), typeof(TDbModel), typeof(TResult));
         Logger.LogInformation("Starting bulk patch operation for entity {EntityType} to response {ResponseType}", entityTypeName, responseTypeName);
-        var bulkValidation = BulkListRequestValidator.Validate(new BulkListRequestValidatorInput(requestList.Count, bulkOptions.MaxAmount));
+        var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk patch size validation failed for {EntityType}: {Code} {Message}", entityTypeName, err.Code, err.Message);
@@ -173,7 +168,7 @@ public class PatchService<TContext>(
                 var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct).ConfigureAwait(false);
                 if (entities.Count == 0) {
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for patch.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
@@ -183,9 +178,8 @@ public class PatchService<TContext>(
 
                 if (entities.Count > 1 && !request.AllowMultiple) {
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
-                        .WithMessage(
-                            $"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
+                        .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
                     results.Add(ResultFactory.PatchFailure<TResult>(err));
@@ -230,8 +224,7 @@ public class PatchService<TContext>(
             var bulkResult = new PatchBulkResult<TResult>(results, updated, noChange, failed);
             if (updated > 0) {
                 var keySets = modifiedEntityResultPairs.ConvertAll(p => typeConversion.GetPrimaryKeyValues(p.Entity, context));
-                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct)
-                    .ConfigureAwait(false);
+                await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), keySets, ct).ConfigureAwait(false);
             }
 
             return bulkResult;
@@ -306,7 +299,7 @@ public class PatchService<TContext>(
                     var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct).ConfigureAwait(false);
                     if (entities.Count == 0) {
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                            .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                             .WithMessage($"Entity not found for patch.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -317,9 +310,8 @@ public class PatchService<TContext>(
 
                     if (entities.Count > 1 && !request.AllowMultiple) {
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
-                            .WithMessage(
-                                $"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
+                            .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
                         successes.Add(ResultFactory.PatchFailure<TResult>(err));
@@ -397,7 +389,7 @@ public class PatchService<TContext>(
             if (entities.Count == 0) {
                 return ResultFactory.PatchFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for patch.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -405,9 +397,8 @@ public class PatchService<TContext>(
             if (entities.Count > 1 && !request.AllowMultiple) {
                 return ResultFactory.PatchFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
-                        .WithMessage(
-                            $"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
+                        .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
 
@@ -416,7 +407,7 @@ public class PatchService<TContext>(
             return await PatchInternal<TDbModel, TResult>(entity, request, context, before, after, ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
-            return ResultFactory.PatchFailure<TResult>(LogAndReturnApiError(ex, "Individual Patch Error", Models.Constants.ApiErrorCodes.InvalidPatchRequest));
+            return ResultFactory.PatchFailure<TResult>(LogAndReturnApiError(ex, "Individual Patch Error", Constants.ApiErrorCodes.InvalidPatchRequest));
         }
     }
 
@@ -461,7 +452,7 @@ public class PatchService<TContext>(
             LogPatchPropertyValidationIssues(typeof(TDbModel).Name, propertyIssues);
             return ResultFactory.PatchFailure<TResult>(
                 LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidPatchRequest)
+                    .WithErrorCode(Constants.ApiErrorCodes.InvalidPatchRequest)
                     .WithMessage("Invalid patch request.")
                     .AddErrors(propertyIssues)
                     .Build());
@@ -535,7 +526,7 @@ public class PatchService<TContext>(
                 LogPatchPropertyValidationIssues(entityTypeName, propertyIssues);
                 return ResultFactory.PatchFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidPatchRequest)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidPatchRequest)
                         .WithMessage("Invalid patch request.")
                         .AddErrors(propertyIssues)
                         .Build());
@@ -623,13 +614,9 @@ public class PatchService<TContext>(
     }
 
     private void LogPatchPropertyValidationIssues(string entityTypeName, IReadOnlyList<ApiError> issues)
-    {
-        Logger.LogWarning(
-            "Patch property validation failed for {EntityType}: {IssueCount} issue(s). {Details}",
-            entityTypeName,
-            issues.Count,
+        => Logger.LogWarning(
+            "Patch property validation failed for {EntityType}: {IssueCount} issue(s). {Details}", entityTypeName, issues.Count,
             string.Join("; ", issues.Select(static e => $"{e.Code}: {e.Description}")));
-    }
 
     private Dictionary<string, PropertyInfo> GetCachedProperties(Type type)
     {

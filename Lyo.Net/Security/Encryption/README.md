@@ -65,24 +65,27 @@ algorithms, key management, and envelope encryption patterns.
     - Extensive test coverage
     - Well-documented API
 
-On-disk layouts, default file extensions, and MIME types for Lyo ciphertext are **Lyo-specific** (registered on `FileTypeInfo` in **Lyo.Common**); they describe interoperability within this stack, not a single industry-wide “AES-GCM file” or “RSA file” format. See [Lyo ciphertext files and metadata](#lyo-ciphertext-files-and-metadata).
+On-disk layouts, default file extensions, and MIME types for Lyo ciphertext are **Lyo-specific** (registered on `FileTypeInfo` in **Lyo.Common**); they describe interoperability
+within this stack, not a single industry-wide “AES-GCM file” or “RSA file” format. See [Lyo ciphertext files and metadata](#lyo-ciphertext-files-and-metadata).
 
 ## 🎯 Target frameworks: net10.0 and netstandard2.0
 
-**Lyo.Encryption** multi-targets **`net10.0`** and **`netstandard2.0`**. The **supported algorithms and acceptable key material sizes are the same** on both: blobs encrypted on one target decrypt on the other when keys and formats match.
+**Lyo.Encryption** multi-targets **`net10.0`** and **`netstandard2.0`**. The **supported algorithms and acceptable key material sizes are the same** on both: blobs encrypted on one
+target decrypt on the other when keys and formats match.
 
-| Algorithm (typical service) | Key / IV sizes | `net10.0` | `netstandard2.0` |
-| --- | --- | --- | --- |
-| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit) | `System.Security.Cryptography.AesGcm` | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout) |
-| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`) | **32-byte** key; **12-byte** nonce; **16-byte** tag | `System.Security.Cryptography.ChaCha20Poly1305` | BouncyCastle (**same** sizes and layout) |
-| **AES-CCM** (`AesCcmEncryptionService`) | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag | BouncyCastle | BouncyCastle |
-| **AES-SIV** (`AesSivEncryptionService`) | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297) | Dorssel.Security.Cryptography.AesExtra | Dorssel.Security.Cryptography.AesExtra |
-| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`) | **32-byte** key; **24-byte** nonce; **16-byte** tag | BouncyCastle | BouncyCastle |
-| **RSA** (`RsaEncryptionService`, RSA leg of `AesGcmRsaEncryptionService`) | **≥ 2048-bit** RSA modulus (enforced in `RsaEncryptionService`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
+| Algorithm (typical service)                                                                                                 | Key / IV sizes                                                                                                                                                                                    | `net10.0`                                                                                                         | `netstandard2.0`                                                                |
+|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| **AES-GCM** (`AesGcmEncryptionService`, DEK layer in `TwoKeyEncryptionService`, data layer in `AesGcmRsaEncryptionService`) | **AES-128 / 192 / 256** → **16, 24, or 32-byte** keys; **12-byte** nonce (96-bit); **16-byte** tag (128-bit)                                                                                      | `System.Security.Cryptography.AesGcm`                                                                             | BouncyCastle AES-GCM (**same** sizes and on-the-wire layout)                    |
+| **ChaCha20-Poly1305** (`ChaCha20Poly1305EncryptionService`)                                                                 | **32-byte** key; **12-byte** nonce; **16-byte** tag                                                                                                                                               | `System.Security.Cryptography.ChaCha20Poly1305`                                                                   | BouncyCastle (**same** sizes and layout)                                        |
+| **AES-CCM** (`AesCcmEncryptionService`)                                                                                     | **16 / 24 / 32-byte** keys; **12-byte** nonce; **16-byte** tag                                                                                                                                    | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **AES-SIV** (`AesSivEncryptionService`)                                                                                     | **32, 48, or 64-byte** keys (`AesSivKeySizeBits`: 256 / 384 / 512-bit key material per RFC 5297)                                                                                                  | Dorssel.Security.Cryptography.AesExtra                                                                            | Dorssel.Security.Cryptography.AesExtra                                          |
+| **XChaCha20-Poly1305** (`XChaCha20Poly1305EncryptionService`)                                                               | **32-byte** key; **24-byte** nonce; **16-byte** tag                                                                                                                                               | BouncyCastle                                                                                                      | BouncyCastle                                                                    |
+| **RSA** (`RsaEncryptionService`, RSA leg of `AesGcmRsaEncryptionService`)                                                   | **≥ 2048-bit** RSA modulus (enforced in `RsaEncryptionService`; **3072+** recommended for new keys). Default **OAEP-SHA256**. Usable plaintext size per operation depends on modulus and padding. | `RSA` + PEM/PFX via BCL (`ImportSubjectPublicKeyInfo` / `ImportPkcs8PrivateKey`, `X509CertificateLoader` for PFX) | `RSA` + **BouncyCastle PEM** import for SPKI/PKCS#8; PFX via `X509Certificate2` |
 
 **Interop:** File extensions, stream headers, and chunk framing are **not** TFM-specific.
 
-**Errors:** On **net10.0**, BCL AEAD decrypt paths may throw **`AuthenticationTagMismatchException`**, which some call sites map to **`DecryptionFailedException`**. On **netstandard2.0**, the same failure is usually a **`CryptographicException`** (still wrapped as **`DecryptionFailedException`** where applicable).
+**Errors:** On **net10.0**, BCL AEAD decrypt paths may throw **`AuthenticationTagMismatchException`**, which some call sites map to **`DecryptionFailedException`**. On *
+*netstandard2.0**, the same failure is usually a **`CryptographicException`** (still wrapped as **`DecryptionFailedException`** where applicable).
 
 ## 🏁 Quick Start
 
@@ -567,7 +570,8 @@ var service = new AesGcmEncryptionService(keyStore);
 - **ChaCha20Poly1305**: FormatVersion=V1, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".chacha"
 - **RSA**: FormatVersion=null, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".rsa"
 - **AES-GCM-RSA**: FormatVersion=null, MaxInputSize=long.MaxValue, MinInputSize=1, FileExtension=".agr"
-- **Two-Key**: Uses the inner `IEncryptionService.FileExtension` plus `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`). With AES-GCM as the DEK service, default ciphertext files use **`.ag2k`**.
+- **Two-Key**: Uses the inner `IEncryptionService.FileExtension` plus `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`). With AES-GCM as the DEK service, default ciphertext files use *
+  *`.ag2k`**.
 
 ### 11. Error Handling
 
@@ -789,11 +793,15 @@ public class MyService
 
 ### Lyo ciphertext files and metadata
 
-Algorithms such as AES-GCM and RSA are standardized; **how** ciphertext is framed on disk (headers, chunks, default extensions) is defined by this library and related packages. Those defaults are not interchangeable with arbitrary third-party “`.aes`” or ad-hoc blobs.
+Algorithms such as AES-GCM and RSA are standardized; **how** ciphertext is framed on disk (headers, chunks, default extensions) is defined by this library and related packages.
+Those defaults are not interchangeable with arbitrary third-party “`.aes`” or ad-hoc blobs.
 
-- **`FileTypeInfo` (Lyo.Common)** registers human-readable names, canonical extensions (for example `.ag`, `.chacha`, `.ag2k` for two-key with an AES-GCM inner encryptor), and vendor MIME types such as `application/x-lyo-ciphertext-aes-gcm`. Use these when you need consistent content typing or UI labels.
-- **Two-key file names** append `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`) to the inner encryption service’s extension (for example `.ag` → `.ag2k`). `ITwoKeyEncryptionService.FileExtension` exposes the combined value.
-- **Lyo.FileStorage** (when resolving stored blobs without explicit metadata) considers `FileTypeInfo.CommonStorageResolutionSuffixes`, which includes stream-compression suffixes and Lyo ciphertext extensions.
+- **`FileTypeInfo` (Lyo.Common)** registers human-readable names, canonical extensions (for example `.ag`, `.chacha`, `.ag2k` for two-key with an AES-GCM inner encryptor), and
+  vendor MIME types such as `application/x-lyo-ciphertext-aes-gcm`. Use these when you need consistent content typing or UI labels.
+- **Two-key file names** append `FileTypeInfo.TwoKeyEnvelopeSuffix` (`"2k"`) to the inner encryption service’s extension (for example `.ag` → `.ag2k`).
+  `ITwoKeyEncryptionService.FileExtension` exposes the combined value.
+- **Lyo.FileStorage** (when resolving stored blobs without explicit metadata) considers `FileTypeInfo.CommonStorageResolutionSuffixes`, which includes stream-compression suffixes
+  and Lyo ciphertext extensions.
 
 ### Encryption Services
 
@@ -1067,13 +1075,13 @@ Built with security best practices in mind, following:
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `BouncyCastle.Cryptography` | `2.6.2` |
-| `Dorssel.Security.Cryptography.AesExtra` | `2.0.0` |
-| `Microsoft.Bcl.AsyncInterfaces` | `10.0.0` *(netstandard2.0 only)* |
+| Package                                                 | Version                                          |
+|---------------------------------------------------------|--------------------------------------------------|
+| `BouncyCastle.Cryptography`                             | `2.6.2`                                          |
+| `Dorssel.Security.Cryptography.AesExtra`                | `2.0.0`                                          |
+| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` *(netstandard2.0 only)*                 |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `8.0.2` *(netstandard2.0)* / `[10,)` *(net10.0)* |
-| `System.Threading.Tasks.Extensions` | `4.6.3` *(netstandard2.0 only)* |
+| `System.Threading.Tasks.Extensions`                     | `4.6.3` *(netstandard2.0 only)*                  |
 
 ### Project references
 

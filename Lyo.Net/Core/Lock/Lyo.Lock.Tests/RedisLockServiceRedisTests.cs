@@ -58,10 +58,11 @@ public class RedisLockServiceRedisTests : IAsyncLifetime
         var key = "redis-test-execute-3";
         var executed = false;
         await _lockService.ExecuteWithLockAsync(
-            key, async ct => {
-                await Task.Delay(10, ct).ConfigureAwait(false);
-                executed = true;
-            }, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(10, ct).ConfigureAwait(false);
+                    executed = true;
+                }, ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         executed.ShouldBeTrue();
     }
@@ -83,7 +84,8 @@ public class RedisLockServiceRedisTests : IAsyncLifetime
         var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         handle.ShouldNotBeNull();
         await Assert.ThrowsAsync<TimeoutException>(async () => await _lockService.ExecuteWithLockAsync(
-            key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken).ConfigureAwait(false));
+                key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         await handle.ReleaseAsync().ConfigureAwait(false);
     }

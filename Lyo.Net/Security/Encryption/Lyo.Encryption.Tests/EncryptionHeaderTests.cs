@@ -1,5 +1,4 @@
 using System.Text;
-using Lyo.Encryption;
 
 namespace Lyo.Encryption.Tests;
 

@@ -3,10 +3,10 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Audit;
-using Lyo.FileStorage.S3.Multipart;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
+using Lyo.FileStorage.S3.Multipart;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,8 +17,8 @@ namespace Lyo.FileStorage.S3;
 public static class Extensions
 {
     /// <summary>
-    /// Registers <see cref="S3MultipartUploadService" /> as a keyed <see cref="IMultipartUploadService" /> (same key as keyed <see cref="S3FileStorageService" />).
-    /// Usually called automatically by <see cref="S3FileStorageServiceBuilder.Build" />; call this only to register multipart alone or to replace the default registration.
+    /// Registers <see cref="S3MultipartUploadService" /> as a keyed <see cref="IMultipartUploadService" /> (same key as keyed <see cref="S3FileStorageService" />). Usually
+    /// called automatically by <see cref="S3FileStorageServiceBuilder.Build" />; call this only to register multipart alone or to replace the default registration.
     /// </summary>
     public static IServiceCollection AddKeyedS3MultipartUploadService(this IServiceCollection services, string serviceKey)
     {
@@ -39,8 +39,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Same as <see cref="AddKeyedS3MultipartUploadService" /> — alias for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint:
-    /// AWS, MinIO, Wasabi, R2, etc.).
+    /// Same as <see cref="AddKeyedS3MultipartUploadService" /> — alias for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO,
+    /// Wasabi, R2, etc.).
     /// </summary>
     public static IServiceCollection AddKeyedAwsMultipartUploadService(this IServiceCollection services, string serviceKey)
         => services.AddKeyedS3MultipartUploadService(serviceKey);

@@ -1,7 +1,6 @@
 using Lyo.Exceptions;
 using Lyo.Images;
 using Lyo.Metrics;
-using Lyo.QRCode;
 using Lyo.QRCode.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,12 +77,8 @@ public static class QRCoderQrCodeServiceExtensions
         if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
             services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
 
-        services.AddSingleton<IQRCodeService>(sp =>
-            new QRCoderQRCodeService(
-                sp.GetRequiredService<QRCodeServiceOptions>(),
-                sp.GetService<ILogger<QRCoderQRCodeService>>() ?? NullLogger<QRCoderQRCodeService>.Instance,
-                sp.GetService<IMetrics>(),
-                sp.GetService<IImageService>(),
-                sp.GetRequiredService<IQrFrameLayoutService>()));
+        services.AddSingleton<IQRCodeService>(sp => new QRCoderQRCodeService(
+            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<QRCoderQRCodeService>>() ?? NullLogger<QRCoderQRCodeService>.Instance, sp.GetService<IMetrics>(),
+            sp.GetService<IImageService>(), sp.GetRequiredService<IQrFrameLayoutService>()));
     }
 }

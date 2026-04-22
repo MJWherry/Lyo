@@ -20,16 +20,16 @@ public interface IWhereClauseService
     bool MatchesWhereClause<TEntity>(TEntity entity, Models.Common.WhereClause? whereClause);
 
     /// <summary>
-    /// Explains whether an entity matches a where clause and records pass/fail per AST node (field predicates, groups, <see cref="Lyo.Query.Models.Common.WhereClause.SubClause"/> chains).
+    /// Explains whether an entity matches a where clause and records pass/fail per AST node (field predicates, groups,
+    /// <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> chains).
     /// </summary>
     /// <remarks>
-    /// Default implementation throws <see cref="NotImplementedException"/>: in-memory evaluation against a loaded entity is supported by
-    /// <see cref="BaseWhereClauseService"/>; where clauses translated to SQL (e.g. PostgreSQL) are not explained in-process.
+    /// Default implementation throws <see cref="NotImplementedException" />: in-memory evaluation against a loaded entity is supported by <see cref="BaseWhereClauseService" />;
+    /// where clauses translated to SQL (e.g. PostgreSQL) are not explained in-process.
     /// </remarks>
-    WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? whereClause) =>
-        throw new NotImplementedException(
-            "ExplainMatch is only supported for in-memory evaluation against entity instances. "
-            + "Where clauses executed as SQL (e.g. PostgreSQL) do not implement explanation.");
+    WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? whereClause)
+        => throw new NotImplementedException(
+            "ExplainMatch is only supported for in-memory evaluation against entity instances. " + "Where clauses executed as SQL (e.g. PostgreSQL) do not implement explanation.");
 
     /// <summary>
     /// Returns collection include paths referenced in the query node (e.g. "DocketCharges" for "DocketCharges.Code"). Used to load navigations before in-memory SubQuery

@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
-using MudBlazor;
 
 namespace Lyo.Web.Components;
 
@@ -91,17 +90,18 @@ internal static class Extensions
     public static List<ComparisonOperatorEnum> GetAvailableComparisonOperators(FilterPropertyType type)
         => type switch {
             FilterPropertyType.String => [
-                ComparisonOperatorEnum.Contains, ComparisonOperatorEnum.NotContains, ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.StartsWith, ComparisonOperatorEnum.NotStartsWith,
-                ComparisonOperatorEnum.EndsWith, ComparisonOperatorEnum.NotEndsWith, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
+                ComparisonOperatorEnum.Contains, ComparisonOperatorEnum.NotContains, ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals,
+                ComparisonOperatorEnum.StartsWith, ComparisonOperatorEnum.NotStartsWith, ComparisonOperatorEnum.EndsWith, ComparisonOperatorEnum.NotEndsWith,
+                ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
             ],
             FilterPropertyType.Number => [
-                ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual, ComparisonOperatorEnum.LessThan,
-                ComparisonOperatorEnum.LessThanOrEqual, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
+                ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual,
+                ComparisonOperatorEnum.LessThan, ComparisonOperatorEnum.LessThanOrEqual, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn
             ],
             FilterPropertyType.Enum => [ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.In, ComparisonOperatorEnum.NotIn],
             FilterPropertyType.DateTime => [
-                ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual, ComparisonOperatorEnum.LessThan,
-                ComparisonOperatorEnum.LessThanOrEqual
+                ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals, ComparisonOperatorEnum.GreaterThan, ComparisonOperatorEnum.GreaterThanOrEqual,
+                ComparisonOperatorEnum.LessThan, ComparisonOperatorEnum.LessThanOrEqual
             ],
             FilterPropertyType.Bool => [ComparisonOperatorEnum.Equals, ComparisonOperatorEnum.NotEquals],
             var _ => Enum.GetValues<ComparisonOperatorEnum>().ToList()

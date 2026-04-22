@@ -15,9 +15,8 @@ using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Gateway.Components;
 using Lyo.Gateway.Services;
 using Lyo.Gateway.Stores;
-using Lyo.IO.Temp;
-using Lyo.IO.Temp.Models;
 using Lyo.Images;
+using Lyo.IO.Temp;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
@@ -35,9 +34,9 @@ using Lyo.Xlsx;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Services;
+using Constants = Lyo.Gateway.Models.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.AddLogging(i => i.ClearProviders()
     .AddSimpleConsole(c => {
         c.SingleLine = true;
@@ -64,9 +63,9 @@ builder.Services.AddTwilioSmsServiceFromConfiguration(builder.Configuration);
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, new());
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
-builder.Services.AddSingleton<IIOTempService>(new IOTempService(new IOTempServiceOptions {
-    RootDirectory = Path.Combine(Path.GetTempPath(), "lyo-gateway-uploads"), CreateRootDirectoryIfNotExists = true
-}));
+builder.Services.AddSingleton<IIOTempService>(
+    new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
+
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
 builder.Services.AddLyoApiClient();
@@ -120,8 +119,7 @@ app.MapStaticAssets();
 
 // File Storage Workbench download: asks Test API for a time-limited storage URL when safe (plain files → e.g. S3 presigned), redirects the browser there so bytes never cross Gateway; otherwise streams decrypted output from Test API.
 app.MapGet(
-        $"/{Lyo.Gateway.Models.Constants.FileStorageWorkbench.ProxyDownloadRoute}/{{fileId:guid}}",
-        async (
+        $"/{Constants.FileStorageWorkbench.ProxyDownloadRoute}/{{fileId:guid}}", async (
             HttpContext http,
             Guid fileId,
             double? expiresHours,
@@ -138,7 +136,6 @@ app.MapGet(
                 return Results.Problem("ApiClient:BaseUrl is not configured; cannot download via workbench.");
 
             var prefix = fsw.Value.ApiRoutePrefix.Trim().Trim('/');
-
             FileStoreResult? metadata;
             try {
                 metadata = await apiClient.GetAsAsync<FileStoreResult>($"{prefix}/files/{fileId:D}/metadata", ct: ct).ConfigureAwait(false);
@@ -158,9 +155,8 @@ app.MapGet(
 
                 try {
                     var presigned = await apiClient.GetAsAsync<PresignedReadResponse>(presignedRel, ct: ct).ConfigureAwait(false);
-                    if (presigned?.Url != null
-                        && Uri.TryCreate(presigned.Url, UriKind.Absolute, out var presignedUri)
-                        && (presignedUri.Scheme == Uri.UriSchemeHttp || presignedUri.Scheme == Uri.UriSchemeHttps))
+                    if (presigned?.Url != null && Uri.TryCreate(presigned.Url, UriKind.Absolute, out var presignedUri) &&
+                        (presignedUri.Scheme == Uri.UriSchemeHttp || presignedUri.Scheme == Uri.UriSchemeHttps))
                         return Results.Redirect(presigned.Url);
                 }
                 catch {
@@ -179,10 +175,7 @@ app.MapGet(
             }
 
             var body = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
-                ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
-                ?? $"{fileId}";
-
+            var fileName = response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? $"{fileId}";
             var stream = new HttpResponseStream(body, response, request);
             var mediaType = response.Content.Headers.ContentType?.MediaType ?? FileTypeInfo.Unknown.MimeType;
             // Non-seekable proxy stream has no Length — set Content-Length from metadata so browsers show download progress / time remaining.

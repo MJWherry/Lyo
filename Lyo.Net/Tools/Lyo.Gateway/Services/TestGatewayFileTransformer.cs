@@ -1,6 +1,4 @@
 using System.Buffers.Binary;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common;
@@ -13,10 +11,10 @@ using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Symmetric.Aes.AesCcm;
 using Lyo.Encryption.Symmetric.Aes.AesSiv;
 using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
-using AesSivKeySizeBits = Lyo.Encryption.Symmetric.Aes.AesSiv.AesSivKeySizeBits;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Components.Forms;
+using AesSivKeySizeBits = Lyo.Encryption.Symmetric.Aes.AesSiv.AesSivKeySizeBits;
 
 namespace Lyo.Gateway.Services;
 
@@ -72,12 +70,7 @@ public sealed class TestGatewayFileTransformer
             Detail("Direction", options.Reverse ? "Reverse" : "Forward"),
             Detail("Compression", options.ApplyCompression ? options.CompressionAlgorithm.ToString() : "Off"),
             Detail(
-                "Encryption",
-                options.ApplyEncryption
-                    ? options.UseTwoKeyEncryption
-                        ? FormatTwoKeyEncryptionSummary(options)
-                        : FormatSingleKeyEncryptionSummary(options)
-                    : "Off"),
+                "Encryption", options.ApplyEncryption ? options.UseTwoKeyEncryption ? FormatTwoKeyEncryptionSummary(options) : FormatSingleKeyEncryptionSummary(options) : "Off"),
             Detail("Input Size", ToFileSize(file.Size))
         };
 
@@ -126,9 +119,7 @@ public sealed class TestGatewayFileTransformer
     public TestGatewayTransformResult ProbeFile(TestGatewayUploadedFile file)
     {
         var details = new List<KeyValuePair<string, string>> {
-            Detail("Probe", "Header / format sniff (no decryption)"),
-            Detail("Input file", file.FileName),
-            Detail("Input size", ToFileSize(file.Size))
+            Detail("Probe", "Header / format sniff (no decryption)"), Detail("Input file", file.FileName), Detail("Input size", ToFileSize(file.Size))
         };
 
         var data = file.Content;
@@ -138,7 +129,6 @@ public sealed class TestGatewayFileTransformer
         }
 
         var outerEncExt = TryGetOuterEncryptionExtension(file.FileName);
-
         try {
             if (outerEncExt != null && IsTwoKeyFilenameExtension(outerEncExt))
                 AppendTwoKeyEnvelopeDetails(data, details);
@@ -160,10 +150,7 @@ public sealed class TestGatewayFileTransformer
                             TryAppendAesSivEnvelopeDetails(data, details);
                         }
                         catch (Exception siv) {
-                            details.Add(
-                                Detail(
-                                    "Symmetric V1 envelope",
-                                    $"Could not parse as nonce+tag layout ({gcmStyle.Message}) or AES-SIV layout ({siv.Message})."));
+                            details.Add(Detail("Symmetric V1 envelope", $"Could not parse as nonce+tag layout ({gcmStyle.Message}) or AES-SIV layout ({siv.Message})."));
                         }
                     }
                 }
@@ -181,7 +168,7 @@ public sealed class TestGatewayFileTransformer
         return new("(analysis)", FileTypeInfo.Txt.MimeType, [], details);
     }
 
-    /// <summary>Returns the outermost Lyo encryption suffix on <paramref name="fileName"/> (longest match), or null.</summary>
+    /// <summary>Returns the outermost Lyo encryption suffix on <paramref name="fileName" /> (longest match), or null.</summary>
     private static string? TryGetOuterEncryptionExtension(string fileName)
     {
         foreach (var ext in FileTypeInfo.EncryptionFilenameStripSuffixesLongestFirst) {
@@ -192,21 +179,19 @@ public sealed class TestGatewayFileTransformer
         return null;
     }
 
-    private static bool IsTwoKeyFilenameExtension(string ext)
-        => ext.EndsWith(FileTypeInfo.TwoKeyEnvelopeSuffix, StringComparison.OrdinalIgnoreCase);
+    private static bool IsTwoKeyFilenameExtension(string ext) => ext.EndsWith(FileTypeInfo.TwoKeyEnvelopeSuffix, StringComparison.OrdinalIgnoreCase);
 
-    private static bool IsAesSivFilenameExtension(string ext)
-        => ext.Equals(FileTypeInfo.LyoAesSiv.DefaultExtension, StringComparison.OrdinalIgnoreCase);
+    private static bool IsAesSivFilenameExtension(string ext) => ext.Equals(FileTypeInfo.LyoAesSiv.DefaultExtension, StringComparison.OrdinalIgnoreCase);
 
     private static bool IsRsaFamilyFilenameExtension(string ext)
-        => ext.Equals(FileTypeInfo.LyoRsa.DefaultExtension, StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(FileTypeInfo.LyoAesGcmRsa.DefaultExtension, StringComparison.OrdinalIgnoreCase);
+        => ext.Equals(FileTypeInfo.LyoRsa.DefaultExtension, StringComparison.OrdinalIgnoreCase) ||
+            ext.Equals(FileTypeInfo.LyoAesGcmRsa.DefaultExtension, StringComparison.OrdinalIgnoreCase);
 
     private static bool IsSymmetricAuthenticatedFilenameExtension(string ext)
-        => ext.Equals(FileTypeInfo.LyoAesGcm.DefaultExtension, StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(FileTypeInfo.LyoChaCha20Poly1305.DefaultExtension, StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(FileTypeInfo.LyoAesCcm.DefaultExtension, StringComparison.OrdinalIgnoreCase)
-            || ext.Equals(FileTypeInfo.LyoXChaCha20Poly1305.DefaultExtension, StringComparison.OrdinalIgnoreCase);
+        => ext.Equals(FileTypeInfo.LyoAesGcm.DefaultExtension, StringComparison.OrdinalIgnoreCase) ||
+            ext.Equals(FileTypeInfo.LyoChaCha20Poly1305.DefaultExtension, StringComparison.OrdinalIgnoreCase) ||
+            ext.Equals(FileTypeInfo.LyoAesCcm.DefaultExtension, StringComparison.OrdinalIgnoreCase) || ext.Equals(
+                FileTypeInfo.LyoXChaCha20Poly1305.DefaultExtension, StringComparison.OrdinalIgnoreCase);
 
     private static void AppendTwoKeyEnvelopeDetails(byte[] data, List<KeyValuePair<string, string>> details)
     {
@@ -223,7 +208,7 @@ public sealed class TestGatewayFileTransformer
         AppendTwoKeyStreamLayoutFromHeader(data, header, details);
     }
 
-    /// <summary>Reads sizes from the two-key stream layout after <see cref="EncryptionHeader"/> (wrapped DEK + first sealed chunk length).</summary>
+    /// <summary>Reads sizes from the two-key stream layout after <see cref="EncryptionHeader" /> (wrapped DEK + first sealed chunk length).</summary>
     private static void AppendTwoKeyStreamLayoutFromHeader(byte[] data, EncryptionHeader header, List<KeyValuePair<string, string>> details)
     {
         var headerByteLen = header.GetHeaderSize();
@@ -241,7 +226,6 @@ public sealed class TestGatewayFileTransformer
         var chunkLen = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(headerByteLen, 4));
         details.Add(Detail("First sealed chunk length (from stream, bytes)", chunkLen.ToString()));
         details.Add(Detail("First sealed chunk payload offset", (headerByteLen + 4).ToString()));
-
         if (chunkLen < 0 || chunkLen > data.Length - headerByteLen - 4)
             details.Add(Detail("First sealed chunk", $"Length {chunkLen} is inconsistent with file size."));
     }
@@ -296,12 +280,9 @@ public sealed class TestGatewayFileTransformer
         details.Add(Detail("Key id", string.IsNullOrEmpty(headerKeyId) ? "(none)" : headerKeyId));
         details.Add(Detail("Key version", string.IsNullOrWhiteSpace(headerKeyVersion) ? "(none)" : headerKeyVersion));
         details.Add(Detail("Nonce length", nonceLength.ToString()));
-
-        if (nonceLength == AesGcmHelper.NonceSize)
-            details.Add(
-                Detail(
-                    "Symmetric cipher hint",
-                    "12-byte nonce: typically AES-GCM, ChaCha20-Poly1305, or AES-CCM — use file extension (.ag, .chacha, .ccm)."));
+        if (nonceLength == AesGcmHelper.NonceSize) {
+            details.Add(Detail("Symmetric cipher hint", "12-byte nonce: typically AES-GCM, ChaCha20-Poly1305, or AES-CCM — use file extension (.ag, .chacha, .ccm)."));
+        }
 
         const int xChaChaNonceSize = 24;
         if (nonceLength == xChaChaNonceSize)
@@ -326,7 +307,6 @@ public sealed class TestGatewayFileTransformer
 
         using var ms = new MemoryStream(data, false);
         using var br = new BinaryReader(ms, Encoding.UTF8, true);
-
         var formatByte = br.ReadByte();
         if (formatByte != (byte)StreamFormatVersion.V1)
             throw new InvalidDataException($"Expected format version {(byte)StreamFormatVersion.V1}, got {formatByte}.");
@@ -356,7 +336,6 @@ public sealed class TestGatewayFileTransformer
 
         _ = br.ReadBytes(syntheticIvLength);
         var payloadBytes = ms.Length - ms.Position;
-
         details.Add(Detail("Envelope", "Single-key (AES-SIV layout)"));
         details.Add(Detail("Key id", string.IsNullOrEmpty(headerKeyId) ? "(none)" : headerKeyId));
         details.Add(Detail("Key version", string.IsNullOrWhiteSpace(headerKeyVersion) ? "(none)" : headerKeyVersion));
@@ -371,8 +350,8 @@ public sealed class TestGatewayFileTransformer
             details.Add(
                 Detail(
                     "Raw compression (magic)",
-                    "Bytes at offset 0 are the Lyo encryption envelope, not raw compressor output — signatures such as gzip or xz appear only after decryption (or infer compression from the filename). "
-                        + magic));
+                    "Bytes at offset 0 are the Lyo encryption envelope, not raw compressor output — signatures such as gzip or xz appear only after decryption (or infer compression from the filename). " +
+                    magic));
         }
         else
             details.Add(Detail("Raw compression (magic)", magic));
@@ -415,12 +394,9 @@ public sealed class TestGatewayFileTransformer
     {
         var algorithm = options.DataEncryptionAlgorithm;
         var service = CreateEncryptionService(algorithm, CreatePlaceholderKeyStore(), options.DataAesGcmKeySize, options.DataAesSivKeySize);
-        var encrypted = service.Encrypt(
-            bytes,
-            key: DeriveSymmetricKey(options.Secret, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize));
+        var encrypted = service.Encrypt(bytes, key: DeriveSymmetricKey(options.Secret, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize));
         var details = new List<KeyValuePair<string, string>> { Detail("Encrypted With", algorithm.ToString()) };
         AppendSingleKeySizeDetails(details, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize);
-
         return new(BuildEncryptedName(fileName, service.FileExtension), encrypted, details);
     }
 
@@ -428,39 +404,23 @@ public sealed class TestGatewayFileTransformer
     {
         var algorithm = options.DataEncryptionAlgorithm;
         var service = CreateEncryptionService(algorithm, CreatePlaceholderKeyStore(), options.DataAesGcmKeySize, options.DataAesSivKeySize);
-        var decrypted = service.Decrypt(
-            bytes,
-            key: DeriveSymmetricKey(options.Secret, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize));
+        var decrypted = service.Decrypt(bytes, key: DeriveSymmetricKey(options.Secret, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize));
         var details = new List<KeyValuePair<string, string>> { Detail("Decrypted With", algorithm.ToString()) };
         AppendSingleKeySizeDetails(details, algorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize);
-
         return new(BuildDecryptedName(fileName, service.FileExtension), decrypted, details);
     }
 
-    private static async Task<TestGatewayStepResult> TwoKeyEncryptAsync(
-        byte[] bytes,
-        string fileName,
-        TestGatewayTransformOptions options,
-        CancellationToken ct)
+    private static async Task<TestGatewayStepResult> TwoKeyEncryptAsync(byte[] bytes, string fileName, TestGatewayTransformOptions options, CancellationToken ct)
     {
         var dataAlgorithm = options.DataEncryptionAlgorithm;
         var keyAlgorithm = options.KeyEncryptionAlgorithm;
         var service = CreateTwoKeyEncryptionService(
-            dataAlgorithm,
-            keyAlgorithm,
-            CreatePlaceholderKeyStore(),
-            options.DataAesGcmKeySize,
-            options.KeyAesGcmKeySize,
-            options.DataAesSivKeySize,
-            options.KeyAesSivKeySize);
+            dataAlgorithm, keyAlgorithm, CreatePlaceholderKeyStore(), options.DataAesGcmKeySize, options.KeyAesGcmKeySize, options.DataAesSivKeySize, options.KeyAesSivKeySize);
+
         try {
             await using var input = new MemoryStream(bytes, false);
             await using var output = new MemoryStream();
-            await service.EncryptToStreamAsync(
-                input,
-                output,
-                kek: DeriveSymmetricKey(options.Secret, keyAlgorithm, options.KeyAesGcmKeySize, options.KeyAesSivKeySize),
-                ct: ct);
+            await service.EncryptToStreamAsync(input, output, kek: DeriveSymmetricKey(options.Secret, keyAlgorithm, options.KeyAesGcmKeySize, options.KeyAesSivKeySize), ct: ct);
             var encrypted = output.ToArray();
             var header = EncryptionHeader.Read(encrypted);
             var details = new List<KeyValuePair<string, string>> {
@@ -468,8 +428,8 @@ public sealed class TestGatewayFileTransformer
                 Detail("Key Encrypted With", keyAlgorithm.ToString()),
                 Detail("Encrypted DEK Size", ToFileSize(header.EncryptedDataEncryptionKey.LongLength))
             };
-            AppendTwoKeySizeDetails(details, dataAlgorithm, keyAlgorithm, options);
 
+            AppendTwoKeySizeDetails(details, dataAlgorithm, keyAlgorithm, options);
             return new(BuildEncryptedName(fileName, service.FileExtension), encrypted, details);
         }
         finally {
@@ -477,38 +437,25 @@ public sealed class TestGatewayFileTransformer
         }
     }
 
-    private static async Task<TestGatewayStepResult> TwoKeyDecryptAsync(
-        byte[] bytes,
-        string fileName,
-        TestGatewayTransformOptions options,
-        CancellationToken ct)
+    private static async Task<TestGatewayStepResult> TwoKeyDecryptAsync(byte[] bytes, string fileName, TestGatewayTransformOptions options, CancellationToken ct)
     {
         var dataAlgorithm = options.DataEncryptionAlgorithm;
         var keyAlgorithm = options.KeyEncryptionAlgorithm;
         var service = CreateTwoKeyEncryptionService(
-            dataAlgorithm,
-            keyAlgorithm,
-            CreatePlaceholderKeyStore(),
-            options.DataAesGcmKeySize,
-            options.KeyAesGcmKeySize,
-            options.DataAesSivKeySize,
-            options.KeyAesSivKeySize);
+            dataAlgorithm, keyAlgorithm, CreatePlaceholderKeyStore(), options.DataAesGcmKeySize, options.KeyAesGcmKeySize, options.DataAesSivKeySize, options.KeyAesSivKeySize);
+
         try {
             var header = EncryptionHeader.Read(bytes);
             await using var input = new MemoryStream(bytes, false);
             await using var output = new MemoryStream();
-            await service.DecryptToStreamAsync(
-                input,
-                output,
-                kek: DeriveSymmetricKey(options.Secret, keyAlgorithm, options.KeyAesGcmKeySize, options.KeyAesSivKeySize),
-                ct: ct);
+            await service.DecryptToStreamAsync(input, output, kek: DeriveSymmetricKey(options.Secret, keyAlgorithm, options.KeyAesGcmKeySize, options.KeyAesSivKeySize), ct: ct);
             var details = new List<KeyValuePair<string, string>> {
                 Detail("Data Decrypted With", dataAlgorithm.ToString()),
                 Detail("Key Decrypted With", keyAlgorithm.ToString()),
                 Detail("Encrypted DEK Size", ToFileSize(header.EncryptedDataEncryptionKey.LongLength))
             };
-            AppendTwoKeySizeDetails(details, dataAlgorithm, keyAlgorithm, options);
 
+            AppendTwoKeySizeDetails(details, dataAlgorithm, keyAlgorithm, options);
             return new(BuildDecryptedName(fileName, service.FileExtension), output.ToArray(), details);
         }
         finally {
@@ -572,40 +519,49 @@ public sealed class TestGatewayFileTransformer
         var kch = new ChaCha20Poly1305EncryptionService(keyStore);
         var dx = new XChaCha20Poly1305EncryptionService(keyStore);
         var kx = new XChaCha20Poly1305EncryptionService(keyStore);
-
         return (dataAlgorithm, keyAlgorithm) switch {
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(dg, kg, keyStore),
-            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(dg, kch, keyStore),
+            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(
+                dg, kch, keyStore),
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesGcmEncryptionService>(dg, kc, keyStore),
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesGcmEncryptionService>(dg, ksiv, keyStore),
-            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(dg, kx, keyStore),
-
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, ChaCha20Poly1305EncryptionService>(dch, kg, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kch, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, ChaCha20Poly1305EncryptionService>(dch, kc, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, ChaCha20Poly1305EncryptionService>(dch, ksiv, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kx, keyStore),
-
+            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(
+                dg, kx, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, kg, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kch, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, kc, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, ksiv, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kx, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesCcmEncryptionService>(dc, kg, keyStore),
-            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(dc, kch, keyStore),
+            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(
+                dc, kch, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesCcmEncryptionService>(dc, kc, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesCcmEncryptionService>(dc, ksiv, keyStore),
-            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(dc, kx, keyStore),
-
+            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(
+                dc, kx, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesSivEncryptionService>(dsiv, kg, keyStore),
-            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesSivEncryptionService>(dsiv, kch, keyStore),
+            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesSivEncryptionService>(
+                dsiv, kch, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesSivEncryptionService>(dsiv, kc, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesSivEncryptionService>(dsiv, ksiv, keyStore),
-            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesSivEncryptionService>(dsiv, kx, keyStore),
-
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, XChaCha20Poly1305EncryptionService>(dx, kg, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kch, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, XChaCha20Poly1305EncryptionService>(dx, kc, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, XChaCha20Poly1305EncryptionService>(dx, ksiv, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kx, keyStore),
-
-            var _ => throw new NotSupportedException(
-                $"{dataAlgorithm}/{keyAlgorithm} is not supported in the test gateway file workbench (symmetric algorithms only).")
+            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesSivEncryptionService>(
+                dsiv, kx, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, kg, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kch, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, kc, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, ksiv, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kx, keyStore),
+            var _ => throw new NotSupportedException($"{dataAlgorithm}/{keyAlgorithm} is not supported in the test gateway file workbench (symmetric algorithms only).")
         };
     }
 
@@ -636,15 +592,19 @@ public sealed class TestGatewayFileTransformer
     {
         if (dataAlgorithm == EncryptionAlgorithm.AesGcm)
             details.Add(Detail("Data AES-GCM key size", $"{(int)options.DataAesGcmKeySize} bits"));
+
         if (dataAlgorithm == EncryptionAlgorithm.AesCcm)
             details.Add(Detail("Data AES-CCM key size", $"{(int)options.DataAesGcmKeySize} bits"));
+
         if (dataAlgorithm == EncryptionAlgorithm.AesSiv)
             details.Add(Detail("Data AES-SIV key size", $"{(int)options.DataAesSivKeySize} bits"));
 
         if (keyAlgorithm == EncryptionAlgorithm.AesGcm)
             details.Add(Detail("Key AES-GCM key size", $"{(int)options.KeyAesGcmKeySize} bits"));
+
         if (keyAlgorithm == EncryptionAlgorithm.AesCcm)
             details.Add(Detail("Key AES-CCM key size", $"{(int)options.KeyAesGcmKeySize} bits"));
+
         if (keyAlgorithm == EncryptionAlgorithm.AesSiv)
             details.Add(Detail("Key AES-SIV key size", $"{(int)options.KeyAesSivKeySize} bits"));
     }
@@ -652,11 +612,7 @@ public sealed class TestGatewayFileTransformer
     private static IKeyStore CreatePlaceholderKeyStore() => new LocalKeyStore();
 
     /// <summary>Derives key material from the secret (SHA-256/512, truncated to the length required by the algorithm).</summary>
-    private static byte[] DeriveSymmetricKey(
-        string secret,
-        EncryptionAlgorithm algorithm,
-        AesGcmKeySizeBits aesGcmOrCcmKeySize,
-        AesSivKeySizeBits aesSivKeySize)
+    private static byte[] DeriveSymmetricKey(string secret, EncryptionAlgorithm algorithm, AesGcmKeySizeBits aesGcmOrCcmKeySize, AesSivKeySizeBits aesSivKeySize)
     {
         var utf8 = Encoding.UTF8.GetBytes(secret);
         return algorithm switch {
@@ -689,7 +645,7 @@ public sealed class TestGatewayFileTransformer
             EncryptionAlgorithm.AesGcm => $"{s} ({(int)options.DataAesGcmKeySize}-bit key)",
             EncryptionAlgorithm.AesCcm => $"{s} ({(int)options.DataAesGcmKeySize}-bit key)",
             EncryptionAlgorithm.AesSiv => $"{s} ({(int)options.DataAesSivKeySize}-bit key)",
-            _ => s
+            var _ => s
         };
     }
 
@@ -700,7 +656,7 @@ public sealed class TestGatewayFileTransformer
                 EncryptionAlgorithm.AesGcm => $"{a} ({(int)gcm}-bit)",
                 EncryptionAlgorithm.AesCcm => $"{a} ({(int)gcm}-bit)",
                 EncryptionAlgorithm.AesSiv => $"{a} ({(int)siv}-bit)",
-                _ => a.ToString()
+                var _ => a.ToString()
             };
 
         var data = FormatAlg(options.DataEncryptionAlgorithm, options.DataAesGcmKeySize, options.DataAesSivKeySize);

@@ -4,8 +4,6 @@ namespace Lyo.Web.Automation.Playwright.Configuration;
 public enum PlaywrightBrowserKind
 {
     Chromium = 0,
-
     Firefox = 1,
-
     Webkit = 2
 }

@@ -124,8 +124,7 @@
                             }
 
                             @* Row 3: Delimiter — only when Punctuation is on *@
-                            @if ((row.InferFormattingFlags & PdfInferFormattingFlags.Semicolon) != 0
-                                 && (row.ExtractionType is PdfAnnotationExtractionType.KeyValue or PdfAnnotationExtractionType.Table)) {
+                            @if ((row.InferFormattingFlags & PdfInferFormattingFlags.Semicolon) != 0 && row.ExtractionType is PdfAnnotationExtractionType.KeyValue or PdfAnnotationExtractionType.Table) {
                                 <MudStack Spacing="1" Class="mb-1">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Delimiter characters (order = try first)</MudText>
                                     <MudStack Row="true"
@@ -167,9 +166,11 @@
 
                             @if (row.ExtractionType == PdfAnnotationExtractionType.KeyValue) {
                                 <MudText Typo="Typo.subtitle2" Class="mb-1">Known keys</MudText>
+
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
                                     Leave empty to infer labels using the options above (bold vs punctuation-terminated lines).
                                 </MudText>
+
                                 <div>
                                     <LyoChipInput Values="@row.KnownKeys"
                                                   ValuesChanged="values => SetKnownKeys(row, values)"
@@ -195,7 +196,9 @@
                                                   HelperText="Defaults to the first column. Only this header starts a new row; continuation lines merge into that row."
                                                   Value="@row.TableKeyColumnLabel"
                                                   ValueChanged="v => SetTableKeyColumn(row, v)"/>
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Row key defaults to the first column. Click a header chip to change it, use the field, or prefix a header with <code>*</code>.</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Row key defaults to the first column. Click a header chip to change it, use
+                                        the field, or prefix a header with <code>*</code>.
+                                    </MudText>
                                 </div>
                             }
 
@@ -302,19 +305,9 @@
 
 @code {
 
-    private static readonly (string Value, string Label)[] KvDelimiterSelectOptions =
-    [
-        (":", "Colon"),
-        (";", "Semicolon"),
-        ("=", "Equals"),
-        ("?", "Question"),
-        ("|", "Pipe"),
-        ("-", "Dash"),
-        (".", "Dot"),
-    ];
+    private static readonly (string Value, string Label)[] KvDelimiterSelectOptions = [(":", "Colon"), (";", "Semicolon"), ("=", "Equals"), ("?", "Question"), ("|", "Pipe"), ("-", "Dash"), (".", "Dot")];
 
-    private static readonly HashSet<char> KvDelimiterPresetChars =
-        [.. KvDelimiterSelectOptions.Select(o => o.Value[0])];
+    private static readonly HashSet<char> KvDelimiterPresetChars = [.. KvDelimiterSelectOptions.Select(o => o.Value[0])];
 
     private readonly Dictionary<string, string> _customDelimiterDraft = new(StringComparer.Ordinal);
 
@@ -334,7 +327,7 @@
             PdfAnnotationExtractionType.KeyValue => FormatKeyValueExtractionSummary(row),
             PdfAnnotationExtractionType.Table => FormatTableExtractionSummary(row),
             PdfAnnotationExtractionType.BoundingBoxText => FormatPlainTextExtractionSummary(row),
-            _ => "Paragraph"
+            var _ => "Paragraph"
         };
 
     private static string FormatTableExtractionSummary(LyoPdfAnnotationResult row)
@@ -364,12 +357,10 @@
         if (string.IsNullOrWhiteSpace(text))
             return 0;
 
-        return text.Split(["\r\n", "\n", "\r"], StringSplitOptions.None)
-            .Count(s => !string.IsNullOrWhiteSpace(s));
+        return text.Split(["\r\n", "\n", "\r"], StringSplitOptions.None).Count(s => !string.IsNullOrWhiteSpace(s));
     }
 
-    private static string Plural(int n, string singular, string plural)
-        => $"{n} {(n == 1 ? singular : plural)}";
+    private static string Plural(int n, string singular, string plural) => $"{n} {(n == 1 ? singular : plural)}";
 
     private void SetExtractionType(LyoPdfAnnotationResult row, PdfAnnotationExtractionType value)
     {
@@ -392,8 +383,7 @@
     private void SetTableHeaders(LyoPdfAnnotationResult row, IEnumerable<string> values)
     {
         row.TableHeaders = values.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (row.TableKeyColumnLabel is not null &&
-            !row.TableHeaders.Any(h => string.Equals(h, row.TableKeyColumnLabel, StringComparison.OrdinalIgnoreCase)))
+        if (row.TableKeyColumnLabel is not null && !row.TableHeaders.Any(h => string.Equals(h, row.TableKeyColumnLabel, StringComparison.OrdinalIgnoreCase)))
             row.TableKeyColumnLabel = null;
 
         InvokeAsync(StateHasChanged);
@@ -432,17 +422,13 @@
 
     private void SetInferBold(LyoPdfAnnotationResult row, bool on)
     {
-        row.InferFormattingFlags = on
-            ? row.InferFormattingFlags | PdfInferFormattingFlags.Bold
-            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Bold;
+        row.InferFormattingFlags = on ? row.InferFormattingFlags | PdfInferFormattingFlags.Bold : row.InferFormattingFlags & ~PdfInferFormattingFlags.Bold;
         InvokeAsync(StateHasChanged);
     }
 
     private void SetInferSemicolon(LyoPdfAnnotationResult row, bool on)
     {
-        row.InferFormattingFlags = on
-            ? row.InferFormattingFlags | PdfInferFormattingFlags.Semicolon
-            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Semicolon;
+        row.InferFormattingFlags = on ? row.InferFormattingFlags | PdfInferFormattingFlags.Semicolon : row.InferFormattingFlags & ~PdfInferFormattingFlags.Semicolon;
         if (on && string.IsNullOrWhiteSpace(row.KeyValueInferDelimiters))
             row.KeyValueInferDelimiters = ":;";
 
@@ -504,7 +490,7 @@
             ordered.Add(c);
         }
 
-        row.KeyValueInferDelimiters = ordered.Count > 0 ? new string([.. ordered]) : ":;";
+        row.KeyValueInferDelimiters = ordered.Count > 0 ? new([.. ordered]) : ":;";
         InvokeAsync(StateHasChanged);
     }
 
@@ -542,9 +528,7 @@
 
     private void SetInferUnderline(LyoPdfAnnotationResult row, bool on)
     {
-        row.InferFormattingFlags = on
-            ? row.InferFormattingFlags | PdfInferFormattingFlags.Underline
-            : row.InferFormattingFlags & ~PdfInferFormattingFlags.Underline;
+        row.InferFormattingFlags = on ? row.InferFormattingFlags | PdfInferFormattingFlags.Underline : row.InferFormattingFlags & ~PdfInferFormattingFlags.Underline;
         InvokeAsync(StateHasChanged);
     }
 

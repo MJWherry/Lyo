@@ -1,7 +1,10 @@
-using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
+
+#if NET10_0_OR_GREATER
+using System.Security.Cryptography;
+#endif
 
 namespace Lyo.Keystore.KeyDerivation;
 

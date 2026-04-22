@@ -4,7 +4,7 @@
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-            <Description>Abstractions for storing and retrieving comic series, volumes, chapters, and alternate titles.</Description>
+        <Description>Abstractions for storing and retrieving comic series, volumes, chapters, and alternate titles.</Description>
         <PackageTags>comic manga series volume chapter</PackageTags>
     </PropertyGroup>
 

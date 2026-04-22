@@ -97,7 +97,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
             // Determine the actual version being used
             var actualVersion = version ?? await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
-            
+
             // Derive a proper key from the string value
             // This handles the case where keys are stored as random strings in AWS Secrets Manager
             // The derivation ensures we always get a proper 32-byte key for AES-GCM

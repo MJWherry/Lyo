@@ -14,8 +14,8 @@ public sealed class FileStorageWorkbenchOptions
     public string ApiRoutePrefix { get; set; } = "Workbench/FileStorage";
 
     /// <summary>
-    /// Relative URI for multipart stream upload to the API (no <see cref="ApiRoutePrefix" />). Default <c>upload/file</c> matches <c>POST /upload/file</c>.
-    /// Set to empty to use the legacy path <c>{ApiRoutePrefix}/files/save-stream</c>.
+    /// Relative URI for multipart stream upload to the API (no <see cref="ApiRoutePrefix" />). Default <c>upload/file</c> matches <c>POST /upload/file</c>. Set to empty to use
+    /// the legacy path <c>{ApiRoutePrefix}/files/save-stream</c>.
     /// </summary>
     public string? StreamUploadRelativePath { get; set; } = "upload/file";
 

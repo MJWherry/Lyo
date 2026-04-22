@@ -66,9 +66,6 @@ This library has been designed for production use and includes:
 - ✅ Cancellation token support
 - ✅ Extensible architecture
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -79,14 +76,14 @@ This library has been designed for production use and includes:
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `SixLabors.ImageSharp` | `3.*` |
-| `SixLabors.ImageSharp.Drawing` | `2.*` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| `SixLabors.ImageSharp`                                  | `3.*`   |
+| `SixLabors.ImageSharp.Drawing`                          | `2.*`   |
 
 ### Project references
 

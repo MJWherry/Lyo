@@ -51,10 +51,10 @@ await scheduler.StartAsync();
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
+| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10,)` |
 
 ### Project references
 

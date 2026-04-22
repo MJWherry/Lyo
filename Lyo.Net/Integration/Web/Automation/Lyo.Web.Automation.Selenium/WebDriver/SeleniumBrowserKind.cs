@@ -6,8 +6,6 @@ namespace Lyo.Web.Automation.Selenium.WebDriver;
 public enum SeleniumBrowserKind
 {
     Chrome = 0,
-
     Edge = 1,
-
     Firefox = 2
 }

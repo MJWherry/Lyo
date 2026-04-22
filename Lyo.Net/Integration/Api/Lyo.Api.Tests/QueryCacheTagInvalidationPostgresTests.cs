@@ -2,8 +2,8 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
-using Lyo.Common.Enums;
 using Lyo.Api.Tests.Fixtures;
+using Lyo.Common.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
@@ -28,12 +28,11 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
-
         var request = new QueryReq {
             Start = 0,
             Amount = 10,
             Keys = [[defId]],
-            Include = ["JobRuns"],
+            Include = ["JobRuns"]
         };
 
         async Task<string?> NameFromQuery()
@@ -44,11 +43,9 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         }
 
         Assert.Contains($"QTagInv_{suffix}", await NameFromQuery().ConfigureAwait(false), StringComparison.Ordinal);
-
-        var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new Dictionary<string, object?> { ["Name"] = $"QTagInv_renamed_{suffix}" } };
+        var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = $"QTagInv_renamed_{suffix}" } };
         var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
-
         Assert.Equal($"QTagInv_renamed_{suffix}", await NameFromQuery().ConfigureAwait(false));
     }
 
@@ -61,12 +58,11 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
-
         var request = new QueryReq {
             Start = 0,
             Amount = 10,
             Keys = [[defId]],
-            Include = ["JobRuns"],
+            Include = ["JobRuns"]
         };
 
         async Task<string?> CreatedByFromQuery()
@@ -78,11 +74,9 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromQuery().ConfigureAwait(false));
-
-        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new Dictionary<string, object?> { ["CreatedBy"] = $"after-{suffix}" } };
+        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
         var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
-
         Assert.Equal($"after-{suffix}", await CreatedByFromQuery().ConfigureAwait(false));
     }
 
@@ -95,12 +89,11 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
-
         var request = new ProjectionQueryReq {
             Start = 0,
             Amount = 10,
             Select = ["jobruns.createdby"],
-            WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId),
+            WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
         async Task<string?> CreatedByFromProjection()
@@ -113,11 +106,9 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromProjection().ConfigureAwait(false));
-
-        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new Dictionary<string, object?> { ["CreatedBy"] = $"after-{suffix}" } };
+        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
         var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
-
         Assert.Equal($"after-{suffix}", await CreatedByFromProjection().ConfigureAwait(false));
     }
 
@@ -139,11 +130,9 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         }
 
         Assert.Contains($"GTagInv_{suffix}", await NameFromGet().ConfigureAwait(false), StringComparison.Ordinal);
-
-        var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new Dictionary<string, object?> { ["Name"] = $"GTagInv_renamed_{suffix}" } };
+        var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = $"GTagInv_renamed_{suffix}" } };
         var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
-
         Assert.Equal($"GTagInv_renamed_{suffix}", await NameFromGet().ConfigureAwait(false));
     }
 
@@ -165,11 +154,9 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromGet().ConfigureAwait(false));
-
-        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new Dictionary<string, object?> { ["CreatedBy"] = $"after-{suffix}" } };
+        var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
         var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
-
         Assert.Equal($"after-{suffix}", await CreatedByFromGet().ConfigureAwait(false));
     }
 }

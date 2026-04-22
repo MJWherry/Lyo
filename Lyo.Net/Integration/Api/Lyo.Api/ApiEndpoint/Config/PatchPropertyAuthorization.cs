@@ -8,18 +8,17 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Api.ApiEndpoint.Config;
 
 /// <summary>
-/// Optional per-patch rules: which JSON property names may be updated for the current user. Pair with
-/// <see cref="EndpointAuth"/> on the same endpoint for typical APIs. When <see cref="Custom"/> is set, it replaces
-/// <see cref="PolicyAllowedProperties"/>. Otherwise, allowed names are the union of property sets from each
-/// <see cref="PolicyAllowedProperties"/> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync"/>.
-/// Use <c>"*"</c> in a policy's set to allow every key present in <see cref="PatchRequest.Properties"/> when that policy succeeds.
+/// Optional per-patch rules: which JSON property names may be updated for the current user. Pair with <see cref="EndpointAuth" /> on the same endpoint for typical APIs. When
+/// <see cref="Custom" /> is set, it replaces <see cref="PolicyAllowedProperties" />. Otherwise, allowed names are the union of property sets from each
+/// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync" />. Use <c>"*"</c> in a policy's set to allow every key present
+/// in <see cref="PatchRequest.Properties" /> when that policy succeeds.
 /// </summary>
 public sealed record PatchPropertyAuthorization
 {
-    /// <summary>Maps ASP.NET Core policy name to allowed CLR property names (case-insensitive). Ignored when <see cref="Custom"/> is set.</summary>
+    /// <summary>Maps ASP.NET Core policy name to allowed CLR property names (case-insensitive). Ignored when <see cref="Custom" /> is set.</summary>
     public IReadOnlyDictionary<string, IReadOnlySet<string>>? PolicyAllowedProperties { get; init; }
 
-    /// <summary>When set, runs instead of <see cref="PolicyAllowedProperties"/>.</summary>
+    /// <summary>When set, runs instead of <see cref="PolicyAllowedProperties" />.</summary>
     public Func<HttpContext, Type, PatchRequest, CancellationToken, ValueTask<PatchPropertyAuthorizationResult>>? Custom { get; init; }
 
     /// <summary>Fluent: policy name to allowed property names (or <c>"*"</c>).</summary>
@@ -31,7 +30,7 @@ public sealed record PatchPropertyAuthorization
     }
 }
 
-/// <summary>Fluent builder for <see cref="PatchPropertyAuthorization"/> policy maps.</summary>
+/// <summary>Fluent builder for <see cref="PatchPropertyAuthorization" /> policy maps.</summary>
 public sealed class PatchPropertyAuthorizationBuilder
 {
     private readonly Dictionary<string, HashSet<string>> _map = new(StringComparer.Ordinal);
@@ -41,7 +40,7 @@ public sealed class PatchPropertyAuthorizationBuilder
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(policyName);
         if (!_map.TryGetValue(policyName, out var set)) {
-            set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            set = new(StringComparer.OrdinalIgnoreCase);
             _map[policyName] = set;
         }
 
@@ -52,15 +51,10 @@ public sealed class PatchPropertyAuthorizationBuilder
     }
 
     internal PatchPropertyAuthorization Build()
-        => new() {
-            PolicyAllowedProperties = _map.ToDictionary(
-                static kvp => kvp.Key,
-                static kvp => (IReadOnlySet<string>)kvp.Value,
-                StringComparer.Ordinal)
-        };
+        => new() { PolicyAllowedProperties = _map.ToDictionary(static kvp => kvp.Key, static kvp => (IReadOnlySet<string>)kvp.Value, StringComparer.Ordinal) };
 }
 
-/// <summary>Result of applying <see cref="PatchPropertyAuthorization"/>.</summary>
+/// <summary>Result of applying <see cref="PatchPropertyAuthorization" />.</summary>
 public readonly struct PatchPropertyAuthorizationResult
 {
     private PatchPropertyAuthorizationResult(bool success, PatchRequest? request, LyoProblemDetails? error)
@@ -81,7 +75,7 @@ public readonly struct PatchPropertyAuthorizationResult
     public static PatchPropertyAuthorizationResult Forbidden(LyoProblemDetails error) => new(false, null, error);
 }
 
-/// <summary>Applies <see cref="PatchPropertyAuthorization"/> to a patch request (typed and dynamic endpoints).</summary>
+/// <summary>Applies <see cref="PatchPropertyAuthorization" /> to a patch request (typed and dynamic endpoints).</summary>
 public static class PatchPropertyAuthorizationApplier
 {
     private const string Wildcard = "*";
@@ -115,7 +109,6 @@ public static class PatchPropertyAuthorizationApplier
         var map = authorization.PolicyAllowedProperties!;
         var authz = httpContext.RequestServices.GetRequiredService<IAuthorizationService>();
         var user = httpContext.User;
-
         var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (policyName, propertySet) in map) {
             var result = await authz.AuthorizeAsync(user, policyName).ConfigureAwait(false);
@@ -145,11 +138,7 @@ public static class PatchPropertyAuthorizationApplier
         forbidden.Sort(StringComparer.OrdinalIgnoreCase);
         var detail = $"Not allowed to patch the following properties: {string.Join(", ", forbidden)}.";
         var error = LyoProblemDetails.FromCode(
-            Lyo.Api.Models.Constants.ApiErrorCodes.Forbidden,
-            detail,
-            DateTime.UtcNow,
-            httpContext.TraceIdentifier,
-            extensions: new Dictionary<string, object?> { ["disallowedProperties"] = forbidden });
+            Constants.ApiErrorCodes.Forbidden, detail, DateTime.UtcNow, httpContext.TraceIdentifier, extensions: new() { ["disallowedProperties"] = forbidden });
 
         return PatchPropertyAuthorizationResult.Forbidden(error);
     }

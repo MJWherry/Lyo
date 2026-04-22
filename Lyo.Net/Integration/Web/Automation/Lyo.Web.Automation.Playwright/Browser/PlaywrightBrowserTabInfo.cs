@@ -6,16 +6,6 @@ namespace Lyo.Web.Automation.Playwright.Browser;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class PlaywrightBrowserTabInfo
 {
-    public PlaywrightBrowserTabInfo(int index, bool isActive, string pageKey, string? url = null, string? title = null, string? displayName = null)
-    {
-        Index = index;
-        IsActive = isActive;
-        PageKey = pageKey;
-        Url = url;
-        Title = title;
-        DisplayName = displayName;
-    }
-
     public int Index { get; }
 
     public bool IsActive { get; }
@@ -27,6 +17,16 @@ public sealed class PlaywrightBrowserTabInfo
     public string? Title { get; }
 
     public string? DisplayName { get; }
+
+    public PlaywrightBrowserTabInfo(int index, bool isActive, string pageKey, string? url = null, string? title = null, string? displayName = null)
+    {
+        Index = index;
+        IsActive = isActive;
+        PageKey = pageKey;
+        Url = url;
+        Title = title;
+        DisplayName = displayName;
+    }
 
     public override string ToString() => $"[{Index}] {(IsActive ? "Active" : "Inactive")} {Url}";
 }

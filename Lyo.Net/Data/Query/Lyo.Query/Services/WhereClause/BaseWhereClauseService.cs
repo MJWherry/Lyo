@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Diagnostics;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -103,29 +102,150 @@ public class BaseWhereClauseService : IWhereClauseService
     /// <inheritdoc cref="IWhereClauseService.ExplainMatch{TEntity}" />
     public virtual WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? queryNode)
     {
-        if (entity is null)
-            return new WhereClauseExplainResult(
-                new WhereClauseExplainNode { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" },
-                null,
-                "Entity is null.");
+        if (entity is null) {
+            return new(new() { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" }, null, "Entity is null.");
+        }
 
-        if (queryNode is null)
-            return new WhereClauseExplainResult(
-                new WhereClauseExplainNode { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" },
-                null,
-                "Where clause is null.");
+        if (queryNode is null) {
+            return new(new() { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" }, null, "Where clause is null.");
+        }
 
         var root = BuildExplainNode<TEntity>(entity, queryNode, "");
         var (blockingPath, failureSummary) = ComputeBlockingFailure(root);
         var orBranches = root.Passed ? null : CollectOrBranchOutcomes(root);
-        return new WhereClauseExplainResult(root, blockingPath, failureSummary, orBranches);
+        return new(root, blockingPath, failureSummary, orBranches);
+    }
+
+    public virtual IQueryable<TEntity> ApplyWhereClause<TEntity>(IQueryable<TEntity> source, Models.Common.WhereClause? queryNode, bool includeSubClauses = true)
+    {
+        if (queryNode is null)
+            return source;
+
+        using var timer = _metrics.StartTimer(Constants.Metrics.ApplyWhereClauseDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+        try {
+            var cacheKey = GenerateEfPredicateCacheKey<TEntity>(queryNode, includeSubClauses);
+            var tags = new[] { $"entity:{typeof(TEntity).Name.ToLowerInvariant()}" };
+            var expression = Cache.GetOrSet(cacheKey, _ => BuildExpressionFromWhereClause<TEntity>(queryNode, includeSubClauses)!, typeof(TEntity), tags);
+            var result = expression != null ? source.Where(expression) : source;
+            _metrics.IncrementCounter(Constants.Metrics.ApplyWhereClauseSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            _logger.LogDebug("ApplyWhereClause applied to {EntityType}", typeof(TEntity).Name);
+            return result;
+        }
+        catch (Exception ex) {
+            _metrics.RecordError(Constants.Metrics.ApplyWhereClauseDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            throw;
+        }
+    }
+
+    public virtual IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            throw new InvalidQueryException("Property name cannot be null or empty.");
+
+        using var timer = _metrics.StartTimer(Constants.Metrics.SortByPropertyDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+        try {
+            var sortKeyCacheKey = $"{EntityMetadata.SortKeyLambdaPrefix}{typeof(TEntity).FullName}:{propertyName}";
+            var (lambda, keyType) = SharedEntityMetadataCache.GetOrAddSortKeyLambda(
+                sortKeyCacheKey, () => {
+                    var parameter = Expression.Parameter(typeof(TEntity), "x");
+                    var (keySelector, kt) = BuildKeySelector<TEntity>(propertyName, parameter);
+                    return (Expression.Lambda(keySelector, parameter), kt);
+                });
+
+            var methodName = GetOrderingMethodName(source, direction ?? SortDirection.Desc);
+            var orderMethod = GetQueryableOrderMethodCached<TEntity>(methodName, keyType);
+            var result = (IQueryable<TEntity>)orderMethod.Invoke(null, [source, lambda])!;
+            _metrics.IncrementCounter(Constants.Metrics.SortByPropertySuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            _logger.LogDebug("SortByProperty applied to {EntityType} by {PropertyName} {Direction}", typeof(TEntity).Name, propertyName, direction ?? SortDirection.Desc);
+            return result;
+        }
+        catch (Exception ex) {
+            _metrics.RecordError(Constants.Metrics.SortByPropertyDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            throw;
+        }
+    }
+
+    public virtual IQueryable<TEntity> ApplyOrdering<TEntity>(
+        IQueryable<TEntity> queryable,
+        IEnumerable<SortBy> sortByProps,
+        Expression<Func<TEntity, object?>> defaultOrder,
+        SortDirection defaultSortDirection)
+    {
+        var byProps = sortByProps as SortBy[] ?? sortByProps.ToArray();
+        using var timer = _metrics.StartTimer(Constants.Metrics.ApplyOrderingDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+        try {
+            var result = !byProps.Any()
+                ? defaultSortDirection == SortDirection.Desc ? queryable.OrderByDescending(defaultOrder) : queryable.OrderBy(defaultOrder)
+                : byProps.Select((s, i) => (SortBy: s, EffectivePriority: s.Priority ?? i))
+                    .OrderBy(x => x.EffectivePriority)
+                    .Aggregate(queryable, (current, x) => SortByProperty(current, x.SortBy.PropertyName, x.SortBy.Direction));
+
+            _metrics.IncrementCounter(Constants.Metrics.ApplyOrderingSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            _metrics.RecordGauge(Constants.Metrics.SortByCount, byProps.Length, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            _logger.LogDebug("ApplyOrdering applied to {EntityType} with {SortByCount} sort properties", typeof(TEntity).Name, byProps.Length);
+            return result;
+        }
+        catch (Exception ex) {
+            _metrics.RecordError(Constants.Metrics.ApplyOrderingDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
+            throw;
+        }
+    }
+
+    public virtual IEnumerable<string> GetCollectionIncludePathsForWhereClause<TEntity>(Models.Common.WhereClause? queryNode)
+    {
+        if (queryNode == null)
+            return [];
+
+        var cacheKeyBuilder = new StringBuilder("SubQueryIncludePaths_").Append(typeof(TEntity).FullName).Append('_');
+        AppendWhereClauseHash(queryNode, cacheKeyBuilder);
+        var cacheKey = cacheKeyBuilder.ToString();
+        var tags = new[] { $"entity:{typeof(TEntity).Name.ToLowerInvariant()}" };
+        return Cache.GetOrSet<IReadOnlyList<string>>(
+            cacheKey, _ => {
+                var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var field in CollectConditionFields(queryNode)) {
+                    if (string.IsNullOrWhiteSpace(field))
+                        continue;
+
+                    var pathMetadata = GetPropertyPathMetadataCached<TEntity>(field);
+                    if (pathMetadata.CollectionPropertyIndex is not { } collectionIndex)
+                        continue;
+
+                    var includePath = string.Join(".", pathMetadata.Properties.Take(collectionIndex + 1).Select(p => p.Name));
+                    if (!string.IsNullOrEmpty(includePath))
+                        paths.Add(includePath);
+                }
+
+                return paths.Order(StringComparer.OrdinalIgnoreCase).ToArray();
+            }, typeof(TEntity), tags) ?? [];
+    }
+
+    public virtual bool TryValidatePropertyPath<TEntity>(string propertyName, out string? errorMessage)
+    {
+        errorMessage = null;
+        if (string.IsNullOrWhiteSpace(propertyName)) {
+            errorMessage = "Property name cannot be null or empty.";
+            return false;
+        }
+
+        try {
+            _ = GetPropertyPathMetadataCached<TEntity>(propertyName);
+            return true;
+        }
+        catch (InvalidQueryException ex) {
+            errorMessage = ex.Message;
+            return false;
+        }
+        catch (Exception ex) {
+            errorMessage = ex.Message;
+            return false;
+        }
     }
 
     private WhereClauseExplainNode BuildExplainNode<TEntity>(TEntity entity, Models.Common.WhereClause node, string path)
     {
-        var passed = EvaluateWhereClauseCompiled<TEntity>(entity, node);
+        var passed = EvaluateWhereClauseCompiled(entity, node);
         var description = node.Description;
-
         switch (node) {
             case ConditionClause c: {
                 bool? primaryPredicatePassed = null;
@@ -135,10 +255,10 @@ public class BaseWhereClauseService : IWhereClauseService
                     var primaryBody = BuildConditionExpression<TEntity>(c, param, false);
                     var primaryLambda = Expression.Lambda<Func<TEntity, bool>>(primaryBody, param);
                     primaryPredicatePassed = primaryLambda.Compile()(entity);
-                    subExplain = BuildExplainNode<TEntity>(entity, c.SubClause, string.IsNullOrEmpty(path) ? "sub" : $"{path}/sub");
+                    subExplain = BuildExplainNode(entity, c.SubClause, string.IsNullOrEmpty(path) ? "sub" : $"{path}/sub");
                 }
 
-                return new WhereClauseExplainNode {
+                return new() {
                     Passed = passed,
                     Kind = WhereClauseExplainKind.Condition,
                     Path = path,
@@ -155,12 +275,11 @@ public class BaseWhereClauseService : IWhereClauseService
                 var children = new WhereClauseExplainNode[g.Children.Count];
                 for (var i = 0; i < g.Children.Count; i++) {
                     var childPath = string.IsNullOrEmpty(path) ? i.ToString() : $"{path}/{i}";
-                    children[i] = BuildExplainNode<TEntity>(entity, g.Children[i], childPath);
+                    children[i] = BuildExplainNode(entity, g.Children[i], childPath);
                 }
 
-                var subExplain = g.SubClause != null ? BuildExplainNode<TEntity>(entity, g.SubClause, string.IsNullOrEmpty(path) ? "sub" : $"{path}/sub") : null;
-
-                return new WhereClauseExplainNode {
+                var subExplain = g.SubClause != null ? BuildExplainNode(entity, g.SubClause, string.IsNullOrEmpty(path) ? "sub" : $"{path}/sub") : null;
+                return new() {
                     Passed = passed,
                     Kind = WhereClauseExplainKind.Group,
                     Path = path,
@@ -224,7 +343,7 @@ public class BaseWhereClauseService : IWhereClauseService
         return string.IsNullOrEmpty(actual) ? $"{field} {cmp} is not satisfied." : $"{field} {cmp} is not satisfied (actual: {actual}).";
     }
 
-    /// <summary>Lists each direct branch under every <see cref="GroupOperatorEnum.Or"/> group that failed (nested Or groups included).</summary>
+    /// <summary>Lists each direct branch under every <see cref="GroupOperatorEnum.Or" /> group that failed (nested Or groups included).</summary>
     private static IReadOnlyList<ExplainOrBranchOutcome>? CollectOrBranchOutcomes(WhereClauseExplainNode root)
     {
         var list = new List<ExplainOrBranchOutcome>();
@@ -233,18 +352,16 @@ public class BaseWhereClauseService : IWhereClauseService
 
         void VisitForFailedOrGroups(WhereClauseExplainNode n)
         {
-            if (n.Kind == WhereClauseExplainKind.Group
-                && n.GroupOperator == GroupOperatorEnum.Or
-                && !n.Passed
-                && n.Children is { Count: > 0 } orChildren) {
+            if (n.Kind == WhereClauseExplainKind.Group && n.GroupOperator == GroupOperatorEnum.Or && !n.Passed && n.Children is { Count: > 0 } orChildren) {
                 var orPath = n.Path ?? "";
                 foreach (var branch in orChildren) {
-                    list.Add(new ExplainOrBranchOutcome {
-                        OrGroupPath = orPath,
-                        BranchPath = branch.Path,
-                        Passed = branch.Passed,
-                        Summary = SummarizeOrBranchOutcome(branch)
-                    });
+                    list.Add(
+                        new() {
+                            OrGroupPath = orPath,
+                            BranchPath = branch.Path,
+                            Passed = branch.Passed,
+                            Summary = SummarizeOrBranchOutcome(branch)
+                        });
                 }
             }
 
@@ -267,7 +384,7 @@ public class BaseWhereClauseService : IWhereClauseService
             WhereClauseExplainKind.Condition => FormatConditionFailureLine(branch),
             WhereClauseExplainKind.Group => SummarizeFailedGroupBranch(branch),
             WhereClauseExplainKind.None => "Branch did not match.",
-            _ => "Branch did not match."
+            var _ => "Branch did not match."
         };
     }
 
@@ -338,7 +455,7 @@ public class BaseWhereClauseService : IWhereClauseService
                     continue;
                 }
 
-                object? leaf = item;
+                var leaf = item;
                 foreach (var p in tail) {
                     if (leaf == null)
                         break;
@@ -395,112 +512,6 @@ public class BaseWhereClauseService : IWhereClauseService
             return true;
 
         return expr.Compile()(entity);
-    }
-
-    public virtual IQueryable<TEntity> ApplyWhereClause<TEntity>(IQueryable<TEntity> source, Models.Common.WhereClause? queryNode, bool includeSubClauses = true)
-    {
-        if (queryNode is null)
-            return source;
-
-        using var timer = _metrics.StartTimer(Constants.Metrics.ApplyWhereClauseDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-        try {
-            var cacheKey = GenerateEfPredicateCacheKey<TEntity>(queryNode, includeSubClauses);
-            var tags = new[] { $"entity:{typeof(TEntity).Name.ToLowerInvariant()}" };
-            var expression = Cache.GetOrSet(
-                cacheKey,
-                _ => BuildExpressionFromWhereClause<TEntity>(queryNode, includeSubClauses)!,
-                typeof(TEntity),
-                tags);
-            var result = expression != null ? source.Where(expression) : source;
-            _metrics.IncrementCounter(Constants.Metrics.ApplyWhereClauseSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            _logger.LogDebug("ApplyWhereClause applied to {EntityType}", typeof(TEntity).Name);
-            return result;
-        }
-        catch (Exception ex) {
-            _metrics.RecordError(Constants.Metrics.ApplyWhereClauseDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            throw;
-        }
-    }
-
-    public virtual IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null)
-    {
-        if (string.IsNullOrEmpty(propertyName))
-            throw new InvalidQueryException("Property name cannot be null or empty.");
-
-        using var timer = _metrics.StartTimer(Constants.Metrics.SortByPropertyDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-        try {
-            var sortKeyCacheKey = $"{EntityMetadata.SortKeyLambdaPrefix}{typeof(TEntity).FullName}:{propertyName}";
-            var (lambda, keyType) = SharedEntityMetadataCache.GetOrAddSortKeyLambda(sortKeyCacheKey, () => {
-                var parameter = Expression.Parameter(typeof(TEntity), "x");
-                var (keySelector, kt) = BuildKeySelector<TEntity>(propertyName, parameter);
-                return (Expression.Lambda(keySelector, parameter), kt);
-            });
-            var methodName = GetOrderingMethodName(source, direction ?? SortDirection.Desc);
-            var orderMethod = GetQueryableOrderMethodCached<TEntity>(methodName, keyType);
-            var result = (IQueryable<TEntity>)orderMethod.Invoke(null, [source, lambda])!;
-            _metrics.IncrementCounter(Constants.Metrics.SortByPropertySuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            _logger.LogDebug("SortByProperty applied to {EntityType} by {PropertyName} {Direction}", typeof(TEntity).Name, propertyName, direction ?? SortDirection.Desc);
-            return result;
-        }
-        catch (Exception ex) {
-            _metrics.RecordError(Constants.Metrics.SortByPropertyDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            throw;
-        }
-    }
-
-    public virtual IQueryable<TEntity> ApplyOrdering<TEntity>(
-        IQueryable<TEntity> queryable,
-        IEnumerable<SortBy> sortByProps,
-        Expression<Func<TEntity, object?>> defaultOrder,
-        SortDirection defaultSortDirection)
-    {
-        var byProps = sortByProps as SortBy[] ?? sortByProps.ToArray();
-        using var timer = _metrics.StartTimer(Constants.Metrics.ApplyOrderingDuration, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-        try {
-            var result = !byProps.Any()
-                ? defaultSortDirection == SortDirection.Desc ? queryable.OrderByDescending(defaultOrder) : queryable.OrderBy(defaultOrder)
-                : byProps.Select((s, i) => (SortBy: s, EffectivePriority: s.Priority ?? i))
-                    .OrderBy(x => x.EffectivePriority)
-                    .Aggregate(queryable, (current, x) => SortByProperty(current, x.SortBy.PropertyName, x.SortBy.Direction));
-
-            _metrics.IncrementCounter(Constants.Metrics.ApplyOrderingSuccess, 1, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            _metrics.RecordGauge(Constants.Metrics.SortByCount, byProps.Length, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            _logger.LogDebug("ApplyOrdering applied to {EntityType} with {SortByCount} sort properties", typeof(TEntity).Name, byProps.Length);
-            return result;
-        }
-        catch (Exception ex) {
-            _metrics.RecordError(Constants.Metrics.ApplyOrderingDuration, ex, [(Constants.Metrics.Tags.EntityType, typeof(TEntity).Name)]);
-            throw;
-        }
-    }
-
-    public virtual IEnumerable<string> GetCollectionIncludePathsForWhereClause<TEntity>(Models.Common.WhereClause? queryNode)
-    {
-        if (queryNode == null)
-            return [];
-
-        var cacheKeyBuilder = new StringBuilder("SubQueryIncludePaths_").Append(typeof(TEntity).FullName).Append('_');
-        AppendWhereClauseHash(queryNode, cacheKeyBuilder);
-        var cacheKey = cacheKeyBuilder.ToString();
-        var tags = new[] { $"entity:{typeof(TEntity).Name.ToLowerInvariant()}" };
-        return Cache.GetOrSet<IReadOnlyList<string>>(
-            cacheKey, _ => {
-                var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var field in CollectConditionFields(queryNode)) {
-                    if (string.IsNullOrWhiteSpace(field))
-                        continue;
-
-                    var pathMetadata = GetPropertyPathMetadataCached<TEntity>(field);
-                    if (pathMetadata.CollectionPropertyIndex is not { } collectionIndex)
-                        continue;
-
-                    var includePath = string.Join(".", pathMetadata.Properties.Take(collectionIndex + 1).Select(p => p.Name));
-                    if (!string.IsNullOrEmpty(includePath))
-                        paths.Add(includePath);
-                }
-
-                return paths.Order(StringComparer.OrdinalIgnoreCase).ToArray();
-            }, typeof(TEntity), tags) ?? [];
     }
 
     private PropertyInfo? ResolvePropertyCached(Type type, string name) => SharedEntityMetadataCache.ResolveProperty(type, name);
@@ -829,12 +840,10 @@ public class BaseWhereClauseService : IWhereClauseService
     {
         var cacheKey = GenerateWhereClauseCacheKey<TEntity>(queryNode);
         return Cache.GetOrSet<Func<TEntity, bool>>(
-            cacheKey,
-            _ => {
+            cacheKey, _ => {
                 var expr = BuildExpressionFromWhereClause<TEntity>(queryNode);
                 return expr == null ? _ => true : expr.Compile();
-            },
-            CacheOptions.DefaultExpiration)!;
+            }, CacheOptions.DefaultExpiration)!;
     }
 
     private static string GenerateEfPredicateCacheKey<TEntity>(Models.Common.WhereClause queryNode, bool includeSubClauses)
@@ -1206,26 +1215,22 @@ public class BaseWhereClauseService : IWhereClauseService
             var _ => throw new InvalidQueryException($"Comparison '{comparison}' is not supported for type '{propertyType.Name}'")
         };
 
-    /// <summary>Guid (and nullable Guid) use the same string operations as <see cref="string" />; values are compared on canonical <see cref="Guid.ToString" /> forms (aligned with typical SQL string casts).</summary>
+    /// <summary>
+    /// Guid (and nullable Guid) use the same string operations as <see cref="string" />; values are compared on canonical <see cref="Guid.ToString" /> forms (aligned with
+    /// typical SQL string casts).
+    /// </summary>
     private static bool IsGuidLikeType(Type type)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
         return type == typeof(Guid);
     }
 
-    private static bool IsStringOrRegexComparison(ComparisonOperatorEnum comparison) =>
-        comparison is ComparisonOperatorEnum.Contains
-            or ComparisonOperatorEnum.NotContains
-            or ComparisonOperatorEnum.StartsWith
-            or ComparisonOperatorEnum.EndsWith
-            or ComparisonOperatorEnum.NotStartsWith
-            or ComparisonOperatorEnum.NotEndsWith
-            or ComparisonOperatorEnum.Regex
-            or ComparisonOperatorEnum.NotRegex;
+    private static bool IsStringOrRegexComparison(ComparisonOperatorEnum comparison)
+        => comparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.EndsWith
+            or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex;
 
     /// <summary>Types that support Contains/StartsWith/EndsWith/Regex using string semantics (including Guid, matched via string representation).</summary>
-    private static bool SupportsStringMethodComparisons(Type propertyType) =>
-        propertyType == typeof(string) || IsGuidLikeType(propertyType);
+    private static bool SupportsStringMethodComparisons(Type propertyType) => propertyType == typeof(string) || IsGuidLikeType(propertyType);
 
     private static Type GetFilterValueParseType(Type propertyType, ComparisonOperatorEnum comparison)
     {
@@ -1235,13 +1240,10 @@ public class BaseWhereClauseService : IWhereClauseService
         return propertyType;
     }
 
-    /// <summary>RHS for string-method / regex filters on Guid must stay <see cref="string"/> (partial fragments); do not convert to <see cref="Guid"/>.</summary>
+    /// <summary>RHS for string-method / regex filters on Guid must stay <see cref="string" /> (partial fragments); do not convert to <see cref="Guid" />.</summary>
     private static Expression GetRhsConstantExpression(object? parsedValue, Type parseType, Expression propertyExpression, ComparisonOperatorEnum comparison)
     {
-        if (parseType == typeof(string)
-            && propertyExpression.Type != typeof(string)
-            && IsGuidLikeType(propertyExpression.Type)
-            && IsStringOrRegexComparison(comparison))
+        if (parseType == typeof(string) && propertyExpression.Type != typeof(string) && IsGuidLikeType(propertyExpression.Type) && IsStringOrRegexComparison(comparison))
             return Expression.Constant(parsedValue, typeof(string));
 
         return GetValueExpression(parsedValue, parseType, propertyExpression);
@@ -1378,27 +1380,5 @@ public class BaseWhereClauseService : IWhereClauseService
             return true;
 
         return queryRequest.WhereClause == null || Match(entity, queryRequest.WhereClause);
-    }
-
-    public virtual bool TryValidatePropertyPath<TEntity>(string propertyName, out string? errorMessage)
-    {
-        errorMessage = null;
-        if (string.IsNullOrWhiteSpace(propertyName)) {
-            errorMessage = "Property name cannot be null or empty.";
-            return false;
-        }
-
-        try {
-            _ = GetPropertyPathMetadataCached<TEntity>(propertyName);
-            return true;
-        }
-        catch (InvalidQueryException ex) {
-            errorMessage = ex.Message;
-            return false;
-        }
-        catch (Exception ex) {
-            errorMessage = ex.Message;
-            return false;
-        }
     }
 }

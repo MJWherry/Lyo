@@ -4,16 +4,14 @@ using OpenQA.Selenium.Support.UI;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
-/// <summary>Shared single-attempt element wait used by <see cref="SeleniumBrowser.WaitFor" /> and <see cref="SeleniumBrowser.GetElementAsync(OpenQA.Selenium.By,System.Threading.CancellationToken)" /> (and chained resolution in <see cref="SeleniumBrowser" />).</summary>
+/// <summary>
+/// Shared single-attempt element wait used by <see cref="SeleniumBrowser.WaitFor" /> and
+/// <see cref="SeleniumBrowser.GetElementAsync(OpenQA.Selenium.By,System.Threading.CancellationToken)" /> (and chained resolution in <see cref="SeleniumBrowser" />).
+/// </summary>
 internal static class SeleniumPolling
 {
     /// <summary>One bounded <see cref="WebDriverWait" /> for <paramref name="by" />.</summary>
-    public static IWebElement? TryWaitForElement(
-        IWebDriver driver,
-        By by,
-        int seleniumMaxWaitSeconds,
-        ILogger? logger,
-        CancellationToken ct)
+    public static IWebElement? TryWaitForElement(IWebDriver driver, By by, int seleniumMaxWaitSeconds, ILogger? logger, CancellationToken ct)
     {
         var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(seleniumMaxWaitSeconds));
         try {
@@ -32,13 +30,7 @@ internal static class SeleniumPolling
     }
 
     /// <summary>Waits for <paramref name="by" /> relative to <paramref name="context" /> (nested search).</summary>
-    public static IWebElement? TryWaitForNestedElement(
-        IWebDriver driver,
-        IWebElement context,
-        By by,
-        int seleniumMaxWaitSeconds,
-        ILogger? logger,
-        CancellationToken ct)
+    public static IWebElement? TryWaitForNestedElement(IWebDriver driver, IWebElement context, By by, int seleniumMaxWaitSeconds, ILogger? logger, CancellationToken ct)
     {
         var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(seleniumMaxWaitSeconds));
         try {

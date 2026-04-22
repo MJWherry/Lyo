@@ -26,12 +26,12 @@ public sealed partial record ElementLocator
     public ElementLocatorChain Then(ElementLocator next)
     {
         ArgumentHelpers.ThrowIfNull(next, nameof(next));
-        return new ElementLocatorChain(this, next);
+        return new(this, next);
     }
 
     private static ElementLocator New(ElementLocatorKind kind, string value)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, nameof(value));
-        return new ElementLocator(kind, value);
+        return new(kind, value);
     }
 }

@@ -12,11 +12,6 @@ namespace Lyo.Web.Components.JsonEditor;
 
 public partial class JsonTreeView : IAsyncDisposable
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-json-tree-view" : ElementId.Trim();
-
     private const int TreeRowItemSize = 28;
 
     private readonly HashSet<string> _expanded = new(StringComparer.Ordinal) { "" };
@@ -31,10 +26,15 @@ public partial class JsonTreeView : IAsyncDisposable
     private int _lastNotifiedCurrent = -1;
     private int _lastNotifiedTotal = -1;
     private string _lastSearchText = "";
+    private JsonNode? _lastVisibleRowsRoot;
     private int _searchIndex = -1;
     private ElementReference _treeContainerRef;
     private List<TreeRow>? _visibleRowsCache;
-    private JsonNode? _lastVisibleRowsRoot;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-json-tree-view" : ElementId.Trim();
 
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = null!;

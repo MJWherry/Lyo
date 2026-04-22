@@ -23,8 +23,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
     private readonly ILogger<S3MultipartUploadService> _logger;
-    private readonly IMetrics _metrics;
     private readonly IFileMalwareScanner _malwareScanner;
+    private readonly IMetrics _metrics;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly S3FileStorageOptions _options;
     private readonly IAmazonS3 _s3;

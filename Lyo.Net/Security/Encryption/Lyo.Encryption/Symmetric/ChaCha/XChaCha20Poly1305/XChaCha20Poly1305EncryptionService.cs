@@ -182,7 +182,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
         var nonce = br.ReadBytes(nonceLength);
         var tag = br.ReadBytes(XChaCha20Poly1305Helper.TagSize);
         var ciphertext = br.ReadBytes((int)(ms.Length - ms.Position));
-
         byte[]? actualKey = null;
         if (key != null)
             actualKey = key;

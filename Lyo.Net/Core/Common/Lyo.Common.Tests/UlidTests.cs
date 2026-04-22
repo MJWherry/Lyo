@@ -28,8 +28,7 @@ public class UlidTests
         var u1 = Ulid.Create(t1);
         var u2 = Ulid.Create(t2);
         // The first 10 characters encode the timestamp; later time → larger string.
-        Assert.True(string.Compare(u1, u2, StringComparison.Ordinal) < 0,
-            "ULID with earlier timestamp should sort before one with later timestamp.");
+        Assert.True(string.Compare(u1, u2, StringComparison.Ordinal) < 0, "ULID with earlier timestamp should sort before one with later timestamp.");
     }
 
     [Fact]
@@ -42,20 +41,18 @@ public class UlidTests
     }
 
     [Fact]
-    public void GetTimestamp_TooShort_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp("TOOSHORT"));
+    public void GetTimestamp_TooShort_Throws() => Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp("TOOSHORT"));
 
     [Fact]
-    public void GetTimestamp_TooLong_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp(new string('0', 27)));
+    public void GetTimestamp_TooLong_Throws() => Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp(new('0', 27)));
 
     [Fact]
-    public void GetTimestamp_InvalidChar_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp("I000000000" + new string('0', 16))); // 'I' not in Crockford alphabet; must be in timestamp region (first 10 chars)
+    public void GetTimestamp_InvalidChar_Throws()
+        => Assert.Throws<ArgumentException>(()
+            => Ulid.GetTimestamp("I000000000" + new string('0', 16))); // 'I' not in Crockford alphabet; must be in timestamp region (first 10 chars)
 
     [Fact]
-    public void GetTimestamp_Null_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp(null!));
+    public void GetTimestamp_Null_Throws() => Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp(null!));
 
     [Fact]
     public void Create_SameTimestampDifferentRandom()

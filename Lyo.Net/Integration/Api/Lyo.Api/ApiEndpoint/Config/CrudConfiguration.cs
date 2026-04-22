@@ -54,7 +54,7 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
 
     public EndpointAuth? PatchBulkAuth { get; init; }
 
-    /// <summary>When set, restricts <see cref="PatchRequest.Properties"/> for both Patch and PatchBulk (same rules as typed hooks).</summary>
+    /// <summary>When set, restricts <see cref="PatchRequest.Properties" /> for both Patch and PatchBulk (same rules as typed hooks).</summary>
     public PatchPropertyAuthorization? PatchPropertyAuthorization { get; init; }
 
     public EndpointAuth? UpsertAuth { get; init; }

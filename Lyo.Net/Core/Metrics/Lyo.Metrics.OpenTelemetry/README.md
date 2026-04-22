@@ -115,11 +115,11 @@ using (metrics.StartTimer("operation.duration"))
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `OpenTelemetry` | `1.*` |
-| `OpenTelemetry.Exporter.Console` | `1.*` |
-| `OpenTelemetry.Extensions.Hosting` | `1.*` |
+| Package                            | Version |
+|------------------------------------|---------|
+| `OpenTelemetry`                    | `1.*`   |
+| `OpenTelemetry.Exporter.Console`   | `1.*`   |
+| `OpenTelemetry.Extensions.Hosting` | `1.*`   |
 
 ### Project references
 

@@ -1,9 +1,5 @@
-using System.Linq;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage;
-using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
-using Lyo.Web.Components;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
@@ -15,22 +11,36 @@ namespace Lyo.FileStorage.Web.Components;
 
 public partial class FileStoreFilesTab : ComponentBase
 {
-    [CascadingParameter]
-    public FileStorageWorkbench Workbench { get; set; } = default!;
+    private const string _guidValidationPattern = "^[{(]?[0-9A-Fa-f]{8}(?:-?[0-9A-Fa-f]{4}){3}-?[0-9A-Fa-f]{12}[)}]?$";
+
+    private int _cryptoOpsTab;
 
     private bool _fileBusy;
-    private IIOTempSession? _stagingSession;
-    private LocalBrowserFilePath? _uploadedFile;
-    private string _uploadStatus = "No file selected.";
-    private string? _saveOriginalFileName;
-    private string _savePathPrefix = string.Empty;
+    private LyoDataGridProjected? _fileMetadataGrid;
+    private int _migrationBatchSize = 100;
+    private DekMigrationResult? _migrationResult;
+
+    private string _migrationSourceKeyId = string.Empty;
+    private string _migrationSourceKeyVersion = string.Empty;
+    private string _migrationTargetKeyId = string.Empty;
+    private string _migrationTargetKeyVersion = string.Empty;
+    private int _rotationBatchSize = 100;
+    private List<string> _rotationFileIds = [];
+    private DekMigrationResult? _rotationResult;
+    private string _rotationTargetKeyId = string.Empty;
+    private string _rotationTargetKeyVersion = string.Empty;
+    private int? _saveChunkSize;
     private bool _saveCompress;
     private bool _saveEncrypt;
     private string _saveKeyId = string.Empty;
-    private int? _saveChunkSize;
+    private string? _saveOriginalFileName;
+    private string _savePathPrefix = string.Empty;
+    private IIOTempSession? _stagingSession;
+    private LocalBrowserFilePath? _uploadedFile;
+    private string _uploadStatus = "No file selected.";
 
-    private int _cryptoOpsTab;
-    private LyoDataGridProjected? _fileMetadataGrid;
+    [CascadingParameter]
+    public FileStorageWorkbench Workbench { get; set; } = default!;
 
     private string CryptoOpsMigrationTitle => _cryptoOpsTab == 0 ? "DEK migration" : "KEK migration";
 
@@ -38,18 +48,14 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private string CryptoOpsKind => _cryptoOpsTab == 0 ? "DEK" : "KEK";
 
-    private string _migrationSourceKeyId = string.Empty;
-    private string _migrationSourceKeyVersion = string.Empty;
-    private string _migrationTargetKeyId = string.Empty;
-    private string _migrationTargetKeyVersion = string.Empty;
-    private int _migrationBatchSize = 100;
-    private DekMigrationResult? _migrationResult;
-    private const string _guidValidationPattern = "^[{(]?[0-9A-Fa-f]{8}(?:-?[0-9A-Fa-f]{4}){3}-?[0-9A-Fa-f]{12}[)}]?$";
-    private List<string> _rotationFileIds = [];
-    private string _rotationTargetKeyId = string.Empty;
-    private string _rotationTargetKeyVersion = string.Empty;
-    private int _rotationBatchSize = 100;
-    private DekMigrationResult? _rotationResult;
+    public async ValueTask DisposeAsync()
+    {
+        if (_stagingSession is null)
+            return;
+
+        await _stagingSession.DisposeAsync();
+        _stagingSession = null;
+    }
 
     private IReadOnlyList<string> GetKnownVersions(string? keyId) => Workbench.GetKnownVersionsForKey(keyId);
 
@@ -57,7 +63,6 @@ public partial class FileStoreFilesTab : ComponentBase
     {
         _uploadedFile = file;
         _saveOriginalFileName = file.FileName;
-
         if (Workbench.FileStorage == null)
             _uploadStatus = $"{file.FileName} staged in IO temp session (no storage service).";
         else if (_saveEncrypt && string.IsNullOrWhiteSpace(_saveKeyId))
@@ -133,7 +138,10 @@ public partial class FileStoreFilesTab : ComponentBase
         _uploadStatus = "Uploading to storage…";
         try {
             await InvokeAsync(StateHasChanged);
-            var result = await storage.SaveFileAsync(_uploadedFile.FilePath, string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt, _saveEncrypt ? _saveKeyId : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
+            var result = await storage.SaveFileAsync(
+                _uploadedFile.FilePath, string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
+                _saveEncrypt ? _saveKeyId : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
+
             if (_fileMetadataGrid != null)
                 await _fileMetadataGrid.RefreshData();
 
@@ -164,8 +172,13 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            _migrationResult = await storage.MigrateDeksAsync(_migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId), NullIfWhiteSpace(_migrationTargetKeyVersion), _migrationBatchSize);
-            Workbench.SetStatus(_migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.", _migrationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+            _migrationResult = await storage.MigrateDeksAsync(
+                _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId), NullIfWhiteSpace(_migrationTargetKeyVersion),
+                _migrationBatchSize);
+
+            Workbench.SetStatus(
+                _migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.",
+                _migrationResult.AllSucceeded ? Severity.Success : Severity.Warning);
         }
         catch (Exception ex) {
             Workbench.SetStatus(ex.Message, Severity.Error);
@@ -189,7 +202,9 @@ public partial class FileStoreFilesTab : ComponentBase
         _fileBusy = true;
         try {
             _rotationResult = await storage.RotateDeksAsync(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize);
-            Workbench.SetStatus(_rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.", _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+            Workbench.SetStatus(
+                _rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.",
+                _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
         }
         catch (Exception ex) {
             Workbench.SetStatus(ex.Message, Severity.Error);
@@ -287,7 +302,6 @@ public partial class FileStoreFilesTab : ComponentBase
         _fileBusy = true;
         try {
             var deleted = await storage.DeleteFileAsync(fileId);
-
             if (deleted && _fileMetadataGrid != null)
                 await _fileMetadataGrid.RefreshData();
 
@@ -373,15 +387,6 @@ public partial class FileStoreFilesTab : ComponentBase
             return;
 
         _stagingSession = Workbench.TempService.CreateSession();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_stagingSession is null)
-            return;
-
-        await _stagingSession.DisposeAsync();
-        _stagingSession = null;
     }
 
     private void NormalizeFileTabSelections()

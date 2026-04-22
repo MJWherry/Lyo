@@ -4,7 +4,8 @@ Thanks for helping improve Lyo.
 
 ## License for your contribution
 
-By submitting a pull request or otherwise contributing code or documentation to this repository, you agree that your contribution is licensed under the **Apache License, Version 2.0**—the same license as the project ([`LICENSE`](LICENSE)). That keeps inbound rights aligned with what everyone gets outbound.
+By submitting a pull request or otherwise contributing code or documentation to this repository, you agree that your contribution is licensed under the **Apache License, Version
+2.0**—the same license as the project ([`LICENSE`](LICENSE)). That keeps inbound rights aligned with what everyone gets outbound.
 
 ## What we hope for (not a legal requirement)
 

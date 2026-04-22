@@ -27,5 +27,11 @@ public sealed class IOTempSessionOptions
 
     public long? MaxFileSizeBytes { get; init; } = FileSizeUnitInfo.Gigabyte.ConvertToBytes(1);
 
+    /// <summary>
+    /// Maximum total bytes for all files in this session.
+    /// When exceeded, <see cref="OverflowStrategy"/> governs whether old/large files are deleted or an exception is thrown.
+    /// </summary>
+    public long? MaxTotalSizeBytes { get; init; }
+
     public TempOverflowStrategy OverflowStrategy { get; init; } = TempOverflowStrategy.ThrowException;
 }

@@ -37,6 +37,28 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
         Description = description;
     }
 
+    public bool Equals(GroupClause? other)
+    {
+        if (other is null)
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        if (Operator != other.Operator)
+            return false;
+
+        if (Children.Count != other.Children.Count)
+            return false;
+
+        for (var i = 0; i < Children.Count; i++) {
+            if (!StructuralEquals(Children[i], other.Children[i]))
+                return false;
+        }
+
+        return true;
+    }
+
     public override string Print(int indent = 0)
     {
         var pad = new string(' ', indent * 2);
@@ -87,28 +109,6 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
         return string.Join("\n", lines);
     }
 
-    public bool Equals(GroupClause? other)
-    {
-        if (other is null)
-            return false;
-
-        if (ReferenceEquals(this, other))
-            return true;
-
-        if (Operator != other.Operator)
-            return false;
-
-        if (Children.Count != other.Children.Count)
-            return false;
-
-        for (var i = 0; i < Children.Count; i++) {
-            if (!StructuralEquals(Children[i], other.Children[i]))
-                return false;
-        }
-
-        return true;
-    }
-
     public override bool Equals(object? obj) => Equals(obj as GroupClause);
 
     public override int GetHashCode()
@@ -139,13 +139,13 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
         return false;
     }
 
-    private static int StructuralHashCode(WhereClause? node) => node switch
-    {
-        null => 0,
-        ConditionClause c => c.GetHashCode(),
-        GroupClause g => g.GetHashCode(),
-        _ => node.GetHashCode()
-    };
+    private static int StructuralHashCode(WhereClause? node)
+        => node switch {
+            null => 0,
+            ConditionClause c => c.GetHashCode(),
+            GroupClause g => g.GetHashCode(),
+            var _ => node.GetHashCode()
+        };
 
     public override string ToString() => Description ?? $"({string.Join($" {Operator.ToString().ToUpperInvariant()} ", Children)})";
 }

@@ -1,6 +1,8 @@
-using System.Buffers;
 using System.Security.Cryptography;
 using Lyo.Exceptions;
+#if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
+using System.Buffers;
+#endif
 
 namespace Lyo.Streams;
 

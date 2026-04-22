@@ -82,14 +82,14 @@ Example `appsettings.json`:
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| `Microsoft.Extensions.Options`                          | `[10,)` |
+| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10,)` |
 
 ### Project references
 

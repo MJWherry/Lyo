@@ -22,8 +22,7 @@ public static class FileStorageWorkbenchExtensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(fileStorageKey) && s.ServiceType == typeof(IFileStorageService))) {
                 services.AddKeyedScoped<IFileStorageService>(
                     fileStorageKey,
-                    (provider, _) => new TestApiFileStorageService(
-                        provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix, options.StreamUploadRelativePath));
+                    (provider, _) => new TestApiFileStorageService(provider.GetRequiredService<IApiClient>(), options.ApiRoutePrefix, options.StreamUploadRelativePath));
             }
 
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyStoreKey) && s.ServiceType == typeof(IKeyStore)))

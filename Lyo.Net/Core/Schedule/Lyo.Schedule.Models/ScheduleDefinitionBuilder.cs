@@ -1,9 +1,9 @@
+using Lyo.Common.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
-using Lyo.Common.Enums;
 
 namespace Lyo.Schedule.Models;
 

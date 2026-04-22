@@ -9,6 +9,5 @@ namespace Lyo.Web.Automation.Models;
 public sealed partial record ElementLocator(ElementLocatorKind Kind, string Value)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"{Kind}: {AutomationDisplayText.Ellipsis(Value)}";
+    public override string ToString() => $"{Kind}: {AutomationDisplayText.Ellipsis(Value)}";
 }

@@ -1,58 +1,38 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Drawing;
-using System.Linq;
 using Lyo.Exceptions;
 using Lyo.Metrics;
-using Lyo.Web.Automation;
-using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Core;
-using Lyo.Web.Automation.Models;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Automation;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Controls;
-using Lyo.Web.Automation.Selenium.Core;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Automation.Selenium.WebDriver;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
 /// <summary>Selenium WebDriver session façade: polling, metrics, controls, and <see cref="IWebAutomationBrowser" />.</summary>
 public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
 {
-    private readonly SeleniumExecutionContext? _executionContext;
-    private readonly ILogger _logger;
     private readonly Dictionary<string, string> _metricNames;
-    private readonly IMetrics _metrics;
-    private readonly SeleniumBrowserOptions _options;
-    private bool _disposed;
-    private IWebDriver? _driver;
-    private TabManager? _tabs;
     private BrowserAlerts? _alerts;
+    private SeleniumCookieJar? _cookieJar;
+    private bool _disposed;
     private FrameNavigator? _frames;
     private BrowserKeyboard? _keyboard;
-    private SeleniumCookieJar? _cookieJar;
+    private TabManager? _tabs;
 
     /// <summary>Gets the underlying WebDriver when the browser is started.</summary>
-    public IWebDriver? Driver => _driver;
-
-    /// <inheritdoc />
-    public IBrowserCookies? CookieJar => _driver != null ? _cookieJar ??= new SeleniumCookieJar(this) : null;
-
-    /// <inheritdoc />
-    public IBrowserHeaders? ExtraHeaders => null;
+    public IWebDriver? Driver { get; private set; }
 
     /// <summary>Correlation id when this browser was created from <see cref="ISeleniumBrowserService.CreateSession" />; otherwise <see cref="Guid.Empty" />.</summary>
-    public Guid SessionId => _executionContext?.SessionId ?? Guid.Empty;
+    public Guid SessionId => ExecutionContext?.SessionId ?? Guid.Empty;
 
     /// <summary>Session-scoped paths and temp lifetime when created from <see cref="ISeleniumBrowserService.CreateSession" />.</summary>
-    public SeleniumExecutionContext? ExecutionContext => _executionContext;
+    public SeleniumExecutionContext? ExecutionContext { get; }
 
     /// <summary>JavaScript alert / confirm / prompt helpers.</summary>
     public BrowserAlerts Alerts => _alerts ??= new(this);
@@ -63,46 +43,20 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Keyboard input via Selenium <see cref="OpenQA.Selenium.Interactions.Actions" />.</summary>
     public BrowserKeyboard Keyboard => _keyboard ??= new(this);
 
-    internal ILogger Logger => _logger;
+    internal ILogger Logger { get; }
 
-    internal IMetrics Metrics => _metrics;
+    internal IMetrics Metrics { get; }
 
-    internal SeleniumBrowserOptions Options => _options;
+    internal SeleniumBrowserOptions Options { get; }
 
     internal string SessionIdLabel => SessionId == Guid.Empty ? "none" : SessionId.ToString("N");
 
-    /// <summary>Resolved metric name for members of <see cref="Web.Automation.Core.Constants.Metrics" /> (Selenium-specific series).</summary>
-    internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
-
-    /// <summary>Begins a structured logging scope (<c>session_id</c>, <c>operation</c>, <c>tab</c>, <c>url</c>) for multi-step flows.</summary>
-    /// <param name="urlOverride">When set, used for <c>url</c> instead of the current document URL.</param>
-    public IDisposable? BeginOperationScope(string operation, string? urlOverride = null)
-    {
-        var url = urlOverride ?? TryGetCurrentUrl();
-        return _logger.BeginScope(
-            new Dictionary<string, object?> {
-                ["session_id"] = SessionIdLabel,
-                ["operation"] = operation,
-                ["tab"] = TryCurrentWindowHandle(),
-                ["url"] = url == null ? null : BrowserUrlRedaction.ForLog(url, _options.MaskSensitiveUrlsInLogs)
-            });
-    }
-
     /// <summary>Tab/window operations, metadata, open/close/switch. Valid after <see cref="StartBrowserAsync" />.</summary>
-    public TabManager Tabs
-    {
-        get
-        {
+    public TabManager Tabs {
+        get {
             EnsureDriver();
-            return _tabs ??= new(this, _logger);
+            return _tabs ??= new(this, Logger);
         }
-    }
-
-    /// <summary>Throws if the browser is not started; returns the active WebDriver.</summary>
-    internal IWebDriver GetRequiredDriver()
-    {
-        EnsureDriver();
-        return _driver!;
     }
 
     /// <summary>Creates a new browser instance.</summary>
@@ -110,23 +64,17 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <param name="logger">Optional logger.</param>
     /// <param name="metrics">Optional metrics.</param>
     public SeleniumBrowser(SeleniumBrowserOptions options, ILogger? logger = null, IMetrics? metrics = null)
-        : this(options, null, logger, metrics)
-    {
-    }
+        : this(options, null, logger, metrics) { }
 
     /// <summary>Creates a browser with optional session execution context (profile paths, temp session).</summary>
-    public SeleniumBrowser(
-        SeleniumBrowserOptions options,
-        SeleniumExecutionContext? executionContext,
-        ILogger? logger = null,
-        IMetrics? metrics = null)
+    public SeleniumBrowser(SeleniumBrowserOptions options, SeleniumExecutionContext? executionContext, ILogger? logger = null, IMetrics? metrics = null)
     {
         ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        _options = options;
-        _executionContext = executionContext ?? SeleniumExecutionContextFactory.Create(options, Guid.NewGuid());
+        Options = options;
+        ExecutionContext = executionContext ?? SeleniumExecutionContextFactory.Create(options, Guid.NewGuid());
         var baseLogger = logger ?? NullLogger.Instance;
-        _logger = _executionContext.BuildLogger(baseLogger);
-        _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
+        Logger = ExecutionContext.BuildLogger(baseLogger);
+        Metrics = Options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _metricNames = CreateMetricNamesDictionary();
     }
 
@@ -137,40 +85,144 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
             return;
 
         _disposed = true;
-        _driver?.Quit();
+        Driver?.Quit();
         _tabs?.ClearDisplayNames();
         _tabs = null;
         _alerts = null;
         _frames = null;
         _keyboard = null;
         _cookieJar = null;
-        _driver?.Dispose();
-        _driver = null;
-        _executionContext?.Dispose();
+        Driver?.Dispose();
+        Driver = null;
+        ExecutionContext?.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public IBrowserCookies? CookieJar => Driver != null ? _cookieJar ??= new(this) : null;
+
+    /// <inheritdoc />
+    public IBrowserHeaders? ExtraHeaders => null;
+
+    Task IWebAutomationBrowser.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
+
+    async Task IWebAutomationBrowser.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
+    {
+        await NavigateToAsync(url, ct).ConfigureAwait(false);
+        while (!ct.IsCancellationRequested) {
+            var done = await Task.Run(
+                    () => {
+                        try {
+                            var logs = Driver!.Manage().Logs.GetLog(LogType.Performance);
+                            foreach (var entry in logs) {
+                                var reqUrl = TryParseNetworkRequestUrl(entry.Message);
+                                if (reqUrl != null && onRequest(reqUrl))
+                                    return true;
+                            }
+                        }
+                        catch {
+                            // performance log unavailable for this browser/driver combination
+                        }
+
+                        return false;
+                    }, ct)
+                .ConfigureAwait(false);
+
+            if (done)
+                return;
+
+            await Task.Delay(50, ct).ConfigureAwait(false);
+        }
+
+        ct.ThrowIfCancellationRequested();
+    }
+
+    Task<string> IWebAutomationBrowser.GetPageSourceAsync(CancellationToken ct)
+        => Task.Run(
+            () => {
+                EnsureDriver();
+                ct.ThrowIfCancellationRequested();
+                return Driver!.PageSource;
+            }, ct);
+
+    Task IWebAutomationBrowser.ReloadAsync(CancellationToken ct)
+        => Task.Run(
+            () => {
+                EnsureDriver();
+                ct.ThrowIfCancellationRequested();
+                Driver!.Navigate().Refresh();
+            }, ct);
+
+    Task<string> IWebAutomationBrowser.GetCurrentUrlAsync(CancellationToken ct)
+        => Task.Run(
+            () => {
+                EnsureDriver();
+                ct.ThrowIfCancellationRequested();
+                return Driver!.Url;
+            }, ct);
+
+    Task<string> IWebAutomationBrowser.GetTitleAsync(CancellationToken ct)
+        => Task.Run(
+            () => {
+                EnsureDriver();
+                ct.ThrowIfCancellationRequested();
+                return Driver!.Title;
+            }, ct);
+
+    async Task<IWebAutomationElement> IWebAutomationBrowser.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct)
+        => await PollForChainAsync(chain, ct).ConfigureAwait(false);
+
+    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationBrowser.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct) => PollForElementsAsync(chain, ct);
+
+    Task<IWebAutomationElement?> IWebAutomationBrowser.GetElementAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementChainAsync(chain, ct);
+
+    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationBrowser.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementsChainAsync(chain, ct);
+
+    Task<byte[]> IWebAutomationBrowser.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
+
+    /// <summary>Resolved metric name for members of <see cref="Web.Automation.Core.Constants.Metrics" /> (Selenium-specific series).</summary>
+    internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
+
+    /// <summary>Begins a structured logging scope (<c>session_id</c>, <c>operation</c>, <c>tab</c>, <c>url</c>) for multi-step flows.</summary>
+    /// <param name="urlOverride">When set, used for <c>url</c> instead of the current document URL.</param>
+    public IDisposable? BeginOperationScope(string operation, string? urlOverride = null)
+    {
+        var url = urlOverride ?? TryGetCurrentUrl();
+        return Logger.BeginScope(
+            new Dictionary<string, object?> {
+                ["session_id"] = SessionIdLabel,
+                ["operation"] = operation,
+                ["tab"] = TryCurrentWindowHandle(),
+                ["url"] = url == null ? null : BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs)
+            });
+    }
+
+    /// <summary>Throws if the browser is not started; returns the active WebDriver.</summary>
+    internal IWebDriver GetRequiredDriver()
+    {
+        EnsureDriver();
+        return Driver!;
     }
 
     /// <summary>Starts the browser asynchronously.</summary>
     /// <param name="ct">Cancellation token.</param>
     public async Task StartBrowserAsync(CancellationToken ct = default)
     {
-        if (_driver != null) {
-            _logger.LogDebug("Browser already started");
+        if (Driver != null) {
+            Logger.LogDebug("Browser already started");
             return;
         }
 
-        using var timer = _metrics.StartTimer(
-            _metricNames[nameof(Wm.Metrics.StartBrowserDuration)],
-            SeleniumMetricTags.ForOperation(this, "start_browser"));
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.StartBrowserDuration)], SeleniumMetricTags.ForOperation(this, "start_browser"));
         await Task.Run(
                 () => {
                     ct.ThrowIfCancellationRequested();
-                    _driver = WebDriverFactory.CreateDriver(_options, _executionContext);
-                    ApplyWindowSize(_driver);
-                    _driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(_options.PageLoadTimeoutSeconds);
-                    _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(_options.ImplicitWaitSeconds);
-                    _driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(_options.ScriptTimeoutSeconds);
-                    _logger.LogInformation("Browser started ({BrowserKind})", _options.BrowserKind);
+                    Driver = WebDriverFactory.CreateDriver(Options, ExecutionContext);
+                    ApplyWindowSize(Driver);
+                    Driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(Options.PageLoadTimeoutSeconds);
+                    Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Options.ImplicitWaitSeconds);
+                    Driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(Options.ScriptTimeoutSeconds);
+                    Logger.LogInformation("Browser started ({BrowserKind})", Options.BrowserKind);
                 }, ct)
             .ConfigureAwait(false);
     }
@@ -179,20 +231,18 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <param name="ct">Cancellation token.</param>
     public async Task StopBrowserAsync(CancellationToken ct = default)
     {
-        if (_driver == null) {
-            _logger.LogDebug("Browser not running");
+        if (Driver == null) {
+            Logger.LogDebug("Browser not running");
             return;
         }
 
-        using var timer = _metrics.StartTimer(
-            _metricNames[nameof(Wm.Metrics.StopBrowserDuration)],
-            SeleniumMetricTags.ForOperation(this, "stop_browser"));
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.StopBrowserDuration)], SeleniumMetricTags.ForOperation(this, "stop_browser"));
         await Task.Run(
                 () => {
                     ct.ThrowIfCancellationRequested();
                     try {
-                        _driver!.Quit();
-                        _logger.LogInformation("Browser stopped");
+                        Driver!.Quit();
+                        Logger.LogInformation("Browser stopped");
                     }
                     finally {
                         _tabs?.ClearDisplayNames();
@@ -200,8 +250,8 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                         _alerts = null;
                         _frames = null;
                         _keyboard = null;
-                        _driver.Dispose();
-                        _driver = null;
+                        Driver.Dispose();
+                        Driver = null;
                     }
                 }, ct)
             .ConfigureAwait(false);
@@ -211,21 +261,21 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     public string GetCurrentUrl()
     {
         EnsureDriver();
-        return _driver!.Url;
+        return Driver!.Url;
     }
 
     /// <summary>Gets the current document title.</summary>
     public string GetTitle()
     {
         EnsureDriver();
-        return _driver!.Title;
+        return Driver!.Title;
     }
 
     /// <summary>Gets the full HTML source of the current page.</summary>
     public string GetPageSource()
     {
         EnsureDriver();
-        return _driver!.PageSource;
+        return Driver!.PageSource;
     }
 
     /// <summary>Scrolls the window by the given pixel offsets.</summary>
@@ -246,8 +296,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     public void ScrollToBottom()
     {
         EnsureDriver();
-        GetJavaScriptExecutor().ExecuteScript(
-            "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));");
+        GetJavaScriptExecutor().ExecuteScript("window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));");
     }
 
     /// <summary>Scrolls to the top of the page.</summary>
@@ -266,7 +315,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     }
 
     /// <summary>Creates a WebDriverWait with the configured timeout.</summary>
-    public WebDriverWait CreateWait() => new(_driver!, TimeSpan.FromSeconds(_options.SeleniumMaxWaitSeconds));
+    public WebDriverWait CreateWait() => new(Driver!, TimeSpan.FromSeconds(Options.SeleniumMaxWaitSeconds));
 
     /// <summary>Waits for an element using WebDriverWait (sync).</summary>
     /// <param name="by">Locator (e.g. By.Id, By.Name, By.XPath).</param>
@@ -275,16 +324,22 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     public IWebElement? WaitFor(By by, CancellationToken ct = default)
     {
         EnsureDriver();
-        return SeleniumPolling.TryWaitForElement(_driver!, by, _options.SeleniumMaxWaitSeconds, _logger, ct);
+        return SeleniumPolling.TryWaitForElement(Driver!, by, Options.SeleniumMaxWaitSeconds, Logger, ct);
     }
 
     /// <summary>Waits for an element using WebDriverWait (async).</summary>
     public async Task<IWebElement?> WaitForAsync(By by, CancellationToken ct = default) => await Task.Run(() => WaitFor(by, ct), ct).ConfigureAwait(false);
 
-    /// <summary>Retries <see cref="WaitFor" /> up to <see cref="SeleniumBrowserOptions.PollingMaxAttempts" /> with <see cref="SeleniumBrowserOptions.PollingDelayBetweenAttempts" /> between attempts (sync).</summary>
+    /// <summary>
+    /// Retries <see cref="WaitFor" /> up to <see cref="SeleniumBrowserOptions.PollingMaxAttempts" /> with <see cref="SeleniumBrowserOptions.PollingDelayBetweenAttempts" />
+    /// between attempts (sync).
+    /// </summary>
     public IWebElement PollFor(By by) => PollForAsync(by, CancellationToken.None).GetAwaiter().GetResult();
 
-    /// <summary>One <see cref="WaitFor" /> (bounded by <see cref="SeleniumBrowserOptions.SeleniumMaxWaitSeconds" />); does not apply outer <see cref="SeleniumBrowserOptions.PollingMaxAttempts" />. Returns <see langword="null" /> if not found.</summary>
+    /// <summary>
+    /// One <see cref="WaitFor" /> (bounded by <see cref="SeleniumBrowserOptions.SeleniumMaxWaitSeconds" />); does not apply outer
+    /// <see cref="SeleniumBrowserOptions.PollingMaxAttempts" />. Returns <see langword="null" /> if not found.
+    /// </summary>
     public async Task<IWebElement?> GetElementAsync(By by, CancellationToken ct = default)
     {
         EnsureDriver();
@@ -297,28 +352,28 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         EnsureDriver();
         var locatorDesc = by.ToString();
         var pollTags = SeleniumMetricTags.ForOperation(this, "poll", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
         try {
-            var max = Math.Max(1, _options.PollingMaxAttempts);
+            var max = Math.Max(1, Options.PollingMaxAttempts);
             for (var attempt = 1; attempt <= max; attempt++) {
                 ct.ThrowIfCancellationRequested();
                 var element = await GetElementAsync(by, ct).ConfigureAwait(false);
                 if (element != null) {
-                    _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
-                    _logger.LogDebug("Found element: {Locator}", locatorDesc);
+                    Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
+                    Logger.LogDebug("Found element: {Locator}", locatorDesc);
                     return element;
                 }
 
                 if (attempt < max)
-                    await Task.Delay(_options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
+                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
             }
 
             throw new InvalidOperationException($"Element not found after {max} attempts: {locatorDesc}");
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
-            _logger.LogWarning(ex, "Failed to find element after retries: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
+            Logger.LogWarning(ex, "Failed to find element after retries: {Locator}", locatorDesc);
             throw;
         }
     }
@@ -343,9 +398,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(url, nameof(url));
         EnsureDriver();
-        _driver!.Navigate().GoToUrl(url);
-        var forLog = BrowserUrlRedaction.ForLog(url, _options.MaskSensitiveUrlsInLogs);
-        _logger.LogDebug("Navigated to {Url}", forLog);
+        Driver!.Navigate().GoToUrl(url);
+        var forLog = BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs);
+        Logger.LogDebug("Navigated to {Url}", forLog);
     }
 
     /// <summary>Async navigation with cancellation.</summary>
@@ -354,15 +409,14 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
             () => {
                 ct.ThrowIfCancellationRequested();
                 NavigateTo(url);
-            },
-            ct);
+            }, ct);
 
     /// <summary>Waits until <c>document.readyState === 'complete'</c> or the page load timeout elapses.</summary>
     public async Task WaitForDocumentReadyAsync(CancellationToken ct = default)
     {
         EnsureDriver();
         var executor = GetJavaScriptExecutor();
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(_options.PageLoadTimeoutSeconds);
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(Options.PageLoadTimeoutSeconds);
         while (DateTime.UtcNow < deadline) {
             ct.ThrowIfCancellationRequested();
             var state = executor.ExecuteScript("return document.readyState") as string;
@@ -378,7 +432,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     internal string? TryGetCurrentUrl()
     {
         try {
-            return _driver?.Url;
+            return Driver?.Url;
         }
         catch {
             return null;
@@ -388,7 +442,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private string? TryCurrentWindowHandle()
     {
         try {
-            return _driver?.CurrentWindowHandle;
+            return Driver?.CurrentWindowHandle;
         }
         catch {
             return null;
@@ -398,18 +452,16 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private void ApplyWindowSize(IWebDriver driver)
     {
         try {
-            driver.Manage().Window.Size = new Size(_options.BrowserWindowWidth, _options.BrowserWindowHeight);
+            driver.Manage().Window.Size = new(Options.BrowserWindowWidth, Options.BrowserWindowHeight);
         }
         catch {
             // headless / remote: best effort
         }
     }
 
-    private void EnsureDriver()
-        => OperationHelpers.ThrowIfNull(_driver, "Browser not started. Call StartBrowserAsync first.");
+    private void EnsureDriver() => OperationHelpers.ThrowIfNull(Driver, "Browser not started. Call StartBrowserAsync first.");
 
-    private IJavaScriptExecutor GetJavaScriptExecutor()
-        => _driver as IJavaScriptExecutor ?? throw new InvalidOperationException("WebDriver does not support JavaScript execution.");
+    private IJavaScriptExecutor GetJavaScriptExecutor() => Driver as IJavaScriptExecutor ?? throw new InvalidOperationException("WebDriver does not support JavaScript execution.");
 
     private static WebElementControl WrapElement(IWebElement element, Type controlType)
     {
@@ -432,7 +484,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
             return new TextAreaControl(element);
 
         if (controlType == typeof(WebElementControl))
-            return new WebElementControl(element);
+            return new(element);
 
         throw new ArgumentException($"Unknown control type: {controlType.Name}", nameof(controlType));
     }
@@ -461,23 +513,23 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var getTags = SeleniumMetricTags.ForOperation(this, "get_chain", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], getTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], getTags);
         try {
             var el = await GetElementChainCoreAsync(segments, ct).ConfigureAwait(false);
             if (el == null) {
-                _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
-                _logger.LogDebug("Chained element not found: {Locator}", locatorDesc);
+                Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
+                Logger.LogDebug("Chained element not found: {Locator}", locatorDesc);
                 return null;
             }
 
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: getTags);
-            _logger.LogDebug("Resolved chained element: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: getTags);
+            Logger.LogDebug("Resolved chained element: {Locator}", locatorDesc);
             return new SeleniumWebAutomationElement(this, el);
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, getTags);
-            _logger.LogWarning(ex, "Failed to resolve chained element: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, getTags);
+            Logger.LogWarning(ex, "Failed to resolve chained element: {Locator}", locatorDesc);
             throw;
         }
     }
@@ -490,28 +542,28 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var pollTags = SeleniumMetricTags.ForOperation(this, "poll_chain", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
         try {
-            var max = Math.Max(1, _options.PollingMaxAttempts);
+            var max = Math.Max(1, Options.PollingMaxAttempts);
             for (var attempt = 1; attempt <= max; attempt++) {
                 ct.ThrowIfCancellationRequested();
                 var el = await GetElementChainCoreAsync(segments, ct).ConfigureAwait(false);
                 if (el != null) {
-                    _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
-                    _logger.LogDebug("Found chained element: {Locator}", locatorDesc);
+                    Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
+                    Logger.LogDebug("Found chained element: {Locator}", locatorDesc);
                     return new SeleniumWebAutomationElement(this, el);
                 }
 
                 if (attempt < max)
-                    await Task.Delay(_options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
+                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
             }
 
             throw new InvalidOperationException($"Chained element not found after {max} attempts: {locatorDesc}");
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
-            _logger.LogWarning(ex, "Failed to find chained element after retries: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
+            Logger.LogWarning(ex, "Failed to find chained element after retries: {Locator}", locatorDesc);
             throw;
         }
     }
@@ -520,22 +572,16 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private async Task<IWebElement?> GetElementChainCoreAsync(IReadOnlyList<ElementLocator> segments, CancellationToken ct)
     {
         EnsureDriver();
-        var driver = _driver!;
+        var driver = Driver!;
         IWebElement? current = null;
         for (var i = 0; i < segments.Count; i++) {
             ct.ThrowIfCancellationRequested();
             var by = ElementLocatorMapping.ToBy(segments[i]);
             if (i == 0) {
-                current = await Task.Run(
-                        () => SeleniumPolling.TryWaitForElement(driver, by, _options.SeleniumMaxWaitSeconds, _logger, ct),
-                        ct)
-                    .ConfigureAwait(false);
+                current = await Task.Run(() => SeleniumPolling.TryWaitForElement(driver, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
             }
             else {
-                current = await Task.Run(
-                        () => SeleniumPolling.TryWaitForNestedElement(driver, current!, by, _options.SeleniumMaxWaitSeconds, _logger, ct),
-                        ct)
-                    .ConfigureAwait(false);
+                current = await Task.Run(() => SeleniumPolling.TryWaitForNestedElement(driver, current!, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
             }
 
             if (current == null)
@@ -553,24 +599,24 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var getTags = SeleniumMetricTags.ForOperation(this, "get_many", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], getTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], getTags);
         try {
             var raw = await GetElementsChainCoreAsync(segments, ct).ConfigureAwait(false);
             if (raw == null) {
-                _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
-                _logger.LogDebug("Elements not resolved: {Locator}", locatorDesc);
+                Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
+                Logger.LogDebug("Elements not resolved: {Locator}", locatorDesc);
                 return null;
             }
 
             var wrapped = raw.Select(el => (IWebAutomationElement)new SeleniumWebAutomationElement(this, el)).ToList();
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: getTags);
-            _logger.LogDebug("Resolved {Count} elements: {Locator}", wrapped.Count, locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: getTags);
+            Logger.LogDebug("Resolved {Count} elements: {Locator}", wrapped.Count, locatorDesc);
             return wrapped;
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, getTags);
-            _logger.LogWarning(ex, "Failed to resolve elements: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: getTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, getTags);
+            Logger.LogWarning(ex, "Failed to resolve elements: {Locator}", locatorDesc);
             throw;
         }
     }
@@ -583,29 +629,29 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var pollTags = SeleniumMetricTags.ForOperation(this, "poll_many", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
         try {
-            var max = Math.Max(1, _options.PollingMaxAttempts);
+            var max = Math.Max(1, Options.PollingMaxAttempts);
             for (var attempt = 1; attempt <= max; attempt++) {
                 ct.ThrowIfCancellationRequested();
                 var raw = await GetElementsChainCoreAsync(segments, ct).ConfigureAwait(false);
                 if (raw != null) {
                     var wrapped = raw.Select(el => (IWebAutomationElement)new SeleniumWebAutomationElement(this, el)).ToList();
-                    _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
-                    _logger.LogDebug("Found {Count} elements: {Locator}", wrapped.Count, locatorDesc);
+                    Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
+                    Logger.LogDebug("Found {Count} elements: {Locator}", wrapped.Count, locatorDesc);
                     return wrapped;
                 }
 
                 if (attempt < max)
-                    await Task.Delay(_options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
+                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
             }
 
             throw new InvalidOperationException($"Elements not found after {max} attempts: {locatorDesc}");
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
-            _logger.LogWarning(ex, "Failed to find elements after retries: {Locator}", locatorDesc);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
+            Logger.LogWarning(ex, "Failed to find elements after retries: {Locator}", locatorDesc);
             throw;
         }
     }
@@ -614,13 +660,10 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private async Task<IReadOnlyList<IWebElement>?> GetElementsChainCoreAsync(IReadOnlyList<ElementLocator> segments, CancellationToken ct)
     {
         EnsureDriver();
-        var driver = _driver!;
+        var driver = Driver!;
         if (segments.Count == 1) {
             var by = ElementLocatorMapping.ToBy(segments[0]);
-            var first = await Task.Run(
-                    () => SeleniumPolling.TryWaitForElement(driver, by, _options.SeleniumMaxWaitSeconds, _logger, ct),
-                    ct)
-                .ConfigureAwait(false);
+            var first = await Task.Run(() => SeleniumPolling.TryWaitForElement(driver, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
             if (first == null)
                 return null;
 
@@ -644,37 +687,34 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private async Task<IWebElement?> TryGetNestedElementAsync(IWebElement parent, By by, CancellationToken ct)
     {
         EnsureDriver();
-        var driver = _driver!;
-        return await Task.Run(
-                () => SeleniumPolling.TryWaitForNestedElement(driver, parent, by, _options.SeleniumMaxWaitSeconds, _logger, ct),
-                ct)
-            .ConfigureAwait(false);
+        var driver = Driver!;
+        return await Task.Run(() => SeleniumPolling.TryWaitForNestedElement(driver, parent, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
     }
 
     private async Task<IWebElement> PollForNestedAsync(IWebElement parent, By by, string locatorDesc, CancellationToken ct)
     {
         EnsureDriver();
         var pollTags = SeleniumMetricTags.ForOperation(this, "poll_nested", new[] { ("locator", locatorDesc) });
-        using var timer = _metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Wm.Metrics.PollDuration)], pollTags);
         try {
-            var max = Math.Max(1, _options.PollingMaxAttempts);
+            var max = Math.Max(1, Options.PollingMaxAttempts);
             for (var attempt = 1; attempt <= max; attempt++) {
                 ct.ThrowIfCancellationRequested();
                 var el = await TryGetNestedElementAsync(parent, by, ct).ConfigureAwait(false);
                 if (el != null) {
-                    _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
+                    Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollSuccess)], tags: pollTags);
                     return el;
                 }
 
                 if (attempt < max)
-                    await Task.Delay(_options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
+                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
             }
 
             throw new InvalidOperationException($"Nested element not found after {max} attempts: {locatorDesc}");
         }
         catch (Exception ex) {
-            _metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
-            _metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
+            Metrics.IncrementCounter(_metricNames[nameof(Wm.Metrics.PollFailure)], tags: pollTags);
+            Metrics.RecordError(_metricNames[nameof(Wm.Metrics.PollDuration)], ex, pollTags);
             throw;
         }
     }
@@ -696,54 +736,11 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
             { nameof(Wm.Metrics.ControlInteraction), Wm.Metrics.ControlInteraction }
         };
 
-    Task IWebAutomationBrowser.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
-
-    async Task IWebAutomationBrowser.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
-    {
-        await NavigateToAsync(url, ct).ConfigureAwait(false);
-
-        while (!ct.IsCancellationRequested) {
-            var done = await Task.Run(
-                () => {
-                    try {
-                        var logs = _driver!.Manage().Logs.GetLog(LogType.Performance);
-                        foreach (var entry in logs) {
-                            var reqUrl = TryParseNetworkRequestUrl(entry.Message);
-                            if (reqUrl != null && onRequest(reqUrl))
-                                return true;
-                        }
-                    }
-                    catch {
-                        // performance log unavailable for this browser/driver combination
-                    }
-
-                    return false;
-                },
-                ct).ConfigureAwait(false);
-
-            if (done)
-                return;
-
-            await Task.Delay(50, ct).ConfigureAwait(false);
-        }
-
-        ct.ThrowIfCancellationRequested();
-    }
-
-    Task<string> IWebAutomationBrowser.GetPageSourceAsync(CancellationToken ct)
-        => Task.Run(
-            () => {
-                EnsureDriver();
-                ct.ThrowIfCancellationRequested();
-                return _driver!.PageSource;
-            },
-            ct);
-
     private static string? TryParseNetworkRequestUrl(string logMessage)
     {
         // Performance log entry shape: {"message":{"method":"Network.requestWillBeSent","params":{"request":{"url":"..."}}}}
         try {
-            using var doc = System.Text.Json.JsonDocument.Parse(logMessage);
+            using var doc = JsonDocument.Parse(logMessage);
             var msg = doc.RootElement.GetProperty("message");
             if (!string.Equals(msg.GetProperty("method").GetString(), "Network.requestWillBeSent", StringComparison.Ordinal))
                 return null;
@@ -755,45 +752,6 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         }
     }
 
-    Task IWebAutomationBrowser.ReloadAsync(CancellationToken ct)
-        => Task.Run(
-            () => {
-                EnsureDriver();
-                ct.ThrowIfCancellationRequested();
-                _driver!.Navigate().Refresh();
-            },
-            ct);
-
-    Task<string> IWebAutomationBrowser.GetCurrentUrlAsync(CancellationToken ct)
-        => Task.Run(
-            () => {
-                EnsureDriver();
-                ct.ThrowIfCancellationRequested();
-                return _driver!.Url;
-            },
-            ct);
-
-    Task<string> IWebAutomationBrowser.GetTitleAsync(CancellationToken ct)
-        => Task.Run(
-            () => {
-                EnsureDriver();
-                ct.ThrowIfCancellationRequested();
-                return _driver!.Title;
-            },
-            ct);
-
-    async Task<IWebAutomationElement> IWebAutomationBrowser.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct)
-        => await PollForChainAsync(chain, ct).ConfigureAwait(false);
-
-    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationBrowser.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct)
-        => PollForElementsAsync(chain, ct);
-
-    Task<IWebAutomationElement?> IWebAutomationBrowser.GetElementAsync(ElementLocatorChain chain, CancellationToken ct)
-        => GetElementChainAsync(chain, ct);
-
-    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationBrowser.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct)
-        => GetElementsChainAsync(chain, ct);
-
     /// <summary>Captures the visible viewport of the active window as PNG.</summary>
     public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
         => Task.Run(
@@ -804,10 +762,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                     throw new NotSupportedException("WebDriver does not support screenshots.");
 
                 return shot.GetScreenshot().AsByteArray;
-            },
-            ct);
-
-    Task<byte[]> IWebAutomationBrowser.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
+            }, ct);
 
     private sealed class SeleniumCookieJar : IBrowserCookies
     {
@@ -820,8 +775,8 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 () => {
                     var driver = _browser.GetRequiredDriver();
                     ct.ThrowIfCancellationRequested();
-                    IReadOnlyList<BrowserCookie> result = driver.Manage().Cookies.AllCookies
-                        .Select(c => new BrowserCookie {
+                    IReadOnlyList<BrowserCookie> result = driver.Manage()
+                        .Cookies.AllCookies.Select(c => new BrowserCookie {
                             Name = c.Name,
                             Value = c.Value,
                             Domain = c.Domain,
@@ -831,9 +786,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                             Expiry = c.Expiry.HasValue ? new DateTimeOffset(c.Expiry.Value) : null
                         })
                         .ToList();
+
                     return result;
-                },
-                ct);
+                }, ct);
 
         public Task AddCookiesAsync(IEnumerable<BrowserCookie> cookies, CancellationToken ct = default)
             => Task.Run(
@@ -842,9 +797,8 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                     ct.ThrowIfCancellationRequested();
                     var jar = driver.Manage().Cookies;
                     foreach (var c in cookies)
-                        jar.AddCookie(new Cookie(c.Name, c.Value, c.Domain ?? "", c.Path ?? "/", c.Expiry?.UtcDateTime));
-                },
-                ct);
+                        jar.AddCookie(new(c.Name, c.Value, c.Domain ?? "", c.Path ?? "/", c.Expiry?.UtcDateTime));
+                }, ct);
 
         public Task ClearCookiesAsync(CancellationToken ct = default)
             => Task.Run(
@@ -852,7 +806,6 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                     var driver = _browser.GetRequiredDriver();
                     ct.ThrowIfCancellationRequested();
                     driver.Manage().Cookies.DeleteAllCookies();
-                },
-                ct);
+                }, ct);
     }
 }

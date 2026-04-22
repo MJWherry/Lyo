@@ -474,9 +474,6 @@ directly.
 - Snapshot errors are caught and reported via the Error event
 - Cancellation tokens allow graceful shutdown of long-running operations
 
-
-
-
 <!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
@@ -487,8 +484,8 @@ directly.
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                     | Version |
+|---------------------------------------------|---------|
 | `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
 
 ### Project references

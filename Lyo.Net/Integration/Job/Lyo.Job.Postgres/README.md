@@ -70,12 +70,12 @@ app.BuildJobGroup();
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Mapster` | `[10,)` |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
+| `Mapster`                                         | `[10,)` |
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `UUIDNext` | `4.2.3` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| `UUIDNext`                                        | `4.2.3` |
 
 ### Project references
 

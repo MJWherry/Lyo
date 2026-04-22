@@ -180,18 +180,13 @@ public class ApiEndpointPostgresTests : IDisposable
         Assert.Equal(JsonValueKind.Object, row.ValueKind);
         // Default ZipSiblingCollectionSelections merges jobruns.* + jobruns.createdby into one array under the collection merge key.
         // JSON uses camelCase for dictionary keys (e.g. jobRuns), not necessarily the select path casing.
-        Assert.True(
-            row.TryGetProperty("jobruns", out var jobRuns)
-            || row.TryGetProperty("jobRuns", out jobRuns)
-            || row.TryGetProperty("JobRuns", out jobRuns));
+        Assert.True(row.TryGetProperty("jobruns", out var jobRuns) || row.TryGetProperty("jobRuns", out jobRuns) || row.TryGetProperty("JobRuns", out jobRuns));
         Assert.Equal(JsonValueKind.Array, jobRuns.ValueKind);
         Assert.True(jobRuns.GetArrayLength() >= 1);
         var first = jobRuns[0];
         Assert.Equal(JsonValueKind.Object, first.ValueKind);
         Assert.True(
-            first.TryGetProperty("CreatedBy", out _)
-            || first.TryGetProperty("createdBy", out _)
-            || first.TryGetProperty("createdby", out _),
+            first.TryGetProperty("CreatedBy", out var _) || first.TryGetProperty("createdBy", out var _) || first.TryGetProperty("createdby", out var _),
             "merged row should include CreatedBy from jobruns.createdby");
     }
 
@@ -254,7 +249,8 @@ public class ApiEndpointPostgresTests : IDisposable
             Amount = 10,
             Options = new() { IncludeFilterMode = QueryIncludeFilterMode.MatchedOnly },
             Select = ["jobruns.createdby"],
-            WhereClause = WhereClauseBuilder.And(and => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
+            WhereClause = WhereClauseBuilder.And(and
+                => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
         var response = await _client.PostAsJsonAsync("/api/Job/Definition/QueryProject", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -293,7 +289,9 @@ public class ApiEndpointPostgresTests : IDisposable
     public async Task Get_Endpoint_WithInclude_LoadsNavigationProperties()
     {
         var defId = await _fixture.SeedJobDefinitionAsync("EndpointGetInclude").ConfigureAwait(false);
-        var response = await _client.GetAsync($"/api/Job/Definition/{defId}?include=JobParameters&include=JobSchedules", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.GetAsync($"/api/Job/Definition/{defId}?include=JobParameters&include=JobSchedules", TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(TestContext.Current.CancellationToken).ConfigureAwait(false);
         Assert.NotNull(result);

@@ -25,11 +25,7 @@ public class BuiltInQRCodeServiceTests
                 MinSize = 1,
                 DefaultErrorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium,
                 EnableMetrics = false
-            },
-            NullLogger<BuiltInQRCodeService>.Instance,
-            metrics: null,
-            imageService: null,
-            qrFrameLayout: new QrFrameLayoutService());
+            }, NullLogger<BuiltInQRCodeService>.Instance, null, null, new QrFrameLayoutService());
 
     [Fact]
     public async Task GenerateAsync_Png_HasValidHeader()
@@ -54,13 +50,10 @@ public class BuiltInQRCodeServiceTests
         Assert.True(bare.IsSuccess);
         var bareQr = Assert.IsType<QRCodeResult>(bare);
         var framed = await service.GenerateAsync(
-            "https://example.com",
-            new() {
-                Format = QRCodeFormat.Png,
-                Size = 8,
-                Frame = new QrFrameLayoutOptions { Style = QrFrameStyle.SimpleRoundedPanel, CaptionText = "Scan" }
-            },
-            TestContext.Current.CancellationToken).ConfigureAwait(false);
+                "https://example.com", new() { Format = QRCodeFormat.Png, Size = 8, Frame = new() { Style = QrFrameStyle.SimpleRoundedPanel, CaptionText = "Scan" } },
+                TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(framed.IsSuccess);
         var framedQr = Assert.IsType<QRCodeResult>(framed);
         Assert.NotNull(bareQr.ImageBytes);

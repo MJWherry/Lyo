@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-            <Description>Text-to-Speech models and DTOs shared across Lyo TTS provider implementations.</Description>
+        <Description>Text-to-Speech models and DTOs shared across Lyo TTS provider implementations.</Description>
         <PackageTags>tts text-to-speech speech models dto</PackageTags>
     </PropertyGroup>
 

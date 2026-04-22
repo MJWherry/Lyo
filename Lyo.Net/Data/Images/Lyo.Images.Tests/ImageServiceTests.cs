@@ -477,7 +477,9 @@ public class ImageServiceTests
         var inputBytes = CreateTestImage(200, 200);
         using var inputStream = new MemoryStream(inputBytes);
         using var outputStream = new MemoryStream();
-        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ResizeMode.Max, ImageFormat.Jpeg, 50, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.ResizeAsync(inputStream, outputStream, 100, 100, ResizeMode.Max, ImageFormat.Jpeg, 50, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
+
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(outputStream.Length > 0);

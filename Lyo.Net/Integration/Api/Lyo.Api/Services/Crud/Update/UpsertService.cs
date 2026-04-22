@@ -1,7 +1,7 @@
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
@@ -16,6 +16,7 @@ using Lyo.Query.Services.PropertyComparison;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
@@ -71,7 +72,7 @@ public class UpsertService<TContext>(
             RecordCrudFailure(operation, typeof(TDbModel));
             return ResultFactory.UpsertFailure<TResult>(
                 LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                    .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                     .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                     .Build());
         }
@@ -80,8 +81,7 @@ public class UpsertService<TContext>(
         var entity = entities[0];
         var upsertResult = await UpsertInternal<TRequest, TDbModel, TResult>(entity, request, context, before, beforeUpdate, after, afterUpdate, ct);
         if (upsertResult.Result == UpsertResultEnum.Updated) {
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
-                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct)
                 .ConfigureAwait(false);
         }
 
@@ -110,7 +110,7 @@ public class UpsertService<TContext>(
         var requestList = requests as IReadOnlyList<UpsertRequest<TRequest>> ?? requests.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(requestList, nameof(requests));
         using var scope = BeginActionScope("UPSERT BULK", typeof(TRequest), typeof(TDbModel), typeof(TResult));
-        var bulkValidation = BulkListRequestValidator.Validate(new BulkListRequestValidatorInput(requestList.Count, bulkOptions.MaxAmount));
+        var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
             Logger.LogWarning("Bulk upsert size validation failed: {Code} {Message}", err.Code, err.Message);
@@ -179,7 +179,7 @@ public class UpsertService<TContext>(
 
                 if (entities.Count > 1) {
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                         .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
@@ -211,7 +211,6 @@ public class UpsertService<TContext>(
             List<CreateResult<TResult>>? createResults = null;
             if (toCreate.Count > 0) {
                 var createBulkResult = await createService.CreateBulkAsync<TRequest, TDbModel, TResult>(toCreate, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), ct);
-
                 createResults = createBulkResult.Results.ToList();
             }
 
@@ -348,7 +347,7 @@ public class UpsertService<TContext>(
 
                     if (entities.Count > 1) {
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                             .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -448,7 +447,7 @@ public class UpsertService<TContext>(
             if (entities.Count > 1) {
                 return ResultFactory.UpsertFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                         .WithMessage($"Multiple entities ({entities.Count}) found.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -458,7 +457,7 @@ public class UpsertService<TContext>(
             return await UpsertInternal<TRequest, TDbModel, TResult>(entity, request, context, before, beforeUpdate, after, afterUpdate, ct);
         }
         catch (Exception ex) {
-            return ResultFactory.UpsertFailure<TResult>(LogAndReturnApiError(ex, "Individual Upsert Error", Models.Constants.ApiErrorCodes.SqlException));
+            return ResultFactory.UpsertFailure<TResult>(LogAndReturnApiError(ex, "Individual Upsert Error", Constants.ApiErrorCodes.SqlException));
         }
     }
 
@@ -552,7 +551,7 @@ public class UpsertService<TContext>(
             return ResultFactory.CreateSuccess(result);
         }
         catch (Exception ex) {
-            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Create Error", Models.Constants.ApiErrorCodes.InvalidCreateRequest));
+            return ResultFactory.CreateFailure<TResult>(LogAndReturnApiError(ex, "Create Error", Constants.ApiErrorCodes.InvalidCreateRequest));
         }
     }
 }

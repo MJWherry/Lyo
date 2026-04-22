@@ -24,7 +24,7 @@
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage" Version="[4,)"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[10,)"/>
-        <PackageReference Include="MudBlazor" Version="[9,)"/>
+        <PackageReference Include="MudBlazor" Version="[9.3,)"/>
     </ItemGroup>
 
     <ItemGroup>

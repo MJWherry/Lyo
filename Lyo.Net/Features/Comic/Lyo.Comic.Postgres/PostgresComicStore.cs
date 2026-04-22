@@ -25,11 +25,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(series, nameof(series));
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
-        var existing = series.Id != default
-            ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false)
-            : null;
-
+        var existing = series.Id != default ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false) : null;
         if (existing != null) {
             existing.Title = series.Title;
             existing.Slug = series.Slug;
@@ -38,7 +34,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             existing.Description = series.Description;
             existing.OriginalLanguage = series.OriginalLanguage;
             existing.PublishedYear = series.PublishedYear;
-
             ctx.AlternateTitles.RemoveRange(existing.AlternateTitles);
             foreach (var alt in series.AlternateTitles)
                 ctx.AlternateTitles.Add(ToAlternateTitleEntity(alt, existing.Id));
@@ -76,13 +71,10 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(query, nameof(query));
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
         var q = ctx.Series.Include(s => s.AlternateTitles).AsQueryable();
-
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLower();
-            q = q.Where(s => s.Title.ToLower().Contains(needle) ||
-                              s.AlternateTitles.Any(a => a.Title.ToLower().Contains(needle)));
+            q = q.Where(s => s.Title.ToLower().Contains(needle) || s.AlternateTitles.Any(a => a.Title.ToLower().Contains(needle)));
         }
 
         if (query.ComicType.HasValue)
@@ -95,7 +87,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             q = q.Where(s => s.OriginalLanguage == query.OriginalLanguage);
 
         q = q.OrderBy(s => s.Title).Skip(query.Skip);
-
         if (query.Limit.HasValue)
             q = q.Take(query.Limit.Value);
 
@@ -121,7 +112,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(volume, nameof(volume));
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
         if (volume.Id != default) {
             var existing = await ctx.Volumes.FindAsync([volume.Id], ct).ConfigureAwait(false);
             if (existing != null) {
@@ -151,12 +141,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public async Task<IReadOnlyList<ComicVolume>> GetVolumesBySeriesAsync(Guid seriesId, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await ctx.Volumes
-            .Where(v => v.SeriesId == seriesId)
-            .OrderBy(v => v.VolumeNumber)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
-
+        var entities = await ctx.Volumes.Where(v => v.SeriesId == seriesId).OrderBy(v => v.VolumeNumber).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToVolume).ToList();
     }
 
@@ -178,7 +163,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(chapter, nameof(chapter));
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
         if (chapter.Id != default) {
             var existing = await ctx.Chapters.FindAsync([chapter.Id], ct).ConfigureAwait(false);
             if (existing != null) {
@@ -267,91 +251,99 @@ public sealed class PostgresComicStore : IComicStore, IHealth
 
     // ── Mapping helpers ───────────────────────────────────────────────────────
 
-    private static SeriesEntity ToSeriesEntity(ComicSeries r, Guid id) => new() {
-        Id = id,
-        Title = r.Title,
-        Slug = r.Slug,
-        ComicType = (int)r.ComicType,
-        Status = (int)r.Status,
-        Description = r.Description,
-        OriginalLanguage = r.OriginalLanguage,
-        PublishedYear = r.PublishedYear,
-        CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
-    };
+    private static SeriesEntity ToSeriesEntity(ComicSeries r, Guid id)
+        => new() {
+            Id = id,
+            Title = r.Title,
+            Slug = r.Slug,
+            ComicType = (int)r.ComicType,
+            Status = (int)r.Status,
+            Description = r.Description,
+            OriginalLanguage = r.OriginalLanguage,
+            PublishedYear = r.PublishedYear,
+            CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
+        };
 
-    private static AlternateTitleEntity ToAlternateTitleEntity(ComicAlternateTitle r, Guid seriesId) => new() {
-        Id = r.Id == default ? Guid.NewGuid() : r.Id,
-        SeriesId = seriesId,
-        Title = r.Title,
-        Language = r.Language
-    };
+    private static AlternateTitleEntity ToAlternateTitleEntity(ComicAlternateTitle r, Guid seriesId)
+        => new() {
+            Id = r.Id == default ? Guid.NewGuid() : r.Id,
+            SeriesId = seriesId,
+            Title = r.Title,
+            Language = r.Language
+        };
 
-    private static VolumeEntity ToVolumeEntity(ComicVolume r, Guid id) => new() {
-        Id = id,
-        SeriesId = r.SeriesId,
-        VolumeNumber = r.VolumeNumber,
-        Title = r.Title,
-        CoverImageRef = r.CoverImageRef,
-        PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
-        CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
-    };
+    private static VolumeEntity ToVolumeEntity(ComicVolume r, Guid id)
+        => new() {
+            Id = id,
+            SeriesId = r.SeriesId,
+            VolumeNumber = r.VolumeNumber,
+            Title = r.Title,
+            CoverImageRef = r.CoverImageRef,
+            PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
+            CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
+        };
 
-    private static ChapterEntity ToChapterEntity(ComicChapter r, Guid id) => new() {
-        Id = id,
-        SeriesId = r.SeriesId,
-        VolumeId = r.VolumeId,
-        ChapterNumber = r.ChapterNumber,
-        Title = r.Title,
-        Language = r.Language,
-        PageCount = r.PageCount,
-        PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
-        SourceRef = r.SourceRef,
-        CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
-    };
+    private static ChapterEntity ToChapterEntity(ComicChapter r, Guid id)
+        => new() {
+            Id = id,
+            SeriesId = r.SeriesId,
+            VolumeId = r.VolumeId,
+            ChapterNumber = r.ChapterNumber,
+            Title = r.Title,
+            Language = r.Language,
+            PageCount = r.PageCount,
+            PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
+            SourceRef = r.SourceRef,
+            CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
+        };
 
-    private static ComicSeries ToSeries(SeriesEntity e) => new() {
-        Id = e.Id,
-        Title = e.Title,
-        Slug = e.Slug,
-        ComicType = (ComicType)e.ComicType,
-        Status = (ComicStatus)e.Status,
-        Description = e.Description,
-        OriginalLanguage = e.OriginalLanguage,
-        PublishedYear = e.PublishedYear,
-        CreatedTimestamp = e.CreatedTimestamp,
-        UpdatedTimestamp = e.UpdatedTimestamp,
-        AlternateTitles = e.AlternateTitles.Select(ToAlternateTitle).ToList()
-    };
+    private static ComicSeries ToSeries(SeriesEntity e)
+        => new() {
+            Id = e.Id,
+            Title = e.Title,
+            Slug = e.Slug,
+            ComicType = (ComicType)e.ComicType,
+            Status = (ComicStatus)e.Status,
+            Description = e.Description,
+            OriginalLanguage = e.OriginalLanguage,
+            PublishedYear = e.PublishedYear,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp,
+            AlternateTitles = e.AlternateTitles.Select(ToAlternateTitle).ToList()
+        };
 
-    private static ComicAlternateTitle ToAlternateTitle(AlternateTitleEntity e) => new() {
-        Id = e.Id,
-        SeriesId = e.SeriesId,
-        Title = e.Title,
-        Language = e.Language
-    };
+    private static ComicAlternateTitle ToAlternateTitle(AlternateTitleEntity e)
+        => new() {
+            Id = e.Id,
+            SeriesId = e.SeriesId,
+            Title = e.Title,
+            Language = e.Language
+        };
 
-    private static ComicVolume ToVolume(VolumeEntity e) => new() {
-        Id = e.Id,
-        SeriesId = e.SeriesId,
-        VolumeNumber = e.VolumeNumber,
-        Title = e.Title,
-        CoverImageRef = e.CoverImageRef,
-        PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
-        CreatedTimestamp = e.CreatedTimestamp,
-        UpdatedTimestamp = e.UpdatedTimestamp
-    };
+    private static ComicVolume ToVolume(VolumeEntity e)
+        => new() {
+            Id = e.Id,
+            SeriesId = e.SeriesId,
+            VolumeNumber = e.VolumeNumber,
+            Title = e.Title,
+            CoverImageRef = e.CoverImageRef,
+            PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp
+        };
 
-    private static ComicChapter ToChapter(ChapterEntity e) => new() {
-        Id = e.Id,
-        SeriesId = e.SeriesId,
-        VolumeId = e.VolumeId,
-        ChapterNumber = e.ChapterNumber,
-        Title = e.Title,
-        Language = e.Language,
-        PageCount = e.PageCount,
-        PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
-        SourceRef = e.SourceRef,
-        CreatedTimestamp = e.CreatedTimestamp,
-        UpdatedTimestamp = e.UpdatedTimestamp
-    };
+    private static ComicChapter ToChapter(ChapterEntity e)
+        => new() {
+            Id = e.Id,
+            SeriesId = e.SeriesId,
+            VolumeId = e.VolumeId,
+            ChapterNumber = e.ChapterNumber,
+            Title = e.Title,
+            Language = e.Language,
+            PageCount = e.PageCount,
+            PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
+            SourceRef = e.SourceRef,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp
+        };
 }

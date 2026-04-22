@@ -27,11 +27,12 @@ public interface IProjectionService
     IEnumerable<string> GetDerivedIncludes(Type rootType, IReadOnlyList<ProjectedFieldSpec> specs);
 
     /// <summary>
-    /// Builds an Expression for SQL-level projection. Sibling paths under the same collection share one navigation when possible (single join).
-    /// Returns a null projection when any path has wildcard or cannot be resolved.
+    /// Builds an Expression for SQL-level projection. Sibling paths under the same collection share one navigation when possible (single join). Returns a null projection when
+    /// any path has wildcard or cannot be resolved.
     /// </summary>
     /// <param name="projectionPathsAlreadyValidated">
-    /// When <c>true</c>, skips an internal <see cref="CollectProjectionFieldIssues{TDbModel}" /> pass (callers such as <c>QueryProjectedCore</c> already validated specs).
+    /// When <c>true</c>, skips an internal <see cref="CollectProjectionFieldIssues{TDbModel}" /> pass (callers such as
+    /// <c>QueryProjectedCore</c> already validated specs).
     /// </param>
     SqlProjectionBuildResult<TDbModel> TryBuildSqlProjectionExpression<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, bool projectionPathsAlreadyValidated = false)
         where TDbModel : class;
@@ -43,7 +44,10 @@ public interface IProjectionService
     /// <summary>Same as the generic overload, using an explicit root CLR type (e.g. for non-generic callers).</summary>
     IReadOnlyList<ApiError> CollectProjectionFieldIssues(Type rootType, IReadOnlyList<ProjectedFieldSpec> specs, bool allowSelectWildcards = true);
 
-    /// <summary>Non-empty when any computed field has a missing name, empty template, or invalid SmartFormat syntax. Requires <see cref="IFormatterService" />; returns empty when the formatter is not registered.</summary>
+    /// <summary>
+    /// Non-empty when any computed field has a missing name, empty template, or invalid SmartFormat syntax. Requires <see cref="IFormatterService" />; returns empty when the
+    /// formatter is not registered.
+    /// </summary>
     IReadOnlyList<ApiError> ValidateComputedFieldTemplates(IReadOnlyList<ComputedField> computedFields);
 
     /// <summary>Projects entities to selected fields (in-memory).</summary>
@@ -58,17 +62,21 @@ public interface IProjectionService
     IReadOnlyList<object?> ConvertSqlProjectedResults(IReadOnlyList<object?> raw, IReadOnlyList<ProjectedFieldSpec> specs, SqlProjectionConversionPlan? conversionPlan = null);
 
     /// <summary>
-    /// When <paramref name="zipSiblingCollectionSelections" /> is <c>true</c>, merges parallel collection projections (e.g. <c>items.a</c> and <c>items.b</c>) into a single array of objects under <c>items</c>.
-    /// Call after <see cref="ApplyComputedFields" /> so templates still see flat keys. Run before stripping auto-derived dependency columns so merged shapes still see sibling values.
-    /// No-op when <paramref name="zipSiblingCollectionSelections" /> is <c>false</c> or when the select list cannot produce such a merge.
+    /// When <paramref name="zipSiblingCollectionSelections" /> is <c>true</c>, merges parallel collection projections (e.g. <c>items.a</c> and <c>items.b</c>) into a single
+    /// array of objects under <c>items</c>. Call after <see cref="ApplyComputedFields" /> so templates still see flat keys. Run before stripping auto-derived dependency columns so merged
+    /// shapes still see sibling values. No-op when <paramref name="zipSiblingCollectionSelections" /> is <c>false</c> or when the select list cannot produce such a merge.
     /// </summary>
     void MergeSiblingCollectionProjectionRows(IReadOnlyList<object?> items, Type entityType, IReadOnlyList<ProjectedFieldSpec> specs, bool zipSiblingCollectionSelections);
 
     /// <summary>
     /// Removes leaves from merged collection rows for paths that were only added to load computed-field templates (see <see cref="EnsureSelectIncludesComputedDependencies" />).
-    /// Call after <see cref="MergeSiblingCollectionProjectionRows" />. Fields the client put in <c>Select</c> are not in that set—users who want dependency columns must select them explicitly.
+    /// Call after <see cref="MergeSiblingCollectionProjectionRows" />. Fields the client put in <c>Select</c> are not in that set—users who want dependency columns must select them
+    /// explicitly.
     /// </summary>
-    void StripAutoDerivedDependencyLeavesFromMergedCollections(IReadOnlyList<object?> items, IReadOnlyList<ProjectedFieldSpec> specs, IReadOnlyCollection<string> autoDerivedSelectPaths);
+    void StripAutoDerivedDependencyLeavesFromMergedCollections(
+        IReadOnlyList<object?> items,
+        IReadOnlyList<ProjectedFieldSpec> specs,
+        IReadOnlyCollection<string> autoDerivedSelectPaths);
 
     /// <summary>Extracts filter conditions from a WhereClause for projection-level filtering (MatchedOnly mode).</summary>
     ProjectedFilterConditions GetProjectedFilterConditions<TDbModel>(WhereClause? queryNode)
@@ -92,14 +100,15 @@ public interface IProjectionService
     IReadOnlyList<string> GetComputedFieldDependencies(IReadOnlyList<ComputedField> computedFields);
 
     /// <summary>
-    /// Ensures <see cref="ProjectionQueryReq.Select" /> lists every path referenced by <see cref="ProjectionQueryReq.ComputedFields" /> templates (via <see cref="GetComputedFieldDependencies" />).
-    /// Mutates <paramref name="queryRequest" />.Select. Returns paths that were appended only for template dependencies (for stripping from the response after projection).
+    /// Ensures <see cref="ProjectionQueryReq.Select" /> lists every path referenced by <see cref="ProjectionQueryReq.ComputedFields" /> templates (via
+    /// <see cref="GetComputedFieldDependencies" />). Mutates <paramref name="queryRequest" />.Select. Returns paths that were appended only for template dependencies (for stripping from
+    /// the response after projection).
     /// </summary>
     IReadOnlyList<string> EnsureSelectIncludesComputedDependencies(ProjectionQueryReq queryRequest);
 
     /// <summary>
-    /// Distinct CLR type names for the root entity and every navigation (including collection elements) touched by <paramref name="specs" />
-    /// and by computed-field template placeholder paths in <paramref name="computedFields" />. Used for <see cref="Lyo.Api.Models.Common.Response.ProjectedQueryRes{T}.EntityTypes" />.
+    /// Distinct CLR type names for the root entity and every navigation (including collection elements) touched by <paramref name="specs" /> and by computed-field template
+    /// placeholder paths in <paramref name="computedFields" />. Used for <see cref="Lyo.Api.Models.Common.Response.ProjectedQueryRes{T}.EntityTypes" />.
     /// </summary>
     IReadOnlyList<string> GetProjectionEntityTypeNames<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, IReadOnlyList<ComputedField> computedFields)
         where TDbModel : class;

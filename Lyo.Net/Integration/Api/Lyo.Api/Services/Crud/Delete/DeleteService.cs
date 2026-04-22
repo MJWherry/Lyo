@@ -1,8 +1,8 @@
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
+using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
@@ -13,6 +13,7 @@ using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Delete;
 
@@ -62,8 +63,7 @@ public class DeleteService<TContext>(
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, null, entity, context, before, after, ct);
         if (result.IsSuccess) {
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct)
-                .ConfigureAwait(false);
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
         }
 
         if (result.IsSuccess)
@@ -93,7 +93,7 @@ public class DeleteService<TContext>(
             RecordCrudFailure(operation, typeof(TDbModel));
             return ResultFactory.DeleteFailure<TResult>(
                 LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                    .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                     .WithMessage($"Entity not found for deletion.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                     .Build());
         }
@@ -102,7 +102,7 @@ public class DeleteService<TContext>(
             RecordCrudFailure(operation, typeof(TDbModel));
             return ResultFactory.DeleteFailure<TResult>(
                 LyoProblemDetailsBuilder.CreateWithActivity()
-                    .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                    .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                     .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                     .Build());
         }
@@ -120,8 +120,7 @@ public class DeleteService<TContext>(
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
         if (result.IsSuccess) {
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct)
-                .ConfigureAwait(false);
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
         }
 
         if (result.IsSuccess)
@@ -194,7 +193,7 @@ public class DeleteService<TContext>(
                 var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct);
                 if (entities.Count == 0) {
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for deletion.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
@@ -204,9 +203,8 @@ public class DeleteService<TContext>(
 
                 if (entities.Count > 1 && !request.AllowMultiple) {
                     var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
-                        .WithMessage(
-                            $"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
+                        .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build();
 
                     results.Add(ResultFactory.DeleteFailure<TResult>(err));
@@ -302,7 +300,7 @@ public class DeleteService<TContext>(
                     var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct);
                     if (entities.Count == 0) {
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                            .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                             .WithMessage($"Entity not found for deletion.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -313,7 +311,7 @@ public class DeleteService<TContext>(
 
                     if (entities.Count > 1 && !request.AllowMultiple) {
                         var err = LyoProblemDetailsBuilder.CreateWithActivity()
-                            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                             .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                             .Build();
 
@@ -384,7 +382,7 @@ public class DeleteService<TContext>(
             if (entities.Count == 0) {
                 return ResultFactory.DeleteFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.NotFound)
+                        .WithErrorCode(Constants.ApiErrorCodes.NotFound)
                         .WithMessage($"Entity not found for deletion.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -392,7 +390,7 @@ public class DeleteService<TContext>(
             if (entities.Count > 1 && !request.AllowMultiple) {
                 return ResultFactory.DeleteFailure<TResult>(
                     LyoProblemDetailsBuilder.CreateWithActivity()
-                        .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidOperation)
+                        .WithErrorCode(Constants.ApiErrorCodes.InvalidOperation)
                         .WithMessage($"Multiple entities ({entities.Count}) found but AllowMultiple is false.{Environment.NewLine}DatabaseType={typeof(TDbModel).FullName}")
                         .Build());
             }
@@ -404,7 +402,7 @@ public class DeleteService<TContext>(
             return await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
         }
         catch (Exception ex) {
-            return ResultFactory.DeleteFailure<TResult>(LogAndReturnApiError(ex, "Individual Delete Error", Models.Constants.ApiErrorCodes.SqlException));
+            return ResultFactory.DeleteFailure<TResult>(LogAndReturnApiError(ex, "Individual Delete Error", Constants.ApiErrorCodes.SqlException));
         }
     }
 
@@ -423,7 +421,7 @@ public class DeleteService<TContext>(
             return null;
 
         return LyoProblemDetailsBuilder.CreateWithActivity()
-            .WithErrorCode(Models.Constants.ApiErrorCodes.InvalidInclude)
+            .WithErrorCode(Constants.ApiErrorCodes.InvalidInclude)
             .WithMessage("One or more include paths are invalid.")
             .AddErrors(errs.Select(e => new ApiError(e.Code, e.Message, e.StackTrace)))
             .Build();

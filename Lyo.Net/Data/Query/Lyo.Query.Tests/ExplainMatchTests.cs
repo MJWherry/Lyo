@@ -15,7 +15,6 @@ public class ExplainMatchTests : WhereClauseServiceTests
         var svc = CreateService();
         var person = new PersonBuilder().WithName("Alice").Build();
         var clause = WhereClauseBuilder.And(b => b.Equals("Name", "Alice"));
-
         Assert.True(svc.MatchesWhereClause(person, clause));
         var explain = svc.ExplainMatch(person, clause);
         Assert.True(explain.Passed);
@@ -37,7 +36,6 @@ public class ExplainMatchTests : WhereClauseServiceTests
         Assert.False(noEntity.Passed);
         Assert.Equal(WhereClauseExplainKind.None, noEntity.Root.Kind);
         Assert.Equal("Entity is null.", noEntity.FailureSummary);
-
         var person = new PersonBuilder().WithName("A").Build();
         var noClause = svc.ExplainMatch(person, null);
         Assert.False(noClause.Passed);
@@ -51,7 +49,6 @@ public class ExplainMatchTests : WhereClauseServiceTests
         var svc = CreateService();
         var person = new PersonBuilder().WithName("Charlie").Build();
         var clause = WhereClauseBuilder.Or(b => b.Equals("Name", "Alpha").Equals("Name", "Bravo"));
-
         Assert.False(svc.MatchesWhereClause(person, clause));
         var explain = svc.ExplainMatch(person, clause);
         Assert.NotNull(explain.OrBranchOutcomes);
@@ -69,7 +66,6 @@ public class ExplainMatchTests : WhereClauseServiceTests
         // Name fails the first predicate; Age satisfies the second — overall And still false.
         var person = new PersonBuilder().WithName("Bob").WithAge(10).Build();
         var clause = WhereClauseBuilder.And(b => b.Equals("Name", "Alice").Equals("Age", 10));
-
         Assert.False(svc.MatchesWhereClause(person, clause));
         var explain = svc.ExplainMatch(person, clause);
         Assert.False(explain.Passed);
@@ -88,7 +84,6 @@ public class ExplainMatchTests : WhereClauseServiceTests
         var person = new PersonBuilder().WithName("Alice").WithAge(5).Build();
         var sub = WhereClauseBuilder.Condition("Age", ComparisonOperatorEnum.Equals, 10);
         var clause = WhereClauseBuilder.ConditionWithSubClause("Name", ComparisonOperatorEnum.Equals, "Alice", sub);
-
         Assert.False(svc.MatchesWhereClause(person, clause));
         var explain = svc.ExplainMatch(person, clause);
         Assert.Equal(WhereClauseExplainKind.Condition, explain.Root.Kind);
@@ -112,17 +107,17 @@ public class ExplainMatchTests : WhereClauseServiceTests
     /// <summary>Minimal stub with no ExplainMatch: default interface implementation should throw.</summary>
     private sealed class DatabaseOnlyWhereClauseStub : IWhereClauseService
     {
-        public IQueryable<TEntity> ApplyWhereClause<TEntity>(IQueryable<TEntity> source, WhereClause? queryNode, bool includeSubClauses = true) =>
-            throw new NotImplementedException();
+        public IQueryable<TEntity> ApplyWhereClause<TEntity>(IQueryable<TEntity> source, WhereClause? queryNode, bool includeSubClauses = true)
+            => throw new NotImplementedException();
 
-        public IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null) =>
-            throw new NotImplementedException();
+        public IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null) => throw new NotImplementedException();
 
         public IQueryable<TEntity> ApplyOrdering<TEntity>(
             IQueryable<TEntity> queryable,
             IEnumerable<SortBy> sortByProps,
             Expression<Func<TEntity, object?>> defaultOrder,
-            SortDirection defaultSortDirection) => throw new NotImplementedException();
+            SortDirection defaultSortDirection)
+            => throw new NotImplementedException();
 
         public bool MatchesWhereClause<TEntity>(TEntity entity, WhereClause? queryNode) => throw new NotImplementedException();
 

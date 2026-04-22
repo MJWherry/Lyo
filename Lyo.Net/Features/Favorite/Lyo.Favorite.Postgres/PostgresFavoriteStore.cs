@@ -20,38 +20,13 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "favorite-postgres";
-
-    /// <inheritdoc />
-    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-    {
-        var sw = Stopwatch.StartNew();
-        try {
-            await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var canConnect = await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
-            sw.Stop();
-            return canConnect
-                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "favorite" })
-                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
-        }
-        catch (Exception ex) {
-            sw.Stop();
-            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
-        }
-    }
-
-    /// <inheritdoc />
     public async Task SaveAsync(FavoriteRecord favorite, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(favorite, nameof(favorite));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
-        var existing = await context.Favorites
-            .FirstOrDefaultAsync(f =>
-                f.ForEntityType == favorite.ForEntityType &&
-                f.ForEntityId == favorite.ForEntityId &&
-                f.FromEntityType == favorite.FromEntityType &&
-                f.FromEntityId == favorite.FromEntityId, ct)
+        var existing = await context.Favorites.FirstOrDefaultAsync(
+                f => f.ForEntityType == favorite.ForEntityType && f.ForEntityId == favorite.ForEntityId && f.FromEntityType == favorite.FromEntityType &&
+                    f.FromEntityId == favorite.FromEntityId, ct)
             .ConfigureAwait(false);
 
         if (existing != null)
@@ -84,12 +59,9 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Favorites
-            .FirstOrDefaultAsync(f =>
-                f.ForEntityType == forEntity.EntityType &&
-                f.ForEntityId == forEntity.EntityId &&
-                f.FromEntityType == fromEntity.EntityType &&
-                f.FromEntityId == fromEntity.EntityId, ct)
+        var entity = await context.Favorites.FirstOrDefaultAsync(
+                f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
+                    f.FromEntityId == fromEntity.EntityId, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : ToRecord(entity);
@@ -101,12 +73,9 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        return await context.Favorites
-            .AnyAsync(f =>
-                f.ForEntityType == forEntity.EntityType &&
-                f.ForEntityId == forEntity.EntityId &&
-                f.FromEntityType == fromEntity.EntityType &&
-                f.FromEntityId == fromEntity.EntityId, ct)
+        return await context.Favorites.AnyAsync(
+                f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
+                    f.FromEntityId == fromEntity.EntityId, ct)
             .ConfigureAwait(false);
     }
 
@@ -115,8 +84,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Favorites
-            .Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId)
+        var entities = await context.Favorites.Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId)
             .OrderBy(f => f.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -129,8 +97,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Favorites
-            .Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId)
+        var entities = await context.Favorites.Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId)
             .OrderBy(f => f.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -156,9 +123,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        return await context.Favorites
-            .CountAsync(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId, ct)
-            .ConfigureAwait(false);
+        return await context.Favorites.CountAsync(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -178,12 +143,9 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Favorites
-            .FirstOrDefaultAsync(f =>
-                f.ForEntityType == forEntity.EntityType &&
-                f.ForEntityId == forEntity.EntityId &&
-                f.FromEntityType == fromEntity.EntityType &&
-                f.FromEntityId == fromEntity.EntityId, ct)
+        var entity = await context.Favorites.FirstOrDefaultAsync(
+                f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
+                    f.FromEntityId == fromEntity.EntityId, ct)
             .ConfigureAwait(false);
 
         if (entity != null) {
@@ -197,11 +159,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Favorites
-            .Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
-
+        var entities = await context.Favorites.Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Favorites.RemoveRange(entities);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -211,13 +169,30 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Favorites
-            .Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
-
+        var entities = await context.Favorites.Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Favorites.RemoveRange(entities);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public string HealthCheckName => "favorite-postgres";
+
+    /// <inheritdoc />
+    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var sw = Stopwatch.StartNew();
+        try {
+            await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            var canConnect = await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
+            sw.Stop();
+            return canConnect
+                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "favorite" })
+                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
+        }
+        catch (Exception ex) {
+            sw.Stop();
+            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
+        }
     }
 
     private static FavoriteRecord ToRecord(FavoriteEntity e)

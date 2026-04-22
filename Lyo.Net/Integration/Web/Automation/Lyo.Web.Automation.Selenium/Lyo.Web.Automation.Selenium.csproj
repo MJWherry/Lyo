@@ -20,7 +20,7 @@
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
         <PackageReference Include="System.Text.Json" Version="[10,)"/>
     </ItemGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
         <ProjectReference Include="..\..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>

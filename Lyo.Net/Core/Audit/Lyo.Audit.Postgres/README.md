@@ -49,10 +49,10 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package                                           | Version |
+|---------------------------------------------------|---------|
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
 
 ### Project references
 

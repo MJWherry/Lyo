@@ -1,18 +1,17 @@
-using Lyo.Api.Services.Crud;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Validation;
 
 /// <summary>
-/// Per-request cache so the same dotted path is not re-validated for sort, where, select, and include.
-/// Complements process-wide <see cref="SharedEntityMetadataCache" /> and filter metadata caches by deduplicating work within one query.
+/// Per-request cache so the same dotted path is not re-validated for sort, where, select, and include. Complements process-wide <see cref="SharedEntityMetadataCache" /> and
+/// filter metadata caches by deduplicating work within one query.
 /// </summary>
 public sealed class QueryPathValidationCache
 {
     private readonly Dictionary<string, (bool Ok, string? Message)> _filterPropertyPaths = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, (bool Ok, string? Normalized, string? Message)> _selectNormalize = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, (bool Ok, string? Message)> _includePaths = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (bool Ok, string? Normalized, string? Message)> _selectNormalize = new(StringComparer.OrdinalIgnoreCase);
 
     private static string EntityKey<T>() => typeof(T).FullName ?? typeof(T).Name;
 
@@ -69,8 +68,7 @@ public sealed class QueryPathValidationCache
 
     /// <summary>EF navigation include path (same rules as <see cref="EntityLoaderService.CollectIncludePathErrors" /> per path).</summary>
     public bool TryValidateInclude<TContext, TDbModel>(IEntityLoaderService loader, TContext db, string include, out string? errorMessage)
-        where TContext : DbContext
-        where TDbModel : class
+        where TContext : DbContext where TDbModel : class
     {
         var key = PathKey<TDbModel>(include);
         if (_includePaths.TryGetValue(key, out var hit)) {

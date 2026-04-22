@@ -525,15 +525,15 @@ If validation fails, an `OptionsValidationException` or `InvalidOperationExcepti
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.Http` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
-| `Twilio` | `[7.14,)` |
+| Package                                                | Version   |
+|--------------------------------------------------------|-----------|
+| `Microsoft.Extensions.Configuration.Abstractions`      | `[10,)`   |
+| `Microsoft.Extensions.Configuration.Binder`            | `[10,)`   |
+| `Microsoft.Extensions.Http`                            | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`            | `[10,)`   |
+| `Microsoft.Extensions.Options`                         | `[10,)`   |
+| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)`   |
+| `Twilio`                                               | `[7.14,)` |
 
 ### Project references
 

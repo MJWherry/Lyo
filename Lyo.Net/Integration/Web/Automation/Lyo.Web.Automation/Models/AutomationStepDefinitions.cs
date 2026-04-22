@@ -28,10 +28,10 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(StorePageTitleAutomationStep), "storePageTitle")]
 public abstract record AutomationStepDefinition(string? Name = null)
 {
-    /// <summary>Stable id for this step (set by <see cref="Lyo.Web.Automation.Plan.AutomationPlanBuilder.Build"/> when omitted).</summary>
+    /// <summary>Stable id for this step (set by <see cref="Lyo.Web.Automation.Plan.AutomationPlanBuilder.Build" /> when omitted).</summary>
     public Guid? StepId { get; init; }
 
-    /// <summary>Maximum duration for this step; overrides <see cref="Lyo.Web.Automation.Plan.AutomationPlanRuntimeOptions.DefaultStepTimeout"/> when set.</summary>
+    /// <summary>Maximum duration for this step; overrides <see cref="Lyo.Web.Automation.Plan.AutomationPlanRuntimeOptions.DefaultStepTimeout" /> when set.</summary>
     public TimeSpan? StepTimeout { get; init; }
 
     /// <summary>Suffix for <see cref="ToString" />: optional step id, timeout, and display name.</summary>
@@ -40,8 +40,10 @@ public abstract record AutomationStepDefinition(string? Name = null)
         var sb = new StringBuilder(head);
         if (StepId is { } sid && sid != Guid.Empty)
             sb.Append($" | stepId={sid:N}");
+
         if (StepTimeout is { } t)
             sb.Append($" | timeout={t}");
+
         sb.Append(AutomationDisplayText.OptionalName(Name));
         return sb.ToString();
     }
@@ -49,29 +51,29 @@ public abstract record AutomationStepDefinition(string? Name = null)
 
 /// <summary>Navigates the active page to <see cref="Url" /> (supports <c>{{var}}</c> from string variables).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record NavigateAutomationStep(string Url, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record NavigateAutomationStep(string Url, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"navigate → {AutomationDisplayText.Ellipsis(Url)}");
+    public override string ToString() => FormatStepDebugLine($"navigate → {AutomationDisplayText.Ellipsis(Url)}");
 }
 
 /// <summary>Polls for an element, then stores it as <see cref="RefName" /> for later <see cref="ElementActionAutomationStep" /> steps.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record FindElementAutomationStep(string RefName, ElementLocator Locator, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record FindElementAutomationStep(string RefName, ElementLocator Locator, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"findElement ref={RefName} @ {Locator}");
+    public override string ToString() => FormatStepDebugLine($"findElement ref={RefName} @ {Locator}");
 }
 
 /// <summary>Runs an <see cref="ElementAction" /> on a previously stored element ref.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ElementActionAutomationStep(string ElementRefName, ElementAction Action, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record ElementActionAutomationStep(string ElementRefName, ElementAction Action, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"elementAction ref={ElementRefName} {Action}");
+    public override string ToString() => FormatStepDebugLine($"elementAction ref={ElementRefName} {Action}");
 }
 
 /// <summary>Convenience: find by locator, store as <see cref="RefName" />, then apply <see cref="Action" />.</summary>
@@ -80,8 +82,7 @@ public sealed record FindAndActAutomationStep(string RefName, ElementLocator Loc
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"findAndAct ref={RefName} @ {Locator} → {Action}");
+    public override string ToString() => FormatStepDebugLine($"findAndAct ref={RefName} @ {Locator} → {Action}");
 }
 
 /// <summary>Polls for a chained locator path, then stores the result as <see cref="RefName" />.</summary>
@@ -90,8 +91,7 @@ public sealed record FindElementChainAutomationStep(string RefName, ElementLocat
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"findElementChain ref={RefName} chain={Chain}");
+    public override string ToString() => FormatStepDebugLine($"findElementChain ref={RefName} chain={Chain}");
 }
 
 /// <summary>Finds via <see cref="Chain" />, stores as <see cref="RefName" />, then applies <see cref="Action" />.</summary>
@@ -100,26 +100,25 @@ public sealed record FindAndActChainAutomationStep(string RefName, ElementLocato
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"findAndActChain ref={RefName} chain={Chain} → {Action}");
+    public override string ToString() => FormatStepDebugLine($"findAndActChain ref={RefName} chain={Chain} → {Action}");
 }
 
 /// <summary>Async delay between steps (for pacing or waiting on client-side rendering).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record DelayAutomationStep(int DelayMilliseconds, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record DelayAutomationStep(int DelayMilliseconds, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"delay {DelayMilliseconds} ms");
+    public override string ToString() => FormatStepDebugLine($"delay {DelayMilliseconds} ms");
 }
 
 /// <summary>Reloads the current document (F5).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ReloadAutomationStep(string? Name = null) : AutomationStepDefinition(Name)
+public sealed record ReloadAutomationStep(string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine("reload");
+    public override string ToString() => FormatStepDebugLine("reload");
 }
 
 /// <summary>Polls for all matching elements on the chained path and stores them as <see cref="RefName" /> (list ref).</summary>
@@ -128,18 +127,12 @@ public sealed record FindElementsChainAutomationStep(string RefName, ElementLoca
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"findElementsChain ref={RefName} chain={Chain}");
+    public override string ToString() => FormatStepDebugLine($"findElementsChain ref={RefName} chain={Chain}");
 }
 
 /// <summary>Reads attribute or text from a stored element ref into a string variable (usable later as <c>{{variableName}}</c>).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ExtractElementDataAutomationStep(
-    string ElementRefName,
-    string VariableName,
-    ElementDataExtractKind Kind,
-    string? AttributeName = null,
-    string? Name = null)
+public sealed record ExtractElementDataAutomationStep(string ElementRefName, string VariableName, ElementDataExtractKind Kind, string? AttributeName = null, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
@@ -174,14 +167,13 @@ public sealed record WriteStringListToFileAutomationStep(string VariableName, st
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine(
-            $"writeStringListToFile var:{VariableName} → {AutomationDisplayText.Ellipsis(FilePath, 80)} (append: {Append})");
+    public override string ToString() => FormatStepDebugLine($"writeStringListToFile var:{VariableName} → {AutomationDisplayText.Ellipsis(FilePath, 80)} (append: {Append})");
 }
 
 /// <summary>
-/// Downloads each URL in a string-list variable into <see cref="TargetDirectory" /> (requires <see cref="Lyo.Web.Automation.Plan.AutomationPlanRuntimeOptions.HttpClient" />).
-/// When <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable value is used.
+/// Downloads each URL in a string-list variable into <see cref="TargetDirectory" /> (requires <see cref="Lyo.Web.Automation.Plan.AutomationPlanRuntimeOptions.HttpClient" />
+/// ). When <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable
+/// value is used.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DownloadUrlsToDirectoryAutomationStep(
@@ -203,36 +195,36 @@ public sealed record DownloadUrlsToDirectoryAutomationStep(
 
 /// <summary>Stores a string literal in <see cref="VariableName" /> (value may contain <c>{{otherVar}}</c> placeholders).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record StoreLiteralAutomationStep(string VariableName, string Value, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record StoreLiteralAutomationStep(string VariableName, string Value, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"storeLiteral var:{VariableName} = {AutomationDisplayText.Ellipsis(Value, 64)}");
+    public override string ToString() => FormatStepDebugLine($"storeLiteral var:{VariableName} = {AutomationDisplayText.Ellipsis(Value, 64)}");
 }
 
 /// <summary>Expands <see cref="Template" /> using current string variables (<c>{{name}}</c>) and stores the result in <see cref="VariableName" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record StoreTemplateAutomationStep(string VariableName, string Template, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record StoreTemplateAutomationStep(string VariableName, string Template, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"storeTemplate var:{VariableName} ← {AutomationDisplayText.Ellipsis(Template, 64)}");
+    public override string ToString() => FormatStepDebugLine($"storeTemplate var:{VariableName} ← {AutomationDisplayText.Ellipsis(Template, 64)}");
 }
 
 /// <summary>Stores the current document URL in <see cref="VariableName" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record StorePageUrlAutomationStep(string VariableName, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record StorePageUrlAutomationStep(string VariableName, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"storePageUrl var:{VariableName}");
+    public override string ToString() => FormatStepDebugLine($"storePageUrl var:{VariableName}");
 }
 
 /// <summary>Stores the current document title in <see cref="VariableName" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record StorePageTitleAutomationStep(string VariableName, string? Name = null) : AutomationStepDefinition(Name)
+public sealed record StorePageTitleAutomationStep(string VariableName, string? Name = null)
+    : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"storePageTitle var:{VariableName}");
+    public override string ToString() => FormatStepDebugLine($"storePageTitle var:{VariableName}");
 }

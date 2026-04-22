@@ -40,9 +40,9 @@ public class CacheServiceEdgeCasesTests : IDisposable
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         await Assert.ThrowsAsync<ArgumentNullException>(async () => {
-            await service.GetOrSetAsync<string>(
-                null!, _ => Task.FromResult("fallback-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+                await service.GetOrSetAsync<string>(null!, _ => Task.FromResult("fallback-value")!, null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            })
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -64,9 +64,9 @@ public class CacheServiceEdgeCasesTests : IDisposable
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         await Assert.ThrowsAsync<ArgumentException>(async () => {
-            await service.GetOrSetAsync<string>(
-                "", _ => Task.FromResult("empty-key-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+                await service.GetOrSetAsync<string>("", _ => Task.FromResult("empty-key-value")!, null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            })
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -94,9 +94,9 @@ public class CacheServiceEdgeCasesTests : IDisposable
     {
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         await Assert.ThrowsAsync<ArgumentException>(async () => {
-            await service.GetOrSetAsync<string>(
-                "   ", _ => Task.FromResult("whitespace-value")!, extraTags: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        }).ConfigureAwait(false);
+                await service.GetOrSetAsync<string>("   ", _ => Task.FromResult("whitespace-value")!, null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            })
+            .ConfigureAwait(false);
     }
 
     [Fact]
@@ -161,19 +161,21 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var key = "type-expiration-test";
         var callCount = 0;
         await service.GetOrSetAsync<TestModels.TestEntity>(
-            key, _ => {
-                callCount++;
-                return Task.FromResult<TestModels.TestEntity>(new() { Id = 1 })!;
-            }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, _ => {
+                    callCount++;
+                    return Task.FromResult<TestModels.TestEntity>(new() { Id = 1 })!;
+                }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.Equal(1, callCount);
 
         // Second call should use cache
         var cached = await service.GetOrSetAsync<TestModels.TestEntity>(
-            key, ct => {
-                callCount++;
-                return Task.FromResult<TestModels.TestEntity>(new() { Id = 2 })!;
-            }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                key, ct => {
+                    callCount++;
+                    return Task.FromResult<TestModels.TestEntity>(new() { Id = 2 })!;
+                }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false);
 
         Assert.NotNull(cached);
         Assert.Equal(1, callCount);
@@ -282,7 +284,8 @@ public class CacheServiceEdgeCasesTests : IDisposable
         // FusionCache or our code will throw when factory is null
         // Could be ArgumentNullException or NullReferenceException depending on where it's checked
         await Assert.ThrowsAnyAsync<Exception>(async () => await service.GetOrSetAsync(
-            key, (Func<CancellationToken, Task<string?>>)null!, null, TestContext.Current.CancellationToken).ConfigureAwait(false));
+                key, (Func<CancellationToken, Task<string?>>)null!, null, TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
     }
 
     [Fact]
@@ -305,10 +308,11 @@ public class CacheServiceEdgeCasesTests : IDisposable
         // Factory throwing exception should propagate
         // FusionCache may call the factory multiple times due to internal retry logic
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await service.GetOrSetAsync<string>(
-            key, _ => {
-                callCount++;
-                return Task.FromException<string?>(new InvalidOperationException("Factory error"));
-            }, token: TestContext.Current.CancellationToken).ConfigureAwait(false));
+                key, _ => {
+                    callCount++;
+                    return Task.FromException<string?>(new InvalidOperationException("Factory error"));
+                }, token: TestContext.Current.CancellationToken)
+            .ConfigureAwait(false));
 
         // FusionCache may call factory multiple times, so just verify it was called at least once
         Assert.True(callCount >= 1, $"Factory should be called at least once, but was called {callCount} times");
@@ -317,10 +321,11 @@ public class CacheServiceEdgeCasesTests : IDisposable
         var callCountBeforeSecond = callCount;
         try {
             await service.GetOrSetAsync<string>(
-                key, _ => {
-                    callCount++;
-                    return Task.FromException<string?>(new InvalidOperationException("Factory error"));
-                }, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+                    key, _ => {
+                        callCount++;
+                        return Task.FromException<string?>(new InvalidOperationException("Factory error"));
+                    }, token: TestContext.Current.CancellationToken)
+                .ConfigureAwait(false);
 
             Assert.Fail("Should have thrown exception");
         }

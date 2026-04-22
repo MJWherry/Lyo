@@ -1,17 +1,11 @@
 using Lyo.Web.Components.RichTextEditor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Web.Components;
 
 public partial class LyoRichTextEditor : IAsyncDisposable
 {
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-rich-text-editor" : ElementId.Trim();
-
     private static readonly IReadOnlyList<SelectOption> FontFamilyOptions = [
         new("Arial, Helvetica, sans-serif", "Sans"), new("'Times New Roman', Times, serif", "Serif"), new("Georgia, serif", "Georgia"),
         new("'Courier New', Courier, monospace", "Monospace"), new("Verdana, Geneva, sans-serif", "Verdana")
@@ -31,6 +25,11 @@ public partial class LyoRichTextEditor : IAsyncDisposable
 
     private ElementReference _editorRef;
     private ElementReference _rootRef;
+
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-rich-text-editor" : ElementId.Trim();
 
     [Inject]
     private IJSRuntime JsRuntime { get; set; } = default!;

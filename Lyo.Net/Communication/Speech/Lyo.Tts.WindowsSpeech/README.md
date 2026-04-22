@@ -91,8 +91,8 @@ var testResult = await ttsService.TestConnectionAsync();
 
 ### NuGet packages
 
-| Package | Version |
-| --- | --- |
+| Package         | Version  |
+|-----------------|----------|
 | `System.Speech` | `10.0.2` |
 
 ### Project references

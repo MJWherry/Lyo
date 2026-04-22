@@ -1,8 +1,8 @@
 using Lyo.Exceptions;
-using Wm = Lyo.Web.Automation.Core.Constants;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
@@ -11,14 +11,14 @@ public sealed class BrowserAlerts
 {
     private readonly SeleniumBrowser _browser;
 
+    /// <summary>Whether a JS dialog is currently displayed.</summary>
+    public bool IsPresent => TryGetAlert(out var _);
+
     internal BrowserAlerts(SeleniumBrowser browser)
     {
         ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
         _browser = browser;
     }
-
-    /// <summary>Whether a JS dialog is currently displayed.</summary>
-    public bool IsPresent => TryGetAlert(out _);
 
     /// <summary>Tries to switch to an alert, if any.</summary>
     public bool TryGetAlert(out IAlert? alert)
@@ -68,7 +68,7 @@ public sealed class BrowserAlerts
     public bool TryAccept(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        if (!TryGetAlert(out _))
+        if (!TryGetAlert(out var _))
             return false;
 
         RunAlert("try_accept", () => _browser.GetRequiredDriver().SwitchTo().Alert().Accept());
@@ -96,19 +96,18 @@ public sealed class BrowserAlerts
         var log = _browser.Logger;
         log.LogDebug("Alert operation {Operation} starting", operation);
         try {
-            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.AlertOperationDuration)), SeleniumMetricTags.ForOperation(_browser, operation))) {
+            using (_browser.Metrics.StartTimer(_browser.ResolveMetric(nameof(Wm.Metrics.AlertOperationDuration)), SeleniumMetricTags.ForOperation(_browser, operation)))
                 action();
-            }
 
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.AlertOperation)),
-                tags: SeleniumMetricTags.ForOperation(_browser, operation, [("result", "success")]));
+                _browser.ResolveMetric(nameof(Wm.Metrics.AlertOperation)), tags: SeleniumMetricTags.ForOperation(_browser, operation, [("result", "success")]));
+
             log.LogDebug("Alert operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.AlertOperation)),
-                tags: SeleniumMetricTags.ForOperation(_browser, operation, [("result", "failure")]));
+                _browser.ResolveMetric(nameof(Wm.Metrics.AlertOperation)), tags: SeleniumMetricTags.ForOperation(_browser, operation, [("result", "failure")]));
+
             _browser.Metrics.RecordError(_browser.ResolveMetric(nameof(Wm.Metrics.AlertOperationDuration)), ex, SeleniumMetricTags.ForOperation(_browser, operation));
             log.LogWarning(ex, "Alert operation {Operation} failed", operation);
             throw;

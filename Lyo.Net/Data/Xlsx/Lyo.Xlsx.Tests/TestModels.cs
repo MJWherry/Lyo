@@ -1,6 +1,5 @@
-
-
 // ReSharper disable once CheckNamespace
+
 namespace Lyo.Xlsx.Tests.TestModels;
 
 internal class DateNumberModel

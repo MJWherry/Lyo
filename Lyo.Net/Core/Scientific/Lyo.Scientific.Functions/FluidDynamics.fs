@@ -7,6 +7,7 @@ open Lyo.Scientific.Engineering
 type FluidDynamicsFunctions private () =
     static member ReynoldsNumber(input: ReynoldsNumberInput) =
         let state = input.State
+
         state.Density.KilogramsPerCubicMeter
         * state.Velocity.MetersPerSecond
         * state.HydraulicDiameter.Meters

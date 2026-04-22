@@ -27,8 +27,7 @@ public class KsuidTests
         var t2 = t1.AddSeconds(1);
         var k1 = Ksuid.Create(t1);
         var k2 = Ksuid.Create(t2);
-        Assert.True(string.Compare(k1, k2, StringComparison.Ordinal) < 0,
-            "KSUID with earlier timestamp should sort before one with later timestamp.");
+        Assert.True(string.Compare(k1, k2, StringComparison.Ordinal) < 0, "KSUID with earlier timestamp should sort before one with later timestamp.");
     }
 
     [Fact]
@@ -42,20 +41,16 @@ public class KsuidTests
     }
 
     [Fact]
-    public void GetTimestamp_TooShort_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp("TOOSHORT"));
+    public void GetTimestamp_TooShort_Throws() => Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp("TOOSHORT"));
 
     [Fact]
-    public void GetTimestamp_TooLong_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(new string('0', 28)));
+    public void GetTimestamp_TooLong_Throws() => Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(new('0', 28)));
 
     [Fact]
-    public void GetTimestamp_InvalidChar_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(new string('!', 27)));
+    public void GetTimestamp_InvalidChar_Throws() => Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(new('!', 27)));
 
     [Fact]
-    public void GetTimestamp_Null_Throws() =>
-        Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(null!));
+    public void GetTimestamp_Null_Throws() => Assert.Throws<ArgumentException>(() => Ksuid.GetTimestamp(null!));
 
     [Fact]
     public void Create_SameTimestampDifferentRandom()
@@ -94,7 +89,7 @@ public class KsuidTests
     {
         // All KSUIDs in a batch are generated within the same second, so the first
         // character(s) encoding the timestamp should be identical.
-        var ids    = Ksuid.CreateBulk(10);
+        var ids = Ksuid.CreateBulk(10);
         var prefix = ids[0][..4];
         Assert.All(ids, id => Assert.Equal(prefix, id[..4]));
     }

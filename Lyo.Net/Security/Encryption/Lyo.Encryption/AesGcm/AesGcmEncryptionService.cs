@@ -29,7 +29,10 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
                 AesGcmKeySize = aesGcmKeySize
             }, keyStore) { }
 
-    /// <summary>Initializes a new instance with explicit options (must set <see cref="EncryptionServiceOptions.FileExtension"/> and <see cref="EncryptionServiceOptions.AesGcmKeySize"/> as needed).</summary>
+    /// <summary>
+    /// Initializes a new instance with explicit options (must set <see cref="EncryptionServiceOptions.FileExtension" /> and <see cref="EncryptionServiceOptions.AesGcmKeySize" />
+    /// as needed).
+    /// </summary>
     public AesGcmEncryptionService(EncryptionServiceOptions options, IKeyStore keyStore)
         : base(options, keyStore) { }
 

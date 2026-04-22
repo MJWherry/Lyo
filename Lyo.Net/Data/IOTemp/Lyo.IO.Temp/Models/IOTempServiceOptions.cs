@@ -11,7 +11,17 @@ public class IOTempServiceOptions
 {
     public const string SectionName = "IOTempService";
 
-    public string RootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-io-temp");
+    /// <summary>The OS temp root folder. Defaults to <see cref="Path.GetTempPath"/>.</summary>
+    public string TempRoot { get; set; } = Path.GetTempPath();
+
+    /// <summary>
+    /// The subdirectory name under <see cref="TempRoot"/> used by this service.
+    /// Changing this per-instance (e.g. in tests) prevents collisions when multiple instances run in parallel.
+    /// </summary>
+    public string DirectoryName { get; set; } = "lyo-io-temp";
+
+    /// <summary>Full root directory, computed from <see cref="TempRoot"/> and <see cref="DirectoryName"/>.</summary>
+    public string RootDirectory => Path.Combine(TempRoot, DirectoryName);
 
     public bool CreateRootDirectoryIfNotExists { get; set; } = true;
 
@@ -40,5 +50,5 @@ public class IOTempServiceOptions
 
     public TempOverflowStrategy OverflowStrategy { get; set; } = TempOverflowStrategy.ThrowException;
 
-    public override string ToString() => $"{RootDirectory}/{DirectoryPrefix}*{DirectorySuffix}/{FilePrefix}*{FileSuffix}{FileExtension}";
+    public override string ToString() => $"{TempRoot}/{DirectoryName}/{DirectoryPrefix}*{DirectorySuffix}/{FilePrefix}*{FileSuffix}{FileExtension}";
 }

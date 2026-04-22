@@ -10,6 +10,5 @@ public class QueryRequestOptions
 
     public QueryIncludeFilterMode IncludeFilterMode { get; set; } = QueryIncludeFilterMode.Full;
 
-    public override string ToString()
-        => $"TotalCountMode: {TotalCountMode}, IncludeFilterMode: {IncludeFilterMode}";
+    public override string ToString() => $"TotalCountMode: {TotalCountMode}, IncludeFilterMode: {IncludeFilterMode}";
 }
