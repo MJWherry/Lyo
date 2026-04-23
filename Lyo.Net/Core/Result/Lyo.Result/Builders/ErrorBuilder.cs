@@ -13,6 +13,7 @@ public class ErrorBuilder
     private string? _message;
     private Dictionary<string, object>? _metadata;
     private ErrorSeverity _severity = ErrorSeverity.Error;
+    private ErrorType _type = ErrorType.Generic;
     private string? _stackTrace;
     private DateTime? _timestamp;
 
@@ -119,21 +120,25 @@ public class ErrorBuilder
         return this;
     }
 
+    /// <summary>Sets the error type category.</summary>
+    public ErrorBuilder WithType(ErrorType type)
+    {
+        _type = type;
+        return this;
+    }
+
     /// <summary>Builds the Error instance.</summary>
     public Error Build()
     {
         ThrowIfNullOrEmpty(_code, "Code is required to build an Error");
 
-        // If exception is provided and message isn't set, use exception message
         if (string.IsNullOrEmpty(_message) && _exception != null)
             _message = _exception.Message;
 
-        // If exception is provided and stacktrace isn't set, use exception stack trace
         if (string.IsNullOrEmpty(_stackTrace) && _exception != null)
             _stackTrace = _exception.StackTrace;
 
-        // If InnerError isn't provided but exception has InnerException, it will be handled in Error constructor
-        var error = new Error(_message, _code, _stackTrace, _innerError, _metadata, _exception, _severity) { Timestamp = _timestamp ?? DateTime.UtcNow };
+        var error = new Error(_message, _code, _stackTrace, _innerError, _metadata, _exception, _severity, _type) { Timestamp = _timestamp ?? DateTime.UtcNow };
         return error;
     }
 

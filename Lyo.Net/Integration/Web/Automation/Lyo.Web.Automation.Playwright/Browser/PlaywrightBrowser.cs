@@ -258,8 +258,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             return;
         }
 
-        if (Page != null && !_ownsPlaywrightStack)
-            throw new InvalidOperationException("Browser is attached to an external page; do not call StartBrowserAsync.");
+        OperationHelpers.ThrowIf(Page != null && !_ownsPlaywrightStack, "Browser is attached to an external page; do not call StartBrowserAsync.");
 
         using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StartBrowserDuration)], PlaywrightMetricTags.ForOperation(this, "start_browser"));
         ct.ThrowIfCancellationRequested();

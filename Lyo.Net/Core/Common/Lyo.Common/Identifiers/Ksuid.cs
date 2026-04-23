@@ -125,12 +125,9 @@ public static class Ksuid
     {
         Span<uint> words = stackalloc uint[5];
         foreach (var c in ksuid) {
-            if (c >= 128)
-                throw new ArgumentException($"Invalid KSUID character '{c}'.", nameof(ksuid));
-
+            ArgumentHelpers.ThrowIf(c >= 128, $"Invalid KSUID character '{c}'.", nameof(ksuid));
             var value = DecodeMap[c];
-            if (value == 255)
-                throw new ArgumentException($"Invalid KSUID character '{c}'.", nameof(ksuid));
+            ArgumentHelpers.ThrowIf(value == 255, $"Invalid KSUID character '{c}'.", nameof(ksuid));
 
             ulong carry = value;
             for (var j = 4; j >= 0; j--) {

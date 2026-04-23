@@ -151,11 +151,7 @@ public class CountingStream : Stream
         BytesWritten = 0;
     }
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(GetType().Name);
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, GetType().Name);
 
     protected override void Dispose(bool disposing)
     {

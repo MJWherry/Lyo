@@ -1,30 +1,26 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Mathematics;
 
 internal static class MathValueGuards
 {
     public static double Finite(double value, string paramName)
     {
-        if (double.IsNaN(value) || double.IsInfinity(value))
-            throw new ArgumentOutOfRangeException(paramName, "Value must be a finite number.");
-
+        ArgumentHelpers.ThrowIf(double.IsNaN(value) || double.IsInfinity(value), "Value must be a finite number.", paramName);
         return value;
     }
 
     public static double NonNegativeFinite(double value, string paramName)
     {
         var finite = Finite(value, paramName);
-        if (finite < 0)
-            throw new ArgumentOutOfRangeException(paramName, "Value must be greater than or equal to zero.");
-
+        ArgumentHelpers.ThrowIfNegative(finite, paramName);
         return finite;
     }
 
     public static double PositiveFinite(double value, string paramName)
     {
         var finite = Finite(value, paramName);
-        if (finite <= 0)
-            throw new ArgumentOutOfRangeException(paramName, "Value must be greater than zero.");
-
+        ArgumentHelpers.ThrowIfNegativeOrZero(finite, paramName);
         return finite;
     }
 }

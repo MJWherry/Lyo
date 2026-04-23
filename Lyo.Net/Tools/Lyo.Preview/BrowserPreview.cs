@@ -117,7 +117,7 @@ public class BrowserPreview : IPreviewService
                         content = Encoding.UTF8.GetBytes(html);
                     }
                     else
-                        throw new InvalidOperationException("XLSX preview requires IXlsxService. Call AddXlsxService() before AddPreviewService().");
+                        OperationHelpers.ThrowIf(true, "XLSX preview requires IXlsxService. Call AddXlsxService() before AddPreviewService().");
                 }
             }
             else

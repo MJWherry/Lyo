@@ -740,8 +740,7 @@ public partial class LyoDataGrid<T>
 
     private async Task BulkExport(FileTypeFlags flag)
     {
-        if (!CommonExtensions.IsSingleFlag(flag))
-            throw new ArgumentException("Only a single export type is allowed.", nameof(flag));
+        ArgumentHelpers.ThrowIf(!CommonExtensions.IsSingleFlag(flag), "Only a single export type is allowed.", nameof(flag));
 
         if (!string.IsNullOrEmpty(Route)) {
             await BulkExportViaApi(flag);

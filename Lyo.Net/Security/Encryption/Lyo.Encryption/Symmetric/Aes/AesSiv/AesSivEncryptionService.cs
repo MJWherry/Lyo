@@ -54,7 +54,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         var total = new byte[SivSize + plaintext.Length];
         using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
@@ -106,7 +106,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         var total = new byte[SivSize + bytes.Length];
         using (var siv = new Dorssel.Security.Cryptography.AesSiv(actualKey!))
@@ -215,7 +215,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
                 ValidateKey(actualKey);
             }
             else
-                throw new InvalidOperationException("No decryption key available. Provide either a keyId or a key parameter.");
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
         if (key != null)
@@ -242,9 +242,5 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         }
     }
 
-    private void ValidateKey(byte[] k)
-    {
-        if (k.Length != RequiredKeyBytes)
-            throw new ArgumentException($"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(k));
-    }
+    private void ValidateKey(byte[] k) => ArgumentHelpers.ThrowIf(k.Length != RequiredKeyBytes, $"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(k));
 }

@@ -119,12 +119,12 @@ public static class ArgumentHelpers
             ThrowArgumentException(message, paramName);
     }
 
-    /// <summary>Throws an ArgumentException if the value is not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is not within the specified range.</summary>
     /// <param name="value">The value to check.</param>
-    /// <param name="max">The maximum allowed value (inclusive).</param>
     /// <param name="min">The minimum allowed value (inclusive).</param>
+    /// <param name="max">The maximum allowed value (inclusive).</param>
     /// <param name="paramName">The parameter name for error messages.</param>
-    /// <exception cref="ArgumentException">Thrown when value is not in the range [min, max].</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is not in the range [min, max].</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
@@ -136,12 +136,16 @@ public static class ArgumentHelpers
             ThrowArgumentOutsideRange(paramName, value, min, max, message);
     }
 
-    /// <summary>Throws an ArgumentException if the value is not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is null or not within the specified range.</summary>
     /// <param name="value">The value to check.</param>
-    /// <param name="max">The maximum allowed value (inclusive).</param>
     /// <param name="min">The minimum allowed value (inclusive).</param>
+    /// <param name="max">The maximum allowed value (inclusive).</param>
     /// <param name="paramName">The parameter name for error messages.</param>
-    /// <exception cref="ArgumentException">Thrown when value is not in the range [min, max].</exception>
+    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is not in the range [min, max].</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNullOrNotInRange<T>(T? value, T? min = default, T? max = default, string? paramName = null, string? message = null)
         where T : IComparable<T>, IConvertible
@@ -150,7 +154,7 @@ public static class ArgumentHelpers
         ThrowIfNotInRange(value, min, max, paramName, message);
     }
 
-    /// <summary>Throws an ArgumentException if the DateTime value is not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the DateTime value is not within the specified range.</summary>
     /// <param name="value">The DateTime value to check.</param>
     /// <param name="min">The minimum allowed DateTime value (inclusive).</param>
     /// <param name="max">The maximum allowed DateTime value (inclusive).</param>
@@ -167,7 +171,7 @@ public static class ArgumentHelpers
             ThrowArgumentOutsideRange(paramName, value, min, max, message);
     }
 
-    /// <summary>Throws an ArgumentException if the nullable DateTime value is null or not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the nullable DateTime value is null or not within the specified range.</summary>
     /// <param name="value">The nullable DateTime value to check.</param>
     /// <param name="min">The minimum allowed DateTime value (inclusive).</param>
     /// <param name="max">The maximum allowed DateTime value (inclusive).</param>
@@ -185,7 +189,7 @@ public static class ArgumentHelpers
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
     }
 
-    /// <summary>Throws an ArgumentException if the TimeSpan value is not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the TimeSpan value is not within the specified range.</summary>
     /// <param name="value">The TimeSpan value to check.</param>
     /// <param name="min">The minimum allowed TimeSpan value (inclusive).</param>
     /// <param name="max">The maximum allowed TimeSpan value (inclusive).</param>
@@ -202,7 +206,7 @@ public static class ArgumentHelpers
             ThrowArgumentOutsideRange(paramName, value.ToString(), min?.ToString(), max?.ToString(), message);
     }
 
-    /// <summary>Throws an ArgumentException if the nullable TimeSpan value is null or not within the specified range.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the nullable TimeSpan value is null or not within the specified range.</summary>
     /// <param name="value">The nullable TimeSpan value to check.</param>
     /// <param name="min">The minimum allowed TimeSpan value (inclusive).</param>
     /// <param name="max">The maximum allowed TimeSpan value (inclusive).</param>
@@ -330,7 +334,8 @@ public static class ArgumentHelpers
     /// <summary>Throws an ArgumentOutsideRangeException if the value is negative.</summary>
     /// <param name="value">The value to check.</param>
     /// <param name="paramName">The parameter name.</param>
-    /// <exception cref="ArgumentException">Thrown when value is negative.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is negative.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
@@ -345,7 +350,7 @@ public static class ArgumentHelpers
             ThrowArgumentOutsideRange(paramName, value, 1, null, $"Value cannot be negative. Actual value: {value}.");
     }
 
-    /// <summary>Throws an ArgumentOutsideRangeException if the value negative or zero.</summary>
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is negative or zero.</summary>
     /// <param name="value">The value to check.</param>
     /// <param name="paramName">The parameter name.</param>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when value is negative or zero.</exception>
@@ -361,6 +366,154 @@ public static class ArgumentHelpers
 
         if (value.CompareTo(default(T)) <= 0)
             ThrowArgumentOutsideRange(paramName, value, 0, null, $"Value must be greater than zero. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is positive (greater than zero).</summary>
+    /// <typeparam name="T">A comparable, convertible numeric type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is greater than zero.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfPositive<T>(T? value, string? paramName = null)
+        where T : IComparable, IConvertible
+    {
+        if (value is null)
+            ThrowArgumentNull(nameof(value));
+
+        if (value.CompareTo(default(T)) > 0)
+            ThrowArgumentOutsideRange(paramName, value, null, 0, $"Value cannot be positive. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is positive or zero (i.e. must be strictly negative).</summary>
+    /// <typeparam name="T">A comparable, convertible numeric type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is greater than or equal to zero.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfPositiveOrZero<T>(T? value, string? paramName = null)
+        where T : IComparable, IConvertible
+    {
+        if (value is null)
+            ThrowArgumentNull(nameof(value));
+
+        if (value.CompareTo(default(T)) >= 0)
+            ThrowArgumentOutsideRange(paramName, value, null, 0, $"Value must be less than zero. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is greater than the specified threshold.</summary>
+    /// <typeparam name="T">A comparable, convertible type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The inclusive upper bound; the value must be ≤ threshold.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is greater than threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfGreaterThan<T>(T value, T threshold, string? paramName = null, string? message = null)
+        where T : IComparable<T>, IConvertible
+    {
+        if (value.CompareTo(threshold) > 0)
+            ThrowArgumentOutsideRange(paramName, value, null, threshold, message ?? $"Value must be less than or equal to {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is greater than or equal to the specified threshold.</summary>
+    /// <typeparam name="T">A comparable, convertible type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The upper bound; the value must be strictly less than threshold.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is greater than or equal to threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfGreaterThanOrEqual<T>(T value, T threshold, string? paramName = null, string? message = null)
+        where T : IComparable<T>, IConvertible
+    {
+        if (value.CompareTo(threshold) >= 0)
+            ThrowArgumentOutsideRange(paramName, value, null, threshold, message ?? $"Value must be strictly less than {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is less than the specified threshold.</summary>
+    /// <typeparam name="T">A comparable, convertible type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The inclusive lower bound; the value must be ≥ threshold.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is less than threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfLessThan<T>(T value, T threshold, string? paramName = null, string? message = null)
+        where T : IComparable<T>, IConvertible
+    {
+        if (value.CompareTo(threshold) < 0)
+            ThrowArgumentOutsideRange(paramName, value, threshold, null, message ?? $"Value must be greater than or equal to {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentOutsideRangeException if the value is less than or equal to the specified threshold.</summary>
+    /// <typeparam name="T">A comparable, convertible type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The lower bound; the value must be strictly greater than threshold.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is less than or equal to threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfLessThanOrEqual<T>(T value, T threshold, string? paramName = null, string? message = null)
+        where T : IComparable<T>, IConvertible
+    {
+        if (value.CompareTo(threshold) <= 0)
+            ThrowArgumentOutsideRange(paramName, value, threshold, null, message ?? $"Value must be strictly greater than {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an ArgumentException if the value equals the specified other value.</summary>
+    /// <typeparam name="T">A comparable type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="other">The value that <paramref name="value"/> must not equal.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentException">Thrown when value equals other.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfEqual<T>(T value, T other, string? paramName = null, string? message = null)
+        where T : IEquatable<T>
+    {
+        if (value.Equals(other))
+            ThrowArgumentException(message ?? $"Value must not equal {other}. Actual value: {value}.", paramName);
+    }
+
+    /// <summary>Throws an ArgumentException if the value does not equal the specified other value.</summary>
+    /// <typeparam name="T">A comparable type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="expected">The value that <paramref name="value"/> must equal.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ArgumentException">Thrown when value does not equal expected.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotEqual<T>(T value, T expected, string? paramName = null, string? message = null)
+        where T : IEquatable<T>
+    {
+        if (!value.Equals(expected))
+            ThrowArgumentException(message ?? $"Value must equal {expected}. Actual value: {value}.", paramName);
     }
 
     /// <summary>Throws a FileNotFoundException if the file does not exist.</summary>

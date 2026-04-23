@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Mathematics.Functions;
 using Lyo.Mathematics.Models;
 using Lyo.Metrics.Models;
@@ -9,14 +10,9 @@ public static class MathExtensions
 {
     public static IReadOnlyDictionary<string, double?> GetHistogramPercentiles(this MetricsSnapshot snapshot, string name, params double[] percentiles)
     {
-        if (snapshot == null)
-            throw new ArgumentNullException(nameof(snapshot));
-
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
-
-        if (percentiles == null)
-            throw new ArgumentNullException(nameof(percentiles));
+        ArgumentHelpers.ThrowIfNull(snapshot, nameof(snapshot));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentHelpers.ThrowIfNull(percentiles, nameof(percentiles));
 
         var histogram = snapshot.Histograms.Values.FirstOrDefault(h => string.Equals(h.Name, name, StringComparison.Ordinal));
         return percentiles.ToDictionary(p => p.ToString("0.###"), p => histogram.Percentile(p));

@@ -43,8 +43,7 @@ public sealed class PlaywrightFrameNavigator
     public void SwitchToParentFrame()
         => RunFrameOp(
             "parent_frame", () => {
-                if (_iframeSelectors.Count <= 0)
-                    throw new InvalidOperationException("Already at default content (no parent frame).");
+                OperationHelpers.ThrowIf(_iframeSelectors.Count <= 0, "Already at default content (no parent frame).");
 
                 _iframeSelectors.RemoveAt(_iframeSelectors.Count - 1);
             });

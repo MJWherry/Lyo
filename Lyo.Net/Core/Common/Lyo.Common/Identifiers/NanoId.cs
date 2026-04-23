@@ -94,8 +94,7 @@ public static class NanoId
     {
         ArgumentHelpers.ThrowIfNegativeOrZero(size, nameof(size));
         ArgumentHelpers.ThrowIfNullOrEmpty(alphabet, nameof(alphabet));
-        if (alphabet.Length > 255)
-            throw new ArgumentException("Alphabet must not exceed 255 characters.", nameof(alphabet));
+        ArgumentHelpers.ThrowIf(alphabet.Length > 255, "Alphabet must not exceed 255 characters.", nameof(alphabet));
     }
 
     private static int ComputeMask(int alphabetLength)

@@ -44,7 +44,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -92,7 +92,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -201,7 +201,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
                 }
             }
             else
-                throw new InvalidOperationException("No decryption key available. Provide either a keyId or a key parameter.");
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
         try {

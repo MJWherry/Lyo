@@ -107,11 +107,7 @@ public class TeeStream : Stream
     }
 #endif
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(TeeStream));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(TeeStream));
 
     protected override void Dispose(bool disposing)
     {

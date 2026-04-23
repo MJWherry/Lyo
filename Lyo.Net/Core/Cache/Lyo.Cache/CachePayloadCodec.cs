@@ -16,8 +16,8 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
 
     public CachePayloadCodec(CacheOptions cacheOptions, ICompressionService compression, IEncryptionService? encryption = null)
     {
-        _cacheOptions = cacheOptions ?? throw new ArgumentNullException(nameof(cacheOptions));
-        _compression = compression ?? throw new ArgumentNullException(nameof(compression));
+        _cacheOptions = ArgumentHelpers.ThrowIfNullReturn(cacheOptions, nameof(cacheOptions));
+        _compression = ArgumentHelpers.ThrowIfNullReturn(compression, nameof(compression));
         _encryption = encryption;
     }
 

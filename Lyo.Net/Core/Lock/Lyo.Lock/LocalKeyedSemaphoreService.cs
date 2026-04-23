@@ -24,8 +24,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
     public async ValueTask<IPermitHandle?> AcquireAsync(string key, int maxConcurrency, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (maxConcurrency <= 0)
-            throw new ArgumentOutOfRangeException(nameof(maxConcurrency), maxConcurrency, "Max concurrency must be greater than zero.");
+        ArgumentHelpers.ThrowIfNegativeOrZero(maxConcurrency, nameof(maxConcurrency));
 
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;
@@ -95,7 +94,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
                 _entries[normalizedKey] = entry;
             }
             else if (entry.MaxConcurrency != maxConcurrency)
-                throw new InvalidOperationException($"Semaphore key '{normalizedKey}' is already active with max concurrency {entry.MaxConcurrency}, not {maxConcurrency}.");
+                OperationHelpers.ThrowIf(true, $"Semaphore key '{normalizedKey}' is already active with max concurrency {entry.MaxConcurrency}, not {maxConcurrency}.");
 
             entry.RefCount++;
             return entry;

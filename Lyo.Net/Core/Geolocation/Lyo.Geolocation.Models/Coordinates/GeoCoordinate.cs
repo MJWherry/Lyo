@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Enums;
 
 namespace Lyo.Geolocation.Models.Coordinates;
@@ -12,8 +13,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     public double Latitude {
         get => _latitude;
         set {
-            if (value < -90 || value > 90)
-                throw new ArgumentOutOfRangeException(nameof(Latitude), "Latitude must be between -90 and 90 degrees");
+            ArgumentHelpers.ThrowIfNotInRange(value, -90.0, 90.0, nameof(Latitude), "Latitude must be between -90 and 90 degrees");
 
             _latitude = value;
         }
@@ -23,8 +23,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     public double Longitude {
         get => _longitude;
         set {
-            if (value < -180 || value > 180)
-                throw new ArgumentOutOfRangeException(nameof(Longitude), "Longitude must be between -180 and 180 degrees");
+            ArgumentHelpers.ThrowIfNotInRange(value, -180.0, 180.0, nameof(Longitude), "Longitude must be between -180 and 180 degrees");
 
             _longitude = value;
         }
@@ -71,9 +70,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     /// <returns>Distance in the specified unit</returns>
     public double DistanceTo(GeoCoordinate other, DistanceUnit unit = DistanceUnit.Meters)
     {
-        if (other == null)
-            throw new ArgumentNullException(nameof(other));
-
+        ArgumentHelpers.ThrowIfNull(other, nameof(other));
         const double earthRadiusMeters = 6371000; // Earth's radius in meters
         var lat1Rad = Latitude * Math.PI / 180;
         var lat2Rad = other.Latitude * Math.PI / 180;
@@ -100,9 +97,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     /// <summary>Checks if this coordinate is within a specified radius of another coordinate</summary>
     public bool IsWithinRadius(GeoCoordinate center, double radiusMeters)
     {
-        if (center == null)
-            throw new ArgumentNullException(nameof(center));
-
+        ArgumentHelpers.ThrowIfNull(center, nameof(center));
         return DistanceTo(center) <= radiusMeters;
     }
 

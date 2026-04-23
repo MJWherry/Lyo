@@ -25,6 +25,7 @@ public class UnauthorizedException : HttpException
 
     /// <summary>Initializes a new instance of the <see cref="UnauthorizedException" /> class with a reason.</summary>
     /// <param name="reason">The reason for the unauthorized access.</param>
+    /// <param name="includeReasonInMessage">When true, appends the reason to the exception message. Default is true.</param>
     public UnauthorizedException(string reason, bool includeReasonInMessage = true)
         : base(HttpStatusCode, includeReasonInMessage ? $"Authentication is required. Reason: {reason}" : "Authentication is required.")
         => Reason = reason;

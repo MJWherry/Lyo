@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/><ProjectReference Include="..\..\Result\Lyo.Result\Lyo.Result.csproj" />
     </ItemGroup>
 
     <ItemGroup>

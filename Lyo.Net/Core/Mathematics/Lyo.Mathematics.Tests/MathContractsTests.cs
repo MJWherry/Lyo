@@ -75,5 +75,5 @@ public class MathContractsTests
     }
 
     [Fact]
-    public void Mass_WithNegativeValue_Throws() => Assert.Throws<ArgumentOutOfRangeException>(() => new Mass(-1d));
+    public void Mass_WithNegativeValue_Throws() => Assert.ThrowsAny<ArgumentOutOfRangeException>(() => new Mass(-1d));
 }

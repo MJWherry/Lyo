@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
 
@@ -16,8 +17,7 @@ internal static class HkdfRfc5869
 
     public static byte[] Expand(byte[] prk, int length, byte[] info)
     {
-        if (length < 0 || length > HashLen * 255)
-            throw new ArgumentOutOfRangeException(nameof(length));
+        ArgumentHelpers.ThrowIfNotInRange(length, 0, HashLen * 255, nameof(length));
 
         var n = (length + HashLen - 1) / HashLen;
         var okm = new byte[length];

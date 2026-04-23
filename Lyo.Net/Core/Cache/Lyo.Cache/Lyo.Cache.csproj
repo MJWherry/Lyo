@@ -25,6 +25,7 @@
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Result\Lyo.Result\Lyo.Result.csproj" />
     </ItemGroup>
 
 </Project>

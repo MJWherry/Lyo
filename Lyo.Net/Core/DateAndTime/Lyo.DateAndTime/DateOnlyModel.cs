@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
+using Lyo.Exceptions;
 
 namespace Lyo.DateAndTime;
 
@@ -38,8 +39,7 @@ public sealed class DateOnlyModel : IComparable<DateOnlyModel>, IEquatable<DateO
 
     public static DateOnlyModel Parse(string input, IFormatProvider? provider = null)
     {
-        if (input == null)
-            throw new ArgumentNullException(nameof(input));
+        ArgumentHelpers.ThrowIfNull(input, nameof(input));
 
         if (!TryParse(input, provider, out var value))
             throw new FormatException($"Invalid date: '{input}'.");

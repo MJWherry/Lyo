@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Result\Lyo.Result\Lyo.Result.csproj" />
         <ProjectReference Include="..\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
     </ItemGroup>

@@ -32,8 +32,7 @@ public static class LyoGuid
     /// <summary>Creates a version 3 (MD5 name-based) GUID per RFC 9562. The same <paramref name="ns" /> and <paramref name="name" /> always produce the same GUID.</summary>
     public static Guid CreateV3(Guid ns, string name)
     {
-        if (name is null)
-            throw new ArgumentNullException(nameof(name));
+        ArgumentHelpers.ThrowIfNull(name, nameof(name));
 
         var input = BuildNameInput(ns, name);
         byte[] hash;
@@ -46,8 +45,7 @@ public static class LyoGuid
     /// <summary>Creates a version 5 (SHA-1 name-based) GUID per RFC 9562. The same <paramref name="ns" /> and <paramref name="name" /> always produce the same GUID.</summary>
     public static Guid CreateV5(Guid ns, string name)
     {
-        if (name is null)
-            throw new ArgumentNullException(nameof(name));
+        ArgumentHelpers.ThrowIfNull(name, nameof(name));
 
         var input = BuildNameInput(ns, name);
         byte[] hash;

@@ -1,5 +1,6 @@
 using Lyo.ContactUs.Models;
 using Lyo.ContactUs.Postgres.Database;
+using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,7 +18,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
         IDbContextFactory<ContactUsDbContext> contextFactory,
         ILogger<PostgresContactUsService>? logger = null)
         : base(options.Value, logger)
-        => _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        => _contextFactory = ArgumentHelpers.ThrowIfNullReturn(contextFactory, nameof(contextFactory));
 
     /// <inheritdoc />
     protected override async Task<ContactUsSubmitResult> SubmitCoreAsync(ContactUsRequest request, CancellationToken ct)

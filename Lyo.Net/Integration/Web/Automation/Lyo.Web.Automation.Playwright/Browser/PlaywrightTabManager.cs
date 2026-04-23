@@ -74,8 +74,7 @@ public sealed class PlaywrightTabManager
     public void SetDisplayName(string pageKey, string? displayName)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey, nameof(pageKey));
-        if (!Guid.TryParseExact(pageKey, "N", out var id))
-            throw new ArgumentException("PageKey must be a 32-character hex Guid.", nameof(pageKey));
+        ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
 
         if (string.IsNullOrWhiteSpace(displayName))
             _displayNames.Remove(id);
@@ -107,8 +106,7 @@ public sealed class PlaywrightTabManager
     public void SwitchTo(string pageKey)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey, nameof(pageKey));
-        if (!Guid.TryParseExact(pageKey, "N", out var id))
-            throw new ArgumentException("PageKey must be a 32-character hex Guid.", nameof(pageKey));
+        ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
 
         RunTabOp(
             "switch_key", () => {

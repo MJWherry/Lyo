@@ -14,8 +14,8 @@ public sealed class ComicSeriesQuery
     /// <summary>Gets or sets the publication status to filter by. Null means all statuses.</summary>
     public ComicStatus? Status { get; set; }
 
-    /// <summary>Gets or sets the BCP 47 original language to filter by (e.g. "ja", "en"). Null means all languages.</summary>
-    public string? OriginalLanguage { get; set; }
+    /// <summary>Gets or sets the BCP 47 language to filter by (e.g. "ja", "en"). Null means all languages.</summary>
+    public string? Language { get; set; }
 
     /// <summary>Gets or sets the maximum number of results to return. Null means no limit.</summary>
     public int? Limit { get; set; }

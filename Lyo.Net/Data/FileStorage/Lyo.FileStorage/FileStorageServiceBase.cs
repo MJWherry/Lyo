@@ -1169,8 +1169,9 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         if (!string.IsNullOrWhiteSpace(targetKeyVersion))
             resolvedTargetKeyVersion = targetKeyVersion;
         else if (!string.IsNullOrWhiteSpace(targetKeyId)) {
-            resolvedTargetKeyVersion = TwoKeyEncryptionService!.GetKeyVersion(resolvedTargetKeyId) ?? throw new InvalidOperationException(
-                $"No current key version available for key ID '{resolvedTargetKeyId}'. Ensure the keystore is properly initialized.");
+            var rawVersion = TwoKeyEncryptionService!.GetKeyVersion(resolvedTargetKeyId);
+            OperationHelpers.ThrowIfNull(rawVersion, $"No current key version available for key ID '{resolvedTargetKeyId}'. Ensure the keystore is properly initialized.");
+            resolvedTargetKeyVersion = rawVersion!;
         }
         else
             resolvedTargetKeyVersion = metadata.DataEncryptionKeyVersion!;

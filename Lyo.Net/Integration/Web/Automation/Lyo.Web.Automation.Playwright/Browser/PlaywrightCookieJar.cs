@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Microsoft.Playwright;
@@ -33,7 +34,8 @@ internal sealed class PlaywrightCookieJar : IBrowserCookies
 
     public async Task AddCookiesAsync(IEnumerable<BrowserCookie> cookies, CancellationToken ct = default)
     {
-        var ctx = _browser.Context ?? throw new InvalidOperationException("Browser not started.");
+        OperationHelpers.ThrowIfNull(_browser.Context, "Browser not started.");
+        var ctx = _browser.Context!;
         await ctx.AddCookiesAsync(
                 cookies.Select(c => new Cookie {
                     Name = c.Name,

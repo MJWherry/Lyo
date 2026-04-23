@@ -83,9 +83,7 @@ public sealed class AzureMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public Task<MultipartPartDescriptor> GetPresignedPartUploadAsync(Guid sessionId, int partNumber, CancellationToken ct = default)
     {
-        if (partNumber < 1)
-            throw new ArgumentOutOfRangeException(nameof(partNumber), "Part number must be at least 1.");
-
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1, nameof(partNumber));
         return GetPresignedPartUploadCoreAsync(sessionId, partNumber, ct);
     }
 
@@ -256,14 +254,9 @@ public sealed class AzureMultipartUploadService : IMultipartUploadService
     {
         var session = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
-        if (session.ProviderKind != expectedKind)
-            throw new InvalidOperationException($"Session {sessionId} is not an {expectedKind} session.");
-
-        if (session.Status != MultipartSessionStatus.Active)
-            throw new InvalidOperationException($"Session {sessionId} is not active.");
-
-        if (DateTime.UtcNow > session.ExpiresUtc)
-            throw new InvalidOperationException($"Session {sessionId} has expired.");
+        OperationHelpers.ThrowIf(session.ProviderKind != expectedKind, $"Session {sessionId} is not an {expectedKind} session.");
+        OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
+        OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
 
         return session;
     }

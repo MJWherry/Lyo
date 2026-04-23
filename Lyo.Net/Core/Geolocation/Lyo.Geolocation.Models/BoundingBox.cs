@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Coordinates;
 
 namespace Lyo.Geolocation.Models;
@@ -81,8 +82,7 @@ public class BoundingBox : IEquatable<BoundingBox>
     /// <summary>Creates a bounding box from a center point and radius</summary>
     public static BoundingBox FromCenterAndRadius(GeoCoordinate center, double radiusMeters)
     {
-        if (center == null)
-            throw new ArgumentNullException(nameof(center));
+        ArgumentHelpers.ThrowIfNull(center, nameof(center));
 
         const double metersPerDegreeLat = 111320.0;
         var metersPerDegreeLon = 111320.0 * Math.Cos(center.Latitude * Math.PI / 180);

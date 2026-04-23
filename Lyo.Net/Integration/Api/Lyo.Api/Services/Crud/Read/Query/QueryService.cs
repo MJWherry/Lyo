@@ -158,7 +158,7 @@ public class QueryService<TContext>(
                 loaderService.ValidateIncludePaths<TContext, TDbModel>(setupContext, matIncludes);
 
             var pkOrdered = typeConversion.ConvertKeysForFind<TDbModel>(keys, setupContext);
-            var cacheKey = QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), pkOrdered, matIncludes.Count > 0 ? matIncludes : null, false);
+            var cacheKey = QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), pkOrdered, matIncludes.Count > 0 ? matIncludes : null);
             var cachedResult = await cache.GetOrSetAsync<TResult?>(
                 cacheKey, async ct2 => {
                     await using var context = await ContextFactory.CreateDbContextAsync(ct2).ConfigureAwait(false);
@@ -174,11 +174,12 @@ public class QueryService<TContext>(
                             : QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>();
                     }
                     else {
-                        var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
-                        tagSet.Add(
+                        var tagSet = new HashSet<string> {
+                            "entities",
+                            QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
                             QueryCacheTagBuilder.EntityInstanceTag(
-                                typeof(TDbModel),
-                                result is null ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context) : typeConversion.GetPrimaryKeyValues(result, context)));
+                                typeof(TDbModel), result is null ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context) : typeConversion.GetPrimaryKeyValues(result, context))
+                        };
 
                         if (result is not null && matIncludes.Count > 0)
                             QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
@@ -246,11 +247,12 @@ public class QueryService<TContext>(
                             : QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>();
                     }
                     else {
-                        var tagSet = new HashSet<string> { "entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)) };
-                        tagSet.Add(
+                        var tagSet = new HashSet<string> {
+                            "entities",
+                            QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)),
                             QueryCacheTagBuilder.EntityInstanceTag(
-                                typeof(TDbModel),
-                                result is null ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context) : typeConversion.GetPrimaryKeyValues(result, context)));
+                                typeof(TDbModel), result is null ? typeConversion.ConvertKeysForFind<TDbModel>(keys, context) : typeConversion.GetPrimaryKeyValues(result, context))
+                        };
 
                         if (result is not null && matIncludes.Count > 0)
                             QueryCacheTagBuilder.AppendIncludeCascadeTags(tagSet, result, matIncludes, context, typeConversion);
@@ -467,8 +469,7 @@ public class QueryService<TContext>(
             return ResultFactory.ProjectedQueryFailure<object?>(queryRequestForEcho, AggregatedValidationProblemDetails(aggregatedErrors, "Invalid projected query."));
         }
 
-        if (projectedFieldSpecs is null)
-            throw new InvalidOperationException("Projected field specs must be resolved when Select is non-empty.");
+        OperationHelpers.ThrowIfNull(projectedFieldSpecs, "Projected field specs must be resolved when Select is non-empty.");
 
         var effectiveIncludes = BuildQueryProjectEffectiveIncludes<TDbModel>(projectedFieldSpecs, queryRequest.WhereClause);
 

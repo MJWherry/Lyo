@@ -571,9 +571,7 @@ public sealed class LocalCacheService : ICacheService
         CancellationToken token = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
-
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
@@ -632,9 +630,7 @@ public sealed class LocalCacheService : ICacheService
         CancellationToken token = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
-
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
@@ -715,8 +711,7 @@ public sealed class LocalCacheService : ICacheService
         CancellationToken token = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (_payloadCodec == null || _payloadSerializer == null)
-            throw new InvalidOperationException("Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddLocalCache which registers both).");
+        OperationHelpers.ThrowIf(_payloadCodec == null || _payloadSerializer == null, "Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddLocalCache which registers both).");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
@@ -783,9 +778,7 @@ public sealed class LocalCacheService : ICacheService
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
-
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return PayloadFactoryOnlySync(factory);
@@ -831,9 +824,7 @@ public sealed class LocalCacheService : ICacheService
     public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
-
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
         if (!_enabled)
             return;
 
@@ -858,8 +849,7 @@ public sealed class LocalCacheService : ICacheService
     public bool TryGetPayload(string key, out CacheEntryEnvelope? envelope)
     {
         envelope = null;
-        if (_payloadCodec == null)
-            throw new InvalidOperationException("Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Payload cache requires ICachePayloadCodec (use AddLocalCache which registers it).");
 
         if (!_enabled || string.IsNullOrWhiteSpace(key))
             return false;

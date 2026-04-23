@@ -4,6 +4,7 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.IO.Temp;
 
@@ -57,6 +58,48 @@ public static class Extensions
         services.AddSingleton(CreateService);
         services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
         return services;
+    }
+
+    /// <summary>
+    /// Adds <see cref="IIOTempService"/> and registers <see cref="IOTempCleanupWorker"/> as a hosted background service
+    /// that periodically calls <see cref="IIOTempService.Cleanup"/>.
+    /// </summary>
+    public static IServiceCollection AddIOTempServiceWithAutoCleanup(
+        this IServiceCollection services,
+        TimeSpan? cleanupInterval = null,
+        TimeSpan? initialDelay = null)
+    {
+        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        services.AddIOTempService();
+        ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
+        services.AddHostedService<IOTempCleanupWorker>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds <see cref="IIOTempService"/> with an options callback and registers <see cref="IOTempCleanupWorker"/>.
+    /// </summary>
+    public static IServiceCollection AddIOTempServiceWithAutoCleanup(
+        this IServiceCollection services,
+        Action<IOTempServiceOptions> configureService,
+        TimeSpan? cleanupInterval = null,
+        TimeSpan? initialDelay = null)
+    {
+        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(configureService, nameof(configureService));
+        services.AddIOTempService(configureService);
+        ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
+        services.AddHostedService<IOTempCleanupWorker>();
+        return services;
+    }
+
+    private static void ConfigureCleanupOptions(IServiceCollection services, TimeSpan? interval, TimeSpan? delay)
+    {
+        if (interval.HasValue || delay.HasValue)
+            services.Configure<IOTempCleanupOptions>(o => {
+                if (interval.HasValue) o.Interval = interval.Value;
+                if (delay.HasValue) o.InitialDelay = delay.Value;
+            });
     }
 
     private static IOTempService CreateService(IServiceProvider provider)

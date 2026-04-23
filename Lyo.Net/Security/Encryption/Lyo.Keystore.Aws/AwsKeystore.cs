@@ -293,8 +293,8 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     public async Task SetCurrentVersionAsync(string keyId, string version, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        if (!await HasKeyAsync(keyId, version, ct).ConfigureAwait(false))
-            throw new InvalidOperationException($"Key '{keyId}' version {version} does not exist. Add the key before setting it as current.");
+        var hasKeyForCurrent = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
+        OperationHelpers.ThrowIf(!hasKeyForCurrent, $"Key '{keyId}' version {version} does not exist. Add the key before setting it as current.");
 
         var versionString = version;
         var currentVersionSecretName = GetCurrentVersionSecretName(keyId);
@@ -367,8 +367,8 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
         ArgumentNullException.ThrowIfNull(metadata);
-        if (!await HasKeyAsync(keyId, version, ct).ConfigureAwait(false))
-            throw new InvalidOperationException($"Key '{keyId}' version {version} does not exist. Add the key before setting metadata.");
+        var hasKeyForMetadata = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
+        OperationHelpers.ThrowIf(!hasKeyForMetadata, $"Key '{keyId}' version {version} does not exist. Add the key before setting metadata.");
 
         var metadataSecretName = GetMetadataSecretName(keyId, version);
         var metadataJson = JsonSerializer.Serialize(metadata);

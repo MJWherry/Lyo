@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
 
@@ -7,16 +8,12 @@ internal static class Pbkdf2Sha256
 {
     public static byte[] DeriveBytes(byte[] password, byte[] salt, int iterations, int dkLen)
     {
-        if (iterations < 1)
-            throw new ArgumentOutOfRangeException(nameof(iterations));
-
-        if (dkLen < 1)
-            throw new ArgumentOutOfRangeException(nameof(dkLen));
+        ArgumentHelpers.ThrowIfLessThan(iterations, 1, nameof(iterations));
+        ArgumentHelpers.ThrowIfLessThan(dkLen, 1, nameof(dkLen));
 
         const int hLen = 32;
         var l = (dkLen + hLen - 1) / hLen;
-        if (l > int.MaxValue / hLen)
-            throw new ArgumentOutOfRangeException(nameof(dkLen));
+        ArgumentHelpers.ThrowIfGreaterThan(l, int.MaxValue / hLen, nameof(dkLen));
 
         using var hmac = new HMACSHA256(password);
         var dk = new byte[dkLen];

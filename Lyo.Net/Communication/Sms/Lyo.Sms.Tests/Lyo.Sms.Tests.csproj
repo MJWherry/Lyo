@@ -13,8 +13,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Sms\Lyo.Sms.csproj"/>
-        <ProjectReference Include="..\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/>
-    </ItemGroup>
+        <ProjectReference Include="..\Lyo.Sms.Twilio\Lyo.Sms.Twilio.csproj"/></ItemGroup>
 
 </Project>
 

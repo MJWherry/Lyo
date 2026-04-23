@@ -182,11 +182,7 @@ public class ConcatenatedStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException("ConcatenatedStream is read-only");
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(ConcatenatedStream));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(ConcatenatedStream));
 
     protected override void Dispose(bool disposing)
     {

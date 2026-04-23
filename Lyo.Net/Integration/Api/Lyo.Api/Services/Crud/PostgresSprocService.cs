@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Lyo.Api.Mapping;
 using Lyo.Cache;
+using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -27,8 +28,7 @@ public sealed class PostgresSprocService<TContext>(
         CancellationToken ct = default)
     {
         logger.LogDebug("Executing {StoredProcedureName} with {StoredProcedureParameterCount} parameters", storedProcName, parameters?.Count);
-        if (!SprocNameRegex.IsMatch(storedProcName))
-            throw new ArgumentException("Stored procedure name contains invalid characters.", nameof(storedProcName));
+        ArgumentHelpers.ThrowIf(!SprocNameRegex.IsMatch(storedProcName), "Stored procedure name contains invalid characters.", nameof(storedProcName));
 
         extraCacheTags ??= [];
         var cacheKey = GenerateCacheKey<TResult>(storedProcName, parameters);
@@ -50,8 +50,7 @@ public sealed class PostgresSprocService<TContext>(
             if (parameters is not null && parameters.Count > 0) {
                 foreach (var kvp in parameters) {
                     var name = kvp.Key.TrimStart('@');
-                    if (!ParameterNameRegex.IsMatch(name))
-                        throw new ArgumentException($"Parameter name '{kvp.Key}' is not a valid PostgreSQL identifier.", nameof(parameters));
+                    ArgumentHelpers.ThrowIf(!ParameterNameRegex.IsMatch(name), $"Parameter name '{kvp.Key}' is not a valid PostgreSQL identifier.", nameof(parameters));
                 }
 
                 var refs = string.Join(", ", parameters.Keys.Select(k => "@" + k.TrimStart('@')));

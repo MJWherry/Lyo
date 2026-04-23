@@ -182,7 +182,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     {
         ArgumentHelpers.ThrowIfNotInRange(encryptedData, 1, long.MaxValue, nameof(encryptedData));
         ArgumentHelpers.ThrowIfNotInRange(encryptedDataEncryptionKey, 1, long.MaxValue, nameof(encryptedDataEncryptionKey));
-        byte[]? kekBytes;
+        byte[]? kekBytes = null;
         if (kek != null)
             kekBytes = kek;
         else if (keyId != null) {
@@ -190,7 +190,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
             kekBytes = !string.IsNullOrWhiteSpace(keyVersion) ? _keyStore.GetKey(keyId, keyVersion) : _keyStore.GetCurrentKey(keyId);
         }
         else
-            throw new InvalidOperationException("Either keyId or kek must be provided for decryption.");
+            OperationHelpers.ThrowIf(true, "Either keyId or kek must be provided for decryption.");
 
         if (kekBytes == null) {
             var versionInfo = !string.IsNullOrWhiteSpace(keyVersion) ? $"version {keyVersion}" : "current version";

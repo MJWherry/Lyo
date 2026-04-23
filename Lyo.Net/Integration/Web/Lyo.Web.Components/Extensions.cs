@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Lyo.Common.Enums;
+using Lyo.Exceptions;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 
@@ -29,7 +30,11 @@ internal static class Extensions
     }
 
     public static string GetTokenId(this ClaimsPrincipal principal)
-        => principal.FindFirst("azure_token_id")?.Value ?? throw new InvalidOperationException("No user identifier found in claims");
+    {
+        var tokenId = principal.FindFirst("azure_token_id")?.Value;
+        OperationHelpers.ThrowIfNull(tokenId, "No user identifier found in claims");
+        return tokenId!;
+    }
 
     //public static Color GetStateColor(JobState state)
     //    => state switch

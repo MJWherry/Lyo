@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+using Lyo.Exceptions;
 using Lyo.Query.Models.Attributes;
 using static Lyo.Cache.Constants;
 
@@ -97,8 +98,7 @@ public static class SharedEntityMetadataCache
     {
         var currentType = rootType;
         var parts = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
-            throw new ArgumentException($"Invalid selected field path '{path}'.");
+        ArgumentHelpers.ThrowIf(parts.Length == 0, $"Invalid selected field path '{path}'.");
 
         var normalizedParts = new List<string>(parts.Length);
         var lastWasCollection = false;
@@ -108,8 +108,7 @@ public static class SharedEntityMetadataCache
 
             var part = parts[i];
             if (part == "*") {
-                if (i != parts.Length - 1)
-                    throw new ArgumentException($"Selected field '{path}' contains '*' in an invalid position.");
+                ArgumentHelpers.ThrowIf(i != parts.Length - 1, $"Selected field '{path}' contains '*' in an invalid position.");
 
                 normalizedParts.Add(part);
                 break;
@@ -121,8 +120,7 @@ public static class SharedEntityMetadataCache
             }
 
             var property = ResolvePropertyCore(currentType, part);
-            if (property == null)
-                throw new ArgumentException($"Selected field '{path}' not found on type '{currentType.Name}'.");
+            ArgumentHelpers.ThrowIf(property == null, $"Selected field '{path}' not found on type '{currentType.Name}'.");
 
             normalizedParts.Add(property.Name);
             currentType = property.PropertyType;

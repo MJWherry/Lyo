@@ -44,8 +44,7 @@ public sealed class FrameNavigator
     public void SwitchToParentFrame()
         => RunFrameOp(
             "parent_frame", () => {
-                if (Depth <= 0)
-                    throw new InvalidOperationException("Already at default content (no parent frame).");
+                OperationHelpers.ThrowIf(Depth <= 0, "Already at default content (no parent frame).");
 
                 _scraper.GetRequiredDriver().SwitchTo().ParentFrame();
                 Depth--;

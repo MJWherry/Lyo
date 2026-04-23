@@ -72,8 +72,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             var init = await _s3.InitiateMultipartUploadAsync(new() { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType }, ct)
                 .ConfigureAwait(false);
 
-            if (string.IsNullOrWhiteSpace(init.UploadId))
-                throw new InvalidOperationException("S3 InitiateMultipartUpload returned no UploadId.");
+            OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
 
             uploadId = init.UploadId;
         }
@@ -109,9 +108,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public Task<MultipartPartDescriptor> GetPresignedPartUploadAsync(Guid sessionId, int partNumber, CancellationToken ct = default)
     {
-        if (partNumber < 1)
-            throw new ArgumentOutOfRangeException(nameof(partNumber), "Part number must be at least 1.");
-
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1, nameof(partNumber));
         return GetPresignedPartUploadCoreAsync(sessionId, partNumber, ct);
     }
 
@@ -295,14 +292,9 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
     {
         var session = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
-        if (session.ProviderKind != expectedKind)
-            throw new InvalidOperationException($"Session {sessionId} is not an {expectedKind} session.");
-
-        if (session.Status != MultipartSessionStatus.Active)
-            throw new InvalidOperationException($"Session {sessionId} is not active.");
-
-        if (DateTime.UtcNow > session.ExpiresUtc)
-            throw new InvalidOperationException($"Session {sessionId} has expired.");
+        OperationHelpers.ThrowIf(session.ProviderKind != expectedKind, $"Session {sessionId} is not an {expectedKind} session.");
+        OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
+        OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
 
         return session;
     }

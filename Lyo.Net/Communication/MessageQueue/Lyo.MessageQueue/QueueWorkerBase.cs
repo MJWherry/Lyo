@@ -94,8 +94,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IDisposable
     /// <summary>Starts the worker and begins processing messages from the queue.</summary>
     public async Task StartAsync(CancellationToken ct = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException("QueueWorkerBase");
+        OperationHelpers.ThrowIfDisposed(_disposed, "QueueWorkerBase");
 
         if (IsRunning) {
             Logger.LogWarning("Worker for queue {QueueName} is already running.", QueueName);

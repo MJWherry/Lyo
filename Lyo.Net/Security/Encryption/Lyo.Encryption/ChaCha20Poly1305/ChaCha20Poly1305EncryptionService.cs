@@ -45,7 +45,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         if (key != null)
             ArgumentHelpers.ThrowIfNotInRange(key, 32, 32, nameof(key));
 
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         string? keyVersion = null;
         if (key != null)
             actualKey = key;
@@ -55,7 +55,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -100,7 +100,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         if (key != null)
             ArgumentHelpers.ThrowIfNotInRange(key, 32, 32, nameof(key)); // ChaCha20-Poly1305 requires 32-byte key
 
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         string? keyVersion = null;
         if (key != null)
             actualKey = key;
@@ -110,7 +110,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         // Use hybrid nonce generator (random IV + counter) to prevent nonce reuse
         // If key was provided directly (not from KeyStore), fall back to random nonce
@@ -217,7 +217,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         var ciphertext = br.ReadBytes((int)(ms.Length - ms.Position));
 
         // Determine which key to use
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         if (key != null)
             actualKey = key;
         else {
@@ -239,7 +239,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
                 }
             }
             else
-                throw new InvalidOperationException("No decryption key available. Provide either a keyId or a key parameter.");
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
         try {

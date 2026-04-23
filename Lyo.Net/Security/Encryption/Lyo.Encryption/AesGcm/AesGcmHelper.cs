@@ -4,6 +4,7 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 #endif
+using Lyo.Exceptions;
 
 namespace Lyo.Encryption.AesGcm;
 
@@ -19,8 +20,7 @@ public static class AesGcmHelper
         if (expectedLengthBytes is not (16 or 24 or 32))
             throw new ArgumentOutOfRangeException(nameof(expectedLengthBytes), expectedLengthBytes, "AES-GCM key length must be 16, 24, or 32 bytes.");
 
-        if (key.Length != expectedLengthBytes)
-            throw new ArgumentException($"AES-GCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
+        ArgumentHelpers.ThrowIf(key.Length != expectedLengthBytes, $"AES-GCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
     }
 
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(byte[] plaintext, byte[] key, byte[] nonce) => Encrypt(plaintext.AsSpan(), key, nonce);

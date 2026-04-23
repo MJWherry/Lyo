@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Exceptions;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
@@ -17,8 +18,7 @@ internal static class AesCcmHelper
         if (expectedLengthBytes is not (16 or 24 or 32))
             throw new ArgumentOutOfRangeException(nameof(expectedLengthBytes), expectedLengthBytes, "AES-CCM key length must be 16, 24, or 32 bytes.");
 
-        if (key.Length != expectedLengthBytes)
-            throw new ArgumentException($"AES-CCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
+        ArgumentHelpers.ThrowIf(key.Length != expectedLengthBytes, $"AES-CCM key must be exactly {expectedLengthBytes} bytes; got {key.Length}.", nameof(key));
     }
 
     public static (byte[] Ciphertext, byte[] Tag) Encrypt(ReadOnlySpan<byte> plaintext, byte[] key, byte[] nonce)

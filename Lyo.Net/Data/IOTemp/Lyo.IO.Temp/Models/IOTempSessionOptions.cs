@@ -33,5 +33,17 @@ public sealed class IOTempSessionOptions
     /// </summary>
     public long? MaxTotalSizeBytes { get; init; }
 
+    /// <summary>
+    /// Maximum number of tracked files allowed in this session at any one time.
+    /// When exceeded, <see cref="OverflowStrategy"/> governs whether the oldest/largest files are deleted or an exception is thrown.
+    /// </summary>
+    public int? MaxFileCount { get; init; }
+
+    /// <summary>
+    /// Optional target lifetime for files in this session.
+    /// The cleanup worker and <see cref="IIOTempService.Cleanup()"/> will honour this when set; otherwise the service-level lifetime applies.
+    /// </summary>
+    public TimeSpan? FileLifetime { get; init; }
+
     public TempOverflowStrategy OverflowStrategy { get; init; } = TempOverflowStrategy.ThrowException;
 }

@@ -12,11 +12,11 @@ namespace Lyo.Common;
 public static class Utilities
 {
     private static readonly HashSet<Type> ScalarTypes = [typeof(string), typeof(decimal), typeof(Guid), typeof(DateTime), typeof(TimeSpan)];
+    private static readonly Regex SensitiveUriRegex = new(@"(?i:(?<!result|status)(\w*secret|\w*token|\bcode\b|\w*password))(?:\s|=|:)(.*?)(?:\s|&)");
 
     public static double ConvertFromBytes(long bytes, FileSizeUnit targetUnit)
     {
-        if (bytes < 0)
-            throw new ArgumentOutOfRangeException(nameof(bytes), "File size cannot be negative.");
+        ArgumentHelpers.ThrowIfNegative(bytes, nameof(bytes));
 
         var power = (int)targetUnit;
         return bytes / Math.Pow(1024, power);
@@ -24,8 +24,7 @@ public static class Utilities
 
     public static long ConvertToBytes(double size, FileSizeUnit sourceUnit)
     {
-        if (size < 0)
-            throw new ArgumentOutOfRangeException(nameof(size), "File size cannot be negative.");
+        ArgumentHelpers.ThrowIfNegative(size, nameof(size));
 
         var power = (int)sourceUnit;
         return (long)(size * Math.Pow(1024, power));
@@ -46,7 +45,7 @@ public static class Utilities
         if (string.IsNullOrEmpty(sanitizedQueryString))
             return null;
 
-        var matches = RegexPatterns.SensitiveUriRegex.Matches(sanitizedQueryString);
+        var matches = SensitiveUriRegex.Matches(sanitizedQueryString);
         foreach (Match match in matches)
             sanitizedQueryString = sanitizedQueryString.Replace(match.Groups[2].Value, "********");
 

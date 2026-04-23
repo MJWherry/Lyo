@@ -12,7 +12,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Validation\Lyo.Validation.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
-    </ItemGroup>
+        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/></ItemGroup>
 
 </Project>

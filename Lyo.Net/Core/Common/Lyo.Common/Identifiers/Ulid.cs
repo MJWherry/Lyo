@@ -73,8 +73,7 @@ public static class Ulid
     /// <exception cref="ArgumentException">The string is not a valid 26-character ULID.</exception>
     public static DateTimeOffset GetTimestamp(string ulid)
     {
-        if (ulid is null || ulid.Length != 26)
-            throw new ArgumentException("ULID must be exactly 26 characters.", nameof(ulid));
+        ArgumentHelpers.ThrowIf(ulid is null || ulid.Length != 26, "ULID must be exactly 26 characters.", nameof(ulid));
 
         long ms = 0;
         for (var i = 0; i < 10; i++)
@@ -120,12 +119,9 @@ public static class Ulid
 
     private static int DecodeChar(char c, int position)
     {
-        if (c >= 128)
-            throw new ArgumentException($"Invalid ULID character '{c}' at position {position}.", "ulid");
-
+        ArgumentHelpers.ThrowIf(c >= 128, $"Invalid ULID character '{c}' at position {position}.", "ulid");
         var v = DecodeMap[c];
-        if (v == 255)
-            throw new ArgumentException($"Invalid ULID character '{c}' at position {position}.", "ulid");
+        ArgumentHelpers.ThrowIf(v == 255, $"Invalid ULID character '{c}' at position {position}.", "ulid");
 
         return v;
     }

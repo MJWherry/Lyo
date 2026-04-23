@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Cache;
+using Lyo.Comic.Postgres;
 using Lyo.Compression;
 using Lyo.Config.Postgres;
 using Lyo.Csv;
@@ -78,6 +79,7 @@ builder.Services.AddPeopleDbContextFactory(new PostgresPeopleOptions { Connectio
 builder.Services.AddTwilioSmsDbContextFactory(new PostgresTwilioSmsOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresDiscord(new PostgresDiscordOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresConfigStore(new PostgresConfigOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+builder.Services.AddPostgresComicStore(new PostgresComicOptions() { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddDiscordGuildSettingsInfrastructure();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddLyoCrudServices<PeopleDbContext>();

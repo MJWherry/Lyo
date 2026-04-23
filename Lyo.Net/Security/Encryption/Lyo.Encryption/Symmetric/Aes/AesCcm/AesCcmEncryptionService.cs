@@ -49,7 +49,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -103,7 +103,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -199,7 +199,7 @@ public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
                 AesCcmHelper.ValidateKeyLength(actualKey, RequiredKeyBytes);
             }
             else
-                throw new InvalidOperationException("No decryption key available. Provide either a keyId or a key parameter.");
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
         if (key != null)

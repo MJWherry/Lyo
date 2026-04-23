@@ -111,7 +111,7 @@ public class LocalKeyedSemaphoreServiceTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AcquireAsync(null!, 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
         await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("", 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
         await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("   ", 1, ct: TestContext.Current.CancellationToken).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => _service.AcquireAsync("semaphore-key-8", 0, ct: TestContext.Current.CancellationToken).AsTask())
+        await Assert.ThrowsAnyAsync<ArgumentOutOfRangeException>(() => _service.AcquireAsync("semaphore-key-8", 0, ct: TestContext.Current.CancellationToken).AsTask())
             .ConfigureAwait(false);
     }
 

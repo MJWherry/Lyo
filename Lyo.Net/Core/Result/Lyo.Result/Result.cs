@@ -5,8 +5,10 @@ namespace Lyo.Common;
 /// <summary>Represents the result of an operation that can either succeed with data or fail with errors.</summary>
 /// <typeparam name="T">The type of the data returned on success.</typeparam>
 [DebuggerDisplay("{ToString(),nq}")]
-public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = null) : ResultBase
+public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = null) : ResultBase, IResult<T>
 {
+    public override IReadOnlyList<Error>? Errors { get; } = Errors;
+
     public override IReadOnlyDictionary<string, object>? Metadata { get; init; }
 
     /// <summary>Creates a successful result with data.</summary>
@@ -38,8 +40,6 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
         => new(false, default, [Error.FromException(exception, code, metadata, timestamp)]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
 
     /// <summary>Attempts to get the value from a successful result.</summary>
-    /// <param name="value">The value if successful, otherwise default.</param>
-    /// <returns>True if the result is successful and contains a value, otherwise false.</returns>
     public bool TryGetValue(out T value)
     {
         if (IsSuccess && Data != null) {
@@ -51,15 +51,16 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
         return false;
     }
 
-    /// <summary>Gets the value from a successful result, or throws an exception if failed.</summary>
-    /// <returns>The data value if successful.</returns>
+    /// <summary>Gets the value from a successful result, or throws if failed.</summary>
     /// <exception cref="InvalidOperationException">Thrown when the result is not successful.</exception>
     public T ValueOrThrow()
     {
         if (IsSuccess && Data != null)
             return Data;
 
-        var errorMessages = Errors != null && Errors.Count > 0 ? string.Join("; ", Errors.Select(e => $"{e.Code}: {e.Message}")) : "Operation failed";
+        var errorMessages = Errors != null && Errors.Count > 0
+            ? string.Join("; ", Errors.Select(e => $"{e.Code}: {e.Message}"))
+            : "Operation failed";
         throw new InvalidOperationException(errorMessages);
     }
 
@@ -69,8 +70,39 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
     /// <summary>Gets the value from a successful result, or returns the value from the factory if failed.</summary>
     public T ValueOrDefault(Func<T> defaultValueFactory) => IsSuccess && Data != null ? Data : defaultValueFactory();
 
-    /// <summary>Pattern matching - returns a value based on whether the result is successful or failed.</summary>
-    public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<IReadOnlyList<Error>, TResult> onFailure) => IsSuccess ? onSuccess(Data!) : onFailure(Errors ?? []);
+    /// <summary>Transforms the success value using a mapping function, propagating failure unchanged.</summary>
+    public Result<TOut> Map<TOut>(Func<T, TOut> mapper)
+        => IsSuccess
+            ? Result<TOut>.Success(mapper(Data!), Timestamp, Metadata)
+            : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+
+    /// <summary>Asynchronously transforms the success value using a mapping function, propagating failure unchanged.</summary>
+    public async Task<Result<TOut>> MapAsync<TOut>(Func<T, Task<TOut>> mapper)
+        => IsSuccess
+            ? Result<TOut>.Success(await mapper(Data!).ConfigureAwait(false), Timestamp, Metadata)
+            : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+
+    /// <summary>Executes a side-effect action on success without transforming the result.</summary>
+    public Result<T> Tap(Action<T> action)
+    {
+        if (IsSuccess && Data != null)
+            action(Data);
+
+        return this;
+    }
+
+    /// <summary>Asynchronously executes a side-effect action on success without transforming the result.</summary>
+    public async Task<Result<T>> TapAsync(Func<T, Task> action)
+    {
+        if (IsSuccess && Data != null)
+            await action(Data).ConfigureAwait(false);
+
+        return this;
+    }
+
+    /// <summary>Pattern matching — returns a value based on whether the result is successful or failed.</summary>
+    public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<IReadOnlyList<Error>, TResult> onFailure)
+        => IsSuccess ? onSuccess(Data!) : onFailure(Errors ?? []);
 
     /// <summary>Executes actions based on whether the result is successful or failed.</summary>
     public Result<T> Switch(Action<T> onSuccess, Action<IReadOnlyList<Error>> onFailure)
@@ -92,7 +124,7 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
     /// <summary>Attempts to recover from failure by executing a recovery operation.</summary>
     public Result<T> RecoverWith(Func<IReadOnlyList<Error>, Result<T>> recovery) => IsSuccess ? this : recovery(Errors ?? []);
 
-    /// <summary>Filters the result - only succeeds if the predicate is true.</summary>
+    /// <summary>Filters the result — only stays successful if the predicate is true.</summary>
     public Result<T> Where(Func<T, bool> predicate, string errorCode, string errorMessage)
     {
         if (!IsSuccess)
@@ -104,7 +136,7 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
         return Failure(errorMessage, errorCode, null, null, Metadata, Timestamp);
     }
 
-    /// <summary>Gets all errors including inner errors as a flat list.</summary>
+    /// <summary>Gets all errors including recursively flattened inner errors.</summary>
     public IReadOnlyList<Error> GetAllErrors()
     {
         var allErrors = new List<Error>();
@@ -135,10 +167,10 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
         errors = Errors;
     }
 
-    /// <summary>Implicit conversion from T to Result&lt;T&gt;.</summary>
+    /// <summary>Implicit conversion from T to Result&lt;T&gt; (success).</summary>
     public static implicit operator Result<T>(T value) => Success(value);
 
-    /// <summary>Implicit conversion from Error to Result&lt;T&gt;.</summary>
+    /// <summary>Implicit conversion from Error to Result&lt;T&gt; (failure).</summary>
     public static implicit operator Result<T>(Error error) => Failure(error);
 
     public override string ToString()
@@ -147,7 +179,7 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
             : $"Failure: {string.Join("; ", Errors ?? [])}, Timestamp={Timestamp:O}, Metadata Count={Metadata?.Count ?? 0}";
 }
 
-/// <summary>Represents the result of an operation that includes both the request and result data.</summary>
+/// <summary>Represents the result of an operation that carries both the original request and the result data.</summary>
 /// <typeparam name="TRequest">The type of the request object.</typeparam>
 /// <typeparam name="TResult">The type of the data returned on success.</typeparam>
 [DebuggerDisplay("{ToString(),nq}")]
@@ -189,8 +221,6 @@ public sealed record Result<TRequest, TResult>(bool IsSuccess, TRequest? Request
         => new(false, request, default, [Error.FromException(exception, code, metadata, timestamp)]) { Timestamp = timestamp ?? DateTime.UtcNow, Metadata = metadata };
 
     /// <summary>Attempts to get the request object.</summary>
-    /// <param name="request">The request if present, otherwise default.</param>
-    /// <returns>True if the request is present, otherwise false.</returns>
     public bool TryGetRequest(out TRequest request)
     {
         if (Request != null) {

@@ -48,6 +48,13 @@ public class IOTempServiceOptions
 
     public long MaxTotalSizeBytes { get; set; } = FileSizeUnitInfo.Gigabyte.ConvertToBytes(10);
 
+    /// <summary>
+    /// Maximum number of tracked files allowed per session.
+    /// When exceeded, <see cref="OverflowStrategy"/> governs whether the oldest/largest files are deleted or an exception is thrown.
+    /// <c>null</c> means no limit.
+    /// </summary>
+    public int? MaxFileCount { get; set; }
+
     public TempOverflowStrategy OverflowStrategy { get; set; } = TempOverflowStrategy.ThrowException;
 
     public override string ToString() => $"{TempRoot}/{DirectoryName}/{DirectoryPrefix}*{DirectorySuffix}/{FilePrefix}*{FileSuffix}{FileExtension}";

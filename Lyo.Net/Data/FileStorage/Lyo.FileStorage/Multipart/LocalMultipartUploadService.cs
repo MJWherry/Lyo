@@ -169,11 +169,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     {
         var session = await _sessions.GetAsync(sessionId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
-        if (session.Status != MultipartSessionStatus.Active)
-            throw new InvalidOperationException($"Session {sessionId} is not active.");
-
-        if (DateTime.UtcNow > session.ExpiresUtc)
-            throw new InvalidOperationException($"Session {sessionId} has expired.");
+        OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
+        OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
 
         return session;
     }

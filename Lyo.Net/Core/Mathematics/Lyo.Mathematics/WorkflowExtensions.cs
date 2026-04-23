@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Mathematics.Models;
 using Lyo.Mathematics.Vectors;
 
@@ -7,8 +8,7 @@ public static class MathematicsWorkflowExtensions
 {
     public static double[] ToMagnitudes(this ComplexNumber[] samples)
     {
-        if (samples is null)
-            throw new ArgumentNullException(nameof(samples));
+        ArgumentHelpers.ThrowIfNull(samples, nameof(samples));
 
         var magnitudes = new double[samples.Length];
         for (var i = 0; i < samples.Length; i++)

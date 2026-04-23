@@ -1,8 +1,9 @@
 namespace Lyo.Common;
 
-/// <summary>Shared error codes for validation failures.</summary>
+/// <summary>Shared error codes for validation and common operation failures.</summary>
 public static class ValidationErrorCodes
 {
+    // Validation
     public const string ValidationFailed = "VALIDATION_FAILED";
     public const string RequiredValue = "REQUIRED_VALUE";
     public const string NullValue = "NULL_VALUE";
@@ -20,4 +21,13 @@ public static class ValidationErrorCodes
     public const string InvalidZip = "INVALID_ZIP";
     public const string MissingItem = "MISSING_ITEM";
     public const string DisallowedItem = "DISALLOWED_ITEM";
+
+    // Resource / operation
+    public const string NotFound = "NOT_FOUND";
+    public const string Conflict = "CONFLICT";
+    public const string Unauthorized = "UNAUTHORIZED";
+    public const string Forbidden = "FORBIDDEN";
+    public const string InternalError = "INTERNAL_ERROR";
+    public const string Timeout = "TIMEOUT";
+    public const string ServiceUnavailable = "SERVICE_UNAVAILABLE";
 }

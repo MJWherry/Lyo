@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Lyo.Exceptions;
 
-/// <summary>Helper methods for operation validation that throw InvalidOperationException.</summary>
+/// <summary>Helper methods for operation validation that throw InvalidOperationException and related runtime exceptions.</summary>
 public static class OperationHelpers
 {
     [DoesNotReturn]
@@ -14,6 +14,24 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     private static void ThrowInvalidOperation(string message) => throw new InvalidOperationException(message);
+
+    [DoesNotReturn]
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    private static void ThrowObjectDisposed(string? objectName, string? message) => throw new ObjectDisposedException(objectName, message);
+
+    [DoesNotReturn]
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    private static void ThrowOperationCancelled(CancellationToken token) => throw new OperationCanceledException(token);
+
+    [DoesNotReturn]
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    private static void ThrowNotSupported(string message) => throw new NotSupportedException(message);
 
     /// <summary>Throws an InvalidOperationException if the condition is true.</summary>
     /// <param name="condition">The condition to check. If true, an InvalidOperationException is thrown.</param>
@@ -128,5 +146,129 @@ public static class OperationHelpers
 
         if (!stream.CanWrite)
             ThrowInvalidOperation(message ?? "Operation cannot be performed because the stream is not writable.");
+    }
+
+    /// <summary>Throws an ObjectDisposedException if the disposed flag is true.</summary>
+    /// <param name="disposed">The flag indicating whether the object has been disposed.</param>
+    /// <param name="objectName">The name of the disposed object. If null, a generic message is used.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <exception cref="ObjectDisposedException">Thrown when disposed is true.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfDisposed(bool disposed, string? objectName = null, string? message = null)
+    {
+        if (disposed)
+            ThrowObjectDisposed(objectName, message);
+    }
+
+    /// <summary>Throws an OperationCanceledException if the cancellation token has been cancelled.</summary>
+    /// <param name="cancellationToken">The cancellation token to check.</param>
+    /// <exception cref="OperationCanceledException">Thrown when the token has been cancelled.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfCancelled(CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            ThrowOperationCancelled(cancellationToken);
+    }
+
+    /// <summary>Throws a NotSupportedException if the condition is true.</summary>
+    /// <param name="condition">The condition to check. If true, a NotSupportedException is thrown.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="NotSupportedException">Thrown when condition is true.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotSupported(bool condition, string? message = null)
+    {
+        if (condition)
+            ThrowNotSupported(message ?? "The operation is not supported.");
+    }
+
+    /// <summary>Throws an InvalidOperationException if the value is zero.</summary>
+    /// <typeparam name="T">A comparable, convertible numeric type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="InvalidOperationException">Thrown when value is zero.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfZero<T>(T value, string? message = null)
+        where T : IComparable, IConvertible
+    {
+        if (value.CompareTo(default(T)!) == 0)
+            ThrowInvalidOperation(message ?? $"Operation cannot be performed because the value is zero. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an InvalidOperationException if the value is negative.</summary>
+    /// <typeparam name="T">A comparable, convertible numeric type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="InvalidOperationException">Thrown when value is negative.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNegative<T>(T value, string? message = null)
+        where T : IComparable, IConvertible
+    {
+        if (value.CompareTo(default(T)!) < 0)
+            ThrowInvalidOperation(message ?? $"Operation cannot be performed because the value is negative. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an InvalidOperationException if the value is negative or zero.</summary>
+    /// <typeparam name="T">A comparable, convertible numeric type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="InvalidOperationException">Thrown when value is negative or zero.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNegativeOrZero<T>(T value, string? message = null)
+        where T : IComparable, IConvertible
+    {
+        if (value.CompareTo(default(T)!) <= 0)
+            ThrowInvalidOperation(message ?? $"Operation cannot be performed because the value must be greater than zero. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an InvalidOperationException if the value is greater than the specified threshold.</summary>
+    /// <typeparam name="T">A comparable type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The inclusive upper bound; the value must be ≤ threshold.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="InvalidOperationException">Thrown when value is greater than threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfGreaterThan<T>(T value, T threshold, string? message = null)
+        where T : IComparable<T>
+    {
+        if (value.CompareTo(threshold) > 0)
+            ThrowInvalidOperation(message ?? $"Operation cannot be performed because the value must be less than or equal to {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>Throws an InvalidOperationException if the value is less than the specified threshold.</summary>
+    /// <typeparam name="T">A comparable type.</typeparam>
+    /// <param name="value">The value to check.</param>
+    /// <param name="threshold">The inclusive lower bound; the value must be ≥ threshold.</param>
+    /// <param name="message">The error message. If null, a default message is used.</param>
+    /// <exception cref="InvalidOperationException">Thrown when value is less than threshold.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfLessThan<T>(T value, T threshold, string? message = null)
+        where T : IComparable<T>
+    {
+        if (value.CompareTo(threshold) < 0)
+            ThrowInvalidOperation(message ?? $"Operation cannot be performed because the value must be greater than or equal to {threshold}. Actual value: {value}.");
     }
 }

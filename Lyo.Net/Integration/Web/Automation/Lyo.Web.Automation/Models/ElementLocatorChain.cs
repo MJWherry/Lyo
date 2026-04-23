@@ -52,8 +52,7 @@ public sealed class ElementLocatorChain
     private static void ValidateSegments(IReadOnlyList<ElementLocator> segments)
     {
         ArgumentHelpers.ThrowIfNull(segments, nameof(segments));
-        if (segments.Count < 1)
-            throw new ArgumentException("At least one locator segment is required.", nameof(segments));
+        ArgumentHelpers.ThrowIf(segments.Count < 1, "At least one locator segment is required.", nameof(segments));
 
         foreach (var s in segments) {
             ArgumentHelpers.ThrowIfNull(s, nameof(segments));

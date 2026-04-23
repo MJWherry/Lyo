@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
@@ -243,8 +244,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
 
     internal (ApiFeatureFlag Features, CrudConfiguration<TDbContext, TDbEntity, TRequest> Config) Build()
     {
-        if (!_flagsSet)
-            throw new InvalidOperationException("Call WithFlags(...) to specify ApiFeatureFlag values for WithCrud (e.g. ApiFeatureFlag.All).");
+        OperationHelpers.ThrowIf(!_flagsSet, "Call WithFlags(...) to specify ApiFeatureFlag values for WithCrud (e.g. ApiFeatureFlag.All).");
 
         var config = new CrudConfiguration<TDbContext, TDbEntity, TRequest> {
             AfterCreate = _afterCreate,

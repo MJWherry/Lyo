@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Web.Automation.Abstractions;
 
 namespace Lyo.Web.Automation.Playwright.Browser;
@@ -11,7 +12,8 @@ internal sealed class PlaywrightHeaderStore : IBrowserHeaders
 
     public async Task SetExtraHeadersAsync(IReadOnlyDictionary<string, string> headers, CancellationToken ct = default)
     {
-        var ctx = _browser.Context ?? throw new InvalidOperationException("Browser not started.");
+        OperationHelpers.ThrowIfNull(_browser.Context, "Browser not started.");
+        var ctx = _browser.Context!;
         await ctx.SetExtraHTTPHeadersAsync(headers).ConfigureAwait(false);
     }
 

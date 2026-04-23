@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Plan;
@@ -35,8 +36,7 @@ internal sealed class AutomationPlanRunArtifacts : IDisposable
 
     public static AutomationPlanRunArtifacts? TryCreate(AutomationPlanRunDirectoryOptions directoryOptions, Guid runId)
     {
-        if (string.IsNullOrWhiteSpace(directoryOptions.RootDirectory))
-            throw new ArgumentException("PlanRunDirectory.RootDirectory must be non-empty.", nameof(directoryOptions));
+        ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(directoryOptions.RootDirectory), "PlanRunDirectory.RootDirectory must be non-empty.", nameof(directoryOptions));
 
         var root = Path.GetFullPath(directoryOptions.RootDirectory);
         var runRoot = directoryOptions.NestRunUnderRoot ? Path.Combine(root, directoryOptions.RunFolderName ?? runId.ToString("N")) : root;

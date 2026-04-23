@@ -49,7 +49,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         if (key != null)
             AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
 
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         string? keyVersion = null;
         if (key != null)
             actualKey = key;
@@ -60,7 +60,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         byte[] nonce;
         if (key != null || keyId == null || keyVersion == null)
@@ -109,7 +109,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         if (key != null)
             AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
 
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         string? keyVersion = null;
         if (key != null)
             actualKey = key;
@@ -120,7 +120,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             keyVersion = KeyStore.GetCurrentVersion(keyId);
         }
         else
-            throw new InvalidOperationException("No encryption key available. Provide either a keyId or a key parameter.");
+            OperationHelpers.ThrowIf(true, "No encryption key available. Provide either a keyId or a key parameter.");
 
         // Use hybrid nonce generator (random IV + counter) to prevent nonce reuse
         // If key was provided directly (not from KeyStore), fall back to random nonce
@@ -201,7 +201,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         var nonce = br.ReadBytes(nonceLength);
         var tag = br.ReadBytes(AesGcmHelper.TagSize);
         var ciphertext = br.ReadBytes((int)(ms.Length - ms.Position));
-        byte[]? actualKey;
+        byte[]? actualKey = null;
         if (key != null)
             actualKey = key;
         else {
@@ -221,7 +221,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
                 AesGcmHelper.ValidateKeyLength(actualKey, RequiredKeyBytes);
             }
             else
-                throw new InvalidOperationException("No decryption key available. Provide either a keyId or a key parameter.");
+                OperationHelpers.ThrowIf(true, "No decryption key available. Provide either a keyId or a key parameter.");
         }
 
         if (key != null)

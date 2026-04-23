@@ -36,8 +36,7 @@ public class PatchRequestBuilder
     public PatchRequestBuilder WithKey(object[] key)
     {
         ArgumentHelpers.ThrowIfNull(key, nameof(key));
-        if (key.Length == 0)
-            throw new ArgumentException("Key must contain at least one value", nameof(key));
+        ArgumentHelpers.ThrowIf(key.Length == 0, "Key must contain at least one value", nameof(key));
 
         _keys.Add(key);
         return this;

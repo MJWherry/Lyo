@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Api.Client;
+using Lyo.Exceptions;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
@@ -684,8 +685,7 @@ public partial class LyoDataGridProjected
 
     private async Task BulkExport(FileTypeFlags flag)
     {
-        if (!CommonExtensions.IsSingleFlag(flag))
-            throw new ArgumentException("Only a single export type allowed.", nameof(flag));
+        ArgumentHelpers.ThrowIf(!CommonExtensions.IsSingleFlag(flag), "Only a single export type allowed.", nameof(flag));
 
         if (!string.IsNullOrEmpty(Route)) {
             await BulkExportViaApi(flag);

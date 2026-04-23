@@ -143,11 +143,7 @@ public class HashingStream : Stream
     }
 #endif
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(GetType().Name);
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, GetType().Name);
 
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
     private void TransformBlockFromSpan(ReadOnlySpan<byte> span)

@@ -89,9 +89,9 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("series_id");
 
-                    b.Property<string>("SourceRef")
+                    b.Property<string>("Source")
                         .HasColumnType("text")
-                        .HasColumnName("source_ref");
+                        .HasColumnName("source");
 
                     b.Property<string>("Title")
                         .HasMaxLength(500)
@@ -140,14 +140,42 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<string>("OriginalLanguage")
+                    b.Property<string>("Language")
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)")
-                        .HasColumnName("original_language");
+                        .HasColumnName("language");
 
                     b.Property<int?>("PublishedYear")
                         .HasColumnType("integer")
                         .HasColumnName("published_year");
+
+                    b.Property<string>("Author")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("author");
+
+                    b.Property<string>("Artist")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("artist");
+
+                    b.Property<string>("Publisher")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("publisher");
+
+                    b.Property<string>("Source")
+                        .HasColumnType("text")
+                        .HasColumnName("source");
+
+                    b.Property<string>("CoverImageRef")
+                        .HasColumnType("text")
+                        .HasColumnName("cover_image_ref");
+
+                    b.Property<string>("Demographic")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("demographic");
 
                     b.Property<string>("Slug")
                         .IsRequired()

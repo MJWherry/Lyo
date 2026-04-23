@@ -52,9 +52,5 @@ public sealed class SeleniumBrowserService : ISeleniumBrowserService
 
     private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(SeleniumBrowserService));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(SeleniumBrowserService));
 }

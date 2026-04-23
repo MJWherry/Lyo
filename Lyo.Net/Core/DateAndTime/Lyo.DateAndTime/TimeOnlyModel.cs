@@ -29,8 +29,7 @@ public sealed class TimeOnlyModel : IComparable<TimeOnlyModel>, IEquatable<TimeO
 
     private TimeOnlyModel(long ticks)
     {
-        if (ticks < 0 || ticks >= TimeSpan.TicksPerDay)
-            throw new ArgumentOutOfRangeException(nameof(ticks));
+        ArgumentHelpers.ThrowIfNotInRange(ticks, 0L, TimeSpan.TicksPerDay - 1, nameof(ticks));
 
         Ticks = ticks;
     }
@@ -43,8 +42,7 @@ public sealed class TimeOnlyModel : IComparable<TimeOnlyModel>, IEquatable<TimeO
 
     public static TimeOnlyModel FromTimeSpan(TimeSpan ts)
     {
-        if (ts.Ticks < 0 || ts.Ticks >= TimeSpan.TicksPerDay)
-            throw new ArgumentOutOfRangeException(nameof(ts));
+        ArgumentHelpers.ThrowIfNotInRange(ts.Ticks, 0L, TimeSpan.TicksPerDay - 1, nameof(ts));
 
         return new(ts.Ticks);
     }

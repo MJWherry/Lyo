@@ -15,12 +15,12 @@ public class ArgumentOutsideRangeException : ArgumentOutOfRangeException
     /// <summary>Gets the maximum allowed value (inclusive).</summary>
     public IConvertible? MaxValue { get; }
 
-    /// <summary>Initializes a new instance of the NotInRangeException class with a custom message.</summary>
-    /// <param name="message">The error message</param>
-    /// <param name="paramName">The name of the parameter that caused the exception</param>
-    /// <param name="actualValue">The actual value that was out of range</param>
-    /// <param name="minValue">The minimum allowed value (inclusive)</param>
-    /// <param name="maxValue">The maximum allowed value (inclusive)</param>
+    /// <summary>Initializes a new instance of the <see cref="ArgumentOutsideRangeException" /> class.</summary>
+    /// <param name="paramName">The name of the parameter that caused the exception.</param>
+    /// <param name="actualValue">The actual value that was out of range.</param>
+    /// <param name="minValue">The minimum allowed value (inclusive).</param>
+    /// <param name="maxValue">The maximum allowed value (inclusive).</param>
+    /// <param name="message">Optional custom error message. A default message is generated when null.</param>
     public ArgumentOutsideRangeException(string? paramName, IConvertible? actualValue, IConvertible? minValue, IConvertible? maxValue, string? message = null)
         : base(paramName, message ?? $"Value ({actualValue ?? "NULL"}) is not in the allowed range [{minValue ?? "Unspecified"}, {maxValue ?? "Unspecified"}].")
     {

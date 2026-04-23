@@ -29,8 +29,7 @@ public static class AutomationPlanRunner
     {
         ArgumentHelpers.ThrowIfNull(session, nameof(session));
         ArgumentHelpers.ThrowIfNull(plan, nameof(plan));
-        if (plan.Steps == null)
-            throw new ArgumentException("AutomationPlan.Steps cannot be null.", nameof(plan));
+        ArgumentHelpers.ThrowIf(plan.Steps == null, "AutomationPlan.Steps cannot be null.", nameof(plan));
 
         var runId = AutomationGuid.CreateTimeOrdered();
         var state = new PlanExecutionState();
@@ -387,7 +386,8 @@ public static class AutomationPlanRunner
                 state.Strings[t.VariableName] = await browser.GetTitleAsync(ct).ConfigureAwait(false);
                 return;
             default:
-                throw new InvalidOperationException($"Unsupported automation step: {step.GetType().Name}");
+                OperationHelpers.ThrowIf(true, $"Unsupported automation step: {step.GetType().Name}");
+                return;
         }
     }
 
@@ -434,8 +434,8 @@ public static class AutomationPlanRunner
         if (step.Kind == ElementDataExtractKind.Attribute)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(step.AttributeName, nameof(step.AttributeName));
 
-        if (!state.ElementLists.TryGetValue(step.ElementsListRefName, out var list))
-            throw new InvalidOperationException($"Unknown element list ref '{step.ElementsListRefName}'.");
+        var foundList = state.ElementLists.TryGetValue(step.ElementsListRefName, out var list);
+        OperationHelpers.ThrowIf(!foundList, $"Unknown element list ref '{step.ElementsListRefName}'.");
 
         var result = new List<string>(list.Count);
         foreach (var element in list) {
@@ -459,8 +459,8 @@ public static class AutomationPlanRunner
         AutomationPlanStepLogScope? stepLogScope,
         CancellationToken ct)
     {
-        if (!state.StringLists.TryGetValue(step.VariableName, out var lines))
-            throw new InvalidOperationException($"Unknown string list variable '{step.VariableName}'.");
+        var foundLines = state.StringLists.TryGetValue(step.VariableName, out var lines);
+        OperationHelpers.ThrowIf(!foundLines, $"Unknown string list variable '{step.VariableName}'.");
 
         using (BeginStepCorrelationScope(logger, stepLogScope)) {
             var bindings = CreateBindings(state, browser);
@@ -495,23 +495,18 @@ public static class AutomationPlanRunner
     {
         using (BeginStepCorrelationScope(logger, stepLogScope)) {
             var http = runtime?.HttpClient;
-            if (http == null) {
-                throw new InvalidOperationException("DownloadUrlsToDirectory requires AutomationPlanRuntimeOptions.HttpClient to be set.");
-            }
+            OperationHelpers.ThrowIfNull(http, "DownloadUrlsToDirectory requires AutomationPlanRuntimeOptions.HttpClient to be set.");
 
             IReadOnlyList<string> urlSource;
             if (step.UrlListFromCompletedStepIndex is { } stepIdx) {
-                if (!state.TryGetStringListAtCompletedStep(stepIdx, step.UrlListVariableName, out var fromFrame)) {
-                    throw new InvalidOperationException($"No string list variable '{step.UrlListVariableName}' at completed step index {stepIdx}, or step index out of range.");
-                }
-
+                var foundFrame = state.TryGetStringListAtCompletedStep(stepIdx, step.UrlListVariableName, out var fromFrame);
+                OperationHelpers.ThrowIf(!foundFrame, $"No string list variable '{step.UrlListVariableName}' at completed step index {stepIdx}, or step index out of range.");
                 urlSource = fromFrame!;
             }
             else {
-                if (!state.StringLists.TryGetValue(step.UrlListVariableName, out var urls))
-                    throw new InvalidOperationException($"Unknown string list variable '{step.UrlListVariableName}'.");
-
-                urlSource = urls;
+                var foundUrls = state.StringLists.TryGetValue(step.UrlListVariableName, out var urls);
+                OperationHelpers.ThrowIf(!foundUrls, $"Unknown string list variable '{step.UrlListVariableName}'.");
+                urlSource = urls!;
             }
 
             var bindings = CreateBindings(state, browser);
@@ -588,7 +583,8 @@ public static class AutomationPlanRunner
                 await element.SelectByIndexAsync(x.Index, ct).ConfigureAwait(false);
                 return;
             default:
-                throw new InvalidOperationException($"Unsupported element action: {action.GetType().Name}");
+                OperationHelpers.ThrowIf(true, $"Unsupported element action: {action.GetType().Name}");
+                return;
         }
     }
 
@@ -604,20 +600,14 @@ public static class AutomationPlanRunner
 
         public Dictionary<string, List<string>> StringLists { get; } = new(StringComparer.Ordinal);
 
-        public void ThrowIfRefNameTaken(string refName)
-        {
-            if (Elements.ContainsKey(refName) || ElementLists.ContainsKey(refName))
-                throw new InvalidOperationException($"Duplicate ref name '{refName}'. Ref names must be unique within a plan.");
-        }
+        public void ThrowIfRefNameTaken(string refName) =>
+            OperationHelpers.ThrowIf(Elements.ContainsKey(refName) || ElementLists.ContainsKey(refName), $"Duplicate ref name '{refName}'. Ref names must be unique within a plan.");
 
         public IWebAutomationElement ResolveElement(string refName)
         {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName, nameof(refName));
-            if (!Elements.TryGetValue(refName, out var el)) {
-                throw new InvalidOperationException($"Unknown element ref '{refName}'. Run a find step first.");
-            }
-
-            return el;
+            OperationHelpers.ThrowIf(!Elements.TryGetValue(refName, out var el), $"Unknown element ref '{refName}'. Run a find step first.");
+            return el!;
         }
 
         public AutomationPlanExecutionSnapshot ToSnapshot()

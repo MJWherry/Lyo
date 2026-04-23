@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Metrics.Models;
 
@@ -26,8 +27,8 @@ public class Timer : IDisposable
     /// <param name="tags">Optional tags/labels for the metric</param>
     public Timer(IMetrics metrics, string name, IEnumerable<(string, string)>? tags)
     {
-        _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-        _name = name ?? throw new ArgumentNullException(nameof(name));
+        _metrics = ArgumentHelpers.ThrowIfNullReturn(metrics, nameof(metrics));
+        _name = ArgumentHelpers.ThrowIfNullReturn(name, nameof(name));
         _tags = tags;
         _stopwatch = Stopwatch.StartNew();
     }

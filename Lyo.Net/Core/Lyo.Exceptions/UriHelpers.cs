@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Lyo.Exceptions.Models;
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
@@ -25,6 +26,7 @@ public static class UriHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfInvalidUri([NotNull] string? uri, string? paramName = null, UriKind uriKind = UriKind.RelativeOrAbsolute)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
@@ -45,6 +47,7 @@ public static class UriHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfInvalidAbsoluteUri([NotNull] string? uri, string? paramName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
@@ -62,6 +65,7 @@ public static class UriHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Uri GetValidUri([NotNull] string? uri, string? paramName = null, UriKind uriKind = UriKind.Absolute)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
@@ -84,9 +88,7 @@ public static class UriHelpers
     /// <param name="paramName">The parameter name for error messages.</param>
     /// <param name="uriKind">The kind of URI (Absolute, Relative, or RelativeOrAbsolute). Default is Absolute.</param>
     /// <returns>true if the URI was successfully parsed; otherwise, false.</returns>
-#if NET6_0_OR_GREATER
-    [StackTraceHidden]
-#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetValidUri(string? uri, out Uri? validUri, string? paramName = null, UriKind uriKind = UriKind.Absolute)
     {
         validUri = null;
@@ -99,6 +101,10 @@ public static class UriHelpers
     /// <returns>A valid absolute Uri instance.</returns>
     /// <exception cref="ArgumentException">Thrown when uri is null, empty, or whitespace.</exception>
     /// <exception cref="InvalidFormatException">Thrown when uri is not a valid absolute URI format.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Uri GetValidAbsoluteUri(string? uri, string? paramName = null) => GetValidUri(uri, paramName);
 
     /// <summary>Validates a URI string and returns a valid relative Uri instance, or throws an exception if invalid.</summary>
@@ -107,6 +113,10 @@ public static class UriHelpers
     /// <returns>A valid relative Uri instance.</returns>
     /// <exception cref="ArgumentException">Thrown when uri is null, empty, or whitespace.</exception>
     /// <exception cref="InvalidFormatException">Thrown when uri is not a valid relative URI format.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Uri GetValidRelativeUri(string? uri, string? paramName = null) => GetValidUri(uri, paramName, UriKind.Relative);
 
     /// <summary>Validates that a URI uses a specific scheme (e.g., http, https, ftp) and returns the Uri instance.</summary>
@@ -119,6 +129,7 @@ public static class UriHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Uri GetValidUriWithScheme(string? uri, string scheme, string? paramName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(scheme, nameof(scheme));
@@ -138,6 +149,7 @@ public static class UriHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Uri GetValidWebUri(string? uri, string? paramName = null)
     {
         var validUri = GetValidAbsoluteUri(uri, paramName);
@@ -152,6 +164,10 @@ public static class UriHelpers
     /// <param name="paramName">The parameter name.</param>
     /// <exception cref="ArgumentException">Thrown when uri is null, empty, or whitespace.</exception>
     /// <exception cref="InvalidFormatException">Thrown when uri is not a valid absolute URI format.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ValidateAbsoluteUri(string? uri, string? paramName = null) => ThrowIfInvalidAbsoluteUri(uri, paramName);
 
     /// <summary>Validates that a URI string is a valid URI (absolute or relative) and throws InvalidFormatException if not. This is a convenience method that calls ThrowIfInvalidUri.</summary>
@@ -159,6 +175,10 @@ public static class UriHelpers
     /// <param name="paramName">The parameter name.</param>
     /// <exception cref="ArgumentException">Thrown when uri is null, empty, or whitespace.</exception>
     /// <exception cref="InvalidFormatException">Thrown when uri is not a valid URI format.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ValidateUri(string? uri, string? paramName = null) => ThrowIfInvalidUri(uri, paramName);
 
     /// <summary>Combines a base URI with a path segment, handling trailing/leading slashes.</summary>
@@ -168,6 +188,10 @@ public static class UriHelpers
     /// <returns>A combined URI string.</returns>
     /// <exception cref="ArgumentException">Thrown when baseUri is null, empty, or whitespace.</exception>
     /// <exception cref="InvalidFormatException">Thrown when baseUri is not a valid absolute URI.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string CombineUri(string? baseUri, string? path, string? paramName = null)
     {
         var validBase = GetValidAbsoluteUri(baseUri, paramName ?? nameof(baseUri));
@@ -184,6 +208,10 @@ public static class UriHelpers
     /// <param name="queryString">The query string to append (without leading ?).</param>
     /// <returns>The URI with the query string appended.</returns>
     /// <exception cref="ArgumentException">Thrown when uri is null, empty, or whitespace.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string AppendQueryString(string? uri, string? queryString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, nameof(uri));
@@ -196,6 +224,7 @@ public static class UriHelpers
     }
 
     /// <summary>Attempts to combine a base URI with a path. Returns false if baseUri is invalid.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryCombineUri(string? baseUri, string? path, out string? combined)
     {
         combined = null;

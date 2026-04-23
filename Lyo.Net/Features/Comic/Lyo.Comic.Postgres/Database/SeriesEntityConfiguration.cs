@@ -15,8 +15,14 @@ public sealed class SeriesEntityConfiguration : IEntityTypeConfiguration<SeriesE
         builder.Property(e => e.ComicType).HasColumnName("comic_type");
         builder.Property(e => e.Status).HasColumnName("status");
         builder.Property(e => e.Description).HasColumnName("description");
-        builder.Property(e => e.OriginalLanguage).HasMaxLength(10).HasColumnName("original_language");
+        builder.Property(e => e.Language).HasMaxLength(10).HasColumnName("language");
         builder.Property(e => e.PublishedYear).HasColumnName("published_year");
+        builder.Property(e => e.Author).HasMaxLength(500).HasColumnName("author");
+        builder.Property(e => e.Artist).HasMaxLength(500).HasColumnName("artist");
+        builder.Property(e => e.Publisher).HasMaxLength(500).HasColumnName("publisher");
+        builder.Property(e => e.Source).HasColumnName("source");
+        builder.Property(e => e.CoverImageRef).HasColumnName("cover_image_ref");
+        builder.Property(e => e.Demographic).HasMaxLength(50).HasColumnName("demographic");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => e.Slug).IsUnique().HasDatabaseName("ix_comic_series_slug");

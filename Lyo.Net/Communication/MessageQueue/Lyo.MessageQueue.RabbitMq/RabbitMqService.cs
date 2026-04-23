@@ -74,8 +74,7 @@ public sealed class RabbitMqService : IRabbitMqService
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(RabbitMqService));
+        OperationHelpers.ThrowIfDisposed(_disposed, nameof(RabbitMqService));
 
         await _connectionLock.WaitAsync(ct).ConfigureAwait(false);
         try {

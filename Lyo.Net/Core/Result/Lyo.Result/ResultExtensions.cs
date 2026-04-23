@@ -92,6 +92,10 @@ public static class ResultExtensions
             ? Result<TResult>.Success(result.Data!, result.Timestamp, result.Metadata)
             : Result<TResult>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata);
 
+    /// <summary>Transforms the errors of a failed result using the provided mapper, leaving a successful result unchanged.</summary>
+    public static Result<T> MapError<T>(this Result<T> result, Func<IReadOnlyList<Error>, IReadOnlyList<Error>> mapper)
+        => result.IsSuccess ? result : Result<T>.Failure(mapper(result.Errors ?? []), result.Timestamp, result.Metadata);
+
     extension<TIn>(Result<TIn> result)
     {
         /// <summary>Chains two results together. If the first result is successful, applies the function to get the next result.</summary>

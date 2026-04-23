@@ -19,6 +19,10 @@
         <Project Path="Core/Common/Lyo.Common/Lyo.Common.csproj"/>
         <Project Path="Core/Common/Lyo.Common.Tests/Lyo.Common.Tests.csproj"/>
     </Folder>
+    <Folder Name="/Core/Result/">
+        <Project Path="Core/Result/Lyo.Result/Lyo.Result.csproj"/>
+        <Project Path="Core/Result/Lyo.Result.Tests/Lyo.Result.Tests.csproj"/>
+    </Folder>
     <Folder Name="/Core/">
         <Project Path="Core/Lyo.Exceptions/Lyo.Exceptions.csproj"/>
         <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj"/>

@@ -64,6 +64,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenQA.Selenium;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) => {
@@ -197,7 +198,20 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
+
+
+var spp = sp.GetService<ISeleniumBrowserService>();
+var tr = spp.CreateSession();
+ await tr.StartBrowserAsync();
+ tr.Browser.NavigateTo("https://duckduckgo.com");
+var i= await tr.Browser.PollForAsync(By.TagName("input"));
+i.SendKeys("Wahl Family Heating, Cooling & Plumbing review Angies List");
+var earchBut = await tr.Browser.PollForAsync(By.Id("search_button_homepage"));
+earchBut.Click();
 var discordBotOpts = host.Services.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value;
+
+
+
 if (!string.IsNullOrWhiteSpace(discordBotOpts.Token)) {
     using var botCts = new CancellationTokenSource();
     Console.CancelKeyPress += (_, e) => {

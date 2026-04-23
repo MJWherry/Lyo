@@ -24,6 +24,7 @@
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj" />
         <ProjectReference Include="..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
         <ProjectReference Include="..\..\Features\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>

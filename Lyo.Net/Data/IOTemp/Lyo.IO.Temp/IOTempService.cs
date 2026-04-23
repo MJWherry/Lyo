@@ -16,7 +16,9 @@ namespace Lyo.IO.Temp;
 public sealed class IOTempService : IIOTempService
 {
     private static long _nameSequence;
-    private readonly ConcurrentDictionary<string, byte> _activeSessions = [];
+    private readonly ConcurrentDictionary<string, IIOTempSession> _activeSessions = [];
+    private readonly ConcurrentDictionary<string, IIOTempSession> _keyedSessions = [];
+    private readonly object _keyedSessionLock = new();
     private readonly ILogger<IOTempService> _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly IMetrics _metrics;
@@ -50,7 +52,7 @@ public sealed class IOTempService : IIOTempService
             var sessionOptions = BuildSessionOptions(options);
             var sessionLogger = _loggerFactory?.CreateLogger<IOTempSession>();
             var session = new IOTempSession(sessionOptions, sessionLogger, _metrics, OnSessionDisposed);
-            _activeSessions.TryAdd(session.SessionDirectory, 0);
+            _activeSessions.TryAdd(session.SessionDirectory, session);
             _logger.LogDebug("Created IO temp session at {SessionDirectory}", session.SessionDirectory);
             _metrics.RecordTiming(Constants.Metrics.CreateSessionDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateSessionSuccess);
@@ -63,6 +65,42 @@ public sealed class IOTempService : IIOTempService
             _metrics.IncrementCounter(Constants.Metrics.CreateSessionFailure);
             throw;
         }
+    }
+
+    public IIOTempSession GetOrCreateSession(string key, IOTempSessionOptions? options = null)
+    {
+        ThrowIfDisposed();
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+
+        if (_keyedSessions.TryGetValue(key, out var existing))
+            return existing;
+
+        lock (_keyedSessionLock) {
+            if (_keyedSessions.TryGetValue(key, out existing))
+                return existing;
+            var session = CreateSession(options);
+            _keyedSessions[key] = session;
+            return session;
+        }
+    }
+
+    public void ReleaseSession(string key)
+    {
+        ThrowIfDisposed();
+        if (_keyedSessions.TryRemove(key, out var session))
+            session.Dispose();
+    }
+
+    public IOTempServiceStats GetStats()
+    {
+        ThrowIfDisposed();
+        var totalBytes = _activeSessions.Values.Sum(s => s.GetTotalBytesUsed());
+        return new IOTempServiceStats(
+            ActiveSessionCount: _activeSessions.Count,
+            KeyedSessionCount: _keyedSessions.Count,
+            TotalBytesUsed: totalBytes,
+            ServiceDirectory: ServiceDirectory
+        );
     }
 
 #endregion
@@ -242,6 +280,8 @@ public sealed class IOTempService : IIOTempService
                 DirectoryNamingStrategy = _options.DirectoryNamingStrategy,
                 MaxFileSizeBytes = _options.MaxFileSizeBytes,
                 MaxTotalSizeBytes = _options.MaxTotalSizeBytes,
+                MaxFileCount = _options.MaxFileCount,
+                FileLifetime = _options.FileLifetime,
                 OverflowStrategy = _options.OverflowStrategy
             };
         }
@@ -258,14 +298,24 @@ public sealed class IOTempService : IIOTempService
             DirectoryNamingStrategy = overrides.DirectoryNamingStrategy,
             MaxFileSizeBytes = overrides.MaxFileSizeBytes ?? _options.MaxFileSizeBytes,
             MaxTotalSizeBytes = overrides.MaxTotalSizeBytes ?? _options.MaxTotalSizeBytes,
+            MaxFileCount = overrides.MaxFileCount ?? _options.MaxFileCount,
+            FileLifetime = overrides.FileLifetime ?? _options.FileLifetime,
             OverflowStrategy = overrides.OverflowStrategy
         };
     }
 
     private void OnSessionDisposed(string sessionDirectory)
     {
-        if (!_activeSessions.TryRemove(sessionDirectory, out var _))
+        if (!_activeSessions.TryRemove(sessionDirectory, out _))
             return;
+
+        // Remove from keyed pool if this session was registered there
+        foreach (var kvp in _keyedSessions) {
+            if (kvp.Value.SessionDirectory == sessionDirectory) {
+                _keyedSessions.TryRemove(kvp.Key, out _);
+                break;
+            }
+        }
 
         _logger.LogDebug("Disposed IO temp session at {SessionDirectory}", sessionDirectory);
         _metrics.RecordGauge(Constants.Metrics.ActiveSessionCount, _activeSessions.Count);
@@ -337,11 +387,7 @@ public sealed class IOTempService : IIOTempService
 #endif
     }
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(IOTempService));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(IOTempService));
 
     public void Dispose()
     {

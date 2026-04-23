@@ -12,6 +12,7 @@ using Lyo.Encryption.Symmetric.Aes.AesCcm;
 using Lyo.Encryption.Symmetric.Aes.AesSiv;
 using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
+using Lyo.Exceptions;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Components.Forms;
 using AesSivKeySizeBits = Lyo.Encryption.Symmetric.Aes.AesSiv.AesSivKeySizeBits;
@@ -55,14 +56,9 @@ public sealed class TestGatewayFileTransformer
 
     public async Task<TestGatewayTransformResult> TransformAsync(TestGatewayUploadedFile file, TestGatewayTransformOptions options, CancellationToken ct = default)
     {
-        if (file.Content.Length == 0)
-            throw new InvalidOperationException("Please upload a file first.");
-
-        if (!options.ApplyCompression && !options.ApplyEncryption)
-            throw new InvalidOperationException("Select compression, encryption, or both.");
-
-        if (options.ApplyEncryption && string.IsNullOrWhiteSpace(options.Secret))
-            throw new InvalidOperationException("A secret is required when encryption is enabled.");
+        OperationHelpers.ThrowIf(file.Content.Length == 0, "Please upload a file first.");
+        OperationHelpers.ThrowIf(!options.ApplyCompression && !options.ApplyEncryption, "Select compression, encryption, or both.");
+        OperationHelpers.ThrowIf(options.ApplyEncryption && string.IsNullOrWhiteSpace(options.Secret), "A secret is required when encryption is enabled.");
 
         var currentFileName = file.FileName;
         var currentBytes = file.Content;
@@ -627,8 +623,7 @@ public sealed class TestGatewayFileTransformer
 
     private static byte[] TruncateHash(byte[] hash32, int byteLength)
     {
-        if (byteLength > hash32.Length)
-            throw new InvalidOperationException($"Key length {byteLength} exceeds SHA-256 output.");
+        OperationHelpers.ThrowIf(byteLength > hash32.Length, $"Key length {byteLength} exceeds SHA-256 output.");
 
         if (byteLength == hash32.Length)
             return hash32;

@@ -940,8 +940,7 @@ public class PdfService : IPdfService, IDisposable
     private Guid LoadPdfInternal(byte[] pdfBytes, string? filePath = null, string? url = null)
         => ExecuteWithMetrics(
             Constants.Metrics.LoadDuration, Constants.Metrics.LoadSuccess, Constants.Metrics.LoadFailure, () => {
-                if (pdfBytes.Length > _maxPdfSizeBytes)
-                    throw new ArgumentOutOfRangeException(nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
+                ArgumentHelpers.ThrowIfGreaterThan(pdfBytes.Length, _maxPdfSizeBytes, nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
 
                 _documentsLock.EnterWriteLock();
                 try {
@@ -1066,9 +1065,7 @@ public class PdfService : IPdfService, IDisposable
                 pdfId, loadedPdf => {
                     var document = loadedPdf.Document;
                     if (page.HasValue) {
-                        if (page.Value < 1 || page.Value > document.NumberOfPages)
-                            throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
-
+                        ArgumentHelpers.ThrowIfNotInRange(page.Value, 1, document.NumberOfPages, nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
                         var pdfPage = document.GetPage(page.Value);
                         return pdfPage.GetWords().ToPdfWords(pdfPage.Paths);
                     }
@@ -1089,9 +1086,7 @@ public class PdfService : IPdfService, IDisposable
                     var document = loadedPdf.Document;
                     var tolerance = yTolerance ?? _options.DefaultYTolerance;
                     if (page.HasValue) {
-                        if (page.Value < 1 || page.Value > document.NumberOfPages)
-                            throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
-
+                        ArgumentHelpers.ThrowIfNotInRange(page.Value, 1, document.NumberOfPages, nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
                         var pdfPage = document.GetPage(page.Value);
                         return GroupIntoLines(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), tolerance);
                     }
@@ -1110,8 +1105,8 @@ public class PdfService : IPdfService, IDisposable
         var lines = new List<PdfTextLine>();
         var startPage = page ?? 1;
         var endPage = page ?? document.NumberOfPages;
-        if (page.HasValue && (page.Value < 1 || page.Value > document.NumberOfPages))
-            throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
+        if (page.HasValue)
+            ArgumentHelpers.ThrowIfNotInRange(page.Value, 1, document.NumberOfPages, nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
 
         for (var pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
             var pdfPage = document.GetPage(pageNumber);
@@ -1143,8 +1138,7 @@ public class PdfService : IPdfService, IDisposable
             Constants.Metrics.LinesDuration, Constants.Metrics.LinesSuccess, Constants.Metrics.LinesFailure, () => WithLoadedPdfRead(
                 pdfId, loadedPdf => {
                     var document = loadedPdf.Document;
-                    if (region.Page < 1 || region.Page > document.NumberOfPages)
-                        throw new ArgumentOutOfRangeException(nameof(region), $"Page number must be between 1 and {document.NumberOfPages}.");
+                    ArgumentHelpers.ThrowIfNotInRange(region.Page, 1, document.NumberOfPages, nameof(region), $"Page number must be between 1 and {document.NumberOfPages}.");
 
                     var pdfPage = document.GetPage(region.Page);
                     var overlapThreshold = Math.Max(0, Math.Min(1, _options.BoundingBoxOverlapThreshold));
@@ -1954,9 +1948,7 @@ public class PdfService : IPdfService, IDisposable
                     pdfId, loadedPdf => {
                         var document = loadedPdf.Document;
                         if (page.HasValue) {
-                            if (page.Value < 1 || page.Value > document.NumberOfPages)
-                                throw new ArgumentOutOfRangeException(nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
-
+                            ArgumentHelpers.ThrowIfNotInRange(page.Value, 1, document.NumberOfPages, nameof(page), $"Page number must be between 1 and {document.NumberOfPages}.");
                             var pdfPage = document.GetPage(page.Value);
                             return ExtractTableFromWordsFormatted(pdfPage.GetWords().ToPdfWords(pdfPage.Paths), headers, yTolerance);
                         }
@@ -2088,8 +2080,7 @@ public class PdfService : IPdfService, IDisposable
 
     private PdfColumnarText BuildColumnarText(List<PdfWord> words, int columnCount, double? yTolerance)
     {
-        if (columnCount < 1)
-            throw new ArgumentOutOfRangeException(nameof(columnCount), "Column count must be at least 1.");
+        ArgumentHelpers.ThrowIfLessThan(columnCount, 1, nameof(columnCount), "Column count must be at least 1.");
 
         if (words.Count == 0)
             return new(Enumerable.Repeat(string.Empty, columnCount).ToList());

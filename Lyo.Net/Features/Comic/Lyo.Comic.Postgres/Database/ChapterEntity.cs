@@ -25,7 +25,7 @@ public sealed class ChapterEntity
 
     public DateOnly? PublishedDate { get; set; }
 
-    public string? SourceRef { get; set; }
+    public string? Source { get; set; }
 
     [Required]
     public DateTime CreatedTimestamp { get; set; }

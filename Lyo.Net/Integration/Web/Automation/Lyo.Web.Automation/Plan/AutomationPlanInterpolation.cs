@@ -25,10 +25,8 @@ public static class AutomationPlanInterpolation
         return SimplePlaceholder.Replace(
             template, m => {
                 var key = m.Groups[1].Value;
-                if (!strings.TryGetValue(key, out var value)) {
-                    throw new InvalidOperationException($"Template references undefined string variable '{{{{{key}}}}}'. Define it with a store or extract step first.");
-                }
-
+                var foundValue = strings.TryGetValue(key, out var value);
+                OperationHelpers.ThrowIf(!foundValue, $"Template references undefined string variable '{{{{{key}}}}}'. Define it with a store or extract step first.");
                 return value ?? string.Empty;
             });
     }
@@ -93,19 +91,17 @@ public static class AutomationPlanInterpolation
         if (head.Equals("strings", StringComparison.OrdinalIgnoreCase) || head.Equals("str", StringComparison.OrdinalIgnoreCase)) {
             OperationHelpers.ThrowIf(parts.Length != 2, $"Invalid strings placeholder '{{{s}}}'.");
             var key = parts[1];
-            if (!b.Strings.TryGetValue(key, out var v))
-                throw new InvalidOperationException($"Unknown string variable '{key}'.");
-
+            var foundStr = b.Strings.TryGetValue(key, out var v);
+            OperationHelpers.ThrowIf(!foundStr, $"Unknown string variable '{key}'.");
             return v ?? string.Empty;
         }
 
         if (head.Equals("lists", StringComparison.OrdinalIgnoreCase) || head.Equals("list", StringComparison.OrdinalIgnoreCase)) {
             OperationHelpers.ThrowIf(parts.Length != 2, $"Invalid lists placeholder '{{{s}}}'.");
             var key = parts[1];
-            if (!b.StringLists.TryGetValue(key, out var list) || list == null)
-                throw new InvalidOperationException($"Unknown string list variable '{key}'.");
-
-            return string.Join(Environment.NewLine, list);
+            var foundList = b.StringLists.TryGetValue(key, out var list);
+            OperationHelpers.ThrowIf(!foundList || list == null, $"Unknown string list variable '{key}'.");
+            return string.Join(Environment.NewLine, list!);
         }
 
         if (head.Equals("page", StringComparison.OrdinalIgnoreCase)) {
@@ -124,8 +120,8 @@ public static class AutomationPlanInterpolation
         if (head.Equals("elements", StringComparison.OrdinalIgnoreCase) || head.Equals("el", StringComparison.OrdinalIgnoreCase)) {
             OperationHelpers.ThrowIf(parts.Length < 3, $"Invalid element placeholder '{{{s}}}'. Expected el.ref.text or el.ref.attr.name.");
             var refName = parts[1];
-            if (!b.Elements.TryGetValue(refName, out var el) || el == null)
-                throw new InvalidOperationException($"Unknown element ref '{refName}'.");
+            var foundEl = b.Elements.TryGetValue(refName, out var el);
+            OperationHelpers.ThrowIf(!foundEl || el == null, $"Unknown element ref '{refName}'.");
 
             if (parts[2].Equals("text", StringComparison.OrdinalIgnoreCase)) {
                 OperationHelpers.ThrowIf(parts.Length != 3, $"Invalid element text placeholder '{{{s}}}'.");

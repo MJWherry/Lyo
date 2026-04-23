@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Lyo.Exceptions;
 
 namespace Lyo.FileStorage.Multipart;
 
@@ -9,8 +10,7 @@ public sealed class InMemoryMultipartUploadSessionStore : IMultipartUploadSessio
 
     public Task CreateAsync(MultipartUploadSessionRecord session, CancellationToken ct = default)
     {
-        if (!_sessions.TryAdd(session.SessionId, session))
-            throw new InvalidOperationException($"Session {session.SessionId} already exists.");
+        OperationHelpers.ThrowIf(!_sessions.TryAdd(session.SessionId, session), $"Session {session.SessionId} already exists.");
 
         return Task.CompletedTask;
     }

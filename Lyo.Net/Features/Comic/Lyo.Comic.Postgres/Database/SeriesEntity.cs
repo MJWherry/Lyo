@@ -22,9 +22,25 @@ public sealed class SeriesEntity
     public string? Description { get; set; }
 
     [MaxLength(10)]
-    public string? OriginalLanguage { get; set; }
+    public string? Language { get; set; }
 
     public int? PublishedYear { get; set; }
+
+    [MaxLength(500)]
+    public string? Author { get; set; }
+
+    [MaxLength(500)]
+    public string? Artist { get; set; }
+
+    [MaxLength(500)]
+    public string? Publisher { get; set; }
+
+    public string? Source { get; set; }
+
+    public string? CoverImageRef { get; set; }
+
+    [MaxLength(50)]
+    public string? Demographic { get; set; }
 
     [Required]
     public DateTime CreatedTimestamp { get; set; }

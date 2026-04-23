@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using Lyo.Exceptions;
 
 namespace Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 
@@ -7,8 +8,7 @@ internal static class HChaCha20
 {
     public static void Block(ReadOnlySpan<byte> key32, ReadOnlySpan<byte> nonce16, Span<byte> out32)
     {
-        if (key32.Length != 32 || nonce16.Length != 16 || out32.Length != 32)
-            throw new ArgumentException("HChaCha20 requires a 32-byte key, 16-byte nonce, and 32-byte output.");
+        ArgumentHelpers.ThrowIf(key32.Length != 32 || nonce16.Length != 16 || out32.Length != 32, "HChaCha20 requires a 32-byte key, 16-byte nonce, and 32-byte output.");
 
         Span<uint> st = stackalloc uint[16];
         st[0] = 0x61707865;

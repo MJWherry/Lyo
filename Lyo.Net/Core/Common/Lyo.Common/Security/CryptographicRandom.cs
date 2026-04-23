@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Exceptions;
 
 namespace Lyo.Common.Security;
 
@@ -11,8 +12,7 @@ public static class CryptographicRandom
     /// <summary>Returns an array of <paramref name="length" /> cryptographically strong random bytes.</summary>
     public static byte[] GetBytes(int length)
     {
-        if (length < 0)
-            throw new ArgumentOutOfRangeException(nameof(length));
+        ArgumentHelpers.ThrowIfNegative(length, nameof(length));
 
         if (length == 0)
             return Array.Empty<byte>();
@@ -42,8 +42,7 @@ public static class CryptographicRandom
     /// <summary>Returns a random integer in <c>[<paramref name="fromInclusive" />, <paramref name="toExclusive" />)</c> with an approximately uniform distribution.</summary>
     public static int GetInt32(int fromInclusive, int toExclusive)
     {
-        if (fromInclusive >= toExclusive)
-            throw new ArgumentOutOfRangeException(nameof(toExclusive));
+        ArgumentHelpers.ThrowIf(fromInclusive >= toExclusive, "toExclusive must be greater than fromInclusive.", nameof(toExclusive));
 
         var range = (ulong)((long)toExclusive - fromInclusive);
         if (range == 1)
@@ -55,8 +54,7 @@ public static class CryptographicRandom
 
     private static ulong NextUInt64Exclusive(ulong range)
     {
-        if (range < 2)
-            throw new ArgumentOutOfRangeException(nameof(range));
+        ArgumentHelpers.ThrowIfLessThan(range, 2UL, nameof(range));
 
         var limit = ulong.MaxValue - ulong.MaxValue % range;
         var buf = new byte[8];

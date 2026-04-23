@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using Lyo.Common;
 using Lyo.Common.Enums;
+using Lyo.Exceptions;
 using Lyo.Images.Models;
 using Lyo.Images.Sprite.Models;
 using SixLabors.ImageSharp;
@@ -21,10 +22,8 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
     {
         await using var sourceStream = new MemoryStream(imageBytes, false);
         var result = await imageService.GetMetadataAsync(sourceStream, ct);
-        if (!result.IsSuccess || result.Data == null)
-            throw new InvalidOperationException(FormatErrors(result.Errors));
-
-        return result.Data;
+        OperationHelpers.ThrowIf(!result.IsSuccess || result.Data == null, FormatErrors(result.Errors));
+        return result.Data!;
     }
 
     public async Task<byte[]> ExportFrameAsync(byte[] imageBytes, SpriteFrameRect frame, CancellationToken ct = default)
@@ -32,9 +31,7 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
         await using var sourceStream = new MemoryStream(imageBytes, false);
         await using var outputStream = new MemoryStream();
         var result = await imageService.CropAsync(sourceStream, outputStream, frame.X, frame.Y, frame.Width, frame.Height, ImageFormat.Png, ct: ct);
-        if (!result.IsSuccess)
-            throw new InvalidOperationException(FormatErrors(result.Errors));
-
+        OperationHelpers.ThrowIf(!result.IsSuccess, FormatErrors(result.Errors));
         return outputStream.ToArray();
     }
 
@@ -57,8 +54,7 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
     public async Task<byte[]> ExportAnimatedGifAsync(byte[] imageBytes, IReadOnlyList<SpriteFrameRect> frames, int framesPerSecond, CancellationToken ct = default)
     {
         var includedFrames = frames.Where(frame => frame.IsIncluded).ToList();
-        if (includedFrames.Count == 0)
-            throw new InvalidOperationException("Add at least one included frame before exporting a GIF.");
+        OperationHelpers.ThrowIf(includedFrames.Count == 0, "Add at least one included frame before exporting a GIF.");
 
         var frameDelay = Math.Max(1, (int)Math.Round(100d / Math.Clamp(framesPerSecond, 1, 60)));
         await using var sourceStream = new MemoryStream(imageBytes, false);
@@ -178,12 +174,10 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
     {
         ArgumentNullException.ThrowIfNull(sampled);
         var n = sampled.Count;
-        if (n == 0)
-            throw new ArgumentException("Sample list must not be empty.", nameof(sampled));
+        ArgumentHelpers.ThrowIf(n == 0, "Sample list must not be empty.", nameof(sampled));
 
         targetCount = Math.Max(1, targetCount);
-        if (targetCount < n)
-            throw new ArgumentOutOfRangeException(nameof(targetCount), "Target count must be at least the number of samples.");
+        ArgumentHelpers.ThrowIfLessThan(targetCount, n, nameof(targetCount), "Target count must be at least the number of samples.");
 
         if (targetCount == n)
             return sampled;
@@ -324,18 +318,15 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
         padTop = Math.Clamp(padTop, 0, 4096);
         padBottom = Math.Clamp(padBottom, 0, 4096);
         var maxCells = rowCount * framesPerRow;
-        if (maxCells == 0)
-            throw new InvalidOperationException("Grid must have at least one cell.");
+        OperationHelpers.ThrowIf(maxCells == 0, "Grid must have at least one cell.");
 
         sampleBudget = Math.Clamp(sampleBudget, 1, maxCells);
         await using var sourceStream = new MemoryStream(imageBytes, false);
         using var image = await Image.LoadAsync<Rgba32>(sourceStream, ct);
-        if (image.Frames.Count == 0)
-            throw new InvalidOperationException("Image has no frames.");
+        OperationHelpers.ThrowIf(image.Frames.Count == 0, "Image has no frames.");
 
         var sampledIndices = SampleFrameIndices(image, sampleBudget);
-        if (sampledIndices.Count == 0)
-            throw new InvalidOperationException("No frames were sampled from the animation.");
+        OperationHelpers.ThrowIf(sampledIndices.Count == 0, "No frames were sampled from the animation.");
 
         var expandedIndices = ExpandSampleIndicesToGrid(sampledIndices, maxCells, gridPadMode);
         var frameImages = new List<Image<Rgba32>>(expandedIndices.Count);
@@ -350,13 +341,11 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
             var maxH = frameImages.Max(f => f.Height);
             var cellW = maxW + padLeft + padRight;
             var cellH = maxH + padTop + padBottom;
-            if (cellW <= 0 || cellH <= 0)
-                throw new InvalidOperationException("Computed cell size is invalid.");
+            OperationHelpers.ThrowIf(cellW <= 0 || cellH <= 0, "Computed cell size is invalid.");
 
             var sheetW = offsetX + framesPerRow * cellW;
             var sheetH = offsetY + rowCount * cellH;
-            if (sheetW <= 0 || sheetH <= 0 || sheetW > 16384 || sheetH > 16384)
-                throw new InvalidOperationException("Spritesheet dimensions are out of range.");
+            OperationHelpers.ThrowIf(sheetW <= 0 || sheetH <= 0 || sheetW > 16384 || sheetH > 16384, "Spritesheet dimensions are out of range.");
 
             using var sheet = new Image<Rgba32>(sheetW, sheetH);
             sheet.Mutate(c => c.BackgroundColor(Color.Transparent));

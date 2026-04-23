@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Common.Attributes;
 
 /// <summary>Specifies the string value to use when serializing an enum value.</summary>
@@ -14,5 +16,5 @@ public sealed class StringValueAttribute : Attribute
 
     /// <summary>Initializes a new instance of the <see cref="StringValueAttribute" /> class.</summary>
     /// <param name="value">The string value to use for serialization.</param>
-    public StringValueAttribute(string value) => Value = value ?? throw new ArgumentNullException(nameof(value));
+    public StringValueAttribute(string value) => Value = ArgumentHelpers.ThrowIfNullReturn(value, nameof(value));
 }

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Lyo.Exceptions;
 
 namespace Lyo.Encryption.Utilities;
 
@@ -27,8 +28,7 @@ internal static class BufferPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] Rent(int minimumSize)
     {
-        if (minimumSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(minimumSize), "Minimum size must be greater than 0");
+        ArgumentHelpers.ThrowIfNegativeOrZero(minimumSize, nameof(minimumSize));
 
         // Find the smallest pool size that can accommodate the request
         for (var i = 0; i < PoolSizes.Length; i++) {
@@ -79,8 +79,7 @@ internal static class BufferPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] RentExact(int size, bool exactSize = false)
     {
-        if (size <= 0)
-            throw new ArgumentOutOfRangeException(nameof(size), "Size must be greater than 0");
+        ArgumentHelpers.ThrowIfNegativeOrZero(size, nameof(size));
 
         if (!exactSize)
             return Rent(size);

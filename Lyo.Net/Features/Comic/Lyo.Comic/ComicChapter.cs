@@ -34,7 +34,7 @@ public sealed class ComicChapter
     public DateTime? PublishedDate { get; set; }
 
     /// <summary>Gets or sets an opaque reference to the source this chapter was ingested from (e.g. a scraper site identifier, URL, or external ID). Null for internally created records.</summary>
-    public string? SourceRef { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Gets or sets when this record was created.</summary>
     public DateTime CreatedTimestamp { get; set; }

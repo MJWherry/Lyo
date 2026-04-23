@@ -18,8 +18,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         _contextFactory = contextFactory;
     }
 
-    // ── Series ────────────────────────────────────────────────────────────────
-
     /// <inheritdoc />
     public async Task SaveSeriesAsync(ComicSeries series, CancellationToken ct = default)
     {
@@ -32,8 +30,14 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             existing.ComicType = (int)series.ComicType;
             existing.Status = (int)series.Status;
             existing.Description = series.Description;
-            existing.OriginalLanguage = series.OriginalLanguage;
+            existing.Language = series.Language;
             existing.PublishedYear = series.PublishedYear;
+            existing.Author = series.Author;
+            existing.Artist = series.Artist;
+            existing.Publisher = series.Publisher;
+            existing.Source = series.Source;
+            existing.CoverImageRef = series.CoverImageRef;
+            existing.Demographic = series.Demographic;
             ctx.AlternateTitles.RemoveRange(existing.AlternateTitles);
             foreach (var alt in series.AlternateTitles)
                 ctx.AlternateTitles.Add(ToAlternateTitleEntity(alt, existing.Id));
@@ -83,8 +87,8 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         if (query.Status.HasValue)
             q = q.Where(s => s.Status == (int)query.Status.Value);
 
-        if (!string.IsNullOrWhiteSpace(query.OriginalLanguage))
-            q = q.Where(s => s.OriginalLanguage == query.OriginalLanguage);
+        if (!string.IsNullOrWhiteSpace(query.Language))
+            q = q.Where(s => s.Language == query.Language);
 
         q = q.OrderBy(s => s.Title).Skip(query.Skip);
         if (query.Limit.HasValue)
@@ -104,8 +108,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
         }
     }
-
-    // ── Volumes ───────────────────────────────────────────────────────────────
 
     /// <inheritdoc />
     public async Task SaveVolumeAsync(ComicVolume volume, CancellationToken ct = default)
@@ -156,8 +158,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         }
     }
 
-    // ── Chapters ──────────────────────────────────────────────────────────────
-
     /// <inheritdoc />
     public async Task SaveChapterAsync(ComicChapter chapter, CancellationToken ct = default)
     {
@@ -173,7 +173,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
                 existing.Language = chapter.Language;
                 existing.PageCount = chapter.PageCount;
                 existing.PublishedDate = chapter.PublishedDate.HasValue ? DateOnly.FromDateTime(chapter.PublishedDate.Value) : null;
-                existing.SourceRef = chapter.SourceRef;
+                existing.Source = chapter.Source;
                 await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
                 return;
             }
@@ -226,8 +226,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         }
     }
 
-    // ── Health ────────────────────────────────────────────────────────────────
-
     /// <inheritdoc />
     public string HealthCheckName => "comic-postgres";
 
@@ -249,8 +247,6 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         }
     }
 
-    // ── Mapping helpers ───────────────────────────────────────────────────────
-
     private static SeriesEntity ToSeriesEntity(ComicSeries r, Guid id)
         => new() {
             Id = id,
@@ -259,8 +255,14 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             ComicType = (int)r.ComicType,
             Status = (int)r.Status,
             Description = r.Description,
-            OriginalLanguage = r.OriginalLanguage,
+            Language = r.Language,
             PublishedYear = r.PublishedYear,
+            Author = r.Author,
+            Artist = r.Artist,
+            Publisher = r.Publisher,
+            Source = r.Source,
+            CoverImageRef = r.CoverImageRef,
+            Demographic = r.Demographic,
             CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
         };
 
@@ -293,7 +295,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Language = r.Language,
             PageCount = r.PageCount,
             PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
-            SourceRef = r.SourceRef,
+            Source = r.Source,
             CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
         };
 
@@ -305,8 +307,14 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             ComicType = (ComicType)e.ComicType,
             Status = (ComicStatus)e.Status,
             Description = e.Description,
-            OriginalLanguage = e.OriginalLanguage,
+            Language = e.Language,
             PublishedYear = e.PublishedYear,
+            Author = e.Author,
+            Artist = e.Artist,
+            Publisher = e.Publisher,
+            Source = e.Source,
+            CoverImageRef = e.CoverImageRef,
+            Demographic = e.Demographic,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp,
             AlternateTitles = e.AlternateTitles.Select(ToAlternateTitle).ToList()
@@ -342,7 +350,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Language = e.Language,
             PageCount = e.PageCount,
             PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
-            SourceRef = e.SourceRef,
+            Source = e.Source,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };

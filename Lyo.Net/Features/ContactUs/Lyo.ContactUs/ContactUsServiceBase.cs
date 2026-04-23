@@ -1,4 +1,5 @@
 using Lyo.ContactUs.Models;
+using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using static Lyo.ContactUs.ContactUsErrorCodes;
 
@@ -16,7 +17,7 @@ public abstract class ContactUsServiceBase : IContactUsService
     /// <summary>Initializes a new instance of the <see cref="ContactUsServiceBase" /> class.</summary>
     protected ContactUsServiceBase(ContactUsServiceOptions options, ILogger? logger = null)
     {
-        Options = options ?? throw new ArgumentNullException(nameof(options));
+        Options = ArgumentHelpers.ThrowIfNullReturn(options, nameof(options));
         Logger = logger;
     }
 

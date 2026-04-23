@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
@@ -346,8 +347,7 @@ public sealed class QueryHistoryEndpointConfigBuilder<TDbEntity>
 
     internal void Validate()
     {
-        if (StartTime == null || EndTime == null)
-            throw new InvalidOperationException("Call TimeRange(start, end) on the query history builder.");
+        OperationHelpers.ThrowIf(StartTime == null || EndTime == null, "Call TimeRange(start, end) on the query history builder.");
     }
 }
 

@@ -9,8 +9,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
-        <ProjectReference Include="..\Lyo.Sms\Lyo.Sms.csproj"/>
-    </ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj" />
+        <ProjectReference Include="..\Lyo.Sms\Lyo.Sms.csproj"/></ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>

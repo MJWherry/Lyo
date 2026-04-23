@@ -59,7 +59,7 @@ public class ColumnarTextTests
     public void GetColumnarText_ColumnCountZero_Throws()
     {
         var service = new PdfService();
-        Assert.Throws<ArgumentOutOfRangeException>(() => service.GetColumnarText([W("x", 0, 10, 100, 90)], 0));
+        Assert.ThrowsAny<ArgumentOutOfRangeException>(() => service.GetColumnarText([W("x", 0, 10, 100, 90)], 0));
     }
 
     [Fact]

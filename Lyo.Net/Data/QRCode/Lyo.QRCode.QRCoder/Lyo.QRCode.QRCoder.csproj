@@ -15,9 +15,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj" />
         <ProjectReference Include="..\..\Images\Lyo.Images\Lyo.Images.csproj"/>
-        <ProjectReference Include="..\Lyo.QRCode\Lyo.QRCode.csproj"/>
-    </ItemGroup>
+        <ProjectReference Include="..\Lyo.QRCode\Lyo.QRCode.csproj"/></ItemGroup>
 
 </Project>
 

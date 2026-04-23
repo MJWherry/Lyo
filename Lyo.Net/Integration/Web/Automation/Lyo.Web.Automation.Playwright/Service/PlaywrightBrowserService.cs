@@ -52,9 +52,5 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
 
     private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(PlaywrightBrowserService));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(PlaywrightBrowserService));
 }

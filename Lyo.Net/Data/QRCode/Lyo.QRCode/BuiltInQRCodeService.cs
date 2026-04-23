@@ -188,10 +188,7 @@ public class BuiltInQRCodeService : IQRCodeService
         };
 
         if (options.Icon != null && QrCodeIconComposer.TryResolveIconBytes(options.Icon) != null) {
-            if (_imageService == null) {
-                throw new InvalidOperationException(
-                    "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
-            }
+            OperationHelpers.ThrowIfNull(_imageService, "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
 
             if (options.Format == QRCodeFormat.Png)
                 bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, _logger, ct).ConfigureAwait(false);

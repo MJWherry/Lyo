@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -10,8 +11,7 @@ public sealed class NotificationPublisher(IServiceProvider services, ILogger<Not
     public async Task PublishAsync<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
-        if (notification == null)
-            throw new ArgumentNullException(nameof(notification));
+        ArgumentHelpers.ThrowIfNull(notification, nameof(notification));
 
         var handlers = services.GetServices<INotificationHandler<TNotification>>();
         foreach (var handler in handlers) {

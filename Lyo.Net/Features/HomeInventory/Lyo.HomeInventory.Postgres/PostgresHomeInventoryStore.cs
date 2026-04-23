@@ -329,7 +329,8 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await using var tx = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var fromRow = await context.Stocks.FindAsync([itemId, fromLocationId], ct).ConfigureAwait(false);
-        var sourceRow = fromRow ?? throw new InvalidOperationException("No stock row at the source location.");
+        OperationHelpers.ThrowIfNull(fromRow, "No stock row at the source location.");
+        var sourceRow = fromRow!;
         OperationHelpers.ThrowIf(sourceRow.QuantityOnHand < quantity, "Insufficient quantity at the source location.");
         sourceRow.QuantityOnHand -= quantity;
         sourceRow.UpdatedTimestamp = DateTime.UtcNow;

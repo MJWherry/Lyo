@@ -14,8 +14,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj" />
         <ProjectReference Include="..\..\Codes\Lyo.Codes.ZXing\Lyo.Codes.ZXing.csproj"/>
-        <ProjectReference Include="..\Lyo.Barcode\Lyo.Barcode.csproj"/>
-    </ItemGroup>
+        <ProjectReference Include="..\Lyo.Barcode\Lyo.Barcode.csproj"/></ItemGroup>
 
 </Project>

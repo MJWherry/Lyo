@@ -57,7 +57,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
         else if (!string.IsNullOrEmpty(pfxPath) && !string.IsNullOrEmpty(password))
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
-            throw new InvalidOperationException("No RSA key configuration provided. Specify either (publicPemPath, privatePemPath) or (pfxPath, password).");
+            OperationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either (publicPemPath, privatePemPath) or (pfxPath, password).");
 
         // Validate RSA key size - minimum 2048 bits recommended (3072+ preferred for new deployments)
         ArgumentHelpers.ThrowIf(
