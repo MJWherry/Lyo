@@ -28,14 +28,14 @@ public class CompressionPostgresTests : IDisposable
     [Fact]
     public async Task Get_WithBrotliAcceptEncoding_ReturnsBrotliCompressedResponse()
     {
-        var id = await _fixture.SeedJobDefinitionAsync("CompressionGet").ConfigureAwait(false);
+        var id = await _fixture.SeedJobDefinitionAsync("CompressionGet");
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/Job/Definition/{id}");
         request.Headers.AcceptEncoding.Add(new("br"));
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
         Assert.Contains("Accept-Encoding", response.Headers.Vary, StringComparer.OrdinalIgnoreCase);
-        var compressedBytes = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var compressedBytes = await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken);
         var jsonBytes = DecompressBrotli(compressedBytes);
         using var doc = JsonDocument.Parse(jsonBytes);
         var json = doc.RootElement.GetRawText();
@@ -45,7 +45,7 @@ public class CompressionPostgresTests : IDisposable
     [Fact]
     public async Task Post_WithGzipContentEncoding_ProcessesCompressedRequestBody()
     {
-        await _fixture.SeedJobDefinitionAsync("CompressionQueryTarget").ConfigureAwait(false);
+        await _fixture.SeedJobDefinitionAsync("CompressionQueryTarget");
         var requestBody = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget") };
         var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(requestBody);
         var gzippedBytes = CompressGzip(jsonBytes);
@@ -53,9 +53,9 @@ public class CompressionPostgresTests : IDisposable
         content.Headers.ContentType = new(FileTypeInfo.Json.MimeType);
         content.Headers.ContentEncoding.Add("gzip");
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/Query") { Content = content };
-        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result!.IsSuccess);
         Assert.NotNull(result.Items);

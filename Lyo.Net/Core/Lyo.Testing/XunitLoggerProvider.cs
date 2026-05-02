@@ -6,7 +6,7 @@ namespace Lyo.Testing;
 
 public class XunitLoggerProvider(ITestOutputHelper output) : ILoggerProvider
 {
-    private readonly ITestOutputHelper _output = ArgumentHelpers.ThrowIfNullReturn(output, nameof(output));
+    private readonly ITestOutputHelper _output = ArgumentHelpers.ThrowIfNullReturn(output);
 
     public ILogger CreateLogger(string categoryName) => new XunitLogger(_output, categoryName);
 

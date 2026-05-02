@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection (IDbContextFactory only).</summary>
     public static IServiceCollection AddTagDbContextFactory(this IServiceCollection services, Action<PostgresTagOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresTagOptions();
         configure(options);
         return services.AddTagDbContextFactory(options);
@@ -27,9 +27,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresTagOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresTagOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddTagDbContextFactory(this IServiceCollection services, PostgresTagOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresTagOptions>>(Options.Create(options));
         services.AddPostgresMigrations<TagDbContext, PostgresTagOptions>();
@@ -55,8 +55,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore (ITagStore) to the service collection.</summary>
     public static IServiceCollection AddPostgresTagStore(this IServiceCollection services, Action<PostgresTagOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresTagOptions();
         configure(options);
         return services.AddPostgresTagStore(options);
@@ -68,9 +68,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresTagOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresTagOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -82,8 +82,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore to the service collection.</summary>
     public static IServiceCollection AddPostgresTagStore(this IServiceCollection services, PostgresTagOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddTagDbContextFactory(options);
         services.AddSingleton<ITagStore, PostgresTagStore>();
         return services;

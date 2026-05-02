@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
+using Lyo.Result;
 using MimeKit;
 
 namespace Lyo.Email.Builders;
@@ -36,7 +36,7 @@ public sealed class EmailRequestBuilder
     /// <remarks>Note: When passing exactly 2 string arguments, this will match AddTo(string email, string name) instead. Use 3+ arguments or an array to use this overload.</remarks>
     public EmailRequestBuilder AddTo(params string[] to)
     {
-        ArgumentHelpers.ThrowIfNull(to, nameof(to));
+        ArgumentHelpers.ThrowIfNull(to);
         foreach (var i in to)
             AddTo(i);
 
@@ -59,7 +59,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddTo(MailboxAddress to)
     {
-        ArgumentHelpers.ThrowIfNull(to, nameof(to));
+        ArgumentHelpers.ThrowIfNull(to);
         _message.To.Add(to);
         return this;
     }
@@ -69,7 +69,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddCc(IEnumerable<string> cc)
     {
-        ArgumentHelpers.ThrowIfNull(cc, nameof(cc));
+        ArgumentHelpers.ThrowIfNull(cc);
         foreach (var i in cc)
             AddCc(i);
 
@@ -81,7 +81,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddCc(params string[] cc)
     {
-        ArgumentHelpers.ThrowIfNull(cc, nameof(cc));
+        ArgumentHelpers.ThrowIfNull(cc);
         foreach (var i in cc)
             AddCc(i, i);
 
@@ -104,7 +104,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddCc(MailboxAddress cc)
     {
-        ArgumentHelpers.ThrowIfNull(cc, nameof(cc));
+        ArgumentHelpers.ThrowIfNull(cc);
         _message.Cc.Add(cc);
         return this;
     }
@@ -114,7 +114,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddBcc(IEnumerable<string> bcc)
     {
-        ArgumentHelpers.ThrowIfNull(bcc, nameof(bcc));
+        ArgumentHelpers.ThrowIfNull(bcc);
         foreach (var i in bcc)
             AddBcc(i);
 
@@ -126,7 +126,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddBcc(params string[] bcc)
     {
-        ArgumentHelpers.ThrowIfNull(bcc, nameof(bcc));
+        ArgumentHelpers.ThrowIfNull(bcc);
         foreach (var i in bcc)
             AddBcc(i);
 
@@ -149,7 +149,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddBcc(MailboxAddress bcc)
     {
-        ArgumentHelpers.ThrowIfNull(bcc, nameof(bcc));
+        ArgumentHelpers.ThrowIfNull(bcc);
         _message.Bcc.Add(bcc);
         return this;
     }
@@ -170,7 +170,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder SetFrom(MailboxAddress from)
     {
-        ArgumentHelpers.ThrowIfNull(from, nameof(from));
+        ArgumentHelpers.ThrowIfNull(from);
         _message.From.Add(from);
         return this;
     }
@@ -191,7 +191,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder SetReplyTo(MailboxAddress replyTo)
     {
-        ArgumentHelpers.ThrowIfNull(replyTo, nameof(replyTo));
+        ArgumentHelpers.ThrowIfNull(replyTo);
         _message.ReplyTo.Add(replyTo);
         return this;
     }
@@ -201,7 +201,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder SetSubject(string subject)
     {
-        ArgumentHelpers.ThrowIfNull(subject, nameof(subject));
+        ArgumentHelpers.ThrowIfNull(subject);
         _message.Subject = subject;
         return this;
     }
@@ -256,7 +256,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddAttachment(EmailAttachment attachment)
     {
-        ArgumentHelpers.ThrowIfNull(attachment, nameof(attachment));
+        ArgumentHelpers.ThrowIfNull(attachment);
         var contentType = !string.IsNullOrWhiteSpace(attachment.ContentType) ? ContentType.Parse(attachment.ContentType) : null;
         if (contentType != null)
             _bodyBuilder.Attachments.Add(attachment.FileName, attachment.Data, contentType);
@@ -283,8 +283,8 @@ public sealed class EmailRequestBuilder
         Guid? templateId = null,
         string? metadataJson = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentHelpers.ThrowIfNull(data);
         if (contentType != null)
             _bodyBuilder.Attachments.Add(fileName, data, contentType);
         else
@@ -310,8 +310,8 @@ public sealed class EmailRequestBuilder
         Guid? templateId = null,
         string? metadataJson = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentHelpers.ThrowIfNull(data);
         OperationHelpers.ThrowIfNotReadable(data, $"Stream '{nameof(data)}' must be readable.");
         var bytes = ReadStreamToBytes(data);
         if (contentType != null)
@@ -328,7 +328,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddAttachment(Dictionary<string, byte[]> files)
     {
-        ArgumentHelpers.ThrowIfNull(files, nameof(files));
+        ArgumentHelpers.ThrowIfNull(files);
         foreach (var file in files) {
             _bodyBuilder.Attachments.Add(file.Key, file.Value);
             _attachmentMetadata.Add(new(file.Key, file.Value));
@@ -344,7 +344,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddAttachmentFromFile(string filePath, string? fileStorageId = null, Guid? templateId = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var fileName = Path.GetFileName(filePath);
         var data = File.ReadAllBytes(filePath);
         _bodyBuilder.Attachments.Add(fileName, data);
@@ -360,8 +360,8 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddAttachmentsAsZip(string zipFileName, Dictionary<string, byte[]> files, string? fileStorageId = null, Guid? templateId = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName, nameof(zipFileName));
-        ArgumentHelpers.ThrowIfNull(files, nameof(files));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
+        ArgumentHelpers.ThrowIfNull(files);
         var zipData = ZipFileBuilder.New().AddFiles(files).Build();
         _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
         _attachmentMetadata.Add(new(zipFileName, zipData, fileStorageId, templateId, FileTypeInfo.Zip.MimeType));
@@ -374,8 +374,8 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddAttachmentsAsZip(string zipFileName, params string[] filePaths)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName, nameof(zipFileName));
-        ArgumentHelpers.ThrowIfNull(filePaths, nameof(filePaths));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
+        ArgumentHelpers.ThrowIfNull(filePaths);
         var zipData = ZipFileBuilder.New().AddFiles(filePaths).Build();
         _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
         _attachmentMetadata.Add(new(zipFileName, zipData, null, null, FileTypeInfo.Zip.MimeType));
@@ -388,8 +388,8 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddZippedFile(string zipFileName, Action<ZipFileBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName, nameof(zipFileName));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
+        ArgumentHelpers.ThrowIfNull(configure);
         var zipBuilder = ZipFileBuilder.New();
         configure(zipBuilder);
         var zipData = zipBuilder.Build();
@@ -404,8 +404,8 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddHeader(string name, string value)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(value);
         _message.Headers.Add(name, value);
         return this;
     }

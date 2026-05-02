@@ -10,7 +10,7 @@ public sealed class PlaywrightDialogs
 
     internal PlaywrightDialogs(PlaywrightBrowser browser)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
 

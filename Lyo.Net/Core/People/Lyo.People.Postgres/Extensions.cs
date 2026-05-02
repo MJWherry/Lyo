@@ -17,8 +17,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPeopleDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString })
             .AddScoped<PeopleDbContext>(sp => sp.GetRequiredService<IDbContextFactory<PeopleDbContext>>().CreateDbContext());
     }
@@ -29,8 +29,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPeopleDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<PeopleDbContext>(configure);
         return services;
     }
@@ -41,8 +41,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPeopleDbContextFactory(this IServiceCollection services, Action<PostgresPeopleOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresPeopleOptions();
         configure(options);
         return services.AddPeopleDbContextFactory(options);
@@ -58,9 +58,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresPeopleOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresPeopleOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -75,8 +75,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPeopleDbContextFactory(this IServiceCollection services, PostgresPeopleOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresPeopleOptions>>(Options.Create(options));
         services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>();

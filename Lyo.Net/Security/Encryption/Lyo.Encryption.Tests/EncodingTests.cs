@@ -25,7 +25,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
 
     private readonly IIOTempSession _tempSession = new IOTempSession(new());
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -116,7 +116,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var encoding = Encoding.GetEncoding(encodingName);
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
@@ -125,10 +125,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }
@@ -144,7 +144,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var encoding = Encoding.GetEncoding(encodingName);
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
@@ -153,10 +153,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }
@@ -179,10 +179,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }

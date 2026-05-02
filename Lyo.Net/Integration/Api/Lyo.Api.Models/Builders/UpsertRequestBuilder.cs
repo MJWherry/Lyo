@@ -16,7 +16,7 @@ public class UpsertRequestBuilder<T>
 
     public UpsertRequestBuilder<T> WithData(T data)
     {
-        _newData = ArgumentHelpers.ThrowIfNullReturn(data, nameof(data));
+        _newData = ArgumentHelpers.ThrowIfNullReturn(data);
         return this;
     }
 
@@ -44,7 +44,7 @@ public class UpsertRequestBuilder<T>
 
     public UpsertRequestBuilder<T> WithIgnoredProperties(string property, params string[] rest)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(property, nameof(property));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(property);
         _ignoredCompareProperties.Add(property);
         foreach (var p in rest)
             _ignoredCompareProperties.Add(p);

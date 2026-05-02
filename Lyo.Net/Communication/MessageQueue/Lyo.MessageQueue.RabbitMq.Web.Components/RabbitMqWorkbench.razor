@@ -171,7 +171,7 @@
         _busy = true;
         try {
             _lastHealth = await MqService.CheckHealthAsync();
-            SetDetails("Health Check", _lastHealth.IsHealthy, [Detail("Healthy", _lastHealth.IsHealthy.ToString()), Detail("Duration", _lastHealth.Duration.ToString()), Detail("Message", _lastHealth.Message ?? "(none)"), Detail("Checked", _lastHealth.CheckedAt.ToString("u")), .. _lastHealth.Metadata?.Select(x => Detail(x.Key, x.Value?.ToString() ?? "(null)")).ToList() ?? []]);
+            SetDetails("Health Check", _lastHealth.IsHealthy, [Detail("Healthy", _lastHealth.IsHealthy.ToString()), Detail("Duration", _lastHealth.Duration.ToString()), Detail("Message", _lastHealth.Message ?? "(none)"), Detail("Checked", _lastHealth.CheckedAt.ToString("u")), Detail("Exception", _lastHealth.Exception?.Message ?? "(none)"), .. _lastHealth.Metadata?.Select(x => Detail(x.Key, x.Value?.ToString() ?? "(null)")).ToList() ?? []]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);

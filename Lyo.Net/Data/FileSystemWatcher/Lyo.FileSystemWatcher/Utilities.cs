@@ -423,8 +423,8 @@ public static class Utilities
 
     public static byte[] Hash(string path, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        ArgumentHelpers.ThrowIfFileNotFound(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        ArgumentHelpers.ThrowIfFileNotFound(path);
         try {
             using var stream = File.OpenRead(path);
             ct.ThrowIfCancellationRequested();

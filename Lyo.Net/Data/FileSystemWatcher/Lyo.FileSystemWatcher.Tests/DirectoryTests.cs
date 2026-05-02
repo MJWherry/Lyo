@@ -40,7 +40,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Delete(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Move(Path.Combine(_tempSession.SessionDirectory, directoryName), Path.Combine(_tempSession.SessionDirectory, newDirectoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Move(Path.Combine(_tempSession.SessionDirectory, directoryName), Path.Combine(_tempSession.SessionDirectory, subDirectoryName, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class DirectoryTests : IDisposable
             fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(5));
     }
 
     [Fact]
@@ -188,7 +188,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Delete(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Move(Path.Combine(_tempSession.SessionDirectory, directoryName), Path.Combine(_tempSession.SessionDirectory, newFileName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class DirectoryTests : IDisposable
         };
 
         Directory.Move(Path.Combine(_tempSession.SessionDirectory, directoryName), Path.Combine(_tempSession.SessionDirectory, subDirectoryName, directoryName));
-        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
     [Theory]
@@ -252,6 +252,6 @@ public class DirectoryTests : IDisposable
         for (var i = 0; i < directoryAmount; i++)
             Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, $"{directoryPrefix}_{i}"));
 
-        await PollAssert.ThatAsync(() => directoryAmount == fired, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => directoryAmount == fired, TimeSpan.FromSeconds(30));
     }
 }

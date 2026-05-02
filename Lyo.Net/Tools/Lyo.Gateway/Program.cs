@@ -24,6 +24,7 @@ using Lyo.Pdf;
 using Lyo.Pdf.Web.Components.PdfAnnotator;
 using Lyo.Profanity;
 using Lyo.QRCode;
+using Lyo.Scheduler;
 using Lyo.Sms.Twilio;
 using Lyo.Translation.Aws;
 using Lyo.Tts.Typecast;
@@ -47,6 +48,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddLyoMetrics();
+builder.Services.AddScheduler();
 builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);
 builder.Services.AddLocalLock(options => options.EnableMetrics = true);
 builder.Services.AddLocalKeyedSemaphore(options => options.EnableMetrics = true);
@@ -58,13 +60,13 @@ builder.Services.AddTypecastClientFromConfiguration(builder.Configuration);
 builder.Services.AddTypecastTtsServiceFromConfiguration(builder.Configuration);
 builder.Services.AddAwsTranslationServiceFromConfiguration(builder.Configuration);
 builder.Services.AddProfanityFilterServiceFromConfiguration(builder.Configuration);
+builder.Services.AddComicApiClientFromConfiguration(builder.Configuration);
 builder.Services.AddEmailServiceFromConfiguration(builder.Configuration);
 builder.Services.AddTwilioSmsServiceFromConfiguration(builder.Configuration);
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, new());
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
-builder.Services.AddSingleton<IIOTempService>(
-    new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
+builder.Services.AddSingleton<IIOTempService>(new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
 
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
@@ -185,6 +187,20 @@ app.MapGet(
             return Results.Stream(stream, mediaType, fileName, enableRangeProcessing: true);
         })
     .WithName("FileStorageWorkbenchProxyDownload");
+
+// Comic API file proxy: browser fetches images through Gateway so the Comic API's
+// localhost address is never exposed to clients on other devices (e.g. mobile).
+app.MapGet(
+        "/comic-files/{id:guid}", async (Guid id, IComicApiClient comicApi, CancellationToken ct) => {
+            try {
+                var (content, fileType) = await comicApi.GetFileWithTypeAsync($"files/{id}", ct: ct);
+                return Results.Bytes(content, fileType.MimeType);
+            }
+            catch {
+                return Results.NotFound();
+            }
+        })
+    .WithName("ComicFileProxy");
 
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.Run();

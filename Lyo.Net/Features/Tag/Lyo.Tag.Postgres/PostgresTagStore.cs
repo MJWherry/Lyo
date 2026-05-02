@@ -15,7 +15,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     /// <summary>Creates a new PostgresTagStore.</summary>
     public PostgresTagStore(IDbContextFactory<TagDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
@@ -41,12 +41,15 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task AddTagAsync(EntityRef forEntity, string tag, EntityRef? fromEntity = null, CancellationToken ct = default)
+    public async Task AddTagAsync(EntityRef forEntity, string tag, string tagType = "tag", EntityRef? fromEntity = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var exists = await context.Tags.AnyAsync(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag, ct).ConfigureAwait(false);
+        var exists = await context.Tags.AnyAsync(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag && t.TagType == tagType, ct)
+            .ConfigureAwait(false);
+
         if (exists)
             return;
 
@@ -55,6 +58,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
             ForEntityType = forEntity.EntityType,
             ForEntityId = forEntity.EntityId,
             Tag = tag,
+            TagType = tagType,
             FromEntityType = fromEntity?.EntityType,
             FromEntityId = fromEntity?.EntityId,
             CreatedTimestamp = DateTime.UtcNow
@@ -65,12 +69,13 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task RemoveTagAsync(EntityRef forEntity, string tag, CancellationToken ct = default)
+    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag)
+        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag && t.TagType == tagType)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -79,35 +84,50 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId)
-            .OrderBy(t => t.Tag)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var query = context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId);
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
 
+        var entities = await query.OrderBy(t => t.Tag).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(string tag, string? forEntityType = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(string tag, string? forEntityType = null, string? tagType = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.Where(t => t.Tag == tag);
         if (!string.IsNullOrWhiteSpace(forEntityType))
             query = query.Where(t => t.ForEntityType == forEntityType);
+
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
 
         var entities = await query.OrderBy(t => t.ForEntityType).ThenBy(t => t.ForEntityId).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var query = context.Tags.Where(t => t.ForEntityType == forEntityType);
+        if (!string.IsNullOrWhiteSpace(tagType))
+            query = query.Where(t => t.TagType == tagType);
+
+        return await query.Select(t => t.Tag).Distinct().OrderBy(t => t).ToListAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task RemoveAllTagsForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Tags.RemoveRange(entities);
@@ -120,6 +140,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
             ForEntityType = e.ForEntityType,
             ForEntityId = e.ForEntityId,
             Tag = e.Tag,
+            TagType = e.TagType,
             FromEntityType = e.FromEntityType,
             FromEntityId = e.FromEntityId,
             CreatedTimestamp = e.CreatedTimestamp

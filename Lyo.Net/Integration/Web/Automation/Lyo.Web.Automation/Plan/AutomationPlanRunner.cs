@@ -27,8 +27,8 @@ public static class AutomationPlanRunner
         ILogger? logger,
         CancellationToken ct)
     {
-        ArgumentHelpers.ThrowIfNull(session, nameof(session));
-        ArgumentHelpers.ThrowIfNull(plan, nameof(plan));
+        ArgumentHelpers.ThrowIfNull(session);
+        ArgumentHelpers.ThrowIfNull(plan);
         ArgumentHelpers.ThrowIf(plan.Steps == null, "AutomationPlan.Steps cannot be null.", nameof(plan));
 
         var runId = AutomationGuid.CreateTimeOrdered();
@@ -393,7 +393,7 @@ public static class AutomationPlanRunner
 
     private static async Task FindAndStoreElementAsync(IWebAutomationBrowser browser, PlanExecutionState state, string refName, ElementLocator locator, CancellationToken ct)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName, nameof(refName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName);
         state.ThrowIfRefNameTaken(refName);
         var element = await browser.PollForElementAsync(locator, ct).ConfigureAwait(false);
         state.Elements[refName] = element;
@@ -401,7 +401,7 @@ public static class AutomationPlanRunner
 
     private static async Task FindAndStoreChainAsync(IWebAutomationBrowser browser, PlanExecutionState state, string refName, ElementLocatorChain chain, CancellationToken ct)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName, nameof(refName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName);
         state.ThrowIfRefNameTaken(refName);
         var element = await browser.PollForElementAsync(chain, ct).ConfigureAwait(false);
         state.Elements[refName] = element;
@@ -409,7 +409,7 @@ public static class AutomationPlanRunner
 
     private static async Task FindAndStoreElementListAsync(IWebAutomationBrowser browser, PlanExecutionState state, string refName, ElementLocatorChain chain, CancellationToken ct)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName, nameof(refName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName);
         state.ThrowIfRefNameTaken(refName);
         var list = await browser.PollForElementsAsync(chain, ct).ConfigureAwait(false);
         state.ElementLists[refName] = list;
@@ -605,7 +605,7 @@ public static class AutomationPlanRunner
 
         public IWebAutomationElement ResolveElement(string refName)
         {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName, nameof(refName));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(refName);
             OperationHelpers.ThrowIf(!Elements.TryGetValue(refName, out var el), $"Unknown element ref '{refName}'. Run a find step first.");
             return el!;
         }

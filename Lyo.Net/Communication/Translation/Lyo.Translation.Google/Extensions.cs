@@ -18,9 +18,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = GoogleTranslationOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Configure GoogleTranslationOptions from configuration (if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(GoogleTranslationOptions))) {
@@ -53,8 +53,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddGoogleTranslationService(this IServiceCollection services, Action<GoogleTranslationOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<GoogleTranslationOptions>(_ => {
             var options = new GoogleTranslationOptions();
             configure(options);
@@ -79,8 +79,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddGoogleTranslationService(this IServiceCollection services, GoogleTranslationOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<GoogleTranslationService>(provider => {
             var logger = provider.GetService<ILogger<GoogleTranslationService>>();

@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL comment DbContextFactory to the service collection (IDbContextFactory only).</summary>
     public static IServiceCollection AddCommentDbContextFactory(this IServiceCollection services, Action<PostgresCommentOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresCommentOptions();
         configure(options);
         return services.AddCommentDbContextFactory(options);
@@ -27,9 +27,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresCommentOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresCommentOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL comment DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddCommentDbContextFactory(this IServiceCollection services, PostgresCommentOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresCommentOptions>>(Options.Create(options));
         services.AddPostgresMigrations<CommentDbContext, PostgresCommentOptions>();
@@ -55,8 +55,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL comment DbContextFactory and PostgresCommentStore (ICommentStore) to the service collection.</summary>
     public static IServiceCollection AddPostgresCommentStore(this IServiceCollection services, Action<PostgresCommentOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresCommentOptions();
         configure(options);
         return services.AddPostgresCommentStore(options);
@@ -68,9 +68,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresCommentOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresCommentOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -82,8 +82,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL comment DbContextFactory and PostgresCommentStore to the service collection.</summary>
     public static IServiceCollection AddPostgresCommentStore(this IServiceCollection services, PostgresCommentOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddCommentDbContextFactory(options);
         services.AddSingleton<ICommentStore, PostgresCommentStore>();
         return services;

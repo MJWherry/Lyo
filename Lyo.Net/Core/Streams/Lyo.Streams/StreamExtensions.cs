@@ -15,8 +15,8 @@ public static class StreamExtensions
     /// <exception cref="ArgumentNullException">Thrown when source or destination is null.</exception>
     public static async Task CopyToAsync(this Stream source, Stream destination, int? bufferSize = null, IProgress<long>? progress = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(source, nameof(source));
-        ArgumentHelpers.ThrowIfNull(destination, nameof(destination));
+        ArgumentHelpers.ThrowIfNull(source);
+        ArgumentHelpers.ThrowIfNull(destination);
         var effectiveBufferSize = bufferSize ?? StreamChunkSizeHelper.DetermineChunkSize(source);
         if (progress == null) {
             await source.CopyToAsync(destination, effectiveBufferSize, ct).ConfigureAwait(false);

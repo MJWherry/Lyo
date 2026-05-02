@@ -45,8 +45,8 @@ public class OptionsTests : IDisposable
                 fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", "test.txt"), TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", "test.txt"), TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(fired);
     }
 
@@ -77,8 +77,8 @@ public class OptionsTests : IDisposable
                 fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(fired);
     }
 
@@ -94,8 +94,8 @@ public class OptionsTests : IDisposable
                 fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(fired);
     }
 

@@ -1,0 +1,102 @@
+@page "/rich-text-editor"
+@using Lyo.Web.Components
+
+<PageTitle>Rich Text Editor — Portfolio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MudPaper Class="pa-4">
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.h5">Rich Text Editor</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Exercise the reusable `LyoRichTextEditor` component and inspect both the rendered preview and raw HTML output.
+                </MudText>
+            </div>
+
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadSample">Load Sample</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Clear">Clear</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="ToggleReadOnly">
+                    @(_readOnly ? "Switch To Edit Mode" : "Switch To Read-Only")
+                </MudButton>
+            </MudStack>
+
+            <MudGrid>
+                <MudItem xs="12" md="7">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.subtitle1">Editor</MudText>
+                            <LyoRichTextEditor @bind-Value="_html"
+                                               Label="Body"
+                                               Placeholder="Write your content here..."
+                                               ReadOnly="@_readOnly"
+                                               MinHeightPx="360"/>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="5">
+                    <MudStack Spacing="3">
+                        <MudPaper Class="pa-4" Outlined="true">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Preview</MudText>
+                            @if (string.IsNullOrWhiteSpace(_html)) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Start typing to preview the rendered rich text here.</MudText>
+                            }
+                            else {
+                                <div class="rte-preview">@((MarkupString)_html)</div>
+                            }
+                        </MudPaper>
+
+                        <MudPaper Class="pa-4" Outlined="true">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">HTML Output</MudText>
+                            <MudTextField T="string" Value="@_html" ReadOnly="true" Lines="12" FullWidth="true" Variant="Variant.Outlined"/>
+                        </MudPaper>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<style>
+    .rte-preview { min-height: 180px; line-height: 1.55; word-break: break-word; }
+    .rte-preview h1, .rte-preview h2, .rte-preview h3, .rte-preview h4, .rte-preview h5,
+    .rte-preview p, .rte-preview blockquote, .rte-preview pre, .rte-preview ul, .rte-preview ol { margin-top: 0; }
+    .rte-preview blockquote { margin-left: 0; padding-left: 12px; border-left: 4px solid var(--mud-palette-primary); color: var(--mud-palette-text-secondary); }
+    .rte-preview pre { position: relative; padding: 12px; padding-top: 28px; border-radius: 4px; overflow-x: auto; border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 70%, transparent 30%); background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-text-primary) 8%); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.5; }
+    .rte-preview pre code { display: block; white-space: pre-wrap; color: inherit; font-family: inherit; font-size: inherit; line-height: inherit; tab-size: 4; }
+    .rte-preview :last-child { margin-bottom: 0; }
+</style>
+
+@code {
+    [CascadingParameter]
+    private MainLayout? Layout { get; set; }
+
+    private string _html = """
+                          <h2>Welcome</h2>
+                          <p>This is a <strong>rich text editor</strong> test page for the component library.</p>
+                          <p>You can edit formatted text, create <a href="https://example.com" target="_blank" rel="noopener noreferrer">links</a>, and inspect the generated HTML.</p>
+                          <ul>
+                            <li>Bold, italic, underline, and strike-through</li>
+                            <li>Headings, quotes, and code blocks</li>
+                            <li>Lists, alignment, links, and images</li>
+                          </ul>
+                          """;
+
+    private bool _readOnly;
+
+    protected override void OnInitialized() => Layout?.SetPageTitle("Rich Text Editor");
+
+    private void LoadSample()
+        => _html = """
+                   <h1>Sample Article</h1>
+                   <p><strong>LyoRichTextEditor</strong> stores its value as HTML so it can be reused anywhere in the app.</p>
+                   <blockquote>Use this page to verify toolbar actions and preview the rendered result.</blockquote>
+                   <p style="text-align:center;">Centered text also works.</p>
+                   <pre>Console.WriteLine("Hello from the rich text editor");</pre>
+                   """;
+
+    private void Clear() => _html = string.Empty;
+
+    private void ToggleReadOnly() => _readOnly = !_readOnly;
+}

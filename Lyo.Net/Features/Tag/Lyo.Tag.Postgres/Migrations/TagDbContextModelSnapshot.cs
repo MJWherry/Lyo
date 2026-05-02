@@ -62,15 +62,25 @@ namespace Lyo.Tag.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("tag");
 
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("tag")
+                        .HasColumnName("tag_type");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Tag")
                         .HasDatabaseName("ix_tag_tag");
 
+                    b.HasIndex("TagType")
+                        .HasDatabaseName("ix_tag_tag_type");
+
                     b.HasIndex("ForEntityType", "ForEntityId")
                         .HasDatabaseName("ix_tag_for_entity");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "Tag")
+                    b.HasIndex("ForEntityType", "ForEntityId", "TagType", "Tag")
                         .IsUnique()
                         .HasDatabaseName("ix_tag_for_entity_tag_unique");
 

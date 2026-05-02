@@ -1,26 +1,14 @@
 using Lyo.Health;
 using Lyo.MessageQueue;
-using Lyo.MessageQueue.RabbitMq;
 
 namespace Lyo.Job.Postgres.Tests;
 
-/// <summary>Fake RabbitMQ service for integration tests - always connected, SendToQueue/SendToExchange succeed.</summary>
-public sealed class FakeMqService : IRabbitMqService
+/// <summary>Fake MQ service for integration tests — always connected, all operations succeed.</summary>
+public sealed class FakeMqService : IMqService
 {
     private bool _connected = true;
 
     public bool IsConnected() => _connected;
-
-    public Task<bool> CreateExchange(
-        string exchangeName,
-        string exchangeType = "direct",
-        bool durable = true,
-        bool autoDelete = false,
-        IDictionary<string, object>? arguments = null,
-        CancellationToken ct = default)
-        => Task.FromResult(true);
-
-    public Task<bool> DeleteExchange(string exchangeName, bool ifUnused = false, CancellationToken ct = default) => Task.FromResult(true);
 
     public Task ConnectAsync(CancellationToken ct = default)
     {

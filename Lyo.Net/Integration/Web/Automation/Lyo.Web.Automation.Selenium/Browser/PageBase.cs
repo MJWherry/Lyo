@@ -14,7 +14,7 @@ public abstract class PageBase
 
     protected PageBase(SeleniumBrowser browser, By? root = null)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         Browser = browser;
         Root = root;
     }

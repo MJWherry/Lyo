@@ -55,7 +55,7 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
     /// <inheritdoc />
     public Task<TranslationResult> TranslateAsync(string text, LanguageCodeInfo targetLanguageCode, LanguageCodeInfo? sourceLanguage = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         var request = new TranslationRequest { Text = text, TargetLanguageCode = targetLanguageCode, SourceLanguage = sourceLanguage ?? Options.DefaultSourceLanguage };
         return TranslateAsync(request, ct);
     }
@@ -63,7 +63,7 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
     /// <inheritdoc />
     public async Task<TranslationResult> TranslateAsync(TranslationRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.TranslateDuration)]);
         OnTranslating(request);
         var result = await TranslateCoreAsync(request, ct).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
     /// <inheritdoc />
     public async Task<IReadOnlyList<TranslationResult>> TranslateBulkAsync(IEnumerable<TranslationRequest> requests, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(requests, nameof(requests));
+        ArgumentHelpers.ThrowIfNull(requests);
         var requestList = requests.ToList();
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.BulkTranslateDuration)]);
         var sw = Stopwatch.StartNew();

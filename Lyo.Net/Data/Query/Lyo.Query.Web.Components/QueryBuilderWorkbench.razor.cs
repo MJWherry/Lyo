@@ -65,10 +65,8 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
                 var loaded = JsonSerializer.Deserialize<QueryWorkbenchPersistedState>(json, JsonOptions);
                 if (loaded != null) {
                     loadedAny = true;
-                    _projectionQuery = loaded.QueryRequest ?? new ProjectionQueryReq { Start = 0, Amount = 20 };
-                    _projectionQuery.Options ??= new();
+                    _projectionQuery = loaded.QueryRequest;
                     _entityQuery = loaded.EntityQuery ?? FromProjectionSharedFields(_projectionQuery);
-                    _entityQuery.Options ??= new();
                     _includeAll = loaded.IncludeAll ?? [];
                     _selectAll = loaded.SelectAll ?? [];
                     _keysAll = loaded.KeysAll ?? [];

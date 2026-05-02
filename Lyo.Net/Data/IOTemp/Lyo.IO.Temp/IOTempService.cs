@@ -3,12 +3,10 @@ using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
+using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-#if !NET5_0_OR_GREATER
-using System.Runtime.InteropServices;
-#endif
 
 namespace Lyo.IO.Temp;
 
@@ -19,6 +17,7 @@ public sealed class IOTempService : IIOTempService
     private readonly ConcurrentDictionary<string, IIOTempSession> _activeSessions = [];
     private readonly ConcurrentDictionary<string, IIOTempSession> _keyedSessions = [];
     private readonly object _keyedSessionLock = new();
+    private readonly IIOTempStorageProvider _storage;
     private readonly ILogger<IOTempService> _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly IMetrics _metrics;
@@ -28,11 +27,12 @@ public sealed class IOTempService : IIOTempService
 
     public string ServiceDirectory { get; }
 
-    public IOTempService(IOTempServiceOptions? options = null, ILogger<IOTempService>? logger = null, IMetrics? metrics = null, ILoggerFactory? loggerFactory = null)
+    public IOTempService(IOTempServiceOptions? options = null, ILogger<IOTempService>? logger = null, IMetrics? metrics = null, ILoggerFactory? loggerFactory = null, IIOTempStorageProvider? storageProvider = null)
     {
         _options = options ?? new IOTempServiceOptions();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.TempRoot, nameof(_options.TempRoot));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.DirectoryName, nameof(_options.DirectoryName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.TempRoot);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.DirectoryName);
+        _storage = storageProvider ?? new FileSystemIOTempStorageProvider(_options.RootDirectory);
         _logger = logger ?? NullLogger<IOTempService>.Instance;
         _loggerFactory = loggerFactory;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -51,7 +51,7 @@ public sealed class IOTempService : IIOTempService
         try {
             var sessionOptions = BuildSessionOptions(options);
             var sessionLogger = _loggerFactory?.CreateLogger<IOTempSession>();
-            var session = new IOTempSession(sessionOptions, sessionLogger, _metrics, OnSessionDisposed);
+            var session = new IOTempSession(sessionOptions, sessionLogger, _metrics, OnSessionDisposed, _storage);
             _activeSessions.TryAdd(session.SessionDirectory, session);
             _logger.LogDebug("Created IO temp session at {SessionDirectory}", session.SessionDirectory);
             _metrics.RecordTiming(Constants.Metrics.CreateSessionDuration, stopwatch.Elapsed);
@@ -70,7 +70,7 @@ public sealed class IOTempService : IIOTempService
     public IIOTempSession GetOrCreateSession(string key, IOTempSessionOptions? options = null)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
 
         if (_keyedSessions.TryGetValue(key, out var existing))
             return existing;
@@ -111,8 +111,7 @@ public sealed class IOTempService : IIOTempService
     {
         ThrowIfDisposed();
         var path = ResolveServicePath(name, false);
-        using (File.Create(path)) { }
-
+        _storage.TouchFile(path);
         _logger.LogDebug("Created IO temp one-off file at {FilePath}", path);
         return path;
     }
@@ -121,7 +120,7 @@ public sealed class IOTempService : IIOTempService
     {
         ThrowIfDisposed();
         var path = ResolveServicePath(name, false);
-        File.WriteAllBytes(path, data.ToArray());
+        _storage.WriteAllBytes(path, data.ToArray());
         _logger.LogDebug("Created IO temp one-off file at {FilePath}", path);
         return path;
     }
@@ -129,11 +128,11 @@ public sealed class IOTempService : IIOTempService
     public string CreateFile(Stream data, string? name = null)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         OperationHelpers.ThrowIfNotReadable(data, "Input stream must be readable to create temp file.");
         var path = ResolveServicePath(name, false);
-        using var fs = File.Create(path);
-        data.CopyTo(fs);
+        using var dest = _storage.OpenCreate(path);
+        data.CopyTo(dest);
         _logger.LogDebug("Created IO temp one-off file at {FilePath}", path);
         return path;
     }
@@ -142,7 +141,7 @@ public sealed class IOTempService : IIOTempService
     {
         ThrowIfDisposed();
         var path = ResolveServicePath(name, true);
-        Directory.CreateDirectory(path);
+        _storage.CreateDirectory(path);
         _logger.LogDebug("Created IO temp one-off directory at {DirectoryPath}", path);
         return path;
     }
@@ -164,49 +163,46 @@ public sealed class IOTempService : IIOTempService
         var stopwatch = Stopwatch.StartNew();
         var deletedDirectories = 0;
         var deletedFiles = 0;
-        var root = new DirectoryInfo(ServiceDirectory);
-        if (!root.Exists) {
+
+        if (!_storage.DirectoryExists(ServiceDirectory)) {
             _logger.LogDebug("Service directory {ServiceDirectory} does not exist, skipping cleanup", ServiceDirectory);
             return;
         }
 
         var cutoff = DateTimeOffset.UtcNow - olderThan;
-        foreach (var dir in root.EnumerateDirectories()) {
+        foreach (var entry in _storage.EnumerateEntries(ServiceDirectory)) {
             ct.ThrowIfCancellationRequested();
-            if (dir.CreationTimeUtc > cutoff)
+            if (entry.CreationTimeUtc > cutoff)
                 continue;
 
-            if (_activeSessions.ContainsKey(dir.FullName)) {
-                _logger.LogDebug("Skipping cleanup for active session directory {SessionDirectory}", dir.FullName);
-                continue;
-            }
+            if (entry.IsDirectory) {
+                if (_activeSessions.ContainsKey(entry.FullPath)) {
+                    _logger.LogDebug("Skipping cleanup for active session directory {SessionDirectory}", entry.FullPath);
+                    continue;
+                }
 
-            try {
-                dir.Delete(true);
+                try {
+                    _storage.DeleteDirectory(entry.FullPath);
+                }
+                catch (Exception ex) {
+                    _logger.LogWarning(ex, "Failed deleting temp directory {DirectoryPath} during cleanup", entry.FullPath);
+                }
+                finally {
+                    if (!_storage.DirectoryExists(entry.FullPath))
+                        deletedDirectories++;
+                }
             }
-            catch (Exception ex) {
-                _logger.LogWarning(ex, "Failed deleting temp directory {DirectoryPath} during cleanup", dir.FullName);
-            }
-            finally {
-                if (!dir.Exists)
-                    deletedDirectories++;
-            }
-        }
-
-        foreach (var file in root.EnumerateFiles()) {
-            ct.ThrowIfCancellationRequested();
-            if (file.CreationTimeUtc > cutoff)
-                continue;
-
-            try {
-                file.Delete();
-            }
-            catch (Exception ex) {
-                _logger.LogWarning(ex, "Failed deleting temp file {FilePath} during cleanup", file.FullName);
-            }
-            finally {
-                if (!file.Exists)
-                    deletedFiles++;
+            else {
+                try {
+                    _storage.DeleteFile(entry.FullPath);
+                }
+                catch (Exception ex) {
+                    _logger.LogWarning(ex, "Failed deleting temp file {FilePath} during cleanup", entry.FullPath);
+                }
+                finally {
+                    if (!_storage.FileExists(entry.FullPath))
+                        deletedFiles++;
+                }
             }
         }
 
@@ -225,16 +221,16 @@ public sealed class IOTempService : IIOTempService
     private void EnsureRootExists()
     {
         try {
-            if (!Directory.Exists(_options.RootDirectory)) {
+            if (!_storage.DirectoryExists(_options.RootDirectory)) {
                 if (_options.CreateRootDirectoryIfNotExists) {
-                    Directory.CreateDirectory(_options.RootDirectory);
+                    _storage.CreateDirectory(_options.RootDirectory);
                     _logger.LogInformation("Created IO temp root directory at {RootDirectory}", _options.RootDirectory);
                 }
                 else
-                    ExceptionThrower.ThrowIfDirectoryNotFound(_options.RootDirectory, nameof(_options.RootDirectory));
+                    ExceptionThrower.ThrowIfDirectoryNotFound(_options.RootDirectory);
             }
 
-            ValidateDirectoryReadableAndWritable(_options.RootDirectory, "RootDirectory");
+            _storage.EnsureDirectoryAccessible(_options.RootDirectory);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "IO temp root directory {RootDirectory} is not accessible for read/write operations", _options.RootDirectory);
@@ -246,11 +242,11 @@ public sealed class IOTempService : IIOTempService
     {
         var stopwatch = Stopwatch.StartNew();
         var serviceDirName = $"service-{Guid.NewGuid():N}";
-        var serviceDirectory = Path.Combine(_options.RootDirectory, serviceDirName);
+        var serviceDirectory = Path.Combine(_storage.RootPath, serviceDirName);
         try {
-            Directory.CreateDirectory(serviceDirectory);
-            OperationHelpers.ThrowIf(!Directory.Exists(serviceDirectory), $"Failed to create IO temp service directory: {serviceDirectory}");
-            ValidateDirectoryReadableAndWritable(serviceDirectory, "ServiceDirectory");
+            _storage.CreateDirectory(serviceDirectory);
+            OperationHelpers.ThrowIf(!_storage.DirectoryExists(serviceDirectory), $"Failed to create IO temp service directory: {serviceDirectory}");
+            _storage.EnsureDirectoryAccessible(serviceDirectory);
             _logger.LogInformation("Created IO temp service directory at {ServiceDirectory}", serviceDirectory);
             _metrics.RecordTiming(Constants.Metrics.CreateServiceDirectoryDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.CreateServiceDirectorySuccess);
@@ -338,7 +334,7 @@ public sealed class IOTempService : IIOTempService
 
         var parentDir = Path.GetDirectoryName(path);
         OperationHelpers.ThrowIfNullOrWhiteSpace(parentDir, "Could not determine parent directory for service temp path.");
-        Directory.CreateDirectory(parentDir!);
+        _storage.CreateDirectory(parentDir!);
         return path;
     }
 
@@ -364,26 +360,14 @@ public sealed class IOTempService : IIOTempService
         return $"{prefix}{middle}{suffix}";
     }
 
-    private static void ValidateDirectoryReadableAndWritable(string directoryPath, string paramName)
-    {
-        ExceptionThrower.ThrowIfDirectoryNotAccessible(directoryPath, paramName);
-        var probePath = Path.Combine(directoryPath, $".rw-check-{Guid.NewGuid():N}.tmp");
-        try {
-            File.WriteAllText(probePath, "rw");
-            ExceptionThrower.ThrowIfFileNotAccessible(probePath, nameof(probePath));
-        }
-        finally {
-            if (File.Exists(probePath))
-                File.Delete(probePath);
-        }
-    }
-
     private static StringComparison GetPathComparison()
     {
 #if NET5_0_OR_GREATER
         return OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 #else
-        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
 #endif
     }
 
@@ -411,13 +395,12 @@ public sealed class IOTempService : IIOTempService
         }
     }
 
-    private static void DeleteDirectoryWithRetry(string path, ILogger logger, int retries = 3, int retryDelayMs = 150)
+    private void DeleteDirectoryWithRetry(string path, ILogger logger, int retries = 3, int retryDelayMs = 150)
     {
         Exception? lastEx = null;
         for (var attempt = 1; attempt <= retries; attempt++) {
             try {
-                if (Directory.Exists(path))
-                    Directory.Delete(path, true);
+                _storage.DeleteDirectory(path);
                 return;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {

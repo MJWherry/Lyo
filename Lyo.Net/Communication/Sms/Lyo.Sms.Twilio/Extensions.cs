@@ -34,9 +34,9 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddTwilioSmsService(this IServiceCollection services, IConfiguration configuration, string configSectionName = TwilioOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 #if NET6_0_OR_GREATER
         services.AddHttpClient(TwilioHttpClientName);
 #endif

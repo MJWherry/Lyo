@@ -15,28 +15,28 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
 
     public PostgresChangeTracker(IDbContextFactory<ChangeTrackerDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public void RecordChange(ChangeRecord change)
     {
-        ArgumentHelpers.ThrowIfNull(change, nameof(change));
+        ArgumentHelpers.ThrowIfNull(change);
         RecordChanges([change]);
     }
 
     /// <inheritdoc />
     public async Task RecordChangeAsync(ChangeRecord change, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(change, nameof(change));
+        ArgumentHelpers.ThrowIfNull(change);
         await RecordChangesAsync([change], ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public void RecordChanges(IEnumerable<ChangeRecord> changes)
     {
-        ArgumentHelpers.ThrowIfNull(changes, nameof(changes));
+        ArgumentHelpers.ThrowIfNull(changes);
         var list = changes.ToList();
         if (list.Count == 0)
             return;
@@ -49,7 +49,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     /// <inheritdoc />
     public async Task RecordChangesAsync(IEnumerable<ChangeRecord> changes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(changes, nameof(changes));
+        ArgumentHelpers.ThrowIfNull(changes);
         var list = changes.ToList();
         if (list.Count == 0)
             return;
@@ -70,7 +70,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ChangeRecord>> GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Changes.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId)
             .OrderByDescending(c => c.Timestamp)
@@ -83,7 +83,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ChangeRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Changes.Where(c => c.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
@@ -96,7 +96,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Changes.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         if (entities.Count == 0)

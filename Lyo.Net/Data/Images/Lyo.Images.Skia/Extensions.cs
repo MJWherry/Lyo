@@ -14,7 +14,7 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddSkiaImageService(this IServiceCollection services, Action<ImageServiceOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         var options = new ImageServiceOptions();
         configure?.Invoke(options);
         services.AddSingleton(options);
@@ -28,8 +28,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddSkiaImageService(this IServiceCollection services, ImageServiceOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<IImageService, SkiaImageService>();
         return services;
@@ -59,9 +59,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = ImageServiceOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(ImageServiceOptions))) {
             services.AddSingleton<ImageServiceOptions>(_ => {
                 var section = configuration.GetSection(configSectionName);

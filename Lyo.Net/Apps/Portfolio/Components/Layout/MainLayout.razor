@@ -1,0 +1,102 @@
+@using Lyo.Portfolio.Components.Layout
+@inherits LayoutComponentBase
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+
+@if (_initialized) {
+    <MudThemeProvider Theme="@Themes.Default" IsDarkMode="@_isDarkMode"/>
+    <MudPopoverProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+
+    <MudLayout>
+        <MudDrawer @bind-Open="_drawerOpen"
+                   Elevation="1"
+                   Variant="DrawerVariant.Temporary"
+                   Anchor="Anchor.Start"
+                   Class="mud-width-260">
+            <div>
+                <MudPaper Class="pa-4" Square="true" Style="min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <MudText Typo="Typo.h6" Style="font-weight: 600;">Portfolio</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Lyo Components</MudText>
+                </MudPaper>
+                <MudDivider/>
+                <MudNavMenu Dense="true" Class="mt-2">
+                    <MudNavLink Href="/" Icon="@Icons.Material.Filled.Tag" Match="NavLinkMatch.All">ID Generator</MudNavLink>
+
+                    <MudNavGroup Title="Data &amp; Files" Icon="@Icons.Material.Filled.Folder" Expanded="true">
+                        <MudNavLink Href="/csv-xlsx" Icon="@Icons.Material.Filled.TableChart">CSV / XLSX</MudNavLink>
+                        <MudNavLink Href="/encryption" Icon="@Icons.Material.Filled.Lock">Encryption / Compression</MudNavLink>
+                        <MudNavLink Href="/text-diff" Icon="@Icons.Material.Filled.CompareArrows">Text Diff</MudNavLink>
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Editors" Icon="@Icons.Material.Filled.Edit" Expanded="true">
+                        <MudNavLink Href="/rich-text-editor" Icon="@Icons.Material.Filled.TextFields">Rich Text Editor</MudNavLink>
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Infrastructure" Icon="@Icons.Material.Filled.Storage" Expanded="true">
+                        <MudNavLink Href="/cache" Icon="@Icons.Material.Filled.Memory">Cache</MudNavLink>
+                        <MudNavLink Href="/locks" Icon="@Icons.Material.Filled.LockOpen">Locks</MudNavLink>
+                        <MudNavLink Href="/metrics" Icon="@Icons.Material.Filled.BarChart">Metrics</MudNavLink>
+                        <MudNavLink Href="/schedule" Icon="@Icons.Material.Filled.Schedule">Schedule</MudNavLink>
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Query (Portfolio API)" Icon="@Icons.Material.Filled.Search" Expanded="true">
+                        <MudNavLink Href="/query-builder" Icon="@Icons.Material.Filled.FilterList">Query Builder</MudNavLink>
+                    </MudNavGroup>
+                </MudNavMenu>
+            </div>
+        </MudDrawer>
+
+        <MudMainContent>
+            <MudAppBar Elevation="4" Color="Color.Primary" Dense="true">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+                <MudButton Href="/" Variant="Variant.Text" Class="ml-2" Style="text-transform: none; padding: 0; min-width: auto;">
+                    <MudText Typo="Typo.h6" Style="color: white;">@_pageTitle</MudText>
+                </MudButton>
+                <MudSpacer/>
+                <MudSwitch T="bool" Value="_isDarkMode" ValueChanged="OnDarkModeChangedAsync" Color="Color.Default" Label="Dark Mode"/>
+            </MudAppBar>
+            <CascadingValue Value="this">
+                @Body
+            </CascadingValue>
+        </MudMainContent>
+    </MudLayout>
+}
+else {
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <MudProgressCircular Indeterminate="true"/>
+    </div>
+}
+
+@code {
+    private bool _drawerOpen;
+    private bool _isDarkMode;
+    private bool _initialized;
+    private string _pageTitle = "Portfolio";
+
+    private const string DarkModeKey = "pref_theme_dark";
+
+    public void SetPageTitle(string title)
+    {
+        _pageTitle = title;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized) {
+            _isDarkMode = await LocalStorage.GetItemAsync<bool>(DarkModeKey);
+            _initialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDarkModeChangedAsync(bool value)
+    {
+        _isDarkMode = value;
+        await LocalStorage.SetItemAsync(DarkModeKey, value);
+    }
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

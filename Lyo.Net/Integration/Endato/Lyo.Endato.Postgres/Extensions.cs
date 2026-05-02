@@ -17,8 +17,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddEndatoDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connectionString })
             .AddScoped<EndatoDbContext>(sp => sp.GetRequiredService<IDbContextFactory<EndatoDbContext>>().CreateDbContext());
     }
@@ -29,8 +29,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddEndatoDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<EndatoDbContext>(configure);
         return services;
     }
@@ -41,8 +41,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddEndatoDbContextFactory(this IServiceCollection services, Action<PostgresEndatoOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresEndatoOptions();
         configure(options);
         return services.AddEndatoDbContextFactory(options);
@@ -58,9 +58,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresEndatoOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresEndatoOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -75,8 +75,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddEndatoDbContextFactory(this IServiceCollection services, PostgresEndatoOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresEndatoOptions>>(Options.Create(options));
         services.AddPostgresMigrations<EndatoDbContext, PostgresEndatoOptions>();

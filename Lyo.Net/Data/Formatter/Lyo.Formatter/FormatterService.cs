@@ -27,7 +27,7 @@ public sealed class FormatterService : IFormatterService
     /// <param name="formatter">The SmartFormatter instance to use. Must not be null.</param>
     public FormatterService(SmartFormatter formatter)
     {
-        ArgumentHelpers.ThrowIfNull(formatter, nameof(formatter));
+        ArgumentHelpers.ThrowIfNull(formatter);
         Formatter = formatter;
     }
 
@@ -40,7 +40,7 @@ public sealed class FormatterService : IFormatterService
     /// <inheritdoc />
     public string Format(string template, object? context)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         var provider = Culture ?? CultureInfo.CurrentCulture;
         return context is null ? Formatter.Format(provider, template) : Formatter.Format(provider, template, context);
     }
@@ -48,8 +48,8 @@ public sealed class FormatterService : IFormatterService
     /// <inheritdoc />
     public string Format(string template, params object?[] contextItems)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
-        ArgumentHelpers.ThrowIfNull(contextItems, nameof(contextItems));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
+        ArgumentHelpers.ThrowIfNull(contextItems);
         var provider = Culture ?? CultureInfo.CurrentCulture;
         return Formatter.Format(provider, template, contextItems);
     }
@@ -57,8 +57,8 @@ public sealed class FormatterService : IFormatterService
     /// <inheritdoc />
     public string Format(string template, IReadOnlyDictionary<string, object?> context)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
-        ArgumentHelpers.ThrowIfNull(context, nameof(context));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
+        ArgumentHelpers.ThrowIfNull(context);
         var provider = Culture ?? CultureInfo.CurrentCulture;
         return Formatter.Format(provider, template, context);
     }
@@ -66,8 +66,8 @@ public sealed class FormatterService : IFormatterService
     /// <inheritdoc />
     public string Format(string template, Action<IContextBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
+        ArgumentHelpers.ThrowIfNull(configure);
         var context = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var contextBuilder = new ContextBuilder(context, Culture ?? CultureInfo.CurrentCulture);
         configure(contextBuilder);
@@ -151,7 +151,7 @@ public sealed class FormatterService : IFormatterService
     /// <inheritdoc />
     public ITemplate CreateTemplate(string template)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         return new Template(this, template);
     }
 
@@ -222,7 +222,7 @@ public sealed class FormatterService : IFormatterService
 
         public ITemplate AddContext(Action<IContextBuilder> configure)
         {
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(configure);
             var contextBuilder = new ContextBuilder(_mergedContext, _service.Culture ?? CultureInfo.CurrentCulture);
             configure(contextBuilder);
             return this;
@@ -315,21 +315,21 @@ public sealed class FormatterService : IFormatterService
 
         public IContextBuilder Add(string key, object? value, string format)
         {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(format, nameof(format));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
             _target[key] = value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty;
             return this;
         }
 
         public IContextBuilder Add(string key, object? value, Func<object?, string?> formatter)
         {
-            ArgumentHelpers.ThrowIfNull(formatter, nameof(formatter));
+            ArgumentHelpers.ThrowIfNull(formatter);
             _target[key] = formatter(value);
             return this;
         }
 
         public IContextBuilder Add<T>(string key, T? value, Func<T?, string?> formatter)
         {
-            ArgumentHelpers.ThrowIfNull(formatter, nameof(formatter));
+            ArgumentHelpers.ThrowIfNull(formatter);
             _target[key] = formatter(value);
             return this;
         }
@@ -345,7 +345,7 @@ public sealed class FormatterService : IFormatterService
         public IContextBuilder AddIf(string key, object? value, string format, bool condition)
         {
             if (condition) {
-                ArgumentHelpers.ThrowIfNullOrWhiteSpace(format, nameof(format));
+                ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
                 _target[key] = value is IFormattable formattable ? formattable.ToString(format, _formatProvider) : value?.ToString() ?? string.Empty;
             }
 
@@ -354,7 +354,7 @@ public sealed class FormatterService : IFormatterService
 
         public IContextBuilder AddWhen(string key, object? value, Func<object?, bool> predicate)
         {
-            ArgumentHelpers.ThrowIfNull(predicate, nameof(predicate));
+            ArgumentHelpers.ThrowIfNull(predicate);
             if (predicate(value))
                 _target[key] = value;
 
@@ -363,7 +363,7 @@ public sealed class FormatterService : IFormatterService
 
         public IContextBuilder AddWhen<T>(string key, T? value, Func<T?, bool> predicate)
         {
-            ArgumentHelpers.ThrowIfNull(predicate, nameof(predicate));
+            ArgumentHelpers.ThrowIfNull(predicate);
             if (predicate(value))
                 _target[key] = value;
 

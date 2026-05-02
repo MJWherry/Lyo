@@ -36,7 +36,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
     {
         _options = options;
         _httpClient = httpClient ?? new HttpClient();
-        _baseUrl = string.IsNullOrWhiteSpace(options.ApiEndpoint) ? "https://translation.googleapis.com/language/translate/v2" : options.ApiEndpoint.TrimEnd('/');
+        _baseUrl = string.IsNullOrWhiteSpace(_options.ApiEndpoint) ? "https://translation.googleapis.com/language/translate/v2" : options.ApiEndpoint.TrimEnd('/');
 
         // Override base metric names with Google Translate-specific ones
         MetricNames[nameof(Translation.Constants.Metrics.TranslateDuration)] = Constants.Metrics.TranslateDuration;
@@ -141,7 +141,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
         var sw = Stopwatch.StartNew();
         using var timer = Metrics.StartTimer(MetricNames[nameof(Translation.Constants.Metrics.DetectLanguageDuration)]);
         try {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
             ArgumentHelpers.ThrowIfNotInRange(text.Length, 1, Options.MaxTextLength, nameof(text));
             var apiKey = _options.ApiKey;
             OperationHelpers.ThrowIfNullOrWhiteSpace(apiKey, "Google Translate API key is required. Set ApiKey in GoogleTranslationOptions.");

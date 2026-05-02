@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using Lyo.Exceptions;
+
+// ReSharper disable RedundantSuppressNullableWarningExpression
 #if NETSTANDARD2_1_OR_GREATER || NET5_0_OR_GREATER
 using System.Buffers;
 #endif
@@ -29,8 +31,8 @@ public class HashingStream : Stream
 
     public HashingStream(Stream baseStream, HashAlgorithm hashAlgorithm)
     {
-        ArgumentHelpers.ThrowIfNull(baseStream, nameof(baseStream));
-        ArgumentHelpers.ThrowIfNull(hashAlgorithm, nameof(hashAlgorithm));
+        ArgumentHelpers.ThrowIfNull(baseStream);
+        ArgumentHelpers.ThrowIfNull(hashAlgorithm);
         _baseStream = baseStream;
         _hashAlgorithm = hashAlgorithm;
     }
@@ -166,12 +168,12 @@ public class HashingStream : Stream
     /// <summary>Gets the computed hash. Call this after all data has been written/read. This method can be called multiple times and will return the same hash.</summary>
     public byte[] GetHash()
     {
-        if (!_hashFinalized) {
-            _hashAlgorithm.TransformFinalBlock([], 0, 0);
-            _hashFinalized = true;
-        }
+        if (_hashFinalized)
+            return _hashAlgorithm.Hash!;
 
-        return _hashAlgorithm.Hash ?? [];
+        _hashAlgorithm.TransformFinalBlock([], 0, 0);
+        _hashFinalized = true;
+        return _hashAlgorithm.Hash!;
     }
 
     /// <summary>Gets the computed hash as a hexadecimal string.</summary>

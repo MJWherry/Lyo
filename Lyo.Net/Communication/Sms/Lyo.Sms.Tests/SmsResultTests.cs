@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Result;
 using Lyo.Sms.Models;
 using Lyo.Sms.Twilio;
 
@@ -13,7 +13,7 @@ public class SmsResultTests
         var result = Result<SmsRequest>.Success(request);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
-        Assert.Equal("+1234567890", result.Data!.To);
+        Assert.Equal("+1234567890", result.Data.To);
         Assert.Equal("+1987654321", result.Data.From);
         Assert.Null(result.Errors);
     }
@@ -21,7 +21,6 @@ public class SmsResultTests
     [Fact]
     public void Failure_CreatesFailureResult()
     {
-        var request = new SmsRequest { To = "+1234567890", From = "+1987654321", Body = "Test message" };
         var exception = new Exception("Test error");
         var result = Result<SmsRequest>.Failure(exception, "TEST_ERROR");
         Assert.False(result.IsSuccess);
@@ -68,7 +67,6 @@ public class SmsResultTests
     [Fact]
     public void ToString_Failure_IncludesErrorInfo()
     {
-        var request = new SmsRequest { To = "+1234567890", From = "+1987654321", Body = "Test message" };
         var exception = new Exception("Test error");
         var result = Result<SmsRequest>.Failure(exception, "TEST_ERROR");
         var str = result.ToString();

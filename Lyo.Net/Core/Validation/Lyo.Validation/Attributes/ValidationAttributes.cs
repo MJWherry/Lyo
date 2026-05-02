@@ -1,21 +1,19 @@
 using System.Collections;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Lyo.Common;
+using Lyo.Result;
 
 namespace Lyo.Validation.Attributes;
 
 /// <summary>Base attribute for property-level validation rules.</summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-public abstract class ValidationAttributeBase : Attribute
+public abstract class ValidationAttributeBase(string errorCode) : Attribute
 {
     /// <summary>Gets the error code returned when validation fails.</summary>
-    public string ErrorCode { get; }
+    public string ErrorCode { get; } = errorCode;
 
     /// <summary>Gets or sets the optional custom error message.</summary>
     public string? ErrorMessage { get; set; }
-
-    protected ValidationAttributeBase(string errorCode) => ErrorCode = errorCode;
 
     /// <summary>Validates the supplied property value.</summary>
     public abstract IReadOnlyList<Error> Validate(string propertyName, object? value, object instance);
@@ -52,85 +50,59 @@ public abstract class ValidationAttributeBase : Attribute
 }
 
 /// <summary>Requires the property value to be non-null.</summary>
-public sealed class RequiredAttribute : ValidationAttributeBase
+public sealed class RequiredAttribute()
+    : ValidationAttributeBase(ValidationErrorCodes.NullValue)
 {
-    public RequiredAttribute()
-        : base(ValidationErrorCodes.NullValue) { }
-
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
         => value == null ? [CreateError(propertyName, value, $"{propertyName} cannot be null")] : [];
 }
 
 /// <summary>Requires the property value to not be empty.</summary>
-public sealed class NotEmptyAttribute : ValidationAttributeBase
+public sealed class NotEmptyAttribute()
+    : ValidationAttributeBase(ValidationErrorCodes.EmptyValue)
 {
-    public NotEmptyAttribute()
-        : base(ValidationErrorCodes.EmptyValue) { }
-
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
         => IsEmpty(value) ? [CreateError(propertyName, value, $"{propertyName} cannot be empty")] : [];
 }
 
 /// <summary>Requires the string property value to not be null, empty, or whitespace.</summary>
-public sealed class NotWhiteSpaceAttribute : ValidationAttributeBase
+public sealed class NotWhiteSpaceAttribute()
+    : ValidationAttributeBase(ValidationErrorCodes.WhitespaceString)
 {
-    public NotWhiteSpaceAttribute()
-        : base(ValidationErrorCodes.WhitespaceString) { }
-
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
         => string.IsNullOrWhiteSpace(value as string) ? [CreateError(propertyName, value, $"{propertyName} cannot be null, empty, or whitespace")] : [];
 }
 
 /// <summary>Requires the string property value length to be within the supplied inclusive range.</summary>
-public sealed class LengthAttribute : ValidationAttributeBase
+public sealed class LengthAttribute(int minLength, int maxLength)
+    : ValidationAttributeBase(ValidationErrorCodes.InvalidLength)
 {
-    public int MinLength { get; }
+    public int MinLength { get; } = minLength;
 
-    public int MaxLength { get; }
-
-    public LengthAttribute(int minLength, int maxLength)
-        : base(ValidationErrorCodes.InvalidLength)
-    {
-        MinLength = minLength;
-        MaxLength = maxLength;
-    }
+    public int MaxLength { get; } = maxLength;
 
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
-    {
-        var text = value as string;
-        return text == null || text.Length < MinLength || text.Length > MaxLength
+        => value is not string text || text.Length < MinLength || text.Length > MaxLength
             ? [CreateError(propertyName, value, $"{propertyName} length must be between {MinLength} and {MaxLength}")]
             : [];
-    }
 }
 
 /// <summary>Requires the string property value to match the supplied regex.</summary>
-public sealed class RegexAttribute : ValidationAttributeBase
+public sealed class RegexAttribute(string pattern)
+    : ValidationAttributeBase(ValidationErrorCodes.InvalidFormat)
 {
-    private readonly Regex _regex;
+    private readonly Regex _regex = new(pattern, RegexOptions.Compiled);
 
-    public string Pattern { get; }
-
-    public RegexAttribute(string pattern)
-        : base(ValidationErrorCodes.InvalidFormat)
-    {
-        Pattern = pattern;
-        _regex = new(pattern, RegexOptions.Compiled);
-    }
+    public string Pattern { get; } = pattern;
 
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
-    {
-        var text = value as string;
-        return text == null || !_regex.IsMatch(text) ? [CreateError(propertyName, value, $"{propertyName} is not in the expected format")] : [];
-    }
+        => value is not string text || !_regex.IsMatch(text) ? [CreateError(propertyName, value, $"{propertyName} is not in the expected format")] : [];
 }
 
 /// <summary>Requires the string property value to be a valid email address.</summary>
-public sealed class EmailAttribute : ValidationAttributeBase
+public sealed class EmailAttribute()
+    : ValidationAttributeBase(ValidationErrorCodes.InvalidEmail)
 {
-    public EmailAttribute()
-        : base(ValidationErrorCodes.InvalidEmail) { }
-
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
     {
         var text = value as string;
@@ -141,11 +113,9 @@ public sealed class EmailAttribute : ValidationAttributeBase
 }
 
 /// <summary>Requires the string property value to be a valid phone number.</summary>
-public sealed class PhoneAttribute : ValidationAttributeBase
+public sealed class PhoneAttribute()
+    : ValidationAttributeBase(ValidationErrorCodes.InvalidPhone)
 {
-    public PhoneAttribute()
-        : base(ValidationErrorCodes.InvalidPhone) { }
-
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
     {
         var text = value as string;
@@ -156,13 +126,10 @@ public sealed class PhoneAttribute : ValidationAttributeBase
 }
 
 /// <summary>Requires the string property value to be a valid URI.</summary>
-public sealed class UriAttribute : ValidationAttributeBase
+public sealed class UriAttribute(UriKind kind = UriKind.Absolute)
+    : ValidationAttributeBase(ValidationErrorCodes.InvalidUri)
 {
-    public UriKind Kind { get; }
-
-    public UriAttribute(UriKind kind = UriKind.Absolute)
-        : base(ValidationErrorCodes.InvalidUri)
-        => Kind = kind;
+    public UriKind Kind { get; } = kind;
 
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
     {
@@ -172,18 +139,12 @@ public sealed class UriAttribute : ValidationAttributeBase
 }
 
 /// <summary>Requires the property value to be within the supplied inclusive numeric range.</summary>
-public sealed class RangeAttribute : ValidationAttributeBase
+public sealed class RangeAttribute(double minimum, double maximum)
+    : ValidationAttributeBase(ValidationErrorCodes.OutOfRange)
 {
-    public double Minimum { get; }
+    public double Minimum { get; } = minimum;
 
-    public double Maximum { get; }
-
-    public RangeAttribute(double minimum, double maximum)
-        : base(ValidationErrorCodes.OutOfRange)
-    {
-        Minimum = minimum;
-        Maximum = maximum;
-    }
+    public double Maximum { get; } = maximum;
 
     public override IReadOnlyList<Error> Validate(string propertyName, object? value, object instance)
     {

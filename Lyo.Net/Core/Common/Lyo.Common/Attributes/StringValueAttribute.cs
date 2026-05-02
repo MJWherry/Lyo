@@ -16,5 +16,5 @@ public sealed class StringValueAttribute : Attribute
 
     /// <summary>Initializes a new instance of the <see cref="StringValueAttribute" /> class.</summary>
     /// <param name="value">The string value to use for serialization.</param>
-    public StringValueAttribute(string value) => Value = ArgumentHelpers.ThrowIfNullReturn(value, nameof(value));
+    public StringValueAttribute(string value) => Value = ArgumentHelpers.ThrowIfNullReturn(value);
 }

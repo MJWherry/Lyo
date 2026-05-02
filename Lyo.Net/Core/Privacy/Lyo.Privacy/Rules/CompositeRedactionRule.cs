@@ -1,0 +1,31 @@
+using Lyo.Exceptions;
+using Lyo.Privacy.Abstractions;
+using Lyo.Privacy.Enums;
+using Lyo.Privacy.Policy;
+
+namespace Lyo.Privacy.Rules;
+
+/// <summary>
+/// Delegates span detection to an ordered inner rule list. Reported kind is <see cref="RedactionKind.Composite" />; use <see cref="RedactionPolicyBuilder" /> when per-kind
+/// counts matter.
+/// </summary>
+public sealed class CompositeRedactionRule : IRedactionRule
+{
+    private readonly IReadOnlyList<IRedactionRule> _rules;
+
+    public CompositeRedactionRule(IEnumerable<IRedactionRule> rules)
+    {
+        ArgumentHelpers.ThrowIfNullOrEmpty(rules);
+        _rules = rules as IReadOnlyList<IRedactionRule> ?? rules.ToArray();
+    }
+
+    public RedactionKind Kind => RedactionKind.Composite;
+
+    public IEnumerable<RedactionSpan> EnumerateSpans(string input)
+    {
+        foreach (var r in _rules) {
+            foreach (var s in r.EnumerateSpans(input))
+                yield return new(s.Start, s.Length, Kind);
+        }
+    }
+}

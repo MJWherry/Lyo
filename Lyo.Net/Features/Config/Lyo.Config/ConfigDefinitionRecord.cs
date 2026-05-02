@@ -41,16 +41,16 @@ public sealed class ConfigDefinitionRecord
     /// <summary>Returns true when the provided config value is allowed by this definition.</summary>
     public bool Accepts(ConfigValue value)
     {
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNull(value);
         return value.MatchesType(ForValueType);
     }
 
     /// <summary>Validates that the configured default value matches the configured value type.</summary>
     public void Validate()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForEntityType, nameof(ForEntityType));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(Key, nameof(Key));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForValueType, nameof(ForValueType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForEntityType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(Key);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForValueType);
         // Do not pass a single ThrowIf(condition, $"…{DefaultValue.TypeName}…"): the message is evaluated before ThrowIf runs, so DefaultValue null still dereferenced.
         if (DefaultValue != null && !Accepts(DefaultValue))
             OperationHelpers.ThrowIf(true, $"Default value type '{DefaultValue.TypeName}' does not match definition type '{ForValueType}'.");

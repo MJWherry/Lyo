@@ -15,7 +15,7 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPdfService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<PdfServiceOptions>(_ => new());
         services.AddScoped<PdfService>(provider => {
             var logger = provider.GetService<ILogger<PdfService>>();
@@ -36,8 +36,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPdfService(this IServiceCollection services, Action<PdfServiceOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<PdfServiceOptions>(_ => {
             var options = new PdfServiceOptions();
             configure(options);
@@ -67,9 +67,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PdfServiceOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         services.AddSingleton<PdfServiceOptions>(_ => {
             var options = new PdfServiceOptions();
             var section = configuration.GetSection(configSectionName);
@@ -98,8 +98,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPdfService(this IServiceCollection services, Func<IServiceProvider, HttpClient> httpClientFactory)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(httpClientFactory, nameof(httpClientFactory));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(httpClientFactory);
         services.AddSingleton<PdfServiceOptions>(_ => new());
         services.AddScoped<PdfService>(provider => {
             var logger = provider.GetService<ILogger<PdfService>>();
@@ -119,8 +119,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPdfService(this IServiceCollection services, string httpClientName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(httpClientName, nameof(httpClientName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(httpClientName);
         services.AddHttpClient(httpClientName);
         services.AddSingleton<PdfServiceOptions>(_ => new());
         services.AddScoped<PdfService>(provider => {
@@ -148,8 +148,8 @@ public static class Extensions
         Func<IServiceProvider, HttpClient>? httpClientFactory = null,
         Action<PdfServiceOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName, nameof(keyedServiceName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName);
         services.AddKeyedSingleton<PdfServiceOptions>(
             keyedServiceName, (_, _) => {
                 var options = new PdfServiceOptions();

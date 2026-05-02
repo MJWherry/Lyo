@@ -13,8 +13,8 @@ public static class Extensions
 {
     public static IServiceCollection AddHomeInventoryDbContextFactory(this IServiceCollection services, Action<PostgresHomeInventoryOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresHomeInventoryOptions();
         configure(options);
         return services.AddHomeInventoryDbContextFactory(options);
@@ -25,9 +25,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresHomeInventoryOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresHomeInventoryOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -38,8 +38,8 @@ public static class Extensions
 
     public static IServiceCollection AddHomeInventoryDbContextFactory(this IServiceCollection services, PostgresHomeInventoryOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresHomeInventoryOptions>>(Options.Create(options));
         services.AddPostgresMigrations<HomeInventoryDbContext, PostgresHomeInventoryOptions>();
@@ -51,8 +51,8 @@ public static class Extensions
 
     public static IServiceCollection AddPostgresHomeInventoryStore(this IServiceCollection services, Action<PostgresHomeInventoryOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresHomeInventoryOptions();
         configure(options);
         return services.AddPostgresHomeInventoryStore(options);
@@ -63,9 +63,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresHomeInventoryOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresHomeInventoryOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -76,8 +76,8 @@ public static class Extensions
 
     public static IServiceCollection AddPostgresHomeInventoryStore(this IServiceCollection services, PostgresHomeInventoryOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddHomeInventoryDbContextFactory(options);
         services.AddSingleton<IHomeInventoryStore, PostgresHomeInventoryStore>();
         return services;

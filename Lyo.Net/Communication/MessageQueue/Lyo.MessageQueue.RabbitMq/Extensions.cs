@@ -14,9 +14,9 @@ public static class Extensions
         Dictionary<string, object?> connectionProperties,
         Action<RabbitMqOptions> configureOptions)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(connectionProperties, nameof(connectionProperties));
-        ArgumentHelpers.ThrowIfNull(configureOptions, nameof(configureOptions));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(connectionProperties);
+        ArgumentHelpers.ThrowIfNull(configureOptions);
 
         // Configure and register options (only if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(RabbitMqOptions))) {
@@ -35,10 +35,10 @@ public static class Extensions
         Dictionary<string, object?>? connectionProperties = null,
         string configSectionName = RabbitMqOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNull(connectionProperties, nameof(connectionProperties));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNull(connectionProperties);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Register options using configuration binding (only if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(RabbitMqOptions))) {

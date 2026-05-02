@@ -20,7 +20,7 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -35,7 +35,7 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
         using (var scope = _serviceProvider.CreateScope()) {
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
             await using var context = await factory.CreateDbContextAsync();
-            await context.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
         }
 
         var trackerFactory = _serviceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
@@ -47,7 +47,7 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
         if (_serviceProvider is IDisposable d)
             d.Dispose();
 
-        await _container.DisposeAsync().ConfigureAwait(false);
+        await _container.DisposeAsync();
     }
 
     [Fact]
@@ -60,9 +60,9 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
             FromEntity = fromEntity, ChangeType = "Updated", Message = "Order submitted"
         };
 
-        await _changeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var byId = await _changeTracker.GetByIdAsync(change.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var history = await _changeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _changeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken);
+        var byId = await _changeTracker.GetByIdAsync(change.Id, TestContext.Current.CancellationToken);
+        var history = await _changeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken);
         Assert.NotNull(byId);
         Assert.Single(history);
         Assert.Equal(change.Id, byId.Id);
@@ -86,8 +86,8 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
             Timestamp = DateTime.UtcNow, ChangeType = "Updated"
         };
 
-        await _changeTracker.RecordChangesAsync([older, newer], TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var history = await _changeTracker.GetForEntityTypeAsync("Order", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _changeTracker.RecordChangesAsync([older, newer], TestContext.Current.CancellationToken);
+        var history = await _changeTracker.GetForEntityTypeAsync("Order", ct: TestContext.Current.CancellationToken);
         Assert.True(history.Count >= 2);
         Assert.Equal(newer.Id, history[0].Id);
         Assert.Equal(older.Id, history[1].Id);
@@ -99,9 +99,9 @@ public class PostgresChangeTrackerTests : IAsyncLifetime
         Assert.NotNull(_changeTracker);
         var forEntity = EntityRef.ForKey("Invoice", "9001");
         var change = new ChangeRecord(forEntity, new Dictionary<string, object?>(), new Dictionary<string, object?> { ["Status"] = "Paid" });
-        await _changeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await _changeTracker.DeleteForEntityAsync(forEntity, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var history = await _changeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _changeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken);
+        await _changeTracker.DeleteForEntityAsync(forEntity, TestContext.Current.CancellationToken);
+        var history = await _changeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken);
         Assert.Empty(history);
     }
 

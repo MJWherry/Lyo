@@ -61,7 +61,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-user-key";
         var user = new TestEntity { Id = 1, Name = "Test User" };
-        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(user), typeof(TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(user), typeof(TestEntity), token: TestContext.Current.CancellationToken);
 
         // Verify it's cached
         var cached = service.GetOrSet<TestEntity>(key, _ => null, typeof(TestEntity));
@@ -103,7 +103,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         Assert.NotNull(service.GetOrSet<TestProduct>(key3, _ => null));
 
         // Invalidate User type
-        await service.InvalidateCacheByTypeAsync(typeof(TestEntity).FullName!).ConfigureAwait(false);
+        await service.InvalidateCacheByTypeAsync(typeof(TestEntity).FullName!);
 
         // Users should be gone, product should remain
         Assert.Null(service.GetOrSet<TestEntity>(key1, _ => null));
@@ -118,7 +118,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var key = "order-1";
         service.Set(key, new TestOrder { Id = 1 }, [$"type:{typeof(TestOrder).FullName}"]);
         Assert.NotNull(service.GetOrSet<TestOrder>(key, _ => null));
-        await service.InvalidateCacheByTypeAsync(typeof(TestOrder)).ConfigureAwait(false);
+        await service.InvalidateCacheByTypeAsync(typeof(TestOrder));
         Assert.Null(service.GetOrSet<TestOrder>(key, _ => null));
     }
 
@@ -129,7 +129,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var key = "user-generic-1";
         service.Set(key, new TestEntity { Id = 1 }, [$"type:{typeof(TestEntity).FullName}"]);
         Assert.NotNull(service.GetOrSet<TestEntity>(key, _ => null));
-        await service.InvalidateCacheByTypeAsync<TestEntity>().ConfigureAwait(false);
+        await service.InvalidateCacheByTypeAsync<TestEntity>();
         Assert.Null(service.GetOrSet<TestEntity>(key, _ => null));
     }
 
@@ -271,7 +271,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, options);
         var key = "wildcard-test";
         var entity = new TestEntity { Id = 1, Name = "Test" };
-        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(entity), typeof(TestEntity), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(entity), typeof(TestEntity), token: TestContext.Current.CancellationToken);
 
         // Verify it's cached (the expiration should be 120 minutes from the wildcard pattern)
         var cached = service.GetOrSet<TestEntity>(key, _ => null, typeof(TestEntity));

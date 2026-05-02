@@ -1,8 +1,9 @@
 namespace Lyo.MessageQueue.RabbitMq;
 
-/// <summary>RabbitMQ-specific queue operations such as exchanges, bindings, and routed publish.</summary>
+/// <summary>RabbitMQ-specific queue operations such as exchange management in addition to the base <see cref="IMqService" /> contract.</summary>
 public interface IRabbitMqService : IMqService
 {
+    /// <summary>Declares an exchange on the broker.</summary>
     Task<bool> CreateExchange(
         string exchangeName,
         string exchangeType = "direct",
@@ -11,9 +12,6 @@ public interface IRabbitMqService : IMqService
         IDictionary<string, object>? arguments = null,
         CancellationToken ct = default);
 
+    /// <summary>Deletes an exchange from the broker.</summary>
     Task<bool> DeleteExchange(string exchangeName, bool ifUnused = false, CancellationToken ct = default);
-
-    Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default);
-
-    Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data);
 }

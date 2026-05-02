@@ -13,8 +13,8 @@ public sealed class LoadedPdfLease : IDisposable, IAsyncDisposable
 
     public LoadedPdfLease(Guid id, Action<Guid> unload, Func<Guid, Task> unloadAsync)
     {
-        ArgumentHelpers.ThrowIfNull(unload, nameof(unload));
-        ArgumentHelpers.ThrowIfNull(unloadAsync, nameof(unloadAsync));
+        ArgumentHelpers.ThrowIfNull(unload);
+        ArgumentHelpers.ThrowIfNull(unloadAsync);
         Id = id;
         _unload = unload;
         _unloadAsync = unloadAsync;

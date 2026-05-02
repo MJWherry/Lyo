@@ -16,7 +16,10 @@ using Lyo.FileStorage;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.S3;
 using Lyo.Formatter;
+using Lyo.Job.Postgres;
+using Lyo.Job.Postgres.Database;
 using Lyo.Keystore.Aws;
+using Lyo.MessageQueue.RabbitMq;
 using Lyo.People.Postgres;
 using Lyo.People.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres;
@@ -75,16 +78,29 @@ builder.Services.ConfigureHttpJsonOptions(options => {
 builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("QueryOptions"));
 builder.Services.ConfigureMapster();
 var connStr = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5437;Database=postgres;Username=root_remote;Password=password";
+builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, []);
+builder.Services.AddMqJobEventPublisher();
+builder.Services.AddPostgresJobManagement(opts => {
+    opts.ConnectionString = connStr;
+    opts.EnableAutoMigrations = true;
+});
+
+builder.Services.AddLyoCrudServices<JobContext>();
+builder.Services.AddScoped<JobService>();
+builder.Services.AddHttpContextAccessor();
+// Uncomment to run the built-in cron/interval scheduler in this process:
+// builder.Services.AddJobScheduler();
 builder.Services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddTwilioSmsDbContextFactory(new PostgresTwilioSmsOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresDiscord(new PostgresDiscordOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddPostgresConfigStore(new PostgresConfigOptions { ConnectionString = connStr, EnableAutoMigrations = true });
-builder.Services.AddPostgresComicStore(new PostgresComicOptions() { ConnectionString = connStr, EnableAutoMigrations = true });
+builder.Services.AddPostgresComicStore(new PostgresComicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddDiscordGuildSettingsInfrastructure();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddLyoCrudServices<PeopleDbContext>();
 builder.Services.WithExportService<PeopleDbContext>();
 builder.Services.WithExportService<DiscordDbContext>();
+builder.Services.WithExportService<JobContext>();
 builder.Services.AddPostgresSprocService<PeopleDbContext>();
 builder.Services.AddLyoCrudServices<TwilioSmsDbContext>();
 builder.Services.AddLyoCrudServices<FileMetadataStoreDbContext>();

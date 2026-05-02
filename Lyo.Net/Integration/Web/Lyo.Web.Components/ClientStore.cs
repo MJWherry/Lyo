@@ -1,9 +1,9 @@
-﻿using Lyo.Web.Components.DataGrid;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+﻿using Blazored.LocalStorage;
+using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.Web.Components;
 
-public class ClientStore(ProtectedSessionStorage sessionStorage)
+public class ClientStore(ILocalStorageService sessionStorage)
 {
     private const string ThemeKey = "pref_theme_dark";
     private const string TimeZoneKey = "pref_timezone";
@@ -12,60 +12,39 @@ public class ClientStore(ProtectedSessionStorage sessionStorage)
     private const string GridStatePrefix = "grid_state_";
     private const string QueryWorkbenchStateKey = "query_workbench_state_v1";
 
-    // Existing methods...
-    public async Task SetStoreId(string storeId) => await sessionStorage.SetAsync(StoreIdKey, storeId);
+    public async Task SetStoreId(string storeId) => await sessionStorage.SetItemAsync(StoreIdKey, storeId);
 
-    public async Task<string?> GetStoreId()
-    {
-        var result = await sessionStorage.GetAsync<string>(StoreIdKey);
-        return result.Success ? result.Value : null;
-    }
+    public async Task<string?> GetStoreId() => await sessionStorage.GetItemAsync<string?>(StoreIdKey);
 
-    public async Task RemoveStoreId() => await sessionStorage.DeleteAsync(StoreIdKey);
+    public async Task RemoveStoreId() => await sessionStorage.RemoveItemAsync(StoreIdKey);
 
-    public async Task SetDarkThemeAsync(bool isDark) => await sessionStorage.SetAsync(ThemeKey, isDark);
+    public async Task SetDarkThemeAsync(bool isDark) => await sessionStorage.SetItemAsync(ThemeKey, isDark);
 
-    public async Task<bool> GetDarkThemeAsync()
-    {
-        var result = await sessionStorage.GetAsync<bool>(ThemeKey);
-        return result.Success && result.Value;
-    }
+    public async Task<bool> GetDarkThemeAsync() => await sessionStorage.GetItemAsync<bool>(ThemeKey);
 
-    public async Task SetTimeZoneAsync(string timeZone) => await sessionStorage.SetAsync(TimeZoneKey, timeZone);
+    public async Task SetTimeZoneAsync(string timeZone) => await sessionStorage.SetItemAsync(TimeZoneKey, timeZone);
 
-    public async Task<string?> GetTimeZoneAsync()
-    {
-        var result = await sessionStorage.GetAsync<string>(TimeZoneKey);
-        return result.Success ? result.Value : null;
-    }
+    public async Task<string?> GetTimeZoneAsync() => await sessionStorage.GetItemAsync<string?>(TimeZoneKey);
 
-    public async Task SetPageNameAsync(string pageName) => await sessionStorage.SetAsync(PageNameKey, pageName);
+    public async Task SetPageNameAsync(string pageName) => await sessionStorage.SetItemAsync(PageNameKey, pageName);
 
-    public async Task<string?> GetPageNameAsync()
-    {
-        var result = await sessionStorage.GetAsync<string>(PageNameKey);
-        return result.Success ? result.Value : null;
-    }
+    public async Task<string?> GetPageNameAsync() => await sessionStorage.GetItemAsync<string?>(PageNameKey);
 
-    // New grid state methods
-    public async Task SetGridStateAsync<T>(string gridKey, LyoDataGridState<T> state) => await sessionStorage.SetAsync($"{GridStatePrefix}{gridKey}", state);
+    public async Task SetGridStateAsync<T>(string gridKey, LyoDataGridState<T> state)
+        => await sessionStorage.SetItemAsync($"{GridStatePrefix}{gridKey}", state);
 
     public async Task<LyoDataGridState<T>?> GetGridStateAsync<T>(string gridKey)
-    {
-        var result = await sessionStorage.GetAsync<LyoDataGridState<T>>($"{GridStatePrefix}{gridKey}");
-        return result.Success ? result.Value : null;
-    }
+        => await sessionStorage.GetItemAsync<LyoDataGridState<T>?>($"{GridStatePrefix}{gridKey}");
 
-    public async Task RemoveGridStateAsync(string gridKey) => await sessionStorage.DeleteAsync($"{GridStatePrefix}{gridKey}");
+    public async Task RemoveGridStateAsync(string gridKey)
+        => await sessionStorage.RemoveItemAsync($"{GridStatePrefix}{gridKey}");
 
-    /// <summary>Stores the query workbench JSON (request + run targets only; not API responses).</summary>
-    public async Task SetQueryWorkbenchStateAsync(string json) => await sessionStorage.SetAsync(QueryWorkbenchStateKey, json);
+    public async Task SetQueryWorkbenchStateAsync(string json)
+        => await sessionStorage.SetItemAsync(QueryWorkbenchStateKey, json);
 
     public async Task<string?> GetQueryWorkbenchStateAsync()
-    {
-        var result = await sessionStorage.GetAsync<string>(QueryWorkbenchStateKey);
-        return result.Success ? result.Value : null;
-    }
+        => await sessionStorage.GetItemAsync<string?>(QueryWorkbenchStateKey);
 
-    public async Task RemoveQueryWorkbenchStateAsync() => await sessionStorage.DeleteAsync(QueryWorkbenchStateKey);
+    public async Task RemoveQueryWorkbenchStateAsync()
+        => await sessionStorage.RemoveItemAsync(QueryWorkbenchStateKey);
 }

@@ -24,7 +24,7 @@ public class EmailServiceErrorHandlingTests
     {
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Test body").AddTo("recipient@example.com");
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Errors);
         Assert.True(result.Errors!.Count > 0);
@@ -37,8 +37,8 @@ public class EmailServiceErrorHandlingTests
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Test body").AddTo("recipient@example.com");
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
-        var result = await service.SendEmailAsync(builder, cts.Token).ConfigureAwait(false);
+        await cts.CancelAsync();
+        var result = await service.SendEmailAsync(builder, cts.Token);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Errors);
         Assert.True(result.Errors!.Count > 0);
@@ -50,7 +50,7 @@ public class EmailServiceErrorHandlingTests
     {
         var service = new EmailService(_options, _logger);
         var builders = Array.Empty<EmailRequestBuilder>();
-        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken);
         Assert.Empty(results);
     }
 
@@ -64,8 +64,8 @@ public class EmailServiceErrorHandlingTests
         };
 
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
-        var results = await service.SendBulkEmailAsync(builders, cts.Token).ConfigureAwait(false);
+        await cts.CancelAsync();
+        var results = await service.SendBulkEmailAsync(builders, cts.Token);
 
         // Should stop early due to cancellation
         Assert.True(results.Count <= builders.Length);
@@ -75,7 +75,7 @@ public class EmailServiceErrorHandlingTests
     public async Task TestConnectionAsync_InvalidServer_ReturnsFalse()
     {
         var service = new EmailService(_options, _logger);
-        var result = await service.TestConnectionAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.TestConnectionAsync(TestContext.Current.CancellationToken);
         Assert.False(result);
     }
 
@@ -84,7 +84,7 @@ public class EmailServiceErrorHandlingTests
     {
         var service = new EmailService(_options, _logger);
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
-        await Assert.ThrowsAsync<OperationCanceledException>(() => service.TestConnectionAsync(cts.Token)).ConfigureAwait(false);
+        await cts.CancelAsync();
+        await Assert.ThrowsAsync<OperationCanceledException>(() => service.TestConnectionAsync(cts.Token));
     }
 }

@@ -11,7 +11,7 @@ public class AesGcmRsaTests : IDisposable, IAsyncDisposable
 {
     private readonly IIOTempSession _tempSession = new IOTempSession(new());
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 

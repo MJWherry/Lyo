@@ -19,7 +19,7 @@ public static class Extensions
         this IServiceCollection services,
         Action<TtsServiceOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         var options = new TtsServiceOptions();
         configure?.Invoke(options);
         
@@ -43,8 +43,8 @@ public static class Extensions
         this IServiceCollection services,
         TtsServiceOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         
         services.AddSingleton(options);
         services.AddSingleton<WindowsSpeechTtsService>(provider =>

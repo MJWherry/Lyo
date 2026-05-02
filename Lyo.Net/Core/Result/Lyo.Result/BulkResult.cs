@@ -1,31 +1,23 @@
 using System.Diagnostics;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Represents the result of a bulk operation containing multiple individual results.</summary>
 /// <typeparam name="T">The type of the data returned on success for each individual result.</typeparam>
 [DebuggerDisplay("{ToString(),nq}")]
 public record BulkResult<T> : ResultBase
 {
-    // Lazy-cached computed values to avoid repeated O(n) enumeration.
-    private readonly Lazy<IReadOnlyList<Result<T>>> _successfulResults;
-    private readonly Lazy<IReadOnlyList<Result<T>>> _failedResults;
     private readonly Lazy<IReadOnlyList<Error>> _allErrors;
     private readonly Lazy<IReadOnlyList<string>> _errorCodes;
     private readonly Lazy<IReadOnlyList<string>> _errorMessages;
 
+    private readonly Lazy<IReadOnlyList<Result<T>>> _failedResults;
+
+    // Lazy-cached computed values to avoid repeated O(n) enumeration.
+    private readonly Lazy<IReadOnlyList<Result<T>>> _successfulResults;
+
     /// <summary>Gets the collection of individual results.</summary>
     public IReadOnlyList<Result<T>> Results { get; }
-
-    public BulkResult(IReadOnlyList<Result<T>> results)
-    {
-        Results = results;
-        _successfulResults = new(() => Results.Where(r => r.IsSuccess).ToList(), isThreadSafe: false);
-        _failedResults = new(() => Results.Where(r => !r.IsSuccess).ToList(), isThreadSafe: false);
-        _allErrors = new(() => _failedResults.Value.SelectMany(r => r.Errors ?? []).ToList(), isThreadSafe: false);
-        _errorCodes = new(() => _allErrors.Value.SelectMany(GetAllErrorCodes).Distinct().ToList(), isThreadSafe: false);
-        _errorMessages = new(() => _allErrors.Value.SelectMany(GetAllErrorMessages).Distinct().ToList(), isThreadSafe: false);
-    }
 
     /// <summary>Gets a value indicating whether any results succeeded.</summary>
     public override bool IsSuccess {
@@ -81,6 +73,16 @@ public record BulkResult<T> : ResultBase
     /// <summary>Gets any data values present on failed results.</summary>
     public IReadOnlyList<T> FailedData => FailedResults.Where(r => r.Data != null).Select(r => r.Data!).ToList();
 
+    public BulkResult(IReadOnlyList<Result<T>> results)
+    {
+        Results = results;
+        _successfulResults = new(() => Results.Where(r => r.IsSuccess).ToList(), false);
+        _failedResults = new(() => Results.Where(r => !r.IsSuccess).ToList(), false);
+        _allErrors = new(() => _failedResults.Value.SelectMany(r => r.Errors ?? []).ToList(), false);
+        _errorCodes = new(() => _allErrors.Value.SelectMany(GetAllErrorCodes).Distinct().ToList(), false);
+        _errorMessages = new(() => _allErrors.Value.SelectMany(GetAllErrorMessages).Distinct().ToList(), false);
+    }
+
     /// <summary>Creates a BulkResult from a collection of individual results.</summary>
     public static BulkResult<T> FromResults(IEnumerable<Result<T>> results) => new(results.ToList());
 
@@ -97,6 +99,7 @@ public record BulkResult<T> : ResultBase
         var current = error.InnerError;
         while (current != null) {
             yield return current.Code;
+
             current = current.InnerError;
         }
     }
@@ -108,6 +111,7 @@ public record BulkResult<T> : ResultBase
         var current = error.InnerError;
         while (current != null) {
             yield return current.Message;
+
             current = current.InnerError;
         }
     }
@@ -121,19 +125,11 @@ public record BulkResult<T> : ResultBase
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BulkResult<TRequest, TResult> : BulkResult<TResult>
 {
-    private readonly Lazy<IReadOnlyList<Result<TRequest, TResult>>> _successfulPaired;
     private readonly Lazy<IReadOnlyList<Result<TRequest, TResult>>> _failedPaired;
+    private readonly Lazy<IReadOnlyList<Result<TRequest, TResult>>> _successfulPaired;
 
     /// <summary>Gets the collection of paired request/response results.</summary>
     public new IReadOnlyList<Result<TRequest, TResult>> Results { get; }
-
-    public BulkResult(IReadOnlyList<Result<TRequest, TResult>> results)
-        : base(results.Select(r => (Result<TResult>)r).ToList())
-    {
-        Results = results;
-        _successfulPaired = new(() => Results.Where(r => r.IsSuccess).ToList(), isThreadSafe: false);
-        _failedPaired = new(() => Results.Where(r => !r.IsSuccess).ToList(), isThreadSafe: false);
-    }
 
     /// <summary>Gets all successful paired results.</summary>
     public new IReadOnlyList<Result<TRequest, TResult>> SuccessfulResults => _successfulPaired.Value;
@@ -146,6 +142,14 @@ public sealed record BulkResult<TRequest, TResult> : BulkResult<TResult>
 
     /// <summary>Gets all failed request objects.</summary>
     public IReadOnlyList<TRequest> FailedRequests => FailedResults.Where(r => r.Request != null).Select(r => r.Request!).ToList();
+
+    public BulkResult(IReadOnlyList<Result<TRequest, TResult>> results)
+        : base(results.Select(r => (Result<TResult>)r).ToList())
+    {
+        Results = results;
+        _successfulPaired = new(() => Results.Where(r => r.IsSuccess).ToList(), false);
+        _failedPaired = new(() => Results.Where(r => !r.IsSuccess).ToList(), false);
+    }
 
     /// <summary>Creates a BulkResult from a collection of paired results.</summary>
     public static BulkResult<TRequest, TResult> FromResults(IEnumerable<Result<TRequest, TResult>> results) => new(results.ToList());
@@ -177,8 +181,7 @@ public sealed record BulkResultFromRequest<TRequest, TResult> : BulkResult<TResu
         => new(request, data.Select(d => Result<TResult>.Success(d)).ToList());
 
     /// <summary>Creates from a single request and a collection of results.</summary>
-    public static BulkResultFromRequest<TRequest, TResult> FromResults(TRequest request, IEnumerable<Result<TResult>> results)
-        => new(request, results.ToList());
+    public static BulkResultFromRequest<TRequest, TResult> FromResults(TRequest request, IEnumerable<Result<TResult>> results) => new(request, results.ToList());
 
     /// <summary>Creates a failed bulk result from the request and a collection of errors.</summary>
     public static BulkResultFromRequest<TRequest, TResult> FromErrors(TRequest request, IEnumerable<Error> errors)
@@ -188,6 +191,5 @@ public sealed record BulkResultFromRequest<TRequest, TResult> : BulkResult<TResu
     public static BulkResultFromRequest<TRequest, TResult> FromException(TRequest request, Exception exception, string? code = null)
         => new(request, [Result<TResult>.Failure(exception, code)]);
 
-    public override string ToString()
-        => $"BulkResultFromRequest: Request={Request}, {SuccessCount}/{TotalCount} successful, Timestamp={Timestamp:O}";
+    public override string ToString() => $"BulkResultFromRequest: Request={Request}, {SuccessCount}/{TotalCount} successful, Timestamp={Timestamp:O}";
 }

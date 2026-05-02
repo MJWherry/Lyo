@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Images.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SixLabors.ImageSharp;
@@ -61,8 +61,8 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ArgumentHelpers.ThrowIfNotInRange(width, 1, int.MaxValue, nameof(width));
@@ -99,8 +99,8 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ArgumentHelpers.ThrowIfNotInRange(x, 0, int.MaxValue, nameof(x));
@@ -112,7 +112,7 @@ public abstract class ImageServiceBase : IImageService
         try {
             using var image = await Image.LoadAsync(inputStream, ct).ConfigureAwait(false);
             var rectangle = new Rectangle(x, y, width, height);
-            image.Mutate(x => x.Crop(rectangle));
+            image.Mutate(ctx => ctx.Crop(rectangle));
             var encoder = GetEncoder(format ?? DefaultFormat, quality);
             await image.SaveAsync(outputStream, encoder, ct).ConfigureAwait(false);
             return ImageOperationResult.FromSuccess("Crop", $"Image cropped at ({x}, {y}) with size {width}x{height}");
@@ -135,8 +135,8 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.RotateDuration)]);
@@ -167,11 +167,11 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(watermarkText, nameof(watermarkText));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(watermarkText);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.WatermarkDuration)]);
         ct.ThrowIfCancellationRequested();
 
@@ -184,8 +184,8 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertFormatAsync(Stream inputStream, Stream outputStream, ImageFormat targetFormat, int? quality = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.ConvertDuration)]);
@@ -214,7 +214,7 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNotInRange(maxWidth, 1, int.MaxValue, nameof(maxWidth));
         ArgumentHelpers.ThrowIfNotInRange(maxHeight, 1, int.MaxValue, nameof(maxHeight));
@@ -246,9 +246,9 @@ public abstract class ImageServiceBase : IImageService
         ImageCenterOverlayOptions options,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(backgroundPng, nameof(backgroundPng));
-        ArgumentHelpers.ThrowIfNull(overlayImageBytes, nameof(overlayImageBytes));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(backgroundPng);
+        ArgumentHelpers.ThrowIfNull(overlayImageBytes);
+        ArgumentHelpers.ThrowIfNull(options);
         var overlayPct = Math.Clamp(options.OverlaySizePercent, 1, 50);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.CompositeOverlayDuration)]);
         ct.ThrowIfCancellationRequested();
@@ -310,8 +310,8 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public virtual async Task<Result<byte[]>> CompositeQrFramePngAsync(byte[] qrPng, QrFrameLayoutOptions options, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(qrPng, nameof(qrPng));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(qrPng);
+        ArgumentHelpers.ThrowIfNull(options);
         ct.ThrowIfCancellationRequested();
         try {
             var bytes = await QrFrameLayoutCompositor.ApplyAsync(qrPng, options, ct).ConfigureAwait(false);
@@ -330,7 +330,7 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public virtual async Task<Result<ImagePalette>> GetPaletteAsync(Stream imageStream, int colorCount, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageStream, nameof(imageStream));
+        ArgumentHelpers.ThrowIfNull(imageStream);
         OperationHelpers.ThrowIfNotReadable(imageStream, $"Stream '{nameof(imageStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNotInRange(colorCount, 1, 256, nameof(colorCount));
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.PaletteDuration)]);
@@ -384,17 +384,17 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public async Task<Result<ImageMetadata>> GetMetadataAsync(Stream imageStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageStream, nameof(imageStream));
+        ArgumentHelpers.ThrowIfNull(imageStream);
         OperationHelpers.ThrowIfNotReadable(imageStream, $"Stream '{nameof(imageStream)}' must be readable.");
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.MetadataDuration)]);
         ct.ThrowIfCancellationRequested();
         try {
             var fileSize = GetStreamLength(imageStream);
             using var image = await Image.LoadAsync(imageStream, ct).ConfigureAwait(false);
-            var format = DetectFormat(image.Metadata?.DecodedImageFormat);
+            var format = DetectFormat(image.Metadata.DecodedImageFormat);
             var (exifInfo, exifData) = ExifExtractor.Extract(image);
             var metadata = new ImageMetadata(
-                image.Width, image.Height, format, fileSize, image.PixelType?.BitsPerPixel, image.PixelType?.AlphaRepresentation != null, exifInfo, exifData);
+                image.Width, image.Height, format, fileSize, image.PixelType.BitsPerPixel, image.PixelType.AlphaRepresentation != null, exifInfo, exifData);
 
             return ImageMetadataResult.FromSuccess(metadata, $"Image metadata retrieved: {image.Width}x{image.Height}, Format: {format}");
         }
@@ -410,7 +410,7 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public async Task<Result<ImageMetadata>> GetMetadataFromFileAsync(string filePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         try {
             await using var stream = File.OpenRead(filePath);
             return await GetMetadataAsync(stream, ct).ConfigureAwait(false);
@@ -423,8 +423,8 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public async Task<Result<bool>> CompressAsync(Stream inputStream, Stream outputStream, int quality, ImageFormat? format = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ArgumentHelpers.ThrowIfNotInRange(quality, 1, 100, nameof(quality));
@@ -456,8 +456,8 @@ public abstract class ImageServiceBase : IImageService
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputFilePath, nameof(inputFilePath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputFilePath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         try {
             await using var inputStream = File.OpenRead(inputFilePath);
             await using var outputStream = File.Create(outputFilePath);
@@ -471,7 +471,7 @@ public abstract class ImageServiceBase : IImageService
     /// <inheritdoc />
     public async Task<BulkResult<ImageProcessRequest, ImageOperationResult>> ProcessBatchAsync(IEnumerable<ImageProcessRequest> requests, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(requests, nameof(requests));
+        ArgumentHelpers.ThrowIfNull(requests);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.BatchProcessDuration)]);
         var sw = Stopwatch.StartNew();
         var requestList = requests.ToList();
@@ -612,5 +612,5 @@ public abstract class ImageServiceBase : IImageService
     }
 
     /// <summary>Detects the image format from ImageInfo.</summary>
-    protected static ImageFormat DetectFormat(ImageInfo info) => DetectFormat(info.Metadata?.DecodedImageFormat);
+    protected static ImageFormat DetectFormat(ImageInfo info) => DetectFormat(info.Metadata.DecodedImageFormat);
 }

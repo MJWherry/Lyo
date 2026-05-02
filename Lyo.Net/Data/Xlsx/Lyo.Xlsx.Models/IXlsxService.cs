@@ -1,6 +1,6 @@
 using System.Reflection;
 using System.Text;
-using Lyo.Common;
+using Lyo.Result;
 #if NET10_0_OR_GREATER
 #endif
 

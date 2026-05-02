@@ -14,14 +14,14 @@ public sealed class BrowserKeyboard
 
     internal BrowserKeyboard(SeleniumBrowser browser)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
 
     /// <summary>Sends keys to the active element (no specific target).</summary>
     public void SendKeys(string keys, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(keys);
         ct.ThrowIfCancellationRequested();
         RunKb("send_keys", () => new Actions(_browser.GetRequiredDriver()).SendKeys(keys).Perform());
     }
@@ -29,8 +29,8 @@ public sealed class BrowserKeyboard
     /// <summary>Sends keys to a specific element (clicks focus first).</summary>
     public void SendKeys(IWebElement target, string keys, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(target, nameof(target));
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(target);
+        ArgumentHelpers.ThrowIfNull(keys);
         ct.ThrowIfCancellationRequested();
         RunKb("send_keys_element", () => new Actions(_browser.GetRequiredDriver()).SendKeys(target, keys).Perform());
     }
@@ -38,7 +38,7 @@ public sealed class BrowserKeyboard
     /// <summary>Performs a custom <see cref="Actions" /> sequence.</summary>
     public void Perform(Action<Actions> configure, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         ct.ThrowIfCancellationRequested();
         RunKb(
             "actions_perform", () => {

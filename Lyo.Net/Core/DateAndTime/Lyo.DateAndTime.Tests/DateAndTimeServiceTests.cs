@@ -429,7 +429,9 @@ public class DateAndTimeServiceTests
         var scheduleTimes = new List<TimeOnly> { new(9, 0) };
         var scheduleFlags = DayFlags.EveryDay;
         var result = DateAndTime.GetNextScheduledDateTime(USState.NY, scheduleTimes, scheduleFlags);
-        Assert.True(result > DateTime.UtcNow);
+        var localNow = DateAndTime.GetCurrentLocalDateTime(USState.NY);
+        Assert.NotNull(localNow);
+        Assert.True(result > localNow.Value);
     }
 
     [Fact]

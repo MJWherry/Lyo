@@ -50,7 +50,7 @@ public class UpsertService<TContext>(
         const string operation = "upsert";
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var scope = BeginActionScope("UPSERT", typeof(TRequest), typeof(TDbModel), typeof(TResult));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var entities = await FindEntitiesByRequest<TRequest, TDbModel>(context, request, ct);

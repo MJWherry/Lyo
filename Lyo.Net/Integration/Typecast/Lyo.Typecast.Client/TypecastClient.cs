@@ -32,7 +32,7 @@ public class TypecastClient : ApiClient
                 Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
             }, options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         _options = options;
         HttpClient.BaseAddress = CreateBaseAddress(options);
         HttpClient.DefaultRequestHeaders.Add("X-API-KEY", options.ApiKey);

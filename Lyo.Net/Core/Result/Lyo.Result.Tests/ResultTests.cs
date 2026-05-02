@@ -1,10 +1,11 @@
-using Lyo.Common.Builders;
+using System.Collections;
+using Lyo.Result.Builders;
+using Lyo.Result.Interfaces;
 
-namespace Lyo.Common.Tests;
+namespace Lyo.Result.Tests;
 
 public class ResultTests
 {
-
     [Fact]
     public void Success_WithData_ReturnsSuccessfulResult()
     {
@@ -20,7 +21,7 @@ public class ResultTests
         var result = Result<string>.Failure("Something went wrong", "ERR_001");
         Assert.False(result.IsSuccess);
         Assert.Null(result.Data);
-        Assert.Single(result.Errors!);
+        Assert.Single((IEnumerable)result.Errors!);
         Assert.Equal("Something went wrong", result.Errors![0].Message);
         Assert.Equal("ERR_001", result.Errors![0].Code);
     }
@@ -31,7 +32,7 @@ public class ResultTests
         var error = ErrorBuilder.Create().WithMessage("Bad").WithCode("BAD").Build();
         var result = Result<int>.Failure(error);
         Assert.False(result.IsSuccess);
-        Assert.Single(result.Errors!);
+        Assert.Single((IEnumerable)result.Errors!);
         Assert.Equal("Bad", result.Errors![0].Message);
     }
 
@@ -62,7 +63,7 @@ public class ResultTests
     public void ValueOrThrow_OnFailure_Throws()
     {
         var result = Result<string>.Failure("fail", "CODE");
-        Assert.Throws<InvalidOperationException>(() => result.ValueOrThrow());
+        Assert.Throws<InvalidOperationException>(result.ValueOrThrow);
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public class ResultTests
         var original = Result<int>.Failure("fail", "CODE");
         var mapped = original.Map(x => x.ToString());
         Assert.False(mapped.IsSuccess);
-        Assert.Single(mapped.Errors!);
+        Assert.Single((IEnumerable)mapped.Errors!);
         Assert.Equal("CODE", mapped.Errors![0].Code);
     }
 
@@ -124,7 +125,7 @@ public class ResultTests
     public void Tap_OnSuccess_ExecutesAction_AndReturnsOriginal()
     {
         var called = false;
-        var result = Result<int>.Success(99).Tap(v => called = true);
+        var result = Result<int>.Success(99).Tap(_ => called = true);
         Assert.True(called);
         Assert.True(result.IsSuccess);
         Assert.Equal(99, result.Data);
@@ -142,7 +143,12 @@ public class ResultTests
     public async Task TapAsync_OnSuccess_ExecutesAction()
     {
         var called = false;
-        await Result<int>.Success(1).TapAsync(_ => { called = true; return Task.CompletedTask; });
+        await Result<int>.Success(1)
+            .TapAsync(_ => {
+                called = true;
+                return Task.CompletedTask;
+            });
+
         Assert.True(called);
     }
 

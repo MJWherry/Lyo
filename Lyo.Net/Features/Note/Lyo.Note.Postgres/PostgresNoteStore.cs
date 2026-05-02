@@ -15,7 +15,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <summary>Creates a new PostgresNoteStore.</summary>
     public PostgresNoteStore(IDbContextFactory<NoteDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
@@ -43,7 +43,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <inheritdoc />
     public async Task SaveAsync(NoteRecord note, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(note, nameof(note));
+        ArgumentHelpers.ThrowIfNull(note);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (note.Id != default) {
             var existing = await context.Notes.FindAsync([note.Id], ct).ConfigureAwait(false);
@@ -84,7 +84,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<NoteRecord>> GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forEntity.EntityId)
             .OrderBy(n => n.CreatedTimestamp)
@@ -97,7 +97,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<NoteRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.Where(n => n.FromEntityType == fromEntity.EntityType && n.FromEntityId == fromEntity.EntityId)
             .OrderBy(n => n.CreatedTimestamp)
@@ -110,7 +110,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<NoteRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Notes.Where(n => n.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
@@ -134,7 +134,7 @@ public sealed class PostgresNoteStore : INoteStore, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Notes.RemoveRange(entities);

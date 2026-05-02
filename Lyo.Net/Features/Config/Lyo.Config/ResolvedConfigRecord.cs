@@ -21,7 +21,7 @@ public sealed class ResolvedConfigRecord
     /// <summary>Gets the resolved value for the given key if present.</summary>
     public bool TryGetValue(string key, out ConfigValue? value)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var item = Items.FirstOrDefault(i => string.Equals(i.Definition.Key, key, StringComparison.Ordinal));
         value = item?.Value;
         return value != null;

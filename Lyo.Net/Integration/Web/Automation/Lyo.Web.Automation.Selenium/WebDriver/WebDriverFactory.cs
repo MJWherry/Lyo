@@ -16,7 +16,7 @@ public static class WebDriverFactory
     /// <summary>Creates a WebDriver (local or Selenium Grid / remote).</summary>
     public static IWebDriver CreateDriver(SeleniumBrowserOptions options, SeleniumExecutionContext? context)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.RemoteWebDriverUri)) {
             var uri = new Uri(options.RemoteWebDriverUri!, UriKind.Absolute);
             return CreateRemoteDriver(uri, options, context);

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Lyo.Common;
+using Lyo.Result;
 
 namespace Lyo.Email.Models;
 

@@ -16,7 +16,7 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
 
     public async Task SendKeysAsync(string text, bool clearFirst, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
         if (clearFirst)
             await locator.FillAsync(text).ConfigureAwait(false);
@@ -26,7 +26,7 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
 
     public async Task SendKeysRawAsync(string keys, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(keys);
         ct.ThrowIfCancellationRequested();
         await locator.PressSequentiallyAsync(keys).ConfigureAwait(false);
     }
@@ -45,14 +45,14 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
 
     public async Task SelectByTextAsync(string text, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
         await locator.SelectOptionAsync(new SelectOptionValue { Label = text }).ConfigureAwait(false);
     }
 
     public async Task SelectByValueAsync(string value, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNull(value);
         ct.ThrowIfCancellationRequested();
         await locator.SelectOptionAsync(new SelectOptionValue { Value = value }).ConfigureAwait(false);
     }
@@ -72,7 +72,7 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     /// <inheritdoc />
     public async Task<string?> GetAttributeAsync(string name, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ct.ThrowIfCancellationRequested();
         return await locator.GetAttributeAsync(name).ConfigureAwait(false);
     }

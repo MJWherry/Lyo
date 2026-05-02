@@ -1,8 +1,8 @@
-using Lyo.Common.Enums;
 using Lyo.Exceptions;
+using Lyo.Result.Enums;
 using static Lyo.Exceptions.OperationHelpers;
 
-namespace Lyo.Common.Builders;
+namespace Lyo.Result.Builders;
 
 /// <summary>Fluent builder for creating Error instances.</summary>
 public class ErrorBuilder
@@ -13,9 +13,9 @@ public class ErrorBuilder
     private string? _message;
     private Dictionary<string, object>? _metadata;
     private ErrorSeverity _severity = ErrorSeverity.Error;
-    private ErrorType _type = ErrorType.Generic;
     private string? _stackTrace;
     private DateTime? _timestamp;
+    private ErrorType _type = ErrorType.Generic;
 
     /// <summary>Creates a new builder instance.</summary>
     public static ErrorBuilder Create() => new();
@@ -40,7 +40,7 @@ public class ErrorBuilder
     /// <summary>Sets the error code.</summary>
     public ErrorBuilder WithCode(string code)
     {
-        _code = ArgumentHelpers.ThrowIfNullReturn(code, nameof(code));
+        _code = ArgumentHelpers.ThrowIfNullReturn(code);
         return this;
     }
 
@@ -131,7 +131,6 @@ public class ErrorBuilder
     public Error Build()
     {
         ThrowIfNullOrEmpty(_code, "Code is required to build an Error");
-
         if (string.IsNullOrEmpty(_message) && _exception != null)
             _message = _exception.Message;
 

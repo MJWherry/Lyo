@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Result;
 #if !NETSTANDARD2_0
 #endif
 

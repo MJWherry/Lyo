@@ -12,7 +12,7 @@ public static class NotificationServiceCollectionExtensions
     /// <summary>Registers <see cref="NotificationPublisher" /> as <see cref="INotificationPublisher" /> (singleton).</summary>
     public static IServiceCollection AddLyoNotification(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<INotificationPublisher, NotificationPublisher>();
         return services;
     }

@@ -12,6 +12,10 @@ public class ComicDbContext : DbContext
 
     public DbSet<ChapterEntity> Chapters { get; set; } = null!;
 
+    public DbSet<PageEntity> Pages { get; set; } = null!;
+
+    public DbSet<CharacterEntity> Characters { get; set; } = null!;
+
     public ComicDbContext(DbContextOptions<ComicDbContext> options)
         : base(options) { }
 
@@ -22,6 +26,8 @@ public class ComicDbContext : DbContext
         modelBuilder.ApplyConfiguration(new AlternateTitleEntityConfiguration());
         modelBuilder.ApplyConfiguration(new VolumeEntityConfiguration());
         modelBuilder.ApplyConfiguration(new ChapterEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new PageEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new CharacterEntityConfiguration());
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -47,6 +53,10 @@ public class ComicDbContext : DbContext
                     v.CreatedTimestamp = now;
                 else if (entry.Entity is ChapterEntity c && c.CreatedTimestamp == default)
                     c.CreatedTimestamp = now;
+                else if (entry.Entity is PageEntity p && p.CreatedTimestamp == default)
+                    p.CreatedTimestamp = now;
+                else if (entry.Entity is CharacterEntity ch && ch.CreatedTimestamp == default)
+                    ch.CreatedTimestamp = now;
             }
             else if (entry.State == EntityState.Modified) {
                 if (entry.Entity is SeriesEntity s)
@@ -55,6 +65,10 @@ public class ComicDbContext : DbContext
                     v.UpdatedTimestamp = now;
                 else if (entry.Entity is ChapterEntity c)
                     c.UpdatedTimestamp = now;
+                else if (entry.Entity is PageEntity p)
+                    p.UpdatedTimestamp = now;
+                else if (entry.Entity is CharacterEntity ch)
+                    ch.UpdatedTimestamp = now;
             }
         }
     }

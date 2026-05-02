@@ -36,8 +36,8 @@ public class AllEventsTests : IDisposable
             eventData = e;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Created, eventData.ChangeType);
@@ -52,18 +52,18 @@ public class AllEventsTests : IDisposable
     {
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         var filePath = Path.Combine(_tempSession.SessionDirectory, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.FileDeleted += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         File.Delete(filePath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Deleted, eventData.ChangeType);
@@ -76,19 +76,19 @@ public class AllEventsTests : IDisposable
     [Fact]
     public async Task Event_FileChanged_FiresDirectly()
     {
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
         var fileName = Path.GetFileName(filePath);
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.FileChanged += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         Testing.Utilities.AppendBytesToFile(filePath, 100);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Changed, eventData.ChangeType);
@@ -106,18 +106,18 @@ public class AllEventsTests : IDisposable
         var newFileName = Path.GetFileName(_tempSession.GetFilePath());
         var filePath = Path.Combine(_tempSession.SessionDirectory, fileName);
         var newFilePath = Path.Combine(_tempSession.SessionDirectory, newFileName);
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.FileRenamed += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         File.Move(filePath, newFilePath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Renamed, eventData.ChangeType);
@@ -136,18 +136,18 @@ public class AllEventsTests : IDisposable
         Directory.CreateDirectory(subDir);
         var filePath = Path.Combine(_tempSession.SessionDirectory, fileName);
         var newFilePath = Path.Combine(subDir, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.FileMoved += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         File.Move(filePath, newFilePath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Moved, eventData.ChangeType);
@@ -175,7 +175,7 @@ public class AllEventsTests : IDisposable
         };
 
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Created, eventData.ChangeType);
@@ -196,14 +196,14 @@ public class AllEventsTests : IDisposable
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.DirectoryDeleted += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         Directory.Delete(dirPath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Deleted, eventData.ChangeType);
@@ -229,8 +229,8 @@ public class AllEventsTests : IDisposable
             }
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Changed, eventData.ChangeType);
@@ -253,14 +253,14 @@ public class AllEventsTests : IDisposable
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.DirectoryRenamed += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         Directory.Move(dirPath, newDirPath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Renamed, eventData.ChangeType);
@@ -283,14 +283,14 @@ public class AllEventsTests : IDisposable
         var eventFired = false;
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for initial snapshot
+        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
         watcher.DirectoryMoved += (_, e) => {
             eventFired = true;
             eventData = e;
         };
 
         Directory.Move(dirPath, newDirPath);
-        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Moved, eventData.ChangeType);
@@ -316,8 +316,8 @@ public class AllEventsTests : IDisposable
                 eventsFired.Add(e);
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.NotEmpty(eventsFired);
         Assert.Contains(eventsFired, e => e.ChangeType == ChangeTypeEnum.Created && !e.IsDirectory);
     }
@@ -327,17 +327,17 @@ public class AllEventsTests : IDisposable
     {
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         var filePath = Path.Combine(_tempSession.SessionDirectory, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         var eventsFired = new List<FileSystemChangeInfo>();
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
         watcher.OnAnyChange += (_, e) => {
             if (!e.IsDirectory || e.ChangeType != ChangeTypeEnum.Changed)
                 eventsFired.Add(e);
         };
 
         File.Delete(filePath);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.NotEmpty(eventsFired);
         Assert.Contains(eventsFired, e => e.ChangeType == ChangeTypeEnum.Deleted && !e.IsDirectory);
     }
@@ -354,7 +354,7 @@ public class AllEventsTests : IDisposable
         };
 
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.NotEmpty(eventsFired);
         Assert.Contains(eventsFired, e => e.ChangeType == ChangeTypeEnum.Created && e.IsDirectory);
     }
@@ -372,16 +372,16 @@ public class AllEventsTests : IDisposable
         };
 
         // Create
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Change
         Testing.Utilities.AppendBytesToFile(filePath, 100);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Delete
         File.Delete(filePath);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
         Assert.Contains(ChangeTypeEnum.Created, eventsFired);
         Assert.Contains(ChangeTypeEnum.Changed, eventsFired);
         Assert.Contains(ChangeTypeEnum.Deleted, eventsFired);
@@ -420,8 +420,8 @@ public class AllEventsTests : IDisposable
             caughtException = ex;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(errorFired);
         Assert.NotNull(caughtException);
         Assert.IsType<InvalidOperationException>(caughtException);
@@ -447,8 +447,8 @@ public class AllEventsTests : IDisposable
                 onAnyChangeFired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => fileCreatedFired && onAnyChangeFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => fileCreatedFired && onAnyChangeFired, TimeSpan.FromSeconds(5));
         Assert.True(fileCreatedFired);
         Assert.True(onAnyChangeFired);
     }
@@ -463,9 +463,9 @@ public class AllEventsTests : IDisposable
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileCreated += (_, _) => fileCreatedFired = true;
         watcher.DirectoryCreated += (_, _) => directoryCreatedFired = true;
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(fileCreatedFired);
         Assert.True(directoryCreatedFired);
     }
@@ -491,33 +491,33 @@ public class AllEventsTests : IDisposable
         watcher.FileMoved += (_, _) => movedFired = true;
 
         // Create
-        await _tempSession.CreateFileAsync(new byte[100], fileName1, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName1, TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Change
         Testing.Utilities.AppendBytesToFile(Path.Combine(_tempSession.SessionDirectory, fileName1), 100);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Delete
         File.Delete(Path.Combine(_tempSession.SessionDirectory, fileName1));
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Rename
         var file2 = Path.Combine(_tempSession.SessionDirectory, fileName2);
         var file2New = Path.Combine(_tempSession.SessionDirectory, fileName3);
-        await _tempSession.CreateFileAsync(new byte[100], fileName2, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName2, TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
         File.Move(file2, file2New);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Move
         var file3 = Path.Combine(_tempSession.SessionDirectory, fileName4);
         var subDir = Path.Combine(_tempSession.SessionDirectory, "subdir");
         Directory.CreateDirectory(subDir);
-        await _tempSession.CreateFileAsync(new byte[100], fileName4, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName4, TestContext.Current.CancellationToken);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
         File.Move(file3, Path.Combine(subDir, fileName5));
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
         Assert.True(createdFired, "FileCreated should fire");
         Assert.True(changedFired, "FileChanged should fire");
         Assert.True(deletedFired, "FileDeleted should fire");
@@ -548,37 +548,37 @@ public class AllEventsTests : IDisposable
         watcher.DirectoryMoved += (_, _) => movedFired = true;
 
         // Wait for initial snapshot
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Create
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, dir1));
-        await PollAssert.ThatAsync(() => createdFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => createdFired, TimeSpan.FromSeconds(5));
 
         // Change (add file to directory)
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine(dir1, "test.txt"), TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => changedFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine(dir1, "test.txt"), TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => changedFired, TimeSpan.FromSeconds(5));
 
         // Delete
         Directory.Delete(Path.Combine(_tempSession.SessionDirectory, dir1), true);
-        await PollAssert.ThatAsync(() => deletedFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => deletedFired, TimeSpan.FromSeconds(5));
 
         // Rename (same parent, different name)
         var dir2Path = Path.Combine(_tempSession.SessionDirectory, dir2);
         var dir2NewPath = Path.Combine(_tempSession.SessionDirectory, dir3);
         Directory.CreateDirectory(dir2Path);
-        await Task.Delay(300, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for create to be detected
+        await Task.Delay(300, TestContext.Current.CancellationToken); // Wait for create to be detected
         Directory.Move(dir2Path, dir2NewPath);
-        await PollAssert.ThatAsync(() => renamedFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => renamedFired, TimeSpan.FromSeconds(5));
 
         // Move (different parent, same name - required for move detection)
         var dir3Path = Path.Combine(_tempSession.SessionDirectory, dir4);
         var subDir = Path.Combine(_tempSession.SessionDirectory, "subdir");
         Directory.CreateDirectory(subDir);
         Directory.CreateDirectory(dir3Path);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false); // Wait for snapshot to include both directories
+        await Task.Delay(500, TestContext.Current.CancellationToken); // Wait for snapshot to include both directories
         var movedPath = Path.Combine(subDir, dir4); // Keep same name for move detection
         Directory.Move(dir3Path, movedPath);
-        await PollAssert.ThatAsync(() => movedFired, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await PollAssert.ThatAsync(() => movedFired, TimeSpan.FromSeconds(5));
         Assert.True(createdFired, "DirectoryCreated should fire");
         Assert.True(changedFired, "DirectoryChanged should fire");
         Assert.True(deletedFired, "DirectoryDeleted should fire");
@@ -598,8 +598,8 @@ public class AllEventsTests : IDisposable
         FileSystemChangeInfo? eventData = null;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileCreated += (_, e) => eventData = e;
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => eventData != null, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => eventData != null, TimeSpan.FromSeconds(5));
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Created, eventData.ChangeType);
         Assert.Null(eventData.OldPath);
@@ -622,8 +622,8 @@ public class AllEventsTests : IDisposable
                 eventData = e;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await PollAssert.ThatAsync(() => eventData != null, TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await PollAssert.ThatAsync(() => eventData != null, TimeSpan.FromSeconds(5));
         Assert.NotNull(eventData);
         Assert.Equal(ChangeTypeEnum.Changed, eventData.ChangeType);
         Assert.True(eventData.IsDirectory);

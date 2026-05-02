@@ -16,8 +16,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddLyoDiscordBot<TBot>(this IServiceCollection services, IConfiguration configuration, string sectionName = LyoDiscordBotOptions.SectionName)
         where TBot : LyoDiscordBotBase
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
         services.Configure<LyoDiscordBotOptions>(configuration.GetSection(sectionName));
         services.Configure<LyoDiscordClientOptions>(configuration.GetSection(LyoDiscordClientOptions.SectionName));
         services.AddSingleton(p => p.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value);

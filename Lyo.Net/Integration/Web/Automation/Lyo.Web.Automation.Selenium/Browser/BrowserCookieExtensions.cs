@@ -32,7 +32,7 @@ public static class BrowserCookieExtensions
         /// <summary>Exports all cookies for the current domain context as DTOs.</summary>
         public IReadOnlyList<BrowserCookieRecord> ExportCookieRecords()
         {
-            ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+            ArgumentHelpers.ThrowIfNull(browser);
             var driver = browser.GetRequiredDriver();
             return driver.Manage().Cookies.AllCookies.Select(ToRecord).ToList();
         }
@@ -47,8 +47,8 @@ public static class BrowserCookieExtensions
         /// <summary>Deserializes cookies from JSON and adds them to the browser (navigate to the target origin first).</summary>
         public void ImportCookiesFromJson(string json)
         {
-            ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
-            ArgumentHelpers.ThrowIfNull(json, nameof(json));
+            ArgumentHelpers.ThrowIfNull(browser);
+            ArgumentHelpers.ThrowIfNull(json);
             var list = JsonSerializer.Deserialize<List<BrowserCookieRecord>>(json);
             ArgumentHelpers.ThrowIfNull(list, nameof(json));
             browser.ImportCookieRecords(list);
@@ -57,8 +57,8 @@ public static class BrowserCookieExtensions
         /// <summary>Adds cookies from records (same rules as <see cref="OpenQA.Selenium.Cookie" />).</summary>
         public void ImportCookieRecords(IEnumerable<BrowserCookieRecord> cookies)
         {
-            ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
-            ArgumentHelpers.ThrowIfNull(cookies, nameof(cookies));
+            ArgumentHelpers.ThrowIfNull(browser);
+            ArgumentHelpers.ThrowIfNull(cookies);
             var driver = browser.GetRequiredDriver();
             foreach (var c in cookies) {
                 var expiry = c.ExpiryUnixSeconds is { } ux ? DateTimeOffset.FromUnixTimeSeconds(ux).UtcDateTime : (DateTime?)null;

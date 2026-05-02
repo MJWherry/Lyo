@@ -17,7 +17,7 @@ public static class JobScheduleDatabaseExtensions
     /// <summary>Converts a database JobSchedule entity to ScheduleDefinition. Parses stored string values for Type, DayFlags, and MonthFlags.</summary>
     public static ScheduleDefinition ToScheduleDefinition(this JobSchedule jobSchedule)
     {
-        ArgumentHelpers.ThrowIfNull(jobSchedule, nameof(jobSchedule));
+        ArgumentHelpers.ThrowIfNull(jobSchedule);
         var type = Enum.TryParse<ScheduleType>(jobSchedule.Type, out var t) ? t : ScheduleType.SetTimes;
         var dayFlags = Enum.TryParse<DayFlags>(jobSchedule.DayFlags, out var d) ? d : DayFlags.None;
         var monthFlags = Enum.TryParse<MonthFlags>(jobSchedule.MonthFlags, out var m) ? m : MonthFlags.None;

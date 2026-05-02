@@ -57,23 +57,21 @@ public class CacheServiceTests : IDisposable
         var key = "test-key-1";
         var expectedValue = "test-value";
         var result = await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    await Task.Delay(10, ct).ConfigureAwait(false);
-                    return expectedValue;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                await Task.Delay(10, ct);
+                return expectedValue;
+            }, token: TestContext.Current.CancellationToken);
 
         result.ShouldBe(expectedValue);
 
         // Second call should return cached value (factory shouldn't be called again)
         var callCount = 0;
         var cachedResult = await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    callCount++;
-                    await Task.Delay(10, ct).ConfigureAwait(false);
-                    return "different-value";
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                callCount++;
+                await Task.Delay(10, ct);
+                return "different-value";
+            }, token: TestContext.Current.CancellationToken);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0); // Factory should not be called
@@ -87,18 +85,16 @@ public class CacheServiceTests : IDisposable
         var key = "test-key-2";
         var callCount = 0;
         var result1 = await service.GetOrSetAsync<string>(
-                key, ct => {
-                    callCount++;
-                    return Task.FromResult("value-1")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, ct => {
+                callCount++;
+                return Task.FromResult("value-1")!;
+            }, token: TestContext.Current.CancellationToken);
 
         var result2 = await service.GetOrSetAsync<string>(
-                key, ct => {
-                    callCount++;
-                    return Task.FromResult("value-2")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, ct => {
+                callCount++;
+                return Task.FromResult("value-2")!;
+            }, token: TestContext.Current.CancellationToken);
 
         result1.ShouldBe("value-1");
         result2.ShouldBe("value-2");
@@ -162,7 +158,7 @@ public class CacheServiceTests : IDisposable
         cached.ShouldBe(value);
 
         // Invalidate
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
 
         // Verify it's gone
         var afterInvalidate = service.GetOrSet<string>(key, _ => "default");
@@ -175,7 +171,7 @@ public class CacheServiceTests : IDisposable
         var disabledOptions = new CacheOptions { Enabled = false };
         var service = new LocalCacheService(_memoryCache, _localLogger, disabledOptions);
         var key = "test-key-7";
-        await service.InvalidateCacheItem(key).ConfigureAwait(false); // Should not throw
+        await service.InvalidateCacheItem(key); // Should not throw
     }
 
     [Fact]
@@ -198,7 +194,7 @@ public class CacheServiceTests : IDisposable
         service.GetOrSet<string>(key3, _ => "default").ShouldBe("value3");
 
         // Invalidate by tag
-        await service.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(tag);
 
         // Verify tagged items are gone, but untagged item remains
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
@@ -221,7 +217,7 @@ public class CacheServiceTests : IDisposable
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("value2");
 
         // Invalidate query cache
-        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>().ConfigureAwait(false);
+        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>();
 
         // Verify items are gone
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
@@ -239,7 +235,7 @@ public class CacheServiceTests : IDisposable
         service.Set(key2, "value2", [queriesTag]);
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("value1");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("value2");
-        await service.InvalidateAllCachedQueriesAsync().ConfigureAwait(false);
+        await service.InvalidateAllCachedQueriesAsync();
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("default");
     }
@@ -253,11 +249,10 @@ public class CacheServiceTests : IDisposable
 
         // First call should work
         var result1 = await service.GetOrSetAsync<string>(
-                key, ct => {
-                    callCount++;
-                    return Task.FromResult("value-1")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, ct => {
+                callCount++;
+                return Task.FromResult("value-1")!;
+            }, token: TestContext.Current.CancellationToken);
 
         result1.ShouldBe("value-1");
         callCount.ShouldBe(1);
@@ -265,14 +260,13 @@ public class CacheServiceTests : IDisposable
         // Simulate cache failure by using a different key and forcing an error
         // The fallback should call factory again
         var result2 = await service.GetOrSetAsync<string>(
-                key + "-new", ct => {
-                    callCount++;
-                    if (callCount == 1)
-                        throw new("Cache error");
+            key + "-new", ct => {
+                callCount++;
+                if (callCount == 1)
+                    throw new("Cache error");
 
-                    return Task.FromResult("value-2")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+                return Task.FromResult("value-2")!;
+            }, token: TestContext.Current.CancellationToken);
 
         // Should fallback to factory and get value-2
         result2.ShouldBe("value-2");
@@ -293,14 +287,14 @@ public class CacheServiceTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-key-tags";
         var tags = new[] { "tag1", "tag2" };
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken);
 
         // Verify item exists
         var result = service.GetOrSet<string>(key, _ => "default");
         result.ShouldBe("value");
 
         // Invalidate by tag
-        await service.InvalidateCacheItemByTag("tag1").ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag("tag1");
 
         // Should be removed
         var afterInvalidate = service.GetOrSet<string>(key, _ => "default");
@@ -313,14 +307,13 @@ public class CacheServiceTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-key-cancellation";
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
+        await cts.CancelAsync();
         var ex = await ExceptionAssertions.ThrowsAsync<TaskCanceledException>(async () => {
             await service.GetOrSetAsync<string>(
-                    key, async ct => {
-                        await Task.Delay(1000, ct).ConfigureAwait(false);
-                        return "value";
-                    }, token: cts.Token)
-                .ConfigureAwait(false);
+                key, async ct => {
+                    await Task.Delay(1000, ct);
+                    return "value";
+                }, token: cts.Token);
         });
 
         ex.ShouldNotBeNull();

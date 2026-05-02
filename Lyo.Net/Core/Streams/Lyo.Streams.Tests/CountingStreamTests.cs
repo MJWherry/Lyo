@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Lyo.Streams.Tests;
 
 public sealed class CountingStreamTests
@@ -7,7 +5,7 @@ public sealed class CountingStreamTests
     [Fact]
     public void BytesRead_tracks_reads()
     {
-        var data = Encoding.UTF8.GetBytes("hello!");
+        var data = "hello!"u8.ToArray();
         var ms = new MemoryStream(data);
         using var counting = new CountingStream(ms);
         var buf = new byte[3];
@@ -22,16 +20,16 @@ public sealed class CountingStreamTests
     {
         var ms = new MemoryStream();
         using var counting = new CountingStream(ms);
-        counting.Write(Encoding.UTF8.GetBytes("ab"), 0, 2);
+        counting.Write("ab"u8.ToArray(), 0, 2);
         Assert.Equal(2L, counting.BytesWritten);
-        counting.Write(Encoding.UTF8.GetBytes("c"), 0, 1);
+        counting.Write("c"u8.ToArray(), 0, 1);
         Assert.Equal(3L, counting.BytesWritten);
     }
 
     [Fact]
     public void ResetCounters_zeros_counters()
     {
-        var ms = new MemoryStream(Encoding.UTF8.GetBytes("x"));
+        var ms = new MemoryStream("x"u8.ToArray());
         using var counting = new CountingStream(ms);
         counting.ReadExactly(new byte[1], 0, 1);
         Assert.Equal(1L, counting.BytesRead);

@@ -1,0 +1,94 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTabs Elevation="2" Rounded ApplyEffectsToContainer Class="mt-2">
+            <MudTabPanel Text="Summary">
+                <MudGrid Class="pa-4">
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>ID:</b> @JobRun?.Id.Truncated()</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Definition:</b> @(JobRun?.JobDefinition?.Name ?? "-")</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>State:</b> @JobRun?.State</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Result:</b> @(JobRun?.Result?.ToString() ?? "-")</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Created:</b> @JobRun?.CreatedTimestamp.ToString("g")</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Started:</b> @(JobRun?.StartedTimestamp?.ToString("g") ?? "-")</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Finished:</b> @(JobRun?.FinishedTimestamp?.ToString("g") ?? "-")</MudText></MudItem>
+                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Retry #:</b> @JobRun?.RetryAttempt</MudText></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Parameters ({JobRun?.JobRunParameters?.Count ?? 0})")">
+                <MudSimpleTable Dense Class="pa-2">
+                    <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in JobRun?.JobRunParameters ?? []) {
+                            <tr><td>@p.Key</td><td>@p.Type</td><td>@p.Value</td></tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Results ({JobRun?.JobRunResults?.Count ?? 0})")">
+                <MudSimpleTable Dense Class="pa-2">
+                    <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in JobRun?.JobRunResults ?? []) {
+                            <tr><td>@r.Key</td><td>@r.Type</td><td>@r.Value</td></tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudTabPanel>
+            <MudTabPanel Text="@($"Logs ({JobRun?.JobRunLogs?.Count ?? 0})")">
+                <MudStack Spacing="1" Class="pa-2" Style="max-height: 400px; overflow-y: auto;">
+                    @foreach (var log in JobRun?.JobRunLogs ?? []) {
+                        <MudStack Row Spacing="2" AlignItems="AlignItems.Start">
+                            <MudChip T="string" Size="Size.Small" Color="@GetLogColor(log.Level)">@log.Level</MudChip>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@log.Timestamp.ToString("HH:mm:ss")</MudText>
+                            <MudText Typo="Typo.body2">@log.Message</MudText>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())">Close</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Rerun"
+                   StartIcon="@Icons.Material.Filled.Refresh">Re-Run</MudButton>
+        @if (JobRun?.State == JobState.Running) {
+            <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel"
+                       StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter, EditorRequired] public JobRunRes? JobRun { get; set; }
+    [Parameter, EditorRequired] public string RunRoute { get; set; } = "";
+    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    private async Task Rerun()
+    {
+        try {
+            await ApiClient.PostAsAsync<object>($"{RunRoute}/{JobRun!.Id}/Rerun");
+            Snackbar.Add("Re-run queued", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) { Snackbar.Add($"Re-run failed: {ex.Message}", Severity.Error); }
+    }
+
+    private async Task Cancel()
+    {
+        try {
+            await ApiClient.PostAsAsync<object>($"{RunRoute}/{JobRun!.Id}/Cancel");
+            Snackbar.Add("Cancel requested", Severity.Info);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+    }
+
+    private static Color GetLogColor(JobLogLevel level) => level switch {
+        JobLogLevel.Error or JobLogLevel.Critical => Color.Error,
+        JobLogLevel.Warning => Color.Warning,
+        JobLogLevel.Debug => Color.Default,
+        _ => Color.Info
+    };
+}

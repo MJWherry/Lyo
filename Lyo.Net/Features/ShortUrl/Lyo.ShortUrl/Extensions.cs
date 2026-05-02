@@ -99,7 +99,7 @@ public static class Extensions
         string configSectionName = ShortUrlServiceOptions.SectionName)
     {
         ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(ShortUrlServiceOptions))) {
             services.AddSingleton<ShortUrlServiceOptions>(_ => {

@@ -8,7 +8,7 @@ internal static class ElementLocatorMapping
 {
     public static By ToBy(ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(locator);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(locator.Value, nameof(locator.Value));
         return locator.Kind switch {
             ElementLocatorKind.Id => By.Id(locator.Value),

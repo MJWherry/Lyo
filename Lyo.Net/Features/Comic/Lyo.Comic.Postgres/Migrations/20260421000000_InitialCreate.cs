@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -22,8 +22,8 @@ namespace Lyo.Comic.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     slug = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    comic_type = table.Column<int>(type: "integer", nullable: false),
-                    status = table.Column<int>(type: "integer", nullable: false),
+                    comic_type = table.Column<string>(type: "text", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     published_year = table.Column<int>(type: "integer", nullable: true),
@@ -56,6 +56,32 @@ namespace Lyo.Comic.Postgres.Migrations
                     table.PrimaryKey("PK_alternate_title", x => x.id);
                     table.ForeignKey(
                         name: "FK_alternate_title_series_series_id",
+                        column: x => x.series_id,
+                        principalSchema: "comic",
+                        principalTable: "series",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "character",
+                schema: "comic",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    series_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    description = table.Column<string>(type: "text", nullable: true),
+                    image_ref = table.Column<string>(type: "text", nullable: true),
+                    role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_character", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_character_series_series_id",
                         column: x => x.series_id,
                         principalSchema: "comic",
                         principalTable: "series",
@@ -125,6 +151,59 @@ namespace Lyo.Comic.Postgres.Migrations
                         onDelete: ReferentialAction.SetNull);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "character_volume",
+                schema: "comic",
+                columns: table => new
+                {
+                    CharactersId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VolumesId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_character_volume", x => new { x.CharactersId, x.VolumesId });
+                    table.ForeignKey(
+                        name: "FK_character_volume_character_CharactersId",
+                        column: x => x.CharactersId,
+                        principalSchema: "comic",
+                        principalTable: "character",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_character_volume_volume_VolumesId",
+                        column: x => x.VolumesId,
+                        principalSchema: "comic",
+                        principalTable: "volume",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "page",
+                schema: "comic",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    chapter_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    page_number = table.Column<int>(type: "integer", nullable: false),
+                    image_ref = table.Column<string>(type: "text", nullable: true),
+                    width = table.Column<int>(type: "integer", nullable: true),
+                    height = table.Column<int>(type: "integer", nullable: true),
+                    created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_page", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_page_chapter_chapter_id",
+                        column: x => x.chapter_id,
+                        principalSchema: "comic",
+                        principalTable: "chapter",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_comic_alternate_title_series",
                 schema: "comic",
@@ -155,6 +234,37 @@ namespace Lyo.Comic.Postgres.Migrations
                 schema: "comic",
                 table: "chapter",
                 column: "volume_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comic_character_name",
+                schema: "comic",
+                table: "character",
+                column: "name");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comic_character_series",
+                schema: "comic",
+                table: "character",
+                column: "series_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_character_volume_VolumesId",
+                schema: "comic",
+                table: "character_volume",
+                column: "VolumesId");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comic_page_chapter",
+                schema: "comic",
+                table: "page",
+                column: "chapter_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_comic_page_chapter_number",
+                schema: "comic",
+                table: "page",
+                columns: new[] { "chapter_id", "page_number" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_comic_series_slug",
@@ -193,6 +303,18 @@ namespace Lyo.Comic.Postgres.Migrations
         {
             migrationBuilder.DropTable(
                 name: "alternate_title",
+                schema: "comic");
+
+            migrationBuilder.DropTable(
+                name: "character_volume",
+                schema: "comic");
+
+            migrationBuilder.DropTable(
+                name: "page",
+                schema: "comic");
+
+            migrationBuilder.DropTable(
+                name: "character",
                 schema: "comic");
 
             migrationBuilder.DropTable(

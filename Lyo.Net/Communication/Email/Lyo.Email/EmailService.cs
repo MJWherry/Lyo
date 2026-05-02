@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using Lyo.Common;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -40,7 +40,7 @@ public sealed class EmailService : IEmailService
     /// </remarks>
     public EmailService(EmailServiceOptions emailServiceOptions, ILogger<EmailService>? logger = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(emailServiceOptions, nameof(emailServiceOptions));
+        ArgumentHelpers.ThrowIfNull(emailServiceOptions);
         _emailServiceOptions = emailServiceOptions;
         _logger = logger ?? NullLogger<EmailService>.Instance;
         _metrics = emailServiceOptions.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;

@@ -12,8 +12,8 @@ public sealed class SeriesEntityConfiguration : IEntityTypeConfiguration<SeriesE
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.Title).IsRequired().HasMaxLength(500).HasColumnName("title");
         builder.Property(e => e.Slug).IsRequired().HasMaxLength(500).HasColumnName("slug");
-        builder.Property(e => e.ComicType).HasColumnName("comic_type");
-        builder.Property(e => e.Status).HasColumnName("status");
+        builder.Property(e => e.ComicType).HasConversion<string>().HasColumnType("text").HasColumnName("comic_type");
+        builder.Property(e => e.Status).HasConversion<string>().HasColumnType("text").HasColumnName("status");
         builder.Property(e => e.Description).HasColumnName("description");
         builder.Property(e => e.Language).HasMaxLength(10).HasColumnName("language");
         builder.Property(e => e.PublishedYear).HasColumnName("published_year");

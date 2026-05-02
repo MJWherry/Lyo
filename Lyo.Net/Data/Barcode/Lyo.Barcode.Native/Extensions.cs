@@ -12,7 +12,7 @@ public static class Extensions
     {
         public IServiceCollection AddNativeBarcodeService(Action<BarcodeServiceOptions>? configure = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             var options = new BarcodeServiceOptions();
             configure?.Invoke(options);
             services.AddSingleton(options);
@@ -22,8 +22,8 @@ public static class Extensions
 
         public IServiceCollection AddNativeBarcodeService(BarcodeServiceOptions options)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(options, nameof(options));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
             services.AddSingleton(options);
             services.AddSingleton<IBarcodeService, NativeBarcodeService>();
             return services;
@@ -32,9 +32,9 @@ public static class Extensions
         /// <param name="configSectionName">Defaults to <see cref="BarcodeServiceOptions.SectionName" />.</param>
         public IServiceCollection AddNativeBarcodeServiceFromConfiguration(IConfiguration configuration, string configSectionName = BarcodeServiceOptions.SectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(BarcodeServiceOptions))) {
                 services.AddSingleton<BarcodeServiceOptions>(_ => {
                     var section = configuration.GetSection(configSectionName);

@@ -22,6 +22,9 @@ public class JobSchedule
 
     public int? IntervalMinutes { get; set; }
 
+    /// <summary>Standard cron expression (5- or 6-field). Only set when Type is Cron.</summary>
+    public string? CronExpression { get; set; }
+
     public bool Enabled { get; set; }
 
     public DateTime CreatedTimestamp { get; set; }

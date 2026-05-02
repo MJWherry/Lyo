@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Lyo.Exceptions;
 
@@ -12,19 +11,18 @@ public static class CollectionExtensions
     public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source) => source == null || !source.Any();
 
     /// <summary>Returns the enumerable as a read-only list, avoiding multiple enumeration.</summary>
-    [return: NotNull]
-    public static IReadOnlyList<T> AsReadOnlyList<T>([NotNull] this IEnumerable<T> source)
+    public static IReadOnlyList<T> AsReadOnlyList<T>(this IEnumerable<T> source)
     {
-        ArgumentHelpers.ThrowIfNull(source, nameof(source));
-        return source is IReadOnlyList<T> list ? list : source.ToList();
+        ArgumentHelpers.ThrowIfNull(source);
+        return source as IReadOnlyList<T> ?? source.ToList();
     }
 
     /// <summary>Returns distinct elements by a key selector. Polyfill for .NET Standard 2.0.</summary>
 #if NETSTANDARD2_0
-    public static IEnumerable<TSource> DistinctBy<TSource, TKey>([NotNull] this IEnumerable<TSource> source, [NotNull] Func<TSource, TKey> keySelector)
+    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
     {
-        ArgumentHelpers.ThrowIfNull(source, nameof(source));
-        ArgumentHelpers.ThrowIfNull(keySelector, nameof(keySelector));
+        ArgumentHelpers.ThrowIfNull(source);
+        ArgumentHelpers.ThrowIfNull(keySelector);
         var seen = new HashSet<TKey>();
         foreach (var element in source) {
             if (seen.Add(keySelector(element)))
@@ -32,12 +30,12 @@ public static class CollectionExtensions
         }
     }
 #else
-    public static IEnumerable<TSource> DistinctBy<TSource, TKey>([NotNull] this IEnumerable<TSource> source, [NotNull] Func<TSource, TKey> keySelector)
+    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
         => Enumerable.DistinctBy(source, keySelector);
 
     public static IEnumerable<TSource> DistinctBy<TSource, TKey>(
-        [NotNull] this IEnumerable<TSource> source,
-        [NotNull] Func<TSource, TKey> keySelector,
+        this IEnumerable<TSource> source,
+        Func<TSource, TKey> keySelector,
         IEqualityComparer<TKey>? comparer)
         => Enumerable.DistinctBy(source, keySelector, comparer);
 #endif

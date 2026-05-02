@@ -1,5 +1,5 @@
 using Lyo.Barcode.Models;
-using Lyo.Common;
+using Lyo.Result;
 
 namespace Lyo.Barcode;
 

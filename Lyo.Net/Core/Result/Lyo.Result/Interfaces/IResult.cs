@@ -1,4 +1,4 @@
-namespace Lyo.Common;
+namespace Lyo.Result.Interfaces;
 
 /// <summary>Non-generic contract for any result type. Allows uniform handling without knowing the data type.</summary>
 public interface IResult

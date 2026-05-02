@@ -22,8 +22,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEmailService(Func<IServiceProvider, EmailServiceOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<IValidateOptions<EmailServiceOptions>, EmailServiceOptionsValidator>();
             services.AddSingleton<EmailServiceOptions>(provider => {
                 var options = configure(provider);
@@ -49,8 +49,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEmailService(Action<IServiceProvider, EmailServiceOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<IValidateOptions<EmailServiceOptions>, EmailServiceOptionsValidator>();
             services.AddSingleton<EmailServiceOptions>(provider => {
                 var options = new EmailServiceOptions();
@@ -77,8 +77,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEmailService(Action<EmailServiceOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<IValidateOptions<EmailServiceOptions>, EmailServiceOptionsValidator>();
             services.AddSingleton<EmailServiceOptions>(_ => {
                 var options = new EmailServiceOptions();
@@ -106,9 +106,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddEmailServiceFromConfiguration(IConfiguration configuration, string configSectionName = EmailServiceOptions.SectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             services.AddSingleton<IValidateOptions<EmailServiceOptions>, EmailServiceOptionsValidator>();
             services.AddOptions<EmailServiceOptions>().Bind(configuration.GetSection(configSectionName)).ValidateOnStart();
             services.AddSingleton<EmailService>(provider => {

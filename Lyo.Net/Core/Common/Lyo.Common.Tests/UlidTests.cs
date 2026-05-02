@@ -52,7 +52,7 @@ public class UlidTests
             => Ulid.GetTimestamp("I000000000" + new string('0', 16))); // 'I' not in Crockford alphabet; must be in timestamp region (first 10 chars)
 
     [Fact]
-    public void GetTimestamp_Null_Throws() => Assert.Throws<ArgumentException>(() => Ulid.GetTimestamp(null!));
+    public void GetTimestamp_Null_Throws() => Assert.Throws<ArgumentNullException>(() => Ulid.GetTimestamp(null!));
 
     [Fact]
     public void Create_SameTimestampDifferentRandom()

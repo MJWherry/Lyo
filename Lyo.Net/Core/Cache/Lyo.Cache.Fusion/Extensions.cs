@@ -44,7 +44,7 @@ public static class FusionCacheServiceExtensions
             Action<RedisBackplaneOptions>? configureRedisBackplane = null,
             Action<ConfigurationOptions>? configureRedis = null)
         {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(redisConnectionString, nameof(redisConnectionString));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(redisConnectionString);
             services.AddRedisConnection(redisConnectionString, configureRedis);
             return FusionCacheRegistration.AddFusionCacheInternal(services, configureOptions, configureFusionCache, configureRedisBackplane ?? (_ => { }));
         }
@@ -68,8 +68,8 @@ public static class FusionCacheServiceExtensions
             Action<ConfigurationOptions>? configureRedis = null,
             string redisSectionName = "Redis")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
             var cacheOptions = new CacheOptions();
             var section = configuration.GetSection(CacheOptions.SectionName);
             if (section.Exists())
@@ -109,8 +109,8 @@ public static class FusionCacheServiceExtensions
         /// <summary>Adds Redis connection (IConnectionMultiplexer) to the service collection.</summary>
         public IServiceCollection AddRedisConnection(string connectionString, Action<ConfigurationOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
             services.AddSingleton<IConnectionMultiplexer>(_ => {
                 var options = ConfigurationOptions.Parse(connectionString);
                 options.AbortOnConnectFail = false;
@@ -127,9 +127,9 @@ public static class FusionCacheServiceExtensions
             string sectionName = "Redis",
             Action<ConfigurationOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName, nameof(sectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
             var redisSection = configuration.GetSection(sectionName);
             var connectionString = redisSection["ConnectionString"] ??
                 redisSection.Value ?? throw new InvalidOperationException($"Redis connection string not found in configuration section '{sectionName}'");

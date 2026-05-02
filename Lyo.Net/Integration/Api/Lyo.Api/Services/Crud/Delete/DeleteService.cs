@@ -43,8 +43,8 @@ public class DeleteService<TContext>(
         const string operation = "delete";
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
-        ArgumentHelpers.ThrowIfNullOrEmpty(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(keys);
+        ArgumentHelpers.ThrowIfNullOrEmpty(keys);
         using var scope = BeginActionScope("DELETE", null, typeof(TDbModel), typeof(TResult));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var entity = await context.Set<TDbModel>().FindAsync(keys, ct);
@@ -85,7 +85,7 @@ public class DeleteService<TContext>(
         const string operation = "delete_by_request";
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var scope = BeginActionScope("DELETE", typeof(DeleteRequest), typeof(TDbModel), typeof(TResult));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var entities = await FindEntitiesByRequest<TDbModel>(context, request, ct);

@@ -9,7 +9,7 @@ public sealed class DefaultFileContentPolicy : IFileContentPolicy
 
     public DefaultFileContentPolicy(FileStorageServiceBaseOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         _options = options;
     }
 

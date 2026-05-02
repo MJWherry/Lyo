@@ -48,7 +48,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     /// <summary>Derives a key from a password string using Argon2id. Note: The 'iterations' parameter maps to Argon2's time cost parameter.</summary>
     public byte[] DeriveKey(string password, byte[]? salt = null, int iterations = 600000, int? keySizeBytes = null, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password);
         var passwordBytes = (encoding ?? DefaultEncoding).GetBytes(password);
         return DeriveKey(passwordBytes, salt, iterations, keySizeBytes ?? DefaultKeySize);
     }
@@ -59,7 +59,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     /// </summary>
     public byte[] DeriveKey(byte[] password, byte[]? salt = null, int iterations = 600000, int? keySizeBytes = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrEmpty(password);
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualKeySize, 16, 64, nameof(keySizeBytes));
 
@@ -81,7 +81,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     /// <summary>Derives a key from a password and returns both the key and salt.</summary>
     public (byte[] Key, byte[] Salt) DeriveKeyWithSalt(string password, int iterations = 600000, int? keySizeBytes = null, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password);
         var passwordBytes = (encoding ?? DefaultEncoding).GetBytes(password);
         return DeriveKeyWithSalt(passwordBytes, iterations, keySizeBytes ?? DefaultKeySize);
     }
@@ -89,7 +89,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     /// <summary>Derives a key from a password byte array and returns both the key and salt.</summary>
     public (byte[] Key, byte[] Salt) DeriveKeyWithSalt(byte[] password, int iterations = 600000, int? keySizeBytes = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrEmpty(password);
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         var salt = CryptographicRandom.GetBytes(DefaultSaltSize);
         var key = DeriveKey(password, salt, iterations, actualKeySize);

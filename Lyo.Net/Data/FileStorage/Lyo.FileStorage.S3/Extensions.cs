@@ -22,8 +22,8 @@ public static class Extensions
     /// </summary>
     public static IServiceCollection AddKeyedS3MultipartUploadService(this IServiceCollection services, string serviceKey)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceKey, nameof(serviceKey));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceKey);
         services.AddKeyedScoped<S3MultipartUploadService>(
             serviceKey, (provider, _) => {
                 var opts = provider.GetRequiredService<S3FileStorageOptions>();
@@ -60,8 +60,8 @@ public static class Extensions
     /// </example>
     public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyed(this IServiceCollection services, string keyName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         return new(services, keyName);
     }
 
@@ -74,9 +74,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddAmazonS3FromConfiguration(IConfiguration configuration, string configSectionName = S3FileStorageOptions.SectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
                 services.AddSingleton<S3FileStorageOptions>(_ => {
                     var section = configuration.GetSection(configSectionName);

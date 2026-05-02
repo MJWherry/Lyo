@@ -24,7 +24,7 @@ public sealed class LocalLockService : ILockService
     /// <inheritdoc />
     public async ValueTask<ILockHandle?> AcquireAsync(string key, TimeSpan? timeout = null, TimeSpan? lockDuration = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var entry = _locks.GetOrAdd(normalizedKey, _ => new());
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;

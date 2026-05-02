@@ -14,7 +14,7 @@ public static class WebDriverArgumentFormatter
     /// </summary>
     public static string Format(string key, string? value)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var k = key.Trim();
         if (value == null || string.IsNullOrWhiteSpace(value))
             return k;

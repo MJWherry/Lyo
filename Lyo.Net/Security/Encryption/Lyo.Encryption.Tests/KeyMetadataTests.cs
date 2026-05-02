@@ -102,10 +102,10 @@ public class KeyMetadataTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
         var metadata = new KeyMetadata { Algorithm = "AES-256" };
-        await keyStore.SetKeyMetadataAsync(keyId, "1", metadata, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved = await keyStore.GetKeyMetadataAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetKeyMetadataAsync(keyId, "1", metadata, TestContext.Current.CancellationToken);
+        var retrieved = await keyStore.GetKeyMetadataAsync(keyId, "1", TestContext.Current.CancellationToken);
         Assert.NotNull(retrieved);
         Assert.Equal("AES-256", retrieved.Algorithm);
     }
@@ -116,10 +116,10 @@ public class KeyMetadataTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
         var metadata = new KeyMetadata { Algorithm = "ChaCha20-Poly1305" };
-        await keyStore.SetKeyMetadataAsync(keyId, "1", metadata, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved = await keyStore.GetKeyMetadataAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetKeyMetadataAsync(keyId, "1", metadata, TestContext.Current.CancellationToken);
+        var retrieved = await keyStore.GetKeyMetadataAsync(keyId, "1", TestContext.Current.CancellationToken);
         Assert.Equal("ChaCha20-Poly1305", retrieved!.Algorithm);
     }
 

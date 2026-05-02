@@ -1,6 +1,8 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 
 #pragma warning disable CS8777 // Parameter must have a non-null value when exiting.
 

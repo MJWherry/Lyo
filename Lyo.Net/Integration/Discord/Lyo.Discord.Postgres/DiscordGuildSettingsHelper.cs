@@ -21,7 +21,7 @@ public static class DiscordGuildSettingsHelper
     /// <summary>Ensures a config binding exists with all-null settings (idempotent).</summary>
     public static async Task EnsureDefaultBindingAsync(IConfigStore store, long guildId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(store, nameof(store));
+        ArgumentHelpers.ThrowIfNull(store);
         var r = GuildRef(guildId);
         if (await store.GetBindingAsync(r, Key, ct).ConfigureAwait(false) != null)
             return;
@@ -41,7 +41,7 @@ public static class DiscordGuildSettingsHelper
     /// <summary>Loads resolved guild settings, or default empty object when no binding.</summary>
     public static async Task<DiscordGuildSettings> GetSettingsAsync(IConfigStore store, long guildId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(store, nameof(store));
+        ArgumentHelpers.ThrowIfNull(store);
         await EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
         var resolved = await store.LoadConfigAsync(GuildRef(guildId), ct).ConfigureAwait(false);
         var item = resolved.Items.FirstOrDefault(i => string.Equals(i.Definition.Key, Key, StringComparison.Ordinal));

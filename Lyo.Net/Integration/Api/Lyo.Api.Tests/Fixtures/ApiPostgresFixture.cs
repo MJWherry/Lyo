@@ -70,7 +70,7 @@ public sealed class ApiPostgresFixture : IAsyncLifetime
         var result = await createService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             req, ctx => {
                 ctx.Entity.Id = Guid.NewGuid();
-                ctx.Entity.State = nameof(JobState.Queued);
+                ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
             }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
 

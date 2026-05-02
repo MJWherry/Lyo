@@ -136,13 +136,13 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         var input = new MemoryStream(Encoding.UTF8.GetBytes("This is a long stream content to encrypt"));
-        var result = await svc.EncryptStreamAsync(input, keyId).ConfigureAwait(false);
+        var result = await svc.EncryptStreamAsync(input, keyId);
         using var output = new MemoryStream();
-        await svc.DecryptStreamAsync(result, output, keyId).ConfigureAwait(false);
+        await svc.DecryptStreamAsync(result, output, keyId);
         var decrypted = Encoding.UTF8.GetString(output.ToArray());
         Assert.Equal("This is a long stream content to encrypt", decrypted);
     }
@@ -152,7 +152,7 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
 
@@ -248,7 +248,7 @@ public class TwoKeyAesGcmTests
         var keyStore = new LocalKeyStore();
 
         // Create initial KEK version 1
-        var version1 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version1 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v1", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
 
@@ -258,11 +258,11 @@ public class TwoKeyAesGcmTests
         Assert.Equal(version1, resultV1.KeyVersion);
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.Equal(version2, await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        Assert.Equal(version2, await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken));
 
         // Re-encrypt the DEK with version 2 (async)
-        var reEncryptedDek = await svc.ReEncryptDekAsync(resultV1.EncryptedDataEncryptionKey, keyId, version1, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var reEncryptedDek = await svc.ReEncryptDekAsync(resultV1.EncryptedDataEncryptionKey, keyId, version1, ct: TestContext.Current.CancellationToken);
 
         // Verify the re-encrypted DEK is different from the original
         Assert.NotEqual(resultV1.EncryptedDataEncryptionKey, reEncryptedDek);
@@ -494,13 +494,13 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        var expectedVersion = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var expectedVersion = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         var plaintext = Encoding.UTF8.GetBytes("test data");
         using var inputStream = new MemoryStream(plaintext);
         using var outputStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(inputStream, outputStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToStreamAsync(inputStream, outputStream, keyId, ct: TestContext.Current.CancellationToken);
 
         // Verify stream format: [FormatVersion: 1][DEKAlgorithmId: 1][KEKAlgorithmId: 1][KeyIdLength: 4][KeyId][KeyVersionLength: 4][KeyVersion][EncryptedDEKLength: 4][EncryptedDEK][Chunks...]
         outputStream.Position = 0;
@@ -543,7 +543,7 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
 
         // Use ChaCha20Poly1305 for DEK, AES-GCM for KEK
         var dekService = new ChaCha20Poly1305EncryptionService(keyStore);
@@ -552,7 +552,7 @@ public class TwoKeyAesGcmTests
         var plaintext = Encoding.UTF8.GetBytes("test data");
         using var inputStream = new MemoryStream(plaintext);
         using var outputStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(inputStream, outputStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToStreamAsync(inputStream, outputStream, keyId, ct: TestContext.Current.CancellationToken);
 
         // Verify stream format
         outputStream.Position = 0;
@@ -577,7 +577,7 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         var plaintext = Encoding.UTF8.GetBytes("test data");
@@ -585,12 +585,12 @@ public class TwoKeyAesGcmTests
         using var encryptedStream = new MemoryStream();
 
         // Encrypt
-        await svc.EncryptToStreamAsync(inputStream, encryptedStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToStreamAsync(inputStream, encryptedStream, keyId, ct: TestContext.Current.CancellationToken);
 
         // Decrypt
         encryptedStream.Position = 0;
         using var decryptedStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestContext.Current.CancellationToken);
 
         // Verify decrypted data
         var decrypted = decryptedStream.ToArray();
@@ -602,7 +602,7 @@ public class TwoKeyAesGcmTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
 
         // Encrypt with AES-GCM
         var aesGcmService = new AesGcmEncryptionService(keyStore);
@@ -610,7 +610,7 @@ public class TwoKeyAesGcmTests
         var plaintext = Encoding.UTF8.GetBytes("test data");
         using var inputStream = new MemoryStream(plaintext);
         using var encryptedStream = new MemoryStream();
-        await encryptService.EncryptToStreamAsync(inputStream, encryptedStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await encryptService.EncryptToStreamAsync(inputStream, encryptedStream, keyId, ct: TestContext.Current.CancellationToken);
 
         // Try to decrypt with ChaCha20Poly1305 (wrong DEK algorithm)
         var chachaService = new ChaCha20Poly1305EncryptionService(keyStore);
@@ -620,6 +620,6 @@ public class TwoKeyAesGcmTests
 
         // Should throw because DEK magic/algorithm doesn't match
         await Assert.ThrowsAnyAsync<InvalidDataException>(async ()
-            => await decryptService.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false));
+            => await decryptService.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestContext.Current.CancellationToken));
     }
 }

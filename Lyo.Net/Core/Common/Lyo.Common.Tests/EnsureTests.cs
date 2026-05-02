@@ -1,3 +1,5 @@
+using Lyo.Result;
+
 namespace Lyo.Common.Tests;
 
 public class EnsureTests

@@ -17,7 +17,7 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -30,10 +30,10 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
         using var scope = _serviceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
         await using var context = await factory.CreateDbContextAsync();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
     }
 
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
     [Fact]
     public void AddTwilioSmsDbContext_WithNullServices_ThrowsArgumentNullException()
@@ -79,8 +79,8 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     {
         Assert.NotNull(_serviceProvider);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
     }
 
@@ -89,8 +89,8 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     {
         Assert.NotNull(_serviceProvider);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pending);
     }
 
@@ -109,13 +109,13 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
             CreatedTimestamp = DateTime.UtcNow
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false)) {
+        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
             context.TwilioSmsLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false)) {
-            var retrieved = await context.TwilioSmsLogs.FindAsync(["SM1234567890abcdef1234567890abcdef"], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+            var retrieved = await context.TwilioSmsLogs.FindAsync(["SM1234567890abcdef1234567890abcdef"], TestContext.Current.CancellationToken);
             Assert.NotNull(retrieved);
             Assert.Equal("+15551234567", retrieved.To);
             Assert.Equal("Test message", retrieved.Body);
@@ -138,13 +138,13 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
             CreatedTimestamp = DateTime.UtcNow
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false)) {
+        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
             context.TwilioSmsLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false)) {
-            var retrieved = await context.TwilioSmsLogs.FindAsync(["SMfailed1234567890abcdef12345678"], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+            var retrieved = await context.TwilioSmsLogs.FindAsync(["SMfailed1234567890abcdef12345678"], TestContext.Current.CancellationToken);
             Assert.NotNull(retrieved);
             Assert.False(retrieved.IsSuccess);
             Assert.Equal("Invalid phone number", retrieved.ErrorMessage);

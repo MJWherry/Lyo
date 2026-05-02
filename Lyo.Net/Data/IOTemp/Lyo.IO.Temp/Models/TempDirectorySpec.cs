@@ -38,9 +38,9 @@ public record TempDirectorySpec
     /// </summary>
     public static TempDirectorySpec Random(int minFiles, int maxFiles, long minSize, long maxSize)
     {
-        ArgumentHelpers.ThrowIfNegative(minFiles, nameof(minFiles));
+        ArgumentHelpers.ThrowIfNegative(minFiles);
         ArgumentHelpers.ThrowIfLessThan(maxFiles, minFiles, nameof(maxFiles));
-        ArgumentHelpers.ThrowIfNegative(minSize, nameof(minSize));
+        ArgumentHelpers.ThrowIfNegative(minSize);
         ArgumentHelpers.ThrowIfLessThan(maxSize, minSize, nameof(maxSize));
 
         var rng = GetRandom();

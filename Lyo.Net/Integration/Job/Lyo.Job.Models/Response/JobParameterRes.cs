@@ -15,7 +15,11 @@ public sealed record JobParameterRes(
     byte[]? EncryptedValue,
     bool AllowMultiple,
     bool Enabled,
-    bool Required)
+    bool Required,
+    string? ValidationRegex = null,
+    int? MinLength = null,
+    int? MaxLength = null,
+    string? AllowedValues = null)
 {
     public override string ToString() => $"Id={Id.Truncated(4, 4)} DefinitionId={JobDefinitionId.Truncated()} ({Type}) {Key}={Value} ({Description})";
 }

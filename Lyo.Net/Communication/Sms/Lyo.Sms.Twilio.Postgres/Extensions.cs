@@ -17,8 +17,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddTwilioSmsDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddTwilioSmsDbContextFactory(new PostgresTwilioSmsOptions { ConnectionString = connectionString })
             .AddScoped<TwilioSmsDbContext>(sp => sp.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>().CreateDbContext());
     }
@@ -26,8 +26,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL Twilio SMS DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddTwilioSmsDbContextFactory(this IServiceCollection services, Action<PostgresTwilioSmsOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresTwilioSmsOptions();
         configure(options);
         return services.AddTwilioSmsDbContextFactory(options);
@@ -39,8 +39,8 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresTwilioSmsOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
         var options = new PostgresTwilioSmsOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -52,9 +52,9 @@ public static class Extensions
     /// <summary>Adds PostgreSQL Twilio SMS DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddTwilioSmsDbContextFactory(this IServiceCollection services, PostgresTwilioSmsOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString);
         services.AddSingleton<IOptions<PostgresTwilioSmsOptions>>(Options.Create(options));
         services.AddPostgresMigrations<TwilioSmsDbContext, PostgresTwilioSmsOptions>();
         services.AddDbContextFactory<TwilioSmsDbContext>(dbOptions => dbOptions.UseNpgsql(
@@ -69,8 +69,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddTwilioSmsDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<TwilioSmsDbContext>(configure);
         return services;
     }

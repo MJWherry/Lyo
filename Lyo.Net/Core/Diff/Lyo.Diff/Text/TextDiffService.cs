@@ -10,8 +10,8 @@ public sealed class TextDiffService(ITextTokenizer tokenizer) : ITextDiffService
     /// <inheritdoc />
     public TextDiffResult Diff(string oldText, string newText, TextDiffOptions? options = null)
     {
-        ArgumentHelpers.ThrowIfNull(oldText, nameof(oldText));
-        ArgumentHelpers.ThrowIfNull(newText, nameof(newText));
+        ArgumentHelpers.ThrowIfNull(oldText);
+        ArgumentHelpers.ThrowIfNull(newText);
         options ??= DefaultOptions;
         var oldTokens = tokenizer.Tokenize(oldText, options);
         var newTokens = tokenizer.Tokenize(newText, options);
@@ -21,10 +21,10 @@ public sealed class TextDiffService(ITextTokenizer tokenizer) : ITextDiffService
     /// <inheritdoc />
     public TextDiffResult Diff(string oldText, TextToken[] oldTokens, string newText, TextToken[] newTokens, TextDiffOptions? options = null)
     {
-        ArgumentHelpers.ThrowIfNull(oldText, nameof(oldText));
-        ArgumentHelpers.ThrowIfNull(newText, nameof(newText));
-        ArgumentHelpers.ThrowIfNull(oldTokens, nameof(oldTokens));
-        ArgumentHelpers.ThrowIfNull(newTokens, nameof(newTokens));
+        ArgumentHelpers.ThrowIfNull(oldText);
+        ArgumentHelpers.ThrowIfNull(newText);
+        ArgumentHelpers.ThrowIfNull(oldTokens);
+        ArgumentHelpers.ThrowIfNull(newTokens);
         options ??= DefaultOptions;
         OperationHelpers.ThrowIf(
             oldTokens.Length > options.MaxTokensPerSide || newTokens.Length > options.MaxTokensPerSide,

@@ -1,0 +1,117 @@
+@namespace Lyo.Comic.Web.Components
+@implements IAsyncDisposable
+
+<div id="@_viewerId" class="comic-viewer" tabindex="0" @ref="_viewerRef">
+
+    @* ── Loading overlay ─────────────────────────────────────────── *@
+    @if (_loadingPage)
+    {
+        <div class="comic-viewer__loading">
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary"/>
+        </div>
+    }
+
+    @* ── Page image ──────────────────────────────────────────────── *@
+    <div class="comic-viewer__page-area">
+        @if (!string.IsNullOrWhiteSpace(_currentImageUrl))
+        {
+            <img src="@_currentImageUrl"
+                 alt="Page @CurrentPage"
+                 class="comic-viewer__page-img @(_loadingPage ? "comic-viewer__page-img--hidden" : "")"
+                 @onload="OnImageLoaded"/>
+        }
+        else if (!_loadingPage)
+        {
+            <div class="comic-viewer__no-image">
+                <MudIcon Icon="@Icons.Material.Filled.BrokenImage" Color="Color.Default" Style="font-size: 4rem; opacity: 0.3;"/>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Page image not available
+                </MudText>
+            </div>
+        }
+    </div>
+
+    @* ── Invisible left / right tap zones (mobile + desktop) ─────── *@
+    @* Click events handled by JS navigate() for instant image swap; overlay arrows are visual hints only *@
+    <div class="comic-viewer__tap-zone comic-viewer__tap-zone--left" title="Previous page">
+        <div class="comic-viewer__tap-arrow comic-viewer__tap-arrow--left">
+            <MudIcon Icon="@Icons.Material.Filled.ChevronLeft"/>
+        </div>
+    </div>
+
+    <div class="comic-viewer__tap-zone comic-viewer__tap-zone--right" title="Next page">
+        <div class="comic-viewer__tap-arrow comic-viewer__tap-arrow--right">
+            <MudIcon Icon="@Icons.Material.Filled.ChevronRight"/>
+        </div>
+    </div>
+
+    @* ── Top overlay bar ─────────────────────────────────────────── *@
+    <div class="comic-viewer__top-bar @(_overlayVisible ? "comic-viewer__overlay--visible" : "comic-viewer__overlay--hidden")">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="w-100 px-2">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Color="Color.Inherit"
+                           Size="Size.Medium"
+                           OnClick="CloseAsync"
+                           title="Close viewer"/>
+
+            @* Chapter selector ─────────────────────────────────────── *@
+            @if (Chapters.Count > 0)
+            {
+                <MudSelect T="ComicChapter"
+                           Value="CurrentChapter"
+                           ValueChanged="OnChapterSelectedAsync"
+                           ToStringFunc="ChapterToString"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Class="comic-viewer__chapter-select"
+                           AnchorOrigin="Origin.BottomRight"
+                           TransformOrigin="Origin.TopRight">
+                    @foreach (var chapter in Chapters)
+                    {
+                        <MudSelectItem T="ComicChapter" Value="chapter">@ChapterToString(chapter)</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        </MudStack>
+    </div>
+
+    @* ── Bottom overlay bar ──────────────────────────────────────── *@
+    <div class="comic-viewer__bottom-bar @(_overlayVisible ? "comic-viewer__overlay--visible" : "comic-viewer__overlay--hidden")">
+        <MudStack Spacing="1" Class="w-100 px-3 pb-2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIconButton Icon="@Icons.Material.Filled.SkipPrevious"
+                               Color="Color.Inherit"
+                               Size="Size.Small"
+                               Disabled="@(!CanGoPreviousChapter)"
+                               OnClick="PreviousChapterAsync"
+                               title="Previous chapter"/>
+
+                <MudText Typo="Typo.body2" Class="flex-1 text-center" Style="white-space: nowrap;">
+                    @DisplayPage / @TotalPages
+                </MudText>
+
+                <MudIconButton Icon="@Icons.Material.Filled.SkipNext"
+                               Color="Color.Inherit"
+                               Size="Size.Small"
+                               Disabled="@(!CanGoNextChapter)"
+                               OnClick="NextChapterAsync"
+                               title="Next chapter"/>
+            </MudStack>
+
+            <MudSlider T="int"
+                       Value="DisplayPage"
+                       ValueChanged="OnSliderChangedAsync"
+                       Min="1"
+                       Max="@TotalPages"
+                       Class="comic-viewer__progress-slider"
+                       Color="Color.Primary"
+                       Immediate="false"/>
+        </MudStack>
+    </div>
+
+    @* ── Centre-tap zone to toggle overlays ─────────────────────── *@
+    <div class="comic-viewer__tap-zone comic-viewer__tap-zone--center"
+         @onclick="ToggleOverlay">
+    </div>
+
+</div>

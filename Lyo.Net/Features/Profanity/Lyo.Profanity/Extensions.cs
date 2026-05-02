@@ -28,7 +28,7 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddProfanityFilterService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<FileProfanityFilterOptions>(_ => new());
         AddFileProfanityFilterService(services);
         return services;
@@ -40,8 +40,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddProfanityFilterService(this IServiceCollection services, Action<FileProfanityFilterOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<FileProfanityFilterOptions>(_ => {
             var options = new FileProfanityFilterOptions();
             configure(options);
@@ -62,9 +62,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = FileProfanityFilterOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         services.AddSingleton<FileProfanityFilterOptions>(_ => {
             var options = new FileProfanityFilterOptions();
             var section = configuration.GetSection(configSectionName);

@@ -14,7 +14,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
 
     public PostgresHomeInventoryStore(IDbContextFactory<HomeInventoryDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
@@ -42,7 +42,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     /// <inheritdoc />
     public async Task SaveItemAsync(HomeItemRecord item, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(item, nameof(item));
+        ArgumentHelpers.ThrowIfNull(item);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(item.Name, nameof(item.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (item.Id != default) {
@@ -75,7 +75,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     /// <inheritdoc />
     public async Task<HomeItemRecord?> GetItemBySkuAsync(string sku, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sku, nameof(sku));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sku);
         var trimmed = sku.Trim();
         var lower = trimmed.ToLowerInvariant();
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
@@ -97,7 +97,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     /// <inheritdoc />
     public async Task SaveCategoryAsync(HomeCategoryRecord category, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(category, nameof(category));
+        ArgumentHelpers.ThrowIfNull(category);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(category.Name, nameof(category.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (category.Id != default) {
@@ -159,7 +159,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     /// <inheritdoc />
     public async Task SaveLocationAsync(HomeLocationRecord location, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(location, nameof(location));
+        ArgumentHelpers.ThrowIfNull(location);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(location.Name, nameof(location.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (location.Id != default) {

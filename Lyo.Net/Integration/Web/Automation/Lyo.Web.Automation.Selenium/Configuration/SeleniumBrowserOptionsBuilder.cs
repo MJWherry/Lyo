@@ -50,8 +50,8 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <summary>Sets <see cref="SeleniumBrowserOptions.BrowserWindowWidth" /> and <see cref="SeleniumBrowserOptions.BrowserWindowHeight" />.</summary>
     public SeleniumBrowserOptionsBuilder WindowSize(int width, int height)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(width, nameof(width));
-        ArgumentHelpers.ThrowIfNegativeOrZero(height, nameof(height));
+        ArgumentHelpers.ThrowIfNegativeOrZero(width);
+        ArgumentHelpers.ThrowIfNegativeOrZero(height);
         _options.BrowserWindowWidth = width;
         _options.BrowserWindowHeight = height;
         return this;
@@ -60,7 +60,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.BrowserWindowWidth" />
     public SeleniumBrowserOptionsBuilder WindowWidth(int width)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(width, nameof(width));
+        ArgumentHelpers.ThrowIfNegativeOrZero(width);
         _options.BrowserWindowWidth = width;
         return this;
     }
@@ -68,7 +68,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.BrowserWindowHeight" />
     public SeleniumBrowserOptionsBuilder WindowHeight(int height)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(height, nameof(height));
+        ArgumentHelpers.ThrowIfNegativeOrZero(height);
         _options.BrowserWindowHeight = height;
         return this;
     }
@@ -76,7 +76,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.RemoteWebDriverUri" />
     public SeleniumBrowserOptionsBuilder RemoteWebDriver(string uri)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, nameof(uri));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri);
         _options.RemoteWebDriverUri = uri;
         return this;
     }
@@ -91,7 +91,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.ServiceRootDirectory" />
     public SeleniumBrowserOptionsBuilder ServiceRootDirectory(string path)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         _options.ServiceRootDirectory = path;
         return this;
     }
@@ -120,7 +120,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.PageLoadTimeoutSeconds" />
     public SeleniumBrowserOptionsBuilder PageLoadTimeoutSeconds(int seconds)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(seconds, nameof(seconds));
+        ArgumentHelpers.ThrowIfNegativeOrZero(seconds);
         _options.PageLoadTimeoutSeconds = seconds;
         return this;
     }
@@ -128,7 +128,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.ImplicitWaitSeconds" />
     public SeleniumBrowserOptionsBuilder ImplicitWaitSeconds(int seconds)
     {
-        ArgumentHelpers.ThrowIfNegative(seconds, nameof(seconds));
+        ArgumentHelpers.ThrowIfNegative(seconds);
         _options.ImplicitWaitSeconds = seconds;
         return this;
     }
@@ -136,7 +136,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.ScriptTimeoutSeconds" />
     public SeleniumBrowserOptionsBuilder ScriptTimeoutSeconds(int seconds)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(seconds, nameof(seconds));
+        ArgumentHelpers.ThrowIfNegativeOrZero(seconds);
         _options.ScriptTimeoutSeconds = seconds;
         return this;
     }
@@ -144,7 +144,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.SeleniumMaxWaitSeconds" />
     public SeleniumBrowserOptionsBuilder SeleniumMaxWaitSeconds(int seconds)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(seconds, nameof(seconds));
+        ArgumentHelpers.ThrowIfNegativeOrZero(seconds);
         _options.SeleniumMaxWaitSeconds = seconds;
         return this;
     }
@@ -159,7 +159,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.PollingMaxAttempts" />
     public SeleniumBrowserOptionsBuilder PollingMaxAttempts(int attempts)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(attempts, nameof(attempts));
+        ArgumentHelpers.ThrowIfNegativeOrZero(attempts);
         _options.PollingMaxAttempts = attempts;
         return this;
     }
@@ -182,7 +182,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <summary>Appends a user agent string (in addition to the default rotating list).</summary>
     public SeleniumBrowserOptionsBuilder AddUserAgent(string userAgent)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(userAgent, nameof(userAgent));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(userAgent);
         _options.UserAgents.Add(userAgent.Trim());
         return this;
     }

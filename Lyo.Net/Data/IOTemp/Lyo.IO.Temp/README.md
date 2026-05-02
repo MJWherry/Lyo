@@ -7,6 +7,7 @@ or any workflow needing short-lived temp storage.
 
 - **Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose
 - **Standalone files/dirs** – One-off `CreateFile` / `CreateDirectory` without a session
+- **Pluggable storage** – `IIOTempStorageProvider` abstracts all I/O; ships with `FileSystemIOTempStorageProvider` (default) and `InMemoryIOTempStorageProvider` (WASM / tests)
 - **Naming strategies** – `Guid`, `Sequential`, `Timestamp`, `RandomChars`
 - **Overflow handling** – `ThrowException`, `DeleteOldest`, or `DeleteLargest` when per-file or total-size limits are exceeded
 - **File generator** – `session.Generator` produces random-bytes files, structured text/CSV/JSON, zip archives, and simulated directory trees
@@ -184,6 +185,53 @@ await _ioTempService.CleanupAsync(ct);
 await _ioTempService.CleanupAsync(TimeSpan.FromHours(1), ct);
 ```
 
+## Storage Providers
+
+All I/O is delegated through `IIOTempStorageProvider`, making the storage backend fully swappable.
+Two implementations are included; register a custom one via DI to use any other backend.
+
+### FileSystemIOTempStorageProvider (default)
+
+Delegates to `System.IO`. Used automatically when no `IIOTempStorageProvider` is registered.
+
+```csharp
+// Implicit — no registration needed
+services.AddIOTempService();
+```
+
+### InMemoryIOTempStorageProvider
+
+Backed by a `ConcurrentDictionary`. No filesystem access; suitable for Blazor WASM and unit tests.
+All data lives for the lifetime of the provider instance.
+
+```csharp
+// Blazor WASM (Program.cs)
+builder.Services.AddSingleton<IIOTempStorageProvider>(new InMemoryIOTempStorageProvider());
+builder.Services.AddIOTempService();
+
+// xUnit / NUnit — direct construction
+var storage = new InMemoryIOTempStorageProvider();
+var options = new IOTempSessionOptions { RootDirectory = storage.RootPath };
+using var session = new IOTempSession(options, storageProvider: storage);
+```
+
+### Custom Provider
+
+Implement `IIOTempStorageProvider` once to use any backend (FTP, SFTP, Azure Blob, etc.):
+
+```csharp
+public sealed class FtpIOTempStorageProvider : IIOTempStorageProvider
+{
+    // implement RootPath, DirectoryExists, CreateDirectory, WriteAllBytes, OpenRead, ...
+}
+
+// Register it before AddIOTempService
+services.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...));
+services.AddIOTempService();
+```
+
+The provider interface covers: directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length, creation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers).
+
 ## Configuration
 
 ### IOTempServiceOptions
@@ -242,13 +290,16 @@ await _ioTempService.CleanupAsync(TimeSpan.FromHours(1), ct);
 
 ## Public API (generated)
 
-Top-level `public` types in `*.cs` (*19*). Nested types and file-scoped namespaces may omit some entries.
+Top-level `public` types in `*.cs` (*22*). Nested types and file-scoped namespaces may omit some entries.
 
 - `Constants`
 - `Extensions`
+- `FileSystemIOTempStorageProvider`
 - `IIOTempFileGenerator`
 - `IIOTempService`
 - `IIOTempSession`
+- `IIOTempStorageProvider`
+- `InMemoryIOTempStorageProvider`
 - `IOTempCleanupOptions`
 - `IOTempCleanupWorker`
 - `IOTempFileGenerator`
@@ -259,6 +310,7 @@ Top-level `public` types in `*.cs` (*19*). Nested types and file-scoped namespac
 - `IOTempSession`
 - `IOTempSessionExtensions`
 - `IOTempSessionOptions`
+- `ProviderEntryInfo`
 - `TempDirectorySpec`
 - `TempDirectorySpecBuilder`
 - `TempNamingStrategy`

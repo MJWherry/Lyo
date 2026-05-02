@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
+using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,6 +19,9 @@ public sealed class IOTempSession : IIOTempSession
     private const int DisposeRetryCount = 3;
     private const int DisposeRetryDelayMs = 150;
 
+    /// <summary>UTF-8 without BOM so written bytes match <see cref="Encoding.GetByteCount"/> and stream roundtrips.</summary>
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
+
     private static long _nameSequence;
     private readonly List<string> _directories = [];
     private readonly List<string> _files = [];
@@ -25,14 +29,16 @@ public sealed class IOTempSession : IIOTempSession
     private readonly IMetrics _metrics;
     private readonly Action<string>? _onDispose;
     private readonly IOTempSessionOptions _options;
+    private readonly IIOTempStorageProvider _storage;
     private readonly DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private bool _disposed;
     private long _totalBytesUsed;
 
-    public IOTempSession(IOTempSessionOptions? options = null, ILogger<IOTempSession>? logger = null, IMetrics? metrics = null, Action<string>? onDispose = null)
+    public IOTempSession(IOTempSessionOptions? options = null, ILogger<IOTempSession>? logger = null, IMetrics? metrics = null, Action<string>? onDispose = null, IIOTempStorageProvider? storageProvider = null)
     {
         _options = options ?? new IOTempSessionOptions();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.RootDirectory, nameof(_options.RootDirectory));
+        _storage = storageProvider ?? new FileSystemIOTempStorageProvider(_options.RootDirectory);
         _logger = logger ?? NullLogger<IOTempSession>.Instance;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _onDispose = onDispose;
@@ -96,7 +102,7 @@ public sealed class IOTempSession : IIOTempSession
             FileLifetime = _options.FileLifetime,
             OverflowStrategy = _options.OverflowStrategy
         };
-        var sub = new IOTempSession(subOptions, _logger, _metrics);
+        var sub = new IOTempSession(subOptions, _logger, _metrics, storageProvider: _storage);
         _directories.Add(sub.SessionDirectory);
         DirectoryCreated?.Invoke(sub.SessionDirectory);
         return sub;
@@ -109,15 +115,56 @@ public sealed class IOTempSession : IIOTempSession
     public IEnumerable<string> EnumerateFiles(string? pattern = null)
     {
         ThrowIfDisposed();
-        return pattern == null
-            ? Directory.EnumerateFiles(SessionDirectory, "*", SearchOption.AllDirectories)
-            : Directory.EnumerateFiles(SessionDirectory, pattern, SearchOption.AllDirectories);
+        // Provider-level enumeration walks all descendants; apply glob pattern client-side if provided.
+        return EnumerateAllFiles(SessionDirectory)
+            .Where(f => pattern == null || MatchesGlob(Path.GetFileName(f), pattern));
     }
 
     public IEnumerable<string> EnumerateDirectories()
     {
         ThrowIfDisposed();
-        return Directory.EnumerateDirectories(SessionDirectory, "*", SearchOption.AllDirectories);
+        return EnumerateAllDirectories(SessionDirectory);
+    }
+
+    private IEnumerable<string> EnumerateAllFiles(string dir)
+    {
+        foreach (var entry in _storage.EnumerateEntries(dir)) {
+            if (!entry.IsDirectory)
+                yield return entry.FullPath;
+            else
+                foreach (var sub in EnumerateAllFiles(entry.FullPath))
+                    yield return sub;
+        }
+    }
+
+    private IEnumerable<string> EnumerateAllDirectories(string dir)
+    {
+        foreach (var entry in _storage.EnumerateEntries(dir)) {
+            if (!entry.IsDirectory)
+                continue;
+            yield return entry.FullPath;
+            foreach (var sub in EnumerateAllDirectories(entry.FullPath))
+                yield return sub;
+        }
+    }
+
+    private static bool MatchesGlob(string name, string pattern)
+    {
+        // Simple * wildcard support matching the original Directory.EnumerateFiles pattern behaviour.
+        if (pattern == "*") return true;
+        if (!pattern.Contains('*') && !pattern.Contains('?'))
+            return string.Equals(name, pattern, StringComparison.OrdinalIgnoreCase);
+
+        // Convert glob to a simple regex-like match.
+        var parts = pattern.Split('*');
+        var pos = 0;
+        foreach (var part in parts) {
+            if (part.Length == 0) continue;
+            var idx = name.IndexOf(part, pos, StringComparison.OrdinalIgnoreCase);
+            if (idx < 0) return false;
+            pos = idx + part.Length;
+        }
+        return true;
     }
 
 #endregion
@@ -127,18 +174,18 @@ public sealed class IOTempSession : IIOTempSession
     public bool DeleteFile(string path)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath)) {
+            if (!_storage.FileExists(safePath)) {
                 _files.Remove(safePath);
                 _metrics.IncrementCounter(Constants.Metrics.DeleteFileSuccess);
                 return false;
             }
 
-            var size = _files.Contains(safePath) ? new FileInfo(safePath).Length : 0L;
-            File.Delete(safePath);
+            var size = _files.Contains(safePath) ? _storage.GetFileLength(safePath) : 0L;
+            _storage.DeleteFile(safePath);
             if (_files.Remove(safePath))
                 Interlocked.Add(ref _totalBytesUsed, -size);
 
@@ -157,7 +204,7 @@ public sealed class IOTempSession : IIOTempSession
     public bool DeleteDirectory(string path)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
@@ -167,7 +214,7 @@ public sealed class IOTempSession : IIOTempSession
                     GetPathComparison()),
                 "Cannot delete the session root directory.");
 
-            if (!Directory.Exists(safePath)) {
+            if (!_storage.DirectoryExists(safePath)) {
                 _directories.Remove(safePath);
                 _metrics.IncrementCounter(Constants.Metrics.DeleteDirectorySuccess);
                 return false;
@@ -178,10 +225,10 @@ public sealed class IOTempSession : IIOTempSession
             var comparison = GetPathComparison();
 
             var filesUnder = _files.Where(f => f.StartsWith(prefix, comparison)).ToList();
-            var freedBytes = filesUnder.Sum(f => File.Exists(f) ? new FileInfo(f).Length : 0L);
+            var freedBytes = filesUnder.Sum(f => _storage.FileExists(f) ? _storage.GetFileLength(f) : 0L);
             var dirsUnder = _directories.Where(d => d.StartsWith(prefix, comparison)).ToList();
 
-            Directory.Delete(safePath, true);
+            _storage.DeleteDirectory(safePath);
 
             foreach (var f in filesUnder) _files.Remove(f);
             foreach (var d in dirsUnder) _directories.Remove(d);
@@ -207,13 +254,13 @@ public sealed class IOTempSession : IIOTempSession
     public string MoveFrom(string sourcePath)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath, nameof(sourcePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath);
         var sw = Stopwatch.StartNew();
         try {
             string dest;
-            if (File.Exists(sourcePath))
+            if (_storage.FileExists(sourcePath))
                 dest = MoveFileFrom(sourcePath);
-            else if (Directory.Exists(sourcePath))
+            else if (_storage.DirectoryExists(sourcePath))
                 dest = MoveDirectoryFrom(sourcePath);
             else
                 throw new FileNotFoundException($"Source path does not exist: {sourcePath}", sourcePath);
@@ -239,29 +286,22 @@ public sealed class IOTempSession : IIOTempSession
 
     private string MoveFileFrom(string sourcePath)
     {
-        var sourceInfo = new FileInfo(sourcePath);
-        ValidateFileSize(sourceInfo.Length);
+        var size = _storage.GetFileLength(sourcePath);
+        ValidateFileSize(size);
 
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
-        if (File.Exists(dest)) {
+        if (_storage.FileExists(dest)) {
             var ext = Path.GetExtension(destName);
             var stem = Path.GetFileNameWithoutExtension(destName);
             dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
-        try {
-            File.Move(sourcePath, dest);
-        }
-        catch (IOException) {
-            // Cross-device: fall back to copy then delete
-            File.Copy(sourcePath, dest);
-            File.Delete(sourcePath);
-        }
+        _storage.MoveFile(sourcePath, dest);
 
         _files.Add(dest);
-        Interlocked.Add(ref _totalBytesUsed, sourceInfo.Length);
+        Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
         return dest;
     }
@@ -270,11 +310,11 @@ public sealed class IOTempSession : IIOTempSession
     {
         var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         var dest = Path.Combine(SessionDirectory, dirName);
-        if (Directory.Exists(dest))
+        if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
-        Directory.Delete(sourcePath, true);
+        _storage.DeleteDirectory(sourcePath);
         _directories.Add(dest);
         DirectoryCreated?.Invoke(dest);
         return dest;
@@ -287,17 +327,17 @@ public sealed class IOTempSession : IIOTempSession
     public string WriteFile(string path, string text)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var oldSize = new FileInfo(safePath).Length;
-            var newSize = Encoding.UTF8.GetByteCount(text);
+            var oldSize = _storage.GetFileLength(safePath);
+            var newSize = Utf8NoBom.GetByteCount(text);
             ValidateFileSizeForOverwrite(oldSize, newSize);
-            File.WriteAllText(safePath, text, Encoding.UTF8);
+            _storage.WriteAllText(safePath, text, Utf8NoBom);
 
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
@@ -320,12 +360,12 @@ public sealed class IOTempSession : IIOTempSession
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var oldSize = new FileInfo(safePath).Length;
+            var oldSize = _storage.GetFileLength(safePath);
             ValidateFileSizeForOverwrite(oldSize, data.Length);
-            File.WriteAllBytes(safePath, data.ToArray());
+            _storage.WriteAllBytes(safePath, data.ToArray());
 
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
@@ -337,7 +377,7 @@ public sealed class IOTempSession : IIOTempSession
         catch (Exception ex) {
             _metrics.RecordError(Constants.Metrics.WriteFileDuration, ex);
             _metrics.IncrementCounter(Constants.Metrics.WriteFileFailure);
-            _logger.LogError(ex, "Failed overwriting file {FilePath} with bytes in session {SessionDirectory}", path, SessionDirectory);
+            _logger.LogError(ex, "Failed overwriting file with bytes {FilePath} in session {SessionDirectory}", path, SessionDirectory);
             throw;
         }
     }
@@ -345,21 +385,18 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> WriteFileAsync(string path, string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var oldSize = new FileInfo(safePath).Length;
-            var newSize = Encoding.UTF8.GetByteCount(text);
+            var oldSize = _storage.GetFileLength(safePath);
+            var newSize = Utf8NoBom.GetByteCount(text);
             ValidateFileSizeForOverwrite(oldSize, newSize);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(safePath, text, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(safePath, text, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _storage.WriteAllTextAsync(safePath, text, Utf8NoBom, ct).ConfigureAwait(false);
+
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
             Interlocked.Add(ref _totalBytesUsed, newSize - oldSize);
@@ -381,16 +418,13 @@ public sealed class IOTempSession : IIOTempSession
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var oldSize = new FileInfo(safePath).Length;
+            var oldSize = _storage.GetFileLength(safePath);
             ValidateFileSizeForOverwrite(oldSize, data.Length);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllBytesAsync(safePath, data.ToArray(), ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllBytes(safePath, data.ToArray()); }, ct).ConfigureAwait(false);
-#endif
+            await _storage.WriteAllBytesAsync(safePath, data.ToArray(), ct).ConfigureAwait(false);
+
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
             Interlocked.Add(ref _totalBytesUsed, data.Length - oldSize);
@@ -415,7 +449,7 @@ public sealed class IOTempSession : IIOTempSession
         ThrowIfDisposed();
         foreach (var file in _files.ToList()) {
             try {
-                if (File.Exists(file)) File.Delete(file);
+                if (_storage.FileExists(file)) _storage.DeleteFile(file);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete file {File} during Clear() in session {SessionDirectory}", file, SessionDirectory);
@@ -425,7 +459,7 @@ public sealed class IOTempSession : IIOTempSession
         foreach (var dir in _directories.ToList()) {
             if (dir == SessionDirectory) continue;
             try {
-                if (Directory.Exists(dir)) Directory.Delete(dir, true);
+                if (_storage.DirectoryExists(dir)) _storage.DeleteDirectory(dir);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete directory {Dir} during Clear() in session {SessionDirectory}", dir, SessionDirectory);
@@ -440,13 +474,13 @@ public sealed class IOTempSession : IIOTempSession
     public string CopyFrom(string sourcePath)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath, nameof(sourcePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath);
         var sw = Stopwatch.StartNew();
         try {
             string dest;
-            if (File.Exists(sourcePath))
+            if (_storage.FileExists(sourcePath))
                 dest = CopyFileFrom(sourcePath);
-            else if (Directory.Exists(sourcePath))
+            else if (_storage.DirectoryExists(sourcePath))
                 dest = CopyDirectoryFrom(sourcePath);
             else
                 throw new FileNotFoundException($"Source path does not exist: {sourcePath}", sourcePath);
@@ -466,14 +500,14 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> CopyFromAsync(string sourcePath, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath, nameof(sourcePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourcePath);
         var sw = Stopwatch.StartNew();
         try {
             string dest;
-            if (File.Exists(sourcePath))
-                dest = await CopyFileFromAsync(sourcePath, ct);
-            else if (Directory.Exists(sourcePath))
-                dest = await CopyDirectoryFromAsync(sourcePath, ct);
+            if (_storage.FileExists(sourcePath))
+                dest = await CopyFileFromAsync(sourcePath, ct).ConfigureAwait(false);
+            else if (_storage.DirectoryExists(sourcePath))
+                dest = await CopyDirectoryFromAsync(sourcePath, ct).ConfigureAwait(false);
             else
                 throw new FileNotFoundException($"Source path does not exist: {sourcePath}", sourcePath);
 
@@ -492,15 +526,15 @@ public sealed class IOTempSession : IIOTempSession
     public string AppendToFile(string path, ReadOnlyMemory<byte> data)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
             ValidateFileSize(data.Length);
-            using var fs = new FileStream(safePath, FileMode.Append, FileAccess.Write, FileShare.None);
+            using var fs = _storage.OpenAppend(safePath);
             var bytes = data.ToArray();
             fs.Write(bytes, 0, bytes.Length);
 
@@ -523,17 +557,17 @@ public sealed class IOTempSession : IIOTempSession
     public string AppendToFile(string path, string text)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        ArgumentHelpers.ThrowIfNull(text);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var byteCount = Encoding.UTF8.GetByteCount(text);
+            var byteCount = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(byteCount);
-            File.AppendAllText(safePath, text, Encoding.UTF8);
+            _storage.AppendAllText(safePath, text, Utf8NoBom);
 
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
@@ -554,22 +588,16 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> AppendToFileAsync(string path, ReadOnlyMemory<byte> data, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
             ValidateFileSize(data.Length);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await using var fs = new FileStream(safePath, FileMode.Append, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-            await fs.WriteAsync(data, ct);
-#else
-            using var fs = new FileStream(safePath, FileMode.Append, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-            var bytes = data.ToArray();
-            await fs.WriteAsync(bytes, 0, bytes.Length, ct).ConfigureAwait(false);
-#endif
+            await _storage.AppendAllTextAsync(safePath, Utf8NoBom.GetString(data.ToArray()), Utf8NoBom, ct).ConfigureAwait(false);
+
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -589,21 +617,18 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> AppendToFileAsync(string path, string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        ArgumentHelpers.ThrowIfNull(text);
         var sw = Stopwatch.StartNew();
         try {
             var safePath = EnsurePathWithinSession(path);
-            if (!File.Exists(safePath))
+            if (!_storage.FileExists(safePath))
                 throw new FileNotFoundException($"File not found: {safePath}", safePath);
 
-            var byteCount = Encoding.UTF8.GetByteCount(text);
+            var byteCount = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(byteCount);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.AppendAllTextAsync(safePath, text, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.AppendAllText(safePath, text, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _storage.AppendAllTextAsync(safePath, text, Utf8NoBom, ct).ConfigureAwait(false);
+
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -622,22 +647,22 @@ public sealed class IOTempSession : IIOTempSession
 
     private string CopyFileFrom(string sourcePath)
     {
-        var sourceInfo = new FileInfo(sourcePath);
-        ValidateFileSize(sourceInfo.Length);
+        var size = _storage.GetFileLength(sourcePath);
+        ValidateFileSize(size);
 
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
 
-        if (File.Exists(dest)) {
+        if (_storage.FileExists(dest)) {
             var ext = Path.GetExtension(destName);
             var stem = Path.GetFileNameWithoutExtension(destName);
             dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
-        File.Copy(sourcePath, dest);
+        _storage.CopyFile(sourcePath, dest);
         _files.Add(dest);
-        Interlocked.Add(ref _totalBytesUsed, sourceInfo.Length);
+        Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
         return dest;
     }
@@ -647,7 +672,7 @@ public sealed class IOTempSession : IIOTempSession
         var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         var dest = Path.Combine(SessionDirectory, dirName);
 
-        if (Directory.Exists(dest))
+        if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
 
         dest = EnsurePathWithinSession(dest);
@@ -659,29 +684,21 @@ public sealed class IOTempSession : IIOTempSession
 
     private async Task<string> CopyFileFromAsync(string sourcePath, CancellationToken ct)
     {
-        var sourceInfo = new FileInfo(sourcePath);
-        ValidateFileSize(sourceInfo.Length);
+        var size = _storage.GetFileLength(sourcePath);
+        ValidateFileSize(size);
 
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
-        if (File.Exists(dest)) {
+        if (_storage.FileExists(dest)) {
             var ext = Path.GetExtension(destName);
             var stem = Path.GetFileNameWithoutExtension(destName);
             dest = Path.Combine(SessionDirectory, $"{stem}_{Guid.NewGuid():N}{ext}");
         }
 
         dest = EnsurePathWithinSession(dest);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        await using var srcStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
-        await using var dstStream = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-        await srcStream.CopyToAsync(dstStream, ct);
-#else
-        using var srcStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
-        using var dstStream = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-        await srcStream.CopyToAsync(dstStream, 81920, ct).ConfigureAwait(false);
-#endif
+        await _storage.CopyFileAsync(sourcePath, dest, ct).ConfigureAwait(false);
         _files.Add(dest);
-        Interlocked.Add(ref _totalBytesUsed, sourceInfo.Length);
+        Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
         return dest;
     }
@@ -690,10 +707,10 @@ public sealed class IOTempSession : IIOTempSession
     {
         var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         var dest = Path.Combine(SessionDirectory, dirName);
-        if (Directory.Exists(dest))
+        if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
         dest = EnsurePathWithinSession(dest);
-        await CopyDirectoryRecursiveAsync(sourcePath, dest, ct);
+        await CopyDirectoryRecursiveAsync(sourcePath, dest, ct).ConfigureAwait(false);
         _directories.Add(dest);
         DirectoryCreated?.Invoke(dest);
         return dest;
@@ -701,53 +718,44 @@ public sealed class IOTempSession : IIOTempSession
 
     private async Task CopyDirectoryRecursiveAsync(string src, string dst, CancellationToken ct)
     {
-        Directory.CreateDirectory(dst);
-        foreach (var file in Directory.GetFiles(src)) {
+        _storage.CreateDirectory(dst);
+        foreach (var entry in _storage.EnumerateEntries(src)) {
             ct.ThrowIfCancellationRequested();
-            var info = new FileInfo(file);
-            ValidateFileSize(info.Length);
-            var destFile = Path.Combine(dst, Path.GetFileName(file));
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await using var srcStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
-            await using var dstStream = new FileStream(destFile, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-            await srcStream.CopyToAsync(dstStream, ct);
-#else
-            using var srcStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
-            using var dstStream = new FileStream(destFile, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-            await srcStream.CopyToAsync(dstStream, 81920, ct).ConfigureAwait(false);
-#endif
-            _files.Add(destFile);
-            Interlocked.Add(ref _totalBytesUsed, info.Length);
-            FileCreated?.Invoke(destFile);
-        }
-
-        foreach (var subDir in Directory.GetDirectories(src)) {
-            ct.ThrowIfCancellationRequested();
-            var destSub = Path.Combine(dst, Path.GetFileName(subDir));
-            _directories.Add(destSub);
-            DirectoryCreated?.Invoke(destSub);
-            await CopyDirectoryRecursiveAsync(subDir, destSub, ct);
+            if (entry.IsDirectory) {
+                var destSub = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                _directories.Add(destSub);
+                DirectoryCreated?.Invoke(destSub);
+                await CopyDirectoryRecursiveAsync(entry.FullPath, destSub, ct).ConfigureAwait(false);
+            }
+            else {
+                ValidateFileSize(entry.Length);
+                var destFile = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                await _storage.CopyFileAsync(entry.FullPath, destFile, ct).ConfigureAwait(false);
+                _files.Add(destFile);
+                Interlocked.Add(ref _totalBytesUsed, entry.Length);
+                FileCreated?.Invoke(destFile);
+            }
         }
     }
 
     private void CopyDirectoryRecursive(string src, string dst)
     {
-        Directory.CreateDirectory(dst);
-        foreach (var file in Directory.GetFiles(src)) {
-            var info = new FileInfo(file);
-            ValidateFileSize(info.Length);
-            var destFile = Path.Combine(dst, Path.GetFileName(file));
-            File.Copy(file, destFile);
-            _files.Add(destFile);
-            Interlocked.Add(ref _totalBytesUsed, info.Length);
-            FileCreated?.Invoke(destFile);
-        }
-
-        foreach (var subDir in Directory.GetDirectories(src)) {
-            var destSub = Path.Combine(dst, Path.GetFileName(subDir));
-            _directories.Add(destSub);
-            DirectoryCreated?.Invoke(destSub);
-            CopyDirectoryRecursive(subDir, destSub);
+        _storage.CreateDirectory(dst);
+        foreach (var entry in _storage.EnumerateEntries(src)) {
+            if (entry.IsDirectory) {
+                var destSub = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                _directories.Add(destSub);
+                DirectoryCreated?.Invoke(destSub);
+                CopyDirectoryRecursive(entry.FullPath, destSub);
+            }
+            else {
+                ValidateFileSize(entry.Length);
+                var destFile = Path.Combine(dst, Path.GetFileName(entry.FullPath));
+                _storage.CopyFile(entry.FullPath, destFile);
+                _files.Add(destFile);
+                Interlocked.Add(ref _totalBytesUsed, entry.Length);
+                FileCreated?.Invoke(destFile);
+            }
         }
     }
 
@@ -767,7 +775,7 @@ public sealed class IOTempSession : IIOTempSession
         var stopwatch = Stopwatch.StartNew();
         try {
             var path = ResolvePath(name, false);
-            File.Create(path).Dispose();
+            _storage.TouchFile(path);
             _files.Add(path);
             FileCreated?.Invoke(path);
             _metrics.RecordTiming(Constants.Metrics.CreateFileDuration, stopwatch.Elapsed);
@@ -785,13 +793,13 @@ public sealed class IOTempSession : IIOTempSession
     public string CreateFile(string text)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         var stopwatch = Stopwatch.StartNew();
         try {
-            var sizeBytes = Encoding.UTF8.GetByteCount(text);
+            var sizeBytes = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(sizeBytes);
             var path = ResolvePath(null, false);
-            File.WriteAllText(path, text);
+            _storage.WriteAllText(path, text, Utf8NoBom);
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, sizeBytes);
             FileCreated?.Invoke(path);
@@ -814,7 +822,7 @@ public sealed class IOTempSession : IIOTempSession
         try {
             ValidateFileSize(data.Length);
             var path = ResolvePath(name, false);
-            File.WriteAllBytes(path, data.ToArray());
+            _storage.WriteAllBytes(path, data.ToArray());
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, data.Length);
             FileCreated?.Invoke(path);
@@ -833,14 +841,14 @@ public sealed class IOTempSession : IIOTempSession
     public string CreateFile(Stream data, string? name = null)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         OperationHelpers.ThrowIfNotReadable(data, "Input stream must be readable to create temp file.");
         var stopwatch = Stopwatch.StartNew();
         try {
             ValidateFileSize(data.Length);
             var path = ResolvePath(name, false);
-            using var fs = File.Create(path);
-            data.CopyTo(fs);
+            using var dest = _storage.OpenCreate(path);
+            data.CopyTo(dest);
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, data.Length);
             FileCreated?.Invoke(path);
@@ -859,22 +867,13 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> CreateFileAsync(string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         var stopwatch = Stopwatch.StartNew();
         try {
-            var sizeBytes = Encoding.UTF8.GetByteCount(text);
+            var sizeBytes = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(sizeBytes);
             var path = ResolvePath(null, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(path, text, ct);
-#else
-            await Task.Run(
-                    () => {
-                        ct.ThrowIfCancellationRequested();
-                        File.WriteAllText(path, text);
-                    }, ct)
-                .ConfigureAwait(false);
-#endif
+            await _storage.WriteAllTextAsync(path, text, Utf8NoBom, ct).ConfigureAwait(false);
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, sizeBytes);
             FileCreated?.Invoke(path);
@@ -897,16 +896,7 @@ public sealed class IOTempSession : IIOTempSession
         try {
             ValidateFileSize(data.Length);
             var path = ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllBytesAsync(path, data.ToArray(), ct);
-#else
-            await Task.Run(
-                    () => {
-                        ct.ThrowIfCancellationRequested();
-                        File.WriteAllBytes(path, data.ToArray());
-                    }, ct)
-                .ConfigureAwait(false);
-#endif
+            await _storage.WriteAllBytesAsync(path, data.ToArray(), ct).ConfigureAwait(false);
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, data.Length);
             FileCreated?.Invoke(path);
@@ -925,19 +915,13 @@ public sealed class IOTempSession : IIOTempSession
     public async Task<string> CreateFileAsync(Stream data, string? name = null, CancellationToken ct = default)
     {
         ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         OperationHelpers.ThrowIfNotReadable(data, "Input stream must be readable to create temp file.");
         var stopwatch = Stopwatch.StartNew();
         try {
             ValidateFileSize(data.Length);
             var path = ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await using var fs = File.Create(path);
-            await data.CopyToAsync(fs, ct);
-#else
-            using var fs = File.Create(path);
-            await data.CopyToAsync(fs, 81920, ct).ConfigureAwait(false);
-#endif
+            await _storage.CopyStreamToFileAsync(data, path, ct).ConfigureAwait(false);
             _files.Add(path);
             Interlocked.Add(ref _totalBytesUsed, data.Length);
             FileCreated?.Invoke(path);
@@ -969,7 +953,7 @@ public sealed class IOTempSession : IIOTempSession
         var stopwatch = Stopwatch.StartNew();
         try {
             var path = ResolvePath(name, true);
-            Directory.CreateDirectory(path);
+            _storage.CreateDirectory(path);
             _directories.Add(path);
             DirectoryCreated?.Invoke(path);
             _metrics.RecordTiming(Constants.Metrics.CreateDirectoryDuration, stopwatch.Elapsed);
@@ -985,9 +969,7 @@ public sealed class IOTempSession : IIOTempSession
     }
 
     public Task<string> CreateDirectoryAsync(string? name = null, CancellationToken ct = default)
-        =>
-            // Directory creation is synchronous on all platforms, no true async needed
-            Task.FromResult(CreateDirectory(name));
+        => Task.FromResult(CreateDirectory(name));
 
 #endregion
 
@@ -1001,7 +983,7 @@ public sealed class IOTempSession : IIOTempSession
         _disposed = true;
         var stopwatch = Stopwatch.StartNew();
         try {
-            DeleteDirectoryWithRetry(SessionDirectory, _logger, DisposeRetryCount, DisposeRetryDelayMs);
+            DeleteDirectoryWithRetry(SessionDirectory, DisposeRetryCount, DisposeRetryDelayMs);
             _metrics.RecordTiming(Constants.Metrics.DisposeSessionDuration, stopwatch.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.DisposeSessionSuccess);
         }
@@ -1017,7 +999,6 @@ public sealed class IOTempSession : IIOTempSession
 
     public ValueTask DisposeAsync()
     {
-        // Directory.Delete has no true async equivalent; calling Dispose() is the correct pattern.
         Dispose();
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         return ValueTask.CompletedTask;
@@ -1048,23 +1029,24 @@ public sealed class IOTempSession : IIOTempSession
             },
             Options: _options,
             Logger: _logger,
-            Metrics: _metrics
+            Metrics: _metrics,
+            Storage: _storage
         );
 
     private string CreateSessionDirectory()
     {
         var name = GenerateName(_options.DirectoryPrefix, _options.DirectorySuffix, _options.DirectoryNamingStrategy);
         var path = Path.Combine(_options.RootDirectory, name);
-        Directory.CreateDirectory(path);
-        OperationHelpers.ThrowIf(!Directory.Exists(path), $"Failed to create IO temp session directory: {path}");
-        ValidateDirectoryReadableAndWritable(path);
+        _storage.CreateDirectory(path);
+        OperationHelpers.ThrowIf(!_storage.DirectoryExists(path), $"Failed to create IO temp session directory: {path}");
+        _storage.EnsureDirectoryAccessible(path);
         return path;
     }
 
     private string ResolvePath(string? name, bool isDirectory)
     {
         if (name is not null) {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
             var combined = Path.Combine(SessionDirectory, name);
             return EnsurePathWithinSession(combined);
         }
@@ -1100,11 +1082,9 @@ public sealed class IOTempSession : IIOTempSession
 
     private void ValidateFileSize(long sizeBytes)
     {
-        // Per-file hard limit: no overflow strategy can free space for a single oversized file.
         OperationHelpers.ThrowIf(_options.MaxFileSizeBytes.HasValue && sizeBytes > _options.MaxFileSizeBytes.Value,
             $"File size {sizeBytes:N0} bytes exceeds the per-file limit of {_options.MaxFileSizeBytes!.Value:N0} bytes.");
 
-        // File count limit
         if (_options.MaxFileCount.HasValue && _files.Count >= _options.MaxFileCount.Value) {
             switch (_options.OverflowStrategy) {
                 case TempOverflowStrategy.ThrowException:
@@ -1161,15 +1141,15 @@ public sealed class IOTempSession : IIOTempSession
         if (excess <= 0) return;
 
         var candidates = _options.OverflowStrategy == TempOverflowStrategy.DeleteOldest
-            ? _files.Where(File.Exists).OrderBy(f => new FileInfo(f).CreationTimeUtc).ToList()
-            : _files.Where(File.Exists).OrderByDescending(f => new FileInfo(f).Length).ToList();
+            ? _files.Where(_storage.FileExists).OrderBy(_storage.GetFileCreationTimeUtc).ToList()
+            : _files.Where(_storage.FileExists).OrderByDescending(_storage.GetFileLength).ToList();
 
         var freed = 0;
         foreach (var file in candidates) {
             if (freed >= excess) break;
-            var size = new FileInfo(file).Exists ? new FileInfo(file).Length : 0L;
+            var size = _storage.FileExists(file) ? _storage.GetFileLength(file) : 0L;
             try {
-                File.Delete(file);
+                _storage.DeleteFile(file);
                 _files.Remove(file);
                 Interlocked.Add(ref _totalBytesUsed, -size);
                 freed++;
@@ -1190,29 +1170,24 @@ public sealed class IOTempSession : IIOTempSession
         if (needed <= 0)
             return;
 
-        var sessionDir = new DirectoryInfo(SessionDirectory);
-        if (!sessionDir.Exists)
-            return;
-
         var candidates = _options.OverflowStrategy == TempOverflowStrategy.DeleteOldest
-            ? sessionDir.EnumerateFiles().OrderBy(f => f.CreationTimeUtc).ToList()
-            : sessionDir.EnumerateFiles().OrderByDescending(f => f.Length).ToList();
+            ? _storage.EnumerateEntries(SessionDirectory).Where(e => !e.IsDirectory).OrderBy(e => e.CreationTimeUtc).ToList()
+            : _storage.EnumerateEntries(SessionDirectory).Where(e => !e.IsDirectory).OrderByDescending(e => e.Length).ToList();
 
         var freed = 0L;
-        foreach (var file in candidates) {
+        foreach (var entry in candidates) {
             if (freed >= needed)
                 break;
 
-            var fileSize = file.Length;
             try {
-                file.Delete();
-                _files.Remove(file.FullName);
-                Interlocked.Add(ref _totalBytesUsed, -fileSize);
-                freed += fileSize;
-                _logger.LogInformation("Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", file.FullName, fileSize, SessionDirectory);
+                _storage.DeleteFile(entry.FullPath);
+                _files.Remove(entry.FullPath);
+                Interlocked.Add(ref _totalBytesUsed, -entry.Length);
+                freed += entry.Length;
+                _logger.LogInformation("Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", entry.FullPath, entry.Length, SessionDirectory);
             }
             catch (Exception ex) {
-                _logger.LogWarning(ex, "Failed to delete {FilePath} during overflow cleanup in session {SessionDirectory}", file.FullName, SessionDirectory);
+                _logger.LogWarning(ex, "Failed to delete {FilePath} during overflow cleanup in session {SessionDirectory}", entry.FullPath, SessionDirectory);
             }
         }
 
@@ -1220,19 +1195,18 @@ public sealed class IOTempSession : IIOTempSession
             $"Could not free sufficient space: needed {needed:N0} bytes freed, freed {freed:N0} bytes. Session total limit: {_options.MaxTotalSizeBytes.Value:N0} bytes.");
     }
 
-    private static void DeleteDirectoryWithRetry(string path, ILogger logger, int retries, int retryDelayMs)
+    private void DeleteDirectoryWithRetry(string path, int retries, int retryDelayMs)
     {
         Exception? lastEx = null;
         for (var attempt = 1; attempt <= retries; attempt++) {
             try {
-                if (Directory.Exists(path))
-                    Directory.Delete(path, true);
+                _storage.DeleteDirectory(path);
                 return;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
                 lastEx = ex;
                 if (attempt < retries) {
-                    logger.LogDebug("Delete attempt {Attempt}/{Retries} failed for {Path}, retrying in {Delay}ms", attempt, retries, path, retryDelayMs);
+                    _logger.LogDebug("Delete attempt {Attempt}/{Retries} failed for {Path}, retrying in {Delay}ms", attempt, retries, path, retryDelayMs);
                     Thread.Sleep(retryDelayMs);
                 }
             }
@@ -1247,26 +1221,13 @@ public sealed class IOTempSession : IIOTempSession
     private void EnsureRootExistsAndAccessible()
     {
         try {
-            ExceptionThrower.ThrowIfDirectoryNotFound(_options.RootDirectory, nameof(_options.RootDirectory));
-            ExceptionThrower.ThrowIfDirectoryNotAccessible(_options.RootDirectory, nameof(_options.RootDirectory));
+            if (!_storage.DirectoryExists(_options.RootDirectory))
+                ExceptionThrower.ThrowIfDirectoryNotFound(_options.RootDirectory, nameof(_options.RootDirectory));
+            _storage.EnsureDirectoryAccessible(_options.RootDirectory);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "IO temp session root directory {RootDirectory} is not accessible", _options.RootDirectory);
             throw;
-        }
-    }
-
-    private static void ValidateDirectoryReadableAndWritable(string directoryPath)
-    {
-        ExceptionThrower.ThrowIfDirectoryNotAccessible(directoryPath, nameof(directoryPath));
-        var probePath = Path.Combine(directoryPath, $".rw-check-{Guid.NewGuid():N}.tmp");
-        try {
-            File.WriteAllText(probePath, "rw");
-            ExceptionThrower.ThrowIfFileNotAccessible(probePath, nameof(probePath));
-        }
-        finally {
-            if (File.Exists(probePath))
-                File.Delete(probePath);
         }
     }
 

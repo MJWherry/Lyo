@@ -1,3 +1,4 @@
+using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 
@@ -17,5 +18,6 @@ internal sealed record IOTempGeneratorContext(
     Action<string> RegisterDirectory,
     IOTempSessionOptions Options,
     ILogger Logger,
-    IMetrics Metrics
+    IMetrics Metrics,
+    IIOTempStorageProvider Storage
 );

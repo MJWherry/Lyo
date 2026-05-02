@@ -15,7 +15,7 @@ public class EncryptionExtraTests : IDisposable, IAsyncDisposable
 
     private readonly IIOTempSession _tempSession = new IOTempSession(new());
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -53,15 +53,15 @@ public class EncryptionExtraTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var aesKey = DeriveKey("external");
         var input = new MemoryStream(Encoding.UTF8.GetBytes("stream external key"));
         var encStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(input, encStream, key: aesKey, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToStreamAsync(input, encStream, key: aesKey, ct: TestContext.Current.CancellationToken);
         encStream.Position = 0;
         var outStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encStream, outStream, key: aesKey, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.DecryptToStreamAsync(encStream, outStream, key: aesKey, ct: TestContext.Current.CancellationToken);
         var res = Encoding.UTF8.GetString(outStream.ToArray());
         Assert.Equal("stream external key", res);
     }

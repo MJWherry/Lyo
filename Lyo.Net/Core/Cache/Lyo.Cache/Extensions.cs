@@ -27,7 +27,7 @@ public static class CacheServiceExtensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalCache(Action<CacheOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             var cacheOptions = new CacheOptions();
             configureOptions?.Invoke(cacheOptions);
             services.AddSingleton(cacheOptions);
@@ -56,8 +56,8 @@ public static class CacheServiceExtensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalCacheFromConfiguration(IConfiguration configuration, Action<CacheOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
             var cacheOptions = new CacheOptions();
             var section = configuration.GetSection(CacheOptions.SectionName);
             if (section.Exists())
@@ -105,8 +105,8 @@ public static class CacheServiceExtensions
         /// <returns>The CacheOptions instance for chaining</returns>
         public CacheOptions WithTypeExpiration(string fullTypeName, int expirationMinutes)
         {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fullTypeName, nameof(fullTypeName));
-            ArgumentHelpers.ThrowIfNegative(expirationMinutes, nameof(expirationMinutes));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fullTypeName);
+            ArgumentHelpers.ThrowIfNegative(expirationMinutes);
             options.TypeExpirations[fullTypeName] = expirationMinutes;
             return options;
         }

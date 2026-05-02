@@ -9,8 +9,8 @@ using Lyo.Api.Mapping;
 using Lyo.Audit.Postgres;
 using Lyo.Audit.Postgres.Database;
 using Lyo.Cache.Fusion;
+using Lyo.Comic.Postgres;
 using Lyo.Comment.Postgres;
-using Lyo.Common.Enums;
 using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
@@ -48,6 +48,7 @@ using Lyo.Sms.Models;
 using Lyo.Sms.Twilio;
 using Lyo.Sms.Twilio.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
+using Lyo.Tag.Postgres;
 using Lyo.TestConsole;
 using Lyo.Translation.Aws;
 using Lyo.Tts;
@@ -64,7 +65,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OpenQA.Selenium;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) => {
@@ -74,6 +74,7 @@ var host = Host.CreateDefaultBuilder(args)
                 c.UseUtcTimestamp = true;
             })); //logging
 
+        //services.AddPostgresComicStoreFromConfiguration(context.Configuration);
         services.AddSeleniumBrowserService();
         services.AddIOTempService(); //temp file management
         services.AddPreviewService(); //preview HTML, images, etc. in browser
@@ -125,6 +126,8 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddLyoCrudServices<JobContext>();
         services.AddScoped<JobService>();
+        services.AddComicDbContextFactory(new PostgresComicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+        services.AddPostgresTagStore(new PostgresTagOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
         config.Default.MaxDepth(8);
@@ -187,7 +190,7 @@ var host = Host.CreateDefaultBuilder(args)
                 PropertyNameCaseInsensitive = true, Converters = { new DateOnlyModelConverter(), new TimeOnlyModelConverter(), new JsonStringEnumConverter() }
             }));
 
-        services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/", TimezoneState = USState.PA });
+        services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" });
         services.AddFusionCacheFromConfiguration(context.Configuration);
         services.AddLyoQueryServices();
         services.AddLyoDiscordBot<LyoDiscordBot>(context.Configuration);
@@ -199,19 +202,15 @@ using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
 
-
-var spp = sp.GetService<ISeleniumBrowserService>();
-var tr = spp.CreateSession();
- await tr.StartBrowserAsync();
- tr.Browser.NavigateTo("https://duckduckgo.com");
-var i= await tr.Browser.PollForAsync(By.TagName("input"));
-i.SendKeys("Wahl Family Heating, Cooling & Plumbing review Angies List");
-var earchBut = await tr.Browser.PollForAsync(By.Id("search_button_homepage"));
-earchBut.Click();
+//var spp = sp.GetService<ISeleniumBrowserService>();
+//var tr = spp.CreateSession();
+// await tr.StartBrowserAsync();
+// tr.Browser.NavigateTo("https://duckduckgo.com");
+//var i= await tr.Browser.PollForAsync(By.TagName("input"));
+//i.SendKeys("Wahl Family Heating, Cooling & Plumbing review Angies List");
+//var earchBut = await tr.Browser.PollForAsync(By.Id("search_button_homepage"));
+//earchBut.Click();
 var discordBotOpts = host.Services.GetRequiredService<IOptions<LyoDiscordBotOptions>>().Value;
-
-
-
 if (!string.IsNullOrWhiteSpace(discordBotOpts.Token)) {
     using var botCts = new CancellationTokenSource();
     Console.CancelKeyPress += (_, e) => {

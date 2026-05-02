@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.Comic.Enums;
 
 namespace Lyo.Comic.Postgres.Database;
 
@@ -15,9 +16,9 @@ public sealed class SeriesEntity
     [MaxLength(500)]
     public string Slug { get; set; } = string.Empty;
 
-    public int ComicType { get; set; }
+    public ComicType ComicType { get; set; }
 
-    public int Status { get; set; }
+    public ComicStatus Status { get; set; }
 
     public string? Description { get; set; }
 
@@ -52,4 +53,6 @@ public sealed class SeriesEntity
     public ICollection<VolumeEntity> Volumes { get; set; } = [];
 
     public ICollection<ChapterEntity> Chapters { get; set; } = [];
+
+    public ICollection<CharacterEntity> Characters { get; set; } = [];
 }

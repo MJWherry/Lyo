@@ -1,4 +1,4 @@
-namespace Lyo.Common.Enums;
+namespace Lyo.Result.Enums;
 
 /// <summary>Defines the severity level of an error.</summary>
 public enum ErrorSeverity

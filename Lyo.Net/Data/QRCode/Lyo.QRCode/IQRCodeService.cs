@@ -1,5 +1,5 @@
-using Lyo.Common;
 using Lyo.QRCode.Models;
+using Lyo.Result;
 
 namespace Lyo.QRCode;
 

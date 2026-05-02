@@ -73,4 +73,24 @@ public interface IMqService : IHealth
     /// <param name="ct">Cancellation token. When cancelled, the subscription will stop.</param>
     /// <returns>True if subscription was successful, false otherwise.</returns>
     Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default);
+
+    // Exchange Operations
+
+    /// <summary>
+    /// Binds a queue to an exchange with a routing key, so that messages published to the exchange with that key are routed to the queue. In non-RabbitMQ brokers this may map to
+    /// a topic subscription.
+    /// </summary>
+    /// <param name="queueName">The queue to bind.</param>
+    /// <param name="exchangeName">The exchange (or topic) to bind to.</param>
+    /// <param name="routingKey">The routing key that selects messages for this queue.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the binding was created successfully, false otherwise.</returns>
+    Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default);
+
+    /// <summary>Publishes a message to an exchange with a routing key.</summary>
+    /// <param name="exchangeName">The exchange to publish to.</param>
+    /// <param name="routingKey">The routing key for message routing.</param>
+    /// <param name="data">The message data as bytes.</param>
+    /// <returns>True if published successfully, false otherwise.</returns>
+    Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data);
 }

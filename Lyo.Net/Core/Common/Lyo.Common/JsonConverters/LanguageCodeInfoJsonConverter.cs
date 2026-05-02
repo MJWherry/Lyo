@@ -35,7 +35,7 @@ public class LanguageCodeInfoJsonConverter : JsonConverter<LanguageCodeInfo>
 
     public override void Write(Utf8JsonWriter writer, LanguageCodeInfo value, JsonSerializerOptions options)
     {
-        if (value == null || value == LanguageCodeInfo.Unknown) {
+        if (value == LanguageCodeInfo.Unknown) {
             writer.WriteNullValue();
             return;
         }

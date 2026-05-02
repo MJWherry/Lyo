@@ -287,14 +287,14 @@ public class ApiClient : IApiClient
         Action<HttpRequestMessage>? before = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrEmpty(data);
         using var stream = new MemoryStream(data);
         return await PostFileAsAsync<TResult>(uri, stream, fileType, fileName, before, ct).ConfigureAwait(false);
     }
 
     public async Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrEmpty(data);
         var fileType = FileTypeInfo.FromFilePath(fileName);
         using var stream = new MemoryStream(data);
         return await PostFileAsAsync<TResult>(uri, stream, fileType, fileName, before, ct).ConfigureAwait(false);
@@ -305,7 +305,7 @@ public class ApiClient : IApiClient
         if (HttpClient.BaseAddress == null)
             UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
 
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var fileName = Path.GetFileName(filePath);
         var stream = File.OpenRead(filePath);
         try {

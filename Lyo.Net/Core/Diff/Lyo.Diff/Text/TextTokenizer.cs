@@ -9,8 +9,8 @@ public sealed class TextTokenizer : ITextTokenizer
     /// <inheritdoc />
     public TextToken[] Tokenize(string text, TextDiffOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(text);
+        ArgumentHelpers.ThrowIfNull(options);
         if (options.NormalizeLineEndings) {
             text = text.Replace("\r\n", "\n");
             text = text.Replace("\r", "\n");

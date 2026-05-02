@@ -31,8 +31,8 @@ public static class HttpExtensions
     /// <returns>The HTTP client builder for chaining.</returns>
     public static IHttpClientBuilder AddLyoResilienceHandler(this IHttpClientBuilder builder, string pipelineName)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pipelineName, nameof(pipelineName));
+        ArgumentHelpers.ThrowIfNull(builder);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pipelineName);
         builder.AddHttpMessageHandler(services => {
             var pipelineProvider = services.GetRequiredService<ResiliencePipelineProvider<string>>();
             var metrics = services.GetService<IMetrics>() ?? NullMetrics.Instance;

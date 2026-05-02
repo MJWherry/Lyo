@@ -1,30 +1,21 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Extension methods for composing and awaiting async Result operations.</summary>
 public static class AsyncResultExtensions
 {
-
     /// <summary>Chains an async operation to a result. Executes only on success.</summary>
     [return: NotNull]
-    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(
-        this Result<TIn> result,
-        [NotNull] Func<TIn, Task<Result<TOut>>> next,
-        CancellationToken ct = default)
+    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(this Result<TIn> result, [NotNull] Func<TIn, Task<Result<TOut>>> next, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return !result.IsSuccess
-            ? Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata)
-            : await next(result.Data!).ConfigureAwait(false);
+        return !result.IsSuccess ? Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata) : await next(result.Data!).ConfigureAwait(false);
     }
 
     /// <summary>Chains an async operation to a task result. Executes only on success.</summary>
     [return: NotNull]
-    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(
-        this Task<Result<TIn>> task,
-        [NotNull] Func<TIn, Task<Result<TOut>>> next,
-        CancellationToken ct = default)
+    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(this Task<Result<TIn>> task, [NotNull] Func<TIn, Task<Result<TOut>>> next, CancellationToken ct = default)
     {
         var result = await task.ConfigureAwait(false);
         return await result.ThenAsync(next, ct).ConfigureAwait(false);
@@ -32,10 +23,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Chains an async operation that returns a plain value. Wraps the value in a success result.</summary>
     [return: NotNull]
-    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(
-        this Result<TIn> result,
-        [NotNull] Func<TIn, Task<TOut>> next,
-        CancellationToken ct = default)
+    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(this Result<TIn> result, [NotNull] Func<TIn, Task<TOut>> next, CancellationToken ct = default)
     {
         if (!result.IsSuccess)
             return Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata);
@@ -47,10 +35,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Chains an async operation that returns a plain value (task overload).</summary>
     [return: NotNull]
-    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(
-        this Task<Result<TIn>> task,
-        [NotNull] Func<TIn, Task<TOut>> next,
-        CancellationToken ct = default)
+    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(this Task<Result<TIn>> task, [NotNull] Func<TIn, Task<TOut>> next, CancellationToken ct = default)
     {
         var result = await task.ConfigureAwait(false);
         return await result.ThenAsync(next, ct).ConfigureAwait(false);
@@ -64,9 +49,7 @@ public static class AsyncResultExtensions
         CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return !result.IsSuccess
-            ? Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata)
-            : await next(result.Data!, ct).ConfigureAwait(false);
+        return !result.IsSuccess ? Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata) : await next(result.Data!, ct).ConfigureAwait(false);
     }
 
     /// <summary>Chains an async operation that accepts a CancellationToken (task overload).</summary>
@@ -82,10 +65,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Executes an async side-effect if the result is successful.</summary>
     [return: NotNull]
-    public static async Task<Result<T>> OnSuccessAsync<T>(
-        this Result<T> result,
-        [NotNull] Func<T, Task> action,
-        CancellationToken ct = default)
+    public static async Task<Result<T>> OnSuccessAsync<T>(this Result<T> result, [NotNull] Func<T, Task> action, CancellationToken ct = default)
     {
         if (result.IsSuccess && result.Data != null) {
             ct.ThrowIfCancellationRequested();
@@ -97,10 +77,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Executes an async side-effect if the result is successful (task overload).</summary>
     [return: NotNull]
-    public static async Task<Result<T>> OnSuccessAsync<T>(
-        this Task<Result<T>> task,
-        [NotNull] Func<T, Task> action,
-        CancellationToken ct = default)
+    public static async Task<Result<T>> OnSuccessAsync<T>(this Task<Result<T>> task, [NotNull] Func<T, Task> action, CancellationToken ct = default)
     {
         var result = await task.ConfigureAwait(false);
         return await result.OnSuccessAsync(action, ct).ConfigureAwait(false);
@@ -108,10 +85,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Executes an async side-effect if the result failed.</summary>
     [return: NotNull]
-    public static async Task<Result<T>> OnFailureAsync<T>(
-        this Result<T> result,
-        [NotNull] Func<IReadOnlyList<Error>, Task> action,
-        CancellationToken ct = default)
+    public static async Task<Result<T>> OnFailureAsync<T>(this Result<T> result, [NotNull] Func<IReadOnlyList<Error>, Task> action, CancellationToken ct = default)
     {
         if (!result.IsSuccess) {
             ct.ThrowIfCancellationRequested();
@@ -123,10 +97,7 @@ public static class AsyncResultExtensions
 
     /// <summary>Executes an async side-effect if the result failed (task overload).</summary>
     [return: NotNull]
-    public static async Task<Result<T>> OnFailureAsync<T>(
-        this Task<Result<T>> task,
-        [NotNull] Func<IReadOnlyList<Error>, Task> action,
-        CancellationToken ct = default)
+    public static async Task<Result<T>> OnFailureAsync<T>(this Task<Result<T>> task, [NotNull] Func<IReadOnlyList<Error>, Task> action, CancellationToken ct = default)
     {
         var result = await task.ConfigureAwait(false);
         return await result.OnFailureAsync(action, ct).ConfigureAwait(false);
@@ -141,19 +112,14 @@ public static class AsyncResultExtensions
         var results = await Task.WhenAll(tasks).ConfigureAwait(false);
         var successes = results.Where(r => r.IsSuccess && r.Data != null).Select(r => r.Data!).ToList();
         var failures = results.Where(r => !r.IsSuccess).SelectMany(r => r.Errors ?? []).ToList();
-        return failures.Count > 0
-            ? Result<IReadOnlyList<T>>.Failure(failures)
-            : Result<IReadOnlyList<T>>.Success(successes);
+        return failures.Count > 0 ? Result<IReadOnlyList<T>>.Failure(failures) : Result<IReadOnlyList<T>>.Success(successes);
     }
 
     /// <summary>Awaits all tasks in parallel (enumerable overload).</summary>
-    public static async Task<Result<IReadOnlyList<T>>> WhenAll<T>(IEnumerable<Task<Result<T>>> tasks)
-        => await WhenAll(tasks?.ToArray() ?? []).ConfigureAwait(false);
+    public static async Task<Result<IReadOnlyList<T>>> WhenAll<T>(IEnumerable<Task<Result<T>>> tasks) => await WhenAll(tasks?.ToArray() ?? []).ConfigureAwait(false);
 
     /// <summary>Combines two async results into a tuple. Both must succeed.</summary>
-    public static async Task<Result<(T1, T2)>> CombineAsync<T1, T2>(
-        this Task<Result<T1>> task1,
-        Task<Result<T2>> task2)
+    public static async Task<Result<(T1, T2)>> CombineAsync<T1, T2>(this Task<Result<T1>> task1, Task<Result<T2>> task2)
     {
         var r1 = await task1.ConfigureAwait(false);
         var r2 = await task2.ConfigureAwait(false);
@@ -161,10 +127,7 @@ public static class AsyncResultExtensions
     }
 
     /// <summary>Combines three async results into a tuple. All must succeed.</summary>
-    public static async Task<Result<(T1, T2, T3)>> CombineAsync<T1, T2, T3>(
-        this Task<Result<T1>> task1,
-        Task<Result<T2>> task2,
-        Task<Result<T3>> task3)
+    public static async Task<Result<(T1, T2, T3)>> CombineAsync<T1, T2, T3>(this Task<Result<T1>> task1, Task<Result<T2>> task2, Task<Result<T3>> task3)
     {
         var r1 = await task1.ConfigureAwait(false);
         var r2 = await task2.ConfigureAwait(false);
@@ -173,9 +136,8 @@ public static class AsyncResultExtensions
     }
 
     /// <summary>
-    /// Runs all tasks in parallel and returns the first successful result.
-    /// If none succeed, returns all collected errors.
-    /// Renamed from the previously misnamed <c>WhenAny</c> which ran all tasks via <c>Task.WhenAll</c>.
+    /// Runs all tasks in parallel and returns the first successful result. If none succeed, returns all collected errors. Renamed from the previously misnamed <c>WhenAny</c>
+    /// which ran all tasks via <c>Task.WhenAll</c>.
     /// </summary>
     public static async Task<Result<T>> FirstSuccess<T>(params Task<Result<T>>[] tasks)
     {
@@ -192,24 +154,17 @@ public static class AsyncResultExtensions
     }
 
     /// <summary>Runs all tasks in parallel and returns the first successful result (enumerable overload).</summary>
-    public static async Task<Result<T>> FirstSuccess<T>(IEnumerable<Task<Result<T>>> tasks)
-        => await FirstSuccess(tasks?.ToArray() ?? []).ConfigureAwait(false);
+    public static async Task<Result<T>> FirstSuccess<T>(IEnumerable<Task<Result<T>>> tasks) => await FirstSuccess(tasks?.ToArray() ?? []).ConfigureAwait(false);
 
     /// <summary>Executes an async side-effect on a task result without changing it (success or failure).</summary>
-    public static async Task<Result<T>> TapAsync<T>(
-        this Task<Result<T>> task,
-        Func<T, Task> action,
-        CancellationToken ct = default)
+    public static async Task<Result<T>> TapAsync<T>(this Task<Result<T>> task, Func<T, Task> action, CancellationToken ct = default)
     {
         var result = await task.ConfigureAwait(false);
         return await result.TapAsync(action).ConfigureAwait(false);
     }
 
     /// <summary>Transforms a task result's success value using an async mapper.</summary>
-    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(
-        this Task<Result<TIn>> task,
-        Func<TIn, Task<TOut>> mapper,
-        CancellationToken ct = default)
+    public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Task<Result<TIn>> task, Func<TIn, Task<TOut>> mapper, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         var result = await task.ConfigureAwait(false);

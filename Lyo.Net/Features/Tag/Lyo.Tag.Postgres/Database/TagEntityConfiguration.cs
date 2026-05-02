@@ -13,11 +13,20 @@ public sealed class TagEntityConfiguration : IEntityTypeConfiguration<TagEntity>
         builder.Property(e => e.ForEntityType).HasMaxLength(200).IsRequired().HasColumnName("for_entity_type");
         builder.Property(e => e.ForEntityId).HasMaxLength(200).IsRequired().HasColumnName("for_entity_id");
         builder.Property(e => e.Tag).HasMaxLength(200).IsRequired().HasColumnName("tag");
+        builder.Property(e => e.TagType).HasMaxLength(50).IsRequired().HasColumnName("tag_type").HasDefaultValue("tag");
         builder.Property(e => e.FromEntityType).HasMaxLength(200).HasColumnName("from_entity_type");
         builder.Property(e => e.FromEntityId).HasMaxLength(200).HasColumnName("from_entity_id");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_tag_for_entity");
         builder.HasIndex(e => e.Tag).HasDatabaseName("ix_tag_tag");
-        builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId, e.Tag }).IsUnique().HasDatabaseName("ix_tag_for_entity_tag_unique");
+        builder.HasIndex(e => e.TagType).HasDatabaseName("ix_tag_tag_type");
+        builder.HasIndex(e => new {
+                e.ForEntityType,
+                e.ForEntityId,
+                e.TagType,
+                e.Tag
+            })
+            .IsUnique()
+            .HasDatabaseName("ix_tag_for_entity_tag_unique");
     }
 }

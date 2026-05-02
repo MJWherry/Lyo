@@ -53,20 +53,18 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key = $"both-getorset-async-{implementation}";
         var expectedValue = "cached-value";
         var result = await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    await Task.Delay(5, ct).ConfigureAwait(false);
-                    return expectedValue;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                await Task.Delay(5, ct);
+                return expectedValue;
+            }, token: TestContext.Current.CancellationToken);
 
         result.ShouldBe(expectedValue);
         var callCount = 0;
         var cachedResult = await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    callCount++;
-                    return "different";
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                callCount++;
+                return "different";
+            }, token: TestContext.Current.CancellationToken);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0);
@@ -112,7 +110,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key = $"both-invalidate-{implementation}";
         service.Set(key, "value");
         service.GetOrSet<string>(key, _ => "default").ShouldBe("value");
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
     }
 
@@ -125,13 +123,13 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key1 = $"both-tag-key1-{implementation}";
         var key2 = $"both-tag-key2-{implementation}";
         var key3 = $"both-tag-key3-{implementation}";
-        await service.GetOrSetAsync<string>(key1, ct => Task.FromResult("v1")!, [tag], TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.GetOrSetAsync<string>(key2, ct => Task.FromResult("v2")!, [tag], TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.GetOrSetAsync<string>(key3, ct => Task.FromResult("v3")!, ["other-tag"], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key1, ct => Task.FromResult("v1")!, [tag], TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key2, ct => Task.FromResult("v2")!, [tag], TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key3, ct => Task.FromResult("v3")!, ["other-tag"], TestContext.Current.CancellationToken);
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("v1");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("v2");
         service.GetOrSet<string>(key3, _ => "default").ShouldBe("v3");
-        await service.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(tag);
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("default");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("default");
         service.GetOrSet<string>(key3, _ => "default").ShouldBe("v3");
@@ -144,9 +142,9 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var service = CreateCacheService(implementation);
         var tag = $"both-factory-tags-{implementation}";
         var key = $"both-factory-tags-key-{implementation}";
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult<(string?, string[]?)>(("value", [tag])), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult<(string?, string[]?)>(("value", [tag])), token: TestContext.Current.CancellationToken);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("value");
-        await service.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(tag);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
     }
 
@@ -157,9 +155,9 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var service = CreateCacheService(implementation);
         var extraTag = $"both-extra-{implementation}";
         var key = $"both-extra-key-{implementation}";
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, [extraTag], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, [extraTag], TestContext.Current.CancellationToken);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("value");
-        await service.InvalidateCacheItemByTag(extraTag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(extraTag);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
     }
 
@@ -192,7 +190,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
     {
         var service = CreateCacheService(implementation);
         var key = $"Both-MixedCase-{implementation}";
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, token: TestContext.Current.CancellationToken);
         var result = service.GetOrSet<string>(key.ToLowerInvariant(), _ => "default");
         result.ShouldBe("value");
     }

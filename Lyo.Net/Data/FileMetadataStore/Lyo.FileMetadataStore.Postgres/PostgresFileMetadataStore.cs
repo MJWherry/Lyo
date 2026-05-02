@@ -21,7 +21,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
 
     public PostgresFileMetadataStore(FileMetadataStoreDbContext dbContext, ILoggerFactory? loggerFactory = null)
     {
-        ArgumentHelpers.ThrowIfNull(dbContext, nameof(dbContext));
+        ArgumentHelpers.ThrowIfNull(dbContext);
         _dbContext = dbContext;
         _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<PostgresFileMetadataStore>();
     }
@@ -53,7 +53,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     /// <inheritdoc />
     public async Task SaveMetadataAsync(Guid fileId, FileStoreResult metadata, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(metadata, nameof(metadata));
+        ArgumentHelpers.ThrowIfNull(metadata);
         _logger.LogDebug("Saving metadata for file {FileId}", fileId);
         var entity = FileMetadataEntity.FromFileStoreResult(metadata);
         var existing = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
@@ -85,7 +85,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     /// <inheritdoc />
     public async Task<FileStoreResult?> FindByHashAsync(byte[] hash, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(hash, nameof(hash));
+        ArgumentHelpers.ThrowIfNullOrEmpty(hash);
         _logger.LogDebug("Searching for metadata by hash");
 
         // EF Core doesn't support direct byte array comparison efficiently,
@@ -106,7 +106,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     /// <inheritdoc />
     public async Task<IEnumerable<FileStoreResult>> FindByKeyIdAndVersionAsync(string keyId, string? keyVersion = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         _logger.LogDebug("Searching for metadata by keyId '{KeyId}' and version {KeyVersion}", keyId, keyVersion ?? "any");
         var query = _dbContext.FileMetadata.Where(e => e.DataEncryptionKeyId == keyId && e.IsEncrypted);
         if (keyVersion != null)

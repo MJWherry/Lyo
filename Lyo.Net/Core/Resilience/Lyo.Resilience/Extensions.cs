@@ -16,7 +16,7 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddLyoResilienceDefaults(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         if (services.Any(x => x.ServiceType == typeof(LyoResilienceDefaultsMarker)))
             return services;
 

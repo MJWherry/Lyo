@@ -1,0 +1,17 @@
+@page "/query-builder"
+@using Lyo.Query.Web.Components
+
+<PageTitle>Query Builder — Portfolio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <QueryBuilderWorkbench Routes="@Routes"/>
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    private MainLayout? Layout { get; set; }
+
+    public readonly Dictionary<string, List<string>> Routes = new();
+
+    protected override void OnInitialized() => Layout?.SetPageTitle("Query Builder");
+}

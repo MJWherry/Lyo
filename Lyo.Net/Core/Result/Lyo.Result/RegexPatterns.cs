@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 public static class RegexPatterns
 {

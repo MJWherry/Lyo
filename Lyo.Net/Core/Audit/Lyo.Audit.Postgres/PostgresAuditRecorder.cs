@@ -16,28 +16,28 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     /// <param name="contextFactory">Factory for creating AuditDbContext instances</param>
     public PostgresAuditRecorder(IDbContextFactory<AuditDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public void RecordChange(AuditChange change)
     {
-        ArgumentHelpers.ThrowIfNull(change, nameof(change));
+        ArgumentHelpers.ThrowIfNull(change);
         RecordChanges([change]);
     }
 
     /// <inheritdoc />
     public async Task RecordChangeAsync(AuditChange change, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(change, nameof(change));
+        ArgumentHelpers.ThrowIfNull(change);
         await RecordChangesAsync([change], ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public void RecordChanges(IEnumerable<AuditChange> changes)
     {
-        ArgumentHelpers.ThrowIfNull(changes, nameof(changes));
+        ArgumentHelpers.ThrowIfNull(changes);
         var list = changes.ToList();
         if (list.Count == 0)
             return;
@@ -59,7 +59,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     /// <inheritdoc />
     public async Task RecordChangesAsync(IEnumerable<AuditChange> changes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(changes, nameof(changes));
+        ArgumentHelpers.ThrowIfNull(changes);
         var list = changes.ToList();
         if (list.Count == 0)
             return;
@@ -81,21 +81,21 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     /// <inheritdoc />
     public void RecordEvent(AuditEvent evt)
     {
-        ArgumentHelpers.ThrowIfNull(evt, nameof(evt));
+        ArgumentHelpers.ThrowIfNull(evt);
         RecordEvents([evt]);
     }
 
     /// <inheritdoc />
     public async Task RecordEventAsync(AuditEvent evt, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(evt, nameof(evt));
+        ArgumentHelpers.ThrowIfNull(evt);
         await RecordEventsAsync([evt], ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public void RecordEvents(IEnumerable<AuditEvent> events)
     {
-        ArgumentHelpers.ThrowIfNull(events, nameof(events));
+        ArgumentHelpers.ThrowIfNull(events);
         var list = events.ToList();
         if (list.Count == 0)
             return;
@@ -118,7 +118,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     /// <inheritdoc />
     public async Task RecordEventsAsync(IEnumerable<AuditEvent> events, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(events, nameof(events));
+        ArgumentHelpers.ThrowIfNull(events);
         var list = events.ToList();
         if (list.Count == 0)
             return;

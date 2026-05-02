@@ -35,7 +35,7 @@ public sealed class BulkSmsBuilder
     /// <exception cref="ArgumentException">Thrown when the phone number is null, empty, or invalid.</exception>
     public BulkSmsBuilder SetDefaultFrom(string from)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(from, nameof(from));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(from);
         if (!PhoneNumber.Normalize(from)?.StartsWith("+") == true)
             throw new InvalidFormatException("From phone number is not in a valid format.", nameof(from), from, PhoneNumber.ValidFormats);
 
@@ -50,7 +50,7 @@ public sealed class BulkSmsBuilder
     /// <exception cref="ArgumentException">Thrown when parameters are invalid.</exception>
     public BulkSmsBuilder Add(string to, string? body)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to, nameof(to));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
         if (body != null && body.Length > 1600)
             throw new ArgumentOutsideRangeException(nameof(body), body.Length, 0, 1600, $"Message body exceeds maximum length of 1600 characters. Current length: {body.Length}");
 
@@ -71,7 +71,7 @@ public sealed class BulkSmsBuilder
     /// <exception cref="ArgumentException">Thrown when parameters are invalid.</exception>
     public BulkSmsBuilder Add(string to, string? body, string? from)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to, nameof(to));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
         if (body != null && body.Length > 1600)
             throw new ArgumentOutsideRangeException(nameof(body), body.Length, 0, 1600, $"Message body exceeds maximum length of 1600 characters. Current length: {body.Length}");
 

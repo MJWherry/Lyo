@@ -28,14 +28,14 @@ public class PatchRequestBuilder
 
     public PatchRequestBuilder WithKey(object key, params object[] extraKeys)
     {
-        ArgumentHelpers.ThrowIfNull(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(key);
         _keys.Add(extraKeys.Length == 0 ? [key] : [key, ..extraKeys]);
         return this;
     }
 
     public PatchRequestBuilder WithKey(object[] key)
     {
-        ArgumentHelpers.ThrowIfNull(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(key);
         ArgumentHelpers.ThrowIf(key.Length == 0, "Key must contain at least one value", nameof(key));
 
         _keys.Add(key);

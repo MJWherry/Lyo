@@ -10,6 +10,7 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for format validation that throw InvalidFormatException.</summary>
+/// <remarks>Optional name parameters use <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers"/>: when omitted at the call site, the compiler supplies the caller's expression for <see cref="ArgumentException.ParamName" />. Override with <c>nameof(...)</c> when you want a CLR parameter name.</remarks>
 public static class FormatHelpers
 {
     private static readonly Regex HexColorRegex = new(@"^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$", RegexOptions.Compiled);
@@ -34,11 +35,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidGuid([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfInvalidGuid([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!Guid.TryParse(value, out var _))
-            ThrowInvalidFormat($"Invalid GUID format: {value}", paramName ?? nameof(value), value, "GUID (e.g., 550e8400-e29b-41d4-a716-446655440000)");
+            ThrowInvalidFormat($"Invalid GUID format: {value}", paramName, value, "GUID (e.g., 550e8400-e29b-41d4-a716-446655440000)");
     }
 
     /// <summary>Validates a string and returns a valid Guid, or throws InvalidFormatException if invalid.</summary>
@@ -51,14 +52,14 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Guid GetValidGuid([NotNull] string? value, string? paramName = null)
+    public static Guid GetValidGuid([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (Guid.TryParse(value, out var guid))
             return guid;
 
-        ThrowInvalidFormat($"Invalid GUID format: {value}", paramName ?? nameof(value), value, "GUID (e.g., 550e8400-e29b-41d4-a716-446655440000)");
-        return default;
+        ThrowInvalidFormat($"Invalid GUID format: {value}", paramName, value, "GUID (e.g., 550e8400-e29b-41d4-a716-446655440000)");
+        return Guid.Empty;
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or not a valid hex color (e.g., #000000 or #FFF).</summary>
@@ -70,11 +71,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidHexColor([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfInvalidHexColor([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!HexColorRegex.IsMatch(value))
-            ThrowInvalidFormat($"Invalid hex color format: {value}", paramName ?? nameof(value), value, "Hex color (e.g., #000000 or #FFF)");
+            ThrowInvalidFormat($"Invalid hex color format: {value}", paramName, value, "Hex color (e.g., #000000 or #FFF)");
     }
 
     /// <summary>Validates a hex color string and returns it normalized (with # prefix), or throws InvalidFormatException if invalid.</summary>
@@ -87,10 +88,10 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string GetValidHexColor([NotNull] string? value, string? paramName = null)
+    public static string GetValidHexColor([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
         ThrowIfInvalidHexColor(value, paramName);
-        return value!.StartsWith("#") ? value : "#" + value;
+        return value.StartsWith("#") ? value : "#" + value;
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or not valid Base64.</summary>
@@ -101,14 +102,14 @@ public static class FormatHelpers
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
-    public static void ThrowIfInvalidBase64([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfInvalidBase64([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         try {
-            Convert.FromBase64String(value!);
+            _ = Convert.FromBase64String(value);
         }
         catch (FormatException) {
-            ThrowInvalidFormat("Invalid Base64 format.", paramName ?? nameof(value), value, "Base64-encoded string");
+            ThrowInvalidFormat("Invalid Base64 format.", paramName, value, "Base64-encoded string");
         }
     }
 
@@ -122,14 +123,14 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte[] GetValidBase64([NotNull] string? value, string? paramName = null)
+    public static byte[] GetValidBase64([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         try {
-            return Convert.FromBase64String(value!);
+            return Convert.FromBase64String(value);
         }
         catch (FormatException) {
-            ThrowInvalidFormat("Invalid Base64 format.", paramName ?? nameof(value), value, "Base64-encoded string");
+            ThrowInvalidFormat("Invalid Base64 format.", paramName, value, "Base64-encoded string");
             return null!;
         }
     }
@@ -144,11 +145,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidDateTime([NotNull] string? value, string? paramName = null, IFormatProvider? formatProvider = null)
+    public static void ThrowIfInvalidDateTime([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null, IFormatProvider? formatProvider = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!DateTime.TryParse(value, formatProvider ?? CultureInfo.CurrentCulture, DateTimeStyles.None, out var _))
-            ThrowInvalidFormat($"Invalid DateTime format: {value}", paramName ?? nameof(value), value, "DateTime (e.g., 2024-01-15 or 01/15/2024 14:30:00)");
+            ThrowInvalidFormat($"Invalid DateTime format: {value}", paramName, value, "DateTime (e.g., 2024-01-15 or 01/15/2024 14:30:00)");
     }
 
     /// <summary>Validates a string and returns a valid DateTime, or throws InvalidFormatException if invalid.</summary>
@@ -162,13 +163,13 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DateTime GetValidDateTime([NotNull] string? value, string? paramName = null, IFormatProvider? formatProvider = null)
+    public static DateTime GetValidDateTime([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null, IFormatProvider? formatProvider = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (DateTime.TryParse(value, formatProvider ?? CultureInfo.CurrentCulture, DateTimeStyles.None, out var dateTime))
             return dateTime;
 
-        ThrowInvalidFormat($"Invalid DateTime format: {value}", paramName ?? nameof(value), value, "DateTime (e.g., 2024-01-15 or 01/15/2024 14:30:00)");
+        ThrowInvalidFormat($"Invalid DateTime format: {value}", paramName, value, "DateTime (e.g., 2024-01-15 or 01/15/2024 14:30:00)");
         return default;
     }
 
@@ -184,11 +185,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidFormat([NotNull] string? value, Regex regex, string message, string? paramName = null, params string[] validFormats)
+    public static void ThrowIfInvalidFormat([NotNull] string? value, Regex regex, string message, [CallerArgumentExpression("value")] string? paramName = null, params string[] validFormats)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
-        if (!regex.IsMatch(value!))
-            ThrowInvalidFormat(string.Format(message, value), paramName ?? nameof(value), value, validFormats);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
+        if (!regex.IsMatch(value))
+            ThrowInvalidFormat(string.Format(message, value), paramName, value, validFormats);
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or contains characters other than letters and digits.</summary>
@@ -200,11 +201,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotAlphanumeric([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfNotAlphanumeric([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!AlphanumericRegex.IsMatch(value))
-            ThrowInvalidFormat($"Value must contain only alphanumeric characters: {value}", paramName ?? nameof(value), value, "Alphanumeric only (e.g., abc123)");
+            ThrowInvalidFormat($"Value must contain only alphanumeric characters: {value}", paramName, value, "Alphanumeric only (e.g., abc123)");
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or contains characters other than letters.</summary>
@@ -216,11 +217,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotAlpha([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfNotAlpha([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!AlphaRegex.IsMatch(value))
-            ThrowInvalidFormat($"Value must contain only letters: {value}", paramName ?? nameof(value), value, "Letters only (e.g., abc)");
+            ThrowInvalidFormat($"Value must contain only letters: {value}", paramName, value, "Letters only (e.g., abc)");
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or contains characters other than digits.</summary>
@@ -232,11 +233,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotNumeric([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfNotNumeric([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName ?? nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!NumericRegex.IsMatch(value))
-            ThrowInvalidFormat($"Value must contain only digits: {value}", paramName ?? nameof(value), value, "Digits only (e.g., 12345)");
+            ThrowInvalidFormat($"Value must contain only digits: {value}", paramName, value, "Digits only (e.g., 12345)");
     }
 
     /// <summary>Throws an InvalidFormatException if the string is null, empty, or contains whitespace.</summary>
@@ -248,11 +249,11 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfContainsWhitespace([NotNull] string? value, string? paramName = null)
+    public static void ThrowIfContainsWhitespace([NotNull] string? value, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(value, paramName ?? nameof(value));
-        if (WhitespaceRegex.IsMatch(value!))
-            ThrowInvalidFormat($"Value must not contain whitespace: {value}", paramName ?? nameof(value), value, "No whitespace allowed");
+        ArgumentHelpers.ThrowIfNullOrEmpty(value, paramName);
+        if (WhitespaceRegex.IsMatch(value))
+            ThrowInvalidFormat($"Value must not contain whitespace: {value}", paramName, value, "No whitespace allowed");
     }
 
     /// <summary>Throws an InvalidFormatException if the string length is outside the specified range.</summary>
@@ -266,13 +267,13 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidLength([NotNull] string? value, int minLength, int maxLength, string? paramName = null)
+    public static void ThrowIfInvalidLength([NotNull] string? value, int minLength, int maxLength, [CallerArgumentExpression("value")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNull(value, paramName ?? nameof(value));
-        var len = value!.Length;
+        ArgumentHelpers.ThrowIfNull(value, paramName);
+        var len = value.Length;
         if (len < minLength || len > maxLength) {
             ThrowInvalidFormat(
-                $"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName ?? nameof(value), value, $"Length between {minLength} and {maxLength}");
+                $"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName, value, $"Length between {minLength} and {maxLength}");
         }
     }
 

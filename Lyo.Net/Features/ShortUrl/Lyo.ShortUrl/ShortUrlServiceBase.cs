@@ -29,7 +29,7 @@ public class ShortUrlServiceBase : IShortUrlService
     /// <param name="metrics">Optional metrics instance for tracking URL shortener operations.</param>
     protected ShortUrlServiceBase(ShortUrlServiceOptions options, ILogger? logger = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         Options = options;
         Logger = logger ?? NullLogger.Instance;
         Metrics = options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -39,7 +39,7 @@ public class ShortUrlServiceBase : IShortUrlService
     /// <inheritdoc />
     public async Task<UrlShortenResult> ShortenAsync(string longUrl, string? customAlias = null, DateTime? expirationDate = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(longUrl, nameof(longUrl));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(longUrl);
 
         // Enforce HTTPS if option is enabled
         if (Options.EnforceHttps && Uri.TryCreate(longUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttp) {
@@ -76,7 +76,7 @@ public class ShortUrlServiceBase : IShortUrlService
     /// <inheritdoc />
     public Task<UrlShortenResult> ShortenAsync(UrlShortenBuilder builder, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
+        ArgumentHelpers.ThrowIfNull(builder);
         var (longUrl, customAlias, expirationDate) = builder.Build();
         return ShortenAsync(longUrl, customAlias, expirationDate, ct);
     }
@@ -84,7 +84,7 @@ public class ShortUrlServiceBase : IShortUrlService
     /// <inheritdoc />
     public async Task<UrlExpandResult> ExpandAsync(string shortUrl, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(shortUrl, nameof(shortUrl));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(shortUrl);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.ExpandDuration)]);
         var sw = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();

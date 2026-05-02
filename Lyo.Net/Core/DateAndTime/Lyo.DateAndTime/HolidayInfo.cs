@@ -2,6 +2,10 @@ using System.Reflection;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 
+// ReSharper disable NotAccessedPositionalProperty.Global
+// ReSharper disable UnusedType.Global
+#pragma warning disable CS8604 // Possible null reference argument.
+
 namespace Lyo.DateAndTime;
 
 /// <summary>Represents metadata for a U.S. holiday and can resolve its calendar date for a given year.</summary>
@@ -193,7 +197,7 @@ public sealed record HolidayInfo(
 
     private static DateTime GetNthWeekdayOfMonth(int year, int month, DayOfWeek dayOfWeek, int occurrence)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(occurrence, nameof(occurrence));
+        ArgumentHelpers.ThrowIfNegativeOrZero(occurrence);
         var date = new DateTime(year, month, 1);
         while (date.DayOfWeek != dayOfWeek)
             date = date.AddDays(1);

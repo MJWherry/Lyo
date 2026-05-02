@@ -17,7 +17,7 @@ public abstract class ContactUsServiceBase : IContactUsService
     /// <summary>Initializes a new instance of the <see cref="ContactUsServiceBase" /> class.</summary>
     protected ContactUsServiceBase(ContactUsServiceOptions options, ILogger? logger = null)
     {
-        Options = ArgumentHelpers.ThrowIfNullReturn(options, nameof(options));
+        Options = ArgumentHelpers.ThrowIfNullReturn(options);
         Logger = logger;
     }
 

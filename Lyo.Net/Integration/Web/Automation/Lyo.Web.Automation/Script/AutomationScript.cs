@@ -47,17 +47,17 @@ public sealed class AutomationScriptBuilder
 
     public AutomationScriptBuilder Step(string name, Func<IWebAutomationSession, CancellationToken, Task> execute)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(execute, nameof(execute));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(execute);
         _steps.Add(new(name, execute));
         return this;
     }
 
     public AutomationScriptBuilder Step(string name, Func<IWebAutomationSession, CancellationToken, Task> execute, Action<AutomationScriptRetryBuilder> configureRetry)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(execute, nameof(execute));
-        ArgumentHelpers.ThrowIfNull(configureRetry, nameof(configureRetry));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(execute);
+        ArgumentHelpers.ThrowIfNull(configureRetry);
         var b = new AutomationScriptRetryBuilder();
         configureRetry(b);
         _steps.Add(new(name, execute, b.Build()));
@@ -78,8 +78,8 @@ public static class AutomationScriptRunner
     /// <summary>Executes each step in order using the session's cancellation token.</summary>
     public static async Task RunAsync(IWebAutomationSession session, IReadOnlyList<AutomationScriptStep> steps, ILogger? logger, CancellationToken ct, string? scriptName = null)
     {
-        ArgumentHelpers.ThrowIfNull(session, nameof(session));
-        ArgumentHelpers.ThrowIfNull(steps, nameof(steps));
+        ArgumentHelpers.ThrowIfNull(session);
+        ArgumentHelpers.ThrowIfNull(steps);
         using (logger?.BeginScope(new Dictionary<string, object?> { ["session_id"] = session.SessionId, ["automation_script"] = scriptName })) {
             await session.StartBrowserAsync(ct).ConfigureAwait(false);
             foreach (var step in steps) {

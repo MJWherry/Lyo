@@ -40,9 +40,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Metadata_ReturnsEntityTypes()
     {
-        var response = await _client.GetAsync($"{BaseRoute}/Metadata", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.GetAsync($"{BaseRoute}/Metadata", TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<EntityTypeMetadata>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<EntityTypeMetadata>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal("JobDefinition", result.EntityType);
     }
@@ -50,11 +50,11 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Query_Endpoint_ReturnsJobDefinitions()
     {
-        await _fixture.SeedJobDefinitionAsync("DynamicQueryTest").ConfigureAwait(false);
+        await _fixture.SeedJobDefinitionAsync("DynamicQueryTest");
         var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -64,12 +64,12 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Query_Endpoint_WithFilters_ReturnsMatchingItems()
     {
-        await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterA").ConfigureAwait(false);
-        await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterB").ConfigureAwait(false);
+        await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterA");
+        await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterB");
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "DynamicQueryFilterA") };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -80,7 +80,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task QueryProject_Endpoint_WithSelect_ReturnsProjectedRows()
     {
         var name = $"DynamicProjected_{Guid.NewGuid():N}";
-        var defId = await _fixture.SeedJobDefinitionAsync(name, "Dynamic projected description").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync(name, "Dynamic projected description");
         var request = new ProjectionQueryReq {
             Start = 0,
             Amount = 10,
@@ -88,9 +88,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryProject", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryProject", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Single(result.Items!);
@@ -104,10 +104,10 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Get_Endpoint_ReturnsJobDefinition()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicGetTest").ConfigureAwait(false);
-        var response = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicGetTest");
+        var response = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<JobDefinitionRes>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(defId, result.Id);
         Assert.Equal("DynamicGetTest", result.Name);
@@ -116,7 +116,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Get_Endpoint_WhenNotFound_Returns404()
     {
-        var response = await _client.GetAsync($"{BaseRoute}/{Guid.NewGuid()}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.GetAsync($"{BaseRoute}/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -133,9 +133,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Enabled = true
         };
 
-        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -156,9 +156,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Enabled = true
         };
 
-        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
@@ -168,7 +168,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Update_Endpoint_ModifiesEntity()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicUpdateOriginal").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicUpdateOriginal");
         var entity = new {
             Name = "DynamicUpdateModified",
             Description = "Updated via dynamic endpoint",
@@ -178,9 +178,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
         };
 
         var updateRequest = new UpdateRequest<object>(entity, defId);
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Update", updateRequest, JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Update", updateRequest, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpdateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<UpdateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.Result is UpdateResultEnum.Updated or UpdateResultEnum.NoChange);
         Assert.NotNull(result.NewData);
@@ -190,11 +190,11 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Patch_Endpoint_ModifiesProperties()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicPatchOriginal").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicPatchOriginal");
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = "DynamicPatchModified" } };
-        var response = await _client.PatchAsJsonAsync(BaseRoute, patchRequest, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PatchAsJsonAsync(BaseRoute, patchRequest, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(PatchResultEnum.Updated, result.Result);
         Assert.Equal("DynamicPatchModified", result.NewData!.Name);
@@ -203,17 +203,17 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Delete_Endpoint_RemovesEntity()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteTest").ConfigureAwait(false);
-        var response = await _client.DeleteAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteTest");
+        var response = await _client.DeleteAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
     [Fact]
     public async Task Delete_Endpoint_WhenNotFound_Returns404()
     {
-        var response = await _client.DeleteAsync($"{BaseRoute}/{Guid.NewGuid()}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.DeleteAsync($"{BaseRoute}/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -239,9 +239,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
             }
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk", entities, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk", entities, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<CreateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<CreateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, result.CreatedCount);
         Assert.Equal(0, result.FailedCount);
@@ -250,8 +250,8 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task UpdateBulk_Endpoint_ModifiesEntities()
     {
-        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicUpdateBulk1").ConfigureAwait(false);
-        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicUpdateBulk2").ConfigureAwait(false);
+        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicUpdateBulk1");
+        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicUpdateBulk2");
         var requests = new[] {
             new UpdateRequest<object>(
                 new {
@@ -271,9 +271,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
                 }, id2)
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk/Update", requests, JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk/Update", requests, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpdateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<UpdateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, result.UpdatedCount + result.NoChangeCount);
         Assert.Equal(0, result.FailedCount);
@@ -282,16 +282,16 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task PatchBulk_Endpoint_ModifiesProperties()
     {
-        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicPatchBulk1").ConfigureAwait(false);
-        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicPatchBulk2").ConfigureAwait(false);
+        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicPatchBulk1");
+        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicPatchBulk2");
         var requests = new[] {
             new PatchRequest { Keys = [[id1]], Properties = new() { ["Name"] = "DynamicPatchBulk1Mod" } },
             new PatchRequest { Keys = [[id2]], Properties = new() { ["Name"] = "DynamicPatchBulk2Mod" } }
         };
 
-        var response = await _client.PatchAsJsonAsync($"{BaseRoute}/Bulk", requests, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PatchAsJsonAsync($"{BaseRoute}/Bulk", requests, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<PatchBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<PatchBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, result.UpdatedCount);
         Assert.Equal(0, result.FailedCount);
@@ -310,9 +310,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
         };
 
         var upsertRequest = new UpsertRequest<object>(entity, "Name", "DynamicUpsertCreate");
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Upsert", upsertRequest, JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Upsert", upsertRequest, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(UpsertResultEnum.Created, result.Result);
         Assert.NotNull(result.NewData);
@@ -322,7 +322,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Upsert_Endpoint_WhenExists_Updates()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicUpsertOriginal").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicUpsertOriginal");
         var entity = new {
             Name = "DynamicUpsertUpdated",
             Description = "Upsert updated",
@@ -332,9 +332,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
         };
 
         var upsertRequest = new UpsertRequest<object>(entity, "Id", defId);
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Upsert", upsertRequest, JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Upsert", upsertRequest, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<UpsertResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(UpsertResultEnum.Updated, result.Result);
         Assert.NotNull(result.NewData);
@@ -344,7 +344,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task UpsertBulk_Endpoint_CreatesAndUpdates()
     {
-        var existingId = await _fixture.SeedJobDefinitionAsync("DynamicUpsertBulkExisting").ConfigureAwait(false);
+        var existingId = await _fixture.SeedJobDefinitionAsync("DynamicUpsertBulkExisting");
         var requests = new[] {
             new UpsertRequest<object>(
                 new {
@@ -365,9 +365,9 @@ public class DynamicCrudApiPostgresTests : IDisposable
                 }, "Id", existingId)
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk/Upsert", requests, JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk/Upsert", requests, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<UpsertBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<UpsertBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(1, result.CreatedCount);
         Assert.Equal(1, result.UpdatedCount);
@@ -376,40 +376,40 @@ public class DynamicCrudApiPostgresTests : IDisposable
     [Fact]
     public async Task Delete_Endpoint_ByBody_RemovesEntity()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteByBody").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteByBody");
         var deleteRequest = new DeleteRequest { Keys = [[defId]] };
         using var msg = new HttpRequestMessage(HttpMethod.Delete, BaseRoute);
         msg.Content = JsonContent.Create(deleteRequest);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
     [Fact]
     public async Task Delete_Endpoint_ByIdentifiers_RemovesMatchingEntity()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteByIdentifier").ConfigureAwait(false);
+        var defId = await _fixture.SeedJobDefinitionAsync("DynamicDeleteByIdentifier");
         var deleteRequest = new DeleteRequest("Name", "DynamicDeleteByIdentifier");
         using var msg = new HttpRequestMessage(HttpMethod.Delete, BaseRoute);
         msg.Content = JsonContent.Create(deleteRequest);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var getResponse = await _client.GetAsync($"{BaseRoute}/{defId}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
     [Fact]
     public async Task DeleteBulk_Endpoint_RemovesEntities()
     {
-        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicDeleteBulk1").ConfigureAwait(false);
-        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicDeleteBulk2").ConfigureAwait(false);
+        var id1 = await _fixture.SeedJobDefinitionAsync("DynamicDeleteBulk1");
+        var id2 = await _fixture.SeedJobDefinitionAsync("DynamicDeleteBulk2");
         var requests = new[] { new DeleteRequest { Keys = [[id1]] }, new DeleteRequest { Keys = [[id2]] } };
         using var msg = new HttpRequestMessage(HttpMethod.Delete, $"{BaseRoute}/Bulk");
         msg.Content = JsonContent.Create(requests);
-        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.SendAsync(msg, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<DeleteBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await response.Content.ReadFromJsonAsync<DeleteBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, result.DeletedCount);
         Assert.Equal(0, result.FailedCount);
@@ -419,14 +419,14 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task Export_Endpoint_ReturnsCsv()
     {
         var name = $"DynamicExportTest_{Guid.NewGuid():N}";
-        await _fixture.SeedJobDefinitionAsync(name).ConfigureAwait(false);
+        await _fixture.SeedJobDefinitionAsync(name);
         var request = new ExportRequest {
             Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Csv
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.NotEmpty(content);
         Assert.Contains(name, content);
     }
@@ -435,14 +435,14 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task Export_Endpoint_ReturnsJson()
     {
         var name = $"DynamicExportJsonTest_{Guid.NewGuid():N}";
-        await _fixture.SeedJobDefinitionAsync(name).ConfigureAwait(false);
+        await _fixture.SeedJobDefinitionAsync(name);
         var request = new ExportRequest {
             Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Json
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.NotEmpty(content);
         Assert.Contains(name, content);
     }
@@ -451,7 +451,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task UnknownEntityType_Returns404()
     {
         var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/Query", request, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/Query", request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Ffmpeg.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -27,7 +27,7 @@ public sealed class FfmpegAudioProber : IAudioProber
     /// <inheritdoc />
     public async Task<Result<AudioProbeResult>> ProbeAsync(string filePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         using var timer = _metrics.StartTimer(Constants.Metrics.ProbeDuration);
         var result = await ProbeCoreAsync(filePath, ct).ConfigureAwait(false);
         _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ProbeSuccess : Constants.Metrics.ProbeFailure);
@@ -40,7 +40,7 @@ public sealed class FfmpegAudioProber : IAudioProber
     /// <inheritdoc />
     public async Task<Result<AudioProbeResult>> ProbeStreamAsync(Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
         var inputPath = await FfmpegTempHelper.WriteStreamToTempFileAsync(stream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -54,7 +54,7 @@ public sealed class FfmpegAudioProber : IAudioProber
     /// <inheritdoc />
     public async Task<Result<AudioProbeResult>> ProbeBytesAsync(byte[] bytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(bytes, nameof(bytes));
+        ArgumentHelpers.ThrowIfNull(bytes);
         var inputPath = await FfmpegTempHelper.WriteBytesToTempFileAsync(bytes, ".tmp", ct).ConfigureAwait(false);
         try {
             return await ProbeAsync(inputPath, ct).ConfigureAwait(false);
@@ -144,7 +144,6 @@ public sealed class FfmpegAudioProber : IAudioProber
         return layout.ToLowerInvariant() switch {
             "mono" => 1,
             "stereo" => 2,
-            "2.1" => 3,
             "3.0" or "2.1" => 3,
             "4.0" => 4,
             "5.0" => 5,

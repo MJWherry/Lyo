@@ -10,5 +10,8 @@ public enum ScheduleType
     Interval,
 
     /// <summary>Execute once at a specific date and time.</summary>
-    OneShot
+    OneShot,
+
+    /// <summary>Execute according to a standard 5- or 6-field cron expression (e.g. <c>"0 8 * * MON-FRI"</c>).</summary>
+    Cron
 }

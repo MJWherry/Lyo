@@ -1,5 +1,5 @@
-using Lyo.Common;
 using Lyo.Images.Models;
+using Lyo.Result;
 
 namespace Lyo.Images;
 

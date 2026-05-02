@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
-using Lyo.Common;
+using Lyo.Result;
 using Lyo.Validation.Attributes;
 using DataAnnotationsValidationAttribute = System.ComponentModel.DataAnnotations.ValidationAttribute;
 using PhoneAttribute = System.ComponentModel.DataAnnotations.PhoneAttribute;
@@ -103,11 +103,11 @@ public sealed class AttributeValidator<T> : IValidator<T>
         DataAnnotationsValidationAttribute? sourceAttribute = null)
     {
         var errorCode = sourceAttribute != null ? ResolveErrorCode(sourceAttribute) : ValidationErrorCodes.ValidationFailed;
-        var memberNames = validationResult.MemberNames?.Where(static name => !string.IsNullOrWhiteSpace(name)).Distinct().ToArray() ?? [];
+        var memberNames = validationResult.MemberNames.Where(static name => !string.IsNullOrWhiteSpace(name)).Distinct().ToArray();
         if (memberNames.Length == 0) {
             var resolvedFallbackPropertyName = fallbackPropertyName;
             if (!string.IsNullOrWhiteSpace(resolvedFallbackPropertyName)) {
-                var propertyName = resolvedFallbackPropertyName!;
+                var propertyName = resolvedFallbackPropertyName;
                 errors.Add(ValidatorBuilder<T>.CreatePropertyError(propertyName, attemptedValue, errorCode, validationResult.ErrorMessage ?? $"{propertyName} is invalid"));
                 return;
             }
@@ -124,7 +124,7 @@ public sealed class AttributeValidator<T> : IValidator<T>
 
         errors.Add(
             ValidatorBuilder<T>.CreatePropertyError(
-                fallbackPropertyName!, attemptedValue, sourceAttribute != null ? ResolveErrorCode(sourceAttribute) : ValidationErrorCodes.ValidationFailed,
+                fallbackPropertyName, attemptedValue, sourceAttribute != null ? ResolveErrorCode(sourceAttribute) : ValidationErrorCodes.ValidationFailed,
                 validationResult.ErrorMessage ?? $"{fallbackPropertyName} is invalid"));
     }
 

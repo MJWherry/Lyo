@@ -15,14 +15,14 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <summary>Creates a new PostgresCommentStore.</summary>
     public PostgresCommentStore(IDbContextFactory<CommentDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public async Task SaveAsync(CommentRecord comment, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(comment, nameof(comment));
+        ArgumentHelpers.ThrowIfNull(comment);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (comment.Id != default) {
             var existing = await context.Comments.FindAsync([comment.Id], ct).ConfigureAwait(false);
@@ -69,7 +69,7 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommentRecord>> GetForEntityAsync(EntityRef forEntity, bool includeReplies = true, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Comments.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId);
         if (!includeReplies)
@@ -90,7 +90,7 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommentRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Comments.Where(c => c.FromEntityType == fromEntity.EntityType && c.FromEntityId == fromEntity.EntityId)
             .OrderBy(c => c.CreatedTimestamp)
@@ -103,7 +103,7 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommentRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Comments.Where(c => c.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
@@ -116,8 +116,8 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task AddReactionAsync(EntityRef commentRef, EntityRef fromEntity, CommentReactionType reactionType, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(commentRef, nameof(commentRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(commentRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         if (!Guid.TryParse(commentRef.EntityId, out var commentId))
             return;
 
@@ -172,8 +172,8 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task RemoveReactionAsync(EntityRef commentRef, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(commentRef, nameof(commentRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(commentRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         if (!Guid.TryParse(commentRef.EntityId, out var commentId))
             return;
 
@@ -201,8 +201,8 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task<CommentReactionRecord?> GetReactionAsync(EntityRef commentRef, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(commentRef, nameof(commentRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(commentRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.CommentReactions.FirstOrDefaultAsync(
                 r => r.ForEntityType == commentRef.EntityType && r.ForEntityId == commentRef.EntityId && r.FromEntityType == fromEntity.EntityType &&
@@ -252,7 +252,7 @@ public sealed class PostgresCommentStore : ICommentStore, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var comments = await context.Comments.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         var commentIds = comments.Select(c => c.Id.ToString()).ToHashSet();

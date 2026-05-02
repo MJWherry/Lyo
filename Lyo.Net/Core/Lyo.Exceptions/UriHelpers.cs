@@ -8,6 +8,7 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for URI validation and parsing.</summary>
+/// <remarks>Optional name parameters use <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers"/>: when omitted, the compiler fills <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c> explicitly when preferred.</remarks>
 public static class UriHelpers
 {
     [DoesNotReturn]
@@ -27,16 +28,16 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidUri([NotNull] string? uri, string? paramName = null, UriKind uriKind = UriKind.RelativeOrAbsolute)
+    public static void ThrowIfInvalidUri([NotNull] string? uri, [CallerArgumentExpression("uri")] string? paramName = null, UriKind uriKind = UriKind.RelativeOrAbsolute)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
-        if (Uri.TryCreate(uri!, uriKind, out var _))
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName);
+        if (Uri.TryCreate(uri, uriKind, out var _))
             return;
 
         var expectedFormat = uriKind == UriKind.Absolute ? "Absolute URI (e.g., https://example.com)" :
             uriKind == UriKind.Relative ? "Relative URI (e.g., /path/to/resource)" : "Valid URI (absolute or relative)";
 
-        ThrowInvalidFormat($"Invalid URI format: {uri}", paramName ?? nameof(uri), uri!, expectedFormat);
+        ThrowInvalidFormat($"Invalid URI format: {uri}", paramName, uri, expectedFormat);
     }
 
     /// <summary>Throws an InvalidFormatException if the URI string is null, empty, or not a valid absolute URI.</summary>
@@ -48,11 +49,11 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidAbsoluteUri([NotNull] string? uri, string? paramName = null)
+    public static void ThrowIfInvalidAbsoluteUri([NotNull] string? uri, [CallerArgumentExpression("uri")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
-        if (!Uri.TryCreate(uri!, UriKind.Absolute, out var _))
-            ThrowInvalidFormat($"Invalid absolute URI format: {uri}", paramName ?? nameof(uri), uri!, "Absolute URI (e.g., https://example.com)");
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName);
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var _))
+            ThrowInvalidFormat($"Invalid absolute URI format: {uri}", paramName, uri, "Absolute URI (e.g., https://example.com)");
     }
 
     /// <summary>Validates a URI string and returns a valid Uri instance, or throws an exception if invalid.</summary>
@@ -66,10 +67,10 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Uri GetValidUri([NotNull] string? uri, string? paramName = null, UriKind uriKind = UriKind.Absolute)
+    public static Uri GetValidUri([NotNull] string? uri, [CallerArgumentExpression("uri")] string? paramName = null, UriKind uriKind = UriKind.Absolute)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName ?? nameof(uri));
-        if (Uri.TryCreate(uri!, uriKind, out var validUri))
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, paramName);
+        if (Uri.TryCreate(uri, uriKind, out var validUri))
             return validUri;
 
         var expectedFormat = uriKind switch {
@@ -78,7 +79,7 @@ public static class UriHelpers
             var _ => "Valid URI (absolute or relative)"
         };
 
-        ThrowInvalidFormat($"Invalid URI format: {uri}", paramName ?? nameof(uri), uri!, expectedFormat);
+        ThrowInvalidFormat($"Invalid URI format: {uri}", paramName, uri, expectedFormat);
         return null!; // Unreachable - ThrowInvalidFormat is [DoesNotReturn]
     }
 
@@ -105,7 +106,7 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Uri GetValidAbsoluteUri(string? uri, string? paramName = null) => GetValidUri(uri, paramName);
+    public static Uri GetValidAbsoluteUri(string? uri, [CallerArgumentExpression("uri")] string? paramName = null) => GetValidUri(uri, paramName);
 
     /// <summary>Validates a URI string and returns a valid relative Uri instance, or throws an exception if invalid.</summary>
     /// <param name="uri">The URI string to validate.</param>
@@ -117,7 +118,7 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Uri GetValidRelativeUri(string? uri, string? paramName = null) => GetValidUri(uri, paramName, UriKind.Relative);
+    public static Uri GetValidRelativeUri(string? uri, [CallerArgumentExpression("uri")] string? paramName = null) => GetValidUri(uri, paramName, UriKind.Relative);
 
     /// <summary>Validates that a URI uses a specific scheme (e.g., http, https, ftp) and returns the Uri instance.</summary>
     /// <param name="uri">The URI string to validate.</param>
@@ -130,12 +131,12 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Uri GetValidUriWithScheme(string? uri, string scheme, string? paramName = null)
+    public static Uri GetValidUriWithScheme(string? uri, string scheme, [CallerArgumentExpression("uri")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(scheme, nameof(scheme));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(scheme);
         var validUri = GetValidAbsoluteUri(uri, paramName);
         if (!string.Equals(validUri.Scheme, scheme, StringComparison.OrdinalIgnoreCase))
-            ThrowInvalidFormat($"URI must use the '{scheme}' scheme. Found: {validUri.Scheme}", paramName ?? nameof(uri), uri!, $"{scheme}://...");
+            ThrowInvalidFormat($"URI must use the '{scheme}' scheme. Found: {validUri.Scheme}", paramName, uri!, $"{scheme}://...");
 
         return validUri;
     }
@@ -150,11 +151,11 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Uri GetValidWebUri(string? uri, string? paramName = null)
+    public static Uri GetValidWebUri(string? uri, [CallerArgumentExpression("uri")] string? paramName = null)
     {
         var validUri = GetValidAbsoluteUri(uri, paramName);
         if (validUri.Scheme != Uri.UriSchemeHttp && validUri.Scheme != Uri.UriSchemeHttps)
-            ThrowInvalidFormat($"URI must use HTTP or HTTPS scheme. Found: {validUri.Scheme}", paramName ?? nameof(uri), uri!, "http://... or https://...");
+            ThrowInvalidFormat($"URI must use HTTP or HTTPS scheme. Found: {validUri.Scheme}", paramName, uri!, "http://... or https://...");
 
         return validUri;
     }
@@ -168,7 +169,7 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ValidateAbsoluteUri(string? uri, string? paramName = null) => ThrowIfInvalidAbsoluteUri(uri, paramName);
+    public static void ValidateAbsoluteUri(string? uri, [CallerArgumentExpression("uri")] string? paramName = null) => ThrowIfInvalidAbsoluteUri(uri, paramName);
 
     /// <summary>Validates that a URI string is a valid URI (absolute or relative) and throws InvalidFormatException if not. This is a convenience method that calls ThrowIfInvalidUri.</summary>
     /// <param name="uri">The URI string to validate.</param>
@@ -179,7 +180,7 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ValidateUri(string? uri, string? paramName = null) => ThrowIfInvalidUri(uri, paramName);
+    public static void ValidateUri(string? uri, [CallerArgumentExpression("uri")] string? paramName = null) => ThrowIfInvalidUri(uri, paramName);
 
     /// <summary>Combines a base URI with a path segment, handling trailing/leading slashes.</summary>
     /// <param name="baseUri">The base URI (e.g. https://api.example.com).</param>
@@ -192,9 +193,9 @@ public static class UriHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string CombineUri(string? baseUri, string? path, string? paramName = null)
+    public static string CombineUri(string? baseUri, string? path, [CallerArgumentExpression("baseUri")] string? paramName = null)
     {
-        var validBase = GetValidAbsoluteUri(baseUri, paramName ?? nameof(baseUri));
+        var validBase = GetValidAbsoluteUri(baseUri, paramName);
         if (string.IsNullOrEmpty(path))
             return validBase.ToString();
 
@@ -214,11 +215,11 @@ public static class UriHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string AppendQueryString(string? uri, string? queryString)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri, nameof(uri));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri);
         if (string.IsNullOrEmpty(queryString))
-            return uri!;
+            return uri;
 
-        var trimmed = uri!.TrimEnd('?', '&');
+        var trimmed = uri.TrimEnd('?', '&');
         var hasQuery = trimmed.IndexOf('?') >= 0;
         return $"{trimmed}{(hasQuery ? "&" : "?")}{queryString!.TrimStart('?', '&')}";
     }

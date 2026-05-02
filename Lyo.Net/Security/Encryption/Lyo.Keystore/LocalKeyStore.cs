@@ -41,7 +41,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <inheritdoc />
     public byte[]? GetKey(string keyId, string? version = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var actualVersion = version ?? GetCurrentVersion(keyId);
         if (string.IsNullOrWhiteSpace(actualVersion))
             return null;
@@ -51,7 +51,8 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
         // Check if key has expired
         var metadata = GetKeyMetadata(keyId, actualVersion);
-        OperationHelpers.ThrowIf(metadata?.IsExpired ?? true, $"Key '{keyId}' version {actualVersion} has expired (expired at {metadata.ExpiresAt:O}).");
+        OperationHelpers.ThrowIfNull(metadata, $"Key '{keyId}' version {actualVersion} has no metadata.");
+        OperationHelpers.ThrowIf(metadata.IsExpired, $"Key '{keyId}' version {actualVersion} has expired (expired at {metadata.ExpiresAt:O}).");
         return key;
     }
 
@@ -65,7 +66,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <inheritdoc />
     public byte[]? GetCurrentKey(string keyId)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         return GetKey(keyId);
     }
 
@@ -79,7 +80,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <inheritdoc />
     public string? GetCurrentVersion(string keyId)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         return _currentVersions.TryGetValue(keyId, out var ver) ? ver : null;
     }
 
@@ -93,9 +94,9 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <inheritdoc />
     public void AddKey(string keyId, string version, byte[] key)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version, nameof(version));
-        ArgumentHelpers.ThrowIfNullOrEmpty(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version);
+        ArgumentHelpers.ThrowIfNullOrEmpty(key);
         var versions = _keys.GetOrAdd(keyId, _ => new());
         var keyCopy = new byte[key.Length];
         Array.Copy(key, keyCopy, key.Length);
@@ -126,8 +127,8 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// </remarks>
     public void AddKeyFromString(string keyId, string version, string keyString)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyString, nameof(keyString));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyString);
 
         // Get metadata once at the beginning
         var existingMetadata = GetKeyMetadata(keyId, version);
@@ -212,8 +213,8 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <summary>Gets the salt used for key derivation for a specific key ID and version. Returns the salt from metadata if available, or null if not found.</summary>
     public byte[]? GetSaltForVersion(string keyId, string version)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version, nameof(version));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version);
         var metadata = GetKeyMetadata(keyId, version);
         if (metadata?.AdditionalData != null && metadata.AdditionalData.TryGetValue(SaltMetadataKey, out var saltBase64)) {
             try {
@@ -235,8 +236,8 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public void SetCurrentVersion(string keyId, string version)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version, nameof(version));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version);
         OperationHelpers.ThrowIf(!HasKey(keyId, version), $"Key '{keyId}' version {version} does not exist. Add the key before setting it as current.");
         _currentVersions[keyId] = version;
     }
@@ -250,7 +251,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public bool HasKey(string keyId, string? version = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         if (!_keys.TryGetValue(keyId, out var versions))
             return false;
 
@@ -268,8 +269,8 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public KeyMetadata? GetKeyMetadata(string keyId, string version)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version, nameof(version));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version);
         if (!_metadata.TryGetValue(keyId, out var versions))
             return null;
 
@@ -284,9 +285,9 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public void SetKeyMetadata(string keyId, string version, KeyMetadata metadata)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version, nameof(version));
-        ArgumentHelpers.ThrowIfNull(metadata, nameof(metadata));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(version);
+        ArgumentHelpers.ThrowIfNull(metadata);
         OperationHelpers.ThrowIf(!HasKey(keyId, version), $"Key '{keyId}' version {version} does not exist. Add the key before setting metadata.");
         var metadataDict = _metadata.GetOrAdd(keyId, _ => new());
         metadataDict[version] = metadata;
@@ -301,7 +302,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public string UpdateKey(string keyId, byte[] key)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var newVersion = NewKeyVersionString();
         AddKey(keyId, newVersion, key);
         SetCurrentVersion(keyId, newVersion);
@@ -316,7 +317,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 
     public string UpdateKeyFromString(string keyId, string keyString)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var newVersion = NewKeyVersionString();
         AddKeyFromString(keyId, newVersion, keyString);
         SetCurrentVersion(keyId, newVersion);
@@ -334,7 +335,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <returns>Collection of available key versions</returns>
     public IEnumerable<string> GetAvailableVersions(string keyId)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         if (!_keys.TryGetValue(keyId, out var versions))
             return Array.Empty<string>();
 
@@ -350,7 +351,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     /// <returns>True if the key was removed, false if it didn't exist</returns>
     public bool RemoveKey(string keyId, string version)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var currentVersion = GetCurrentVersion(keyId);
         OperationHelpers.ThrowIf(
             version == currentVersion && !string.IsNullOrWhiteSpace(currentVersion),

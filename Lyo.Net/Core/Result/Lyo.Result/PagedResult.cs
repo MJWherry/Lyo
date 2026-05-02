@@ -1,9 +1,6 @@
-namespace Lyo.Common;
+namespace Lyo.Result;
 
-/// <summary>
-/// Represents a single page of results from a paged query.
-/// Use as the data payload of <see cref="Result{T}"/>: <c>Result&lt;PagedResult&lt;T&gt;&gt;</c>.
-/// </summary>
+/// <summary>Represents a single page of results from a paged query. Use as the data payload of <see cref="Result{T}" />: <c>Result&lt;PagedResult&lt;T&gt;&gt;</c>.</summary>
 /// <typeparam name="T">The item type.</typeparam>
 public record PagedResult<T>
 {
@@ -18,14 +15,6 @@ public record PagedResult<T>
 
     /// <summary>Maximum number of items per page.</summary>
     public int PageSize { get; init; }
-
-    public PagedResult(IReadOnlyList<T> items, int totalCount, int page, int pageSize)
-    {
-        Items = items;
-        TotalCount = totalCount;
-        Page = page;
-        PageSize = pageSize;
-    }
 
     /// <summary>Total number of pages.</summary>
     public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
@@ -48,18 +37,22 @@ public record PagedResult<T>
     /// <summary>The 0-based index of the first item on this page relative to the full result set.</summary>
     public int Offset => (Page - 1) * PageSize;
 
+    public PagedResult(IReadOnlyList<T> items, int totalCount, int page, int pageSize)
+    {
+        Items = items;
+        TotalCount = totalCount;
+        Page = page;
+        PageSize = pageSize;
+    }
+
     /// <summary>Creates an empty paged result with no items and a total count of zero.</summary>
-    public static PagedResult<T> Empty(int page = 1, int pageSize = 20)
-        => new([], 0, page, pageSize);
+    public static PagedResult<T> Empty(int page = 1, int pageSize = 20) => new([], 0, page, pageSize);
 
     /// <summary>Creates a paged result treating the provided list as a complete single-page result set.</summary>
-    public static PagedResult<T> SinglePage(IReadOnlyList<T> items, int pageSize = 20)
-        => new(items, items.Count, 1, pageSize);
+    public static PagedResult<T> SinglePage(IReadOnlyList<T> items, int pageSize = 20) => new(items, items.Count, 1, pageSize);
 
     /// <summary>Projects each item to a new type, preserving paging metadata.</summary>
-    public PagedResult<TOut> Map<TOut>(Func<T, TOut> mapper)
-        => new(Items.Select(mapper).ToList(), TotalCount, Page, PageSize);
+    public PagedResult<TOut> Map<TOut>(Func<T, TOut> mapper) => new(Items.Select(mapper).ToList(), TotalCount, Page, PageSize);
 
-    public override string ToString()
-        => $"Page {Page}/{TotalPages}, Items={Items.Count}, TotalCount={TotalCount}, PageSize={PageSize}";
+    public override string ToString() => $"Page {Page}/{TotalPages}, Items={Items.Count}, TotalCount={TotalCount}, PageSize={PageSize}";
 }

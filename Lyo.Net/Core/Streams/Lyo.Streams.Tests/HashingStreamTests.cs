@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Common.Security;
 
 namespace Lyo.Streams.Tests;
 
@@ -8,7 +9,7 @@ public sealed class HashingStreamTests
     public void GetHash_computes_SHA256_of_written_data()
     {
         var data = "hello world"u8.ToArray();
-        var expected = SHA256.HashData(data);
+        var expected = Hasher.ComputeSha2(256, data);
         var ms = new MemoryStream();
         using var hashing = new HashingStream(ms, SHA256.Create());
         hashing.Write(data, 0, data.Length);
@@ -20,7 +21,7 @@ public sealed class HashingStreamTests
     public void GetHash_computes_SHA256_of_read_data()
     {
         var data = "test"u8.ToArray();
-        var expected = SHA256.HashData(data);
+        var expected = Hasher.ComputeSha2(256, data);
         var ms = new MemoryStream(data);
         using var hashing = new HashingStream(ms, SHA256.Create());
         var buffer = new byte[10];

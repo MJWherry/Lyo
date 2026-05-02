@@ -53,10 +53,10 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "hit-test-key";
 
         // First call - cache miss (will set the value)
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
 
         // Second call - cache hit
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken);
         Assert.True(metrics.HitCounters.Count > 0, "Should have recorded at least one hit");
         var hit = metrics.HitCounters.FirstOrDefault(h => h.Tags != null && h.Tags.ContainsKey(Constants.Metrics.Tags.Key) && h.Tags[Constants.Metrics.Tags.Key]
             .Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -72,7 +72,7 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "miss-test-key";
 
         // First call - cache miss
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
         Assert.True(metrics.MissCounters.Count > 0, "Should have recorded at least one miss");
         var miss = metrics.MissCounters.FirstOrDefault(m
             => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key].Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -87,11 +87,10 @@ public class CacheServiceMetricsTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var key = "duration-test-key";
         await service.GetOrSetAsync<string>(
-                key, async ct => {
-                    await Task.Delay(50, ct).ConfigureAwait(false);
-                    return "value";
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                await Task.Delay(50, ct);
+                return "value";
+            }, token: TestContext.Current.CancellationToken);
 
         Assert.True(metrics.MissTimings.Count > 0);
         var miss = metrics.MissTimings.FirstOrDefault(m => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key]
@@ -163,7 +162,7 @@ public class CacheServiceMetricsTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var key = "remove-test-key";
         service.Set(key, "value");
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
         Assert.True(metrics.RemoveCounters.Count > 0);
         var remove = metrics.RemoveCounters.FirstOrDefault(r
             => r.Tags != null && r.Tags.ContainsKey(Constants.Metrics.Tags.Key) && r.Tags[Constants.Metrics.Tags.Key].Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -187,7 +186,7 @@ public class CacheServiceMetricsTests : IDisposable
         var key2 = "tag-key-2";
         service.Set(key1, "value1", [tag]);
         service.Set(key2, "value2", [tag]);
-        await service.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(tag);
         Assert.True(metrics.RemoveByTagCounters.Count > 0);
         var removeByTag = metrics.RemoveByTagCounters.FirstOrDefault(r
             => r.Tags != null && r.Tags.ContainsKey(Constants.Metrics.Tags.Tag) && r.Tags[Constants.Metrics.Tags.Tag].Equals(tag, StringComparison.OrdinalIgnoreCase));
@@ -212,7 +211,7 @@ public class CacheServiceMetricsTests : IDisposable
     {
         var metrics = new TestModels.TestMetrics();
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
-        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>().ConfigureAwait(false);
+        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>();
         Assert.True(metrics.RemoveByTagCounters.Count > 0);
         var removeByTag = metrics.RemoveByTagCounters.FirstOrDefault(r
             => r.Tags != null && r.Tags.ContainsKey(Constants.Metrics.Tags.Tag) && r.Tags[Constants.Metrics.Tags.Tag].Contains("entity:", StringComparison.OrdinalIgnoreCase));
@@ -226,7 +225,7 @@ public class CacheServiceMetricsTests : IDisposable
         var metrics = new TestModels.TestMetrics();
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var typeName = typeof(TestModels.TestEntity).FullName!;
-        await service.InvalidateCacheByTypeAsync(typeName).ConfigureAwait(false);
+        await service.InvalidateCacheByTypeAsync(typeName);
         Assert.True(metrics.RemoveByTagCounters.Count > 0);
         var removeByTag = metrics.RemoveByTagCounters.FirstOrDefault(r => r.Tags != null && r.Tags.ContainsKey(Constants.Metrics.Tags.Tag) && r.Tags[Constants.Metrics.Tags.Tag]
             .Contains($"type:{typeName}", StringComparison.OrdinalIgnoreCase));
@@ -239,7 +238,7 @@ public class CacheServiceMetricsTests : IDisposable
     {
         var metrics = new TestModels.TestMetrics();
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
-        await service.InvalidateAllCachedQueriesAsync().ConfigureAwait(false);
+        await service.InvalidateAllCachedQueriesAsync();
         Assert.True(metrics.RemoveByTagCounters.Count > 0);
         var removeByTag = metrics.RemoveByTagCounters.FirstOrDefault(r
             => r.Tags != null && r.Tags.ContainsKey(Constants.Metrics.Tags.Tag) && r.Tags[Constants.Metrics.Tags.Tag].Equals("queries", StringComparison.OrdinalIgnoreCase));
@@ -258,8 +257,7 @@ public class CacheServiceMetricsTests : IDisposable
         // Actually, let's simulate by disabling cache after setup, but that won't work
         // Instead, let's test with a factory that throws
         try {
-            await service.GetOrSetAsync<string>(key, ct => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken)
-                .ConfigureAwait(false);
+            await service.GetOrSetAsync<string>(key, ct => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException) {
             // Expected
@@ -307,7 +305,7 @@ public class CacheServiceMetricsTests : IDisposable
         service.Set("key2", "value2");
 
         // Wait a bit for events to fire
-        await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         Assert.True(metrics.CacheSizeGauges.Count > 0);
         // Cache size should be recorded (may be 0 or more depending on event timing)
         Assert.All(metrics.CacheSizeGauges, gauge => Assert.True(gauge.Value >= 0));
@@ -320,9 +318,9 @@ public class CacheServiceMetricsTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var key = "size-test-key";
         service.Set(key, "value");
-        await Task.Delay(50, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
-        await Task.Delay(50, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await service.InvalidateCacheItem(key);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
         Assert.True(metrics.CacheSizeGauges.Count > 0);
     }
 

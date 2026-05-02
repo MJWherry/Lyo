@@ -13,9 +13,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = LyoDiscordClientOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(LyoDiscordClientOptions))) {
             services.AddSingleton(_ => {
                 var options = new LyoDiscordClientOptions();
@@ -39,8 +39,8 @@ public static class Extensions
 
     public static IServiceCollection AddDiscordClient(this IServiceCollection services, Action<LyoDiscordClientOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton(_ => {
             var options = new LyoDiscordClientOptions();
             configure(options);
@@ -59,8 +59,8 @@ public static class Extensions
 
     public static IServiceCollection AddDiscordClient(this IServiceCollection services, LyoDiscordClientOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<LyoDiscordClient>(provider => {
             var loggerFactory = provider.GetService<ILoggerFactory>();

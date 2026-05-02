@@ -17,8 +17,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddEmailDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddEmailDbContextFactory(new PostgresEmailOptions { ConnectionString = connectionString })
             .AddScoped<EmailDbContext>(sp => sp.GetRequiredService<IDbContextFactory<EmailDbContext>>().CreateDbContext());
     }
@@ -29,8 +29,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddEmailDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<EmailDbContext>(configure);
         return services;
     }
@@ -41,8 +41,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddEmailDbContextFactory(this IServiceCollection services, Action<PostgresEmailOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresEmailOptions();
         configure(options);
         return services.AddEmailDbContextFactory(options);
@@ -58,9 +58,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresEmailOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresEmailOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -75,9 +75,9 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddEmailDbContextFactory(this IServiceCollection services, PostgresEmailOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString);
         services.AddSingleton<IOptions<PostgresEmailOptions>>(Options.Create(options));
         services.AddPostgresMigrations<EmailDbContext, PostgresEmailOptions>();
         services.AddDbContextFactory<EmailDbContext>(dbOptions => dbOptions.UseNpgsql(

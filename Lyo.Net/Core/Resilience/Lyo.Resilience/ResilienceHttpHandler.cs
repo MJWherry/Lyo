@@ -17,8 +17,8 @@ public sealed class ResilienceHttpHandler : DelegatingHandler
     /// <param name="metrics">Optional metrics for execution duration and success/failure (uses NullMetrics if not provided).</param>
     public ResilienceHttpHandler(ResiliencePipelineProvider<string> pipelineProvider, string pipelineName, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pipelineName, nameof(pipelineName));
-        _pipelineProvider = ArgumentHelpers.ThrowIfNullReturn(pipelineProvider, nameof(pipelineProvider));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pipelineName);
+        _pipelineProvider = ArgumentHelpers.ThrowIfNullReturn(pipelineProvider);
         _pipelineName = pipelineName;
         _metrics = metrics ?? NullMetrics.Instance;
     }

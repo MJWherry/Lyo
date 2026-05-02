@@ -1,0 +1,525 @@
+@using Lyo.Cache
+@using Lyo.Health
+@using Lyo.Metrics
+@using CacheConstants = Lyo.Cache.Constants
+@inject ICacheService CacheService
+@inject IMetrics Metrics
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Local Cache Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Exercise `Lyo.Cache` locally with explicit sets, `GetOrSet` hits and misses, TTL expiration, tag invalidation, and live cache metrics.
+            </MudText>
+        </div>
+
+        <MudGrid>
+            <MudItem xs="12" md="5">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Configuration</MudText>
+                            <MudTextField T="string" Label="Cache key" @bind-Value="_cacheKey"/>
+                            <MudTextField T="string" Label="Tag" @bind-Value="_cacheTag"/>
+                            <MudTextField T="string" Label="Input value" Lines="4" @bind-Value="_inputValue"/>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField T="int" Label="TTL ms" Min="50" Max="600000" @bind-Value="_durationMilliseconds"/>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudNumericField T="int" Label="Factory delay ms" Min="0" Max="5000" @bind-Value="_factoryDelayMilliseconds"/>
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                `GetOrSet` uses the current input when it misses. Re-running it with the same key should return the cached value until expiration or invalidation.
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudText Typo="Typo.h6">Operations</MudText>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Filled" OnClick="SetValueAsync" Disabled="@_busy">Set</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReadWithGetOrSetAsync" Disabled="@_busy">GetOrSet</MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="RunExpirationDemoAsync" Disabled="@_busy">Expiration Demo</MudButton>
+                            </MudStack>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="InvalidateKeyAsync" Disabled="@_busy">Invalidate Key</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Warning" OnClick="InvalidateTagAsync" Disabled="@_busy">Invalidate Tag</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="CheckHealthAsync" Disabled="@_busy">Health</MudButton>
+                            </MudStack>
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudButton Variant="Variant.Text" OnClick="RefreshSnapshot">Refresh Snapshot</MudButton>
+                                <MudButton Variant="Variant.Text" OnClick="RefreshMetrics">Refresh Metrics</MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="7">
+                <MudStack Spacing="3">
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudStack Spacing="2">
+                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                                <MudChip T="string" Color="@(_busy ? Color.Warning : Color.Success)">
+                                    @(_busy ? "Busy" : "Idle")
+                                </MudChip>
+                                <MudChip T="string" Color="@(MetricsStore == null ? Color.Warning : Color.Success)">
+                                    @(MetricsStore == null ? "Metrics Unavailable" : "Metrics Enabled")
+                                </MudChip>
+                                <MudChip T="string" Color="@(_items.Count == 0 ? Color.Default : Color.Primary)">
+                                    @_items.Count Cached Items
+                                </MudChip>
+                            </MudStack>
+
+                            @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+                                <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+                            }
+                        </MudStack>
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Latest Result</MudText>
+
+                        @if (_lastValue == null) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Run `Set` or `GetOrSet` to inspect the latest payload returned from the cache service.
+                            </MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Key</strong></td>
+                                    <td>@_cacheKey</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Value</strong></td>
+                                    <td>@_lastValue.Text</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Origin</strong></td>
+                                    <td>@_lastValue.Source</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Factory Call</strong></td>
+                                    <td>@_lastValue.FactoryCallNumber</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created</strong></td>
+                                    <td>@_lastValue.CreatedAt.ToString("u")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Health</strong></td>
+                                    <td>@(_lastHealth == null ? "(not checked)" : _lastHealth.IsHealthy ? "Healthy" : $"Unhealthy: {_lastHealth.Message}")</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Metrics For Current Key</MudText>
+
+                        @if (MetricsStore == null) {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                The current `IMetrics` implementation is not `MetricsService`, so live cache metrics are not available here.
+                            </MudAlert>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true">
+                                <tbody>
+                                <tr>
+                                    <td><strong>Hit Success</strong></td>
+                                    <td>@_hitSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Miss Success</strong></td>
+                                    <td>@_missSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Set Success</strong></td>
+                                    <td>@_setSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove Success</strong></td>
+                                    <td>@_removeSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove By Tag Success</strong></td>
+                                    <td>@_removeByTagSuccess</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hit Duration Samples</strong></td>
+                                    <td>@_hitDurationCount (@_hitDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Miss Duration Samples</strong></td>
+                                    <td>@_missDurationCount (@_missDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Set Duration Samples</strong></td>
+                                    <td>@_setDurationCount (@_setDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remove Duration Samples</strong></td>
+                                    <td>@_removeDurationCount (@_removeDurationAverageMs.ToString("0.##") ms avg)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Items Removed By Tag</strong></td>
+                                    <td>@_removeByTagItemsRemoved</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Cache Size Gauge</strong></td>
+                                    <td>@(_cacheSizeGauge?.ToString("0.##") ?? "(n/a)")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Refresh</strong></td>
+                                    <td>@(_lastMetricsRefresh == default ? "(not loaded)" : _lastMetricsRefresh.ToString("u"))</td>
+                                </tr>
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Tracked Cache Items</MudText>
+
+                        @if (_items.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                No items are currently tracked by the cache service.
+                            </MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Created</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in _items) {
+                                    <tr>
+                                        <td style="white-space: pre-wrap; word-break: break-word;">@item.Name</td>
+                                        <td>@item.Type</td>
+                                        <td>@item.Created.ToString("u")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+
+                    <MudPaper Class="pa-4" Outlined="true">
+                        <MudText Typo="Typo.h6" Class="mb-3">Recent Events</MudText>
+
+                        @if (_events.Count == 0) {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Cache operations will append a short event log here.
+                            </MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Stage</th>
+                                    <th>Details</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var entry in _events) {
+                                    <tr>
+                                        <td>@entry.Timestamp.ToString("HH:mm:ss.fff")</td>
+                                        <td>@entry.Stage</td>
+                                        <td style="white-space: pre-wrap; word-break: break-word;">@entry.Message</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </MudPaper>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private bool _busy;
+    private string _cacheKey = "workbench:cache";
+    private double? _cacheSizeGauge;
+    private string _cacheTag = "workbench";
+    private int _durationMilliseconds = 2500;
+    private readonly List<DemoEvent> _events = [];
+    private int _factoryCallCount;
+    private int _factoryDelayMilliseconds = 150;
+    private long _hitSuccess;
+    private int _hitDurationCount;
+    private double _hitDurationAverageMs;
+    private string _inputValue = "hello from cache workbench";
+    private List<CacheItem> _items = [];
+    private HealthResult? _lastHealth;
+    private CacheDemoValue? _lastValue;
+    private DateTime _lastMetricsRefresh;
+    private long _missSuccess;
+    private int _missDurationCount;
+    private double _missDurationAverageMs;
+    private long _removeByTagItemsRemoved;
+    private long _removeByTagSuccess;
+    private long _removeSuccess;
+    private int _removeDurationCount;
+    private double _removeDurationAverageMs;
+    private long _setSuccess;
+    private int _setDurationCount;
+    private double _setDurationAverageMs;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    private MetricsService? MetricsStore => Metrics as MetricsService;
+
+    protected override Task OnInitializedAsync()
+    {
+        RefreshSnapshot();
+        RefreshMetrics();
+        return Task.CompletedTask;
+    }
+
+    private async Task SetValueAsync()
+    {
+        _busy = true;
+        try {
+            var payload = CreatePayload("set");
+            CacheService.Set(_cacheKey, payload, [_cacheTag]);
+            _lastValue = payload;
+            AppendEvent("Set", $"Stored '{_cacheKey}' with tag '{_cacheTag}'.");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus("Value written to cache.", Severity.Success);
+        }
+        catch (Exception ex) {
+            AppendEvent("Set Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task ReadWithGetOrSetAsync()
+    {
+        _busy = true;
+        try {
+            var beforeFactoryCallCount = _factoryCallCount;
+            var result = await CacheService.GetOrSetAsync(
+                _cacheKey, async ct => {
+                    var callNumber = Interlocked.Increment(ref _factoryCallCount);
+                    if (_factoryDelayMilliseconds > 0)
+                        await Task.Delay(_factoryDelayMilliseconds, ct);
+
+                    return CreatePayload("factory", callNumber);
+                }, TimeSpan.FromMilliseconds(_durationMilliseconds), [_cacheTag]);
+
+            _lastValue = result;
+            var hit = beforeFactoryCallCount == _factoryCallCount;
+            AppendEvent(hit ? "Hit" : "Miss", $"{(hit ? "Returned cached value" : "Factory populated cache")} for '{_cacheKey}'.");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus(hit ? "Cache hit." : "Cache miss; factory executed.", hit ? Severity.Info : Severity.Success);
+        }
+        catch (Exception ex) {
+            AppendEvent("GetOrSet Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task RunExpirationDemoAsync()
+    {
+        _busy = true;
+        try {
+            await CacheService.InvalidateCacheItem(_cacheKey);
+            AppendEvent("Expire Demo", $"Cleared '{_cacheKey}' to start from a miss.");
+            var first = await CacheService.GetOrSetAsync(
+                _cacheKey, async ct => {
+                    var callNumber = Interlocked.Increment(ref _factoryCallCount);
+                    if (_factoryDelayMilliseconds > 0)
+                        await Task.Delay(_factoryDelayMilliseconds, ct);
+
+                    return CreatePayload("expiration-demo", callNumber);
+                }, TimeSpan.FromMilliseconds(_durationMilliseconds), [_cacheTag]);
+
+            await Task.Delay(_durationMilliseconds + 150);
+            var second = await CacheService.GetOrSetAsync(
+                _cacheKey, async ct => {
+                    var callNumber = Interlocked.Increment(ref _factoryCallCount);
+                    if (_factoryDelayMilliseconds > 0)
+                        await Task.Delay(_factoryDelayMilliseconds, ct);
+
+                    return CreatePayload("expiration-demo", callNumber);
+                }, TimeSpan.FromMilliseconds(_durationMilliseconds), [_cacheTag]);
+
+            _lastValue = second;
+            var expired = first?.FactoryCallNumber != second?.FactoryCallNumber;
+            AppendEvent("Expire Demo", expired ? $"Entry expired after {_durationMilliseconds} ms and the second read rebuilt it." : "Entry did not appear to expire before the second read.");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus(expired ? "Expiration demo rebuilt the value after TTL." : "Expiration demo did not rebuild as expected.", expired ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            AppendEvent("Expire Demo Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task InvalidateKeyAsync()
+    {
+        _busy = true;
+        try {
+            await CacheService.InvalidateCacheItem(_cacheKey);
+            AppendEvent("Invalidate Key", $"Removed '{_cacheKey}'.");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus("Cache key invalidated.", Severity.Success);
+        }
+        catch (Exception ex) {
+            AppendEvent("Invalidate Key Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task InvalidateTagAsync()
+    {
+        _busy = true;
+        try {
+            await CacheService.InvalidateCacheItemByTag(_cacheTag);
+            AppendEvent("Invalidate Tag", $"Removed items tagged '{_cacheTag}'.");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus("Cache tag invalidated.", Severity.Success);
+        }
+        catch (Exception ex) {
+            AppendEvent("Invalidate Tag Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task CheckHealthAsync()
+    {
+        _busy = true;
+        try {
+            _lastHealth = await CacheService.CheckHealthAsync();
+            AppendEvent("Health", _lastHealth.IsHealthy ? "Cache health check passed." : $"Cache health check failed: {_lastHealth.Message}");
+            RefreshSnapshot();
+            RefreshMetrics();
+            SetStatus(_lastHealth.IsHealthy ? "Cache is healthy." : _lastHealth.Message ?? "Cache is unhealthy.", _lastHealth.IsHealthy ? Severity.Success : Severity.Warning);
+        }
+        catch (Exception ex) {
+            AppendEvent("Health Error", ex.Message);
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private void RefreshSnapshot() => _items = CacheService.Items.OrderBy(i => i.Type).ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+    private void RefreshMetrics()
+    {
+        if (MetricsStore == null)
+            return;
+
+        var keyTags = new[] { (CacheConstants.Metrics.Tags.Key, _cacheKey) };
+        var tagTags = new[] { (CacheConstants.Metrics.Tags.Tag, _cacheTag) };
+        _hitSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.HitSuccess, keyTags);
+        _missSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.MissSuccess, keyTags);
+        _setSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.SetSuccess, keyTags);
+        _removeSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.RemoveSuccess, keyTags);
+        _removeByTagSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.RemoveByTagSuccess, tagTags);
+        _hitDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.HitDuration, keyTags)?.Count ?? 0;
+        _hitDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.HitDuration, keyTags)?.Average ?? 0;
+        _missDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.MissDuration, keyTags)?.Count ?? 0;
+        _missDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.MissDuration, keyTags)?.Average ?? 0;
+        _setDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.SetDuration, keyTags)?.Count ?? 0;
+        _setDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.SetDuration, keyTags)?.Average ?? 0;
+        _removeDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.RemoveDuration, keyTags)?.Count ?? 0;
+        _removeDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.RemoveDuration, keyTags)?.Average ?? 0;
+        _removeByTagItemsRemoved = Convert.ToInt64(MetricsStore.GetGaugeValue(CacheConstants.Metrics.RemoveByTagItemsRemoved, tagTags) ?? 0);
+        _cacheSizeGauge = MetricsStore.GetGaugeValue(CacheConstants.Metrics.CacheSize);
+        _lastMetricsRefresh = DateTime.UtcNow;
+    }
+
+    private void ClearEvents()
+    {
+        _events.Clear();
+        SetStatus("Event log cleared.", Severity.Info);
+    }
+
+    private CacheDemoValue CreatePayload(string source, int? factoryCallNumber = null)
+        => new() {
+            CreatedAt = DateTime.UtcNow,
+            FactoryCallNumber = factoryCallNumber ?? _factoryCallCount,
+            Source = source,
+            Text = _inputValue
+        };
+
+    private void AppendEvent(string stage, string message)
+    {
+        _events.Insert(0, new(DateTime.UtcNow, stage, message));
+        if (_events.Count > 40)
+            _events.RemoveRange(40, _events.Count - 40);
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(2500);
+        if (version != _statusVersion)
+            return;
+
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private sealed record DemoEvent(DateTime Timestamp, string Stage, string Message);
+
+    private sealed class CacheDemoValue
+    {
+        public DateTime CreatedAt { get; init; }
+
+        public int FactoryCallNumber { get; init; }
+
+        public required string Source { get; init; }
+
+        public required string Text { get; init; }
+    }
+
+}

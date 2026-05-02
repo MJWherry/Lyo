@@ -18,13 +18,12 @@ public class NativeBarcodeZxingRoundTripTests
     {
         var service = CreateService();
         var result = await service.GenerateAsync(
-                data, BarcodeSymbology.Code128, new() {
-                    Format = BarcodeFormat.Bmp,
-                    ModuleWidthPixels = 2,
-                    BarHeightPixels = 80,
-                    QuietZoneModules = 10
-                }, TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            data, BarcodeSymbology.Code128, new() {
+                Format = BarcodeFormat.Bmp,
+                ModuleWidthPixels = 2,
+                BarHeightPixels = 80,
+                QuietZoneModules = 10
+            }, TestContext.Current.CancellationToken);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess, result.Errors?[0].Message);

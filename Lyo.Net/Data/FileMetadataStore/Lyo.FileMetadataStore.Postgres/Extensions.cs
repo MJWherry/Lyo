@@ -20,8 +20,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFileMetadataStoreDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddFileMetadataStoreDbContextFactory(new PostgresFileMetadataStoreOptions { ConnectionString = connectionString })
             .AddScoped<FileMetadataStoreDbContext>(sp => sp.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>().CreateDbContext());
     }
@@ -32,8 +32,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFileMetadataStoreDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<FileMetadataStoreDbContext>(configure);
         return services;
     }
@@ -44,8 +44,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFileMetadataStoreDbContextFactory(this IServiceCollection services, Action<PostgresFileMetadataStoreOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresFileMetadataStoreOptions();
         configure(options);
         return services.AddFileMetadataStoreDbContextFactory(options);
@@ -61,9 +61,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresFileMetadataStoreOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresFileMetadataStoreOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -78,8 +78,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFileMetadataStoreDbContextFactory(this IServiceCollection services, PostgresFileMetadataStoreOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresFileMetadataStoreOptions>>(Options.Create(options));
         services.AddPostgresMigrations<FileMetadataStoreDbContext, PostgresFileMetadataStoreOptions>();
@@ -94,7 +94,7 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPostgresFileMetadataStore(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddScoped<PostgresFileMetadataStore>(provider => {
             var dbContext = provider.GetRequiredService<FileMetadataStoreDbContext>();
             var loggerFactory = provider.GetService<ILoggerFactory>();
@@ -110,8 +110,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPostgresFileMetadataStore(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<FileMetadataStoreDbContext>(configure);
         services.AddScoped<PostgresFileMetadataStore>(provider => {
             var dbContext = provider.GetRequiredService<FileMetadataStoreDbContext>();
@@ -128,8 +128,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPostgresFileMetadataStore(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         services.AddFileMetadataStoreDbContextFactory(new PostgresFileMetadataStoreOptions { ConnectionString = connectionString });
         services.AddScoped<PostgresFileMetadataStore>(provider => {
             var factory = provider.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>();
@@ -148,9 +148,9 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPostgresFileMetadataStoreKeyed(this IServiceCollection services, string keyName, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<FileMetadataStoreDbContext>(configure);
         services.AddKeyedScoped<PostgresFileMetadataStore>(
             keyName, (provider, serviceKey) => {
@@ -170,9 +170,9 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddPostgresFileMetadataStoreKeyed(this IServiceCollection services, string keyName, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         services.AddFileMetadataStoreDbContextFactory(new PostgresFileMetadataStoreOptions { ConnectionString = connectionString });
         services.AddKeyedScoped<PostgresFileMetadataStore>(
             keyName, (provider, serviceKey) => {
@@ -208,15 +208,15 @@ public static class Extensions
     /// </example>
     public static PostgresFileMetadataStoreBuilder AddPostgresFileMetadataStoreKeyed(this IServiceCollection services, string keyName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         return new(services, keyName);
     }
 
     /// <summary>Registers <see cref="PostgresFileAuditSink" /> as <see cref="IFileAuditEventHandler" />.</summary>
     public static IServiceCollection AddPostgresFileAuditSink(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddScoped<IFileAuditEventHandler, PostgresFileAuditSink>();
         return services;
     }
@@ -227,7 +227,7 @@ public static class Extensions
     /// </summary>
     public static IServiceCollection AddPostgresMultipartUploadSessionStore(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddScoped<PostgresMultipartUploadSessionStore>();
         services.AddScoped<IMultipartUploadSessionStore>(sp => sp.GetRequiredService<PostgresMultipartUploadSessionStore>());
         return services;

@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
-using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Result;
 
 namespace Lyo.Validation;
 
@@ -15,9 +15,9 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
 
     internal PropertyValidatorBuilder(ValidatorBuilder<T> builder, Func<T, TProperty> selector, string propertyName)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
-        ArgumentHelpers.ThrowIfNull(selector, nameof(selector));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(propertyName, nameof(propertyName));
+        ArgumentHelpers.ThrowIfNull(builder);
+        ArgumentHelpers.ThrowIfNull(selector);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(propertyName);
         _builder = builder;
         _selector = selector;
         _propertyName = propertyName;
@@ -34,7 +34,7 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     public PropertyValidatorBuilder<T, TProperty> NotDefault(string errorCode = ValidationErrorCodes.DefaultValue, string? errorMessage = null)
     {
         _builder.AddPropertyRule(
-            _selector, _propertyName, (_, value) => Equals(value, default!) ? [CreateError(value, errorCode, errorMessage ?? $"{_propertyName} cannot be the default value")] : []);
+            _selector, _propertyName, (_, value) => Equals(value, null!) ? [CreateError(value, errorCode, errorMessage ?? $"{_propertyName} cannot be the default value")] : []);
 
         return this;
     }
@@ -76,7 +76,7 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     /// <summary>Requires the string property value to match the supplied regex.</summary>
     public PropertyValidatorBuilder<T, TProperty> Matches(Regex pattern, string errorCode = ValidationErrorCodes.InvalidFormat, string? errorMessage = null)
     {
-        ArgumentHelpers.ThrowIfNull(pattern, nameof(pattern));
+        ArgumentHelpers.ThrowIfNull(pattern);
         _builder.AddPropertyRule(
             _selector, _propertyName, (_, value) => {
                 var text = value as string;
@@ -188,9 +188,9 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     /// <summary>Adds a custom property-level predicate.</summary>
     public PropertyValidatorBuilder<T, TProperty> Must(Func<TProperty, bool> predicate, string errorCode, string errorMessage, IReadOnlyDictionary<string, object>? metadata = null)
     {
-        ArgumentHelpers.ThrowIfNull(predicate, nameof(predicate));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorCode, nameof(errorCode));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorMessage, nameof(errorMessage));
+        ArgumentHelpers.ThrowIfNull(predicate);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorCode);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorMessage);
         _builder.AddPropertyRule(_selector, _propertyName, (_, value) => predicate(value) ? [] : [CreateError(value, errorCode, errorMessage, metadata)]);
         return this;
     }
@@ -202,9 +202,9 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
         string errorMessage,
         IReadOnlyDictionary<string, object>? metadata = null)
     {
-        ArgumentHelpers.ThrowIfNull(predicate, nameof(predicate));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorCode, nameof(errorCode));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorMessage, nameof(errorMessage));
+        ArgumentHelpers.ThrowIfNull(predicate);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorCode);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(errorMessage);
         _builder.AddPropertyRule(_selector, _propertyName, (instance, value) => predicate(instance, value) ? [] : [CreateError(value, errorCode, errorMessage, metadata)]);
         return this;
     }
@@ -212,7 +212,7 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     /// <summary>Applies another validator to the property value and remaps the errors to this property path.</summary>
     public PropertyValidatorBuilder<T, TProperty> SetValidator(IValidator<TProperty> validator)
     {
-        ArgumentHelpers.ThrowIfNull(validator, nameof(validator));
+        ArgumentHelpers.ThrowIfNull(validator);
         _builder.AddPropertyRule(
             _selector, _propertyName, (_, value) => {
                 var result = validator.Validate(value);

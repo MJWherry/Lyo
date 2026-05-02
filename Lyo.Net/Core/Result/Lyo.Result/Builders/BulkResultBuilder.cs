@@ -1,10 +1,13 @@
-namespace Lyo.Common.Builders;
+namespace Lyo.Result.Builders;
 
-/// <summary>Fluent builder for constructing a <see cref="BulkResult{T}"/> incrementally.</summary>
+/// <summary>Fluent builder for constructing a <see cref="BulkResult{T}" /> incrementally.</summary>
 /// <typeparam name="T">The data type for each individual result.</typeparam>
 public sealed class BulkResultBuilder<T>
 {
     private readonly List<Result<T>> _results = [];
+
+    /// <summary>Gets the number of results added so far.</summary>
+    public int Count => _results.Count;
 
     /// <summary>Creates a new builder instance.</summary>
     public static BulkResultBuilder<T> Create() => new();
@@ -24,17 +27,14 @@ public sealed class BulkResultBuilder<T>
     }
 
     /// <summary>Adds a failed result with error details.</summary>
-    public BulkResultBuilder<T> AddFailure(string message, string code,
-        string? stackTrace = null, Error? innerError = null,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public BulkResultBuilder<T> AddFailure(string message, string code, string? stackTrace = null, Error? innerError = null, IReadOnlyDictionary<string, object>? metadata = null)
     {
         _results.Add(Result<T>.Failure(message, code, stackTrace, innerError, metadata));
         return this;
     }
 
     /// <summary>Adds a failed result from an exception.</summary>
-    public BulkResultBuilder<T> AddFailure(Exception exception, string? code = null,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public BulkResultBuilder<T> AddFailure(Exception exception, string? code = null, IReadOnlyDictionary<string, object>? metadata = null)
     {
         _results.Add(Result<T>.Failure(exception, code, metadata));
         return this;
@@ -63,22 +63,22 @@ public sealed class BulkResultBuilder<T>
         return this;
     }
 
-    /// <summary>Gets the number of results added so far.</summary>
-    public int Count => _results.Count;
-
-    /// <summary>Builds and returns the <see cref="BulkResult{T}"/>.</summary>
+    /// <summary>Builds and returns the <see cref="BulkResult{T}" />.</summary>
     public BulkResult<T> Build() => BulkResult<T>.FromResults(_results);
 
-    /// <summary>Implicit conversion to <see cref="BulkResult{T}"/>.</summary>
+    /// <summary>Implicit conversion to <see cref="BulkResult{T}" />.</summary>
     public static implicit operator BulkResult<T>(BulkResultBuilder<T> builder) => builder.Build();
 }
 
-/// <summary>Fluent builder for constructing a <see cref="BulkResult{TRequest, TResult}"/> incrementally.</summary>
+/// <summary>Fluent builder for constructing a <see cref="BulkResult{TRequest, TResult}" /> incrementally.</summary>
 /// <typeparam name="TRequest">The request type.</typeparam>
 /// <typeparam name="TResult">The data type for each individual result.</typeparam>
 public sealed class BulkResultBuilder<TRequest, TResult>
 {
     private readonly List<Result<TRequest, TResult>> _results = [];
+
+    /// <summary>Gets the number of results added so far.</summary>
+    public int Count => _results.Count;
 
     /// <summary>Creates a new builder instance.</summary>
     public static BulkResultBuilder<TRequest, TResult> Create() => new();
@@ -120,12 +120,9 @@ public sealed class BulkResultBuilder<TRequest, TResult>
         return this;
     }
 
-    /// <summary>Gets the number of results added so far.</summary>
-    public int Count => _results.Count;
-
-    /// <summary>Builds and returns the <see cref="BulkResult{TRequest, TResult}"/>.</summary>
+    /// <summary>Builds and returns the <see cref="BulkResult{TRequest, TResult}" />.</summary>
     public BulkResult<TRequest, TResult> Build() => BulkResult<TRequest, TResult>.FromResults(_results);
 
-    /// <summary>Implicit conversion to <see cref="BulkResult{TRequest, TResult}"/>.</summary>
+    /// <summary>Implicit conversion to <see cref="BulkResult{TRequest, TResult}" />.</summary>
     public static implicit operator BulkResult<TRequest, TResult>(BulkResultBuilder<TRequest, TResult> builder) => builder.Build();
 }

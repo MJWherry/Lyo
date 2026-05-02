@@ -1,15 +1,16 @@
-using Lyo.Common.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using Lyo.Common.Enums;
 
 namespace Lyo.Schedule.Models;
 
 /// <summary>Fluent builder for creating ScheduleDefinition instances.</summary>
 public sealed class ScheduleDefinitionBuilder
 {
+    private string? _cronExpression;
     private DayFlags _dayFlags = DayFlags.EveryDay;
     private string? _description;
     private bool _enabled = true;
@@ -117,6 +118,18 @@ public sealed class ScheduleDefinitionBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets a cron-expression schedule. Supports standard 5-field (minute precision) and 6-field (second precision) cron formats. Examples: <c>"0 8 * * MON-FRI"</c> (weekdays at
+    /// 08:00), <c>"*/15 9-17 * * MON-FRI"</c> (every 15 min during business hours).
+    /// </summary>
+    public ScheduleDefinitionBuilder SetCron(string cronExpression)
+    {
+        _type = ScheduleType.Cron;
+        _cronExpression = cronExpression;
+        return this;
+    }
+
     /// <summary>Builds the ScheduleDefinition.</summary>
-    public ScheduleDefinition Build() => new(_type, _dayFlags, _monthFlags, _times, _startTime, _endTime, _intervalMinutes, _executeAt, _timeZone, _enabled, _description);
+    public ScheduleDefinition Build()
+        => new(_type, _dayFlags, _monthFlags, _times, _startTime, _endTime, _intervalMinutes, _executeAt, _timeZone, _enabled, _description, _cronExpression);
 }

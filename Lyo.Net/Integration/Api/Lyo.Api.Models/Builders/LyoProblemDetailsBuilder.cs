@@ -86,7 +86,7 @@ public sealed class LyoProblemDetailsBuilder
     /// <summary>Root problem summary (RFC <c>detail</c>).</summary>
     public LyoProblemDetailsBuilder WithDetail(string detail)
     {
-        _detail = ArgumentHelpers.ThrowIfNullReturn(detail, nameof(detail));
+        _detail = ArgumentHelpers.ThrowIfNullReturn(detail);
         return this;
     }
 
@@ -95,7 +95,7 @@ public sealed class LyoProblemDetailsBuilder
 
     public LyoProblemDetailsBuilder WithTitle(string title)
     {
-        _title = ArgumentHelpers.ThrowIfNullReturn(title, nameof(title));
+        _title = ArgumentHelpers.ThrowIfNullReturn(title);
         return this;
     }
 
@@ -107,7 +107,7 @@ public sealed class LyoProblemDetailsBuilder
 
     public LyoProblemDetailsBuilder WithType(string type)
     {
-        _type = ArgumentHelpers.ThrowIfNullReturn(type, nameof(type));
+        _type = ArgumentHelpers.ThrowIfNullReturn(type);
         return this;
     }
 
@@ -125,26 +125,26 @@ public sealed class LyoProblemDetailsBuilder
 
     public LyoProblemDetailsBuilder AddApiError(string code, string description, string? stacktrace = null)
     {
-        ArgumentHelpers.ThrowIfNullReturn(description, nameof(description));
+        ArgumentHelpers.ThrowIfNullReturn(description);
         _errors.Add(new(code, description, stacktrace));
         return this;
     }
 
     public LyoProblemDetailsBuilder WithInvalidField(string fieldName)
     {
-        ArgumentHelpers.ThrowIfNullReturn(fieldName, nameof(fieldName));
+        ArgumentHelpers.ThrowIfNullReturn(fieldName);
         return AddApiError(Constants.ApiErrorCodes.InvalidField, $"Field '{fieldName}' is not valid.");
     }
 
     public LyoProblemDetailsBuilder WithInvalidSelectField(string fieldName)
     {
-        ArgumentHelpers.ThrowIfNullReturn(fieldName, nameof(fieldName));
+        ArgumentHelpers.ThrowIfNullReturn(fieldName);
         return AddApiError(Constants.ApiErrorCodes.InvalidSelectField, $"Field '{fieldName}' is not valid.");
     }
 
     public LyoProblemDetailsBuilder AddErrors(IEnumerable<ApiError> errors)
     {
-        ArgumentHelpers.ThrowIfNullReturn(errors, nameof(errors));
+        ArgumentHelpers.ThrowIfNullReturn(errors);
         foreach (var i in errors)
             _errors.Add(i);
 
@@ -154,8 +154,8 @@ public sealed class LyoProblemDetailsBuilder
     /// <summary>Field validation helper using <see cref="Constants.ApiErrorCodes.InvalidField" />.</summary>
     public LyoProblemDetailsBuilder AddValidation(string fieldName, string error)
     {
-        ArgumentHelpers.ThrowIfNullReturn(fieldName, nameof(fieldName));
-        ArgumentHelpers.ThrowIfNullReturn(error, nameof(error));
+        ArgumentHelpers.ThrowIfNullReturn(fieldName);
+        ArgumentHelpers.ThrowIfNullReturn(error);
         return AddApiError(Constants.ApiErrorCodes.InvalidField, $"{fieldName}: {error}");
     }
 

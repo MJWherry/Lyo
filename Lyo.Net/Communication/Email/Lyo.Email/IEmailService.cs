@@ -1,6 +1,6 @@
-﻿using Lyo.Common;
-using Lyo.Email.Builders;
+﻿using Lyo.Email.Builders;
 using Lyo.Email.Models;
+using Lyo.Result;
 
 namespace Lyo.Email;
 

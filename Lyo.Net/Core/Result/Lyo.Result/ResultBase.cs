@@ -1,4 +1,6 @@
-namespace Lyo.Common;
+using Lyo.Result.Interfaces;
+
+namespace Lyo.Result;
 
 /// <summary>Base record for Result&lt;T&gt; and BulkResult&lt;T&gt;.</summary>
 public abstract record ResultBase : IResult

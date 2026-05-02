@@ -1,7 +1,7 @@
 using Lyo.Codes.ZXing;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.QRCode.Models;
+using Lyo.Result;
 
 namespace Lyo.QRCode;
 
@@ -11,7 +11,7 @@ public static class QRCodeZxingRead
     /// <summary>Decode the first QR code in an image (PNG, JPEG, BMP, etc.).</summary>
     public static Result<QRCodeImageReadResult> Decode(byte[] imageBytes)
     {
-        ArgumentHelpers.ThrowIfNull(imageBytes, nameof(imageBytes));
+        ArgumentHelpers.ThrowIfNull(imageBytes);
         return QRCodeZxingReadMapper.Map(ZxingCodeImageDecoder.DecodeQrCode(imageBytes));
     }
 }

@@ -39,7 +39,7 @@ public sealed class GoogleGeolocationService : IGeolocationService, IDisposable
     /// <inheritdoc />
     public async Task<GeoCoordinate> GeocodeAsync(string address)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(address, nameof(address));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(address);
         _logger.LogDebug("Geocoding address: {Address}", address);
         var url = $"{_options.BaseUrl}/geocode/json?address={Uri.EscapeDataString(address)}&key={_options.ApiKey}";
         if (!string.IsNullOrEmpty(_options.DefaultLanguage))
@@ -128,8 +128,8 @@ public sealed class GoogleGeolocationService : IGeolocationService, IDisposable
     /// <inheritdoc />
     public async Task<double> GetDistanceAsync(string fromAddress, string toAddress, DistanceUnit unit = DistanceUnit.Kilometers)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fromAddress, nameof(fromAddress));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(toAddress, nameof(toAddress));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fromAddress);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(toAddress);
         var fromCoord = await GeocodeAsync(fromAddress).ConfigureAwait(false);
         var toCoord = await GeocodeAsync(toAddress).ConfigureAwait(false);
         return await GetDistanceAsync(fromCoord, toCoord, unit).ConfigureAwait(false);
@@ -159,7 +159,7 @@ public sealed class GoogleGeolocationService : IGeolocationService, IDisposable
     /// <inheritdoc />
     public async Task<string> GetTimeZoneAsync(string address)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(address, nameof(address));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(address);
         var coordinate = await GeocodeAsync(address).ConfigureAwait(false);
         return await GetTimeZoneAsync(coordinate).ConfigureAwait(false);
     }

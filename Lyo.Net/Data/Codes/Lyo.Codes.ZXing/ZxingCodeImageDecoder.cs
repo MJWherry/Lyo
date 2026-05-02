@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Result;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using ZXing.ImageSharp;

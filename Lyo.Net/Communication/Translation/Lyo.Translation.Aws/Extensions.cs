@@ -22,9 +22,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = AwsTranslationOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Register IAmazonTranslate from configuration if not already registered
         if (!services.Any(s => s.ServiceType == typeof(IAmazonTranslate))) {
@@ -83,8 +83,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddAwsTranslationService(this IServiceCollection services, Action<AwsTranslationOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<AwsTranslationOptions>(_ => {
             var options = new AwsTranslationOptions();
             configure(options);
@@ -109,8 +109,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddAwsTranslationService(this IServiceCollection services, AwsTranslationOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<AwsTranslationService>(provider => {
             var logger = provider.GetService<ILogger<AwsTranslationService>>();

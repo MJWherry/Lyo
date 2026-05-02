@@ -28,7 +28,7 @@ internal static class BufferPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] Rent(int minimumSize)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(minimumSize, nameof(minimumSize));
+        ArgumentHelpers.ThrowIfNegativeOrZero(minimumSize);
 
         // Find the smallest pool size that can accommodate the request
         for (var i = 0; i < PoolSizes.Length; i++) {
@@ -79,7 +79,7 @@ internal static class BufferPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] RentExact(int size, bool exactSize = false)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(size, nameof(size));
+        ArgumentHelpers.ThrowIfNegativeOrZero(size);
 
         if (!exactSize)
             return Rent(size);

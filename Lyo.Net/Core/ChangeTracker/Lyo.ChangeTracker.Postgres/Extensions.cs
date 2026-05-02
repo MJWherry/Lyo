@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds ChangeTrackerDbContext to the service collection.</summary>
     public static IServiceCollection AddChangeTrackerDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddPostgresChangeTracker(new PostgresChangeTrackerOptions { ConnectionString = connectionString })
             .AddScoped<ChangeTrackerDbContext>(sp => sp.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>().CreateDbContext());
     }
@@ -23,8 +23,8 @@ public static class Extensions
     /// <summary>Adds ChangeTrackerDbContext to the service collection.</summary>
     public static IServiceCollection AddChangeTrackerDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<ChangeTrackerDbContext>(configure);
         return services;
     }
@@ -32,8 +32,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL change tracking DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddChangeTrackerDbContextFactory(this IServiceCollection services, Action<PostgresChangeTrackerOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresChangeTrackerOptions();
         configure(options);
         return services.AddChangeTrackerDbContextFactory(options);
@@ -45,9 +45,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresChangeTrackerOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresChangeTrackerOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -59,8 +59,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL change tracking DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddChangeTrackerDbContextFactory(this IServiceCollection services, PostgresChangeTrackerOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresChangeTrackerOptions>>(Options.Create(options));
         services.AddPostgresMigrations<ChangeTrackerDbContext, PostgresChangeTrackerOptions>();
@@ -73,8 +73,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL change tracking services to the service collection.</summary>
     public static IServiceCollection AddPostgresChangeTracker(this IServiceCollection services, Action<PostgresChangeTrackerOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresChangeTrackerOptions();
         configure(options);
         return services.AddPostgresChangeTracker(options);
@@ -86,9 +86,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresChangeTrackerOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresChangeTrackerOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -100,8 +100,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL change tracking services to the service collection.</summary>
     public static IServiceCollection AddPostgresChangeTracker(this IServiceCollection services, PostgresChangeTrackerOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddChangeTrackerDbContextFactory(options);
         services.AddSingleton<IChangeTracker, PostgresChangeTracker>();
         return services;

@@ -1,4 +1,4 @@
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Shared error codes for validation and common operation failures.</summary>
 public static class ValidationErrorCodes

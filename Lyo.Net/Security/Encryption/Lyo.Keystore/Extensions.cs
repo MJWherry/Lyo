@@ -12,7 +12,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalKeyStore()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<LocalKeyStore>(_ => new());
             services.AddSingleton<IKeyStore>(provider => provider.GetRequiredService<LocalKeyStore>());
             return services;
@@ -23,8 +23,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalKeyStore(Action<LocalKeyStore> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<LocalKeyStore>(_ => {
                 var keyStore = new LocalKeyStore();
                 configure(keyStore);
@@ -41,9 +41,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddKeyedSingleton<LocalKeyStore>(
                 key, (_, _) => {
                     var keyStore = new LocalKeyStore();

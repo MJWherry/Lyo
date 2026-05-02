@@ -33,7 +33,7 @@ public class CreateService<TContext>(
         const string operation = "create";
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var scope = BeginActionScope("CREATE", typeof(TRequest), typeof(TDbModel), typeof(TResult));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var result = await CreateInternal<TRequest, TDbModel, TResult>(request, context, before, after, ct);

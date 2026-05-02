@@ -24,5 +24,5 @@ public class FileSystemWatcherOptions
     public bool EnableMetrics { get; set; } = false;
 
     /// <summary>Validates the options and throws ArgumentException if invalid.</summary>
-    internal void Validate() => ArgumentHelpers.ThrowIfNegative(DebounceTimerDelay, nameof(DebounceTimerDelay));
+    internal void Validate() => ArgumentHelpers.ThrowIfNegative(DebounceTimerDelay);
 }

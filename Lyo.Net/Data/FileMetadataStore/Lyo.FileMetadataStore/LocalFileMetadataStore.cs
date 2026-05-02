@@ -15,7 +15,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
 
     public LocalFileMetadataStore(string rootDirectoryPath, ILoggerFactory? loggerFactory = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath, nameof(rootDirectoryPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath);
         _rootDirectoryPath = rootDirectoryPath;
         _logger = (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileMetadataStore>();
         if (Directory.Exists(_rootDirectoryPath))
@@ -32,7 +32,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
         var metadataPath = GetMetadataPath(fileId);
         if (!File.Exists(metadataPath)) {
             _logger.LogWarning("Metadata file not found for {FileId}", fileId);
-            ArgumentHelpers.ThrowIfFileNotFound(metadataPath, nameof(metadataPath));
+            ArgumentHelpers.ThrowIfFileNotFound(metadataPath);
         }
 
         try {
@@ -56,7 +56,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
     /// <inheritdoc />
     public async Task SaveMetadataAsync(Guid fileId, FileStoreResult metadata, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(metadata, nameof(metadata));
+        ArgumentHelpers.ThrowIfNull(metadata);
         _logger.LogDebug("Saving metadata for file {FileId}", fileId);
         var metadataPath = GetMetadataPath(fileId);
         var directory = Path.GetDirectoryName(metadataPath);

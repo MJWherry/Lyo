@@ -62,19 +62,20 @@ public sealed class SnowflakeGenerator
     private const int TimestampShift = SequenceBits + MachineIdBits; // 22
 
     private const int MaxMachineId = (1 << MachineIdBits) - 1; // 1 023
-    private const int MaxSequence = (1 << SequenceBits) - 1;   // 4 095
+    private const int MaxSequence = (1 << SequenceBits) - 1; // 4 095
 
     /// <summary>Milliseconds since the Unix epoch for the default snowflake epoch: 2020-01-01T00:00:00Z.</summary>
     public static readonly long DefaultEpochMs = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
 
-    /// <summary>A shared default generator instance (machine ID 0, <see cref="DefaultEpochMs" />).</summary>
-    public static SnowflakeGenerator Shared { get; } = new();
-
-    private readonly long _machineIdShifted;
     private readonly long _epochMs;
     private readonly object _lock = new();
+
+    private readonly long _machineIdShifted;
     private long _lastTimestampMs = -1;
     private int _sequence;
+
+    /// <summary>A shared default generator instance (machine ID 0, <see cref="DefaultEpochMs" />).</summary>
+    public static SnowflakeGenerator Shared { get; } = new();
 
     /// <summary>The machine ID this generator was constructed with (0–1023).</summary>
     public int MachineId { get; }
@@ -86,10 +87,12 @@ public sealed class SnowflakeGenerator
     public SnowflakeLayout Layout => new(TimestampShift, _epochMs);
 
     /// <summary>Creates a generator with machine ID 0 and the <see cref="DefaultEpochMs">default epoch</see>.</summary>
-    public SnowflakeGenerator() : this(0) { }
+    public SnowflakeGenerator()
+        : this(0) { }
 
     /// <summary>Creates a generator for the specified <paramref name="machineId" /> (0–1023) using the <see cref="DefaultEpochMs">default epoch</see>.</summary>
-    public SnowflakeGenerator(int machineId) : this(machineId, DefaultEpochMs) { }
+    public SnowflakeGenerator(int machineId)
+        : this(machineId, DefaultEpochMs) { }
 
     /// <summary>Creates a generator for the specified <paramref name="machineId" /> (0–1023) and a custom <paramref name="epochMs" /> (milliseconds since the Unix epoch).</summary>
     public SnowflakeGenerator(int machineId, long epochMs)
@@ -103,15 +106,14 @@ public sealed class SnowflakeGenerator
     /// <summary>Generates the next snowflake. Thread-safe; spins for up to 1 ms if the sequence counter is exhausted within the current millisecond.</summary>
     public Snowflake Next()
     {
-        lock (_lock) {
+        lock (_lock)
             return NextLocked();
-        }
     }
 
     /// <summary>Generates <paramref name="count" /> snowflakes in ascending order. Thread-safe.</summary>
     public Snowflake[] NextBulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var result = new Snowflake[count];
         lock (_lock) {
             for (var i = 0; i < count; i++)
@@ -128,12 +130,12 @@ public sealed class SnowflakeGenerator
             _sequence = (_sequence + 1) & MaxSequence;
             if (_sequence == 0)
                 now = WaitNextMs(_lastTimestampMs);
-        } else {
-            _sequence = 0;
         }
+        else
+            _sequence = 0;
 
         _lastTimestampMs = now;
-        var value = ((ulong)(now - _epochMs) << TimestampShift) | (ulong)_machineIdShifted | (ulong)_sequence;
+        var value = ((ulong)(now - _epochMs) << TimestampShift) | (ulong)_machineIdShifted | (uint)_sequence;
         return new(value);
     }
 
@@ -142,7 +144,10 @@ public sealed class SnowflakeGenerator
     private static long WaitNextMs(long lastMs)
     {
         long now;
-        do { now = CurrentMs(); } while (now <= lastMs);
+        do
+            now = CurrentMs();
+        while (now <= lastMs);
+
         return now;
     }
 }

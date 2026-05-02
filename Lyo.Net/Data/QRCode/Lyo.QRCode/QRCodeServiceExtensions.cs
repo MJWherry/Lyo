@@ -15,7 +15,7 @@ public static class QRCodeServiceExtensions
     /// <summary>Registers <see cref="BuiltInQRCodeService" /> as <see cref="IQRCodeService" />.</summary>
     public static IServiceCollection AddQRCodeService(this IServiceCollection services, Action<QRCodeServiceOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         var options = new QRCodeServiceOptions();
         configure?.Invoke(options);
         services.AddSingleton(options);
@@ -26,8 +26,8 @@ public static class QRCodeServiceExtensions
     /// <summary>Registers <see cref="BuiltInQRCodeService" /> as <see cref="IQRCodeService" /> with explicit options.</summary>
     public static IServiceCollection AddQRCodeService(this IServiceCollection services, QRCodeServiceOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         RegisterBuiltInQrCodeService(services);
         return services;
@@ -39,9 +39,9 @@ public static class QRCodeServiceExtensions
         IConfiguration configuration,
         string configSectionName = QRCodeServiceOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(QRCodeServiceOptions))) {
             services.AddSingleton<QRCodeServiceOptions>(_ => {
                 var section = configuration.GetSection(configSectionName);

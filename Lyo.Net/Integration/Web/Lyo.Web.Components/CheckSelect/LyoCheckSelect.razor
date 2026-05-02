@@ -1,0 +1,176 @@
+@namespace Lyo.Web.Components.CheckSelect
+@typeparam TValue where TValue : notnull
+
+<div class="lyo-check-select">
+
+    @if (!string.IsNullOrEmpty(Label)) {
+        <label class="lyo-check-select-label">@Label</label>
+    }
+
+    <MudMenu @ref="_menu"
+             Dense="true"
+             PopoverFixed="true"
+             Modal="false"
+             Class="lyo-check-select-menu">
+        <ActivatorContent>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       FullWidth="true"
+                       DropShadow="false"
+                       Ripple="false"
+                       EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                       Class="lyo-check-select-trigger"
+                       OnClick="@context.ToggleAsync">
+                <span class="@(IsPlaceholder ? "lyo-check-select-placeholder" : "lyo-check-select-value")">@TriggerText</span>
+            </MudButton>
+        </ActivatorContent>
+
+        <ChildContent>
+            <div class="lyo-check-select-popover">
+
+                <div class="pa-3 lyo-check-select-list-wrap">
+
+                    @if (Searchable) {
+                        <MudTextField T="string"
+                                      Value="@Search"
+                                      ValueChanged="@(v => Search = v)"
+                                      Placeholder="Search..."
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Search"
+                                      Margin="Margin.Dense"
+                                      Immediate="true"
+                                      Class="mb-2"/>
+                    }
+
+                    <div class="d-flex justify-space-between align-center mb-1">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @_selected.Count of @_filteredItems.Count selected
+                        </MudText>
+                        <div class="d-flex" style="gap: 2px;">
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Ripple="false"
+                                       Class="lyo-check-select-toolbar-btn"
+                                       OnClick="SelectAll"
+                                       Disabled="@(_filteredItems.Count == 0)">Select All</MudButton>
+                            <MudButton Size="Size.Small" Variant="Variant.Text" Ripple="false"
+                                       Class="lyo-check-select-toolbar-btn"
+                                       OnClick="ClearAll"
+                                       Disabled="@(_selected.Count == 0)">Clear</MudButton>
+                        </div>
+                    </div>
+
+                    @if (_filteredItems.Count == 0) {
+                        <div class="d-flex flex-column align-center justify-center pa-4">
+                            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Class="mb-2"/>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">No matching items</MudText>
+                        </div>
+                    }
+                    else {
+                        @foreach (var item in _filteredItems) {
+                            var isSelected = _selected.Contains(item.Value);
+                            var capturedItem = item;
+                            <div role="button"
+                                 tabindex="0"
+                                 class="lyo-check-select-item d-flex align-center pa-2 @(isSelected ? "selected" : "")"
+                                 @onclick="@(() => Toggle(capturedItem.Value))"
+                                 @onkeydown="@(e => OnItemKeyDown(e, capturedItem.Value))">
+                                <MudIcon Icon="@(isSelected ? Icons.Material.Filled.CheckBox : Icons.Material.Outlined.CheckBoxOutlineBlank)"
+                                         Size="Size.Small"
+                                         Class="flex-shrink-0"
+                                         Style="pointer-events: none;"/>
+                                <MudText Typo="Typo.body2" Class="ml-2 flex-grow-1">@capturedItem.Label</MudText>
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                <MudDivider/>
+                <div class="pa-2 d-flex justify-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                               Ripple="false" OnClick="CloseAsync">Done</MudButton>
+                </div>
+
+            </div>
+        </ChildContent>
+    </MudMenu>
+
+</div>
+
+<style>
+    /* Outer wrapper — full width block, stacks label + trigger */
+    .lyo-check-select {
+        display: block;
+        width: 100%;
+    }
+
+    /* Force MudMenu's own root div and its activator child to stretch full width */
+    .lyo-check-select-menu,
+    .lyo-check-select-menu .mud-menu-activator {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    /* Label above the trigger — matches MudBlazor's helper/caption size */
+    .lyo-check-select-label {
+        display: block;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        color: var(--mud-palette-text-secondary);
+        margin-bottom: 4px;
+        padding-left: 2px;
+    }
+
+    /* Trigger button — full width, outlined field-like appearance */
+    .lyo-check-select-trigger {
+        width: 100% !important;
+        justify-content: space-between !important;
+        text-transform: none !important;
+        min-height: 56px;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .lyo-check-select-placeholder {
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .lyo-check-select-value {
+        color: var(--mud-palette-text-primary);
+    }
+
+    /* Popover panel */
+    .lyo-check-select-popover {
+        width: 22rem;
+        max-width: calc(100vw - 2rem);
+        box-sizing: border-box;
+    }
+
+    .lyo-check-select-list-wrap {
+        max-height: 20rem;
+        overflow-y: auto;
+    }
+
+    /* Checklist rows */
+    .lyo-check-select-item {
+        border: none;
+        background: transparent;
+        width: 100%;
+        cursor: pointer;
+        border-radius: var(--mud-default-borderradius);
+        outline: none;
+        user-select: none;
+    }
+
+    .lyo-check-select-item.selected {
+        background-color: var(--mud-palette-action-selected) !important;
+    }
+
+    .lyo-check-select-item:focus-visible {
+        box-shadow: inset 0 0 0 2px var(--mud-palette-primary);
+    }
+
+    .lyo-check-select-toolbar-btn:hover {
+        background-color: transparent !important;
+    }
+</style>

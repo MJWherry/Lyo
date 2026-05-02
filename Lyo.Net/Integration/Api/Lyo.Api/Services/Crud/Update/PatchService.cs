@@ -45,7 +45,7 @@ public class PatchService<TContext>(
         const string operation = "patch";
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         var entityTypeName = typeof(TDbModel).Name;
         var responseTypeName = typeof(TResult).Name;
         using var scope = BeginActionScope("PATCH", typeof(PatchRequest), typeof(TDbModel), typeof(TResult));

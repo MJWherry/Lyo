@@ -10,7 +10,7 @@ public static class PlaywrightFrameSelectors
     /// <summary>Builds a selector string for the iframe element that hosts the frame.</summary>
     public static string ToIframeSelector(ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(locator);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(locator.Value, nameof(locator.Value));
         return locator.Kind switch {
             ElementLocatorKind.Id => $"iframe#{CssEscape(locator.Value)}",

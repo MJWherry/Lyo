@@ -13,7 +13,7 @@ public static class Extensions
     public static IServiceCollection AddPostgresMigrations<TContext, TOptions>(this IServiceCollection services)
         where TContext : DbContext where TOptions : class, IPostgresMigrationConfig
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddHostedService<PostgresMigrationHostedService<TContext, TOptions>>();
         return services;
     }

@@ -95,8 +95,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
 
     public virtual async Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
-        ArgumentHelpers.ThrowIfNull(output, nameof(output));
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
         // Maximum allowed encrypted chunk size (200 MB) to prevent denial-of-service attacks
@@ -199,8 +199,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
     // File operation methods from IEncryptionService
     public virtual async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var inputStream = new MemoryStream(data);
         using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
@@ -214,16 +214,16 @@ public abstract class EncryptionServiceBase : IEncryptionService
         int chunkSize = 1024 * 1024,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
-        ArgumentHelpers.ThrowIfNegative(chunkSize, nameof(chunkSize));
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
+        ArgumentHelpers.ThrowIfNegative(chunkSize);
         using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
     }
 
     public virtual async Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
@@ -256,7 +256,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual async Task EncryptFileAsync(string inputPath, string? outputPath = null, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         var outputFile = string.IsNullOrEmpty(outputPath) ? inputPath + FileExtension : outputPath;
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = File.Create(outputFile);
@@ -269,8 +269,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual async Task DecryptFileAsync(string inputPath, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = File.Create(outputPath);
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct).ConfigureAwait(false);
@@ -282,7 +282,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual byte[] EncryptFile(string inputPath, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         var fileBytes = File.ReadAllBytes(inputPath);
         return Encrypt(fileBytes, keyId, key);
     }
@@ -293,7 +293,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual void EncryptToFile(string inputPath, string? outputPath = null, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         var encrypted = EncryptFile(inputPath, keyId, key);
         var outputFile = string.IsNullOrEmpty(outputPath) ? inputPath + FileExtension : outputPath;
         File.WriteAllBytes(outputFile, encrypted);
@@ -305,7 +305,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual byte[] DecryptFile(string inputPath, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         var encryptedBytes = File.ReadAllBytes(inputPath);
         return Decrypt(encryptedBytes, keyId, key);
     }
@@ -316,8 +316,8 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// </summary>
     public virtual void DecryptToFile(string inputPath, string outputPath, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         var decrypted = DecryptFile(inputPath, keyId, key);
         File.WriteAllBytes(outputPath, decrypted);
     }

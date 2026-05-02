@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Portfolio</title>
+    <base href="/"/>
+    <link rel="stylesheet" href="app.css"/>
+    <link rel="stylesheet" href="Lyo.Portfolio.styles.css"/>
+    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
+</head>
+<body>
+    <div id="app">Loading...</div>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred. <a href="." class="reload">Reload</a>
+    </div>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script>
+        // Start Blazor with PDB load errors suppressed.
+        // The dev server (WasmAppHost) does not register a MIME type for .pdb files,
+        // so all .pdb requests 404 and the WASM boot aborts. This intercepts those
+        // requests and returns an empty 200 so boot continues normally.
+        Blazor.start({
+            loadBootResource: function (type, name, defaultUri, integrity) {
+                if (type === 'pdb') {
+                    return Promise.resolve(new Response(new ArrayBuffer(0), {
+                        status: 200,
+                        headers: { 'Content-Type': 'application/octet-stream' }
+                    }));
+                }
+            }
+        });
+    </script>
+    <script>
+        window.getClientTimeZone = function () {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        };
+
+        window.downloadFileFromBase64 = (base64Data, contentType, fileName) => {
+            const dataUrl = `data:${contentType};base64,${base64Data}`;
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.downloadFileFromStream = async (streamRef, contentType, fileName) => {
+            const arrayBuffer = await streamRef.arrayBuffer();
+            const blob = new Blob([arrayBuffer], {type: contentType});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+
+        let downloadChunks = [], downloadFileName = '', downloadContentType = '';
+
+        window.initializeChunkedDownload = (fileName, contentType) => {
+            downloadChunks = [];
+            downloadFileName = fileName;
+            downloadContentType = contentType;
+        };
+
+        window.appendChunkToDownload = (base64Chunk, chunkIndex) => {
+            const binaryString = atob(base64Chunk);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+            downloadChunks[chunkIndex] = bytes;
+        };
+
+        window.finalizeChunkedDownload = () => {
+            const totalSize = downloadChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+            const combined = new Uint8Array(totalSize);
+            let offset = 0;
+            for (const chunk of downloadChunks) { combined.set(chunk, offset); offset += chunk.length; }
+            const blob = new Blob([combined], {type: downloadContentType});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = downloadFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            downloadChunks = [];
+        };
+    </script>
+</body>
+</html>

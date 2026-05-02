@@ -18,14 +18,14 @@ public sealed class PlaywrightFrameNavigator
 
     internal PlaywrightFrameNavigator(PlaywrightBrowser browser)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
 
     /// <summary>Switches into the frame that matches <paramref name="locator" /> (iframe element).</summary>
     public async Task SwitchToFrameAsync(ElementLocator locator, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(locator);
         var sel = PlaywrightFrameSelectors.ToIframeSelector(locator);
         await RunFrameOpAsync(
                 "switch_frame", async () => {

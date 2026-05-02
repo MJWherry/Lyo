@@ -39,7 +39,7 @@ public sealed class DateOnlyModel : IComparable<DateOnlyModel>, IEquatable<DateO
 
     public static DateOnlyModel Parse(string input, IFormatProvider? provider = null)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
+        ArgumentHelpers.ThrowIfNull(input);
 
         if (!TryParse(input, provider, out var value))
             throw new FormatException($"Invalid date: '{input}'.");

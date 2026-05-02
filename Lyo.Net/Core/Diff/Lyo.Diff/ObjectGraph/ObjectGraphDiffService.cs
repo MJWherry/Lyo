@@ -16,7 +16,7 @@ public sealed class ObjectGraphDiffService : IObjectGraphDiffService
     public IReadOnlyList<ObjectGraphDifference> GetDifferences(object? left, object? right, ObjectGraphDiffOptions? options = null)
     {
         options ??= DefaultOptions;
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         var list = new List<ObjectGraphDifference>();
         var path = new PathBuilder(256);
         var stack = new HashSet<object>(ReferenceEqualityComparer.Instance);

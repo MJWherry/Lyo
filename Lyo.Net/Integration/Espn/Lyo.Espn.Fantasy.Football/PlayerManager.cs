@@ -12,7 +12,7 @@ public class PlayerManager(FantasyFootballClient client)
     public async Task<IReadOnlyList<PlayerInfoItemRes>?> GetInfoAsync(int leagueId, int seasonId, PlayerInfoQuery query, CancellationToken ct = default)
     {
         FantasyFootballClient.ValidateSeason(seasonId, nameof(GetInfoAsync));
-        ArgumentHelpers.ThrowIfNull(query, nameof(query));
+        ArgumentHelpers.ThrowIfNull(query);
         ArgumentHelpers.ThrowIfNullOrEmpty(query.PlayerIds, nameof(query.PlayerIds));
         var path = client.BuildLeaguePath(leagueId, seasonId, ["kona_playercard"]);
         var additionalPeriodIds = query.AdditionalPeriodIds.Count > 0 ? query.AdditionalPeriodIds : [$"00{seasonId}", $"10{seasonId}"];

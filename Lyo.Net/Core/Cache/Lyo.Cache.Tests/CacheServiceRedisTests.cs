@@ -14,7 +14,7 @@ public class CacheServiceRedisTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _redisContainer.StartAsync().ConfigureAwait(false);
+        await _redisContainer.StartAsync();
         var services = new ServiceCollection();
         services.AddLogging();
 
@@ -29,7 +29,7 @@ public class CacheServiceRedisTests : IAsyncLifetime
         if (_serviceProvider is IDisposable disposable)
             disposable.Dispose();
 
-        await _redisContainer.DisposeAsync().ConfigureAwait(false);
+        await _redisContainer.DisposeAsync();
     }
 
     [Fact]
@@ -40,23 +40,21 @@ public class CacheServiceRedisTests : IAsyncLifetime
         var expectedValue = "redis-cached-value";
         var callCount = 0;
         var result = await _cacheService.GetOrSetAsync<string>(
-                key, async ct => {
-                    callCount++;
-                    await Task.Delay(10, ct).ConfigureAwait(false);
-                    return expectedValue;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                callCount++;
+                await Task.Delay(10, ct);
+                return expectedValue;
+            }, token: TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedValue, result);
         Assert.Equal(1, callCount);
 
         // Second call should use cache
         var cachedResult = await _cacheService.GetOrSetAsync<string>(
-                key, _ => {
-                    callCount++;
-                    return Task.FromResult("different-value")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, _ => {
+                callCount++;
+                return Task.FromResult("different-value")!;
+            }, token: TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedValue, cachedResult);
         Assert.Equal(1, callCount); // Factory should not be called again
@@ -81,7 +79,7 @@ public class CacheServiceRedisTests : IAsyncLifetime
         var value = "redis-value-to-invalidate";
         _cacheService.Set(key, value);
         Assert.Equal(value, _cacheService.GetOrSet<string>(key, _ => "default"));
-        await _cacheService.InvalidateCacheItem(key).ConfigureAwait(false);
+        await _cacheService.InvalidateCacheItem(key);
         Assert.Equal("default", _cacheService.GetOrSet<string>(key, _ => "default"));
     }
 
@@ -99,7 +97,7 @@ public class CacheServiceRedisTests : IAsyncLifetime
         Assert.Equal("value1", _cacheService.GetOrSet<string>(key1, _ => "default"));
         Assert.Equal("value2", _cacheService.GetOrSet<string>(key2, _ => "default"));
         Assert.Equal("value3", _cacheService.GetOrSet<string>(key3, _ => "default"));
-        await _cacheService.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await _cacheService.InvalidateCacheItemByTag(tag);
         Assert.Equal("default", _cacheService.GetOrSet<string>(key1, _ => "default"));
         Assert.Equal("default", _cacheService.GetOrSet<string>(key2, _ => "default"));
         Assert.Equal("value3", _cacheService.GetOrSet<string>(key3, _ => "default"));
@@ -120,13 +118,13 @@ public class CacheServiceRedisTests : IAsyncLifetime
                 _cacheService.GetOrSetAsync<string>(
                         key, async ct => {
                             Interlocked.Increment(ref callCount);
-                            await Task.Delay(50, ct).ConfigureAwait(false);
+                            await Task.Delay(50, ct);
                             return expectedValue;
                         }, token: TestContext.Current.CancellationToken)
                     .AsTask()!);
         }
 
-        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        var results = await Task.WhenAll(tasks);
 
         // All should return the same value
         Assert.All(results, result => Assert.Equal(expectedValue, result));
@@ -142,14 +140,14 @@ public class CacheServiceRedisTests : IAsyncLifetime
         var shortExpiration = TimeSpan.FromMilliseconds(100);
 
         // Set with short expiration using value-based overload
-        await _cacheService.GetOrSetAsync(key, "value", options => options.Duration = shortExpiration, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _cacheService.GetOrSetAsync(key, "value", options => options.Duration = shortExpiration, token: TestContext.Current.CancellationToken);
         Assert.Equal("value", _cacheService.GetOrSet<string>(key, _ => "default"));
 
         // Wait for expiration
-        await Task.Delay(150, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Should call factory (cache expired)
-        var result = await _cacheService.GetOrSetAsync<string>(key, ct => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await _cacheService.GetOrSetAsync<string>(key, ct => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken);
         Assert.Equal("new-value", result);
     }
 

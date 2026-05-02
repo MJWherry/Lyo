@@ -7,6 +7,7 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for throwing generic exceptions (FileNotFoundException, DirectoryNotFoundException, UnauthorizedAccessException, IOException).</summary>
+/// <remarks>Where a <c>paramName</c> argument exists, it follows the <see cref="ArgumentHelpers"/> convention (<see cref="CallerArgumentExpressionAttribute"/> when omitted).</remarks>
 public static class ExceptionThrower
 {
     [DoesNotReturn]
@@ -36,10 +37,10 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfDirectoryNotFound([NotNull] string? directoryPath, string? paramName = null)
+    public static void ThrowIfDirectoryNotFound([NotNull] string? directoryPath, [CallerArgumentExpression("directoryPath")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(directoryPath, paramName ?? nameof(directoryPath));
-        if (!Directory.Exists(directoryPath!))
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(directoryPath, paramName);
+        if (!Directory.Exists(directoryPath))
             ThrowDirectoryNotFound($"Directory not found: {directoryPath}");
     }
 
@@ -52,10 +53,10 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfDirectoryNotFound([NotNull] DirectoryInfo? directoryInfo, string? paramName = null)
+    public static void ThrowIfDirectoryNotFound([NotNull] DirectoryInfo? directoryInfo, [CallerArgumentExpression("directoryInfo")] string? paramName = null)
     {
         ArgumentHelpers.ThrowIfNull(directoryInfo, paramName ?? nameof(directoryInfo));
-        if (!directoryInfo!.Exists)
+        if (!directoryInfo.Exists)
             ThrowDirectoryNotFound($"Directory not found: {directoryInfo.FullName}");
     }
 
@@ -69,11 +70,11 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfFileNotAccessible([NotNull] string? filePath, string? paramName = null)
+    public static void ThrowIfFileNotAccessible([NotNull] string? filePath, [CallerArgumentExpression("filePath")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, paramName ?? nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, paramName);
         try {
-            var fileInfo = new FileInfo(filePath!);
+            var fileInfo = new FileInfo(filePath);
             if (!fileInfo.Exists)
                 return;
 
@@ -97,20 +98,20 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfFileNotAccessible([NotNull] FileInfo? fileInfo, string? paramName = null)
+    public static void ThrowIfFileNotAccessible([NotNull] FileInfo? fileInfo, [CallerArgumentExpression("fileInfo")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNull(fileInfo, paramName ?? nameof(fileInfo));
+        ArgumentHelpers.ThrowIfNull(fileInfo, paramName);
         try {
-            if (!fileInfo!.Exists)
+            if (!fileInfo.Exists)
                 return;
 
             using (fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.Read)) { }
         }
         catch (UnauthorizedAccessException) {
-            ThrowUnauthorizedAccess($"File is not accessible: {fileInfo!.FullName}");
+            ThrowUnauthorizedAccess($"File is not accessible: {fileInfo.FullName}");
         }
         catch (IOException ex) {
-            ThrowIOException($"File is not accessible: {fileInfo!.FullName}", ex);
+            ThrowIOException($"File is not accessible: {fileInfo.FullName}", ex);
         }
     }
 
@@ -124,11 +125,11 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfDirectoryNotAccessible([NotNull] string? directoryPath, string? paramName = null)
+    public static void ThrowIfDirectoryNotAccessible([NotNull] string? directoryPath, [CallerArgumentExpression("directoryPath")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(directoryPath, paramName ?? nameof(directoryPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(directoryPath, paramName);
         try {
-            var directoryInfo = new DirectoryInfo(directoryPath!);
+            var directoryInfo = new DirectoryInfo(directoryPath);
             if (directoryInfo.Exists)
                 _ = directoryInfo.GetFileSystemInfos();
         }
@@ -150,11 +151,11 @@ public static class ExceptionThrower
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfDirectoryNotAccessible([NotNull] DirectoryInfo? directoryInfo, string? paramName = null)
+    public static void ThrowIfDirectoryNotAccessible([NotNull] DirectoryInfo? directoryInfo, [CallerArgumentExpression("directoryInfo")] string? paramName = null)
     {
         ArgumentHelpers.ThrowIfNull(directoryInfo, paramName ?? nameof(directoryInfo));
         try {
-            if (directoryInfo!.Exists)
+            if (directoryInfo.Exists)
                 _ = directoryInfo.GetFileSystemInfos();
         }
         catch (UnauthorizedAccessException) {

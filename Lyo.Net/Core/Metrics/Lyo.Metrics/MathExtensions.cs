@@ -10,9 +10,9 @@ public static class MathExtensions
 {
     public static IReadOnlyDictionary<string, double?> GetHistogramPercentiles(this MetricsSnapshot snapshot, string name, params double[] percentiles)
     {
-        ArgumentHelpers.ThrowIfNull(snapshot, nameof(snapshot));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(percentiles, nameof(percentiles));
+        ArgumentHelpers.ThrowIfNull(snapshot);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(percentiles);
 
         var histogram = snapshot.Histograms.Values.FirstOrDefault(h => string.Equals(h.Name, name, StringComparison.Ordinal));
         return percentiles.ToDictionary(p => p.ToString("0.###"), p => histogram.Percentile(p));

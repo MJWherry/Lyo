@@ -10,17 +10,21 @@
 
     <ItemGroup>
         <PackageReference Include="Mapster" Version="[10,)"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="[10,)">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
-        <PackageReference Include="UUIDNext" Version="4.2.3"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
-        <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue.RabbitMq\Lyo.MessageQueue.RabbitMq.csproj"/>
+        <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
     </ItemGroup>
 
 

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+        <!-- Treat .pdb 404s as warnings, not fatal errors in the WASM boot loader -->
+        <WasmIgnorePdbLoadErrors>true</WasmIgnorePdbLoadErrors>
+        <!-- Removes ICU data (.dat) files from the WASM boot — the dev server cannot serve
+             .dat files (no registered MIME type). Invariant mode is fine for a portfolio app. -->
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="[10,)"/>
+        <PackageReference Include="MudBlazor" Version="[9.3,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Core web components (IdWorkbench, LyoTextDiffViewer, LyoRichTextEditor, etc.) -->
+        <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+
+        <!-- Self-contained (WASM-compatible) -->
+        <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\Core\Schedule\Lyo.Schedule.Web.Components\Lyo.Schedule.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
+
+        <!-- Portfolio API -->
+        <ProjectReference Include="..\..\Data\Query\Lyo.Query.Web.Components\Lyo.Query.Web.Components.csproj"/>
+
+        <!-- In-process infra -->
+        <ProjectReference Include="..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
+        <ProjectReference Include="..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
+
+</Project>

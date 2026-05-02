@@ -24,8 +24,8 @@ public sealed class PostgresFileMetadataStoreBuilder
 
     internal PostgresFileMetadataStoreBuilder(IServiceCollection services, string keyName)
     {
-        _services = ArgumentHelpers.ThrowIfNullReturn(services, nameof(services));
-        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName, nameof(keyName));
+        _services = ArgumentHelpers.ThrowIfNullReturn(services);
+        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName);
     }
 
     /// <summary>Configures PostgreSQL file store options using a configuration section name.</summary>
@@ -33,7 +33,7 @@ public sealed class PostgresFileMetadataStoreBuilder
     /// <returns>The builder for chaining</returns>
     public PostgresFileMetadataStoreBuilder ConfigurePostgresFileStore(string configSectionName = PostgresFileMetadataStoreOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _postgresFileStoreConfigSection = configSectionName;
         return this;
     }
@@ -43,7 +43,7 @@ public sealed class PostgresFileMetadataStoreBuilder
     /// <returns>The builder for chaining</returns>
     public PostgresFileMetadataStoreBuilder ConfigurePostgresFileStore(Action<PostgresFileMetadataStoreOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         _postgresFileStoreConfigure = configure;
         return this;
     }

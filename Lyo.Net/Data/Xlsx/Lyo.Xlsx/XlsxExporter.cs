@@ -22,8 +22,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IEnumerable<T> data, string xlsxFilePath, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath}", typeof(T).FullName, xlsxFilePath);
         using var workbook = CreateWorkbookFromData(data, worksheetName);
         workbook.SaveAs(xlsxFilePath);
@@ -31,8 +31,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IEnumerable<T> data, Stream xlsxStream, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream", typeof(T).FullName);
         using var workbook = CreateWorkbookFromData(data, worksheetName);
@@ -41,7 +41,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public byte[] ExportToXlsxBytes<T>(IEnumerable<T> data, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes", typeof(T).FullName);
         using var memoryStream = new MemoryStream();
         ExportToXlsx(data, memoryStream, worksheetName);
@@ -50,9 +50,9 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string xlsxFilePath, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath} with {PropertyCount} selected properties", typeof(T).FullName, xlsxFilePath, selectedProperties.Count);
         using var workbook = CreateWorkbookFromData(data, selectedProperties, worksheetName);
         workbook.SaveAs(xlsxFilePath);
@@ -60,9 +60,9 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream xlsxStream, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         using var workbook = CreateWorkbookFromData(data, selectedProperties, worksheetName);
@@ -71,8 +71,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public byte[] ExportToXlsxBytes<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string? worksheetName = null)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         using var memoryStream = new MemoryStream();
         ExportToXlsx(data, selectedProperties, memoryStream, worksheetName);
@@ -81,8 +81,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, string xlsxFilePath)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(dataSets);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to {XlsxExportPath}", dataSets.Count, typeof(T).FullName, xlsxFilePath);
         using var workbook = new XLWorkbook();
         foreach (var dataSet in dataSets) {
@@ -95,8 +95,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsx<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, Stream xlsxStream)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(dataSets);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to xlsx stream", dataSets.Count, typeof(T).FullName);
         using var workbook = new XLWorkbook();
@@ -110,7 +110,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public byte[] ExportToXlsxBytes<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
+        ArgumentHelpers.ThrowIfNull(dataSets);
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to xlsx bytes", dataSets.Count, typeof(T).FullName);
         using var memoryStream = new MemoryStream();
         ExportToXlsx(dataSets, memoryStream);
@@ -119,8 +119,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string xlsxFilePath, bool useHeaderRow = true)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting dictionary to {XlsxExportPath}", xlsxFilePath);
         using var workbook = CreateWorkbookFromDictionary(data, useHeaderRow);
         workbook.SaveAs(xlsxFilePath);
@@ -128,8 +128,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream xlsxStream, bool useHeaderRow = true)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting dictionary to xlsx stream");
         using var workbook = CreateWorkbookFromDictionary(data, useHeaderRow);
@@ -138,7 +138,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public byte[] ExportToXlsxBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         using var ms = new MemoryStream();
         ExportToXlsxFromDictionary(data, ms, useHeaderRow);
         return ms.ToArray();
@@ -146,8 +146,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsxFromDataTable(DataTable.Models.DataTable dataTable, string xlsxFilePath)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(dataTable);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting data table to {XlsxExportPath}", xlsxFilePath);
         using var workbook = CreateWorkbookFromDataTable(dataTable);
         workbook.SaveAs(xlsxFilePath);
@@ -155,8 +155,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public void ExportToXlsxFromDataTable(DataTable.Models.DataTable dataTable, Stream xlsxStream)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(dataTable);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting data table to xlsx stream");
         using var workbook = CreateWorkbookFromDataTable(dataTable);
@@ -165,7 +165,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public byte[] ExportToXlsxBytesFromDataTable(DataTable.Models.DataTable dataTable)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
+        ArgumentHelpers.ThrowIfNull(dataTable);
         using var ms = new MemoryStream();
         ExportToXlsxFromDataTable(dataTable, ms);
         return ms.ToArray();
@@ -404,8 +404,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 #if !NETSTANDARD2_0
     public async Task ExportToXlsxAsync<T>(IEnumerable<T> data, string xlsxFilePath, string? worksheetName = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath}", typeof(T).FullName, xlsxFilePath);
         ct.ThrowIfCancellationRequested();
         try {
@@ -430,8 +430,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public async Task ExportToXlsxAsync<T>(IEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream", typeof(T).FullName);
         ct.ThrowIfCancellationRequested();
@@ -457,7 +457,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public async Task<byte[]> ExportToXlsxBytesAsync<T>(IEnumerable<T> data, string? worksheetName = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes", typeof(T).FullName);
         await using var memoryStream = new MemoryStream();
         await ExportToXlsxAsync(data, memoryStream, worksheetName, ct).ConfigureAwait(false);
@@ -471,9 +471,9 @@ internal sealed class XlsxExporter : IXlsxExporter
         string? worksheetName = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxExportType} to {XlsxExportPath} with {PropertyCount} selected properties", typeof(T).FullName, xlsxFilePath, selectedProperties.Count);
         ct.ThrowIfCancellationRequested();
         try {
@@ -503,9 +503,9 @@ internal sealed class XlsxExporter : IXlsxExporter
         string? worksheetName = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         ct.ThrowIfCancellationRequested();
@@ -536,9 +536,9 @@ internal sealed class XlsxExporter : IXlsxExporter
         string? worksheetName = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrEmpty(columns, nameof(columns));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrEmpty(columns);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream with {ColumnCount} custom columns", typeof(T).FullName, columns.Count);
         ct.ThrowIfCancellationRequested();
@@ -569,9 +569,9 @@ internal sealed class XlsxExporter : IXlsxExporter
         string? worksheetName = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters, nameof(columnFormatters));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrEmpty(columnFormatters);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx stream with {ColumnCount} formatter columns", typeof(T).FullName, columnFormatters.Count);
         ct.ThrowIfCancellationRequested();
@@ -601,8 +601,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         string? worksheetName = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(selectedProperties, nameof(selectedProperties));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(selectedProperties);
         _logger.LogDebug("Exporting {XlsxExportType} to xlsx bytes with {PropertyCount} selected properties", typeof(T).FullName, selectedProperties.Count);
         await using var memoryStream = new MemoryStream();
         await ExportToXlsxAsync(data, selectedProperties, memoryStream, worksheetName, ct).ConfigureAwait(false);
@@ -611,8 +611,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public async Task ExportToXlsxAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, string xlsxFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(dataSets);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to {XlsxExportPath}", dataSets.Count, typeof(T).FullName, xlsxFilePath);
         ct.ThrowIfCancellationRequested();
         try {
@@ -643,8 +643,8 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public async Task ExportToXlsxAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, Stream xlsxStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(dataSets);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotWritable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be writable.");
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to xlsx stream", dataSets.Count, typeof(T).FullName);
         ct.ThrowIfCancellationRequested();
@@ -676,7 +676,7 @@ internal sealed class XlsxExporter : IXlsxExporter
 
     public async Task<byte[]> ExportToXlsxBytesAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataSets, nameof(dataSets));
+        ArgumentHelpers.ThrowIfNull(dataSets);
         _logger.LogDebug("Exporting {XlsxSheetCount} sheets of {XlsxExportType} to xlsx bytes", dataSets.Count, typeof(T).FullName);
         await using var memoryStream = new MemoryStream();
         await ExportToXlsxAsync(dataSets, memoryStream, ct).ConfigureAwait(false);
@@ -689,8 +689,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         bool useHeaderRow = true,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         await Task.Run(() => ExportToXlsxFromDictionary(data, xlsxFilePath, useHeaderRow), ct).ConfigureAwait(false);
     }
 
@@ -700,8 +700,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         bool useHeaderRow = true,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(data);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         await Task.Run(() => ExportToXlsxFromDictionary(data, xlsxStream, useHeaderRow), ct).ConfigureAwait(false);
     }
 
@@ -710,27 +710,27 @@ internal sealed class XlsxExporter : IXlsxExporter
         bool useHeaderRow = true,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         return await Task.Run(() => ExportToXlsxBytesFromDictionary(data, useHeaderRow), ct).ConfigureAwait(false);
     }
 
     public async Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, string xlsxFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfNull(dataTable);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(xlsxFilePath);
         await Task.Run(() => ExportToXlsxFromDataTable(dataTable, xlsxFilePath), ct).ConfigureAwait(false);
     }
 
     public async Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, Stream xlsxStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(dataTable);
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         await Task.Run(() => ExportToXlsxFromDataTable(dataTable, xlsxStream), ct).ConfigureAwait(false);
     }
 
     public async Task<byte[]> ExportToXlsxBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(dataTable, nameof(dataTable));
+        ArgumentHelpers.ThrowIfNull(dataTable);
         return await Task.Run(() => ExportToXlsxBytesFromDataTable(dataTable), ct).ConfigureAwait(false);
     }
 #endif

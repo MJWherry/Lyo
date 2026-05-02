@@ -18,7 +18,7 @@ public sealed class SmsMessageBuilder
     /// <exception cref="InvalidFormatException">Thrown when the phone number format is invalid.</exception>
     public SmsMessageBuilder SetTo(string to)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to, nameof(to));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
         if (!PhoneNumber.IsValid(to))
             throw new InvalidFormatException("To phone number is not in a valid format.", nameof(to), to, PhoneNumber.ValidFormats);
 
@@ -34,7 +34,7 @@ public sealed class SmsMessageBuilder
     /// <exception cref="InvalidFormatException">Thrown when the phone number format is invalid.</exception>
     public SmsMessageBuilder SetFrom(string from)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(from, nameof(from));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(from);
         if (!PhoneNumber.IsValid(from))
             throw new InvalidFormatException("From phone number is not in a valid format.", nameof(from), from, PhoneNumber.ValidFormats);
 

@@ -10,8 +10,8 @@ internal static class PlaywrightLocatorFactory
 {
     public static ILocator Locate(IPage page, ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(page, nameof(page));
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(page);
+        ArgumentHelpers.ThrowIfNull(locator);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(locator.Value, nameof(locator.Value));
         return locator.Kind switch {
             ElementLocatorKind.Id => page.Locator(CssIdSelector(locator.Value)),
@@ -28,8 +28,8 @@ internal static class PlaywrightLocatorFactory
 
     public static ILocator Locate(IFrameLocator frame, ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(frame, nameof(frame));
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(frame);
+        ArgumentHelpers.ThrowIfNull(locator);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(locator.Value, nameof(locator.Value));
         return locator.Kind switch {
             ElementLocatorKind.Id => frame.Locator(CssIdSelector(locator.Value)),
@@ -47,8 +47,8 @@ internal static class PlaywrightLocatorFactory
     /// <summary>Chained search under an existing <see cref="ILocator" /> (descendant scope).</summary>
     public static ILocator Locate(ILocator root, ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(root, nameof(root));
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(root);
+        ArgumentHelpers.ThrowIfNull(locator);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(locator.Value, nameof(locator.Value));
         return locator.Kind switch {
             ElementLocatorKind.Id => root.Locator(CssIdSelector(locator.Value)),

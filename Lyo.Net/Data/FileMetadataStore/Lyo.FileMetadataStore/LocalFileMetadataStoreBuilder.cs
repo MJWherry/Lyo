@@ -19,8 +19,8 @@ public sealed class LocalFileMetadataStoreBuilder
 
     internal LocalFileMetadataStoreBuilder(IServiceCollection services, string keyName)
     {
-        _services = ArgumentHelpers.ThrowIfNullReturn(services, nameof(services));
-        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName, nameof(keyName));
+        _services = ArgumentHelpers.ThrowIfNullReturn(services);
+        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName);
     }
 
     /// <summary>Configures local file metadata store using a configuration section name.</summary>
@@ -28,7 +28,7 @@ public sealed class LocalFileMetadataStoreBuilder
     /// <returns>The builder for chaining</returns>
     public LocalFileMetadataStoreBuilder ConfigureLocalFileStore(string configSectionName = LocalFileMetadataStoreOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _localFileMetadataStoreConfigSection = configSectionName;
         return this;
     }
@@ -38,7 +38,7 @@ public sealed class LocalFileMetadataStoreBuilder
     /// <returns>The builder for chaining</returns>
     public LocalFileMetadataStoreBuilder ConfigureLocalFileStore(Action<LocalFileMetadataStoreOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         _localFileMetadataStoreConfigure = configure;
         return this;
     }

@@ -14,9 +14,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = FantasyFootballClientOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(i => i.ServiceType == typeof(FantasyFootballClientOptions))) {
             services.AddSingleton<FantasyFootballClientOptions>(_ => {
                 var section = configuration.GetSection(configSectionName);
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds the fantasy football client with inline configuration.</summary>
     public static IServiceCollection AddFantasyFootballClient(this IServiceCollection services, Action<FantasyFootballClientOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<FantasyFootballClientOptions>(_ => {
             var options = new FantasyFootballClientOptions();
             configure(options);
@@ -62,8 +62,8 @@ public static class Extensions
     /// <summary>Adds the fantasy football client with a pre-built options instance.</summary>
     public static IServiceCollection AddFantasyFootballClient(this IServiceCollection services, FantasyFootballClientOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<FantasyFootballClient>(provider => {
             var loggerFactory = provider.GetService<ILoggerFactory>();

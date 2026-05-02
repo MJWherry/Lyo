@@ -16,7 +16,7 @@ public sealed class TabManager
 
     internal TabManager(SeleniumBrowser scraper, ILogger? logger = null)
     {
-        ArgumentHelpers.ThrowIfNull(scraper, nameof(scraper));
+        ArgumentHelpers.ThrowIfNull(scraper);
         _scraper = scraper;
         _logger = logger ?? NullLogger.Instance;
     }
@@ -79,7 +79,7 @@ public sealed class TabManager
     /// <summary>Assigns a friendly display name for a tab (keyed by window handle).</summary>
     public void SetDisplayName(string windowHandle, string? displayName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle, nameof(windowHandle));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle);
         if (string.IsNullOrWhiteSpace(displayName))
             _displayNames.Remove(windowHandle);
         else
@@ -110,7 +110,7 @@ public sealed class TabManager
     /// <summary>Switches to the tab with the given window handle.</summary>
     public void SwitchTo(string windowHandle)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle, nameof(windowHandle));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle);
         RunTabOp("switch_handle", () => _scraper.GetRequiredDriver().SwitchTo().Window(windowHandle));
     }
 
@@ -120,7 +120,7 @@ public sealed class TabManager
     /// <summary>Switches to the first tab whose <see cref="BrowserTabInfo.DisplayName" /> matches.</summary>
     public void SwitchToDisplayName(string displayName, StringComparison comparison)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(displayName);
         RunTabOp(
             "switch_display_name", () => {
                 foreach (var kv in _displayNames) {
@@ -137,7 +137,7 @@ public sealed class TabManager
     /// <summary>Switches to the first tab that matches <paramref name="predicate" /> (uses <see cref="ListTabs" />).</summary>
     public bool TrySwitchTo(Predicate<BrowserTabInfo> predicate, out BrowserTabInfo? tab)
     {
-        ArgumentHelpers.ThrowIfNull(predicate, nameof(predicate));
+        ArgumentHelpers.ThrowIfNull(predicate);
         tab = null;
         foreach (var t in ListTabs()) {
             if (!predicate(t))
@@ -154,7 +154,7 @@ public sealed class TabManager
     /// <summary>Closes every tab except <paramref name="windowHandleToKeep" />.</summary>
     public void CloseAllExcept(string windowHandleToKeep)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandleToKeep, nameof(windowHandleToKeep));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandleToKeep);
         RunTabOp(
             "close_all_except", () => {
                 while (true) {
@@ -294,7 +294,7 @@ public sealed class TabManager
     /// <summary>Closes the tab with the given window handle.</summary>
     public void Close(string windowHandle)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle, nameof(windowHandle));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle);
         RunTabOp(
             "close_handle", () => {
                 var driver = _scraper.GetRequiredDriver();
@@ -323,7 +323,7 @@ public sealed class TabManager
         ((IJavaScriptExecutor)driver).ExecuteScript("window.open(arguments[0], '_blank');", openUrl);
         var after = driver.WindowHandles.ToList();
         var newHandle = after.FirstOrDefault(h => !before.Contains(h));
-        ArgumentHelpers.ThrowIfNull(newHandle, nameof(newHandle));
+        ArgumentHelpers.ThrowIfNull(newHandle);
         driver.SwitchTo().Window(newHandle);
         return newHandle;
     }

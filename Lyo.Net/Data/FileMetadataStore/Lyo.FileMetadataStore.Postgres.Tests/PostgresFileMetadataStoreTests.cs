@@ -19,7 +19,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -31,10 +31,10 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         _serviceProvider = services.BuildServiceProvider();
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
     }
 
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
     private static FileStoreResult CreateMetadata(Guid id, byte[] hash, string? keyId = null, string? keyVersion = null)
         => new(
@@ -50,8 +50,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 1, 2, 3, 4, 5 };
         var metadata = CreateMetadata(fileId, hash);
-        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.Equal(fileId, retrieved.Id);
         Assert.Equal("original.pdf", retrieved.OriginalFileName);
         Assert.Equal(1024, retrieved.OriginalFileSize);
@@ -66,7 +66,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
-        var ex = await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        var ex = await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
         Assert.Contains(fileId.ToString(), ex.Message);
     }
 
@@ -77,7 +77,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => store.SaveMetadataAsync(fileId, null!, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.SaveMetadataAsync(fileId, null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -88,10 +88,10 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var metadata = CreateMetadata(fileId, [1, 2, 3]);
-        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
+        var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.True(result);
-        await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
-        var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.False(result);
     }
 
@@ -114,9 +114,9 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var fileId = Guid.NewGuid();
         var metadata1 = CreateMetadata(fileId, [1, 2, 3]);
         var metadata2 = CreateMetadata(fileId, [6, 7, 8]) with { OriginalFileName = "updated.pdf" };
-        await store.SaveMetadataAsync(fileId, metadata1, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await store.SaveMetadataAsync(fileId, metadata2, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await store.SaveMetadataAsync(fileId, metadata1, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(fileId, metadata2, TestContext.Current.CancellationToken);
+        var retrieved = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.Equal("updated.pdf", retrieved.OriginalFileName);
         Assert.True(retrieved.OriginalFileHash.SequenceEqual(new byte[] { 6, 7, 8 }));
     }
@@ -130,8 +130,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 10, 20, 30, 40, 50 };
         var metadata = CreateMetadata(fileId, hash);
-        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await store.FindByHashAsync(hash, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
+        var result = await store.FindByHashAsync(hash, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(fileId, result.Id);
         Assert.True(result.OriginalFileHash.SequenceEqual(hash));
@@ -144,7 +144,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var hash = "cba`_"u8.ToArray();
-        var result = await store.FindByHashAsync(hash, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await store.FindByHashAsync(hash, TestContext.Current.CancellationToken);
         Assert.Null(result);
     }
 
@@ -154,7 +154,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
-        await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByHashAsync(null!, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByHashAsync(null!, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
-        await Assert.ThrowsAsync<ArgumentException>(() => store.FindByHashAsync([], TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentException>(() => store.FindByHashAsync([], TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -176,9 +176,9 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var version = "v1";
         var file1 = CreateMetadata(Guid.NewGuid(), [1], keyId, version);
         var file2 = CreateMetadata(Guid.NewGuid(), [2], keyId, version);
-        await store.SaveMetadataAsync(file1.Id, file1, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await store.SaveMetadataAsync(file2.Id, file2, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var results = (await store.FindByKeyIdAndVersionAsync(keyId, version, TestContext.Current.CancellationToken).ConfigureAwait(false)).ToList();
+        await store.SaveMetadataAsync(file1.Id, file1, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(file2.Id, file2, TestContext.Current.CancellationToken);
+        var results = (await store.FindByKeyIdAndVersionAsync(keyId, version, TestContext.Current.CancellationToken)).ToList();
         Assert.Equal(2, results.Count);
         Assert.Contains(results, r => r.Id == file1.Id);
         Assert.Contains(results, r => r.Id == file2.Id);
@@ -193,9 +193,9 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var keyId = "key-multi";
         var file1 = CreateMetadata(Guid.NewGuid(), [1], keyId, "v1");
         var file2 = CreateMetadata(Guid.NewGuid(), [2], keyId, "v2");
-        await store.SaveMetadataAsync(file1.Id, file1, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await store.SaveMetadataAsync(file2.Id, file2, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var results = (await store.FindByKeyIdAndVersionAsync(keyId, null, TestContext.Current.CancellationToken).ConfigureAwait(false)).ToList();
+        await store.SaveMetadataAsync(file1.Id, file1, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(file2.Id, file2, TestContext.Current.CancellationToken);
+        var results = (await store.FindByKeyIdAndVersionAsync(keyId, null, TestContext.Current.CancellationToken)).ToList();
         Assert.Equal(2, results.Count);
     }
 
@@ -205,7 +205,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
-        await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByKeyIdAndVersionAsync(null!, null, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByKeyIdAndVersionAsync(null!, null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
-        await Assert.ThrowsAsync<ArgumentException>(() => store.FindByKeyIdAndVersionAsync("", null, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentException>(() => store.FindByKeyIdAndVersionAsync("", null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         using var scope = _serviceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
-        var results = (await store.FindByKeyIdAndVersionAsync("nonexistent-key", null, TestContext.Current.CancellationToken).ConfigureAwait(false)).ToList();
+        var results = (await store.FindByKeyIdAndVersionAsync("nonexistent-key", null, TestContext.Current.CancellationToken)).ToList();
         Assert.Empty(results);
     }
 
@@ -246,9 +246,9 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 1, 2, 3, 4, 5 };
-        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, hash), TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, hash), TestContext.Current.CancellationToken);
         var shortHash = new byte[] { 1, 2, 3 };
-        var result = await store.FindByHashAsync(shortHash, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await store.FindByHashAsync(shortHash, TestContext.Current.CancellationToken);
         Assert.Null(result);
     }
 }

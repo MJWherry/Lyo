@@ -55,8 +55,8 @@ public abstract class SttServiceBase : ISttService, IDisposable
     /// <inheritdoc />
     public Task<SttResult> RecognizeAsync(byte[] audioData, LanguageCodeInfo? languageCode = null, AudioFormat? audioFormat = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(audioData, nameof(audioData));
-        ArgumentHelpers.ThrowIfNullOrEmpty(audioData, nameof(audioData));
+        ArgumentHelpers.ThrowIfNull(audioData);
+        ArgumentHelpers.ThrowIfNullOrEmpty(audioData);
         var request = new SttRequest { AudioData = audioData, LanguageCode = languageCode ?? Options.DefaultLanguageCode, AudioFormat = audioFormat ?? Options.DefaultAudioFormat };
         return RecognizeAsync(request, ct);
     }
@@ -64,7 +64,7 @@ public abstract class SttServiceBase : ISttService, IDisposable
     /// <inheritdoc />
     public async Task<SttResult> RecognizeFromFileAsync(string audioFilePath, LanguageCodeInfo? languageCode = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(audioFilePath, nameof(audioFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(audioFilePath);
 #if NETSTANDARD2_0
         var audioData = File.ReadAllBytes(audioFilePath);
 #else
@@ -88,7 +88,7 @@ public abstract class SttServiceBase : ISttService, IDisposable
         AudioFormat? audioFormat = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(audioStream, nameof(audioStream));
+        ArgumentHelpers.ThrowIfNull(audioStream);
         OperationHelpers.ThrowIfNotReadable(audioStream, $"Stream '{nameof(audioStream)}' must be readable.");
         using var memoryStream = new MemoryStream();
 #if NETSTANDARD2_0
@@ -104,7 +104,7 @@ public abstract class SttServiceBase : ISttService, IDisposable
     /// <inheritdoc />
     public async Task<SttResult> RecognizeAsync(SttRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.RecognizeDuration)]);
         OnRecognizing(request);
         var result = await RecognizeCoreAsync(request, ct).ConfigureAwait(false);
@@ -119,7 +119,7 @@ public abstract class SttServiceBase : ISttService, IDisposable
     /// <inheritdoc />
     public async Task<IReadOnlyList<SttResult>> RecognizeBulkAsync(IEnumerable<SttRequest> requests, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(requests, nameof(requests));
+        ArgumentHelpers.ThrowIfNull(requests);
         var requestList = requests.ToList();
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.BulkRecognizeDuration)]);
         var sw = Stopwatch.StartNew();

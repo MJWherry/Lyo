@@ -1,6 +1,9 @@
-using Lyo.Common;
+using Lyo.Result;
 using Lyo.Validation.Attributes;
 using DataAnnotations = System.ComponentModel.DataAnnotations;
+
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+// ReSharper disable PropertyCanBeMadeInitOnly.Local
 
 namespace Lyo.Validation.Tests;
 
@@ -78,7 +81,7 @@ public class AttributeValidatorTests
         var result = validator.Validate(new() { Name = "Valid", Email = "matt@example.com", Age = 42 });
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Errors!, x => x.Code == ValidationErrorCodes.ValidationFailed && Equals(x.Metadata?[ValidationMetadataKeys.PropertyName], "Age"));
-        Assert.Contains(result.Errors!, x => x.Code == ValidationErrorCodes.ValidationFailed && x.Metadata == null);
+        Assert.Contains(result.Errors!, x => x is { Code: ValidationErrorCodes.ValidationFailed, Metadata: null });
     }
 
     [Fact]

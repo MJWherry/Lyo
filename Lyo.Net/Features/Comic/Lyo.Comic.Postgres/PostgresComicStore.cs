@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Comic.Enums;
 using Lyo.Comic.Postgres.Database;
 using Lyo.Exceptions;
 using Lyo.Health;
@@ -14,21 +13,21 @@ public sealed class PostgresComicStore : IComicStore, IHealth
 
     public PostgresComicStore(IDbContextFactory<ComicDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public async Task SaveSeriesAsync(ComicSeries series, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(series, nameof(series));
+        ArgumentHelpers.ThrowIfNull(series);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = series.Id != default ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false) : null;
+        var existing = series.Id != Guid.Empty ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false) : null;
         if (existing != null) {
             existing.Title = series.Title;
             existing.Slug = series.Slug;
-            existing.ComicType = (int)series.ComicType;
-            existing.Status = (int)series.Status;
+            existing.ComicType = series.ComicType;
+            existing.Status = series.Status;
             existing.Description = series.Description;
             existing.Language = series.Language;
             existing.PublishedYear = series.PublishedYear;
@@ -43,7 +42,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
                 ctx.AlternateTitles.Add(ToAlternateTitleEntity(alt, existing.Id));
         }
         else {
-            var id = series.Id == default ? Guid.NewGuid() : series.Id;
+            var id = series.Id == Guid.Empty ? Guid.NewGuid() : series.Id;
             var entity = ToSeriesEntity(series, id);
             ctx.Series.Add(entity);
             foreach (var alt in series.AlternateTitles)
@@ -64,7 +63,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     /// <inheritdoc />
     public async Task<ComicSeries?> GetSeriesBySlugAsync(string slug, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug, nameof(slug));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Slug == slug, ct).ConfigureAwait(false);
         return entity == null ? null : ToSeries(entity);
@@ -73,7 +72,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ComicSeries>> SearchSeriesAsync(ComicSeriesQuery query, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(query, nameof(query));
+        ArgumentHelpers.ThrowIfNull(query);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var q = ctx.Series.Include(s => s.AlternateTitles).AsQueryable();
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
@@ -82,13 +81,16 @@ public sealed class PostgresComicStore : IComicStore, IHealth
         }
 
         if (query.ComicType.HasValue)
-            q = q.Where(s => s.ComicType == (int)query.ComicType.Value);
+            q = q.Where(s => s.ComicType == query.ComicType.Value);
 
         if (query.Status.HasValue)
-            q = q.Where(s => s.Status == (int)query.Status.Value);
+            q = q.Where(s => s.Status == query.Status.Value);
 
         if (!string.IsNullOrWhiteSpace(query.Language))
             q = q.Where(s => s.Language == query.Language);
+
+        if (query.FilterSeriesIds is { Count: > 0 })
+            q = q.Where(s => query.FilterSeriesIds.Contains(s.Id));
 
         q = q.OrderBy(s => s.Title).Skip(query.Skip);
         if (query.Limit.HasValue)
@@ -112,9 +114,9 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     /// <inheritdoc />
     public async Task SaveVolumeAsync(ComicVolume volume, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(volume, nameof(volume));
+        ArgumentHelpers.ThrowIfNull(volume);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (volume.Id != default) {
+        if (volume.Id != Guid.Empty) {
             var existing = await ctx.Volumes.FindAsync([volume.Id], ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.SeriesId = volume.SeriesId;
@@ -127,7 +129,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Volumes.Add(ToVolumeEntity(volume, volume.Id == default ? Guid.NewGuid() : volume.Id));
+        ctx.Volumes.Add(ToVolumeEntity(volume, volume.Id == Guid.Empty ? Guid.NewGuid() : volume.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -161,9 +163,9 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     /// <inheritdoc />
     public async Task SaveChapterAsync(ComicChapter chapter, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chapter, nameof(chapter));
+        ArgumentHelpers.ThrowIfNull(chapter);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (chapter.Id != default) {
+        if (chapter.Id != Guid.Empty) {
             var existing = await ctx.Chapters.FindAsync([chapter.Id], ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.SeriesId = chapter.SeriesId;
@@ -179,7 +181,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             }
         }
 
-        ctx.Chapters.Add(ToChapterEntity(chapter, chapter.Id == default ? Guid.NewGuid() : chapter.Id));
+        ctx.Chapters.Add(ToChapterEntity(chapter, chapter.Id == Guid.Empty ? Guid.NewGuid() : chapter.Id));
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -227,6 +229,104 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     }
 
     /// <inheritdoc />
+    public async Task SavePageAsync(ComicPage page, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(page);
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        if (page.Id != Guid.Empty) {
+            var existing = await ctx.Pages.FindAsync([page.Id], ct).ConfigureAwait(false);
+            if (existing != null) {
+                existing.ChapterId = page.ChapterId;
+                existing.PageNumber = page.PageNumber;
+                existing.ImageRef = page.ImageRef;
+                existing.Width = page.Width;
+                existing.Height = page.Height;
+                await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        ctx.Pages.Add(ToPageEntity(page, page.Id == Guid.Empty ? Guid.NewGuid() : page.Id));
+        await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<ComicPage?> GetPageByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Pages.FindAsync([id], ct).ConfigureAwait(false);
+        return entity == null ? null : ToPage(entity);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ComicPage>> GetPagesByChapterAsync(Guid chapterId, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await ctx.Pages.Where(p => p.ChapterId == chapterId).OrderBy(p => p.PageNumber).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(ToPage).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task DeletePageAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Pages.FindAsync([id], ct).ConfigureAwait(false);
+        if (entity != null) {
+            ctx.Pages.Remove(entity);
+            await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task SaveCharacterAsync(ComicCharacter character, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(character);
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        if (character.Id != Guid.Empty) {
+            var existing = await ctx.Characters.FindAsync([character.Id], ct).ConfigureAwait(false);
+            if (existing != null) {
+                existing.SeriesId = character.SeriesId;
+                existing.Name = character.Name;
+                existing.Description = character.Description;
+                existing.ImageRef = character.ImageRef;
+                existing.Role = character.Role;
+                await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        ctx.Characters.Add(ToCharacterEntity(character, character.Id == Guid.Empty ? Guid.NewGuid() : character.Id));
+        await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<ComicCharacter?> GetCharacterByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Characters.FindAsync([id], ct).ConfigureAwait(false);
+        return entity == null ? null : ToCharacter(entity);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ComicCharacter>> GetCharactersBySeriesAsync(Guid seriesId, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entities = await ctx.Characters.Where(c => c.SeriesId == seriesId).OrderBy(c => c.Name).ToListAsync(ct).ConfigureAwait(false);
+        return entities.Select(ToCharacter).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteCharacterAsync(Guid id, CancellationToken ct = default)
+    {
+        await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Characters.FindAsync([id], ct).ConfigureAwait(false);
+        if (entity != null) {
+            ctx.Characters.Remove(entity);
+            await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
     public string HealthCheckName => "comic-postgres";
 
     /// <inheritdoc />
@@ -252,8 +352,8 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Id = id,
             Title = r.Title,
             Slug = r.Slug,
-            ComicType = (int)r.ComicType,
-            Status = (int)r.Status,
+            ComicType = r.ComicType,
+            Status = r.Status,
             Description = r.Description,
             Language = r.Language,
             PublishedYear = r.PublishedYear,
@@ -268,7 +368,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
 
     private static AlternateTitleEntity ToAlternateTitleEntity(ComicAlternateTitle r, Guid seriesId)
         => new() {
-            Id = r.Id == default ? Guid.NewGuid() : r.Id,
+            Id = r.Id == Guid.Empty ? Guid.NewGuid() : r.Id,
             SeriesId = seriesId,
             Title = r.Title,
             Language = r.Language
@@ -304,8 +404,8 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Id = e.Id,
             Title = e.Title,
             Slug = e.Slug,
-            ComicType = (ComicType)e.ComicType,
-            Status = (ComicStatus)e.Status,
+            ComicType = e.ComicType,
+            Status = e.Status,
             Description = e.Description,
             Language = e.Language,
             PublishedYear = e.PublishedYear,
@@ -335,7 +435,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             VolumeNumber = e.VolumeNumber,
             Title = e.Title,
             CoverImageRef = e.CoverImageRef,
-            PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
+            PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };
@@ -349,8 +449,54 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Title = e.Title,
             Language = e.Language,
             PageCount = e.PageCount,
-            PublishedDate = e.PublishedDate.HasValue ? e.PublishedDate.Value.ToDateTime(TimeOnly.MinValue) : null,
+            PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
             Source = e.Source,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp
+        };
+
+    private static PageEntity ToPageEntity(ComicPage r, Guid id)
+        => new() {
+            Id = id,
+            ChapterId = r.ChapterId,
+            PageNumber = r.PageNumber,
+            ImageRef = r.ImageRef,
+            Width = r.Width,
+            Height = r.Height,
+            CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
+        };
+
+    private static ComicPage ToPage(PageEntity e)
+        => new() {
+            Id = e.Id,
+            ChapterId = e.ChapterId,
+            PageNumber = e.PageNumber,
+            ImageRef = e.ImageRef,
+            Width = e.Width,
+            Height = e.Height,
+            CreatedTimestamp = e.CreatedTimestamp,
+            UpdatedTimestamp = e.UpdatedTimestamp
+        };
+
+    private static CharacterEntity ToCharacterEntity(ComicCharacter r, Guid id)
+        => new() {
+            Id = id,
+            SeriesId = r.SeriesId,
+            Name = r.Name,
+            Description = r.Description,
+            ImageRef = r.ImageRef,
+            Role = r.Role,
+            CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
+        };
+
+    private static ComicCharacter ToCharacter(CharacterEntity e)
+        => new() {
+            Id = e.Id,
+            SeriesId = e.SeriesId,
+            Name = e.Name,
+            Description = e.Description,
+            ImageRef = e.ImageRef,
+            Role = e.Role,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };

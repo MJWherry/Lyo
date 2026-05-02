@@ -13,7 +13,7 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddXlsxService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<XlsxService>(provider => {
             var logger = provider.GetService<ILogger<XlsxService>>();
             return new(logger);

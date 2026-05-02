@@ -72,7 +72,7 @@ public class MetricsService : IMetrics, IDisposable
     /// <inheritdoc />
     public void IncrementCounter(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         if (!ShouldSample())
             return;
 
@@ -116,8 +116,8 @@ public class MetricsService : IMetrics, IDisposable
     /// <inheritdoc />
     public void RecordGauge(string name, IConvertible value, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(value);
         if (!ShouldSample())
             return;
 
@@ -149,8 +149,8 @@ public class MetricsService : IMetrics, IDisposable
     /// <inheritdoc />
     public void RecordHistogram(string name, IConvertible value, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(value);
         if (!ShouldSample())
             return;
 
@@ -192,15 +192,15 @@ public class MetricsService : IMetrics, IDisposable
     /// <inheritdoc />
     public MetricsTimer StartTimer(string name, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         return new(new(this, name, tags));
     }
 
     /// <inheritdoc />
     public void RecordError(string name, Exception exception, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNull(exception, nameof(exception));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNull(exception);
         if (!ShouldSample())
             return;
 

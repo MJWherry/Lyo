@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
@@ -8,6 +7,8 @@ using System.Text;
 using Lyo.Common.Attributes;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+
+#pragma warning disable CS8603 // Possible null reference return.
 
 #if NETSTANDARD2_0
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -19,13 +20,11 @@ public static class Extensions
 {
     /// <summary>Returns the default value if the string is null or empty.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [return: NotNull]
-    public static string OrDefault(this string? value, [NotNull] string defaultValue) => string.IsNullOrEmpty(value) ? defaultValue : value!;
+    public static string OrDefault(this string? value, string defaultValue) => string.IsNullOrEmpty(value) ? defaultValue : value;
 
     /// <summary>Returns the default value if the string is null, empty, or consists only of whitespace.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [return: NotNull]
-    public static string OrDefaultIfWhiteSpace(this string? value, [NotNull] string defaultValue) => string.IsNullOrWhiteSpace(value) ? defaultValue : value!;
+    public static string OrDefaultIfWhiteSpace(this string? value, string defaultValue) => string.IsNullOrWhiteSpace(value) ? defaultValue : value;
 
     public static string Truncated(this string s, in int? start = 4, in int? end = null, in int ellipsesLength = 3)
     {
@@ -119,6 +118,7 @@ public static class Extensions
 
     public static T? GetValueAs<T>(this IReadOnlyDictionary<string, object> source, string key, string? format = null, IFormatProvider? formatProvider = null)
     {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (!source.TryGetValue(key, out var v) || v is null)
             return default;
 
@@ -157,32 +157,6 @@ public static class Extensions
 #endif
     }
 
-    public static string? GetDescription<T>(this T? value)
-        where T : Enum
-    {
-        if (value is null)
-            return null;
-
-        var field = value.GetType().GetField(value.ToString());
-        var attribute = field?.GetCustomAttribute<DescriptionAttribute>();
-        return attribute?.Description ?? value.ToString();
-    }
-
-    /// <summary>Gets the string value attribute for an enum value, or the enum name if no string value is found.</summary>
-    /// <typeparam name="T">The enum type.</typeparam>
-    /// <param name="value">The enum value.</param>
-    /// <returns>The string value from the StringValue attribute, or the enum name if not found.</returns>
-    public static string? GetStringValue<T>(this T? value)
-        where T : Enum
-    {
-        if (value is null)
-            return null;
-
-        var field = value.GetType().GetField(value.ToString());
-        var attribute = field?.GetCustomAttribute<StringValueAttribute>();
-        return attribute?.Value ?? value.ToString();
-    }
-
     /// <summary>Gets the string value attribute for an enum value, or the enum name if no string value is found.</summary>
     /// <param name="value">The enum value.</param>
     /// <returns>The string value from the StringValue attribute, or the enum name if not found.</returns>
@@ -193,36 +167,7 @@ public static class Extensions
         return attribute?.Value ?? value.ToString();
     }
 
-    // LanguageCodeInfo extension methods (using new record-based approach)
-
-    /// <summary>Finds a LanguageCodeInfo by its ISO 639-1 (2-letter) code.</summary>
-    /// <param name="iso639_1Code">The ISO 639-1 code (e.g., "en", "es", "fr").</param>
-    /// <returns>The first matching LanguageCodeInfo (base variant), or Unknown if not found.</returns>
-    /// <remarks>When multiple language codes share the same ISO 639-1 code, returns the first one (base variant).</remarks>
-    public static LanguageCodeInfo FromISO639_1(this string iso639_1Code) => LanguageCodeInfo.FromIso6391(iso639_1Code);
-
-    /// <summary>Finds a LanguageCodeInfo by its ISO 639-3 (3-letter) code.</summary>
-    /// <param name="iso639_3Code">The ISO 639-3 code (e.g., "eng", "spa", "fra").</param>
-    /// <returns>The first matching LanguageCodeInfo (base variant), or Unknown if not found.</returns>
-    /// <remarks>When multiple language codes share the same ISO 639-3 code, returns the first one (base variant).</remarks>
-    public static LanguageCodeInfo FromISO639_3(this string iso639_3Code) => LanguageCodeInfo.FromIso6393(iso639_3Code);
-
-    /// <summary>Finds a LanguageCodeInfo by its BCP 47 code.</summary>
-    /// <param name="bcp47Code">The BCP 47 code (e.g., "en-US", "fr-FR").</param>
-    /// <returns>The corresponding LanguageCodeInfo, or Unknown if not found.</returns>
-    public static LanguageCodeInfo FromBCP_47(this string bcp47Code) => LanguageCodeInfo.FromBcp47(bcp47Code);
-
     // FileTypeInfo extension methods (using new record-based approach)
-
-    /// <summary>Finds a FileTypeInfo by its MIME type value.</summary>
-    /// <param name="mimeValue">The MIME type value (e.g., "application/pdf", "image/jpeg").</param>
-    /// <returns>The corresponding FileTypeInfo, or Unknown if not found.</returns>
-    public static FileTypeInfo FromMimeValue(this string mimeValue) => FileTypeInfo.FromMimeType(mimeValue);
-
-    /// <summary>Finds a FileTypeInfo by its file extension.</summary>
-    /// <param name="extension">The file extension (with or without leading dot, e.g., ".pdf", "pdf", ".jpg", "jpg").</param>
-    /// <returns>The corresponding FileTypeInfo, or Unknown if not found.</returns>
-    public static FileTypeInfo FromExtension(this string extension) => FileTypeInfo.FromExtension(extension);
 
     /// <summary>Gets the FileTypeInfo from a file path or extension.</summary>
     /// <param name="filePath">The file path or extension (with or without dot).</param>
@@ -372,5 +317,61 @@ public static class Extensions
     {
         var intValue = Convert.ToInt64(value);
         return intValue != 0 && (intValue & (intValue - 1)) == 0;
+    }
+
+    /// <param name="value">The enum value.</param>
+    /// <typeparam name="T">The enum type.</typeparam>
+    extension<T>(T? value)
+        where T : Enum
+    {
+        public string? GetDescription()
+        {
+            if (value is null)
+                return null;
+
+            var field = value.GetType().GetField(value.ToString());
+            var attribute = field?.GetCustomAttribute<DescriptionAttribute>();
+            return attribute?.Description ?? value.ToString();
+        }
+
+        /// <summary>Gets the string value attribute for an enum value, or the enum name if no string value is found.</summary>
+        /// <returns>The string value from the StringValue attribute, or the enum name if not found.</returns>
+        public string? GetStringValue()
+        {
+            if (value is null)
+                return null;
+
+            var field = value.GetType().GetField(value.ToString());
+            var attribute = field?.GetCustomAttribute<StringValueAttribute>();
+            return attribute?.Value ?? value.ToString();
+        }
+    }
+
+    // LanguageCodeInfo extension methods (using new record-based approach)
+
+    /// <param name="iso6391Code">The ISO 639-1 code (e.g., "en", "es", "fr").</param>
+    extension(string iso6391Code)
+    {
+        /// <summary>Finds a LanguageCodeInfo by its ISO 639-1 (2-letter) code.</summary>
+        /// <returns>The first matching LanguageCodeInfo (base variant), or Unknown if not found.</returns>
+        /// <remarks>When multiple language codes share the same ISO 639-1 code, returns the first one (base variant).</remarks>
+        public LanguageCodeInfo FromISO639_1() => LanguageCodeInfo.FromIso6391(iso6391Code);
+
+        /// <summary>Finds a LanguageCodeInfo by its ISO 639-3 (3-letter) code.</summary>
+        /// <returns>The first matching LanguageCodeInfo (base variant), or Unknown if not found.</returns>
+        /// <remarks>When multiple language codes share the same ISO 639-3 code, returns the first one (base variant).</remarks>
+        public LanguageCodeInfo FromISO639_3() => LanguageCodeInfo.FromIso6393(iso6391Code);
+
+        /// <summary>Finds a LanguageCodeInfo by its BCP 47 code.</summary>
+        /// <returns>The corresponding LanguageCodeInfo, or Unknown if not found.</returns>
+        public LanguageCodeInfo FromBCP_47() => LanguageCodeInfo.FromBcp47(iso6391Code);
+
+        /// <summary>Finds a FileTypeInfo by its MIME type value.</summary>
+        /// <returns>The corresponding FileTypeInfo, or Unknown if not found.</returns>
+        public FileTypeInfo FromMimeValue() => FileTypeInfo.FromMimeType(iso6391Code);
+
+        /// <summary>Finds a FileTypeInfo by its file extension.</summary>
+        /// <returns>The corresponding FileTypeInfo, or Unknown if not found.</returns>
+        public FileTypeInfo FromExtension() => FileTypeInfo.FromExtension(iso6391Code);
     }
 }

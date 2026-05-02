@@ -23,6 +23,7 @@ namespace Lyo.Tag.Postgres.Migrations
                     for_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     tag = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    tag_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "tag"),
                     from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     from_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -42,7 +43,7 @@ namespace Lyo.Tag.Postgres.Migrations
                 name: "ix_tag_for_entity_tag_unique",
                 schema: "tag",
                 table: "tag",
-                columns: new[] { "for_entity_type", "for_entity_id", "tag" },
+                columns: new[] { "for_entity_type", "for_entity_id", "tag_type", "tag" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -50,6 +51,12 @@ namespace Lyo.Tag.Postgres.Migrations
                 schema: "tag",
                 table: "tag",
                 column: "tag");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_tag_tag_type",
+                schema: "tag",
+                table: "tag",
+                column: "tag_type");
         }
 
         /// <inheritdoc />

@@ -28,7 +28,7 @@ public class ConcatenatedStream : Stream
     /// <param name="ownsStreams">If true, the streams will be disposed when this stream is disposed</param>
     public ConcatenatedStream(IEnumerable<Stream> streams, bool ownsStreams = false)
     {
-        ArgumentHelpers.ThrowIfNull(streams, nameof(streams));
+        ArgumentHelpers.ThrowIfNull(streams);
         var streamList = streams.ToList();
         OperationHelpers.ThrowIfNullOrEmpty(streamList, nameof(streams));
         ArgumentHelpers.ThrowIf(streamList.Any(s => s == null), "Streams cannot be null", nameof(streams));

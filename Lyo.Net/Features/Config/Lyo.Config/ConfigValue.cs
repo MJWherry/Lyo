@@ -21,7 +21,7 @@ public sealed class ConfigValue
     /// <summary>Creates a typed config value from the supplied value and explicit type.</summary>
     public static ConfigValue From(Type type, object? value, JsonSerializerOptions? options = null)
     {
-        ArgumentHelpers.ThrowIfNull(type, nameof(type));
+        ArgumentHelpers.ThrowIfNull(type);
         options ??= ConfigJsonSerializerOptions.Default;
         return new() { TypeName = GetTypeName(type), Json = JsonSerializer.Serialize(value, type, options) };
     }
@@ -32,14 +32,14 @@ public sealed class ConfigValue
     /// <summary>Deserializes the value to the given runtime type.</summary>
     public object? GetValue(Type type, JsonSerializerOptions? options = null)
     {
-        ArgumentHelpers.ThrowIfNull(type, nameof(type));
+        ArgumentHelpers.ThrowIfNull(type);
         return JsonSerializer.Deserialize(Json, type, options ?? ConfigJsonSerializerOptions.Default);
     }
 
     /// <summary>Resolves the serialized CLR type name to a runtime type.</summary>
     public Type ResolveType()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(TypeName, nameof(TypeName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(TypeName);
         var type = TryResolveType(TypeName);
         OperationHelpers.ThrowIfNull(type, $"Unable to resolve config value type '{TypeName}'.");
         return type;
@@ -67,7 +67,7 @@ public sealed class ConfigValue
     /// <summary>Returns true when the supplied type name resolves to the same CLR type.</summary>
     public bool MatchesType(string expectedTypeName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(expectedTypeName, nameof(expectedTypeName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(expectedTypeName);
         return TypeNameComparer.Equals(TypeName, expectedTypeName);
     }
 
@@ -80,7 +80,7 @@ public sealed class ConfigValue
     /// </summary>
     public static string GetTypeName(Type type)
     {
-        ArgumentHelpers.ThrowIfNull(type, nameof(type));
+        ArgumentHelpers.ThrowIfNull(type);
         return type.FullName ?? type.AssemblyQualifiedName ?? type.Name;
     }
 

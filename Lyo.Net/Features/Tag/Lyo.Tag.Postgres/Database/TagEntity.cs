@@ -24,6 +24,11 @@ public sealed class TagEntity
     [MaxLength(200)]
     public string Tag { get; set; } = string.Empty;
 
+    /// <summary>Gets or sets the tag type (e.g. "tag", "category"). Defaults to "tag".</summary>
+    [Required]
+    [MaxLength(50)]
+    public string TagType { get; set; } = "tag";
+
     /// <summary>Gets or sets the entity type of who applied the tag, or null if system-applied.</summary>
     [MaxLength(200)]
     public string? FromEntityType { get; set; }

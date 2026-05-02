@@ -16,7 +16,7 @@ public static class Extensions
     public static IServiceCollection AddTranslationService<TService, TOptions>(this IServiceCollection services, Action<TOptions>? configure = null)
         where TService : class, ITranslationService where TOptions : TranslationServiceOptions, new()
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         var options = new TOptions();
         configure?.Invoke(options);
         services.AddSingleton(options);
@@ -34,8 +34,8 @@ public static class Extensions
     public static IServiceCollection AddTranslationService<TService, TOptions>(this IServiceCollection services, TOptions options)
         where TService : class, ITranslationService where TOptions : TranslationServiceOptions
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<TService>();
         services.AddSingleton<ITranslationService>(provider => provider.GetRequiredService<TService>());

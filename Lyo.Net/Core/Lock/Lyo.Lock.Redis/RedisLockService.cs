@@ -19,7 +19,7 @@ public sealed class RedisLockService : ILockService
 
     public RedisLockService(IConnectionMultiplexer redis, ILogger<RedisLockService>? logger = null, RedisLockOptions? options = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(redis, nameof(redis));
+        ArgumentHelpers.ThrowIfNull(redis);
         _logger = logger ?? NullLogger<RedisLockService>.Instance;
         _options = options ?? new RedisLockOptions();
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -30,7 +30,7 @@ public sealed class RedisLockService : ILockService
     /// <inheritdoc />
     public async ValueTask<ILockHandle?> AcquireAsync(string key, TimeSpan? timeout = null, TimeSpan? lockDuration = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var redisKey = _options.KeyPrefix + normalizedKey;
         var token = Guid.NewGuid().ToString("N");

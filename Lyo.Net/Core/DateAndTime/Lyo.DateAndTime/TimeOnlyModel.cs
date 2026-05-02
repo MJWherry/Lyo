@@ -55,7 +55,7 @@ public sealed class TimeOnlyModel : IComparable<TimeOnlyModel>, IEquatable<TimeO
 
     public static TimeOnlyModel Parse(string input, IFormatProvider? provider = null)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
+        ArgumentHelpers.ThrowIfNull(input);
         if (!TryParse(input, provider, out var result))
             throw new FormatException($"Invalid time: '{input}'.");
 

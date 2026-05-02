@@ -24,5 +24,17 @@ public sealed class JobParameterReq
 
     public bool Enabled { get; set; }
 
+    /// <summary>Optional regex pattern the run value must match.</summary>
+    public string? ValidationRegex { get; set; }
+
+    /// <summary>Minimum string length. Null = no minimum.</summary>
+    public int? MinLength { get; set; }
+
+    /// <summary>Maximum string length. Null = no maximum.</summary>
+    public int? MaxLength { get; set; }
+
+    /// <summary>Pipe-separated list of allowed values (e.g. <c>A|B|C</c>). Null = any value allowed.</summary>
+    public string? AllowedValues { get; set; }
+
     public override string ToString() => $"({Type}) {Key}={Value}, {Description}";
 }

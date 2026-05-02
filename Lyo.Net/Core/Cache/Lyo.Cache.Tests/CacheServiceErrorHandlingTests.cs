@@ -40,7 +40,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         service.Set(key, "value");
 
         // Invalidate should work normally
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
 
         // Verify it's gone
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -57,7 +57,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         service.Set(key, "value", [tag]);
 
         // Invalidate should work normally
-        await service.InvalidateCacheItemByTag(tag).ConfigureAwait(false);
+        await service.InvalidateCacheItemByTag(tag);
 
         // Verify it's gone
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -73,7 +73,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         service.Set(key, "value", ["entity:testentity"]);
 
         // Invalidate should work normally
-        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>().ConfigureAwait(false);
+        await service.InvalidateQueryCacheAsync<TestModels.TestEntity>();
 
         // Verify it's gone
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -89,7 +89,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         service.Set(key, "value", ["queries"]);
 
         // Invalidate should work normally
-        await service.InvalidateAllCachedQueriesAsync().ConfigureAwait(false);
+        await service.InvalidateAllCachedQueriesAsync();
 
         // Verify it's gone
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -106,7 +106,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         service.Set(key, "value", [$"type:{typeName}"]);
 
         // Invalidate should work normally
-        await service.InvalidateCacheByTypeAsync(typeName).ConfigureAwait(false);
+        await service.InvalidateCacheByTypeAsync(typeName);
 
         // Verify it's gone
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -134,11 +134,10 @@ public class CacheServiceErrorHandlingTests : IDisposable
 
         // First call should work and cache
         var result1 = await service.GetOrSetAsync<string>(
-                key, _ => {
-                    callCount++;
-                    return Task.FromResult("cached-value")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, _ => {
+                callCount++;
+                return Task.FromResult("cached-value")!;
+            }, token: TestContext.Current.CancellationToken);
 
         result1.ShouldBe("cached-value");
         callCount.ShouldBe(1);
@@ -148,15 +147,14 @@ public class CacheServiceErrorHandlingTests : IDisposable
         cached.ShouldBe("cached-value");
 
         // Remove from cache manually to simulate failure
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
 
         // Next call should fallback to factory
         var result2 = await service.GetOrSetAsync<string>(
-                key, _ => {
-                    callCount++;
-                    return Task.FromResult("new-value")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, _ => {
+                callCount++;
+                return Task.FromResult("new-value")!;
+            }, token: TestContext.Current.CancellationToken);
 
         Assert.Equal("new-value", result2);
         Assert.Equal(2, callCount);
@@ -180,7 +178,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         callCount.ShouldBe(1);
 
         // Remove from cache manually to simulate failure
-        await service.InvalidateCacheItem(key).ConfigureAwait(false);
+        await service.InvalidateCacheItem(key);
 
         // Next call should fallback to factory
         var result2 = service.GetOrSet<string>(
@@ -200,7 +198,7 @@ public class CacheServiceErrorHandlingTests : IDisposable
         var key = "null-type-name-test";
 
         // Type with null FullName should use Name
-        var result = await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value"), typeof(string), token: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value"), typeof(string), token: TestContext.Current.CancellationToken);
         result.ShouldBe("value");
     }
 

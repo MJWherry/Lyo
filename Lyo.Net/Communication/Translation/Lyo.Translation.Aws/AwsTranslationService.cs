@@ -147,7 +147,7 @@ public sealed class AwsTranslationService : TranslationServiceBase
         var sw = Stopwatch.StartNew();
         using var timer = Metrics.StartTimer(MetricNames[nameof(Translation.Constants.Metrics.DetectLanguageDuration)]);
         try {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
             ArgumentHelpers.ThrowIfNotInRange(text.Length, 1, Options.MaxTextLength, nameof(text));
 
             // AWS Translate doesn't have a separate DetectDominantLanguage API

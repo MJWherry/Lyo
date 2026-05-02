@@ -61,7 +61,7 @@ public static class Extensions
         string configSectionName = ContactUsServiceOptions.SectionName)
     {
         ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(configuration);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(ContactUsServiceOptions))) {
             services.AddSingleton<ContactUsServiceOptions>(_ => {

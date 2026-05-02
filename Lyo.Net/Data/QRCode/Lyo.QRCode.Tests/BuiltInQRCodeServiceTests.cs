@@ -31,7 +31,7 @@ public class BuiltInQRCodeServiceTests
     public async Task GenerateAsync_Png_HasValidHeader()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         var qr = Assert.IsType<QRCodeResult>(result);
         Assert.NotNull(qr.ImageBytes);
@@ -46,13 +46,12 @@ public class BuiltInQRCodeServiceTests
     public async Task GenerateAsync_Png_WithRoundedPanelFrame_IsLargerThanBarePng()
     {
         var service = CreateServiceWithFrame();
-        var bare = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var bare = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken);
         Assert.True(bare.IsSuccess);
         var bareQr = Assert.IsType<QRCodeResult>(bare);
         var framed = await service.GenerateAsync(
-                "https://example.com", new() { Format = QRCodeFormat.Png, Size = 8, Frame = new() { Style = QrFrameStyle.SimpleRoundedPanel, CaptionText = "Scan" } },
-                TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            "https://example.com", new() { Format = QRCodeFormat.Png, Size = 8, Frame = new() { Style = QrFrameStyle.SimpleRoundedPanel, CaptionText = "Scan" } },
+            TestContext.Current.CancellationToken);
 
         Assert.True(framed.IsSuccess);
         var framedQr = Assert.IsType<QRCodeResult>(framed);
@@ -65,7 +64,7 @@ public class BuiltInQRCodeServiceTests
     public async Task GenerateAsync_Svg_ContainsSvgRoot()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("hello", new() { Format = QRCodeFormat.Svg, Size = 6 }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("hello", new() { Format = QRCodeFormat.Svg, Size = 6 }, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         var qr = Assert.IsType<QRCodeResult>(result);
         Assert.NotNull(qr.ImageBytes);

@@ -16,7 +16,7 @@ public sealed class BrowserAlerts
 
     internal BrowserAlerts(SeleniumBrowser browser)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
 
@@ -59,7 +59,7 @@ public sealed class BrowserAlerts
     /// <summary>Sends keys to a prompt, then you typically <see cref="Accept" />.</summary>
     public void SendKeysToPrompt(string text, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
         RunAlert("prompt_send_keys", () => _browser.GetRequiredDriver().SwitchTo().Alert().SendKeys(text));
     }

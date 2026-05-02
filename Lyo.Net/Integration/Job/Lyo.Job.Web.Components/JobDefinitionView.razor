@@ -1,0 +1,116 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" Class="mt-2">
+            <MudTabPanel Text="Basic Info">
+                <MudGrid Class="pa-4">
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="ID" Value="@JobDefinition?.Id.ToString()" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Name" @bind-Value="_editName" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField T="string" Label="Description" @bind-Value="_editDescription" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Type" @bind-Value="_editType" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudTextField T="string" Label="Worker Type" @bind-Value="_editWorkerType" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudSwitch T="bool" Label="Enabled" @bind-Value="_editEnabled" Color="Color.Success"/>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudNumericField T="int" Label="Max Retries" @bind-Value="_editMaxRetryCount" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudNumericField T="int" Label="Retry Backoff (s)" @bind-Value="_editRetryBackoffSeconds" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudNumericField T="int" Label="Timeout (min)" @bind-Value="_editTimeoutMinutes" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="12" md="2">
+                        <MudNumericField T="int" Label="Max Concurrent" @bind-Value="_editMaxConcurrentRuns" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="Parameters">
+                <JobParameterView JobParameters="JobDefinition?.JobParameters" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" DefinitionRoute="@DefinitionRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Schedules">
+                <JobScheduleView JobSchedules="JobDefinition?.JobSchedules" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" ScheduleRoute="@ScheduleRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Triggers">
+                <JobTriggerView JobTriggers="JobDefinition?.JobTriggers" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" TriggerRoute="@TriggerRoute"/>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Close</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter, EditorRequired] public JobDefinitionRes? JobDefinition { get; set; }
+    [Parameter, EditorRequired] public string DefinitionRoute { get; set; } = "";
+    [Parameter] public string ScheduleRoute { get; set; } = "";
+    [Parameter] public string TriggerRoute { get; set; } = "";
+    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    private string _editName = "";
+    private string? _editDescription;
+    private string _editType = "";
+    private string _editWorkerType = "";
+    private bool _editEnabled;
+    private int _editMaxRetryCount;
+    private int _editRetryBackoffSeconds;
+    private int _editTimeoutMinutes;
+    private int _editMaxConcurrentRuns;
+
+    protected override void OnParametersSet()
+    {
+        if (JobDefinition == null) return;
+        _editName = JobDefinition.Name;
+        _editDescription = JobDefinition.Description;
+        _editType = JobDefinition.Type;
+        _editWorkerType = JobDefinition.WorkerType;
+        _editEnabled = JobDefinition.Enabled;
+        _editMaxRetryCount = JobDefinition.MaxRetryCount;
+        _editRetryBackoffSeconds = JobDefinition.RetryBackoffSeconds;
+        _editTimeoutMinutes = JobDefinition.TimeoutMinutes;
+        _editMaxConcurrentRuns = JobDefinition.MaxConcurrentRuns;
+    }
+
+    private async Task Save()
+    {
+        if (JobDefinition == null) return;
+        try {
+            var patch = new PatchRequestBuilder()
+                .WithKey(JobDefinition.Id)
+                .SetProperty("Name", _editName)
+                .SetProperty("Description", _editDescription)
+                .SetProperty("Type", _editType)
+                .SetProperty("WorkerType", _editWorkerType)
+                .SetProperty("Enabled", _editEnabled)
+                .SetProperty("MaxRetryCount", _editMaxRetryCount)
+                .SetProperty("RetryBackoffSeconds", _editRetryBackoffSeconds)
+                .SetProperty("TimeoutMinutes", _editTimeoutMinutes)
+                .SetProperty("MaxConcurrentRuns", _editMaxConcurrentRuns)
+                .Build();
+            await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(DefinitionRoute, patch);
+            Snackbar.Add("Definition saved", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

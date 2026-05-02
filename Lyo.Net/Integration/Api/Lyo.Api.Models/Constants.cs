@@ -28,5 +28,6 @@ public static class Constants
         public const string Forbidden = "Forbidden";
         public const string ExceedMaxBulkSize = "ExceedMaxBulkSize";
         public const string MessageQueueConnectionIssue = "MessageQueueConnectionIssue";
+        public const string Conflict = "Conflict";
     }
 }

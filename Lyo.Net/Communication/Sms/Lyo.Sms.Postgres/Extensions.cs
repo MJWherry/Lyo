@@ -17,8 +17,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSmsDbContext(this IServiceCollection services, string connectionString)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString, nameof(connectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         return services.AddSmsDbContextFactory(new PostgresSmsOptions { ConnectionString = connectionString })
             .AddScoped<SmsDbContext>(sp => sp.GetRequiredService<IDbContextFactory<SmsDbContext>>().CreateDbContext());
     }
@@ -29,8 +29,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSmsDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddDbContext<SmsDbContext>(configure);
         return services;
     }
@@ -41,8 +41,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSmsDbContextFactory(this IServiceCollection services, Action<PostgresSmsOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresSmsOptions();
         configure(options);
         return services.AddSmsDbContextFactory(options);
@@ -58,9 +58,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresSmsOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresSmsOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -75,9 +75,9 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSmsDbContextFactory(this IServiceCollection services, PostgresSmsOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString);
         services.AddSingleton<IOptions<PostgresSmsOptions>>(Options.Create(options));
         services.AddPostgresMigrations<SmsDbContext, PostgresSmsOptions>();
         services.AddDbContextFactory<SmsDbContext>(dbOptions => dbOptions.UseNpgsql(

@@ -44,5 +44,13 @@ public static class Constants
 
         /// <summary>Single workbench for CSV + XLSX (tabs). Legacy routes <c>/csv</c> and <c>/xlsx</c> also resolve here.</summary>
         public const string CsvXlsx = "csv-xlsx";
+
+        public const string Jobs = "jobs";
+
+        public const string Schedule = "schedule";
+
+        public const string Comics = "comics";
+
+        public const string IdGenerator = "id-generator";
     }
 }

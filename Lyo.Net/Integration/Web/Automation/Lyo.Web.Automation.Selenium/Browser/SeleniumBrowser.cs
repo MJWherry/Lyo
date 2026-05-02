@@ -69,7 +69,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Creates a browser with optional session execution context (profile paths, temp session).</summary>
     public SeleniumBrowser(SeleniumBrowserOptions options, SeleniumExecutionContext? executionContext, ILogger? logger = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         Options = options;
         ExecutionContext = executionContext ?? SeleniumExecutionContextFactory.Create(options, Guid.NewGuid());
         var baseLogger = logger ?? NullLogger.Instance;
@@ -310,7 +310,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     public void ScrollIntoView(IWebElement element)
     {
         EnsureDriver();
-        ArgumentHelpers.ThrowIfNull(element, nameof(element));
+        ArgumentHelpers.ThrowIfNull(element);
         GetJavaScriptExecutor().ExecuteScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", element);
     }
 
@@ -396,7 +396,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Navigates to the specified URL.</summary>
     public void NavigateTo(string url)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url, nameof(url));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
         EnsureDriver();
         Driver!.Navigate().GoToUrl(url);
         var forLog = BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs);
@@ -492,7 +492,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>One nested wait per <see cref="SeleniumBrowserOptions.SeleniumMaxWaitSeconds" />; no outer polling retries. Returns <see langword="null" /> if not found.</summary>
     public async Task<IWebElement?> GetDescendantElementAsync(IWebElement parent, ElementLocator locator, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(parent, nameof(parent));
+        ArgumentHelpers.ThrowIfNull(parent);
         var by = ElementLocatorMapping.ToBy(locator);
         return await TryGetNestedElementAsync(parent, by, ct).ConfigureAwait(false);
     }
@@ -500,7 +500,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Polls for a descendant of <paramref name="parent" /> (nested <see cref="IWebElement.FindElement(OpenQA.Selenium.By)" /> with retries).</summary>
     public async Task<IWebElement> PollForDescendantElementAsync(IWebElement parent, ElementLocator locator, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(parent, nameof(parent));
+        ArgumentHelpers.ThrowIfNull(parent);
         var by = ElementLocatorMapping.ToBy(locator);
         return await PollForNestedAsync(parent, by, $"{locator.Kind}:{locator.Value}", ct).ConfigureAwait(false);
     }
@@ -508,7 +508,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Resolves a locator chain once (respects frame context if switched). Returns <see langword="null" /> if not found.</summary>
     public async Task<IWebAutomationElement?> GetElementChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         EnsureDriver();
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
@@ -537,7 +537,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Polls for a locator chain from the current document; each attempt runs <see cref="GetElementChainCoreAsync" />.</summary>
     public async Task<IWebAutomationElement> PollForChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         EnsureDriver();
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
@@ -594,7 +594,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Resolves the chain once and returns every match for the final segment. Returns <see langword="null" /> if not found.</summary>
     public async Task<IReadOnlyList<IWebAutomationElement>?> GetElementsChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         EnsureDriver();
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
@@ -624,7 +624,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <summary>Waits until at least one match exists, then returns every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync" />.</summary>
     public async Task<IReadOnlyList<IWebAutomationElement>> PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         EnsureDriver();
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));

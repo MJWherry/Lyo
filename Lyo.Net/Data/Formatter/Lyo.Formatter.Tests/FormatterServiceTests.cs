@@ -25,7 +25,7 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
         _service = new();
     }
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -120,8 +120,8 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     public async Task Format_TemplateFromIOTempFile_Works()
     {
         var templateContent = "Report for {User} at {Date}";
-        var tempPath = await _tempSession.CreateFileAsync(templateContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var contentFromFile = await File.ReadAllTextAsync(tempPath, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempPath = await _tempSession.CreateFileAsync(templateContent, TestContext.Current.CancellationToken);
+        var contentFromFile = await File.ReadAllTextAsync(tempPath, TestContext.Current.CancellationToken);
         var result = _service.Format(contentFromFile, new { User = "Admin", Date = "2026-02-16" });
         Assert.Equal("Report for Admin at 2026-02-16", result);
     }

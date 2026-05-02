@@ -24,7 +24,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
 
     public Task SendKeysAsync(string text, bool clearFirst, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         return Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
@@ -37,7 +37,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
 
     public Task SendKeysRawAsync(string keys, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(keys);
         return Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
@@ -61,7 +61,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
 
     public Task SelectByTextAsync(string text, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         return Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
@@ -71,7 +71,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
 
     public Task SelectByValueAsync(string value, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(value, nameof(value));
+        ArgumentHelpers.ThrowIfNull(value);
         return Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
@@ -96,7 +96,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
     /// <inheritdoc />
     public Task<string?> GetAttributeAsync(string name, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         return Task.Run(
             () => {
                 ct.ThrowIfCancellationRequested();
@@ -115,7 +115,7 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
     /// <inheritdoc />
     public async Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(locator);
         var el = await _browser.PollForDescendantElementAsync(_element, locator, ct).ConfigureAwait(false);
         return new SeleniumWebAutomationElement(_browser, el);
     }

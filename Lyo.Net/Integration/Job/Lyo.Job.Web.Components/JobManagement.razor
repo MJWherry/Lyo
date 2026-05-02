@@ -1,0 +1,23 @@
+@inject IApiClient ApiClient
+
+<MudTabs Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Statistics">
+        <JobStats ApiClient="ApiClient" StatisticsRoute="@StatisticsRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Definitions">
+        <JobDefinitionGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Runs">
+        <JobRunGrid ApiClient="ApiClient" BaseRoute="@BaseRoute"/>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    /// <summary>Base route for job endpoints (e.g. "Job"). Definitions will use BaseRoute/Definition, runs use BaseRoute/Run, etc.</summary>
+    [Parameter, EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
+
+    /// <summary>Optional URL to fetch SpJobStatistic data. When null, the stats tab shows no data.</summary>
+    [Parameter]
+    public string? StatisticsRoute { get; set; }
+}

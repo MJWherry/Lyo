@@ -25,7 +25,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         _tempSession = new(new() { FileExtension = ".xlsx" }, loggerFactory.CreateLogger<IOTempSession>());
     }
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -198,10 +198,10 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         EnsureCodePages();
         var svc = new XlsxService(_logger);
         TestModel[] data = [new() { Id = 3, Name = "Carol", Age = 33 }];
-        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
         Assert.NotNull(bytes);
         using var ms = BytesToStream(bytes);
-        var dict = await svc.ParseXlsxStreamAsDictionaryAsync(ms, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var dict = await svc.ParseXlsxStreamAsDictionaryAsync(ms, TestContext.Current.CancellationToken);
         Assert.Single(dict);
         var row = dict[0].Values.ToList();
         Assert.Contains("Carol", row);
@@ -272,13 +272,13 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         EnsureCodePages();
         var svc = new XlsxService(_logger);
         TestModel[] data = [new() { Id = 1, Name = "Smith, \"John\"", Age = 40 }];
-        var xlsx = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var xlsx = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
         using var inStream = BytesToStream(xlsx);
         using var outStream = new MemoryStream();
-        await svc.ConvertXlsxToCsvAsync(inStream, outStream, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.ConvertXlsxToCsvAsync(inStream, outStream, ct: TestContext.Current.CancellationToken);
         outStream.Position = 0;
         using var reader = new StreamReader(outStream, Encoding.UTF8);
-        var text = await reader.ReadToEndAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var text = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
         Assert.Contains("Name", text);
         Assert.Contains("\"Smith, \"\"John\"\"\"", text);
     }
@@ -307,7 +307,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         TestModel[] a = [new() { Id = 31, Name = "AA", Age = 1 }];
         TestModel[] b = [new() { Id = 32, Name = "BB", Age = 2 }];
         var dataSets = new Dictionary<string, IEnumerable<TestModel>> { { "S1", a }, { "S2", b } };
-        var bytes = await svc.ExportToXlsxBytesAsync(dataSets, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var bytes = await svc.ExportToXlsxBytesAsync(dataSets, TestContext.Current.CancellationToken);
         using var ms = BytesToStream(bytes);
         using var reader = ExcelReaderFactory.CreateReader(ms);
         var config = new ExcelDataSetConfiguration();
@@ -580,9 +580,9 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var dt = new DataTable.Models.DataTable();
         dt.SetHeader(0, "Async").SetHeader(1, "Test");
         dt.AddRow().SetCell(0, "val1").SetCell(1, "val2");
-        var bytes = await svc.ExportToXlsxBytesFromDataTableAsync(dt, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var bytes = await svc.ExportToXlsxBytesFromDataTableAsync(dt, TestContext.Current.CancellationToken);
         Assert.NotNull(bytes);
-        var result = await svc.ParseXlsxBytesAsDataTableAsync(bytes, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await svc.ParseXlsxBytesAsDataTableAsync(bytes, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.Equal("val1", result.ValueOrThrow().Rows[0][0].DisplayValue);
     }
@@ -598,7 +598,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var path2 = _tempSession.GetFilePath("async-batch2.xlsx");
         File.WriteAllBytes(path1, svc.ExportToXlsxBytes(data1));
         File.WriteAllBytes(path2, svc.ExportToXlsxBytes(data2));
-        var results = await svc.BatchParseFilesAsDataTableAsync([path1, path2], ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var results = await svc.BatchParseFilesAsDataTableAsync([path1, path2], ct: TestContext.Current.CancellationToken);
         Assert.Equal(2, results.Count);
         Assert.True(results[0].IsSuccess);
         Assert.True(results[1].IsSuccess);
@@ -614,9 +614,9 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var svc = new XlsxService(_logger);
         var data = Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false); // Cancel immediately
+        await cts.CancelAsync(); // Cancel immediately
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token).ConfigureAwait(false);
+            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token);
         });
     }
 
@@ -628,7 +628,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var data = Enumerable.Range(1, 50000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10)); // Cancel after 10ms
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
-            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token).ConfigureAwait(false);
+            await svc.ExportToXlsxAsync(data, _tempSession.GetFilePath(), ct: cts.Token);
         });
     }
 
@@ -639,9 +639,9 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var svc = new XlsxService(_logger);
         var data = Enumerable.Range(1, 10000).Select(i => new TestModel { Id = i, Name = "N" + i, Age = i }).ToArray();
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
+        await cts.CancelAsync();
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await svc.ExportToXlsxBytesAsync(data, ct: cts.Token).ConfigureAwait(false);
+            await svc.ExportToXlsxBytesAsync(data, ct: cts.Token);
         });
     }
 
@@ -656,9 +656,9 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         };
 
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
+        await cts.CancelAsync();
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await svc.ExportToXlsxAsync(dataSets, _tempSession.GetFilePath(), cts.Token).ConfigureAwait(false);
+            await svc.ExportToXlsxAsync(dataSets, _tempSession.GetFilePath(), cts.Token);
         });
     }
 
@@ -668,12 +668,12 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         EnsureCodePages();
         var svc = new XlsxService(_logger);
         var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
-        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var bytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
         using var ms = BytesToStream(bytes);
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
+        await cts.CancelAsync();
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await svc.ParseXlsxStreamAsDictionaryAsync(ms, cts.Token).ConfigureAwait(false);
+            await svc.ParseXlsxStreamAsDictionaryAsync(ms, cts.Token);
         });
     }
 
@@ -683,13 +683,13 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         EnsureCodePages();
         var svc = new XlsxService(_logger);
         var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
-        var xlsxBytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var xlsxBytes = await svc.ExportToXlsxBytesAsync(data, ct: TestContext.Current.CancellationToken);
         using var inputStream = BytesToStream(xlsxBytes);
         using var outputStream = new MemoryStream();
         using var cts = new CancellationTokenSource();
-        await cts.CancelAsync().ConfigureAwait(false);
+        await cts.CancelAsync();
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await svc.ConvertXlsxToCsvAsync(inputStream, outputStream, ct: cts.Token).ConfigureAwait(false);
+            await svc.ConvertXlsxToCsvAsync(inputStream, outputStream, ct: cts.Token);
         });
     }
 
@@ -700,10 +700,10 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var svc = new XlsxService(_logger);
         var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
         // Try to write to a path where the parent is a file (not a directory) - this will fail
-        var existingFile = await _tempSession.CreateFileAsync(""u8.ToArray(), Guid.NewGuid() + ".tmp", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var existingFile = await _tempSession.CreateFileAsync(""u8.ToArray(), Guid.NewGuid() + ".tmp", TestContext.Current.CancellationToken);
         var invalidPath = Path.Combine(existingFile, "file.xlsx");
         await Assert.ThrowsAnyAsync<Exception>(async () => {
-            await svc.ExportToXlsxAsync(data, invalidPath, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.ExportToXlsxAsync(data, invalidPath, ct: TestContext.Current.CancellationToken);
         });
     }
 
@@ -716,7 +716,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
 
         // Should handle null gracefully (may throw ArgumentNullException or handle it)
         await Assert.ThrowsAnyAsync<Exception>(async () => {
-            await svc.ExportToXlsxAsync(nullData!, _tempSession.GetFilePath(), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await svc.ExportToXlsxAsync(nullData!, _tempSession.GetFilePath(), ct: TestContext.Current.CancellationToken);
         });
     }
 
@@ -727,7 +727,7 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var svc = new XlsxService(_logger);
         var emptyData = Array.Empty<TestModel>();
         var path = _tempSession.GetFilePath();
-        await svc.ExportToXlsxAsync(emptyData, path, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.ExportToXlsxAsync(emptyData, path, ct: TestContext.Current.CancellationToken);
         Assert.True(File.Exists(path));
         Assert.True(new FileInfo(path).Length > 0);
     }
@@ -740,11 +740,11 @@ public class XlsxServiceTests : IDisposable, IAsyncDisposable
         var data = new[] { new TestModel { Id = 1, Name = "Test", Age = 30 } };
         var props = new List<PropertyInfo> { typeof(TestModel).GetProperty(nameof(TestModel.Name))! };
         var path = _tempSession.GetFilePath();
-        await svc.ExportToXlsxAsync(data, props, path, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.ExportToXlsxAsync(data, props, path, ct: TestContext.Current.CancellationToken);
         Assert.True(File.Exists(path));
 
         // Verify content
-        var dict = await svc.ParseXlsxFileAsDictionaryAsync(path, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var dict = await svc.ParseXlsxFileAsDictionaryAsync(path, TestContext.Current.CancellationToken);
         Assert.Single(dict);
         Assert.Equal("Test", dict[0][0]);
     }

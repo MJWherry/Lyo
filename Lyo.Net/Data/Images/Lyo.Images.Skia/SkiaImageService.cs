@@ -1,8 +1,8 @@
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Images.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using static Lyo.Images.ImageErrorCodes;
@@ -164,7 +164,7 @@ public class SkiaImageService : ImageServiceBase
         int? quality = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(watermarkText, nameof(watermarkText));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(watermarkText);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Images.Constants.Metrics.WatermarkDuration)]);
         ct.ThrowIfCancellationRequested();
         var opts = options ?? new WatermarkOptions();
@@ -212,8 +212,8 @@ public class SkiaImageService : ImageServiceBase
     /// <summary>Converts an image to a different format.</summary>
     public new async Task<Result<bool>> ConvertFormatAsync(Stream inputStream, Stream outputStream, ImageFormat targetFormat, int? quality = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         using var timer = Metrics.StartTimer(MetricNames[nameof(Images.Constants.Metrics.ConvertDuration)]);
@@ -279,7 +279,7 @@ public class SkiaImageService : ImageServiceBase
     /// <summary>Gets the dominant color palette of an image.</summary>
     public new async Task<Result<ImagePalette>> GetPaletteAsync(Stream imageStream, int colorCount, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageStream, nameof(imageStream));
+        ArgumentHelpers.ThrowIfNull(imageStream);
         OperationHelpers.ThrowIfNotReadable(imageStream, $"Stream '{nameof(imageStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNotInRange(colorCount, 1, 256, nameof(colorCount));
         using var timer = Metrics.StartTimer(MetricNames[nameof(Images.Constants.Metrics.PaletteDuration)]);
@@ -355,7 +355,7 @@ public class SkiaImageService : ImageServiceBase
     /// <summary>Gets image metadata (dimensions, format, EXIF when present).</summary>
     public new async Task<Result<ImageMetadata>> GetMetadataAsync(Stream imageStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageStream, nameof(imageStream));
+        ArgumentHelpers.ThrowIfNull(imageStream);
         OperationHelpers.ThrowIfNotReadable(imageStream, $"Stream '{nameof(imageStream)}' must be readable.");
         using var timer = Metrics.StartTimer(MetricNames[nameof(Images.Constants.Metrics.MetadataDuration)]);
         ct.ThrowIfCancellationRequested();
@@ -397,8 +397,8 @@ public class SkiaImageService : ImageServiceBase
     /// <summary>Compresses an image (reduces file size while maintaining quality).</summary>
     public new async Task<Result<bool>> CompressAsync(Stream inputStream, Stream outputStream, int quality, ImageFormat? format = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ArgumentHelpers.ThrowIfNotInRange(quality, 1, 100, nameof(quality));

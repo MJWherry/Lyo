@@ -1,10 +1,10 @@
-using Lyo.Common.Enums;
+using System.Collections;
+using Lyo.Result.Enums;
 
-namespace Lyo.Common.Tests;
+namespace Lyo.Result.Tests;
 
 public class ResultExtensionsTests
 {
-
     [Fact]
     public void Then_OnSuccess_ChainsToNext()
     {
@@ -18,7 +18,11 @@ public class ResultExtensionsTests
     {
         var called = false;
         var result = Result<int>.Failure("fail", "CODE")
-            .Then(x => { called = true; return Result<string>.Success("ok"); });
+            .Then(_ => {
+                called = true;
+                return Result<string>.Success("ok");
+            });
+
         Assert.False(called);
         Assert.False(result.IsSuccess);
         Assert.Equal("CODE", result.Errors![0].Code);
@@ -51,10 +55,7 @@ public class ResultExtensionsTests
     [Fact]
     public void GetErrorMessages_ReturnsAllDistinctMessages()
     {
-        var result = Result<int>.Failure([
-            new Error("msg1", "A"),
-            new Error("msg2", "B"),
-        ]);
+        var result = Result<int>.Failure([new("msg1", "A"), new("msg2", "B")]);
         var messages = result.GetErrorMessages();
         Assert.Contains("msg1", messages);
         Assert.Contains("msg2", messages);
@@ -63,11 +64,7 @@ public class ResultExtensionsTests
     [Fact]
     public void GetErrorCodes_ReturnsAllDistinctCodes()
     {
-        var result = Result<int>.Failure([
-            new Error("msg1", "A"),
-            new Error("msg2", "A"),
-            new Error("msg3", "B"),
-        ]);
+        var result = Result<int>.Failure([new("msg1", "A"), new("msg2", "A"), new("msg3", "B")]);
         var codes = result.GetErrorCodes();
         Assert.Equal(2, codes.Count);
     }
@@ -75,15 +72,12 @@ public class ResultExtensionsTests
     [Fact]
     public void GetFirstError_ReturnsFirstError()
     {
-        var result = Result<int>.Failure([new Error("first", "FIRST"), new Error("second", "SECOND")]);
+        var result = Result<int>.Failure([new("first", "FIRST"), new("second", "SECOND")]);
         Assert.Equal("FIRST", result.GetFirstError()?.Code);
     }
 
     [Fact]
-    public void GetFirstError_ReturnsNull_OnSuccess()
-    {
-        Assert.Null(Result<int>.Success(1).GetFirstError());
-    }
+    public void GetFirstError_ReturnsNull_OnSuccess() => Assert.Null(Result<int>.Success(1).GetFirstError());
 
     [Fact]
     public void HasSeverity_ReturnsTrueForMatchingSeverity()
@@ -114,11 +108,7 @@ public class ResultExtensionsTests
     [Fact]
     public void FirstSuccess_ReturnsFirstSuccessfulResult()
     {
-        var results = new[] {
-            Result<int>.Failure("fail", "A"),
-            Result<int>.Success(42),
-            Result<int>.Success(99),
-        };
+        var results = new[] { Result<int>.Failure("fail", "A"), Result<int>.Success(42), Result<int>.Success(99) };
         var first = results.FirstSuccess();
         Assert.True(first.IsSuccess);
         Assert.Equal(42, first.Data);
@@ -127,8 +117,7 @@ public class ResultExtensionsTests
     [Fact]
     public void MapError_OnFailure_TransformsErrors()
     {
-        var result = Result<int>.Failure("original", "CODE")
-            .MapError(errors => [new Error("transformed", "NEW_CODE")]);
+        var result = Result<int>.Failure("original", "CODE").MapError(_ => [new("transformed", "NEW_CODE")]);
         Assert.False(result.IsSuccess);
         Assert.Equal("NEW_CODE", result.Errors![0].Code);
         Assert.Equal("transformed", result.Errors[0].Message);
@@ -138,7 +127,7 @@ public class ResultExtensionsTests
     public void MapError_OnSuccess_ReturnsOriginalUnchanged()
     {
         var original = Result<int>.Success(5);
-        var result = original.MapError(_ => [new Error("never", "NEVER")]);
+        var result = original.MapError(_ => [new("never", "NEVER")]);
         Assert.True(result.IsSuccess);
         Assert.Equal(5, result.Data);
     }
@@ -178,6 +167,6 @@ public class ResultExtensionsTests
         var r2 = Result<string>.Failure("fail", "CODE");
         var combined = r1.Combine(r2);
         Assert.False(combined.IsSuccess);
-        Assert.Single(combined.Errors!);
+        Assert.Single((IEnumerable)combined.Errors!);
     }
 }

@@ -20,8 +20,8 @@ public static class AutomationPlanInterpolation
     /// <summary>Expands only simple <c>{{variableName}}</c> placeholders from string variables (legacy, synchronous).</summary>
     public static string Expand(string template, IReadOnlyDictionary<string, string> strings)
     {
-        ArgumentHelpers.ThrowIfNull(template, nameof(template));
-        ArgumentHelpers.ThrowIfNull(strings, nameof(strings));
+        ArgumentHelpers.ThrowIfNull(template);
+        ArgumentHelpers.ThrowIfNull(strings);
         return SimplePlaceholder.Replace(
             template, m => {
                 var key = m.Groups[1].Value;
@@ -46,8 +46,8 @@ public static class AutomationPlanInterpolation
     /// </remarks>
     public static async Task<string> ExpandAsync(string template, AutomationPlanInterpolationBindings bindings, IFormatterService? formatter, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(template, nameof(template));
-        ArgumentHelpers.ThrowIfNull(bindings, nameof(bindings));
+        ArgumentHelpers.ThrowIfNull(template);
+        ArgumentHelpers.ThrowIfNull(bindings);
         var work = template.IndexOf("{{", StringComparison.Ordinal) >= 0 ? DoubleBracePlaceholder.Replace(template, m => "{" + m.Groups[1].Value.Trim() + "}") : template;
         if (!SingleBraceToken.IsMatch(work))
             return work;

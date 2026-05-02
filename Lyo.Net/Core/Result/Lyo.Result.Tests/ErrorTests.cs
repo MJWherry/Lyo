@@ -1,11 +1,10 @@
-using Lyo.Common.Builders;
-using Lyo.Common.Enums;
+using Lyo.Result.Builders;
+using Lyo.Result.Enums;
 
-namespace Lyo.Common.Tests;
+namespace Lyo.Result.Tests;
 
 public class ErrorTests
 {
-
     [Fact]
     public void Constructor_SetsProperties()
     {
@@ -124,11 +123,7 @@ public class ErrorTests
     [Fact]
     public void ErrorBuilder_WithMetadata_AddsMetadata()
     {
-        var error = ErrorBuilder.Create()
-            .WithMessage("Fail").WithCode("ERR")
-            .WithMetadata("Key", "Value")
-            .WithMetadata("Count", 42)
-            .Build();
+        var error = ErrorBuilder.Create().WithMessage("Fail").WithCode("ERR").WithMetadata("Key", "Value").WithMetadata("Count", 42).Build();
         Assert.NotNull(error.Metadata);
         Assert.Equal("Value", error.Metadata["Key"]);
         Assert.Equal(42, error.Metadata["Count"]);
@@ -164,20 +159,14 @@ public class ErrorTests
     [Fact]
     public void ErrorBuilder_WithType_SetsType()
     {
-        var error = ErrorBuilder.Create()
-            .WithMessage("Not found").WithCode("NF")
-            .WithType(ErrorType.NotFound)
-            .Build();
+        var error = ErrorBuilder.Create().WithMessage("Not found").WithCode("NF").WithType(ErrorType.NotFound).Build();
         Assert.Equal(ErrorType.NotFound, error.Type);
     }
 
     [Fact]
     public void ErrorBuilder_WithSeverity_SetsSeverity()
     {
-        var error = ErrorBuilder.Create()
-            .WithMessage("Warning").WithCode("W")
-            .WithSeverity(ErrorSeverity.Warning)
-            .Build();
+        var error = ErrorBuilder.Create().WithMessage("Warning").WithCode("W").WithSeverity(ErrorSeverity.Warning).Build();
         Assert.Equal(ErrorSeverity.Warning, error.Severity);
     }
 }

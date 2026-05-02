@@ -73,7 +73,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Hello, World!"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.Equal("test.txt", result.OriginalFileName);
@@ -90,8 +90,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Test content for retrieval"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, "retrieve.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "retrieve.txt", ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -100,8 +100,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Metadata test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, "meta.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "meta.txt", ct: TestContext.Current.CancellationToken);
+        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(metadata);
         Assert.Equal(saveResult.Id, metadata.Id);
         Assert.Equal("meta.txt", metadata.OriginalFileName);
@@ -113,8 +113,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Delete me"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var deleted = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var deleted = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.True(deleted);
         var filePath = Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ""));
         Assert.False(File.Exists(filePath));
@@ -126,7 +126,7 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress me!" + new string('B', 1000));
-        var result = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.NotNull(result.CompressionAlgorithm);
         Assert.NotNull(result.CompressedFileSize);
@@ -140,8 +140,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('X', 1000) + "Decompress me!" + new string('Y', 1000));
-        var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -150,13 +150,13 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = "Encrypt this secret message"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsEncrypted);
         Assert.NotNull(result.EncryptedFileSize);
         Assert.NotNull(result.EncryptedFileHash);
@@ -170,13 +170,13 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = "Decrypt this secret"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -185,13 +185,13 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var compressionService = new CompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
         var testData = Encoding.UTF8.GetBytes(new string('Z', 1000) + "Compress and encrypt!" + new string('W', 1000));
-        var result = await service.SaveFileAsync(testData, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.True(result.IsEncrypted);
         Assert.NotNull(result.CompressionAlgorithm);
@@ -206,14 +206,14 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var compressionService = new CompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
         var testData = Encoding.UTF8.GetBytes(new string('M', 1000) + "Round trip test!" + new string('N', 1000));
-        var saveResult = await service.SaveFileAsync(testData, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -221,30 +221,28 @@ public class LocalFileStorageServiceTests : IDisposable
     public async Task SaveFileAsync_NullData_ThrowsArgumentException()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SaveFileAsync((byte[])null!, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SaveFileAsync((byte[])null!, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task SaveFileAsync_EmptyData_ThrowsArgumentException()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<ArgumentException>(() => service.SaveFileAsync([], ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.SaveFileAsync([], ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task SaveFileAsync_CompressWithoutService_ThrowsInvalidOperationException()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), compress: true, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), compress: true, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task SaveFileAsync_EncryptWithoutService_ThrowsInvalidOperationException()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), encrypt: true, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), encrypt: true, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -252,12 +250,11 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), encrypt: true, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SaveFileAsync("test"u8.ToArray(), encrypt: true, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -266,10 +263,10 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId1 = "client-a";
         const string keyId2 = "client-b";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId1, "1", "client-a-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId2, "1", "client-b-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId1, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId2, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId1, "1", "client-a-key", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId2, "1", "client-b-key", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId1, "1", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId2, "1", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
@@ -277,24 +274,24 @@ public class LocalFileStorageServiceTests : IDisposable
         var clientBData = "Client B secret data"u8.ToArray();
 
         // Encrypt with client A's key
-        var resultA = await service.SaveFileAsync(clientAData, "client-a-file.txt", encrypt: true, keyId: keyId1, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var resultA = await service.SaveFileAsync(clientAData, "client-a-file.txt", encrypt: true, keyId: keyId1, ct: TestContext.Current.CancellationToken);
         Assert.True(resultA.IsEncrypted);
         Assert.Equal(keyId1, resultA.DataEncryptionKeyId);
 
         // Encrypt with client B's key
-        var resultB = await service.SaveFileAsync(clientBData, "client-b-file.txt", encrypt: true, keyId: keyId2, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var resultB = await service.SaveFileAsync(clientBData, "client-b-file.txt", encrypt: true, keyId: keyId2, ct: TestContext.Current.CancellationToken);
         Assert.True(resultB.IsEncrypted);
         Assert.Equal(keyId2, resultB.DataEncryptionKeyId);
 
         // Verify both can be decrypted correctly
-        var decryptedA = await service.GetFileAsync(resultA.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedB = await service.GetFileAsync(resultB.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedA = await service.GetFileAsync(resultA.Id, TestContext.Current.CancellationToken);
+        var decryptedB = await service.GetFileAsync(resultB.Id, TestContext.Current.CancellationToken);
         Assert.Equal(clientAData, decryptedA);
         Assert.Equal(clientBData, decryptedB);
 
         // Verify metadata stores correct keyId
-        var metadataA = await service.GetMetadataAsync(resultA.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadataB = await service.GetMetadataAsync(resultB.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadataA = await service.GetMetadataAsync(resultA.Id, TestContext.Current.CancellationToken);
+        var metadataB = await service.GetMetadataAsync(resultB.Id, TestContext.Current.CancellationToken);
         Assert.Equal(keyId1, metadataA.DataEncryptionKeyId);
         Assert.Equal(keyId2, metadataB.DataEncryptionKeyId);
     }
@@ -304,7 +301,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var nonExistentId = Guid.NewGuid();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -312,7 +309,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var nonExistentId = Guid.NewGuid();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetMetadataAsync(nonExistentId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetMetadataAsync(nonExistentId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -322,7 +319,7 @@ public class LocalFileStorageServiceTests : IDisposable
         FileSavedResult? eventArgs = null;
         service.FileSaved += (_, args) => eventArgs = args;
         var testData = "Event test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "event.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "event.txt", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(result.Id, eventArgs.FileId);
         Assert.Equal(testData.Length, eventArgs.OriginalSize);
@@ -337,8 +334,8 @@ public class LocalFileStorageServiceTests : IDisposable
         FileRetrievedResult? eventArgs = null;
         service.FileRetrieved += (_, args) => eventArgs = args;
         var testData = "Retrieve event test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(saveResult.Id, eventArgs.FileId);
         Assert.Equal(testData.Length, eventArgs.FileSize);
@@ -351,8 +348,8 @@ public class LocalFileStorageServiceTests : IDisposable
         FileDeletedResult? eventArgs = null;
         service.FileDeleted += (_, args) => eventArgs = args;
         var testData = "Delete event test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(saveResult.Id, eventArgs.FileId);
         Assert.True(eventArgs.Success);
@@ -365,8 +362,8 @@ public class LocalFileStorageServiceTests : IDisposable
         FileMetadataRetrievedResult? eventArgs = null;
         service.FileMetadataRetrieved += (_, args) => eventArgs = args;
         var testData = "Metadata event test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(saveResult.Id, eventArgs.FileId);
         Assert.NotNull(eventArgs.FileStoreResult);
@@ -377,7 +374,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "No filename test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result.OriginalFileName);
         Assert.Equal(result.Id.ToString(), result.OriginalFileName);
     }
@@ -388,12 +385,11 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress test");
-        var saveResult = await service.SaveFileAsync(testData, compress: true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, compress: true, ct: TestContext.Current.CancellationToken);
 
         // Create a new service without compression service
         using var serviceWithoutCompression = CreateService();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => serviceWithoutCompression.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => serviceWithoutCompression.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -401,17 +397,16 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = "Encrypt test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Create a new service without encryption service
         using var serviceWithoutEncryption = CreateService();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => serviceWithoutEncryption.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => serviceWithoutEncryption.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -419,7 +414,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var nonExistentId = Guid.NewGuid();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -427,7 +422,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnDeleteNotFound: false);
         var nonExistentId = Guid.NewGuid();
-        var result = await service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken);
         Assert.False(result);
     }
 
@@ -436,7 +431,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnFileNotFound: true);
         var nonExistentId = Guid.NewGuid();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -444,7 +439,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnFileNotFound: false);
         var nonExistentId = Guid.NewGuid();
-        var result = await service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GetFileAsync(nonExistentId, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Empty(result);
     }
@@ -454,8 +449,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnDeleteNotFound: false);
         var testData = "Test file for delete"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.True(result);
     }
 
@@ -464,8 +459,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnFileNotFound: false);
         var testData = "Test file for get"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, result);
     }
 
@@ -475,8 +470,8 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService();
         var testData1 = "File 1"u8.ToArray();
         var testData2 = "File 2"u8.ToArray();
-        var result1 = await service.SaveFileAsync(testData1, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result2 = await service.SaveFileAsync(testData2, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result1 = await service.SaveFileAsync(testData1, ct: TestContext.Current.CancellationToken);
+        var result2 = await service.SaveFileAsync(testData2, ct: TestContext.Current.CancellationToken);
         var filePath1 = Path.Combine(_tempSession.SessionDirectory, GetSubPath(result1.Id, ""));
         var filePath2 = Path.Combine(_tempSession.SessionDirectory, GetSubPath(result2.Id, ""));
         Assert.True(File.Exists(filePath1));
@@ -492,15 +487,15 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Hash test"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
 
         // Manually corrupt the file
         var filePath = Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ""));
         var corruptedData = new byte[] { 0xFF, 0xFF, 0xFF };
-        await File.WriteAllBytesAsync(filePath, corruptedData, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await File.WriteAllBytesAsync(filePath, corruptedData, TestContext.Current.CancellationToken);
 
         // Should still retrieve (hash mismatch only logs warning, doesn't throw)
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
 
         // The retrieved data will be the corrupted data
         Assert.Equal(corruptedData, retrievedData);
@@ -512,10 +507,10 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService();
         var largeData = new byte[1024 * 1024]; // 1MB
         new Random().NextBytes(largeData);
-        var result = await service.SaveFileAsync(largeData, "large.bin", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(largeData, "large.bin", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(largeData.Length, result.OriginalFileSize);
-        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken);
         Assert.Equal(largeData, retrievedData);
     }
 
@@ -529,11 +524,11 @@ public class LocalFileStorageServiceTests : IDisposable
         for (var i = 0; i < largeData.Length; i++)
             largeData[i] = (byte)(i % 256);
 
-        var result = await service.SaveFileAsync(largeData, "large-compressed.bin", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(largeData, "large-compressed.bin", true, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.NotNull(result.CompressedFileSize);
         Assert.True(result.CompressedFileSize < result.OriginalFileSize);
-        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken);
         Assert.Equal(largeData, retrievedData);
     }
 
@@ -543,9 +538,9 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         // Setup key store with both key versions
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "test-kek-key-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "test-kek-key-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Setup encryption service with key version 1
         var aesGcmService1 = new AesGcmEncryptionService(keyStore);
@@ -554,49 +549,47 @@ public class LocalFileStorageServiceTests : IDisposable
         var originalData = "Secret data that needs key rotation"u8.ToArray();
 
         // Step 1: Encrypt file with key version 1
-        var saveResult1 = await service1.SaveFileAsync(originalData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult1 = await service1.SaveFileAsync(originalData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(saveResult1.IsEncrypted);
         Assert.Equal(keyId, saveResult1.DataEncryptionKeyId);
         Assert.Equal("1", saveResult1.DataEncryptionKeyVersion);
         Assert.NotNull(saveResult1.EncryptedDataEncryptionKey);
 
         // Step 2: Verify we can decrypt with version 1
-        var decryptedData1 = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedData1 = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedData1);
 
         // Step 3: Rotate to key version 2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmService2 = new AesGcmEncryptionService(keyStore);
         var encryptionService2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService2, keyStore);
         using var service2 = CreateService(encryptionService: encryptionService2);
 
         // Step 4: Re-encrypt the file with version 2
         // First decrypt with version 1, then encrypt with version 2
-        var decryptedData = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedData = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
 
         // Delete the old file
-        await service1.DeleteFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service1.DeleteFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
 
         // Save with version 2
-        var saveResult2 = await service2.SaveFileAsync(decryptedData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult2 = await service2.SaveFileAsync(decryptedData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(saveResult2.IsEncrypted);
         Assert.Equal(keyId, saveResult2.DataEncryptionKeyId);
         Assert.Equal("2", saveResult2.DataEncryptionKeyVersion);
         Assert.NotNull(saveResult2.EncryptedDataEncryptionKey);
 
         // Step 5: Verify we can decrypt with version 2
-        var decryptedData2 = await service2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedData2 = await service2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedData2);
 
         // Step 6: Verify version 1 service can still decrypt version 1 files using key store
         // Create a new file with version 1 to test
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult1New = await service1.SaveFileAsync(originalData, "secret-v1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var saveResult1New = await service1.SaveFileAsync(originalData, "secret-v1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResult1New.DataEncryptionKeyId);
         Assert.Equal("1", saveResult1New.DataEncryptionKeyVersion);
-        var decryptedV1 = await service1.GetFileAsync(saveResult1New.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1 = await service1.GetFileAsync(saveResult1New.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1);
     }
 
@@ -607,9 +600,9 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         var kekKey = "test-kek-key-rotation";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", kekKey, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", kekKey, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", kekKey, TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", kekKey, TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Setup encryption service with key version 1
         var aesGcmService1 = new AesGcmEncryptionService(keyStore);
@@ -618,41 +611,37 @@ public class LocalFileStorageServiceTests : IDisposable
         var originalData = "Data encrypted with version 1"u8.ToArray();
 
         // Encrypt with version 1
-        var saveResult1 = await service1.SaveFileAsync(originalData, "v1-encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResult1 = await service1.SaveFileAsync(originalData, "v1-encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResult1.DataEncryptionKeyId);
         Assert.Equal("1", saveResult1.DataEncryptionKeyVersion);
 
         // Decrypt with version 1
-        var decrypted1 = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted1 = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decrypted1);
 
         // Rotate to version 2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmService2 = new AesGcmEncryptionService(keyStore);
         var encryptionService2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService2, keyStore);
         using var service2 = CreateService(encryptionService: encryptionService2);
 
         // Encrypt new file with version 2
-        var saveResult2 = await service2.SaveFileAsync(originalData, "v2-encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResult2 = await service2.SaveFileAsync(originalData, "v2-encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResult2.DataEncryptionKeyId);
         Assert.Equal("2", saveResult2.DataEncryptionKeyVersion);
 
         // Decrypt version 2 file with version 2 service
-        var decrypted2 = await service2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted2 = await service2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decrypted2);
 
         // Key test: Decrypt version 1 file with version 2 service (using key store)
         // The key store allows us to retrieve the version 1 key even though current version is 2
-        var decryptedV1WithV2 = await service2.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1WithV2 = await service2.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1WithV2);
 
         // Also verify version 1 service can decrypt version 2 files (same KEK, different version)
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedV2WithV1 = await service1.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var decryptedV2WithV1 = await service1.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV2WithV1);
     }
 
@@ -661,26 +650,26 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "key-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "key-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "3", "key-v3", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "key-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "key-v2", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "3", "key-v3", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
 
         // Verify we can get keys by version
-        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.True(await keyStore.HasKeyAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.True(await keyStore.HasKeyAsync(keyId, "3", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.False(await keyStore.HasKeyAsync(keyId, "4", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "3", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Null(await keyStore.GetKeyAsync(keyId, "4", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.NotNull(await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
+        Assert.True(await keyStore.HasKeyAsync(keyId, "2", TestContext.Current.CancellationToken));
+        Assert.True(await keyStore.HasKeyAsync(keyId, "3", TestContext.Current.CancellationToken));
+        Assert.False(await keyStore.HasKeyAsync(keyId, "4", TestContext.Current.CancellationToken));
+        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
+        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken));
+        Assert.NotNull(await keyStore.GetKeyAsync(keyId, "3", TestContext.Current.CancellationToken));
+        Assert.Null(await keyStore.GetKeyAsync(keyId, "4", TestContext.Current.CancellationToken));
+        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken));
+        Assert.NotNull(await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken));
 
         // Verify current key matches version 2
-        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var currentKey = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken);
+        var currentKey = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken);
         Assert.Equal(v2Key, currentKey);
     }
 
@@ -690,17 +679,16 @@ public class LocalFileStorageServiceTests : IDisposable
         // Arrange: Setup keystore with both v1 and v2 keys
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1-password", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2-password", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Step 1: Encrypt file with keystore target v1
         var aesGcmServiceV1 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV1 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV1, keyStore);
         using var storageServiceV1 = CreateService(encryptionService: encryptionServiceV1);
         var originalData = "Secret data encrypted with v1"u8.ToArray();
-        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Verify file was encrypted with v1
         Assert.True(saveResult.IsEncrypted);
@@ -709,23 +697,23 @@ public class LocalFileStorageServiceTests : IDisposable
         Assert.NotNull(saveResult.EncryptedDataEncryptionKey);
 
         // Step 2: Create new storage service, but target v2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmServiceV2 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV2, keyStore);
         using var storageServiceV2 = CreateService(encryptionService: encryptionServiceV2);
 
         // Verify current version is v2
-        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken));
 
         // Step 3: Get file above which should be v1 key even though current v is v2
-        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
 
         // Step 4: File should be decrypted successfully and correct key used
         Assert.Equal(originalData, retrievedData);
         Assert.Equal("Secret data encrypted with v1", Encoding.UTF8.GetString(retrievedData));
 
         // Verify the metadata still shows v1
-        var metadata = await storageServiceV2.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await storageServiceV2.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", metadata.DataEncryptionKeyVersion);
     }
 
@@ -735,46 +723,44 @@ public class LocalFileStorageServiceTests : IDisposable
         // Arrange: Setup keystore with both v1 and v2 keys (different passwords)
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "v1-secret-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "v2-different-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "v1-secret-password", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "v2-different-password", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Step 1: Encrypt file with keystore target v1
         var aesGcmServiceV1 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV1 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV1, keyStore);
         using var storageServiceV1 = CreateService(encryptionService: encryptionServiceV1);
         var originalData = "Data encrypted with version 1 key"u8.ToArray();
-        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResult.DataEncryptionKeyId);
         Assert.Equal("1", saveResult.DataEncryptionKeyVersion);
 
         // Verify v1 key is different from v2 key
-        var v1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var v1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken);
         Assert.NotNull(v1Key);
         Assert.NotNull(v2Key);
         Assert.NotEqual(v1Key, v2Key);
 
         // Step 2: Create new storage service, but target v2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmServiceV2 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV2, keyStore);
 
         // Verify current version is v2
-        Assert.Equal(v2Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal(v2Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken));
         using var storageServiceV2 = CreateService(encryptionService: encryptionServiceV2);
 
         // Step 3: Get file above which should be v1 key even though current v is v2
-        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
 
         // Step 4: File should be decrypted successfully and correct key (v1) used
         Assert.Equal(originalData, retrievedData);
 
         // Verify that v1 key was used (not v2 key)
         // If v2 key was used, decryption would fail or produce wrong data
-        var metadata = await storageServiceV2.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await storageServiceV2.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", metadata.DataEncryptionKeyVersion);
     }
 
@@ -784,9 +770,9 @@ public class LocalFileStorageServiceTests : IDisposable
         // Arrange: Setup keystore with both v1 and v2 keys
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Step 1: Encrypt multiple files with v1
         var aesGcmServiceV1 = new AesGcmEncryptionService(keyStore);
@@ -795,21 +781,21 @@ public class LocalFileStorageServiceTests : IDisposable
         var data1 = "File 1 encrypted with v1"u8.ToArray();
         var data2 = "File 2 encrypted with v1"u8.ToArray();
         var data3 = "File 3 encrypted with v1"u8.ToArray();
-        var saveResult1 = await storageServiceV1.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult2 = await storageServiceV1.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult3 = await storageServiceV1.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult1 = await storageServiceV1.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var saveResult2 = await storageServiceV1.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var saveResult3 = await storageServiceV1.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.All([saveResult1, saveResult2, saveResult3], result => Assert.Equal("1", result.DataEncryptionKeyVersion));
 
         // Step 2: Create new storage service, but target v2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmServiceV2 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV2, keyStore);
         using var storageServiceV2 = CreateService(encryptionService: encryptionServiceV2);
 
         // Step 3: Get all files - they should all use v1 key even though current v is v2
-        var retrieved1 = await storageServiceV2.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved2 = await storageServiceV2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrieved3 = await storageServiceV2.GetFileAsync(saveResult3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrieved1 = await storageServiceV2.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
+        var retrieved2 = await storageServiceV2.GetFileAsync(saveResult2.Id, TestContext.Current.CancellationToken);
+        var retrieved3 = await storageServiceV2.GetFileAsync(saveResult3.Id, TestContext.Current.CancellationToken);
 
         // Step 4: All files should be decrypted successfully with correct keys
         Assert.Equal(data1, retrieved1);
@@ -817,9 +803,9 @@ public class LocalFileStorageServiceTests : IDisposable
         Assert.Equal(data3, retrieved3);
 
         // Verify metadata shows v1 for all
-        var metadata1 = await storageServiceV2.GetMetadataAsync(saveResult1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata2 = await storageServiceV2.GetMetadataAsync(saveResult2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata3 = await storageServiceV2.GetMetadataAsync(saveResult3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata1 = await storageServiceV2.GetMetadataAsync(saveResult1.Id, TestContext.Current.CancellationToken);
+        var metadata2 = await storageServiceV2.GetMetadataAsync(saveResult2.Id, TestContext.Current.CancellationToken);
+        var metadata3 = await storageServiceV2.GetMetadataAsync(saveResult3.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", metadata1.DataEncryptionKeyVersion);
         Assert.Equal("1", metadata2.DataEncryptionKeyVersion);
         Assert.Equal("1", metadata3.DataEncryptionKeyVersion);
@@ -831,48 +817,44 @@ public class LocalFileStorageServiceTests : IDisposable
         // Arrange: Setup keystore with both v1 and v2 keys
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Step 1: Encrypt file with keystore target v1
         var aesGcmServiceV1 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV1 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV1, keyStore);
         using var storageServiceV1 = CreateService(encryptionService: encryptionServiceV1);
         var v1Data = "Data encrypted with v1"u8.ToArray();
-        var v1SaveResult = await storageServiceV1.SaveFileAsync(v1Data, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var v1SaveResult = await storageServiceV1.SaveFileAsync(v1Data, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, v1SaveResult.DataEncryptionKeyId);
         Assert.Equal("1", v1SaveResult.DataEncryptionKeyVersion);
 
         // Step 2: Create new storage service, but target v2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmServiceV2 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV2, keyStore);
         using var storageServiceV2 = CreateService(encryptionService: encryptionServiceV2);
 
         // Step 3: Get v1 file - should use v1 key
-        var retrievedV1 = await storageServiceV2.GetFileAsync(v1SaveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedV1 = await storageServiceV2.GetFileAsync(v1SaveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(v1Data, retrievedV1);
 
         // Step 4: Encrypt new file with v2 (current version)
         var v2Data = "Data encrypted with v2"u8.ToArray();
-        var v2SaveResult = await storageServiceV2.SaveFileAsync(v2Data, "v2-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var v2SaveResult = await storageServiceV2.SaveFileAsync(v2Data, "v2-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, v2SaveResult.DataEncryptionKeyId);
         Assert.Equal("2", v2SaveResult.DataEncryptionKeyVersion);
 
         // Step 5: Verify both files can be decrypted correctly
-        var retrievedV1Again = await storageServiceV2.GetFileAsync(v1SaveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedV2 = await storageServiceV2.GetFileAsync(v2SaveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedV1Again = await storageServiceV2.GetFileAsync(v1SaveResult.Id, TestContext.Current.CancellationToken);
+        var retrievedV2 = await storageServiceV2.GetFileAsync(v2SaveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(v1Data, retrievedV1Again);
         Assert.Equal(v2Data, retrievedV2);
 
         // Verify metadata shows correct versions
-        var v1Metadata = await storageServiceV2.GetMetadataAsync(v1SaveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var v2Metadata = await storageServiceV2.GetMetadataAsync(v2SaveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var v1Metadata = await storageServiceV2.GetMetadataAsync(v1SaveResult.Id, TestContext.Current.CancellationToken);
+        var v2Metadata = await storageServiceV2.GetMetadataAsync(v2SaveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", v1Metadata.DataEncryptionKeyVersion);
         Assert.Equal("2", v2Metadata.DataEncryptionKeyVersion);
     }
@@ -883,43 +865,41 @@ public class LocalFileStorageServiceTests : IDisposable
         // Arrange: Setup keystore with both v1 and v2 keys
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "v1-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "v2-password", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "v1-password", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "v2-password", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Store v1 key for later verification
-        var v1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var v1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var v2Key = await keyStore.GetKeyAsync(keyId, "2", TestContext.Current.CancellationToken);
 
         // Step 1: Encrypt file with keystore target v1
         var aesGcmServiceV1 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV1 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV1, keyStore);
         using var storageServiceV1 = CreateService(encryptionService: encryptionServiceV1);
         var originalData = "Test data for key version verification"u8.ToArray();
-        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "test.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResult = await storageServiceV1.SaveFileAsync(originalData, "test.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResult.DataEncryptionKeyId);
         Assert.Equal("1", saveResult.DataEncryptionKeyVersion);
 
         // Step 2: Create new storage service, but target v2
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var aesGcmServiceV2 = new AesGcmEncryptionService(keyStore);
         var encryptionServiceV2 = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmServiceV2, keyStore);
         using var storageServiceV2 = CreateService(encryptionService: encryptionServiceV2);
 
         // Verify current key is v2
-        Assert.Equal(v2Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.NotEqual(v1Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal(v2Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken));
+        Assert.NotEqual(v1Key, await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken));
 
         // Step 3: Get file - should use v1 key from keystore
-        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await storageServiceV2.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
 
         // Step 4: File should be decrypted successfully using v1 key
         Assert.Equal(originalData, retrievedData);
 
         // Verify that keystore can still retrieve v1 key by version
-        var retrievedV1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedV1Key = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken);
         Assert.Equal(v1Key, retrievedV1Key);
         Assert.NotEqual(v2Key, retrievedV1Key);
     }
@@ -940,13 +920,13 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        var expectedVersion = await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var expectedVersion = await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var dekService = CreateEncryptionService(dekServiceType, keyStore);
         var kekService = CreateEncryptionService(kekServiceType, keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = Encoding.UTF8.GetBytes($"Secret message with {dekServiceType} DEK and {kekServiceType} KEK");
-        var result = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsEncrypted);
         Assert.NotNull(result.EncryptedFileSize);
         Assert.NotNull(result.EncryptedFileHash);
@@ -964,14 +944,14 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var dekService = CreateEncryptionService(dekServiceType, keyStore);
         var kekService = CreateEncryptionService(kekServiceType, keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = Encoding.UTF8.GetBytes($"Decrypt test with {dekServiceType} DEK and {kekServiceType} KEK");
-        var saveResult = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -986,8 +966,8 @@ public class LocalFileStorageServiceTests : IDisposable
         // Setup key store with version 1
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Create service with encryption combo
         var dekService = CreateEncryptionService(dekType, keyStore);
@@ -995,18 +975,18 @@ public class LocalFileStorageServiceTests : IDisposable
         var v1EncryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV1 = CreateService(encryptionService: v1EncryptionService);
         var originalData = Encoding.UTF8.GetBytes($"Data encrypted with v1 ({dekType} DEK, {kekType} KEK)");
-        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "v1-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(saveResultV1.IsEncrypted);
         Assert.Equal(keyId, saveResultV1.DataEncryptionKeyId);
         Assert.Equal("1", saveResultV1.DataEncryptionKeyVersion);
 
         // Verify we can decrypt with v1
-        var decryptedV1 = await serviceV1.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1 = await serviceV1.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1);
 
         // Add new key version 2 (different KEK bytes, same KEK service type)
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
 
         // Create service with v2 (same services, different KEK bytes)
         var v2EncryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
@@ -1014,19 +994,19 @@ public class LocalFileStorageServiceTests : IDisposable
 
         // Save new file with v2
         var newData = Encoding.UTF8.GetBytes($"Data encrypted with v2 ({dekType} DEK, {kekType} KEK)");
-        var saveResultV2 = await serviceV2.SaveFileAsync(newData, "v2-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResultV2 = await serviceV2.SaveFileAsync(newData, "v2-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(saveResultV2.IsEncrypted);
         Assert.Equal(keyId, saveResultV2.DataEncryptionKeyId);
         Assert.Equal("2", saveResultV2.DataEncryptionKeyVersion);
 
         // Verify both files can be decrypted with their respective services
-        var decryptedV1Again = await serviceV1.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedV2 = await serviceV2.GetFileAsync(saveResultV2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1Again = await serviceV1.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
+        var decryptedV2 = await serviceV2.GetFileAsync(saveResultV2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1Again);
         Assert.Equal(newData, decryptedV2);
 
         // Verify v2 service can decrypt v1 file (using key store, same services)
-        var decryptedV1WithV2 = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1WithV2 = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1WithV2);
     }
 
@@ -1039,9 +1019,9 @@ public class LocalFileStorageServiceTests : IDisposable
         // Setup key store with both versions (different KEK bytes, same KEK service type)
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Create service with v1 encryption combo
         var dekService = CreateEncryptionService(dekType, keyStore);
@@ -1051,23 +1031,21 @@ public class LocalFileStorageServiceTests : IDisposable
 
         // Encrypt file with v1
         var originalData = Encoding.UTF8.GetBytes($"Old data encrypted with v1 ({dekType} DEK, {kekType} KEK)");
-        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "old-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "old-file.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResultV1.DataEncryptionKeyId);
         Assert.Equal("1", saveResultV1.DataEncryptionKeyVersion);
 
         // Switch to v2 with different KEK bytes (but same KEK service type)
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var v2EncryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV2 = CreateService(encryptionService: v2EncryptionService);
 
         // Verify v2 service can decrypt v1 file (using key store to get v1 key, same services)
-        var decryptedWithV2 = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedWithV2 = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedWithV2);
 
         // Verify metadata shows v1
-        var metadata = await serviceV2.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await serviceV2.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", metadata.DataEncryptionKeyVersion);
     }
 
@@ -1082,9 +1060,9 @@ public class LocalFileStorageServiceTests : IDisposable
         // Setup key store with both versions
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
 
         // Create service with encryption combo
         var dekService = CreateEncryptionService(dekType, keyStore);
@@ -1094,37 +1072,33 @@ public class LocalFileStorageServiceTests : IDisposable
 
         // Encrypt file with v1
         var originalData = Encoding.UTF8.GetBytes($"Data to re-encrypt with v1 ({dekType} DEK, {kekType} KEK)");
-        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "reencrypt.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResultV1 = await serviceV1.SaveFileAsync(originalData, "reencrypt.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResultV1.DataEncryptionKeyId);
         Assert.Equal("1", saveResultV1.DataEncryptionKeyVersion);
 
         // Switch to v2 with different KEK bytes (but same KEK service type)
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var v2EncryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV2 = CreateService(encryptionService: v2EncryptionService);
 
         // Decrypt with v2 service (uses v1 key from key store, same services)
-        var decryptedData = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedData = await serviceV2.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedData);
 
         // Delete old file
-        await serviceV2.DeleteFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await serviceV2.DeleteFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
 
         // Re-encrypt with v2 (different KEK bytes, same services)
-        var saveResultV2 = await serviceV2.SaveFileAsync(decryptedData, "reencrypt.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResultV2 = await serviceV2.SaveFileAsync(decryptedData, "reencrypt.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveResultV2.DataEncryptionKeyId);
         Assert.Equal("2", saveResultV2.DataEncryptionKeyVersion);
 
         // Verify new file decrypts correctly
-        var decryptedV2 = await serviceV2.GetFileAsync(saveResultV2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV2 = await serviceV2.GetFileAsync(saveResultV2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV2);
 
         // Verify metadata shows v2
-        var metadata = await serviceV2.GetMetadataAsync(saveResultV2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await serviceV2.GetMetadataAsync(saveResultV2.Id, TestContext.Current.CancellationToken);
         Assert.Equal("2", metadata.DataEncryptionKeyVersion);
     }
 
@@ -1134,50 +1108,50 @@ public class LocalFileStorageServiceTests : IDisposable
         // Note: Using same DEK and KEK services for all versions - only KEK bytes (key version) changes
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "3", "kek-v3", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "3", "kek-v3", TestContext.Current.CancellationToken);
 
         // V1: AesGcm DEK + AesGcm KEK
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
         var dekService = new AesGcmEncryptionService(keyStore);
         var kekService = new AesGcmEncryptionService(keyStore);
         var v1Encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV1 = CreateService(encryptionService: v1Encryption);
         var data1 = "File encrypted with v1 (AesGcm DEK + AesGcm KEK)"u8.ToArray();
-        var save1 = await serviceV1.SaveFileAsync(data1, "v1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save1 = await serviceV1.SaveFileAsync(data1, "v1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, save1.DataEncryptionKeyId);
         Assert.Equal("1", save1.DataEncryptionKeyVersion);
 
         // V2: Same services, different KEK bytes
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var v2Encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV2 = CreateService(encryptionService: v2Encryption);
         var data2 = "File encrypted with v2 (AesGcm DEK + AesGcm KEK, different KEK bytes)"u8.ToArray();
-        var save2 = await serviceV2.SaveFileAsync(data2, "v2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save2 = await serviceV2.SaveFileAsync(data2, "v2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, save2.DataEncryptionKeyId);
         Assert.Equal("2", save2.DataEncryptionKeyVersion);
 
         // V3: Same services, different KEK bytes
-        await keyStore.SetCurrentVersionAsync(keyId, "3", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "3", TestContext.Current.CancellationToken);
         var v3Encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV3 = CreateService(encryptionService: v3Encryption);
         var data3 = "File encrypted with v3 (AesGcm DEK + AesGcm KEK, different KEK bytes)"u8.ToArray();
-        var save3 = await serviceV3.SaveFileAsync(data3, "v3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save3 = await serviceV3.SaveFileAsync(data3, "v3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, save3.DataEncryptionKeyId);
         Assert.Equal("3", save3.DataEncryptionKeyVersion);
 
         // Verify all files can be decrypted with their respective services
-        var dec1 = await serviceV1.GetFileAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var dec2 = await serviceV2.GetFileAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var dec3 = await serviceV3.GetFileAsync(save3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var dec1 = await serviceV1.GetFileAsync(save1.Id, TestContext.Current.CancellationToken);
+        var dec2 = await serviceV2.GetFileAsync(save2.Id, TestContext.Current.CancellationToken);
+        var dec3 = await serviceV3.GetFileAsync(save3.Id, TestContext.Current.CancellationToken);
         Assert.Equal(data1, dec1);
         Assert.Equal(data2, dec2);
         Assert.Equal(data3, dec3);
 
         // Verify v3 service can decrypt v1 and v2 files (using key store, same services)
-        var dec1WithV3 = await serviceV3.GetFileAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var dec2WithV3 = await serviceV3.GetFileAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var dec1WithV3 = await serviceV3.GetFileAsync(save1.Id, TestContext.Current.CancellationToken);
+        var dec2WithV3 = await serviceV3.GetFileAsync(save2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(data1, dec1WithV3);
         Assert.Equal(data2, dec2WithV3);
     }
@@ -1188,31 +1162,31 @@ public class LocalFileStorageServiceTests : IDisposable
         // Note: Using same DEK and KEK services - only KEK bytes (key version) changes
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.AddKeyFromStringAsync(keyId, "2", "kek-v2", TestContext.Current.CancellationToken);
 
         // V1: AesGcm DEK + AesGcm KEK
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
         var dekService = new AesGcmEncryptionService(keyStore);
         var kekService = new AesGcmEncryptionService(keyStore);
         var v1Encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV1 = CreateService(encryptionService: v1Encryption);
         var originalData = "Cross-version decryption test"u8.ToArray();
-        var saveV1 = await serviceV1.SaveFileAsync(originalData, "cross.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveV1 = await serviceV1.SaveFileAsync(originalData, "cross.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(keyId, saveV1.DataEncryptionKeyId);
         Assert.Equal("1", saveV1.DataEncryptionKeyVersion);
 
         // V2: Same services, different KEK bytes
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
         var v2Encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         using var serviceV2 = CreateService(encryptionService: v2Encryption);
 
         // V2 service should be able to decrypt V1 file (uses key store to get v1 key, same services)
-        var decrypted = await serviceV2.GetFileAsync(saveV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted = await serviceV2.GetFileAsync(saveV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decrypted);
 
         // V1 service should be able to decrypt V1 file
-        var decryptedV1 = await serviceV1.GetFileAsync(saveV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decryptedV1 = await serviceV1.GetFileAsync(saveV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decryptedV1);
     }
 
@@ -1227,28 +1201,28 @@ public class LocalFileStorageServiceTests : IDisposable
 
         // Encrypt file with version 1
         var originalData = "Data to migrate"u8.ToArray();
-        var saveResultV1 = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResultV1 = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal("1", saveResultV1.DataEncryptionKeyVersion);
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.Equal(version2, await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        Assert.Equal(version2, await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken));
 
         // Migrate DEKs
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(1, migrationResult.TotalFilesFound);
         Assert.Equal(1, migrationResult.SuccessfullyMigrated);
         Assert.Equal(0, migrationResult.Failed);
 
         // Verify metadata was updated
-        var metadata = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, metadata.DataEncryptionKeyVersion);
         Assert.Equal(keyId, metadata.DataEncryptionKeyId);
         Assert.NotEqual(saveResultV1.EncryptedDataEncryptionKey, metadata.EncryptedDataEncryptionKey);
 
         // Verify file can still be decrypted
-        var decrypted = await service.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted = await service.GetFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decrypted);
     }
 
@@ -1265,31 +1239,31 @@ public class LocalFileStorageServiceTests : IDisposable
         var data1 = "File 1"u8.ToArray();
         var data2 = "File 2"u8.ToArray();
         var data3 = "File 3"u8.ToArray();
-        var save1 = await service.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save2 = await service.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save3 = await service.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save1 = await service.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var save2 = await service.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var save3 = await service.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.All([save1, save2, save3], r => Assert.Equal("1", r.DataEncryptionKeyVersion));
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
 
         // Migrate all files
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(3, migrationResult.TotalFilesFound);
         Assert.Equal(3, migrationResult.SuccessfullyMigrated);
         Assert.Equal(0, migrationResult.Failed);
 
         // Verify all files were migrated
-        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata3 = await service.GetMetadataAsync(save3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken);
+        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken);
+        var metadata3 = await service.GetMetadataAsync(save3.Id, TestContext.Current.CancellationToken);
         Assert.All([metadata1, metadata2, metadata3], m => Assert.Equal(version2, m.DataEncryptionKeyVersion));
 
         // Verify all files can still be decrypted
-        Assert.Equal(data1, await service.GetFileAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Equal(data2, await service.GetFileAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Equal(data3, await service.GetFileAsync(save3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal(data1, await service.GetFileAsync(save1.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(data2, await service.GetFileAsync(save2.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(data3, await service.GetFileAsync(save3.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1298,32 +1272,30 @@ public class LocalFileStorageServiceTests : IDisposable
         const string sourceKeyId = "source-key";
         const string targetKeyId = "target-key";
         var keyStore = CreateKeyStoreWithKey(sourceKeyId, "1", "source-kek-v1");
-        var targetVersion = await keyStore.UpdateKeyFromStringAsync(targetKeyId, "target-kek-v1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(targetKeyId, targetVersion, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var targetVersion = await keyStore.UpdateKeyFromStringAsync(targetKeyId, "target-kek-v1", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(targetKeyId, targetVersion, TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
 
         // Encrypt file with source key
         var originalData = "Data to migrate between keys"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
+        var saveResult = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal("1", saveResult.DataEncryptionKeyVersion);
         Assert.Equal(sourceKeyId, saveResult.DataEncryptionKeyId);
 
         // Migrate to target keyId
-        var migrationResult = await service.MigrateDeksAsync(sourceKeyId, "1", targetKeyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(sourceKeyId, "1", targetKeyId, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(1, migrationResult.SuccessfullyMigrated);
 
         // Verify metadata was updated
-        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(targetKeyId, metadata.DataEncryptionKeyId);
         Assert.Equal(targetVersion, metadata.DataEncryptionKeyVersion);
 
         // Verify file can be decrypted with target key
-        var decrypted = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(originalData, decrypted);
     }
 
@@ -1338,35 +1310,35 @@ public class LocalFileStorageServiceTests : IDisposable
 
         // Encrypt file with version 1
         var originalData = "Data to migrate"u8.ToArray();
-        var saveResultV1 = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResultV1 = await service.SaveFileAsync(originalData, "migrate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
 
         // Migrate first time
-        var migrationResult1 = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult1 = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult1.AllSucceeded);
         Assert.Equal(1, migrationResult1.SuccessfullyMigrated);
 
         // Verify file was migrated to version 2
-        var metadataAfterFirst = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadataAfterFirst = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, metadataAfterFirst.DataEncryptionKeyVersion);
 
         // Migrate again - file is now at version 2, so searching for version 1 files finds 0
         // This demonstrates idempotency: running migration again for version 1 finds nothing (already migrated)
-        var migrationResult2 = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult2 = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult2.AllSucceeded);
         Assert.Equal(0, migrationResult2.TotalFilesFound); // No files found at version 1 (already migrated)
         Assert.Equal(0, migrationResult2.SuccessfullyMigrated);
 
         // But if we search for version 2 files and try to migrate to version 2, it should skip (already at target)
-        var migrationResult3 = await service.MigrateDeksAsync(keyId, version2, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult3 = await service.MigrateDeksAsync(keyId, version2, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult3.AllSucceeded);
         Assert.Equal(1, migrationResult3.TotalFilesFound);
         Assert.Equal(1, migrationResult3.SuccessfullyMigrated); // Should skip already migrated file (counts as success)
 
         // Verify metadata is still correct
-        var metadata = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, metadata.DataEncryptionKeyVersion);
     }
 
@@ -1380,7 +1352,7 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(encryptionService: encryptionService);
 
         // Try to migrate non-existent version
-        var migrationResult = await service.MigrateDeksAsync(keyId, "999", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "999", ct: TestContext.Current.CancellationToken);
         Assert.Equal(0, migrationResult.TotalFilesFound);
         Assert.Equal(0, migrationResult.SuccessfullyMigrated);
         Assert.Equal(0, migrationResult.Failed);
@@ -1398,25 +1370,24 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(encryptionService: encryptionService);
 
         // Encrypt files with version 1
-        var save1 = await service.SaveFileAsync(Encoding.UTF8.GetBytes("File 1"), "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+        var save1 = await service.SaveFileAsync(Encoding.UTF8.GetBytes("File 1"), "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 2 and encrypt more files
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save2 = await service.SaveFileAsync("File 2"u8.ToArray(), "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        var save2 = await service.SaveFileAsync("File 2"u8.ToArray(), "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 3
-        var version3 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version3 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken);
 
         // Migrate all versions (sourceKeyVersion = null)
-        var migrationResult = await service.MigrateDeksAsync(keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(2, migrationResult.TotalFilesFound); // Both files should be found
         Assert.Equal(2, migrationResult.SuccessfullyMigrated);
 
         // Verify both files were migrated to version 3
-        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken);
+        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version3, metadata1.DataEncryptionKeyVersion);
         Assert.Equal(version3, metadata2.DataEncryptionKeyVersion);
     }
@@ -1434,22 +1405,22 @@ public class LocalFileStorageServiceTests : IDisposable
         var files = new List<FileStoreResult>();
         for (var i = 0; i < 5; i++) {
             var data = Encoding.UTF8.GetBytes($"File {i}");
-            var saveResult = await service.SaveFileAsync(data, $"file{i}.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var saveResult = await service.SaveFileAsync(data, $"file{i}.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
             files.Add(saveResult);
         }
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
 
         // Migrate with batch size of 2
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", batchSize: 2, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", batchSize: 2, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(5, migrationResult.TotalFilesFound);
         Assert.Equal(5, migrationResult.SuccessfullyMigrated);
 
         // Verify all files were migrated
         foreach (var file in files) {
-            var metadata = await service.GetMetadataAsync(file.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var metadata = await service.GetMetadataAsync(file.Id, TestContext.Current.CancellationToken);
             Assert.Equal(version2, metadata.DataEncryptionKeyVersion);
         }
     }
@@ -1458,7 +1429,7 @@ public class LocalFileStorageServiceTests : IDisposable
     public async Task MigrateDeksAsync_NoEncryptionService_Throws()
     {
         using var service = CreateService(); // No encryption service
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MigrateDeksAsync("test-key", "1", ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MigrateDeksAsync("test-key", "1", ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1469,11 +1440,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
-        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.MigrateDeksAsync(keyId, "1", batchSize: 0, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
-
-        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.MigrateDeksAsync(keyId, "1", batchSize: -1, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.MigrateDeksAsync(keyId, "1", batchSize: 0, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.MigrateDeksAsync(keyId, "1", batchSize: -1, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1487,11 +1455,10 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(encryptionService: encryptionService);
 
         // Encrypt file with source key
-        await service.SaveFileAsync("Test"u8.ToArray(), "test.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await service.SaveFileAsync("Test"u8.ToArray(), "test.txt", encrypt: true, keyId: sourceKeyId, ct: TestContext.Current.CancellationToken);
 
         // Try to migrate to non-existent target key
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MigrateDeksAsync(sourceKeyId, "1", targetKeyId, ct: TestContext.Current.CancellationToken))
-            .ConfigureAwait(false);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.MigrateDeksAsync(sourceKeyId, "1", targetKeyId, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1504,27 +1471,27 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(encryptionService: encryptionService);
 
         // Encrypt file with version 1
-        var save1 = await service.SaveFileAsync("File 1"u8.ToArray(), "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save1 = await service.SaveFileAsync("File 1"u8.ToArray(), "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 2 and encrypt more files
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save2 = await service.SaveFileAsync("File 2"u8.ToArray(), "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        var save2 = await service.SaveFileAsync("File 2"u8.ToArray(), "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 3
-        var version3 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version3 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken);
 
         // Migrate only version 1 files
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(1, migrationResult.TotalFilesFound); // Only version 1 file
         Assert.Equal(1, migrationResult.SuccessfullyMigrated);
 
         // Verify version 1 file was migrated to version 3
-        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version3, metadata1.DataEncryptionKeyVersion);
 
         // Verify version 2 file was not migrated
-        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, metadata2.DataEncryptionKeyVersion);
     }
 
@@ -1533,28 +1500,28 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = CreateKeyStoreWithKey(keyId, "1", "kek-v1");
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v3", TestContext.Current.CancellationToken);
         // Keep current version at 1 so file encrypts with version 1
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
 
         // Encrypt file with version 1 (current version)
-        var saveResult = await service.SaveFileAsync("Test"u8.ToArray(), "test.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync("Test"u8.ToArray(), "test.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal("1", saveResult.DataEncryptionKeyVersion);
 
         // Migrate to specific version 2 (not current version 3)
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", targetKeyVersion: version2, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", targetKeyVersion: version2, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
 
         // Verify file was migrated to version 2 (not current version 3)
-        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, metadata.DataEncryptionKeyVersion);
 
         // Verify file can still be decrypted
-        var decrypted = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var decrypted = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal("Test"u8.ToArray(), decrypted);
     }
 
@@ -1568,27 +1535,26 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(encryptionService: encryptionService);
 
         // Save encrypted file
-        var encryptedFile = await service.SaveFileAsync("Encrypted"u8.ToArray(), "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+        var encryptedFile = await service.SaveFileAsync("Encrypted"u8.ToArray(), "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
 
         // Save non-encrypted file
-        var plainFile = await service.SaveFileAsync("Plain"u8.ToArray(), "plain.txt", encrypt: false, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var plainFile = await service.SaveFileAsync("Plain"u8.ToArray(), "plain.txt", encrypt: false, ct: TestContext.Current.CancellationToken);
 
         // Rotate to version 2
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
 
         // Migrate - should only find encrypted file
-        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var migrationResult = await service.MigrateDeksAsync(keyId, "1", ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult.AllSucceeded);
         Assert.Equal(1, migrationResult.TotalFilesFound); // Only encrypted file
         Assert.Equal(1, migrationResult.SuccessfullyMigrated);
 
         // Verify encrypted file was migrated
-        var encryptedMetadata = await service.GetMetadataAsync(encryptedFile.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var encryptedMetadata = await service.GetMetadataAsync(encryptedFile.Id, TestContext.Current.CancellationToken);
         Assert.Equal(version2, encryptedMetadata.DataEncryptionKeyVersion);
 
         // Verify plain file was not affected
-        var plainMetadata = await service.GetMetadataAsync(plainFile.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var plainMetadata = await service.GetMetadataAsync(plainFile.Id, TestContext.Current.CancellationToken);
         Assert.False(plainMetadata.IsEncrypted);
     }
 
@@ -1603,25 +1569,25 @@ public class LocalFileStorageServiceTests : IDisposable
         var data1 = "Rotate file 1"u8.ToArray();
         var data2 = "Rotate file 2"u8.ToArray();
         var data3 = "Rotate file 3"u8.ToArray();
-        var save1 = await service.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save2 = await service.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var save3 = await service.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var rotationResult = await service.RotateDeksAsync([save1.Id, save3.Id], ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var save1 = await service.SaveFileAsync(data1, "file1.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var save2 = await service.SaveFileAsync(data2, "file2.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var save3 = await service.SaveFileAsync(data3, "file3.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var rotationResult = await service.RotateDeksAsync([save1.Id, save3.Id], ct: TestContext.Current.CancellationToken);
         Assert.True(rotationResult.AllSucceeded);
         Assert.Equal(2, rotationResult.TotalFilesFound);
         Assert.Equal(2, rotationResult.SuccessfullyMigrated);
         Assert.Equal(0, rotationResult.Failed);
-        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var metadata3 = await service.GetMetadataAsync(save3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata1 = await service.GetMetadataAsync(save1.Id, TestContext.Current.CancellationToken);
+        var metadata2 = await service.GetMetadataAsync(save2.Id, TestContext.Current.CancellationToken);
+        var metadata3 = await service.GetMetadataAsync(save3.Id, TestContext.Current.CancellationToken);
         Assert.Equal("1", metadata1.DataEncryptionKeyVersion);
         Assert.Equal("1", metadata3.DataEncryptionKeyVersion);
         Assert.NotEqual(save1.EncryptedDataEncryptionKey, metadata1.EncryptedDataEncryptionKey);
         Assert.NotEqual(save3.EncryptedDataEncryptionKey, metadata3.EncryptedDataEncryptionKey);
         Assert.Equal(save2.EncryptedDataEncryptionKey, metadata2.EncryptedDataEncryptionKey);
-        Assert.Equal(data1, await service.GetFileAsync(save1.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Equal(data2, await service.GetFileAsync(save2.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.Equal(data3, await service.GetFileAsync(save3.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal(data1, await service.GetFileAsync(save1.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(data2, await service.GetFileAsync(save2.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(data3, await service.GetFileAsync(save3.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1633,16 +1599,16 @@ public class LocalFileStorageServiceTests : IDisposable
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var originalData = "Rotate into current version"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(originalData, "rotate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var rotationResult = await service.RotateDeksAsync([saveResult.Id], keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(originalData, "rotate.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var version2 = await keyStore.UpdateKeyFromStringAsync(keyId, "kek-v2", TestContext.Current.CancellationToken);
+        var rotationResult = await service.RotateDeksAsync([saveResult.Id], keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(rotationResult.AllSucceeded);
         Assert.Equal(1, rotationResult.SuccessfullyMigrated);
-        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var metadata = await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(keyId, metadata.DataEncryptionKeyId);
         Assert.Equal(version2, metadata.DataEncryptionKeyVersion);
         Assert.NotEqual(saveResult.EncryptedDataEncryptionKey, metadata.EncryptedDataEncryptionKey);
-        Assert.Equal(originalData, await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        Assert.Equal(originalData, await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1653,12 +1619,10 @@ public class LocalFileStorageServiceTests : IDisposable
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
-        var encryptedFile = await service.SaveFileAsync("Encrypted"u8.ToArray(), "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
-        var plainFile = await service.SaveFileAsync("Plain"u8.ToArray(), "plain.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var encryptedFile = await service.SaveFileAsync("Encrypted"u8.ToArray(), "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var plainFile = await service.SaveFileAsync("Plain"u8.ToArray(), "plain.txt", ct: TestContext.Current.CancellationToken);
         var missingFileId = Guid.NewGuid();
-        var rotationResult = await service.RotateDeksAsync([encryptedFile.Id, plainFile.Id, missingFileId], ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var rotationResult = await service.RotateDeksAsync([encryptedFile.Id, plainFile.Id, missingFileId], ct: TestContext.Current.CancellationToken);
         Assert.False(rotationResult.AllSucceeded);
         Assert.Equal(3, rotationResult.TotalFilesFound);
         Assert.Equal(1, rotationResult.SuccessfullyMigrated);
@@ -1666,9 +1630,9 @@ public class LocalFileStorageServiceTests : IDisposable
         Assert.Contains(plainFile.Id, rotationResult.FailedFileIds);
         Assert.Contains(missingFileId, rotationResult.FailedFileIds);
         Assert.Equal(2, rotationResult.Errors.Count);
-        var encryptedMetadata = await service.GetMetadataAsync(encryptedFile.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var encryptedMetadata = await service.GetMetadataAsync(encryptedFile.Id, TestContext.Current.CancellationToken);
         Assert.NotEqual(encryptedFile.EncryptedDataEncryptionKey, encryptedMetadata.EncryptedDataEncryptionKey);
-        var plainMetadata = await service.GetMetadataAsync(plainFile.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var plainMetadata = await service.GetMetadataAsync(plainFile.Id, TestContext.Current.CancellationToken);
         Assert.False(plainMetadata.IsEncrypted);
     }
 
@@ -1677,8 +1641,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Hello, World from file!"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.NotEqual(Guid.Empty, result.Id);
         Assert.Equal("test.txt", result.OriginalFileName);
@@ -1695,8 +1659,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Test content"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result.OriginalFileName);
         Assert.Equal(Path.GetFileName(tempFile), result.OriginalFileName);
     }
@@ -1707,8 +1671,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress me!" + new string('B', 1000));
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "compressed.txt", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.NotNull(result.CompressionAlgorithm);
         Assert.NotNull(result.CompressedFileSize);
@@ -1721,14 +1685,14 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-kek-key", TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = "Encrypt this secret message from file"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsEncrypted);
         Assert.NotNull(result.EncryptedFileSize);
         Assert.NotNull(result.EncryptedFileHash);
@@ -1742,15 +1706,13 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var compressionService = new CompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
-        var tempFile = await _tempSession.CreateFileAsync(new string('Z', 1000) + "Compress and encrypt from file!" + new string('W', 1000), TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
-
-        var result = await service.SaveFileAsync(tempFile, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(new string('Z', 1000) + "Compress and encrypt from file!" + new string('W', 1000), TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.True(result.IsEncrypted);
         Assert.NotNull(result.CompressionAlgorithm);
@@ -1765,9 +1727,9 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Retrieve test from file"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult = await service.SaveFileAsync(tempFile, "retrieve.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var saveResult = await service.SaveFileAsync(tempFile, "retrieve.txt", ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -1777,9 +1739,9 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('X', 1000) + "Decompress from file!" + new string('Y', 1000));
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult = await service.SaveFileAsync(tempFile, "compressed.txt", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var saveResult = await service.SaveFileAsync(tempFile, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -1788,14 +1750,14 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(encryptionService: encryptionService);
         var testData = "Decrypt from file"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult = await service.SaveFileAsync(tempFile, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var saveResult = await service.SaveFileAsync(tempFile, "encrypted.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -1804,15 +1766,15 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
         var compressionService = new CompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
         var testData = Encoding.UTF8.GetBytes(new string('M', 1000) + "Round trip from file!" + new string('N', 1000));
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var saveResult = await service.SaveFileAsync(tempFile, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var saveResult = await service.SaveFileAsync(tempFile, "both.txt", true, true, keyId, ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -1821,7 +1783,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var nonExistentFile = _tempSession.GetFilePath();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.SaveFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.SaveFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1829,14 +1791,14 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var emptyFile = _tempSession.TouchFile();
-        await Assert.ThrowsAsync<ArgumentException>(() => service.SaveFileAsync(emptyFile, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.SaveFileAsync(emptyFile, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task SaveFileAsync_FromFilePath_NullPath_ThrowsArgumentNullException()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SaveFileAsync((string)null!, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SaveFileAsync((string)null!, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -1845,8 +1807,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 5000));
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "chunksize.txt", true, chunkSize: 2048, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "chunksize.txt", true, chunkSize: 2048, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.NotNull(result.CompressedFileSize);
     }
@@ -1857,11 +1819,11 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService();
         var largeData = new byte[1024 * 1024]; // 1MB
         new Random().NextBytes(largeData);
-        var tempFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "large.bin", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "large.bin", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(largeData.Length, result.OriginalFileSize);
-        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken);
         Assert.Equal(largeData, retrievedData);
     }
 
@@ -1875,12 +1837,12 @@ public class LocalFileStorageServiceTests : IDisposable
         for (var i = 0; i < largeData.Length; i++)
             largeData[i] = (byte)(i % 256);
 
-        var tempFile = await _tempSession.CreateFileAsync(largeData, "large-compressed.bin", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "large-compressed.bin", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(largeData, "large-compressed.bin", TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "large-compressed.bin", true, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsCompressed);
         Assert.NotNull(result.CompressedFileSize);
         Assert.True(result.CompressedFileSize < result.OriginalFileSize);
-        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(result.Id, TestContext.Current.CancellationToken);
         Assert.Equal(largeData, retrievedData);
     }
 
@@ -1889,8 +1851,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Path prefix test"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, "prefix.txt", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await service.SaveFileAsync(tempFile, "prefix.txt", pathPrefix: "test/prefix", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, "prefix.txt", TestContext.Current.CancellationToken);
+        var result = await service.SaveFileAsync(tempFile, "prefix.txt", pathPrefix: "test/prefix", ct: TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal("test/prefix", result.PathPrefix);
     }
@@ -1900,9 +1862,9 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Hash comparison test"u8.ToArray();
-        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var resultFromFile = await service.SaveFileAsync(tempFile, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var resultFromBytes = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var resultFromFile = await service.SaveFileAsync(tempFile, "test.txt", ct: TestContext.Current.CancellationToken);
+        var resultFromBytes = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(resultFromFile.OriginalFileHash, resultFromBytes.OriginalFileHash);
         Assert.Equal(resultFromFile.OriginalFileSize, resultFromBytes.OriginalFileSize);
     }
@@ -1912,10 +1874,10 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(true);
         var testData = "Duplicate detection test"u8.ToArray();
-        var tempFile1 = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var tempFile2 = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result1 = await service.SaveFileAsync(tempFile1, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result2 = await service.SaveFileAsync(tempFile2, "test2.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var tempFile1 = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var tempFile2 = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var result1 = await service.SaveFileAsync(tempFile1, "test.txt", ct: TestContext.Current.CancellationToken);
+        var result2 = await service.SaveFileAsync(tempFile2, "test2.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(result1.Id, result2.Id);
         Assert.Equal(result1.OriginalFileHash, result2.OriginalFileHash);
     }
@@ -1925,7 +1887,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha256);
         var testData = "Sha256 test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha256, result.HashAlgorithm);
         Assert.NotNull(result.OriginalFileHash);
         Assert.Equal(32, result.OriginalFileHash.Length); // SHA-256 produces 32 bytes
@@ -1936,7 +1898,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha384);
         var testData = "Sha384 test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha384, result.HashAlgorithm);
         Assert.NotNull(result.OriginalFileHash);
         Assert.Equal(48, result.OriginalFileHash.Length); // SHA-384 produces 48 bytes
@@ -1947,7 +1909,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha512);
         var testData = "Sha512 test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha512, result.HashAlgorithm);
         Assert.NotNull(result.OriginalFileHash);
         Assert.Equal(64, result.OriginalFileHash.Length); // SHA-512 produces 64 bytes
@@ -1958,7 +1920,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Md5);
         var testData = "Md5 test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Md5, result.HashAlgorithm);
         Assert.NotNull(result.OriginalFileHash);
         Assert.Equal(16, result.OriginalFileHash.Length); // MD5 produces 16 bytes
@@ -1969,7 +1931,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha1);
         var testData = "Sha1 test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha1, result.HashAlgorithm);
         Assert.NotNull(result.OriginalFileHash);
         Assert.Equal(20, result.OriginalFileHash.Length); // SHA-1 produces 20 bytes
@@ -1982,9 +1944,9 @@ public class LocalFileStorageServiceTests : IDisposable
         using var serviceSha256 = CreateService(hashAlgorithm: HashAlgorithm.Sha256);
         using var serviceSha384 = CreateService(hashAlgorithm: HashAlgorithm.Sha384);
         using var serviceMd5 = CreateService(hashAlgorithm: HashAlgorithm.Md5);
-        var result256 = await serviceSha256.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result384 = await serviceSha384.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var resultMd5 = await serviceMd5.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result256 = await serviceSha256.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
+        var result384 = await serviceSha384.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
+        var resultMd5 = await serviceMd5.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(32, result256.OriginalFileHash!.Length);
         Assert.Equal(48, result384.OriginalFileHash!.Length);
         Assert.Equal(16, resultMd5.OriginalFileHash!.Length);
@@ -1997,8 +1959,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha384);
         var testData = "Round trip Sha384"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -2007,8 +1969,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(hashAlgorithm: HashAlgorithm.Sha512);
         var testData = "Round trip Sha512"u8.ToArray();
-        var saveResult = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 
@@ -2017,8 +1979,8 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(true, hashAlgorithm: HashAlgorithm.Sha384);
         var testData = "Duplicate with Sha384"u8.ToArray();
-        var result1 = await service.SaveFileAsync(testData, "first.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result2 = await service.SaveFileAsync(testData, "second.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result1 = await service.SaveFileAsync(testData, "first.txt", ct: TestContext.Current.CancellationToken);
+        var result2 = await service.SaveFileAsync(testData, "second.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(result1.Id, result2.Id);
         Assert.Equal(HashAlgorithm.Sha384, result2.HashAlgorithm);
     }
@@ -2028,7 +1990,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var testData = "Default algorithm test"u8.ToArray();
-        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha256, result.HashAlgorithm);
         Assert.Equal(32, result.OriginalFileHash!.Length);
     }
@@ -2039,10 +2001,10 @@ public class LocalFileStorageServiceTests : IDisposable
         var compressionService = new CompressionService();
         using var service = CreateService(compressionService: compressionService, hashAlgorithm: HashAlgorithm.Sha384);
         var testData = Encoding.UTF8.GetBytes(new string('A', 500) + "Compress with Sha384" + new string('B', 500));
-        var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha384, saveResult.HashAlgorithm);
         Assert.True(saveResult.IsCompressed);
-        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var retrievedData = await service.GetFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.Equal(testData, retrievedData);
     }
 

@@ -17,7 +17,7 @@ public static class Extensions
     /// <summary>Registers a singleton <see cref="IFileOperationContextAccessor" /> using async-local storage.</summary>
     public static IServiceCollection AddFileOperationContextAccessor(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<IFileOperationContextAccessor, FileOperationContextAccessor>();
         return services;
     }
@@ -25,7 +25,7 @@ public static class Extensions
     /// <summary>Registers an in-memory multipart session store (single-node / tests).</summary>
     public static IServiceCollection AddInMemoryMultipartUploadSessionStore(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<InMemoryMultipartUploadSessionStore>();
         services.AddSingleton<IMultipartUploadSessionStore>(sp => sp.GetRequiredService<InMemoryMultipartUploadSessionStore>());
         return services;
@@ -37,7 +37,7 @@ public static class Extensions
     /// </summary>
     public static IServiceCollection TryAddInMemoryMultipartUploadSessionStoreIfMissing(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         if (!services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))
             services.AddInMemoryMultipartUploadSessionStore();
 
@@ -47,7 +47,7 @@ public static class Extensions
     /// <summary>Registers <see cref="LocalMultipartUploadService" /> for server-side multipart uploads to local disk staging.</summary>
     public static IServiceCollection AddLocalMultipartUploadService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
         services.AddScoped<LocalMultipartUploadService>();
         services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<LocalMultipartUploadService>());
@@ -64,10 +64,10 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFileStorageServiceKeyed(string keyName, string fileStoreKeyName, string encryptionServiceKeyName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileStoreKeyName, nameof(fileStoreKeyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName, nameof(encryptionServiceKeyName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileStoreKeyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
             if (keyName == fileStoreKeyName)
                 return services;
 
@@ -82,10 +82,10 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFileStorageServiceKeyed(string keyName, string fileStoreKeyName, Func<IServiceProvider, ITwoKeyEncryptionService> configEncryptionService)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileStoreKeyName, nameof(fileStoreKeyName));
-            ArgumentHelpers.ThrowIfNull(configEncryptionService, nameof(configEncryptionService));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileStoreKeyName);
+            ArgumentHelpers.ThrowIfNull(configEncryptionService);
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
@@ -105,10 +105,10 @@ public static class Extensions
             string encryptionServiceKeyName)
             where TFileStorageService : class, IFileStorageService
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName, nameof(encryptionServiceKeyName));
-            ArgumentHelpers.ThrowIfNull(configFileStore, nameof(configFileStore));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
+            ArgumentHelpers.ThrowIfNull(configFileStore);
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TFileStorageService))) {
                 services.AddKeyedScoped<TFileStorageService>(keyName, (provider, _) => configFileStore(provider));
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<TFileStorageService>(keyName));
@@ -129,10 +129,10 @@ public static class Extensions
             Func<IServiceProvider, TFileStorageService> configFileStore)
             where TFileStorageService : class, IFileStorageService
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNull(configEncryptionService, nameof(configEncryptionService));
-            ArgumentHelpers.ThrowIfNull(configFileStore, nameof(configFileStore));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNull(configEncryptionService);
+            ArgumentHelpers.ThrowIfNull(configFileStore);
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
@@ -159,11 +159,11 @@ public static class Extensions
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             string encryptionServiceKeyName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName, nameof(encryptionServiceKeyName));
-            ArgumentHelpers.ThrowIfNull(config, nameof(config));
-            ArgumentHelpers.ThrowIfNull(configureMetadataStore, nameof(configureMetadataStore));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
+            ArgumentHelpers.ThrowIfNull(config);
+            ArgumentHelpers.ThrowIfNull(configureMetadataStore);
             services.AddSingleton<LocalFileStorageServiceOptions>(_ => {
                 var options = new LocalFileStorageServiceOptions();
                 config(options);
@@ -204,11 +204,11 @@ public static class Extensions
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             Func<IServiceProvider, ITwoKeyEncryptionService> configEncryptionService)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNull(config, nameof(config));
-            ArgumentHelpers.ThrowIfNull(configureMetadataStore, nameof(configureMetadataStore));
-            ArgumentHelpers.ThrowIfNull(configEncryptionService, nameof(configEncryptionService));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNull(config);
+            ArgumentHelpers.ThrowIfNull(configureMetadataStore);
+            ArgumentHelpers.ThrowIfNull(configEncryptionService);
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
@@ -252,11 +252,11 @@ public static class Extensions
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             string encryptionServiceKeyName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName, nameof(encryptionServiceKeyName));
-            ArgumentHelpers.ThrowIfNull(configureMetadataStore, nameof(configureMetadataStore));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
+            ArgumentHelpers.ThrowIfNull(configureMetadataStore);
 
             // Configure options from configuration (if not already registered)
             if (!services.Any(s => s.ServiceType == typeof(LocalFileStorageServiceOptions))) {
@@ -305,11 +305,11 @@ public static class Extensions
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             Func<IServiceProvider, ITwoKeyEncryptionService> configEncryptionService)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
-            ArgumentHelpers.ThrowIfNull(configureMetadataStore, nameof(configureMetadataStore));
-            ArgumentHelpers.ThrowIfNull(configEncryptionService, nameof(configEncryptionService));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            ArgumentHelpers.ThrowIfNull(configureMetadataStore);
+            ArgumentHelpers.ThrowIfNull(configEncryptionService);
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 

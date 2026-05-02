@@ -1,0 +1,170 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 600px; overflow-y: auto;">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudSelect T="JobDefinitionRes"
+                               Value="_selectedDef"
+                               ValueChanged="OnDefinitionChanged"
+                               Label="Job Definition"
+                               Variant="Variant.Outlined"
+                               ToStringFunc="@(d => d?.Name ?? "")"
+                               Required>
+                        @foreach (var def in (JobDefinitions ?? []).Where(d => d.Enabled)) {
+                            <MudSelectItem T="JobDefinitionRes" Value="def">
+                                <MudText Typo="Typo.body1">@def.Name</MudText>
+                                @if (!string.IsNullOrEmpty(def.Description)) {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@def.Description</MudText>
+                                }
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_createdBy" Label="Created By" Variant="Variant.Outlined" Required MaxLength="50"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSwitch T="bool" @bind-Value="_allowTriggers" Label="Allow Triggers" Color="Color.Primary"/>
+                </MudItem>
+
+                @if (_paramModels.Any()) {
+                    <MudItem xs="12"><MudDivider/><MudText Typo="Typo.h6" Class="mt-2 mb-2">Parameters</MudText></MudItem>
+                    @foreach (var p in _paramModels) {
+                        <MudItem xs="12">
+                            <MudPaper Class="pa-4" Elevation="1">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        @p.Param.Key
+                                        @if (p.Param.Required) {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Class="ml-2">Required</MudChip>
+                                        }
+                                    </MudText>
+                                    @if (!string.IsNullOrEmpty(p.Param.Description)) {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@p.Param.Description</MudText>
+                                    }
+                                    @if (p.Param.Type == JobParameterType.Bool) {
+                                        <MudSwitch T="bool" @bind-Value="p.BoolValue" Label="@p.Param.Key" Color="Color.Primary"/>
+                                    }
+                                    else if (p.Param.Type == JobParameterType.Int) {
+                                        <MudNumericField T="int?" @bind-Value="p.IntValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == JobParameterType.Long) {
+                                        <MudNumericField T="long?" @bind-Value="p.LongValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == JobParameterType.DateTime) {
+                                        <MudDatePicker @bind-Date="p.DateTimeValue" Label="@p.Param.Key" Variant="Variant.Outlined" Required="@p.Param.Required"/>
+                                    }
+                                    else if (p.Param.Type == JobParameterType.Json) {
+                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
+                                                      Lines="4" HelperText="JSON" Required="@p.Param.Required"
+                                                      InputType="@(p.Encrypted ? InputType.Password : InputType.Text)"/>
+                                    }
+                                    else {
+                                        <MudTextField @bind-Value="p.StringValue" Label="@p.Param.Key" Variant="Variant.Outlined"
+                                                      Required="@p.Param.Required"
+                                                      InputType="@(p.Encrypted ? InputType.Password : InputType.Text)"/>
+                                    }
+                                    <MudSwitch T="bool" @bind-Value="p.Encrypted" Label="Encrypt" Color="Color.Warning" Size="Size.Small"/>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit"
+                   Disabled="@(!IsValid())" StartIcon="@Icons.Material.Filled.PlayArrow">
+            Create Job Run
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter, EditorRequired] public IEnumerable<JobDefinitionRes>? JobDefinitions { get; set; }
+    [Parameter] public JobDefinitionRes? SelectedJobDefinition { get; set; }
+    [Parameter, EditorRequired] public string RunRoute { get; set; } = "";
+    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    private JobDefinitionRes? _selectedDef;
+    private string _createdBy = "gateway";
+    private bool _allowTriggers = true;
+    private List<ParamModel> _paramModels = [];
+
+    private class ParamModel
+    {
+        public JobParameterRes Param { get; init; } = null!;
+        public string StringValue { get; set; } = "";
+        public bool BoolValue { get; set; }
+        public int? IntValue { get; set; }
+        public long? LongValue { get; set; }
+        public DateTime? DateTimeValue { get; set; }
+        public bool Encrypted { get; set; }
+
+        public bool IsEmpty() => Param.Type switch {
+            JobParameterType.Bool => false,
+            JobParameterType.Int => !IntValue.HasValue,
+            JobParameterType.Long => !LongValue.HasValue,
+            JobParameterType.DateTime => !DateTimeValue.HasValue,
+            _ => string.IsNullOrWhiteSpace(StringValue)
+        };
+
+        public string? ValueAsString() => Param.Type switch {
+            JobParameterType.Bool => BoolValue.ToString().ToLower(),
+            JobParameterType.Int => IntValue?.ToString(),
+            JobParameterType.Long => LongValue?.ToString(),
+            JobParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
+            _ => StringValue
+        };
+    }
+
+    protected override void OnInitialized()
+    {
+        if (SelectedJobDefinition != null)
+            OnDefinitionChanged(SelectedJobDefinition);
+    }
+
+    private void OnDefinitionChanged(JobDefinitionRes? def)
+    {
+        _selectedDef = def;
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
+            Param = p,
+            StringValue = p.Value ?? ""
+        }).ToList();
+    }
+
+    private bool IsValid()
+    {
+        if (_selectedDef == null || string.IsNullOrWhiteSpace(_createdBy)) return false;
+        return _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
+    }
+
+    private async Task Submit()
+    {
+        if (_selectedDef == null) return;
+        try {
+            var req = new JobRunReq {
+                JobDefinitionId = _selectedDef.Id,
+                CreatedBy = _createdBy,
+                AllowTriggers = _allowTriggers,
+                JobRunParameters = _paramModels.Select(p => new JobRunParameterReq {
+                    Key = p.Param.Key,
+                    Type = p.Param.Type,
+                    Value = p.ValueAsString(),
+                    Description = p.Param.Description
+                }).ToList()
+            };
+            var result = await ApiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(RunRoute + "/Create", req);
+            Snackbar.Add($"Job run {result?.Data?.Id.Truncated() ?? "?"} created", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
+        }
+    }
+}

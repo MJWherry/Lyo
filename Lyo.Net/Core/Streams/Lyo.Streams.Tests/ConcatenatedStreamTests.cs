@@ -7,8 +7,8 @@ public sealed class ConcatenatedStreamTests
     [Fact]
     public void Reads_concatenated_content_from_multiple_streams()
     {
-        var s1 = new MemoryStream(Encoding.UTF8.GetBytes("Hello "));
-        var s2 = new MemoryStream(Encoding.UTF8.GetBytes("World"));
+        var s1 = new MemoryStream("Hello "u8.ToArray());
+        var s2 = new MemoryStream("World"u8.ToArray());
         using var concat = new ConcatenatedStream([s1, s2]);
         using var reader = new StreamReader(concat);
         var result = reader.ReadToEnd();
@@ -18,9 +18,9 @@ public sealed class ConcatenatedStreamTests
     [Fact]
     public void ReadAsync_returns_concatenated_content()
     {
-        var s1 = new MemoryStream(Encoding.UTF8.GetBytes("A"));
-        var s2 = new MemoryStream(Encoding.UTF8.GetBytes("B"));
-        var s3 = new MemoryStream(Encoding.UTF8.GetBytes("C"));
+        var s1 = new MemoryStream("A"u8.ToArray());
+        var s2 = new MemoryStream("B"u8.ToArray());
+        var s3 = new MemoryStream("C"u8.ToArray());
         using var concat = new ConcatenatedStream([s1, s2, s3]);
         var buffer = new byte[10];
         var total = 0;
@@ -44,21 +44,21 @@ public sealed class ConcatenatedStreamTests
     [Fact]
     public void Length_throws_NotSupportedException()
     {
-        using var concat = new ConcatenatedStream([new MemoryStream(Encoding.UTF8.GetBytes("x"))]);
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
         Assert.Throws<NotSupportedException>(() => _ = concat.Length);
     }
 
     [Fact]
     public void Seek_throws_NotSupportedException()
     {
-        using var concat = new ConcatenatedStream([new MemoryStream(Encoding.UTF8.GetBytes("x"))]);
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
         Assert.Throws<NotSupportedException>(() => concat.Seek(0, SeekOrigin.Begin));
     }
 
     [Fact]
     public void Write_throws_NotSupportedException()
     {
-        using var concat = new ConcatenatedStream([new MemoryStream(Encoding.UTF8.GetBytes("x"))]);
+        using var concat = new ConcatenatedStream([new MemoryStream("x"u8.ToArray())]);
         var buf = new byte[1];
         Assert.Throws<NotSupportedException>(() => concat.Write(buf, 0, 1));
     }
@@ -66,7 +66,7 @@ public sealed class ConcatenatedStreamTests
     [Fact]
     public void Params_constructor_works()
     {
-        using var concat = new ConcatenatedStream(false, new MemoryStream(Encoding.UTF8.GetBytes("a")), new MemoryStream(Encoding.UTF8.GetBytes("b")));
+        using var concat = new ConcatenatedStream(false, new MemoryStream("a"u8.ToArray()), new MemoryStream(Encoding.UTF8.GetBytes("b")));
         using var reader = new StreamReader(concat);
         Assert.Equal("ab", reader.ReadToEnd());
     }

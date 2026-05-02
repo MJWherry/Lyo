@@ -2,8 +2,8 @@ using System.Runtime.InteropServices;
 using ClosedXML.Excel;
 using ClosedXML.Graphics;
 using ExcelDataReader;
-using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Result;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
 
@@ -30,7 +30,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxFileAsDictionary(string xlsxFilePath)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         _logger.LogDebug("Parsing {ParsingXlsxPath} as dictionary", xlsxFilePath);
         using var inputStream = File.OpenRead(xlsxFilePath);
         return ParseXlsxStreamAsDictionary(inputStream);
@@ -38,7 +38,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxStreamAsDictionary(Stream xlsxStream)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
         _logger.LogDebug("Parsing xlsx stream as dictionary");
         using var reader = ExcelReaderFactory.CreateReader(xlsxStream);
@@ -52,7 +52,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, bool? useHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         _logger.LogDebug("Parsing {ParsingXlsxPath} as DataTable", xlsxFilePath);
         using var inputStream = File.OpenRead(xlsxFilePath);
         return ParseXlsxStreamAsDataTable(inputStream, useHeaderRow);
@@ -60,7 +60,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, bool? useHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
         _logger.LogDebug("Parsing xlsx stream as DataTable");
         try {
@@ -74,14 +74,14 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
         return ParseXlsxStreamAsDataTable(ms, useHeaderRow);
     }
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxBytesAsDictionary(byte[] xlsxBytes)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
         return ParseXlsxStreamAsDictionary(ms);
     }
@@ -193,7 +193,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 #if !NETSTANDARD2_0
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         _logger.LogDebug("Parsing {ParsingXlsxPath} as dictionary", xlsxFilePath);
         await using var inputStream = File.OpenRead(xlsxFilePath);
         return await ParseXlsxStreamAsDictionaryAsync(inputStream, ct).ConfigureAwait(false);
@@ -201,7 +201,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxStreamAsDictionaryAsync(Stream xlsxStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
         _logger.LogDebug("Parsing xlsx stream as dictionary");
         ct.ThrowIfCancellationRequested();
@@ -232,7 +232,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath, nameof(xlsxFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
         _logger.LogDebug("Parsing {ParsingXlsxPath} as DataTable", xlsxFilePath);
         await using var inputStream = File.OpenRead(xlsxFilePath);
         return await ParseXlsxStreamAsDataTableAsync(inputStream, useHeaderRow, ct).ConfigureAwait(false);
@@ -240,7 +240,7 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxStream, nameof(xlsxStream));
+        ArgumentHelpers.ThrowIfNull(xlsxStream);
         OperationHelpers.ThrowIfNotReadable(xlsxStream, $"Stream '{nameof(xlsxStream)}' must be readable.");
         _logger.LogDebug("Parsing xlsx stream as DataTable");
         var effectiveUseHeaderRow = useHeaderRow ?? Config.UseHeaderRow;
@@ -267,14 +267,14 @@ internal sealed class XlsxImporter : IXlsxImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
         return await ParseXlsxStreamAsDataTableAsync(ms, useHeaderRow, ct).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var ms = new MemoryStream(xlsxBytes);
         return await ParseXlsxStreamAsDictionaryAsync(ms, ct).ConfigureAwait(false);
     }

@@ -87,7 +87,7 @@ public class KsuidTests
     [Fact]
     public void CreateBulk_AllShareSameTimestampPrefix()
     {
-        // All KSUIDs in a batch are generated within the same second, so the first
+        // All KSUID in a batch are generated within the same second, so the first
         // character(s) encoding the timestamp should be identical.
         var ids = Ksuid.CreateBulk(10);
         var prefix = ids[0][..4];

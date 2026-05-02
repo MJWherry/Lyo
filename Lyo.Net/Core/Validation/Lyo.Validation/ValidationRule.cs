@@ -1,5 +1,5 @@
-using Lyo.Common;
 using Lyo.Exceptions;
+using Lyo.Result;
 
 namespace Lyo.Validation;
 
@@ -11,7 +11,7 @@ public sealed class ValidationRule<T> : IValidationRule<T>
     /// <summary>Creates a rule from the supplied validation delegate.</summary>
     public ValidationRule(Func<T, IReadOnlyList<Error>> validate)
     {
-        ArgumentHelpers.ThrowIfNull(validate, nameof(validate));
+        ArgumentHelpers.ThrowIfNull(validate);
         _validate = validate;
     }
 

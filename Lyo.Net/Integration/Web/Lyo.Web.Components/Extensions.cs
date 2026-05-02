@@ -14,7 +14,7 @@ internal static class Extensions
         var name = principal.FindFirst(ClaimTypes.Name)?.Value;
         var tokenId = principal.FindFirst("azure_token_id")?.Value;
         var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-        var exp = principal.FindFirstValue("exp");
+        var exp = principal.FindFirst("exp")?.Value;
         //var claims = principal.Claims.ToDictionary(c => c.Type, c => c.Value);
         return new() {
             TokenId = tokenId,

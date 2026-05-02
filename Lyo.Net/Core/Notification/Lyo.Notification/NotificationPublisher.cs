@@ -11,7 +11,7 @@ public sealed class NotificationPublisher(IServiceProvider services, ILogger<Not
     public async Task PublishAsync<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
         where TNotification : INotification
     {
-        ArgumentHelpers.ThrowIfNull(notification, nameof(notification));
+        ArgumentHelpers.ThrowIfNull(notification);
 
         var handlers = services.GetServices<INotificationHandler<TNotification>>();
         foreach (var handler in handlers) {

@@ -1,4 +1,4 @@
-namespace Lyo.Common.Enums;
+namespace Lyo.Result.Enums;
 
 /// <summary>Categorises the nature of an error to support consistent handling at boundaries (e.g. HTTP mapping).</summary>
 public enum ErrorType

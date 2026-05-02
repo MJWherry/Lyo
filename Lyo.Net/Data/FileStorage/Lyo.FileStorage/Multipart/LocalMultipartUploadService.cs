@@ -33,9 +33,9 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
         ILoggerFactory? loggerFactory = null,
         IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(storage, nameof(storage));
-        ArgumentHelpers.ThrowIfNull(sessions, nameof(sessions));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(storage);
+        ArgumentHelpers.ThrowIfNull(sessions);
+        ArgumentHelpers.ThrowIfNull(options);
         _storage = storage;
         _sessions = sessions;
         _options = options;
@@ -49,7 +49,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public async Task<MultipartBeginResult> BeginAsync(MultipartBeginRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
         var sessionId = Guid.NewGuid();
         var targetFileId = Guid.NewGuid();
@@ -81,7 +81,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public async Task UploadPartAsync(Guid sessionId, int partNumber, Stream content, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(content, nameof(content));
+        ArgumentHelpers.ThrowIfNull(content);
         var session = await GetActiveSessionAsync(sessionId, ct).ConfigureAwait(false);
         var dir = GetStagingDir(session);
         var partPath = Path.Combine(dir, $"part-{partNumber:D5}.bin");
@@ -92,7 +92,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public async Task<FileStoreResult> CompleteAsync(CompleteMultipartUploadRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         var session = await GetActiveSessionAsync(request.SessionId, ct).ConfigureAwait(false);
         var dir = GetStagingDir(session);
         var parts = request.Parts.OrderBy(p => p.PartNumber).ToList();

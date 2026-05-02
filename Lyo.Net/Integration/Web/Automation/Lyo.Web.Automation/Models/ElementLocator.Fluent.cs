@@ -25,13 +25,13 @@ public sealed partial record ElementLocator
     /// <summary>Builds a path; continue with <see cref="ElementLocatorChain.Then" /> on the returned chain.</summary>
     public ElementLocatorChain Then(ElementLocator next)
     {
-        ArgumentHelpers.ThrowIfNull(next, nameof(next));
+        ArgumentHelpers.ThrowIfNull(next);
         return new(this, next);
     }
 
     private static ElementLocator New(ElementLocatorKind kind, string value)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, nameof(value));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
         return new(kind, value);
     }
 }

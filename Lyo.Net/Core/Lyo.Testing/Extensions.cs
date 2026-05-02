@@ -176,7 +176,10 @@ public static class Extensions
         public void ShouldMatch(string pattern) => Assert.Matches(pattern, actual);
 
         public void ShouldNotMatch(string pattern) => Assert.DoesNotMatch(pattern, actual);
+    }
 
+    extension(string actual)
+    {
         public void ShouldBeEmpty(string? message = null) => Assert.Empty(actual);
 
         public void ShouldNotBeEmpty(string? message = null) => Assert.NotEmpty(actual);

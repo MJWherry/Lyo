@@ -29,14 +29,14 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _redisContainer.StartAsync().ConfigureAwait(false);
+        await _redisContainer.StartAsync();
         _redis = ConnectionMultiplexer.Connect(_redisContainer.GetConnectionString());
     }
 
     public async ValueTask DisposeAsync()
     {
         _redis?.Dispose();
-        await _redisContainer.DisposeAsync().ConfigureAwait(false);
+        await _redisContainer.DisposeAsync();
     }
 
     private ILockService CreateLockService(string implementation)
@@ -52,9 +52,9 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     {
         var service = CreateLockService(implementation);
         var key = $"both-acquire-{implementation}-{Guid.NewGuid():N}";
-        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle.ShouldNotBeNull();
-        await handle.ReleaseAsync().ConfigureAwait(false);
+        await handle.ReleaseAsync();
     }
 
     [Theory]
@@ -63,12 +63,12 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     {
         var service = CreateLockService(implementation);
         var key = $"both-reacquire-{implementation}-{Guid.NewGuid():N}";
-        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle1.ShouldNotBeNull();
-        await handle1.ReleaseAsync().ConfigureAwait(false);
-        var handle2 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await handle1.ReleaseAsync();
+        var handle2 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle2.ShouldNotBeNull();
-        await handle2.ReleaseAsync().ConfigureAwait(false);
+        await handle2.ReleaseAsync();
     }
 
     [Theory]
@@ -77,11 +77,11 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     {
         var service = CreateLockService(implementation);
         var key = $"both-blocked-{implementation}-{Guid.NewGuid():N}";
-        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle1.ShouldNotBeNull();
-        var handle2 = await service.AcquireAsync(key, TimeSpan.FromMilliseconds(200), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle2 = await service.AcquireAsync(key, TimeSpan.FromMilliseconds(200), ct: TestContext.Current.CancellationToken);
         handle2.ShouldBeNull();
-        await handle1.ReleaseAsync().ConfigureAwait(false);
+        await handle1.ReleaseAsync();
     }
 
     [Theory]
@@ -92,11 +92,10 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
         var key = $"both-execute-{implementation}-{Guid.NewGuid():N}";
         var executed = false;
         await service.ExecuteWithLockAsync(
-                key, async ct => {
-                    await Task.Delay(10, ct).ConfigureAwait(false);
-                    executed = true;
-                }, ct: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                await Task.Delay(10, ct);
+                executed = true;
+            }, ct: TestContext.Current.CancellationToken);
 
         executed.ShouldBeTrue();
     }
@@ -107,7 +106,7 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     {
         var service = CreateLockService(implementation);
         var key = $"both-return-{implementation}-{Guid.NewGuid():N}";
-        var result = await service.ExecuteWithLockAsync(key, _ => Task.FromResult("result"), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.ExecuteWithLockAsync(key, _ => Task.FromResult("result"), ct: TestContext.Current.CancellationToken);
         result.ShouldBe("result");
     }
 
@@ -117,11 +116,11 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     {
         var service = CreateLockService(implementation);
         var key = $"Both-MixedCase-{implementation}-{Guid.NewGuid():N}";
-        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle1 = await service.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle1.ShouldNotBeNull();
-        var handle2 = await service.AcquireAsync(key.ToLowerInvariant(), TimeSpan.FromMilliseconds(200), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle2 = await service.AcquireAsync(key.ToLowerInvariant(), TimeSpan.FromMilliseconds(200), ct: TestContext.Current.CancellationToken);
         handle2.ShouldBeNull();
-        await handle1.ReleaseAsync().ConfigureAwait(false);
+        await handle1.ReleaseAsync();
     }
 
     [Theory]
@@ -131,11 +130,11 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
         var service = CreateLockService(implementation);
         var keyA = $"both-key-a-{implementation}-{Guid.NewGuid():N}";
         var keyB = $"both-key-b-{implementation}-{Guid.NewGuid():N}";
-        var handle1 = await service.AcquireAsync(keyA, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var handle2 = await service.AcquireAsync(keyB, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var handle1 = await service.AcquireAsync(keyA, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle2 = await service.AcquireAsync(keyB, TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
         handle1.ShouldNotBeNull();
         handle2.ShouldNotBeNull();
-        await handle1.ReleaseAsync().ConfigureAwait(false);
-        await handle2.ReleaseAsync().ConfigureAwait(false);
+        await handle1.ReleaseAsync();
+        await handle2.ReleaseAsync();
     }
 }

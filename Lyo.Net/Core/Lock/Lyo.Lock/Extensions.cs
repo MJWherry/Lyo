@@ -17,7 +17,7 @@ public static class LockServiceExtensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalLock(Action<LockOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             var options = new LockOptions();
             configureOptions?.Invoke(options);
             services.AddSingleton(options);
@@ -34,8 +34,8 @@ public static class LockServiceExtensions
         /// <summary>Adds LocalLockService with configuration from IConfiguration.</summary>
         public IServiceCollection AddLocalLockFromConfiguration(IConfiguration configuration, Action<LockOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
             var options = new LockOptions();
             var section = configuration.GetSection(LockOptions.SectionName);
             if (section.Exists())
@@ -58,7 +58,7 @@ public static class LockServiceExtensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLocalKeyedSemaphore(Action<KeyedSemaphoreOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             var options = new KeyedSemaphoreOptions();
             configureOptions?.Invoke(options);
             services.AddSingleton(options);
@@ -75,8 +75,8 @@ public static class LockServiceExtensions
         /// <summary>Adds LocalKeyedSemaphoreService with configuration from IConfiguration.</summary>
         public IServiceCollection AddLocalKeyedSemaphoreFromConfiguration(IConfiguration configuration, Action<KeyedSemaphoreOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
             var options = new KeyedSemaphoreOptions();
             var section = configuration.GetSection(KeyedSemaphoreOptions.SectionName);
             if (section.Exists())

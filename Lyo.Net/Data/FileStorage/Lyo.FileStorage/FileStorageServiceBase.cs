@@ -56,8 +56,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         IFileContentPolicy? contentPolicy = null,
         IFileMalwareScanner? malwareScanner = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNull(metadataService, nameof(metadataService));
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(metadataService);
         Options = options;
         MetadataService = metadataService;
         Logger = logger ?? NullLogger.Instance;
@@ -130,7 +130,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.SaveDuration)]);
         var sw = Stopwatch.StartNew();
-        ArgumentHelpers.ThrowIfNullOrEmpty(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrEmpty(data);
         OperationHelpers.ThrowIf(
             encrypt && string.IsNullOrWhiteSpace(keyId),
             "Encryption was requested but no keyId was provided. When encrypting files, you must provide a keyId parameter to identify the encryption key to use.");
@@ -372,11 +372,11 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.SaveDuration)]);
         var sw = Stopwatch.StartNew();
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var normalizedPathPrefix = NormalizePathPrefix(pathPrefix);
         var fileInfo = new FileInfo(filePath);
         var originalSize = fileInfo.Length;
-        ArgumentHelpers.ThrowIfZero(originalSize, nameof(originalSize));
+        ArgumentHelpers.ThrowIfZero(originalSize);
         var actualOriginalFileName = originalFileName ?? Path.GetFileName(filePath);
         Logger.LogDebug(
             "Saving file from path {FilePath} to storage, Size: {Size} bytes, Compress: {Compress}, Encrypt: {Encrypt}, PathPrefix: {PathPrefix}", filePath, originalSize, compress,
@@ -453,7 +453,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         Guid? fileId = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
+        ArgumentHelpers.ThrowIfNull(input);
         var resolvedTenant = ResolveTenantId(tenantId);
         await ContentPolicy.ValidateAsync(
                 new() {
@@ -775,8 +775,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         int batchSize = 100,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId, nameof(sourceKeyId));
-        ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue, nameof(batchSize));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId);
+        ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue);
         OperationHelpers.ThrowIfNull(TwoKeyEncryptionService, "ITwoKeyEncryptionService is not configured. Cannot migrate DEKs without encryption service.");
         Logger.LogInformation(
             "Starting DEK migration: sourceKeyId='{SourceKeyId}', sourceKeyVersion={SourceKeyVersion}, targetKeyId='{TargetKeyId}', targetKeyVersion={TargetKeyVersion}",
@@ -893,7 +893,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         int batchSize = 100,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fileIds, nameof(fileIds));
+        ArgumentHelpers.ThrowIfNull(fileIds);
         ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue, nameof(batchSize));
         OperationHelpers.ThrowIfNull(TwoKeyEncryptionService, "ITwoKeyEncryptionService is not configured. Cannot rotate DEKs without encryption service.");
         var requestedFileIds = fileIds.Where(fileId => fileId != Guid.Empty).Distinct().ToList();

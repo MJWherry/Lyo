@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL config DbContextFactory to the service collection (IDbContextFactory only).</summary>
     public static IServiceCollection AddConfigDbContextFactory(this IServiceCollection services, Action<PostgresConfigOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresConfigOptions();
         configure(options);
         return services.AddConfigDbContextFactory(options);
@@ -27,9 +27,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresConfigOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresConfigOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL config DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddConfigDbContextFactory(this IServiceCollection services, PostgresConfigOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresConfigOptions>>(Options.Create(options));
         services.AddPostgresMigrations<ConfigDbContext, PostgresConfigOptions>();
@@ -55,8 +55,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL config store registration using configuration.</summary>
     public static IServiceCollection AddPostgresConfigStore(this IServiceCollection services, Action<PostgresConfigOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresConfigOptions();
         configure(options);
         return services.AddPostgresConfigStore(options);
@@ -68,9 +68,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresConfigOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresConfigOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -82,8 +82,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL config store registration.</summary>
     public static IServiceCollection AddPostgresConfigStore(this IServiceCollection services, PostgresConfigOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddConfigDbContextFactory(options);
         services.AddSingleton<IConfigStore, PostgresConfigStore>();
         return services;

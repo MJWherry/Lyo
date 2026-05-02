@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Lyo.Barcode.Models;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static Lyo.Barcode.BarcodeErrorCodes;
@@ -35,14 +35,14 @@ public class NativeBarcodeService : IBarcodeService
 
     public Task<Result<BarcodeRequest>> GenerateAsync(BarcodeBuilder builder, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
+        ArgumentHelpers.ThrowIfNull(builder);
         var (data, symbology, options) = builder.Build();
         return GenerateAsync(data, symbology, options, ct);
     }
 
     public async Task<Result<BarcodeRequest>> GenerateAsync(string data, BarcodeSymbology symbology, BarcodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         using var timer = _metrics.StartTimer(_metricNames[nameof(Constants.Metrics.GenerateDuration)]);
         var sw = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();
@@ -102,8 +102,8 @@ public class NativeBarcodeService : IBarcodeService
         BarcodeOptions? options = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         try {
             var result = await GenerateAsync(data, symbology, options, ct).ConfigureAwait(false);
@@ -124,7 +124,7 @@ public class NativeBarcodeService : IBarcodeService
 
     public async Task<Result<bool>> GenerateToFileAsync(string data, BarcodeSymbology symbology, string filePath, BarcodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         try {
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
@@ -161,7 +161,7 @@ public class NativeBarcodeService : IBarcodeService
         }
 
         sw.Stop();
-        var successCount = results.Count(r => r.IsSuccess && r.Data is BarcodeResult { IsSuccess: true });
+        var successCount = results.Count(r => r is { IsSuccess: true, Data: { IsSuccess: true } });
         var failureCount = results.Count - successCount;
         _logger.LogDebug("Generated {Count} barcodes in batch: {SuccessCount} successful, {FailureCount} failed", requestList.Count, successCount, failureCount);
         return BulkResult<BarcodeRequest, BarcodeResult>.FromResults(results);
@@ -170,7 +170,7 @@ public class NativeBarcodeService : IBarcodeService
     /// <inheritdoc />
     public Task<Result<BarcodeImageReadResult>> ReadFromImageAsync(byte[] imageBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageBytes, nameof(imageBytes));
+        ArgumentHelpers.ThrowIfNull(imageBytes);
         return Task.Run(() => BarcodeZxingRead.Decode(imageBytes), ct);
     }
 }

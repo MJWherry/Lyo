@@ -1,4 +1,6 @@
-using Lyo.Common;
+using Lyo.Result;
+
+// ReSharper disable PropertyCanBeMadeInitOnly.Local
 
 namespace Lyo.Validation.Tests;
 

@@ -1,0 +1,15 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Jobs)]
+@inherits AuthorizedPage
+
+<PageTitle>Jobs</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <Lyo.Gateway.Components.TestGateway.JobWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Job Dashboard";
+
+}

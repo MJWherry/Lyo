@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Lyo.Common.Security;
 using System.Text.RegularExpressions;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
@@ -16,7 +17,7 @@ public static class Utilities
 
     public static double ConvertFromBytes(long bytes, FileSizeUnit targetUnit)
     {
-        ArgumentHelpers.ThrowIfNegative(bytes, nameof(bytes));
+        ArgumentHelpers.ThrowIfNegative(bytes);
 
         var power = (int)targetUnit;
         return bytes / Math.Pow(1024, power);
@@ -24,7 +25,7 @@ public static class Utilities
 
     public static long ConvertToBytes(double size, FileSizeUnit sourceUnit)
     {
-        ArgumentHelpers.ThrowIfNegative(size, nameof(size));
+        ArgumentHelpers.ThrowIfNegative(size);
 
         var power = (int)sourceUnit;
         return (long)(size * Math.Pow(1024, power));
@@ -61,7 +62,7 @@ public static class Utilities
     [return: NotNull]
     public static byte[] Hash([NotNull] string path)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(path, nameof(path));
+        ArgumentHelpers.ThrowIfFileNotFound(path);
         using var stream = File.OpenRead(path);
         using var sha256 = SHA256.Create();
         return sha256.ComputeHash(stream);
@@ -70,16 +71,15 @@ public static class Utilities
     [return: NotNull]
     public static byte[] Hash([NotNull] byte[] input)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
-        using var sha256 = SHA256.Create();
-        return sha256.ComputeHash(input);
+        ArgumentHelpers.ThrowIfNull(input);
+        return Hasher.ComputeSha2(256, input);
     }
 
     /// <summary>Computes SHA256 hash of a stream asynchronously.</summary>
     [return: NotNull]
     public static async Task<byte[]> HashAsync([NotNull] Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
         using var sha256 = SHA256.Create();
 #if NET6_0_OR_GREATER
@@ -96,7 +96,7 @@ public static class Utilities
     [return: NotNull]
     public static async Task<byte[]> HashAsync([NotNull] string path, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(path, nameof(path));
+        ArgumentHelpers.ThrowIfFileNotFound(path);
 #if NET6_0_OR_GREATER
         await using var stream = File.OpenRead(path);
 #else

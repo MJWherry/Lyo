@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using Lyo.Common.Enums;
 using Lyo.Exceptions;
+using Lyo.Result.Enums;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Represents an error with a message, code, type, optional stack trace, inner error, metadata, timestamp, and optional exception.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
@@ -36,15 +36,12 @@ public sealed record Error
         ErrorSeverity severity = ErrorSeverity.Error,
         ErrorType type = ErrorType.Generic)
     {
-        Code = ArgumentHelpers.ThrowIfNullReturn(code, nameof(code));
+        Code = ArgumentHelpers.ThrowIfNullReturn(code);
         Exception = exception;
-
         var resolvedMessage = !string.IsNullOrEmpty(message) ? message : exception?.Message;
         ArgumentHelpers.ThrowIf(string.IsNullOrEmpty(resolvedMessage), "Either message or exception must be provided", nameof(message));
         Message = resolvedMessage!;
-
         StackTrace = !string.IsNullOrEmpty(stackTrace) ? stackTrace : exception?.StackTrace;
-
         if (innerError == null && exception?.InnerException != null)
             InnerError = FromException(exception.InnerException, code);
         else
@@ -76,24 +73,15 @@ public sealed record Error
     }
 
     /// <summary>Creates a validation error.</summary>
-    public static Error Validation(
-        string message,
-        string code = ValidationErrorCodes.ValidationFailed,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public static Error Validation(string message, string code = ValidationErrorCodes.ValidationFailed, IReadOnlyDictionary<string, object>? metadata = null)
         => new(message, code, null, null, metadata, null, ErrorSeverity.Warning, ErrorType.Validation);
 
     /// <summary>Creates a not-found error.</summary>
-    public static Error NotFound(
-        string message,
-        string code = ValidationErrorCodes.NotFound,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public static Error NotFound(string message, string code = ValidationErrorCodes.NotFound, IReadOnlyDictionary<string, object>? metadata = null)
         => new(message, code, null, null, metadata, null, ErrorSeverity.Error, ErrorType.NotFound);
 
     /// <summary>Creates a conflict error.</summary>
-    public static Error Conflict(
-        string message,
-        string code = ValidationErrorCodes.Conflict,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public static Error Conflict(string message, string code = ValidationErrorCodes.Conflict, IReadOnlyDictionary<string, object>? metadata = null)
         => new(message, code, null, null, metadata, null, ErrorSeverity.Error, ErrorType.Conflict);
 
     /// <summary>Creates an unauthorized error.</summary>
@@ -116,13 +104,11 @@ public sealed record Error
         string code = ValidationErrorCodes.InternalError,
         Exception? exception = null,
         IReadOnlyDictionary<string, object>? metadata = null)
-        => new(message, code, exception?.StackTrace, exception != null ? FromException(exception, code) : null, metadata, exception, ErrorSeverity.Critical, ErrorType.InternalError);
+        => new(
+            message, code, exception?.StackTrace, exception != null ? FromException(exception, code) : null, metadata, exception, ErrorSeverity.Critical, ErrorType.InternalError);
 
     /// <summary>Creates a timeout error.</summary>
-    public static Error Timeout(
-        string message = "The operation timed out",
-        string code = ValidationErrorCodes.Timeout,
-        IReadOnlyDictionary<string, object>? metadata = null)
+    public static Error Timeout(string message = "The operation timed out", string code = ValidationErrorCodes.Timeout, IReadOnlyDictionary<string, object>? metadata = null)
         => new(message, code, null, null, metadata, null, ErrorSeverity.Error, ErrorType.Timeout);
 
     /// <summary>Creates a service-unavailable error.</summary>

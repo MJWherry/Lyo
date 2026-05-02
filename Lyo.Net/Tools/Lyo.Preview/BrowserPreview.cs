@@ -42,7 +42,7 @@ public class BrowserPreview : IPreviewService
     /// <inheritdoc />
     public async Task<string?> PreviewFileAsync(string pathOrUrl, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pathOrUrl, nameof(pathOrUrl));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pathOrUrl);
         UriHelpers.ThrowIfInvalidUri(pathOrUrl, nameof(pathOrUrl));
         var bytes = await File.ReadAllBytesAsync(pathOrUrl, ct).ConfigureAwait(false);
         if (bytes.Length == 0) {
@@ -58,8 +58,8 @@ public class BrowserPreview : IPreviewService
     /// <inheritdoc />
     public async Task<string?> PreviewAsync(Stream stream, FileTypeInfo fileType, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
-        ArgumentHelpers.ThrowIfNull(fileType, nameof(fileType));
+        ArgumentHelpers.ThrowIfNull(stream);
+        ArgumentHelpers.ThrowIfNull(fileType);
         ThrowIfNotSupported(fileType, nameof(fileType));
         await using var ms = new MemoryStream();
         await stream.CopyToAsync(ms, ct).ConfigureAwait(false);
@@ -74,8 +74,8 @@ public class BrowserPreview : IPreviewService
     /// <inheritdoc />
     public Task<string?> PreviewAsync(byte[] bytes, FileTypeInfo fileType, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(bytes, nameof(bytes));
-        ArgumentHelpers.ThrowIfNull(fileType, nameof(fileType));
+        ArgumentHelpers.ThrowIfNull(bytes);
+        ArgumentHelpers.ThrowIfNull(fileType);
         ThrowIfNotSupported(fileType, nameof(fileType));
         if (bytes.Length != 0)
             return ServeAndOpenAsync(bytes, fileType, ct);

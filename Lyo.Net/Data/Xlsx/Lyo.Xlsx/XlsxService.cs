@@ -2,9 +2,9 @@ using System.Data;
 using System.Reflection;
 using System.Text;
 using ExcelDataReader;
-using Lyo.Common;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
+using Lyo.Result;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -97,8 +97,8 @@ public class XlsxService : IXlsxService
     /// <inheritdoc />
     public void ConvertXlsxToCsv(string xlsxPath, string outputCsvPath, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxPath, nameof(xlsxPath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath, nameof(outputCsvPath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxPath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath);
         _logger.LogDebug("Converting {ConvertingXlsxPath} to {ConvertedCsvPath}", xlsxPath, outputCsvPath);
         using var inputStream = File.Open(xlsxPath, FileMode.Open, FileAccess.Read);
         using var outputStream = File.Create(outputCsvPath);
@@ -107,8 +107,8 @@ public class XlsxService : IXlsxService
 
     public void ConvertXlsxToCsv(Stream inputStream, Stream outputStream, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Converting xlsx stream to csv stream");
@@ -123,8 +123,8 @@ public class XlsxService : IXlsxService
 
     public void ConvertXlsxToCsv(byte[] xlsxBytes, string outputCsvPath, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath, nameof(outputCsvPath));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath);
         using var inputStream = new MemoryStream(xlsxBytes);
         using var outputStream = File.Create(outputCsvPath);
         ConvertXlsxToCsv(inputStream, outputStream, encoding);
@@ -132,22 +132,22 @@ public class XlsxService : IXlsxService
 
     public void ConvertXlsxToCsv(byte[] xlsxBytes, Stream outputStream, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         using var inputStream = new MemoryStream(xlsxBytes);
         ConvertXlsxToCsv(inputStream, outputStream, encoding);
     }
 
     public byte[] ConvertXlsxToCsvBytes(byte[] xlsxBytes, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         using var inputStream = new MemoryStream(xlsxBytes);
         return ConvertXlsxToCsvBytes(inputStream, encoding);
     }
 
     public byte[] ConvertXlsxToCsvBytes(Stream inputStream, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         using var outputStream = new MemoryStream();
         ConvertXlsxToCsv(inputStream, outputStream, encoding);
         return outputStream.ToArray();
@@ -155,7 +155,7 @@ public class XlsxService : IXlsxService
 
     public void SetExcelDataTableConfiguration(ExcelDataTableConfiguration excelDataTableConfiguration)
     {
-        ArgumentHelpers.ThrowIfNull(excelDataTableConfiguration, nameof(excelDataTableConfiguration));
+        ArgumentHelpers.ThrowIfNull(excelDataTableConfiguration);
         _excelDataTableConfiguration = excelDataTableConfiguration;
     }
 
@@ -323,8 +323,8 @@ public class XlsxService : IXlsxService
     // Conversion Async
     public async Task ConvertXlsxToCsvAsync(string xlsxPath, string outputCsvPath, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(xlsxPath, nameof(xlsxPath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath, nameof(outputCsvPath));
+        ArgumentHelpers.ThrowIfFileNotFound(xlsxPath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath);
         _logger.LogDebug("Converting {ConvertingXlsxPath} to {ConvertedCsvPath}", xlsxPath, outputCsvPath);
         await using var inputStream = File.Open(xlsxPath, FileMode.Open, FileAccess.Read);
         await using var outputStream = File.Create(outputCsvPath);
@@ -333,8 +333,8 @@ public class XlsxService : IXlsxService
 
     public async Task ConvertXlsxToCsvAsync(Stream inputStream, Stream outputStream, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Converting xlsx stream to csv stream");
@@ -349,8 +349,8 @@ public class XlsxService : IXlsxService
 
     public async Task ConvertXlsxToCsvAsync(byte[] xlsxBytes, string outputCsvPath, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath, nameof(outputCsvPath));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputCsvPath);
         await using var inputStream = new MemoryStream(xlsxBytes);
         await using var outputStream = File.Create(outputCsvPath);
         await ConvertXlsxToCsvAsync(inputStream, outputStream, encoding, ct).ConfigureAwait(false);
@@ -358,22 +358,22 @@ public class XlsxService : IXlsxService
 
     public async Task ConvertXlsxToCsvAsync(byte[] xlsxBytes, Stream outputStream, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         await using var inputStream = new MemoryStream(xlsxBytes);
         await ConvertXlsxToCsvAsync(inputStream, outputStream, encoding, ct).ConfigureAwait(false);
     }
 
     public async Task<byte[]> ConvertXlsxToCsvBytesAsync(byte[] xlsxBytes, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(xlsxBytes, nameof(xlsxBytes));
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
         await using var inputStream = new MemoryStream(xlsxBytes);
         return await ConvertXlsxToCsvBytesAsync(inputStream, encoding, ct).ConfigureAwait(false);
     }
 
     public async Task<byte[]> ConvertXlsxToCsvBytesAsync(Stream inputStream, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         await using var outputStream = new MemoryStream();
         await ConvertXlsxToCsvAsync(inputStream, outputStream, encoding, ct).ConfigureAwait(false);
         return outputStream.ToArray();

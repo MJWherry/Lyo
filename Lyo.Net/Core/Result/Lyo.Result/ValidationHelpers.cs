@@ -1,10 +1,9 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Lyo.Common.Enums;
+using Lyo.Result.Enums;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Helper methods for validation scenarios.</summary>
 public static class ValidationHelpers
@@ -16,7 +15,7 @@ public static class ValidationHelpers
     /// <returns>A Result containing the value if all validations pass, or errors if any fail.</returns>
     public static Result<T> Validate<T>(T value, params Func<T, (bool isValid, string errorCode, string errorMessage)>[] validators)
     {
-        if (validators == null || validators.Length == 0)
+        if (validators.Length == 0)
             return Result<T>.Success(value);
 
         var errors = new List<Error>();
@@ -36,7 +35,7 @@ public static class ValidationHelpers
     /// <returns>A Result containing the value if all validations pass, or errors if any fail.</returns>
     public static Result<T> Validate<T>(T value, params Func<T, (bool isValid, string errorCode, string errorMessage, ErrorSeverity severity)>[] validators)
     {
-        if (validators == null || validators.Length == 0)
+        if (validators.Length == 0)
             return Result<T>.Success(value);
 
         var errors = new List<Error>();
@@ -117,7 +116,7 @@ public static class ValidationHelpers
     /// <param name="errorCode">The error code to use if validation fails.</param>
     /// <param name="errorMessage">The error message to use if validation fails.</param>
     /// <returns>A Result containing the value if the condition is met, or an error otherwise.</returns>
-    public static Result<T> ValidateCondition<T>(T value, [NotNull] Func<T, bool> condition, string errorCode, string errorMessage)
+    public static Result<T> ValidateCondition<T>(T value, Func<T, bool> condition, string errorCode, string errorMessage)
         => !condition(value) ? Result<T>.Failure(errorMessage, errorCode) : Result<T>.Success(value);
 
     /// <summary>Validates that a string matches the email format.</summary>
@@ -151,7 +150,7 @@ public static class ValidationHelpers
     }
 
     /// <summary>Validates that a string matches the specified regex pattern.</summary>
-    public static Result<string> ValidateRegex(string? value, [NotNull] Regex pattern, string errorCode = ValidationErrorCodes.InvalidFormat, string? errorMessage = null)
+    public static Result<string> ValidateRegex(string? value, Regex pattern, string errorCode = ValidationErrorCodes.InvalidFormat, string? errorMessage = null)
         => value == null ? Result<string>.Failure(errorMessage ?? "Value cannot be null", ValidationErrorCodes.NullValue) :
             pattern.IsMatch(value) ? Result<string>.Success(value) : Result<string>.Failure(errorMessage ?? "Value does not match required format", errorCode);
 

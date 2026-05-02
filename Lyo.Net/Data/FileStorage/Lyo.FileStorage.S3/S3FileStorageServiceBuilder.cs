@@ -43,8 +43,8 @@ public sealed class S3FileStorageServiceBuilder
 
     internal S3FileStorageServiceBuilder(IServiceCollection services, string keyName)
     {
-        _services = ArgumentHelpers.ThrowIfNullReturn(services, nameof(services));
-        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName, nameof(keyName));
+        _services = ArgumentHelpers.ThrowIfNullReturn(services);
+        _keyName = ArgumentHelpers.ThrowIfNullReturn(keyName);
     }
 
     /// <summary>Configures the key store using a configuration section name.</summary>
@@ -52,7 +52,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureKeyStore(string configSectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _keyStoreConfigSection = configSectionName;
         return this;
     }
@@ -62,7 +62,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder UseKeyStore(string keyName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         _keyStoreKeyName = keyName;
         return this;
     }
@@ -72,7 +72,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureFileMetadataStore(string configSectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _metadataStoreConfigSection = configSectionName;
         return this;
     }
@@ -82,7 +82,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder UseFileMetadataStore(string keyName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         _metadataStoreKeyName = keyName;
         return this;
     }
@@ -92,7 +92,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureFileMetadataStore(Func<IServiceProvider, IFileMetadataStore> factory)
     {
-        ArgumentHelpers.ThrowIfNull(factory, nameof(factory));
+        ArgumentHelpers.ThrowIfNull(factory);
         _metadataStoreFactory = factory;
         return this;
     }
@@ -102,7 +102,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureEncryptionService(string configSectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _encryptionServiceConfigSection = configSectionName;
         return this;
     }
@@ -112,7 +112,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder UseEncryptionService(string keyName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         _encryptionServiceKeyName = keyName;
         return this;
     }
@@ -122,7 +122,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureEncryptionService(Func<IServiceProvider, ITwoKeyEncryptionService> factory)
     {
-        ArgumentHelpers.ThrowIfNull(factory, nameof(factory));
+        ArgumentHelpers.ThrowIfNull(factory);
         _encryptionServiceFactory = factory;
         return this;
     }
@@ -132,7 +132,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureS3FileStorage(string configSectionName = S3FileStorageOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         _s3FileStorageConfigSection = configSectionName;
         return this;
     }
@@ -142,7 +142,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The builder for chaining</returns>
     public S3FileStorageServiceBuilder ConfigureS3FileStorage(Action<S3FileStorageOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         _s3FileStorageConfigure = configure;
         return this;
     }
@@ -152,7 +152,7 @@ public sealed class S3FileStorageServiceBuilder
     /// <returns>The service collection for chaining</returns>
     public IServiceCollection Build(IConfiguration configuration)
     {
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(configuration);
 
         // Configure AWS File Storage Options
         var configSectionName = _s3FileStorageConfigSection ?? S3FileStorageOptions.SectionName;

@@ -3,10 +3,10 @@ using System.Reflection;
 using System.Text;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Lyo.Common;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -55,7 +55,7 @@ public sealed class CsvService : ICsvService
     /// <exception cref="ArgumentNullException">Thrown when configBuilder is null.</exception>
     public CsvService(ILogger<CsvService>? logger, Func<CsvConfiguration> configBuilder, HttpClient? httpClient = null)
     {
-        ArgumentHelpers.ThrowIfNull(configBuilder, nameof(configBuilder));
+        ArgumentHelpers.ThrowIfNull(configBuilder);
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<CsvService>();
         _httpClient = httpClient;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -248,7 +248,7 @@ public sealed class CsvService : ICsvService
 
     private async Task<byte[]> FetchBytesFromUrlAsync(string url, CancellationToken ct)
     {
-        UriHelpers.GetValidWebUri(url, nameof(url));
+        UriHelpers.GetValidWebUri(url);
         var client = _httpClient ?? new HttpClient();
         try {
 #if NETSTANDARD2_0
@@ -437,13 +437,13 @@ public sealed class CsvService : ICsvService
     {
         var fileList = inputFiles.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(fileList, nameof(inputFiles));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFile, nameof(outputFile));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFile);
         await using var outputStream = new FileStream(outputFile, FileMode.Create, FileAccess.Write, FileShare.Read);
         await using var outputWriter = new StreamWriter(outputStream, _csvConfiguration.Encoding);
         await using var outputCsv = new CsvWriter(outputWriter, _csvConfiguration);
         var firstFile = true;
         foreach (var inputFile in fileList) {
-            ArgumentHelpers.ThrowIfFileNotFound(inputFile, nameof(inputFiles));
+            ArgumentHelpers.ThrowIfFileNotFound(inputFile);
             if (firstFile) {
                 var headers = await ReadHeaderRowAsync(inputFile).ConfigureAwait(false);
                 if (headers != null)
@@ -462,11 +462,11 @@ public sealed class CsvService : ICsvService
 
     public async Task SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputFile, nameof(inputFile));
-        ArgumentHelpers.ThrowIfFileNotFound(inputFile, nameof(inputFile));
-        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile, nameof(rowsPerFile));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputDirectory, nameof(outputDirectory));
-        ExceptionThrower.ThrowIfDirectoryNotFound(outputDirectory, nameof(outputDirectory));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputFile);
+        ArgumentHelpers.ThrowIfFileNotFound(inputFile);
+        ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputDirectory);
+        ExceptionThrower.ThrowIfDirectoryNotFound(outputDirectory);
         var baseFileName = Path.GetFileNameWithoutExtension(inputFile);
         var extension = ".csv";
         var fileNumber = 1;

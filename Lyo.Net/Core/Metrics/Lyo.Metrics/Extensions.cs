@@ -16,7 +16,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLyoMetrics()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<IMetrics, MetricsService>(_ => {
                 var options = new MetricsOptions();
                 return new(options);
@@ -30,8 +30,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLyoMetrics(Func<IServiceProvider, MetricsOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<MetricsOptions>(provider => {
                 var options = configure(provider);
                 return options;
@@ -50,8 +50,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLyoMetrics(Action<IServiceProvider, MetricsOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<MetricsOptions>(provider => {
                 var options = new MetricsOptions();
                 configure(provider, options);
@@ -71,8 +71,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLyoMetrics(Action<MetricsOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<MetricsOptions>(_ => {
                 var options = new MetricsOptions();
                 configure(options);
@@ -93,9 +93,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddLyoMetricsFromConfiguration(IConfiguration configuration, string configSectionName = "MetricsOptions")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             services.AddOptions<MetricsOptions>().Bind(configuration.GetSection(configSectionName)).ValidateOnStart();
             services.AddSingleton<IMetrics>(provider => {
                 var options = provider.GetRequiredService<IOptions<MetricsOptions>>().Value;
@@ -109,7 +109,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddNullMetrics()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<IMetrics, NullMetrics>();
             return services;
         }

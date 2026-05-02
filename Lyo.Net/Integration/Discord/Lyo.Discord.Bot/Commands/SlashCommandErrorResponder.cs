@@ -16,8 +16,8 @@ public static class SlashCommandErrorResponder
     /// <summary>Subscribes <paramref name="slash" /> to log failures and respond with an ephemeral message when possible.</summary>
     public static void Subscribe(SlashCommandsExtension slash, ILogger logger, ILyoDiscordBotGateway? discordGateway = null)
     {
-        ArgumentHelpers.ThrowIfNull(slash, nameof(slash));
-        ArgumentHelpers.ThrowIfNull(logger, nameof(logger));
+        ArgumentHelpers.ThrowIfNull(slash);
+        ArgumentHelpers.ThrowIfNull(logger);
         slash.SlashCommandErrored += (_, e) => HandleAsync(e, logger, discordGateway);
     }
 

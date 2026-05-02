@@ -1,6 +1,6 @@
 using Lyo.Codes.ZXing;
-using Lyo.Common;
 using Lyo.QRCode.Models;
+using Lyo.Result;
 using static Lyo.QRCode.QRCodeErrorCodes;
 
 namespace Lyo.QRCode;

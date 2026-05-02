@@ -22,21 +22,21 @@ public static class Ulid
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255,
-            // '0'=48..'9'=57
+            // '0'=48...'9'=57
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-            // ':'=58..'@'=64
+            // ':'=58...'@'=64
             255, 255, 255, 255, 255, 255, 255,
-            // 'A'=65..'Z'=90  (I, L, O, U excluded by Crockford)
+            // 'A'=65...'Z'=90  (I, L, O, U excluded by Crockford)
             10, 11, 12, 13, 14, 15, 16, 17, 255, 18,
             19, 255, 20, 21, 255, 22, 23, 24, 25, 26,
             255, 27, 28, 29, 30, 31,
-            // '['=91..'`'=96
+            // '['=91...'`'=96
             255, 255, 255, 255, 255, 255,
-            // 'a'=97..'z'=122 (same values as uppercase)
+            // 'a'=97...'z'=122 (same values as uppercase)
             10, 11, 12, 13, 14, 15, 16, 17, 255, 18,
             19, 255, 20, 21, 255, 22, 23, 24, 25, 26,
             255, 27, 28, 29, 30, 31,
-            // '{'=123..DEL=127
+            // '{'=123...DEL=127
             255, 255, 255, 255, 255
         ];
 
@@ -58,7 +58,7 @@ public static class Ulid
     /// </summary>
     public static string[] CreateBulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var ms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var result = new string[count];
         var buf = new byte[count * 10]; // 10 random bytes per ULID
@@ -73,11 +73,11 @@ public static class Ulid
     /// <exception cref="ArgumentException">The string is not a valid 26-character ULID.</exception>
     public static DateTimeOffset GetTimestamp(string ulid)
     {
-        ArgumentHelpers.ThrowIf(ulid is null || ulid.Length != 26, "ULID must be exactly 26 characters.", nameof(ulid));
-
+        ArgumentHelpers.ThrowIfNull(ulid);
+        ArgumentHelpers.ThrowIf(ulid.Length != 26, "ULID must be exactly 26 characters.", nameof(ulid));
         long ms = 0;
         for (var i = 0; i < 10; i++)
-            ms = (ms << 5) | DecodeChar(ulid[i], i);
+            ms = (ms << 5) | (uint)DecodeChar(ulid[i], i);
 
         return DateTimeOffset.FromUnixTimeMilliseconds(ms);
     }
@@ -122,7 +122,6 @@ public static class Ulid
         ArgumentHelpers.ThrowIf(c >= 128, $"Invalid ULID character '{c}' at position {position}.", "ulid");
         var v = DecodeMap[c];
         ArgumentHelpers.ThrowIf(v == 255, $"Invalid ULID character '{c}' at position {position}.", "ulid");
-
         return v;
     }
 }

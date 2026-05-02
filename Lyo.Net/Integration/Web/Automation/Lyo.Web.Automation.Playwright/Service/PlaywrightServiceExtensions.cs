@@ -14,7 +14,7 @@ public static class PlaywrightServiceExtensions
     /// <summary>Registers <see cref="PlaywrightBrowserOptions" /> and a scoped <see cref="PlaywrightBrowser" /> for direct injection.</summary>
     public static IServiceCollection AddPlaywrightBrowser(this IServiceCollection services, Action<PlaywrightBrowserOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         RegisterOptionsAndBrowser(services, configure);
         return services;
     }
@@ -25,7 +25,7 @@ public static class PlaywrightServiceExtensions
     /// </summary>
     public static IServiceCollection AddPlaywrightBrowserService(this IServiceCollection services, Action<PlaywrightBrowserOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         RegisterOptionsAndBrowser(services, configure);
         RegisterPlaywrightBrowserServiceSingleton(services);
         return services;
@@ -34,8 +34,8 @@ public static class PlaywrightServiceExtensions
     /// <summary>Binds <paramref name="configuration" /> to <see cref="PlaywrightBrowserOptions" /> and registers Playwright services.</summary>
     public static IServiceCollection AddPlaywrightBrowserServiceFromConfiguration(this IServiceCollection services, IConfiguration configuration, string? configSectionName = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
         var sectionName = string.IsNullOrWhiteSpace(configSectionName) ? PlaywrightBrowserOptions.SectionName : configSectionName!;
         services.AddSingleton(_ => {
             var o = new PlaywrightBrowserOptions();
@@ -51,8 +51,8 @@ public static class PlaywrightServiceExtensions
     /// <summary>Registers explicit options plus <see cref="IPlaywrightBrowserService" />.</summary>
     public static IServiceCollection AddPlaywrightBrowserService(this IServiceCollection services, PlaywrightBrowserOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddScoped(RegisterPlaywrightBrowser);
         RegisterPlaywrightBrowserServiceSingleton(services);
@@ -62,8 +62,8 @@ public static class PlaywrightServiceExtensions
     /// <summary>Registers explicit options and a scoped <see cref="PlaywrightBrowser" />.</summary>
     public static IServiceCollection AddPlaywrightBrowser(this IServiceCollection services, PlaywrightBrowserOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddScoped(RegisterPlaywrightBrowser);
         return services;

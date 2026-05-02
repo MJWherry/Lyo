@@ -38,10 +38,9 @@ public class TeeStream : Stream
     /// <param name="secondary">One or more secondary streams to write to.</param>
     public TeeStream(Stream primary, bool ownsStreams, params Stream[] secondary)
     {
-        ArgumentHelpers.ThrowIfNull(primary, nameof(primary));
-        ArgumentHelpers.ThrowIfNull(secondary, nameof(secondary));
-        ArgumentHelpers.ThrowIfNullOrEmpty(secondary, nameof(secondary));
-        ArgumentHelpers.ThrowIf(secondary!.Any(s => s == null), "Secondary streams cannot be null", nameof(secondary));
+        ArgumentHelpers.ThrowIfNull(primary);
+        ArgumentHelpers.ThrowIfNull(secondary);
+        ArgumentHelpers.ThrowIfNullOrEmpty(secondary);
         _primary = primary;
         _secondary = secondary;
         _ownsStreams = ownsStreams;

@@ -29,9 +29,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = TypecastClientOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Configure TypecastClientOptions from configuration (if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(TypecastClientOptions))) {
@@ -62,8 +62,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddTypecastClient(this IServiceCollection services, Action<TypecastClientOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<TypecastClientOptions>(_ => {
             var options = new TypecastClientOptions();
             configure(options);
@@ -86,8 +86,8 @@ public static class Extensions
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddTypecastClient(this IServiceCollection services, TypecastClientOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddSingleton<TypecastClient>(provider => {
             var loggerFactory = provider.GetService<ILoggerFactory>();

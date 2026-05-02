@@ -13,8 +13,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddLocalFileMetadataStore(this IServiceCollection services, string rootDirectoryPath)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath, nameof(rootDirectoryPath));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath);
         services.AddSingleton<LocalFileMetadataStore>(provider => {
             var loggerFactory = provider.GetService<ILoggerFactory>();
             return new(rootDirectoryPath, loggerFactory);
@@ -30,8 +30,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddLocalFileMetadataStore(this IServiceCollection services, Func<IServiceProvider, string> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<LocalFileMetadataStore>(provider => {
             var rootDirectoryPath = configure(provider);
             var loggerFactory = provider.GetService<ILoggerFactory>();
@@ -52,9 +52,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = LocalFileMetadataStoreOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Register options
         if (!services.Any(s => s.ServiceType == typeof(LocalFileMetadataStoreOptions))) {
@@ -86,9 +86,9 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddLocalFileMetadataStoreKeyed(this IServiceCollection services, string keyName, string rootDirectoryPath)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath, nameof(rootDirectoryPath));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectoryPath);
         services.AddKeyedSingleton<LocalFileMetadataStore>(
             keyName, (provider, _) => {
                 var loggerFactory = provider.GetService<ILoggerFactory>();
@@ -121,8 +121,8 @@ public static class Extensions
     /// </example>
     public static LocalFileMetadataStoreBuilder AddLocalFileMetadataStoreKeyed(this IServiceCollection services, string keyName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
         return new(services, keyName);
     }
 }

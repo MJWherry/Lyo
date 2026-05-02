@@ -35,7 +35,7 @@ public sealed class AwsPollyTtsService : TtsServiceBase<AwsPollyTtsRequest>
     public AwsPollyTtsService(AwsPollyOptions options, ILogger<AwsPollyTtsService>? logger = null, IMetrics? metrics = null, IAmazonPolly? pollyClient = null)
         : base(options, logger ?? NullLoggerFactory.Instance.CreateLogger<AwsPollyTtsService>(), metrics)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         _options = options;
         if (pollyClient != null) {
             _pollyClient = pollyClient;
@@ -119,8 +119,8 @@ public sealed class AwsPollyTtsService : TtsServiceBase<AwsPollyTtsRequest>
     {
         var sw = Stopwatch.StartNew();
         try {
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.Text, nameof(request.Text));
-            ArgumentHelpers.ThrowIfNotInRange(request.Text.Length, 1, Options.MaxTextLength, nameof(request.Text));
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.Text);
+            ArgumentHelpers.ThrowIfNotInRange(request.Text.Length, 1, Options.MaxTextLength);
             request.VoiceId ??= _options.DefaultVoiceIdEnum;
         }
         catch (Exception ex) {

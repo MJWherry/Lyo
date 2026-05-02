@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Images;
 using Lyo.Images.Models;
@@ -8,6 +7,7 @@ using Lyo.QRCode.Encoding;
 using Lyo.QRCode.Encoding.Iso;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.QrGraphics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static Lyo.QRCode.QRCodeErrorCodes;
@@ -54,7 +54,7 @@ public class BuiltInQRCodeService : IQRCodeService
     /// <inheritdoc />
     public Task<Result<QRCodeRequest>> GenerateAsync(QRCodeBuilder builder, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
+        ArgumentHelpers.ThrowIfNull(builder);
         var (data, options) = builder.Build();
         return GenerateAsync(data, options, ct);
     }
@@ -62,7 +62,7 @@ public class BuiltInQRCodeService : IQRCodeService
     /// <inheritdoc />
     public async Task<Result<QRCodeRequest>> GenerateAsync(string data, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         using var timer = _metrics.StartTimer(_metricNames[nameof(Constants.Metrics.GenerateDuration)]);
         var sw = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();
@@ -98,8 +98,8 @@ public class BuiltInQRCodeService : IQRCodeService
     /// <inheritdoc />
     public async Task<Result<bool>> GenerateToStreamAsync(string data, Stream outputStream, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         try {
             var result = await GenerateAsync(data, options, ct).ConfigureAwait(false);
@@ -121,7 +121,7 @@ public class BuiltInQRCodeService : IQRCodeService
     /// <inheritdoc />
     public async Task<Result<bool>> GenerateToFileAsync(string data, string filePath, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         try {
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
@@ -168,7 +168,7 @@ public class BuiltInQRCodeService : IQRCodeService
     /// <inheritdoc />
     public Task<Result<QRCodeImageReadResult>> ReadFromImageAsync(byte[] imageBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageBytes, nameof(imageBytes));
+        ArgumentHelpers.ThrowIfNull(imageBytes);
         return Task.Run(() => QRCodeZxingRead.Decode(imageBytes), ct);
     }
 
@@ -188,7 +188,9 @@ public class BuiltInQRCodeService : IQRCodeService
         };
 
         if (options.Icon != null && QrCodeIconComposer.TryResolveIconBytes(options.Icon) != null) {
-            OperationHelpers.ThrowIfNull(_imageService, "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
+            OperationHelpers.ThrowIfNull(
+                _imageService,
+                "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
 
             if (options.Format == QRCodeFormat.Png)
                 bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, _logger, ct).ConfigureAwait(false);

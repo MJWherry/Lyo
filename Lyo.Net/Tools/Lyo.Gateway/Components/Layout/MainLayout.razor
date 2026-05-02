@@ -40,7 +40,9 @@
                     <!--</AuthorizeView>-->
                     <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All">Home</MudNavLink>
                     <MudNavLink Href="PeopleManagement" Icon="@Icons.Material.Filled.Contacts">People</MudNavLink>
+                    <MudNavLink Href="@Constants.Page.Comics" Icon="@Icons.Material.Filled.AutoStories">Comics</MudNavLink>
                     <MudNavLink Href="@Constants.Page.QueryBuilder" Icon="@Icons.Material.Filled.QueryBuilder">Query Builder</MudNavLink>
+                    <MudNavLink Href="@Constants.Page.IdGenerator" Icon="@Icons.Material.Filled.Tag">ID Generator</MudNavLink>
                     <MudNavGroup Title="Communication"
                                  Icon="@Icons.Material.Filled.Forum"
                                  Expanded="@IsExpanded(Constants.Page.Messaging, Constants.Page.Translation, Constants.Page.Tts, Constants.Page.Profanity)">
@@ -65,11 +67,13 @@
                     </MudNavGroup>
                     <MudNavGroup Title="Infrastructure"
                                  Icon="@Icons.Material.Filled.SettingsEthernet"
-                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache)">
+                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache, Constants.Page.Jobs, Constants.Page.Schedule)">
                         <MudNavLink Href="@Constants.Page.Cache" Icon="@Icons.Material.Filled.Storage">Cache</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Jobs" Icon="@Icons.Material.Filled.Work">Jobs</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Locks" Icon="@Icons.Material.Filled.Lock">Locks</MudNavLink>
                         <MudNavLink Href="@Constants.Page.RabbitMq" Icon="@Icons.Material.Filled.Message">RabbitMq</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Metrics" Icon="@Icons.Material.Filled.HourglassTop">Metrics</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Schedule" Icon="@Icons.Material.Filled.Schedule">Schedule</MudNavLink>
                     </MudNavGroup>
                 </MudNavMenu>
             </div>

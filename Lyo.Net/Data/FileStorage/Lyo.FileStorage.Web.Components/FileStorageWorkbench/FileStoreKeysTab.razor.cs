@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Security.Cryptography;
 using System.Text.Json;
+using Lyo.Common.Security;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Components;
@@ -349,7 +349,7 @@ public partial class FileStoreKeysTab : ComponentBase
         if (keyBytes == null || keyBytes.Length == 0)
             return null;
 
-        var hash = SHA256.HashData(keyBytes);
+        var hash = Hasher.ComputeSha2(256, keyBytes);
         return $"{keyBytes.Length} bytes / {Convert.ToHexString(hash)[..16]}";
     }
 }

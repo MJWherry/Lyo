@@ -16,8 +16,8 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
 
     public CachePayloadCodec(CacheOptions cacheOptions, ICompressionService compression, IEncryptionService? encryption = null)
     {
-        _cacheOptions = ArgumentHelpers.ThrowIfNullReturn(cacheOptions, nameof(cacheOptions));
-        _compression = ArgumentHelpers.ThrowIfNullReturn(compression, nameof(compression));
+        _cacheOptions = ArgumentHelpers.ThrowIfNullReturn(cacheOptions);
+        _compression = ArgumentHelpers.ThrowIfNullReturn(compression);
         _encryption = encryption;
     }
 
@@ -57,7 +57,7 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
     /// <inheritdoc />
     public CacheEntryEnvelope Decode(byte[] framed)
     {
-        ArgumentHelpers.ThrowIfNull(framed, nameof(framed));
+        ArgumentHelpers.ThrowIfNull(framed);
         CachePayloadFrame.Parse(framed, out var flags, out var payloadSpan);
         var working = payloadSpan.ToArray();
         CompressionResult? compressionResult = null;

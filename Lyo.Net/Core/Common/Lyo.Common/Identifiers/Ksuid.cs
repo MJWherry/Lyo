@@ -67,7 +67,7 @@ public static class Ksuid
     /// </summary>
     public static string[] CreateBulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var secs = Math.Max(0L, DateTimeOffset.UtcNow.ToUnixTimeSeconds() - EpochOffsetSeconds);
         var result = new string[count];
         var buf = new byte[count * 16]; // 16 random bytes per KSUID

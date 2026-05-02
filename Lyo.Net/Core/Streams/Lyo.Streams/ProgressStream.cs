@@ -45,7 +45,7 @@ public class ProgressStream : Stream
 
     public ProgressStream(Stream baseStream, IProgress<long>? readProgress = null, IProgress<long>? writeProgress = null)
     {
-        ArgumentHelpers.ThrowIfNull(baseStream, nameof(baseStream));
+        ArgumentHelpers.ThrowIfNull(baseStream);
         _baseStream = baseStream;
         _readProgress = readProgress;
         _writeProgress = writeProgress;

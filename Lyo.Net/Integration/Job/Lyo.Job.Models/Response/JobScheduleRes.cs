@@ -1,13 +1,12 @@
+#if NET6_0_OR_GREATER
+using TimeOnly = System.TimeOnly;
+#else
+using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
+#endif
 using System.Diagnostics;
 using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Schedule.Models;
-#if NET6_0_OR_GREATER
-using TimeOnly = System.TimeOnly;
-
-#else
-using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
-#endif
 
 namespace Lyo.Job.Models.Response;
 
@@ -24,7 +23,8 @@ public sealed record JobScheduleRes(
     int? IntervalMinutes,
     string? Description,
     bool Enabled,
-    IReadOnlyList<JobScheduleParameterRes>? Parameters)
+    IReadOnlyList<JobScheduleParameterRes>? Parameters,
+    string? CronExpression = null)
 {
     public override string ToString()
         => $"{Id.Truncated()} {Description ?? (Type == ScheduleType.SetTimes && Times?.Count > 0 ? $"Times: {string.Join(",", Times)}" : $"{StartTime} - {EndTime}, {IntervalMinutes}m Intervals")} Parameters={Parameters?.Count}";

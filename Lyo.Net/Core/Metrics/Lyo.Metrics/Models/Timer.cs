@@ -27,8 +27,8 @@ public class Timer : IDisposable
     /// <param name="tags">Optional tags/labels for the metric</param>
     public Timer(IMetrics metrics, string name, IEnumerable<(string, string)>? tags)
     {
-        _metrics = ArgumentHelpers.ThrowIfNullReturn(metrics, nameof(metrics));
-        _name = ArgumentHelpers.ThrowIfNullReturn(name, nameof(name));
+        _metrics = ArgumentHelpers.ThrowIfNullReturn(metrics);
+        _name = ArgumentHelpers.ThrowIfNullReturn(name);
         _tags = tags;
         _stopwatch = Stopwatch.StartNew();
     }

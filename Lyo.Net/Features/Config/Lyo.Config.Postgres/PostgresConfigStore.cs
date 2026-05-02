@@ -15,14 +15,14 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <summary>Creates a new PostgresConfigStore.</summary>
     public PostgresConfigStore(IDbContextFactory<ConfigDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public async Task SaveDefinitionAsync(ConfigDefinitionRecord definition, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(definition, nameof(definition));
+        ArgumentHelpers.ThrowIfNull(definition);
         definition.Validate();
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         ConfigDefinitionEntity? entity = null;
@@ -77,8 +77,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<ConfigDefinitionRecord?> GetDefinitionAsync(string forEntityType, string key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.ConfigDefinitions.FirstOrDefaultAsync(x => x.ForEntityType == forEntityType && x.Key == key, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
@@ -87,7 +87,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ConfigDefinitionRecord>> GetDefinitionsAsync(string forEntityType, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.ConfigDefinitions.Where(x => x.ForEntityType == forEntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -108,7 +108,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task SaveBindingAsync(ConfigBindingRecord binding, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(binding, nameof(binding));
+        ArgumentHelpers.ThrowIfNull(binding);
         ArgumentHelpers.ThrowIfNull(binding.Value, nameof(binding.Value));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(binding.Key, nameof(binding.Key));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(binding.ForEntityType, nameof(binding.ForEntityType));
@@ -183,8 +183,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ConfigBindingRevisionRecord>> GetBindingRevisionsAsync(EntityRef forEntity, string key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var binding = await GetBindingAsync(forEntity, key, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(binding, $"No binding for entity type '{forEntity.EntityType}' id '{forEntity.EntityId}' and key '{key}'.");
         return await GetBindingRevisionsAsync(binding.Id, ct).ConfigureAwait(false);
@@ -223,8 +223,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task RevertBindingToRevisionAsync(EntityRef forEntity, string key, int revision, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var binding = await GetBindingAsync(forEntity, key, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(binding, $"No binding for entity type '{forEntity.EntityType}' id '{forEntity.EntityId}' and key '{key}'.");
         await RevertBindingToRevisionAsync(binding.Id, revision, ct).ConfigureAwait(false);
@@ -241,8 +241,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<ConfigBindingRecord?> GetBindingAsync(EntityRef forEntity, string key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.ConfigBindings.FirstOrDefaultAsync(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.Key == key, ct)
             .ConfigureAwait(false);
@@ -253,7 +253,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<ConfigBindingRecord>> GetBindingsAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId)
             .OrderBy(x => x.Key)
@@ -291,7 +291,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task DeleteBindingsAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId)
             .ToListAsync(ct)
@@ -310,7 +310,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     /// <inheritdoc />
     public async Task<ResolvedConfigRecord> LoadConfigAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var definitions = await context.ConfigDefinitions.Where(x => x.ForEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
         var bindings = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId)

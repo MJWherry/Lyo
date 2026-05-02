@@ -31,10 +31,10 @@ public static class QueryCacheInvalidation
         IEnumerable<IReadOnlyList<object?>> affectedPrimaryKeys,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(cache, nameof(cache));
-        ArgumentHelpers.ThrowIfNull(cacheOptions, nameof(cacheOptions));
-        ArgumentHelpers.ThrowIfNull(entityClrType, nameof(entityClrType));
-        ArgumentHelpers.ThrowIfNull(affectedPrimaryKeys, nameof(affectedPrimaryKeys));
+        ArgumentHelpers.ThrowIfNull(cache);
+        ArgumentHelpers.ThrowIfNull(cacheOptions);
+        ArgumentHelpers.ThrowIfNull(entityClrType);
+        ArgumentHelpers.ThrowIfNull(affectedPrimaryKeys);
         if (cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad) {
             await cache.InvalidateCacheItemByTag(QueryCacheTagBuilder.EntityTypeTag(entityClrType)).ConfigureAwait(false);
             return;
@@ -82,9 +82,9 @@ public static class QueryCacheInvalidation
         bool zipSiblingCollectionSelections,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(cache, nameof(cache));
-        ArgumentHelpers.ThrowIfNull(projectedFieldSpecs, nameof(projectedFieldSpecs));
-        ArgumentHelpers.ThrowIfNull(computedFields, nameof(computedFields));
+        ArgumentHelpers.ThrowIfNull(cache);
+        ArgumentHelpers.ThrowIfNull(projectedFieldSpecs);
+        ArgumentHelpers.ThrowIfNull(computedFields);
         _ = ct;
         var tag = QueryCacheTagBuilder.FormatProjShapeTag(projectedFieldSpecs, computedFields, zipSiblingCollectionSelections);
         return cache.InvalidateCacheItemByTag(tag);

@@ -12,10 +12,10 @@ public static class CryptographicRandom
     /// <summary>Returns an array of <paramref name="length" /> cryptographically strong random bytes.</summary>
     public static byte[] GetBytes(int length)
     {
-        ArgumentHelpers.ThrowIfNegative(length, nameof(length));
+        ArgumentHelpers.ThrowIfNegative(length);
 
         if (length == 0)
-            return Array.Empty<byte>();
+            return [];
 
         var bytes = new byte[length];
         Fill(bytes);
@@ -54,7 +54,7 @@ public static class CryptographicRandom
 
     private static ulong NextUInt64Exclusive(ulong range)
     {
-        ArgumentHelpers.ThrowIfLessThan(range, 2UL, nameof(range));
+        ArgumentHelpers.ThrowIfLessThan(range, 2UL);
 
         var limit = ulong.MaxValue - ulong.MaxValue % range;
         var buf = new byte[8];

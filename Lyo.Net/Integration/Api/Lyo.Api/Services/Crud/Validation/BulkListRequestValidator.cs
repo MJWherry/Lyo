@@ -1,5 +1,5 @@
 using Lyo.Api.Models;
-using Lyo.Common;
+using Lyo.Result;
 using Lyo.Validation;
 
 namespace Lyo.Api.Services.Crud.Validation;

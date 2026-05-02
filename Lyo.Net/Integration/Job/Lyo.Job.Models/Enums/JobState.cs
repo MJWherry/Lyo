@@ -9,5 +9,9 @@ public enum JobState
     Queued = 1, [Description("Running")]
     Running = 2, [Description("Finished")]
     Finished = 3, [Description("Cancelled")]
-    Cancelled = 4
+    Cancelled = 4,
+
+    /// <summary>A cancellation has been requested but the worker has not yet confirmed it stopped.</summary>
+    [Description("Cancelling")]
+    Cancelling = 5
 }

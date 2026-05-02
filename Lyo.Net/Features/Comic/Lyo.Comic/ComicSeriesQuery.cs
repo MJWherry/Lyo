@@ -17,6 +17,12 @@ public sealed class ComicSeriesQuery
     /// <summary>Gets or sets the BCP 47 language to filter by (e.g. "ja", "en"). Null means all languages.</summary>
     public string? Language { get; set; }
 
+    /// <summary>Gets or sets tag strings to filter by. Only series that have ALL specified tags are returned. Null or empty means no tag filter.</summary>
+    public IReadOnlyList<string>? Tags { get; set; }
+
+    /// <summary>Gets or sets an explicit set of series IDs to restrict results to. Populated internally by the API after resolving <see cref="Tags" /> — do not set directly.</summary>
+    public IReadOnlyList<Guid>? FilterSeriesIds { get; set; }
+
     /// <summary>Gets or sets the maximum number of results to return. Null means no limit.</summary>
     public int? Limit { get; set; }
 

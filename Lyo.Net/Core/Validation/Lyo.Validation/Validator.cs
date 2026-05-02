@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Result;
 
 namespace Lyo.Validation;
 
@@ -8,7 +8,7 @@ public sealed class Validator<T> : IValidator<T>
     private readonly IReadOnlyList<IValidationRule<T>> _rules;
 
     /// <summary>Creates a validator from the supplied rules.</summary>
-    public Validator(IReadOnlyList<IValidationRule<T>> rules) => _rules = rules ?? [];
+    public Validator(IReadOnlyList<IValidationRule<T>> rules) => _rules = rules;
 
     /// <inheritdoc />
     public Result<T> Validate(T value)

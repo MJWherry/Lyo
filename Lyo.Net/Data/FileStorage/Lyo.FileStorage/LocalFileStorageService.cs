@@ -33,7 +33,7 @@ public class LocalFileStorageService : FileStorageServiceBase
         IFileContentPolicy? contentPolicy = null,
         IFileMalwareScanner? malwareScanner = null)
         : base(
-            ArgumentHelpers.ThrowIfNullReturn(options, nameof(options)), metadataService ?? new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory),
+            ArgumentHelpers.ThrowIfNullReturn(options), metadataService ?? new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
             options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy, malwareScanner)
     {
@@ -125,7 +125,7 @@ public class LocalFileStorageService : FileStorageServiceBase
     protected override async Task<EncryptionHeaderInfo> ExtractEncryptionHeaderAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
         var filePath = GetFilePath(fileId, extension, pathPrefix);
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         using var headerReader = File.OpenRead(filePath);
         var header = EncryptionHeader.Read(headerReader);
         return new(header.EncryptedDataEncryptionKey, header.KeyId, header.KeyVersion, header.DekKeyMaterialBytes);

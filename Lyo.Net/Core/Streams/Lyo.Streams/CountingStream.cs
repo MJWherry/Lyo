@@ -43,7 +43,7 @@ public class CountingStream : Stream
 
     public CountingStream(Stream baseStream)
     {
-        ArgumentHelpers.ThrowIfNull(baseStream, nameof(baseStream));
+        ArgumentHelpers.ThrowIfNull(baseStream);
         _baseStream = baseStream;
     }
 

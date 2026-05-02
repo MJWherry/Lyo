@@ -1,12 +1,11 @@
-using System.Diagnostics;
-using Lyo.Common.Enums;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
-
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Enums;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Request;
 
@@ -28,6 +27,9 @@ public sealed class JobScheduleReq
     public TimeOnly? EndTime { get; set; }
 
     public int? IntervalMinutes { get; set; }
+
+    /// <summary>Standard cron expression (5- or 6-field). Only required when <see cref="Type" /> is <c>Cron</c>.</summary>
+    public string? CronExpression { get; set; }
 
     public string? Description { get; set; }
 

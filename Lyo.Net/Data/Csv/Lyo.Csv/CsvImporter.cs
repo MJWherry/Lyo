@@ -1,10 +1,10 @@
 using System.Reflection;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Lyo.Common;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 #if NET10_0_OR_GREATER
 using System.Runtime.CompilerServices;
@@ -29,8 +29,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public IEnumerable<T> ParseFile<T>(string csvFilePath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as {ParsingType}", csvFilePath, typeof(T).FullName);
         using var reader = new StreamReader(csvFilePath);
         return ParseReader<T>(reader);
@@ -38,7 +38,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public IEnumerable<T> ParseStream<T>(Stream csvStream)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -50,8 +50,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseFileAsDictionary(string csvFilePath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as dictionary", csvFilePath);
         using var reader = new StreamReader(csvFilePath);
         return ParseReaderAsDictionary(reader);
@@ -59,7 +59,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseStreamAsDictionary(Stream csvStream)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -71,8 +71,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public Result<DataTable.Models.DataTable> ParseFileAsDataTable(string csvFilePath, bool? hasHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
         using var reader = new StreamReader(csvFilePath);
         return ParseReaderAsDataTable(reader, hasHeaderRow);
@@ -80,7 +80,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream csvStream, bool? hasHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -92,21 +92,21 @@ internal sealed class CsvImporter : ICsvImporter
 
     public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] csvBytes, bool? hasHeaderRow = null)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStreamAsDataTable(ms, hasHeaderRow);
     }
 
     public IEnumerable<T> ParseBytes<T>(byte[] csvBytes)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStream<T>(ms);
     }
 
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseBytesAsDictionary(byte[] csvBytes)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return ParseStreamAsDictionary(ms);
     }
@@ -188,8 +188,8 @@ internal sealed class CsvImporter : ICsvImporter
 #if !NETSTANDARD2_0
     public async Task<List<T>> ParseFileAsync<T>(string csvFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as {ParsingType}", csvFilePath, typeof(T).FullName);
         await using var stream = File.OpenRead(csvFilePath);
         return await ParseStreamAsync<T>(stream, ct).ConfigureAwait(false);
@@ -197,7 +197,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<List<T>> ParseStreamAsync<T>(Stream csvStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -215,8 +215,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseFileAsDictionaryAsync(string csvFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as dictionary", csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         return await ParseStreamAsDictionaryAsync(stream, ct).ConfigureAwait(false);
@@ -224,7 +224,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseStreamAsDictionaryAsync(Stream csvStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -236,8 +236,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseFileAsDataTableAsync(string csvFilePath, bool? hasHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         _logger.LogDebug("Parsing {ParsingCsvPath} as DataTable", csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         return await ParseStreamAsDataTableAsync(stream, hasHeaderRow, ct).ConfigureAwait(false);
@@ -245,7 +245,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream csvStream, bool? hasHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -259,21 +259,21 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsDataTableAsync(ms, hasHeaderRow, ct).ConfigureAwait(false);
     }
 
     public async Task<List<T>> ParseBytesAsync<T>(byte[] csvBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsync<T>(ms, ct).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseBytesAsDictionaryAsync(byte[] csvBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvBytes, nameof(csvBytes));
+        ArgumentHelpers.ThrowIfNull(csvBytes);
         using var ms = new MemoryStream(csvBytes);
         return await ParseStreamAsDictionaryAsync(ms, ct).ConfigureAwait(false);
     }
@@ -304,8 +304,8 @@ internal sealed class CsvImporter : ICsvImporter
     public async IAsyncEnumerable<T> ParseFileStreamingAsync<T>(string csvFilePath, CsvParseOptions? options = null, CancellationToken ct = default)
 #endif
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         await foreach (var record in ParseStreamStreamingAsync<T>(stream, options, ct).ConfigureAwait(false))
             yield return record;
@@ -317,7 +317,7 @@ internal sealed class CsvImporter : ICsvImporter
     public async IAsyncEnumerable<T> ParseStreamStreamingAsync<T>(Stream csvStream, CsvParseOptions? options = null, CancellationToken ct = default)
 #endif
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -379,15 +379,15 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<List<T>> ParseFileWithOptionsAsync<T>(string csvFilePath, CsvParseOptions? options, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         return await ParseStreamWithOptionsAsync<T>(stream, options, ct).ConfigureAwait(false);
     }
 
     public async Task<List<T>> ParseStreamWithOptionsAsync<T>(Stream csvStream, CsvParseOptions? options, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -441,8 +441,8 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<CsvStatistics> GetStatisticsAsync(string csvFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         var fileInfo = new FileInfo(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         var stats = await GetStatisticsAsync(stream, ct).ConfigureAwait(false);
@@ -452,7 +452,7 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<CsvStatistics> GetStatisticsAsync(Stream csvStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -565,9 +565,9 @@ internal sealed class CsvImporter : ICsvImporter
         CsvParseOptions? options = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfNegativeOrZero(chunkSize, nameof(chunkSize));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
+        ArgumentHelpers.ThrowIfNegativeOrZero(chunkSize);
         await using var stream = File.OpenRead(csvFilePath);
         await ProcessStreamInChunksAsync(stream, chunkSize, processChunk, options, ct).ConfigureAwait(false);
     }
@@ -579,10 +579,10 @@ internal sealed class CsvImporter : ICsvImporter
         CsvParseOptions? options = null,
         CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
-        ArgumentHelpers.ThrowIfNull(processChunk, nameof(processChunk));
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        ArgumentHelpers.ThrowIfNull(processChunk);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNegativeOrZero(chunkSize, nameof(chunkSize));
+        ArgumentHelpers.ThrowIfNegativeOrZero(chunkSize);
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
 
@@ -601,16 +601,16 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<ValidationResult> ValidateAsync(string csvFilePath, CsvSchema schema, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
         await using var stream = File.OpenRead(csvFilePath);
         return await ValidateAsync(stream, schema, ct).ConfigureAwait(false);
     }
 
     public async Task<ValidationResult> ValidateAsync(Stream csvStream, CsvSchema schema, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
-        ArgumentHelpers.ThrowIfNull(schema, nameof(schema));
+        ArgumentHelpers.ThrowIfNull(csvStream);
+        ArgumentHelpers.ThrowIfNull(schema);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
@@ -684,18 +684,18 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<List<T>> ParseFileWithMappingAsync<T>(string csvFilePath, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath, nameof(csvFilePath));
-        ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings, nameof(columnMappings));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
+        ArgumentHelpers.ThrowIfFileNotFound(csvFilePath);
+        ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings);
         await using var stream = File.OpenRead(csvFilePath);
         return await ParseStreamWithMappingAsync<T>(stream, columnMappings, options, ct).ConfigureAwait(false);
     }
 
     public async Task<List<T>> ParseStreamWithMappingAsync<T>(Stream csvStream, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(csvStream, nameof(csvStream));
+        ArgumentHelpers.ThrowIfNull(csvStream);
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings, nameof(columnMappings));
+        ArgumentHelpers.ThrowIfNullOrEmpty(columnMappings);
         if (csvStream.CanSeek && csvStream.Position > 0)
             csvStream.Position = 0;
 
@@ -779,10 +779,10 @@ internal sealed class CsvImporter : ICsvImporter
 
     public async Task<CsvComparisonResult> CompareFilesAsync(string file1, string file2, string? keyColumn = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(file1, nameof(file1));
-        ArgumentHelpers.ThrowIfFileNotFound(file1, nameof(file1));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(file2, nameof(file2));
-        ArgumentHelpers.ThrowIfFileNotFound(file2, nameof(file2));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(file1);
+        ArgumentHelpers.ThrowIfFileNotFound(file1);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(file2);
+        ArgumentHelpers.ThrowIfFileNotFound(file2);
         var dict1 = await ParseFileAsDictionaryAsync(file1, ct).ConfigureAwait(false);
         var dict2 = await ParseFileAsDictionaryAsync(file2, ct).ConfigureAwait(false);
         var result = new CsvComparisonResult {

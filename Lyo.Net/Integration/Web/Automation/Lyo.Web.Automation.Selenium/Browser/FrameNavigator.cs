@@ -16,14 +16,14 @@ public sealed class FrameNavigator
 
     internal FrameNavigator(SeleniumBrowser scraper)
     {
-        ArgumentHelpers.ThrowIfNull(scraper, nameof(scraper));
+        ArgumentHelpers.ThrowIfNull(scraper);
         _scraper = scraper;
     }
 
     /// <summary>Switches to the frame located by <paramref name="by" /> (must be visible).</summary>
     public void SwitchToFrame(By by)
     {
-        ArgumentHelpers.ThrowIfNull(by, nameof(by));
+        ArgumentHelpers.ThrowIfNull(by);
         var el = _scraper.WaitFor(by);
         OperationHelpers.ThrowIfNull(el, $"Frame not found: {by}");
         SwitchToFrame(el);
@@ -32,7 +32,7 @@ public sealed class FrameNavigator
     /// <summary>Switches to the given frame element.</summary>
     public void SwitchToFrame(IWebElement frame)
     {
-        ArgumentHelpers.ThrowIfNull(frame, nameof(frame));
+        ArgumentHelpers.ThrowIfNull(frame);
         RunFrameOp(
             "switch_frame", () => {
                 _scraper.GetRequiredDriver().SwitchTo().Frame(frame);
@@ -69,7 +69,7 @@ public sealed class FrameNavigator
     /// <summary>Enters a frame and returns a scope that calls <see cref="SwitchToParentFrame" /> on dispose.</summary>
     public FrameScope EnterFrame(By by)
     {
-        ArgumentHelpers.ThrowIfNull(by, nameof(by));
+        ArgumentHelpers.ThrowIfNull(by);
         var el = _scraper.WaitFor(by);
         OperationHelpers.ThrowIfNull(el, $"Frame not found: {by}");
         return EnterFrame(el);
@@ -85,7 +85,7 @@ public sealed class FrameNavigator
     /// <summary>Async <see cref="EnterFrame(OpenQA.Selenium.By)" />.</summary>
     public async Task<FrameScope> EnterFrameAsync(By by, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(by, nameof(by));
+        ArgumentHelpers.ThrowIfNull(by);
         var el = await _scraper.WaitForAsync(by, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(el, $"Frame not found: {by}");
         return EnterFrame(el);

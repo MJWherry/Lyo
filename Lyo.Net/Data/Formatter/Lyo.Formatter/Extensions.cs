@@ -13,7 +13,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFormatterService()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<FormatterService>();
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             return services;
@@ -24,8 +24,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFormatterService(Func<IServiceProvider, SmartFormatter> formatterFactory)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(formatterFactory, nameof(formatterFactory));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(formatterFactory);
             services.AddSingleton<FormatterService>(provider => new(formatterFactory(provider)));
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             return services;

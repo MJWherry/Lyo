@@ -29,21 +29,19 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         const string key2 = "query:person:page2";
         _cache.Set(key1, "v1", ["queries", "entity:person"]);
         _cache.Set(key2, "v2", ["queries", "entity:person"]);
-        await _cache.InvalidateAllCachedQueriesAsync().ConfigureAwait(false);
+        await _cache.InvalidateAllCachedQueriesAsync();
         var calls = 0;
         (await _cache.GetOrSetAsync<string>(
-                key1, _ => {
-                    calls++;
-                    return Task.FromResult("miss")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false)).ShouldBe("miss");
+            key1, _ => {
+                calls++;
+                return Task.FromResult("miss")!;
+            }, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
 
         (await _cache.GetOrSetAsync<string>(
-                key2, _ => {
-                    calls++;
-                    return Task.FromResult("miss")!;
-                }, token: TestContext.Current.CancellationToken)
-            .ConfigureAwait(false)).ShouldBe("miss");
+            key2, _ => {
+                calls++;
+                return Task.FromResult("miss")!;
+            }, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
 
         calls.ShouldBe(2);
     }
@@ -57,9 +55,9 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         var keyB = $"query:person:includes:{id2}";
         _cache.Set(keyA, "a", ["queries", $"entity:person:{id1}", "entity:address:aaa"]);
         _cache.Set(keyB, "b", ["queries", $"entity:person:{id2}"]);
-        await _cache.InvalidateCacheItemByTag($"entity:person:{id1}").ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(keyA, _ => Task.FromResult("miss-a")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("miss-a");
-        (await _cache.GetOrSetAsync<string>(keyB, _ => Task.FromResult("miss-b")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("b");
+        await _cache.InvalidateCacheItemByTag($"entity:person:{id1}");
+        (await _cache.GetOrSetAsync<string>(keyA, _ => Task.FromResult("miss-a")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss-a");
+        (await _cache.GetOrSetAsync<string>(keyB, _ => Task.FromResult("miss-b")!, token: TestContext.Current.CancellationToken)).ShouldBe("b");
     }
 
     [Fact]
@@ -69,9 +67,9 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         const string getKey = "entity:person:keys=abc";
         _cache.Set(listKey, "list-payload", ["queries", "entity:person", "entity:person:p1"]);
         _cache.Set(getKey, "get-payload", ["entities", "entity:person", "entity:person:p1"]);
-        await _cache.InvalidateAllCachedQueriesAsync().ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(listKey, _ => Task.FromResult("list-miss")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("list-miss");
-        (await _cache.GetOrSetAsync<string>(getKey, _ => Task.FromResult("get-miss")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("get-payload");
+        await _cache.InvalidateAllCachedQueriesAsync();
+        (await _cache.GetOrSetAsync<string>(listKey, _ => Task.FromResult("list-miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("list-miss");
+        (await _cache.GetOrSetAsync<string>(getKey, _ => Task.FromResult("get-miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("get-payload");
     }
 
     [Fact]
@@ -79,14 +77,13 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
     {
         const string key = "query:widget:q1";
         await _cache.GetOrSetAsync<string>(
-                key, async ct => {
-                    await Task.Yield();
-                    return ("payload", ["queries", "entity:widget", "entity:widget:w1"]);
-                }, ["queryproject"], TestContext.Current.CancellationToken)
-            .ConfigureAwait(false);
+            key, async ct => {
+                await Task.Yield();
+                return ("payload", ["queries", "entity:widget", "entity:widget:w1"]);
+            }, ["queryproject"], TestContext.Current.CancellationToken);
 
-        await _cache.InvalidateCacheItemByTag("entity:widget:w1").ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("miss");
+        await _cache.InvalidateCacheItemByTag("entity:widget:w1");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
     }
 
     [Fact]
@@ -94,8 +91,8 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
     {
         const string key = "k1";
         _cache.Set(key, "v", ["Queries", "ENTITY:Person"]);
-        await _cache.InvalidateCacheItemByTag("queries").ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("miss");
+        await _cache.InvalidateCacheItemByTag("queries");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("miss");
     }
 
     [Fact]
@@ -106,9 +103,9 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         var key2 = "q2";
         _cache.Set(key1, "a", [typeTag]);
         _cache.Set(key2, "b", [typeTag]);
-        await _cache.InvalidateQueryCacheAsync<PersonTagTestStub>().ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(key1, _ => Task.FromResult("m1")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("m1");
-        (await _cache.GetOrSetAsync<string>(key2, _ => Task.FromResult("m2")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("m2");
+        await _cache.InvalidateQueryCacheAsync<PersonTagTestStub>();
+        (await _cache.GetOrSetAsync<string>(key1, _ => Task.FromResult("m1")!, token: TestContext.Current.CancellationToken)).ShouldBe("m1");
+        (await _cache.GetOrSetAsync<string>(key2, _ => Task.FromResult("m2")!, token: TestContext.Current.CancellationToken)).ShouldBe("m2");
     }
 
     [Fact]
@@ -117,8 +114,8 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
         const string key = "mutable";
         _cache.Set(key, "first", ["queries"]);
         _cache.Set(key, "second", ["entities"]);
-        await _cache.InvalidateCacheItemByTag("queries").ConfigureAwait(false);
-        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken).ConfigureAwait(false)).ShouldBe("second");
+        await _cache.InvalidateCacheItemByTag("queries");
+        (await _cache.GetOrSetAsync<string>(key, _ => Task.FromResult("miss")!, token: TestContext.Current.CancellationToken)).ShouldBe("second");
     }
 
     private sealed class PersonTagTestStub;

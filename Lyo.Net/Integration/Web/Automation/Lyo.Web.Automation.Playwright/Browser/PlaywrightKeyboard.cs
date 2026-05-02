@@ -13,14 +13,14 @@ public sealed class PlaywrightKeyboard
 
     internal PlaywrightKeyboard(PlaywrightBrowser browser)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
 
     /// <summary>Presses a single key or named key (e.g. <c>Enter</c>, <c>Tab</c>).</summary>
     public async Task PressAsync(string key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ct.ThrowIfCancellationRequested();
         await RunKbAsync(
                 "press", async () => {
@@ -32,7 +32,7 @@ public sealed class PlaywrightKeyboard
     /// <summary>Types a string of characters.</summary>
     public async Task TypeAsync(string text, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(text, nameof(text));
+        ArgumentHelpers.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
         await RunKbAsync(
                 "type", async () => {

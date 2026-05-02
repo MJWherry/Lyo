@@ -79,7 +79,7 @@ public sealed class UrlShortenBuilder
     /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
     public (string LongUrl, string? CustomAlias, DateTime? ExpirationDate) Build()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_longUrl, nameof(_longUrl));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_longUrl);
         return (_longUrl, _customAlias, _expirationDate);
     }
 

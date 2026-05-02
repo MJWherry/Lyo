@@ -23,6 +23,15 @@ public sealed class JobRunReq
 
     public JobRunResult? Result { get; set; }
 
+    /// <summary>
+    /// The scheduled slot that triggered this run. When set, a unique constraint on (JobScheduleId, ScheduledSlotUtc) prevents duplicate runs across multiple scheduler
+    /// instances.
+    /// </summary>
+    public DateTime? ScheduledSlotUtc { get; set; }
+
+    /// <summary>Number of retry attempts (0 = first attempt).</summary>
+    public int RetryAttempt { get; set; }
+
     public List<JobRunParameterReq> JobRunParameters { get; init; } = [];
 
     //no need for update or delete, jobs shouldn't be modified after the job run is created from definition

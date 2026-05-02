@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection (IDbContextFactory only).</summary>
     public static IServiceCollection AddRatingDbContextFactory(this IServiceCollection services, Action<PostgresRatingOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresRatingOptions();
         configure(options);
         return services.AddRatingDbContextFactory(options);
@@ -27,9 +27,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresRatingOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresRatingOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddRatingDbContextFactory(this IServiceCollection services, PostgresRatingOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresRatingOptions>>(Options.Create(options));
         services.AddPostgresMigrations<RatingDbContext, PostgresRatingOptions>();
@@ -55,8 +55,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore (IRatingStore) to the service collection.</summary>
     public static IServiceCollection AddPostgresRatingStore(this IServiceCollection services, Action<PostgresRatingOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresRatingOptions();
         configure(options);
         return services.AddPostgresRatingStore(options);
@@ -68,9 +68,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresRatingOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresRatingOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -82,8 +82,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore to the service collection.</summary>
     public static IServiceCollection AddPostgresRatingStore(this IServiceCollection services, PostgresRatingOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddRatingDbContextFactory(options);
         services.AddSingleton<IRatingStore, PostgresRatingStore>();
         return services;

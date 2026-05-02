@@ -14,8 +14,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL note DbContextFactory to the service collection (IDbContextFactory only).</summary>
     public static IServiceCollection AddNoteDbContextFactory(this IServiceCollection services, Action<PostgresNoteOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresNoteOptions();
         configure(options);
         return services.AddNoteDbContextFactory(options);
@@ -27,9 +27,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresNoteOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresNoteOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -41,8 +41,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL note DbContextFactory to the service collection.</summary>
     public static IServiceCollection AddNoteDbContextFactory(this IServiceCollection services, PostgresNoteOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton<IOptions<PostgresNoteOptions>>(Options.Create(options));
         services.AddPostgresMigrations<NoteDbContext, PostgresNoteOptions>();
@@ -55,8 +55,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL note DbContextFactory and PostgresNoteStore (INoteStore) to the service collection.</summary>
     public static IServiceCollection AddPostgresNoteStore(this IServiceCollection services, Action<PostgresNoteOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         var options = new PostgresNoteOptions();
         configure(options);
         return services.AddPostgresNoteStore(options);
@@ -68,9 +68,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = PostgresNoteOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresNoteOptions();
         var section = configuration.GetSection(configSectionName);
         if (section.Exists())
@@ -82,8 +82,8 @@ public static class Extensions
     /// <summary>Adds PostgreSQL note DbContextFactory and PostgresNoteStore to the service collection.</summary>
     public static IServiceCollection AddPostgresNoteStore(this IServiceCollection services, PostgresNoteOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddNoteDbContextFactory(options);
         services.AddSingleton<INoteStore, PostgresNoteStore>();
         return services;

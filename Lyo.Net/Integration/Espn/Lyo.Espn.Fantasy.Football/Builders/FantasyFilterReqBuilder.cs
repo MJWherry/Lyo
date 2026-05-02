@@ -15,7 +15,7 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Sets the player ids for a player-card request.</summary>
     public FantasyFilterReqBuilder WithPlayerIds(IEnumerable<int> playerIds)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(playerIds, nameof(playerIds));
+        ArgumentHelpers.ThrowIfNullOrEmpty(playerIds);
         var ids = playerIds.Distinct().ToArray();
         _players = (_players ?? new()) with { FilterIds = new() { Value = ids } };
         return this;
@@ -36,7 +36,7 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Sets the transaction types to include.</summary>
     public FantasyFilterReqBuilder WithTransactionTypes(IEnumerable<string> types)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(types, nameof(types));
+        ArgumentHelpers.ThrowIfNullOrEmpty(types);
         var values = types.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct().ToArray();
         ArgumentHelpers.ThrowIfNullOrEmpty(values, nameof(types));
         _transactions = new() { FilterType = new() { Value = values } };
@@ -46,7 +46,7 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Adds a topic type group to the league chat filter.</summary>
     public FantasyFilterReqBuilder AddTopicType(string topicType, int sortPriority = 1, bool sortAsc = false)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicType, nameof(topicType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicType);
         _topicsByType[topicType] = new() { SortMessageDate = new() { SortPriority = sortPriority, SortAsc = sortAsc } };
         return this;
     }
@@ -54,7 +54,7 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Adds multiple topic type groups to the league chat filter.</summary>
     public FantasyFilterReqBuilder WithTopicTypes(IEnumerable<string> topicTypes, int sortPriority = 1, bool sortAsc = false)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(topicTypes, nameof(topicTypes));
+        ArgumentHelpers.ThrowIfNullOrEmpty(topicTypes);
         foreach (var topicType in topicTypes.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct())
             AddTopicType(topicType, sortPriority, sortAsc);
 

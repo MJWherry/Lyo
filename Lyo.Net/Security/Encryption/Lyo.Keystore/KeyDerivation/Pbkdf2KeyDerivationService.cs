@@ -27,14 +27,14 @@ public class Pbkdf2KeyDerivationService : IKeyDerivationService
 
     public byte[] DeriveKey(string password, byte[]? salt = null, int iterations = DefaultIterations, int? keySizeBytes = null, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(password);
         var passwordBytes = (encoding ?? DefaultEncoding).GetBytes(password);
         return DeriveKey(passwordBytes, salt, iterations, keySizeBytes ?? DefaultKeySize);
     }
 
     public byte[] DeriveKey(byte[] password, byte[]? salt = null, int iterations = DefaultIterations, int? keySizeBytes = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrEmpty(password);
         ArgumentHelpers.ThrowIfNullOrNotInRange(iterations, 600000, int.MaxValue, nameof(iterations));
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualKeySize, 16, 64, nameof(keySizeBytes));
@@ -48,14 +48,14 @@ public class Pbkdf2KeyDerivationService : IKeyDerivationService
 
     public (byte[] Key, byte[] Salt) DeriveKeyWithSalt(string password, int iterations = DefaultIterations, int? keySizeBytes = null, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrEmpty(password);
         var passwordBytes = (encoding ?? DefaultEncoding).GetBytes(password);
         return DeriveKeyWithSalt(passwordBytes, iterations, keySizeBytes ?? DefaultKeySize);
     }
 
     public (byte[] Key, byte[] Salt) DeriveKeyWithSalt(byte[] password, int iterations = DefaultIterations, int? keySizeBytes = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(password, nameof(password));
+        ArgumentHelpers.ThrowIfNullOrEmpty(password);
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         var salt = CryptographicRandom.GetBytes(DefaultSaltSize);
         var key = DeriveKey(password, salt, iterations, actualKeySize);

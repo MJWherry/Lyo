@@ -26,4 +26,6 @@ public sealed class VolumeEntity
     public SeriesEntity Series { get; set; } = null!;
 
     public ICollection<ChapterEntity> Chapters { get; set; } = [];
+
+    public ICollection<CharacterEntity> Characters { get; set; } = [];
 }

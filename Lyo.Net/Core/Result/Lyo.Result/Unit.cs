@@ -1,4 +1,4 @@
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Represents the absence of a value (void). Used with Result for success-only operations.</summary>
 public readonly struct Unit : IEquatable<Unit>

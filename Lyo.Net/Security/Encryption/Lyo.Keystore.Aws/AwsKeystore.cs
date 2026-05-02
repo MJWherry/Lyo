@@ -24,8 +24,8 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     /// <param name="secretNamePrefix">Prefix for secret names (e.g., "myapp/kek")</param>
     public AwsKeyStore(IAmazonSecretsManager secretsManager, string secretNamePrefix = "lyo/kek")
     {
-        ArgumentHelpers.ThrowIfNull(secretsManager, nameof(secretsManager));
-        ArgumentHelpers.ThrowIfNull(secretNamePrefix, nameof(secretNamePrefix));
+        ArgumentHelpers.ThrowIfNull(secretsManager);
+        ArgumentHelpers.ThrowIfNull(secretNamePrefix);
         _secretsManager = secretsManager;
         _secretNamePrefix = secretNamePrefix;
     }
@@ -45,7 +45,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<IReadOnlyList<string>> GetAvailableVersionsAsync(string keyId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var versions = await GetVersionMappingAsync(keyId, ct).ConfigureAwait(false);
         if (versions?.Count > 0)
             return versions.Keys.OrderBy(version => version).ToList();
@@ -58,7 +58,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<byte[]?> GetKeyAsync(string keyId, string? version = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         try {
             // Use the prefix as the secret name (e.g., "dev/CourtCanary/FileStore")
             var secretName = _secretNamePrefix;
@@ -112,7 +112,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<byte[]?> GetCurrentKeyAsync(string keyId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         return await GetKeyAsync(keyId, null, ct).ConfigureAwait(false);
     }
 
@@ -120,7 +120,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<string?> GetCurrentVersionAsync(string keyId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var version = await GetCurrentKeyVersionInternalAsync(keyId, ct).ConfigureAwait(false);
 
         // If no version is tracked, try to get it from the latest secret version
@@ -155,7 +155,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task AddKeyAsync(string keyId, string version, byte[] key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         ArgumentHelpers.ThrowIfNullOrNotInRange(key, 1, long.MaxValue, nameof(key));
 
         // Use the prefix as the secret name (e.g., "dev/CourtCanary/FileStore")
@@ -228,8 +228,8 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task AddKeyFromStringAsync(string keyId, string version, string keyString, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyString, nameof(keyString));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyString);
         var derivationService = new Pbkdf2KeyDerivationService();
 
         // Check if key already exists - if so, don't regenerate it
@@ -292,7 +292,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task SetCurrentVersionAsync(string keyId, string version, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var hasKeyForCurrent = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(!hasKeyForCurrent, $"Key '{keyId}' version {version} does not exist. Add the key before setting it as current.");
 
@@ -320,7 +320,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<bool> HasKeyAsync(string keyId, string? version = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         if (version == null) {
             // Check if any version exists for this key ID
             var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
@@ -349,7 +349,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<KeyMetadata?> GetKeyMetadataAsync(string keyId, string version, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         try {
             var metadataSecretName = GetMetadataSecretName(keyId, version);
             var request = new GetSecretValueRequest { SecretId = metadataSecretName };
@@ -365,7 +365,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task SetKeyMetadataAsync(string keyId, string version, KeyMetadata metadata, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         ArgumentNullException.ThrowIfNull(metadata);
         var hasKeyForMetadata = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(!hasKeyForMetadata, $"Key '{keyId}' version {version} does not exist. Add the key before setting metadata.");
@@ -386,7 +386,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<byte[]?> GetSaltForVersionAsync(string keyId, string version, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var metadata = await GetKeyMetadataAsync(keyId, version, ct).ConfigureAwait(false);
         if (metadata?.AdditionalData == null || !metadata.AdditionalData.TryGetValue("Pbkdf2Salt", out var saltBase64))
             return null;
@@ -403,7 +403,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<string> UpdateKeyAsync(string keyId, byte[] key, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         // //var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
         var newVersion = Guid.CreateVersion7().ToString();
         await AddKeyAsync(keyId, newVersion, key, ct).ConfigureAwait(false);
@@ -415,7 +415,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     public async Task<string> UpdateKeyFromStringAsync(string keyId, string keyString, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         //var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
         var newVersion = Guid.CreateVersion7().ToString();
         await AddKeyFromStringAsync(keyId, newVersion, keyString, ct).ConfigureAwait(false);
@@ -464,7 +464,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     private async Task<string?> GetCurrentKeyVersionInternalAsync(string keyId, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId, nameof(keyId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         await _cacheLock.WaitAsync(ct).ConfigureAwait(false);
         try {
             if (_cachedCurrentVersions.TryGetValue(keyId, out var cachedVersion) && !string.IsNullOrEmpty(cachedVersion)) {

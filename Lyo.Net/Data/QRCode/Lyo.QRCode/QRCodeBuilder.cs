@@ -27,7 +27,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when data is null or empty.</exception>
     public QRCodeBuilder WithData(string data)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         _data = data;
         return this;
     }
@@ -71,7 +71,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when color format is invalid.</exception>
     public QRCodeBuilder WithDarkColor(string color)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color, nameof(color));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color);
         if (!IsValidHexColor(color))
             throw new InvalidFormatException("Color must be in hex format (e.g., '#000000' or '#FF0000').", nameof(color), color, "Hex color format");
 
@@ -85,7 +85,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when color format is invalid.</exception>
     public QRCodeBuilder WithLightColor(string color)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color, nameof(color));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color);
         if (!IsValidHexColor(color))
             throw new InvalidFormatException("Color must be in hex format (e.g., '#FFFFFF' or '#FF0000').", nameof(color), color, "Hex color format");
 
@@ -110,7 +110,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when iconBytes is null or empty, or iconSizePercent is out of range.</exception>
     public QRCodeBuilder WithIcon(byte[] iconBytes, int iconSizePercent = 15, bool drawIconBorder = true)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(iconBytes, nameof(iconBytes));
+        ArgumentHelpers.ThrowIfNullOrEmpty(iconBytes);
         ArgumentHelpers.ThrowIfNotInRange(iconSizePercent, 1, QRCodeIconOptions.MaxIconSizePercent, nameof(iconSizePercent));
         _icon = new() { IconBytes = iconBytes, IconSizePercent = iconSizePercent, DrawIconBorder = drawIconBorder };
         return this;
@@ -124,7 +124,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when file path is invalid or iconSizePercent is out of range.</exception>
     public QRCodeBuilder WithIconFromFile(string iconFilePath, int iconSizePercent = 15, bool drawIconBorder = true)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(iconFilePath, nameof(iconFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(iconFilePath);
         var iconBytes = File.ReadAllBytes(iconFilePath);
         return WithIcon(iconBytes, iconSizePercent, drawIconBorder);
     }
@@ -140,7 +140,7 @@ public sealed class QRCodeBuilder
     /// <summary>Sets a decorative PNG frame (badge, panel, or border). PNG output only; requires a registered image service at generation time.</summary>
     public QRCodeBuilder WithFrame(QrFrameLayoutOptions frame)
     {
-        ArgumentHelpers.ThrowIfNull(frame, nameof(frame));
+        ArgumentHelpers.ThrowIfNull(frame);
         _frame = frame;
         return this;
     }
@@ -172,7 +172,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="InvalidOperationException">Thrown when required fields are missing.</exception>
     public (string Data, QRCodeOptions Options) Build()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_data, nameof(_data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_data);
         var options = new QRCodeOptions();
         if (_format.HasValue)
             options.Format = _format.Value;

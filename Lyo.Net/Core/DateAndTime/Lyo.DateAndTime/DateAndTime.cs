@@ -108,7 +108,7 @@ public static class DateAndTime
     public static DateTime GetNextScheduledDateTime(USState usStateAbbreviation, TimeOnly startTime, TimeOnly endTime, int intervalMinutes, DayFlags scheduleFlags)
     {
         ArgumentHelpers.ThrowIf(startTime > endTime, "Start time must be less than or equal to end time.", nameof(startTime));
-        ArgumentHelpers.ThrowIfNegativeOrZero(intervalMinutes, nameof(intervalMinutes));
+        ArgumentHelpers.ThrowIfNegativeOrZero(intervalMinutes);
         var now = GetCurrentLocalDateTime(usStateAbbreviation);
         OperationHelpers.ThrowIfNull(now, $"Couldn't get local datetime for {usStateAbbreviation}");
         DateTime? nextScheduledDate = null;
@@ -200,7 +200,7 @@ public static class DateAndTime
     public static bool IsPastDue(USState usStateAbbreviation, TimeOnly startTime, TimeOnly endTime, int minuteInterval, DayFlags scheduleFlags, DateTime? lastRunDateTime)
     {
         ArgumentHelpers.ThrowIf(startTime > endTime, "Start time must be less than or equal to end time.", nameof(startTime));
-        ArgumentHelpers.ThrowIfNegativeOrZero(minuteInterval, nameof(minuteInterval));
+        ArgumentHelpers.ThrowIfNegativeOrZero(minuteInterval);
         var now = GetCurrentLocalDateTime(usStateAbbreviation);
         OperationHelpers.ThrowIfNull(now, $"Couldn't get local datetime for {usStateAbbreviation}");
         var defaultLastRun = lastRunDateTime ?? DateTime.UtcNow.AddDays(-DefaultMaxDaysPastDueCheck);
@@ -253,7 +253,7 @@ public static class DateAndTime
     public static IEnumerable<DateTime> GetScheduledTimesForDay(DateTime date, TimeOnly startTime, TimeOnly endTime, int intervalMinutes, DayFlags scheduleFlags)
     {
         ArgumentHelpers.ThrowIf(startTime > endTime, "Start time must be less than or equal to end time.", nameof(startTime));
-        ArgumentHelpers.ThrowIfNegativeOrZero(intervalMinutes, nameof(intervalMinutes));
+        ArgumentHelpers.ThrowIfNegativeOrZero(intervalMinutes);
         var dayFlag = GetDayFlagForDate(date);
         if (!scheduleFlags.HasFlag(dayFlag))
             yield break;

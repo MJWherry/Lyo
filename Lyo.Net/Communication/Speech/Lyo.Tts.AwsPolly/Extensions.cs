@@ -21,9 +21,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddAmazonPollyFromConfiguration(IConfiguration configuration, string configSectionName = AwsPollyOptions.SectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             if (!services.Any(s => s.ServiceType == typeof(AwsPollyOptions))) {
                 services.AddSingleton<AwsPollyOptions>(_ => {
                     var section = configuration.GetSection(configSectionName);
@@ -85,9 +85,9 @@ public static class Extensions
         /// </remarks>
         public IServiceCollection AddAwsPollyTtsServiceFromConfiguration(IConfiguration configuration, string configSectionName = AwsPollyOptions.SectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
             // Register IAmazonPolly from configuration if not already registered
             if (!services.Any(s => s.ServiceType == typeof(IAmazonPolly)))
@@ -124,8 +124,8 @@ public static class Extensions
         /// <exception cref="ArgumentNullException">Thrown when services or configure is null.</exception>
         public IServiceCollection AddAwsPollyTtsService(Action<AwsPollyOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<AwsPollyOptions>(_ => {
                 var options = new AwsPollyOptions();
                 configure(options);

@@ -16,7 +16,7 @@ public static class Extensions
     /// <remarks>Call AddLyoMetrics() before this to enable metrics when FfmpegOptions.EnableMetrics is true.</remarks>
     public static IServiceCollection AddFfmpegServices(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<FfmpegOptions>(_ => new());
         RegisterServices(services);
         return services;
@@ -28,8 +28,8 @@ public static class Extensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddFfmpegServices(this IServiceCollection services, Action<FfmpegOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<FfmpegOptions>(_ => {
             var options = new FfmpegOptions();
             configure(options);
@@ -50,9 +50,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = FfmpegOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         services.AddSingleton<FfmpegOptions>(_ => {
             var options = new FfmpegOptions();
             var section = configuration.GetSection(configSectionName);

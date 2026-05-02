@@ -1,4 +1,4 @@
-using Lyo.Common.Builders;
+using Lyo.Result.Builders;
 
 namespace Lyo.Common.Tests;
 

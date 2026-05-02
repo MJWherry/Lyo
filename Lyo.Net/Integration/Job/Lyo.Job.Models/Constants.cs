@@ -40,6 +40,21 @@ public static class Constants
             public const string RunParameters = $"{Runs}/Parameter";
             public const string RunResults = $"{Runs}/Result";
             public const string Files = $"{Runs}/Files";
+
+            /// <summary>POST endpoint to transition a run to <c>Running</c> state.</summary>
+            public static string RunStarted(Guid runId) => $"{Runs}/{runId}/Started";
+
+            /// <summary>POST endpoint to transition a run to <c>Finished</c> state.</summary>
+            public static string RunFinished(Guid runId) => $"{Runs}/{runId}/Finished";
+
+            /// <summary>POST endpoint to add a log entry to a run.</summary>
+            public static string RunLog(Guid runId) => $"{Runs}/{runId}/Log";
+
+            /// <summary>PATCH endpoint for the worker to bump <c>LastHeartbeatUtc</c> on a running job.</summary>
+            public static string RunHeartbeat(Guid runId) => $"{Runs}/{runId}/Heartbeat";
+
+            /// <summary>GET endpoint for aggregated run statistics on a definition.</summary>
+            public static string DefinitionStats(Guid definitionId) => $"{Definitions}/{definitionId}/Stats";
         }
     }
 
@@ -70,25 +85,51 @@ public static class Constants
         public static class JobRunParameterKey
         {
             public const string JobType = "JobType";
-            public const string IntegratedBusiness = "IntegratedBusiness";
-            public const string ProgrammingLanguage = "Programming Language";
             public const string PaginationAmount = "PaginationAmount";
             public const string DegreeOfParallel = "DegreeOfParallel";
             public const string UpsertChunkSize = "UpsertChunkSize";
 
-            //for email jobs
+            // Application-domain-specific constants below.
+            // These belong in the consuming application, not in this shared library.
+            // Define your own constants alongside the job definition that uses them.
+
+            [Obsolete("Define application-specific parameter keys in the consuming application, not in this shared library.")]
+            public const string IntegratedBusiness = "IntegratedBusiness";
+
+            [Obsolete("Define application-specific parameter keys in the consuming application, not in this shared library.")]
+            public const string ProgrammingLanguage = "Programming Language";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailToPrefix = "EmailTo_";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailCcPrefix = "EmailCc_";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailBccPrefix = "EmailBcc_";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailSubject = "EmailSubject";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailBody = "EmailBody";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailAttachmentPrefix = "EmailAttachment_";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string EmailAttachmentNamePrefix = "EmailAttachmentName_";
+
+            [Obsolete("Define email parameter keys in the consuming application, not in this shared library.")]
             public const string ReportId = "ReportId";
 
-            //for filewatcher for triggering jobs
+            [Obsolete("Define file-watcher parameter keys in the consuming application, not in this shared library.")]
             public const string FileNamePrefix = "FileName_";
+
+            [Obsolete("Define file-watcher parameter keys in the consuming application, not in this shared library.")]
             public const string FileNameRegexPrefix = "FileNameRegex_";
+
+            [Obsolete("Define file-watcher parameter keys in the consuming application, not in this shared library.")]
             public const string FileDirectoryPrefix = "FileDirectory_";
 
             public static string Unknown => $"Unknown_{Guid.NewGuid()}";

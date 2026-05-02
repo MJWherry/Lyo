@@ -17,7 +17,7 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
 
     private readonly IIOTempSession _tempSession = new IOTempSession(new());
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -40,15 +40,15 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var testContent = "This is test file content for encryption";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
         Assert.Equal(testContent, decryptedContent);
     }
 
@@ -57,11 +57,11 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
-        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken);
         var encryptedFile = inputFile + FileTypeInfo.LyoAesGcm.DefaultExtension;
-        await svc.EncryptFileAsync(inputFile, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false); // No output path specified
+        await svc.EncryptFileAsync(inputFile, keyId: keyId, ct: TestContext.Current.CancellationToken); // No output path specified
         Assert.True(File.Exists(encryptedFile), "Encrypted file should be created with .ag extension");
     }
 
@@ -131,15 +131,15 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
         var testContent = "ChaCha20Poly1305 file encryption test";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
         Assert.Equal(testContent, decryptedContent);
     }
 
@@ -165,11 +165,11 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
-        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken);
         var encryptedFile = inputFile + FileTypeInfo.LyoChaCha20Poly1305.DefaultExtension;
-        await svc.EncryptFileAsync(inputFile, keyId: keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, keyId: keyId, ct: TestContext.Current.CancellationToken);
         Assert.True(File.Exists(encryptedFile), "Encrypted file should be created with .chacha extension");
     }
 
@@ -179,12 +179,12 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
         var (pub, priv) = GeneratePemFiles();
         await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
         var testContent = "RSA file encryption test";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptFileAsync(inputFile, encryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, encryptedFile, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptFileAsync(encryptedFile, decryptedFile, ct: TestContext.Current.CancellationToken);
+        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
         Assert.Equal(testContent, decryptedContent);
     }
 
@@ -208,9 +208,9 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         var (pub, priv) = GeneratePemFiles();
         await using var svc = new RsaEncryptionService(pub, priv, padding: RSAEncryptionPadding.OaepSHA256);
-        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync("Test content", TestContext.Current.CancellationToken);
         var encryptedFile = inputFile + FileTypeInfo.LyoRsa.DefaultExtension;
-        await svc.EncryptFileAsync(inputFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, ct: TestContext.Current.CancellationToken);
         Assert.True(File.Exists(encryptedFile), "Encrypted file should be created with .rsa extension");
     }
 
@@ -219,15 +219,15 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var largeContent = new string('A', 2 * 1024 * 1024);
-        var inputFile = await _tempSession.CreateFileAsync(largeContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(largeContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptFileAsync(encryptedFile, decryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
         Assert.Equal(largeContent, decryptedContent);
     }
 
@@ -256,16 +256,16 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var testContent = "Test with byte array key async";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         var decryptedFile = _tempSession.GetFilePath();
         var key = DeriveKey("custom-byte-key");
-        await svc.EncryptFileAsync(inputFile, encryptedFile, key: key, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await svc.DecryptFileAsync(encryptedFile, decryptedFile, key: key, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptFileAsync(inputFile, encryptedFile, key: key, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptFileAsync(encryptedFile, decryptedFile, key: key, ct: TestContext.Current.CancellationToken);
+        var decryptedContent = await File.ReadAllTextAsync(decryptedFile, TestContext.Current.CancellationToken);
         Assert.Equal(testContent, decryptedContent);
     }
 
@@ -275,12 +275,12 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var encryptedFile = _tempSession.GetFilePath();
         var testData = "Test data for byte array encryption"u8.ToArray();
-        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -289,14 +289,14 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var testContent = "Test content for stream encryption";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         var decryptedContent = Encoding.UTF8.GetString(decryptedData);
         Assert.Equal(testContent, decryptedContent);
     }
@@ -306,13 +306,13 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var testData = "Test data with custom key"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
         var key = DeriveKey("custom-key");
-        await svc.EncryptToFileAsync(testData, encryptedFile, key: key, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, key: key, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, key: key, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, key: key, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -321,12 +321,12 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
         var testData = "ChaCha20Poly1305 test data"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -335,14 +335,14 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
         var testContent = "ChaCha20Poly1305 stream test";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         var decryptedContent = Encoding.UTF8.GetString(decryptedData);
         Assert.Equal(testContent, decryptedContent);
     }
@@ -354,8 +354,8 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
         await using var svc = new RsaEncryptionService(pub, priv);
         var testData = "RSA test data"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptToFileAsync(testData, encryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -365,11 +365,11 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
         var (pub, priv) = GeneratePemFiles();
         await using var svc = new RsaEncryptionService(pub, priv);
         var testContent = "RSA stream test content";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(inputStream, encryptedFile, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, ct: TestContext.Current.CancellationToken);
         var decryptedContent = Encoding.UTF8.GetString(decryptedData);
         Assert.Equal(testContent, decryptedContent);
     }
@@ -379,13 +379,13 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var testData = "TwoKey test data"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -394,15 +394,15 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var testContent = "TwoKey stream test content";
-        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(testContent, TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         var decryptedContent = Encoding.UTF8.GetString(decryptedData);
         Assert.Equal(testContent, decryptedContent);
     }
@@ -412,14 +412,14 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var testData = "TwoKey test with custom KEK"u8.ToArray();
         var encryptedFile = _tempSession.GetFilePath();
         var customKek = DeriveKey("custom-kek");
-        await svc.EncryptToFileAsync(testData, encryptedFile, kek: customKek, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, kek: customKek, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(testData, encryptedFile, kek: customKek, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, kek: customKek, ct: TestContext.Current.CancellationToken);
         Assert.Equal(testData, decryptedData);
     }
 
@@ -428,10 +428,10 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        await Assert.ThrowsAsync<FileNotFoundException>(() => svc.DecryptFromFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => svc.DecryptFromFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -439,11 +439,11 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        await Assert.ThrowsAsync<FileNotFoundException>(() => svc.DecryptFromFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken)).ConfigureAwait(false);
+        await Assert.ThrowsAsync<FileNotFoundException>(() => svc.DecryptFromFileAsync(nonExistentFile, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -451,13 +451,13 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "file-key", TestContext.Current.CancellationToken);
         var svc = new AesGcmEncryptionService(keyStore);
         var largeData = new byte[5 * 1024 * 1024];
         RandomNumberGenerator.Fill(largeData);
         var encryptedFile = _tempSession.GetFilePath();
-        await svc.EncryptToFileAsync(largeData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(largeData, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(largeData, decryptedData);
     }
 
@@ -466,16 +466,16 @@ public class FileOperationTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "kek-key", TestContext.Current.CancellationToken);
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         using var svc = new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(aesGcmService, keyStore);
         var largeData = new byte[5 * 1024 * 1024];
         RandomNumberGenerator.Fill(largeData);
-        var inputFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var inputFile = await _tempSession.CreateFileAsync(largeData, ct: TestContext.Current.CancellationToken);
         var encryptedFile = _tempSession.GetFilePath();
         await using var inputStream = File.OpenRead(inputFile);
-        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToFileAsync(inputStream, encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
+        var decryptedData = await svc.DecryptFromFileAsync(encryptedFile, keyId, ct: TestContext.Current.CancellationToken);
         Assert.Equal(largeData, decryptedData);
     }
 }

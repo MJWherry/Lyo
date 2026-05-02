@@ -39,8 +39,8 @@ public sealed class RabbitMqService : IRabbitMqService
         ILogger<RabbitMqService>? logger = null,
         IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
-        ArgumentHelpers.ThrowIfNull(connectionFactory, nameof(connectionFactory));
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(connectionFactory);
         _options = options;
         _connectionFactory = connectionFactory;
         _logger = logger ?? NullLogger<RabbitMqService>.Instance;

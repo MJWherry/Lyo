@@ -17,16 +17,14 @@ public class MultipartAndAuditTests
             var sessions = new InMemoryMultipartUploadSessionStore();
             var storage = new LocalFileStorageService(options, NullLoggerFactory.Instance, metadataService: null);
             var multipart = new LocalMultipartUploadService(storage, sessions, options);
-            var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestContext.Current.CancellationToken);
             var payload = "hello multipart"u8.ToArray();
-            await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestContext.Current.CancellationToken);
             var meta = await multipart.CompleteAsync(
-                    new() { SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "n/a" } } },
-                    TestContext.Current.CancellationToken)
-                .ConfigureAwait(false);
+                new() { SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "n/a" } } }, TestContext.Current.CancellationToken);
 
             Assert.Equal(begin.TargetFileId, meta.Id);
-            var got = await storage.GetFileAsync(meta.Id, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var got = await storage.GetFileAsync(meta.Id, TestContext.Current.CancellationToken);
             Assert.Equal(payload, got);
         }
         finally {
@@ -44,7 +42,7 @@ public class MultipartAndAuditTests
             var options = new LocalFileStorageServiceOptions { RootDirectoryPath = root };
             var storage = new LocalFileStorageService(options, NullLoggerFactory.Instance, metadataService: null, auditHandlers: new[] { sink });
             var data = "audit-me"u8.ToArray();
-            await storage.SaveFileAsync(data, "a.txt", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await storage.SaveFileAsync(data, "a.txt", ct: TestContext.Current.CancellationToken);
             Assert.Contains(sink.Events, e => e.EventType == FileAuditEventType.Save && e.Outcome == FileAuditOutcome.Success);
         }
         finally {

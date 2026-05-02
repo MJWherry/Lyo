@@ -1,6 +1,8 @@
+@using Lyo.Result
 @using Lyo.Sms.Builders
 @using Lyo.Sms.Models
 @using Lyo.Web.Components.ChipInput
+@using Lyo.Web.Components.Form
 @inject ISmsService SmsService
 @inject ISnackbar Snackbar
 
@@ -16,28 +18,28 @@
         <MudGrid>
             <MudItem xs="12" md="7">
                 <MudStack Spacing="3">
-                    <div>
-                        <MudText Typo="Typo.subtitle2" Class="mb-1">Recipients</MudText>
-                        <LyoChipInput Values="@_smsToValues"
-                                      ValuesChanged="OnSmsToValuesChanged"
-                                      Placeholder="Type phone number and press Enter"
-                                      ValidationPattern="@_phoneValidationPattern"
-                                      ValidationErrorMessage="Enter a valid phone number."/>
-                    </div>
-
                     <MudGrid>
-                        <MudItem xs="12" md="4">
-                            <MudTextField T="string" Label="From override" @bind-Value="_smsFrom"/>
-                        </MudItem>
                         <MudItem xs="12" md="8">
-                            <MudText Typo="Typo.subtitle2" Class="mb-1">Public media URLs</MudText>
-                            <LyoChipInput Values="@_smsMediaUrlValues"
-                                          ValuesChanged="OnSmsMediaUrlValuesChanged"
-                                          Placeholder="Type URL and press Enter"
-                                          ValidationPattern="@_publicMediaUrlValidationPattern"
-                                          ValidationErrorMessage="Enter a valid public http(s) URL."/>
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">Recipients</MudText>
+                            <LyoChipInput Values="@_smsToValues"
+                                          ValuesChanged="OnSmsToValuesChanged"
+                                          Placeholder="Type phone number and press Enter"
+                                          ValidationPattern="@_phoneValidationPattern"
+                                          ValidationErrorMessage="Enter a valid phone number."/>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <LyoNullableTextField Label="From override" Value="@_smsFrom" ValueChanged="v => _smsFrom = v"/>
                         </MudItem>
                     </MudGrid>
+
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Public media URLs</MudText>
+                        <LyoChipInput Values="@_smsMediaUrlValues"
+                                      ValuesChanged="OnSmsMediaUrlValuesChanged"
+                                      Placeholder="Type URL and press Enter"
+                                      ValidationPattern="@_publicMediaUrlValidationPattern"
+                                      ValidationErrorMessage="Enter a valid public http(s) URL."/>
+                    </div>
 
                     <MudAlert Severity="Severity.Info" Dense="true">
                         MMS media must be reachable by the configured SMS provider. Unsupported providers may ignore media URLs.
@@ -123,7 +125,7 @@
     private List<Result<SmsRequest>> _lastSmsResults = [];
     private string _lastSmsSummary = string.Empty;
     private string _smsBody = "Hello from Lyo.";
-    private string _smsFrom = string.Empty;
+    private string? _smsFrom;
     private List<string> _smsMediaUrlValues = [];
     private List<string> _smsToValues = ["+15551234567"];
     private string _statusMessage = string.Empty;

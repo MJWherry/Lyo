@@ -16,7 +16,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithVoiceId(string voiceId)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(voiceId, nameof(voiceId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(voiceId);
         _request.VoiceId = voiceId;
         return this;
     }
@@ -26,7 +26,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithText(string text)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         _request.Text = text;
         return this;
     }
@@ -36,7 +36,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithModel(string model)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(model, nameof(model));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(model);
         _request.Model = model;
         return this;
     }
@@ -67,7 +67,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithPrompt(Prompt prompt)
     {
-        ArgumentHelpers.ThrowIfNull(prompt, nameof(prompt));
+        ArgumentHelpers.ThrowIfNull(prompt);
         _request.Prompt = prompt;
         return this;
     }
@@ -77,7 +77,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithPrompt(Action<Prompt> configure)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         var prompt = new Prompt();
         configure(prompt);
         _request.Prompt = prompt;
@@ -102,7 +102,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithOutput(OutputSettings output)
     {
-        ArgumentHelpers.ThrowIfNull(output, nameof(output));
+        ArgumentHelpers.ThrowIfNull(output);
         _request.Output = output;
         return this;
     }
@@ -112,7 +112,7 @@ public class TypecastTtsRequestBuilder
     /// <returns>The builder instance for chaining.</returns>
     public TypecastTtsRequestBuilder WithOutput(Action<OutputSettings> configure)
     {
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(configure);
         var output = new OutputSettings();
         configure(output);
         _request.Output = output;
@@ -147,8 +147,8 @@ public class TypecastTtsRequestBuilder
     /// <returns>A new TextToSpeechRequestBuilder.</returns>
     public static TypecastTtsRequestBuilder Create(string voiceId, string text)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(voiceId, nameof(voiceId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(voiceId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         return New().WithVoiceId(voiceId).WithText(text);
     }
 

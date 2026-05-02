@@ -1,0 +1,15 @@
+@page "/"
+@using Lyo.Web.Components.Identifiers
+
+<PageTitle>ID Generator — Portfolio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <IdWorkbench/>
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    private MainLayout? Layout { get; set; }
+
+    protected override void OnInitialized() => Layout?.SetPageTitle("ID Generator");
+}

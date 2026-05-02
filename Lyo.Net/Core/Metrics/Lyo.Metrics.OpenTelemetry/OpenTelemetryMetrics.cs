@@ -37,7 +37,7 @@ public class OpenTelemetryMetrics : IMetrics, IDisposable
         if (_disposed)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
         try {
             var counter = GetOrCreateCounter(name);
             var longValue = value != null ? Convert.ToInt64(value) : 1L;
@@ -57,7 +57,7 @@ public class OpenTelemetryMetrics : IMetrics, IDisposable
         if (_disposed)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
         try {
             var counter = GetOrCreateCounter(name);
             var longValue = value != null ? Convert.ToInt64(value) : 1L;
@@ -117,7 +117,7 @@ public class OpenTelemetryMetrics : IMetrics, IDisposable
         if (_disposed)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
         var histogram = GetOrCreateHistogram(name);
         var tagPairs = ConvertTagsToKeyValuePairs(tags);
         RecordWithTags(histogram, duration.TotalMilliseconds, tagPairs);
@@ -125,7 +125,7 @@ public class OpenTelemetryMetrics : IMetrics, IDisposable
 
     public MetricsTimer StartTimer(string name, IEnumerable<(string, string)>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
         return new(new(this, name, tags));
     }
 
@@ -156,7 +156,7 @@ public class OpenTelemetryMetrics : IMetrics, IDisposable
         if (_disposed)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrEmpty(name, nameof(name));
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
         try {
             var counter = GetOrCreateCounter($"{name}.events");
             var longValue = value != null ? Convert.ToInt64(value) : 1L;

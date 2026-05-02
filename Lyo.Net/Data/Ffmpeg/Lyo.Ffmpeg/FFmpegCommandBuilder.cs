@@ -23,7 +23,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithInput(string inputPath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath);
         _inputPath = inputPath;
         return this;
     }
@@ -31,7 +31,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithOutput(string outputPath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         _outputPath = outputPath;
         return this;
     }
@@ -39,7 +39,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithCodec(string codec)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(codec, nameof(codec));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(codec);
         _codec = codec;
         return this;
     }
@@ -63,7 +63,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithFormat(string format)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(format, nameof(format));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
         _format = format;
         return this;
     }
@@ -99,7 +99,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithArgument(string argument)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(argument, nameof(argument));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(argument);
         _customArguments.Add(argument);
         return this;
     }
@@ -107,7 +107,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithArguments(IEnumerable<string> arguments)
     {
-        ArgumentHelpers.ThrowIfNull(arguments, nameof(arguments));
+        ArgumentHelpers.ThrowIfNull(arguments);
         foreach (var arg in arguments) {
             if (!string.IsNullOrWhiteSpace(arg))
                 _customArguments.Add(arg);
@@ -119,7 +119,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithDefaults(FfmpegOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         _defaults = options;
         if (!string.IsNullOrWhiteSpace(options.FfmpegPath))
             _executablePath = options.FfmpegPath;
@@ -130,7 +130,7 @@ public sealed class FFmpegCommandBuilder
     /// <summary>Sets the ffmpeg executable path.</summary>
     public FFmpegCommandBuilder WithExecutablePath(string path)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         _executablePath = path;
         return this;
     }

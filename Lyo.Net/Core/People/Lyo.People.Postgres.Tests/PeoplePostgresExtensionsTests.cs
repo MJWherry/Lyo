@@ -18,7 +18,7 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -31,11 +31,11 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
         using (var scope = _serviceProvider.CreateScope()) {
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
             await using var context = factory.CreateDbContext();
-            await context.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
         }
     }
 
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
     [Fact]
     public void AddPeopleDbContext_WithNullServices_ThrowsArgumentNullException()
@@ -106,7 +106,7 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
         await using var context = factory.CreateDbContext();
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
     }
 
@@ -116,7 +116,7 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
         Assert.NotNull(_serviceProvider);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
         await using var context = factory.CreateDbContext();
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pending);
     }
 }

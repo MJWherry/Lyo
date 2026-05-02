@@ -1,5 +1,6 @@
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Models;
+using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +15,7 @@ public static class Extensions
     /// <summary>Adds IO temp service with default options.</summary>
     public static IServiceCollection AddIOTempService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddSingleton<IOTempServiceOptions>(_ => new());
         services.AddSingleton(CreateService);
         services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
@@ -24,8 +25,8 @@ public static class Extensions
     /// <summary>Adds IO temp service with options configuration callback.</summary>
     public static IServiceCollection AddIOTempService(this IServiceCollection services, Action<IOTempServiceOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configure);
         services.AddSingleton<IOTempServiceOptions>(_ => {
             var options = new IOTempServiceOptions();
             configure(options);
@@ -43,9 +44,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = IOTempServiceOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         services.AddSingleton<IOTempServiceOptions>(_ => {
             var options = new IOTempServiceOptions();
             var section = configuration.GetSection(configSectionName);
@@ -69,7 +70,7 @@ public static class Extensions
         TimeSpan? cleanupInterval = null,
         TimeSpan? initialDelay = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.AddIOTempService();
         ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
         services.AddHostedService<IOTempCleanupWorker>();
@@ -85,8 +86,8 @@ public static class Extensions
         TimeSpan? cleanupInterval = null,
         TimeSpan? initialDelay = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configureService, nameof(configureService));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configureService);
         services.AddIOTempService(configureService);
         ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
         services.AddHostedService<IOTempCleanupWorker>();
@@ -108,6 +109,9 @@ public static class Extensions
         var loggerFactory = provider.GetService<ILoggerFactory>();
         var metrics = provider.GetService<IMetrics>();
         var options = provider.GetRequiredService<IOTempServiceOptions>();
-        return new(options, logger, metrics, loggerFactory);
+        // Resolve a registered IIOTempStorageProvider if present; otherwise default to the filesystem provider.
+        var storageProvider = provider.GetService<IIOTempStorageProvider>()
+                              ?? new FileSystemIOTempStorageProvider(options.RootDirectory);
+        return new(options, logger, metrics, loggerFactory, storageProvider);
     }
 }

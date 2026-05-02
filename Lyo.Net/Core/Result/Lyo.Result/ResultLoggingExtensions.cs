@@ -1,4 +1,4 @@
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Extension methods for logging Results.</summary>
 public static class ResultLoggingExtensions

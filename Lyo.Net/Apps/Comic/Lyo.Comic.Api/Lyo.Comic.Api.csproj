@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <Description>Comic API application. Composes comic, tag, rating, comment, and favorite stores into a unified HTTP API with enriched domain responses.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Lyo.Encryption" Version="1.1.28" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="[10,)"/>
+        <PackageReference Include="Scalar.AspNetCore" Version="2.13.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Features\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Features\Favorite\Lyo.Favorite.Postgres\Lyo.Favorite.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="appsettings.Development.json">
+        <DependentUpon>appsettings.json</DependentUpon>
+      </Content>
+    </ItemGroup>
+
+</Project>

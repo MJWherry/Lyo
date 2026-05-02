@@ -20,7 +20,7 @@ public static class Extensions
     /// </remarks>
     public static IServiceCollection AddTypecastTtsService(this IServiceCollection services, Action<TypecastOptions>? configure = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         // Configure TypecastOptions (if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(TypecastOptions))) {
             services.AddSingleton<TypecastOptions>(_ => {
@@ -70,9 +70,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = TypecastOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
         // Configure TypecastOptions from configuration (if not already registered)
         if (!services.Any(s => s.ServiceType == typeof(TypecastOptions))) {

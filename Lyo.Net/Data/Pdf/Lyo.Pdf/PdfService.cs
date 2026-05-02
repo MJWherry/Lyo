@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Pdf.Models;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using PdfSharp.Pdf.IO;
@@ -76,7 +76,7 @@ public class PdfService : IPdfService, IDisposable
     /// <inheritdoc />
     public async Task<IReadOnlyList<LoadedPdfLease>> LoadPdfsFromFilesAsync(IEnumerable<string> filePaths, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(filePaths, nameof(filePaths));
+        ArgumentHelpers.ThrowIfNull(filePaths);
         var paths = filePaths.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(paths, nameof(filePaths));
         foreach (var path in paths)
@@ -88,7 +88,7 @@ public class PdfService : IPdfService, IDisposable
     /// <inheritdoc />
     public IReadOnlyList<LoadedPdfLease> LoadPdfsFromFiles(params string[] filePaths)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(filePaths, nameof(filePaths));
+        ArgumentHelpers.ThrowIfNullOrEmpty(filePaths);
         foreach (var path in filePaths)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(filePaths));
 
@@ -101,7 +101,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<IReadOnlyList<LoadedPdfLease>> LoadPdfsFromUrlsAsync(IEnumerable<string> urls, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(urls, nameof(urls));
+        ArgumentHelpers.ThrowIfNull(urls);
         var urlList = urls.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(urlList, nameof(urls));
         foreach (var url in urlList)
@@ -112,7 +112,7 @@ public class PdfService : IPdfService, IDisposable
 
     public IReadOnlyList<LoadedPdfLease> LoadPdfsFromUrls(params string[] urls)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(urls, nameof(urls));
+        ArgumentHelpers.ThrowIfNullOrEmpty(urls);
         foreach (var url in urls)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(url, nameof(urls));
 
@@ -126,7 +126,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<IReadOnlyList<LoadedPdfLease>> LoadPdfsFromBytesAsync(IEnumerable<byte[]> pdfs, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(pdfs, nameof(pdfs));
+        ArgumentHelpers.ThrowIfNull(pdfs);
         var pdfList = pdfs.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(pdfList, nameof(pdfs));
         foreach (var pdfBytes in pdfList)
@@ -137,7 +137,7 @@ public class PdfService : IPdfService, IDisposable
 
     public IReadOnlyList<LoadedPdfLease> LoadPdfsFromBytes(params byte[][] pdfs)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(pdfs, nameof(pdfs));
+        ArgumentHelpers.ThrowIfNullOrEmpty(pdfs);
         foreach (var pdfBytes in pdfs)
             ArgumentHelpers.ThrowIfNullOrEmpty(pdfBytes, nameof(pdfs));
 
@@ -151,7 +151,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<IReadOnlyList<LoadedPdfLease>> LoadPdfsFromStreamsAsync(IEnumerable<Stream> streams, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(streams, nameof(streams));
+        ArgumentHelpers.ThrowIfNull(streams);
         var streamList = streams.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(streamList, nameof(streams));
         foreach (var stream in streamList)
@@ -162,7 +162,7 @@ public class PdfService : IPdfService, IDisposable
 
     public IReadOnlyList<LoadedPdfLease> LoadPdfsFromStreams(params Stream[] streams)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(streams, nameof(streams));
+        ArgumentHelpers.ThrowIfNullOrEmpty(streams);
         foreach (var stream in streams)
             ArgumentHelpers.ThrowIfNull(stream, nameof(streams));
 
@@ -231,7 +231,7 @@ public class PdfService : IPdfService, IDisposable
 
     public PdfColumnarText GetColumnarText(IReadOnlyList<PdfWord> words, int columnCount, double? yTolerance = null)
     {
-        ArgumentHelpers.ThrowIfNull(words, nameof(words));
+        ArgumentHelpers.ThrowIfNull(words);
         return BuildColumnarText(words.ToList(), columnCount, yTolerance);
     }
 
@@ -271,8 +271,8 @@ public class PdfService : IPdfService, IDisposable
         int keyValueColumnCount = 1)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractKeyValueDuration, Constants.Metrics.ExtractKeyValueSuccess, Constants.Metrics.ExtractKeyValueFailure, () => {
-                ArgumentHelpers.ThrowIfNull(words, nameof(words));
-                ArgumentHelpers.ThrowIfNull(knownKeys, nameof(knownKeys));
+                ArgumentHelpers.ThrowIfNull(words);
+                ArgumentHelpers.ThrowIfNull(knownKeys);
                 return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, keyValueLayout, keyValueColumnCount);
             });
 
@@ -302,8 +302,8 @@ public class PdfService : IPdfService, IDisposable
         PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractTableDuration, Constants.Metrics.ExtractTableSuccess, Constants.Metrics.ExtractTableFailure, () => {
-                ArgumentHelpers.ThrowIfNull(words, nameof(words));
-                ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
+                ArgumentHelpers.ThrowIfNull(words);
+                ArgumentHelpers.ThrowIfNull(headers);
                 return ExtractTableFromWords(words.ToList(), headers, yTolerance, inferFormattingForHeaderRows);
             });
 
@@ -314,7 +314,7 @@ public class PdfService : IPdfService, IDisposable
         PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
         IReadOnlyList<char>? keyValueDelimiters = null)
     {
-        ArgumentHelpers.ThrowIfNull(words, nameof(words));
+        ArgumentHelpers.ThrowIfNull(words);
         if (words.Count == 0 || inferFlags == PdfInferFormattingFlags.None)
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -340,15 +340,15 @@ public class PdfService : IPdfService, IDisposable
         PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
         IReadOnlyList<char>? keyValueDelimiters = null)
     {
-        ArgumentHelpers.ThrowIfNull(words, nameof(words));
+        ArgumentHelpers.ThrowIfNull(words);
         var delimChars = NormalizeKeyValueDelimiters(keyValueDelimiters);
         return InferTableHeadersFromFormattingInternal(words.ToList(), yTolerance, inferFlags, delimChars);
     }
 
     public Result<DataTable.Models.DataTable> ParseBytesAsDataTable(byte[] pdfBytes, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0)
     {
-        ArgumentHelpers.ThrowIfNull(pdfBytes, nameof(pdfBytes));
-        ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
+        ArgumentHelpers.ThrowIfNull(pdfBytes);
+        ArgumentHelpers.ThrowIfNull(headers);
         if (headers.Length == 0)
             return Result<DataTable.Models.DataTable>.Failure("At least one column header is required.", "PdfTabular.NoHeaders");
 
@@ -372,7 +372,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<byte[]> MergePdfsToFileAsync(IEnumerable<Guid> pdfIds, string filePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         ct.ThrowIfCancellationRequested();
         var bytes = await MergePdfsAsync(pdfIds, ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
@@ -388,7 +388,7 @@ public class PdfService : IPdfService, IDisposable
 
     public byte[] MergePdfsToFile(IEnumerable<Guid> pdfIds, string filePath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         var bytes = MergePdfs(pdfIds);
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -400,7 +400,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<byte[]> MergePdfsToStreamAsync(IEnumerable<Guid> pdfIds, Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotWritable(stream, $"Stream '{nameof(stream)}' must be writable.");
         var bytes = await MergePdfsAsync(pdfIds, ct).ConfigureAwait(false);
         if (stream.CanSeek)
@@ -413,7 +413,7 @@ public class PdfService : IPdfService, IDisposable
 
     public byte[] MergePdfsToStream(IEnumerable<Guid> pdfIds, Stream stream)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotWritable(stream, $"Stream '{nameof(stream)}' must be writable.");
         var bytes = MergePdfs(pdfIds);
         if (stream.CanSeek)
@@ -430,7 +430,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task<byte[]> MergePdfFilesAsync(string outputFilePath, string initialPdf, string[] paths, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var allPaths = BuildMergePathInputs(initialPdf, paths);
         var ids = new List<Guid>(allPaths.Count);
         try {
@@ -446,7 +446,7 @@ public class PdfService : IPdfService, IDisposable
 
     public byte[] MergePdfFiles(string outputFilePath, string initialPdf, params string[] paths)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var allPaths = BuildMergePathInputs(initialPdf, paths);
         var ids = new List<Guid>(allPaths.Count);
         try {
@@ -462,23 +462,23 @@ public class PdfService : IPdfService, IDisposable
 
     public Task<byte[]> MergePdfFilesAsync(string outputFilePath, FileInfo initialPdf, FileInfo[] paths, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(initialPdf, nameof(initialPdf));
-        ArgumentHelpers.ThrowIfNull(paths, nameof(paths));
+        ArgumentHelpers.ThrowIfNull(initialPdf);
+        ArgumentHelpers.ThrowIfNull(paths);
         var fullPaths = paths.Select(p => p.FullName).ToArray();
         return MergePdfFilesAsync(outputFilePath, initialPdf.FullName, fullPaths, ct);
     }
 
     public byte[] MergePdfFiles(string outputFilePath, FileInfo initialPdf, params FileInfo[] paths)
     {
-        ArgumentHelpers.ThrowIfNull(initialPdf, nameof(initialPdf));
-        ArgumentHelpers.ThrowIfNull(paths, nameof(paths));
+        ArgumentHelpers.ThrowIfNull(initialPdf);
+        ArgumentHelpers.ThrowIfNull(paths);
         var fullPaths = paths.Select(p => p.FullName).ToArray();
         return MergePdfFiles(outputFilePath, initialPdf.FullName, fullPaths);
     }
 
     public async Task<byte[]> MergePdfBytesAsync(string outputFilePath, byte[] initialPdf, byte[][] pdfs, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var allPdfs = BuildMergeByteInputs(initialPdf, pdfs);
         var ids = new List<Guid>(allPdfs.Count);
         try {
@@ -494,7 +494,7 @@ public class PdfService : IPdfService, IDisposable
 
     public byte[] MergePdfBytes(string outputFilePath, byte[] initialPdf, params byte[][] pdfs)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var allPdfs = BuildMergeByteInputs(initialPdf, pdfs);
         var ids = new List<Guid>(allPdfs.Count);
         try {
@@ -513,7 +513,7 @@ public class PdfService : IPdfService, IDisposable
                 async () => {
                     using var timer = _metrics.StartTimer(Constants.Metrics.SaveDuration);
                     try {
-                        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+                        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
                         var bytes = GetPdfBytesInternal(pdfId);
                         var directory = Path.GetDirectoryName(filePath);
                         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -539,7 +539,7 @@ public class PdfService : IPdfService, IDisposable
 
     public async Task SavePdfToStreamAsync(Guid pdfId, Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotWritable(stream, $"Stream '{nameof(stream)}' must be writable.");
         var bytes = await GetPdfBytesAsync(pdfId, ct).ConfigureAwait(false);
         if (stream.CanSeek)
@@ -552,7 +552,7 @@ public class PdfService : IPdfService, IDisposable
 
     public void SavePdfToStream(Guid pdfId, Stream stream)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotWritable(stream, $"Stream '{nameof(stream)}' must be writable.");
         var bytes = GetPdfBytes(pdfId);
         if (stream.CanSeek)
@@ -571,7 +571,6 @@ public class PdfService : IPdfService, IDisposable
     /// Gets all words between the start section and the next known section, spanning multiple pages. For each page, the end boundary is determined by scanning forward for the
     /// first line that matches any section that comes after the start section in the document order.
     /// </summary>
-    /// <param name="pdfService">The PDF service instance.</param>
     /// <param name="pdfId">The loaded PDF identifier.</param>
     /// <param name="startSection">The section header to start from (e.g. "CHARGES").</param>
     /// <param name="sectionsInOrder">All section headers in document order (top to bottom). The end boundary is the first section after startSection that appears on each page.</param>
@@ -587,8 +586,8 @@ public class PdfService : IPdfService, IDisposable
         int? startPage = null,
         int? endPage = null)
     {
-        ArgumentHelpers.ThrowIfNull(startSection, nameof(startSection));
-        ArgumentHelpers.ThrowIfNull(sectionsInOrder, nameof(sectionsInOrder));
+        ArgumentHelpers.ThrowIfNull(startSection);
+        ArgumentHelpers.ThrowIfNull(sectionsInOrder);
         var sections = sectionsInOrder.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList();
         var startIdx = sections.FindIndex(s => string.Equals(s, startSection.Trim(), StringComparison.OrdinalIgnoreCase));
         var endCandidates = startIdx >= 0 && startIdx < sections.Count - 1 ? sections.Skip(startIdx + 1).ToArray() : [];
@@ -641,8 +640,8 @@ public class PdfService : IPdfService, IDisposable
         int? endPage = null,
         double? yTolerance = null)
     {
-        ArgumentHelpers.ThrowIfNull(startSection, nameof(startSection));
-        ArgumentHelpers.ThrowIfNull(sectionsInOrder, nameof(sectionsInOrder));
+        ArgumentHelpers.ThrowIfNull(startSection);
+        ArgumentHelpers.ThrowIfNull(sectionsInOrder);
         var sections = sectionsInOrder.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList();
         var startIdx = sections.FindIndex(s => string.Equals(s, startSection.Trim(), StringComparison.OrdinalIgnoreCase));
         var endCandidates = startIdx >= 0 && startIdx < sections.Count - 1 ? sections.Skip(startIdx + 1).ToArray() : [];
@@ -707,8 +706,8 @@ public class PdfService : IPdfService, IDisposable
         int? endPage = null,
         double? yTolerance = null)
     {
-        ArgumentHelpers.ThrowIfNull(startSection, nameof(startSection));
-        ArgumentHelpers.ThrowIfNull(sectionsInOrder, nameof(sectionsInOrder));
+        ArgumentHelpers.ThrowIfNull(startSection);
+        ArgumentHelpers.ThrowIfNull(sectionsInOrder);
         var sections = sectionsInOrder.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList();
         var startIdx = sections.FindIndex(s => string.Equals(s, startSection.Trim(), StringComparison.OrdinalIgnoreCase));
         var endCandidates = startIdx >= 0 && startIdx < sections.Count - 1 ? sections.Skip(startIdx + 1).ToArray() : [];
@@ -775,7 +774,7 @@ public class PdfService : IPdfService, IDisposable
     /// <inheritdoc />
     public DataTable.Models.DataTable ExtractDataTable(Guid pdfId, ColumnHeader[] headers, int? page = null, double yTolerance = 5.0)
     {
-        ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
+        ArgumentHelpers.ThrowIfNull(headers);
         var (headerCells, formattedRows) = ExtractTableFormattedInternal(pdfId, headers, page, yTolerance);
         return RowsToDataTable(headers, formattedRows, headerCells);
     }
@@ -783,9 +782,9 @@ public class PdfService : IPdfService, IDisposable
     /// <inheritdoc />
     public DataTable.Models.DataTable ExtractDataTable(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0)
     {
-        ArgumentHelpers.ThrowIfNull(words, nameof(words));
-        ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
-        var (headerCells, formattedRows) = ExtractTableFromWordsFormatted(words.ToList(), headers, yTolerance, null);
+        ArgumentHelpers.ThrowIfNull(words);
+        ArgumentHelpers.ThrowIfNull(headers);
+        var (headerCells, formattedRows) = ExtractTableFromWordsFormatted(words.ToList(), headers, yTolerance);
         return RowsToDataTable(headers, formattedRows, headerCells);
     }
 
@@ -849,7 +848,7 @@ public class PdfService : IPdfService, IDisposable
 
     private async Task<Guid> LoadPdfFromFileIdAsync(string filePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
 #if NETSTANDARD2_0
         return await Task.Run(
                 () => {
@@ -865,14 +864,14 @@ public class PdfService : IPdfService, IDisposable
 
     private Guid LoadPdfFromFileId(string filePath)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var bytes = File.ReadAllBytes(filePath);
         return LoadPdfInternal(bytes, filePath);
     }
 
     private async Task<Guid> LoadPdfFromUrlIdAsync(string url, CancellationToken ct = default)
     {
-        UriHelpers.ThrowIfInvalidUri(url, nameof(url));
+        UriHelpers.ThrowIfInvalidUri(url);
         var client = _httpClient ?? new HttpClient();
         byte[] bytes;
         try {
@@ -894,20 +893,20 @@ public class PdfService : IPdfService, IDisposable
 
     private Task<Guid> LoadPdfFromBytesIdAsync(byte[] pdfBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(pdfBytes, nameof(pdfBytes));
+        ArgumentHelpers.ThrowIfNull(pdfBytes);
         ct.ThrowIfCancellationRequested();
         return Task.FromResult(LoadPdfInternal(pdfBytes));
     }
 
     private Guid LoadPdfFromBytesId(byte[] pdfBytes)
     {
-        ArgumentHelpers.ThrowIfNull(pdfBytes, nameof(pdfBytes));
+        ArgumentHelpers.ThrowIfNull(pdfBytes);
         return LoadPdfInternal(pdfBytes);
     }
 
     private async Task<Guid> LoadPdfFromStreamIdAsync(Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
         return await Task.Run(
                 async () => {
@@ -927,7 +926,7 @@ public class PdfService : IPdfService, IDisposable
 
     private Guid LoadPdfFromStreamId(Stream stream)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
         using var memoryStream = new MemoryStream();
         if (stream.CanSeek)
@@ -940,7 +939,8 @@ public class PdfService : IPdfService, IDisposable
     private Guid LoadPdfInternal(byte[] pdfBytes, string? filePath = null, string? url = null)
         => ExecuteWithMetrics(
             Constants.Metrics.LoadDuration, Constants.Metrics.LoadSuccess, Constants.Metrics.LoadFailure, () => {
-                ArgumentHelpers.ThrowIfGreaterThan(pdfBytes.Length, _maxPdfSizeBytes, nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
+                ArgumentHelpers.ThrowIfGreaterThan(
+                    pdfBytes.Length, _maxPdfSizeBytes, nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
 
                 _documentsLock.EnterWriteLock();
                 try {
@@ -1139,7 +1139,6 @@ public class PdfService : IPdfService, IDisposable
                 pdfId, loadedPdf => {
                     var document = loadedPdf.Document;
                     ArgumentHelpers.ThrowIfNotInRange(region.Page, 1, document.NumberOfPages, nameof(region), $"Page number must be between 1 and {document.NumberOfPages}.");
-
                     var pdfPage = document.GetPage(region.Page);
                     var overlapThreshold = Math.Max(0, Math.Min(1, _options.BoundingBoxOverlapThreshold));
 
@@ -1931,7 +1930,7 @@ public class PdfService : IPdfService, IDisposable
         int keyValueColumnCount)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractKeyValueDuration, Constants.Metrics.ExtractKeyValueSuccess, Constants.Metrics.ExtractKeyValueFailure, () => {
-                ArgumentHelpers.ThrowIfNull(knownKeys, nameof(knownKeys));
+                ArgumentHelpers.ThrowIfNull(knownKeys);
                 var words = GetWordsInternal(pdfId, page);
                 return ExtractKeyValueColumns(words.ToList(), knownKeys, yTolerance, keyValueLayout, keyValueColumnCount);
             });
@@ -1943,7 +1942,7 @@ public class PdfService : IPdfService, IDisposable
         double yTolerance)
         => ExecuteWithMetrics(
             Constants.Metrics.ExtractTableDuration, Constants.Metrics.ExtractTableSuccess, Constants.Metrics.ExtractTableFailure, () => {
-                ArgumentHelpers.ThrowIfNull(headers, nameof(headers));
+                ArgumentHelpers.ThrowIfNull(headers);
                 return WithLoadedPdfRead(
                     pdfId, loadedPdf => {
                         var document = loadedPdf.Document;
@@ -1972,9 +1971,9 @@ public class PdfService : IPdfService, IDisposable
     private byte[] MergePdfsInternal(IEnumerable<Guid> pdfIds)
         => ExecuteWithMetrics(
             Constants.Metrics.MergeDuration, Constants.Metrics.MergeSuccess, Constants.Metrics.MergeFailure, () => {
-                ArgumentHelpers.ThrowIfNull(pdfIds, nameof(pdfIds));
+                ArgumentHelpers.ThrowIfNull(pdfIds);
                 var idsList = pdfIds.ToList();
-                ArgumentHelpers.ThrowIfNullOrEmpty(idsList, nameof(idsList));
+                ArgumentHelpers.ThrowIfNullOrEmpty(idsList);
                 ArgumentHelpers.ThrowIf(idsList.Count < 2, "At least two PDFs are required to merge.", nameof(pdfIds));
                 using var outputDocument = new PdfSharp.Pdf.PdfDocument();
                 foreach (var id in idsList) {
@@ -1995,7 +1994,7 @@ public class PdfService : IPdfService, IDisposable
     private void SavePdfInternal(Guid pdfId, string filePath)
         => ExecuteWithMetrics(
             Constants.Metrics.SaveDuration, Constants.Metrics.SaveSuccess, Constants.Metrics.SaveFailure, () => {
-                ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+                ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
                 var bytes = GetPdfBytesInternal(pdfId);
                 var directory = Path.GetDirectoryName(filePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -2011,8 +2010,8 @@ public class PdfService : IPdfService, IDisposable
 
     private static List<string> BuildMergePathInputs(string initialPdf, IEnumerable<string> paths)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(initialPdf, nameof(initialPdf));
-        ArgumentHelpers.ThrowIfNull(paths, nameof(paths));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(initialPdf);
+        ArgumentHelpers.ThrowIfNull(paths);
         var normalized = new List<string> { initialPdf };
         foreach (var path in paths) {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(paths));
@@ -2025,8 +2024,8 @@ public class PdfService : IPdfService, IDisposable
 
     private static List<byte[]> BuildMergeByteInputs(byte[] initialPdf, IEnumerable<byte[]> pdfs)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(initialPdf, nameof(initialPdf));
-        ArgumentHelpers.ThrowIfNull(pdfs, nameof(pdfs));
+        ArgumentHelpers.ThrowIfNullOrEmpty(initialPdf);
+        ArgumentHelpers.ThrowIfNull(pdfs);
         var normalized = new List<byte[]> { initialPdf };
         foreach (var pdf in pdfs) {
             ArgumentHelpers.ThrowIfNullOrEmpty(pdf, nameof(pdfs));
@@ -2081,7 +2080,6 @@ public class PdfService : IPdfService, IDisposable
     private PdfColumnarText BuildColumnarText(List<PdfWord> words, int columnCount, double? yTolerance)
     {
         ArgumentHelpers.ThrowIfLessThan(columnCount, 1, nameof(columnCount), "Column count must be at least 1.");
-
         if (words.Count == 0)
             return new(Enumerable.Repeat(string.Empty, columnCount).ToList());
 
@@ -2603,7 +2601,7 @@ public class PdfService : IPdfService, IDisposable
         if (words.Count == 0 || headers.Length == 0)
             return ([], []);
 
-        ArgumentHelpers.ThrowIfNullOrEmpty(headers, nameof(headers));
+        ArgumentHelpers.ThrowIfNullOrEmpty(headers);
         var tolerance = yTolerance ?? _options.DefaultYTolerance;
         var allLines = GroupIntoLinesPreservingInputOrder(words, tolerance);
         var headerLabels = headers.Select(h => h.Label).ToArray();

@@ -1,8 +1,7 @@
 using System.Buffers.Binary;
-using System.Security.Cryptography;
 using System.Text;
-using Lyo.Common;
 using Lyo.Common.Records;
+using Lyo.Common.Security;
 using Lyo.Compression;
 using Lyo.Compression.Models;
 using Lyo.Encryption;
@@ -14,6 +13,7 @@ using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.Keystore;
+using Lyo.Result;
 using Microsoft.AspNetCore.Components.Forms;
 using AesSivKeySizeBits = Lyo.Encryption.Symmetric.Aes.AesSiv.AesSivKeySizeBits;
 
@@ -59,7 +59,6 @@ public sealed class TestGatewayFileTransformer
         OperationHelpers.ThrowIf(file.Content.Length == 0, "Please upload a file first.");
         OperationHelpers.ThrowIf(!options.ApplyCompression && !options.ApplyEncryption, "Select compression, encryption, or both.");
         OperationHelpers.ThrowIf(options.ApplyEncryption && string.IsNullOrWhiteSpace(options.Secret), "A secret is required when encryption is enabled.");
-
         var currentFileName = file.FileName;
         var currentBytes = file.Content;
         var details = new List<KeyValuePair<string, string>> {
@@ -276,9 +275,8 @@ public sealed class TestGatewayFileTransformer
         details.Add(Detail("Key id", string.IsNullOrEmpty(headerKeyId) ? "(none)" : headerKeyId));
         details.Add(Detail("Key version", string.IsNullOrWhiteSpace(headerKeyVersion) ? "(none)" : headerKeyVersion));
         details.Add(Detail("Nonce length", nonceLength.ToString()));
-        if (nonceLength == AesGcmHelper.NonceSize) {
+        if (nonceLength == AesGcmHelper.NonceSize)
             details.Add(Detail("Symmetric cipher hint", "12-byte nonce: typically AES-GCM, ChaCha20-Poly1305, or AES-CCM — use file extension (.ag, .chacha, .ccm)."));
-        }
 
         const int xChaChaNonceSize = 24;
         if (nonceLength == xChaChaNonceSize)
@@ -612,24 +610,23 @@ public sealed class TestGatewayFileTransformer
     {
         var utf8 = Encoding.UTF8.GetBytes(secret);
         return algorithm switch {
-            EncryptionAlgorithm.AesGcm => TruncateHash(SHA256.HashData(utf8), aesGcmOrCcmKeySize.GetKeyLengthBytes()),
-            EncryptionAlgorithm.ChaCha20Poly1305 => SHA256.HashData(utf8),
-            EncryptionAlgorithm.AesCcm => TruncateHash(SHA256.HashData(utf8), aesGcmOrCcmKeySize.GetKeyLengthBytes()),
-            EncryptionAlgorithm.AesSiv => TruncateHash(SHA512.HashData(utf8), aesSivKeySize.GetKeyLengthBytes()),
-            EncryptionAlgorithm.XChaCha20Poly1305 => SHA256.HashData(utf8),
+            EncryptionAlgorithm.AesGcm => TruncateHash(Hasher.ComputeSha2(256, utf8), aesGcmOrCcmKeySize.GetKeyLengthBytes()),
+            EncryptionAlgorithm.ChaCha20Poly1305 => Hasher.ComputeSha2(256, utf8),
+            EncryptionAlgorithm.AesCcm => TruncateHash(Hasher.ComputeSha2(256, utf8), aesGcmOrCcmKeySize.GetKeyLengthBytes()),
+            EncryptionAlgorithm.AesSiv => TruncateHash(Hasher.ComputeSha2(512, utf8), aesSivKeySize.GetKeyLengthBytes()),
+            EncryptionAlgorithm.XChaCha20Poly1305 => Hasher.ComputeSha2(256, utf8),
             var _ => throw new NotSupportedException($"{algorithm} is not supported in the test gateway file workbench.")
         };
     }
 
-    private static byte[] TruncateHash(byte[] hash32, int byteLength)
+    private static byte[] TruncateHash(byte[] hashBytes, int byteLength)
     {
-        OperationHelpers.ThrowIf(byteLength > hash32.Length, $"Key length {byteLength} exceeds SHA-256 output.");
-
-        if (byteLength == hash32.Length)
-            return hash32;
+        OperationHelpers.ThrowIf(byteLength > hashBytes.Length, $"Key length {byteLength} exceeds hash output ({hashBytes.Length} bytes).");
+        if (byteLength == hashBytes.Length)
+            return hashBytes;
 
         var result = new byte[byteLength];
-        hash32.AsSpan(0, byteLength).CopyTo(result);
+        hashBytes.AsSpan(0, byteLength).CopyTo(result);
         return result;
     }
 

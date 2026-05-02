@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Reflection;
 
+// ReSharper disable NotAccessedPositionalProperty.Global
+
 namespace Lyo.Common.Records;
 
 /// <summary>Represents metadata about a programming language, using <see cref="ShortName" /> as the canonical identifier.</summary>
@@ -197,7 +199,7 @@ public sealed record ProgrammingLanguageInfo(
         // Keep short-name resolution exclusive to FromShortName, even when
         // the lower-cased display name overlaps with the short name (for
         // example "zig" vs "Zig").
-        if (_allLanguages.Any(language => string.Equals(language.ShortName, trimmedName, StringComparison.Ordinal)))
+        if (_allLanguages.Any(l => string.Equals(l.ShortName, trimmedName, StringComparison.Ordinal)))
             return Unknown;
 
         return _byName.TryGetValue(Normalize(trimmedName), out var language) ? language : FromAlias(trimmedName);

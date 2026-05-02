@@ -16,9 +16,9 @@ public sealed record ChemicalReactionComponent(string Formula, double Moles = 1d
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ChemicalReaction(IReadOnlyList<ChemicalReactionComponent> Reactants, IReadOnlyList<ChemicalReactionComponent> Products)
 {
-    public IReadOnlyList<ChemicalReactionComponent> Reactants { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Reactants, nameof(Reactants));
+    public IReadOnlyList<ChemicalReactionComponent> Reactants { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Reactants);
 
-    public IReadOnlyList<ChemicalReactionComponent> Products { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Products, nameof(Products));
+    public IReadOnlyList<ChemicalReactionComponent> Products { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Products);
 
     public override string ToString() => ScientificModelDisplay.JoinArrow(Reactants.Select(static r => r.ToString()), Products.Select(static p => p.ToString()));
 }
@@ -36,9 +36,9 @@ public sealed record BalancedReactionComponent(string Formula, int Coefficient)
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BalancedReactionResult(IReadOnlyList<BalancedReactionComponent> Reactants, IReadOnlyList<BalancedReactionComponent> Products)
 {
-    public IReadOnlyList<BalancedReactionComponent> Reactants { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Reactants, nameof(Reactants));
+    public IReadOnlyList<BalancedReactionComponent> Reactants { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Reactants);
 
-    public IReadOnlyList<BalancedReactionComponent> Products { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Products, nameof(Products));
+    public IReadOnlyList<BalancedReactionComponent> Products { get; init; } = ArgumentHelpers.ThrowIfNullReturn(Products);
 
     public override string ToString()
         => ScientificModelDisplay.JoinArrow(Reactants.Select(ScientificModelDisplay.BalancedFormula), Products.Select(ScientificModelDisplay.BalancedFormula));

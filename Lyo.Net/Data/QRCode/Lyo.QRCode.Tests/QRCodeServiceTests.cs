@@ -37,7 +37,7 @@ public class QRCodeServiceTests
     public async Task GenerateAsync_WithValidData_ReturnsSuccess()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("https://example.com", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         if (result is QRCodeResult qrResult) {
@@ -61,7 +61,7 @@ public class QRCodeServiceTests
             LightColor = "#FFFFFF"
         };
 
-        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         if (result is QRCodeResult qrResult) {
@@ -78,7 +78,7 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         var builder = QRCodeBuilder.New().WithData("https://example.com").WithFormat(QRCodeFormat.Png).WithSize(256).WithErrorCorrectionLevel(QRCodeErrorCorrectionLevel.Medium);
-        var result = await service.GenerateAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync(builder, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         if (result is QRCodeResult qrResult)
@@ -92,7 +92,7 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         await Assert.ThrowsAsync<ArgumentException>(async () => {
-            await service.GenerateAsync("", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await service.GenerateAsync("", ct: TestContext.Current.CancellationToken);
         });
     }
 
@@ -101,7 +101,7 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         await Assert.ThrowsAsync<ArgumentNullException>(async () => {
-            await service.GenerateAsync(null!, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await service.GenerateAsync(null!, TestContext.Current.CancellationToken);
         });
     }
 
@@ -113,7 +113,7 @@ public class QRCodeServiceTests
             Format = QRCodeFormat.Png, Size = 10 // Too small
         };
 
-        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Errors);
         Assert.True(result.Errors!.Count > 0);
@@ -126,13 +126,13 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         using var stream = new MemoryStream();
-        var result = await service.GenerateToStreamAsync("https://example.com", stream, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateToStreamAsync("https://example.com", stream, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.True(result.Data);
         Assert.True(stream.Length > 0);
         stream.Position = 0;
         var bytes = new byte[stream.Length];
-        await stream.ReadExactlyAsync(bytes, 0, (int)stream.Length, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await stream.ReadExactlyAsync(bytes, 0, (int)stream.Length, TestContext.Current.CancellationToken);
         Assert.True(bytes.Length > 0);
     }
 
@@ -142,7 +142,7 @@ public class QRCodeServiceTests
         var service = CreateService();
         var filePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
         try {
-            var result = await service.GenerateToFileAsync("https://example.com", filePath, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var result = await service.GenerateToFileAsync("https://example.com", filePath, ct: TestContext.Current.CancellationToken);
             Assert.True(result.IsSuccess);
             Assert.True(result.Data);
             Assert.True(File.Exists(filePath));
@@ -162,7 +162,7 @@ public class QRCodeServiceTests
 
         // Test PNG format
         var pngOptions = new QRCodeOptions { Format = QRCodeFormat.Png, Size = 256 };
-        var pngResult = await service.GenerateAsync("https://example.com", pngOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var pngResult = await service.GenerateAsync("https://example.com", pngOptions, TestContext.Current.CancellationToken);
         Assert.True(pngResult.IsSuccess);
         if (pngResult is QRCodeResult pngQrResult)
             Assert.Equal(QRCodeFormat.Png, pngQrResult.Format);
@@ -171,7 +171,7 @@ public class QRCodeServiceTests
 
         // Test SVG format (works on all platforms)
         var svgOptions = new QRCodeOptions { Format = QRCodeFormat.Svg, Size = 256 };
-        var svgResult = await service.GenerateAsync("https://example.com", svgOptions, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var svgResult = await service.GenerateAsync("https://example.com", svgOptions, TestContext.Current.CancellationToken);
         Assert.True(svgResult.IsSuccess);
         if (svgResult is QRCodeResult svgQrResult)
             Assert.Equal(QRCodeFormat.Svg, svgQrResult.Format);
@@ -186,7 +186,7 @@ public class QRCodeServiceTests
         var levels = new[] { QRCodeErrorCorrectionLevel.Low, QRCodeErrorCorrectionLevel.Medium, QRCodeErrorCorrectionLevel.Quartile, QRCodeErrorCorrectionLevel.High };
         foreach (var level in levels) {
             var options = new QRCodeOptions { Format = QRCodeFormat.Png, Size = 256, ErrorCorrectionLevel = level };
-            var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);
             Assert.True(result.IsSuccess);
             if (result is QRCodeResult qrResult)
                 Assert.NotNull(qrResult.ImageBytes);
@@ -200,7 +200,7 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         var longData = "https://example.com/" + new string('a', 1000);
-        var result = await service.GenerateAsync(longData, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync(longData, ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         if (result is QRCodeResult qrResult)
             Assert.NotNull(qrResult.ImageBytes);
@@ -215,7 +215,7 @@ public class QRCodeServiceTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         await Assert.ThrowsAsync<OperationCanceledException>(async () => {
-            await service.GenerateAsync("https://example.com", ct: cts.Token).ConfigureAwait(false);
+            await service.GenerateAsync("https://example.com", ct: cts.Token);
         });
     }
 
@@ -229,7 +229,7 @@ public class QRCodeServiceTests
             new QRCodeRequest { Data = "https://example.com/3", Options = new() { Format = QRCodeFormat.Png, Size = 256 } }
         };
 
-        var result = await service.GenerateBatchAsync(requests, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateBatchAsync(requests, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(3, result.TotalCount);
         Assert.Equal(3, result.SuccessCount);
@@ -251,7 +251,7 @@ public class QRCodeServiceTests
                 EnableMetrics = true
             }, metrics);
 
-        var result = await service.GenerateAsync("https://example.com", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", ct: TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(metrics.GetHistogram(Constants.Metrics.GenerateDuration));
         Assert.Equal(1, metrics.GetCounterValue(Constants.Metrics.GenerateSuccess));
@@ -277,7 +277,7 @@ public class QRCodeServiceTests
             LightColor = "#00FF00"
         };
 
-        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         if (result is QRCodeResult qrResult)
             Assert.NotNull(qrResult.ImageBytes);
@@ -290,7 +290,7 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         var options = new QRCodeOptions { Format = QRCodeFormat.Png, Size = 256, DrawQuietZones = true };
-        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         if (result is QRCodeResult qrResult)
             Assert.NotNull(qrResult.ImageBytes);

@@ -15,14 +15,14 @@ public class DeleteRequestBuilder
 
     public DeleteRequestBuilder WithKey(object key, params object[] extraKeys)
     {
-        ArgumentHelpers.ThrowIfNull(key, nameof(key));
+        ArgumentHelpers.ThrowIfNull(key);
         _keys.Add(extraKeys.Length == 0 ? [key] : [key, ..extraKeys]);
         return this;
     }
 
     public DeleteRequestBuilder WithKeys(IEnumerable<object[]> keys)
     {
-        ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
+        ArgumentHelpers.ThrowIfNull(keys);
         foreach (var k in keys) {
             ArgumentHelpers.ThrowIf(k == null || k.Length == 0, "Each key must contain at least one value", nameof(keys));
             _keys.Add(k!);
@@ -33,7 +33,7 @@ public class DeleteRequestBuilder
 
     public DeleteRequestBuilder WithIdentifier(string propertyName, ComparisonOperatorEnum comparator, object? value, bool overwrite = false)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(propertyName, nameof(propertyName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(propertyName);
         if (overwrite)
             _identifiers.RemoveAll(f => string.Equals(f.Field, propertyName, StringComparison.OrdinalIgnoreCase) && f.Comparison == comparator);
 
@@ -47,7 +47,7 @@ public class DeleteRequestBuilder
 
     public DeleteRequestBuilder WithIdentifiers(IEnumerable<ConditionClause> identifiers)
     {
-        ArgumentHelpers.ThrowIfNull(identifiers, nameof(identifiers));
+        ArgumentHelpers.ThrowIfNull(identifiers);
         foreach (var identifier in identifiers)
             _identifiers.Add(identifier);
 

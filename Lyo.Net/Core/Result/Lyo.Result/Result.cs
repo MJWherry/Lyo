@@ -1,6 +1,7 @@
 using System.Diagnostics;
+using Lyo.Result.Interfaces;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Represents the result of an operation that can either succeed with data or fail with errors.</summary>
 /// <typeparam name="T">The type of the data returned on success.</typeparam>
@@ -58,9 +59,7 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
         if (IsSuccess && Data != null)
             return Data;
 
-        var errorMessages = Errors != null && Errors.Count > 0
-            ? string.Join("; ", Errors.Select(e => $"{e.Code}: {e.Message}"))
-            : "Operation failed";
+        var errorMessages = Errors != null && Errors.Count > 0 ? string.Join("; ", Errors.Select(e => $"{e.Code}: {e.Message}")) : "Operation failed";
         throw new InvalidOperationException(errorMessages);
     }
 
@@ -72,15 +71,11 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
 
     /// <summary>Transforms the success value using a mapping function, propagating failure unchanged.</summary>
     public Result<TOut> Map<TOut>(Func<T, TOut> mapper)
-        => IsSuccess
-            ? Result<TOut>.Success(mapper(Data!), Timestamp, Metadata)
-            : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+        => IsSuccess ? Result<TOut>.Success(mapper(Data!), Timestamp, Metadata) : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
 
     /// <summary>Asynchronously transforms the success value using a mapping function, propagating failure unchanged.</summary>
     public async Task<Result<TOut>> MapAsync<TOut>(Func<T, Task<TOut>> mapper)
-        => IsSuccess
-            ? Result<TOut>.Success(await mapper(Data!).ConfigureAwait(false), Timestamp, Metadata)
-            : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
+        => IsSuccess ? Result<TOut>.Success(await mapper(Data!).ConfigureAwait(false), Timestamp, Metadata) : Result<TOut>.Failure(Errors!, Timestamp, Metadata);
 
     /// <summary>Executes a side-effect action on success without transforming the result.</summary>
     public Result<T> Tap(Action<T> action)
@@ -101,8 +96,7 @@ public record Result<T>(bool IsSuccess, T? Data, IReadOnlyList<Error>? Errors = 
     }
 
     /// <summary>Pattern matching — returns a value based on whether the result is successful or failed.</summary>
-    public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<IReadOnlyList<Error>, TResult> onFailure)
-        => IsSuccess ? onSuccess(Data!) : onFailure(Errors ?? []);
+    public TResult Match<TResult>(Func<T, TResult> onSuccess, Func<IReadOnlyList<Error>, TResult> onFailure) => IsSuccess ? onSuccess(Data!) : onFailure(Errors ?? []);
 
     /// <summary>Executes actions based on whether the result is successful or failed.</summary>
     public Result<T> Switch(Action<T> onSuccess, Action<IReadOnlyList<Error>> onFailure)

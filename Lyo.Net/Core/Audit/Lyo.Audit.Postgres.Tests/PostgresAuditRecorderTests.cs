@@ -18,7 +18,7 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync().ConfigureAwait(false);
+        await _container.StartAsync();
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
@@ -31,7 +31,7 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
         using (var scope = _serviceProvider.CreateScope()) {
             var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
             await using var context = await factory.CreateDbContextAsync();
-            await context.Database.MigrateAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
         }
 
         var recorderFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
@@ -43,7 +43,7 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
         if (_serviceProvider is IDisposable d)
             d.Dispose();
 
-        await _container.DisposeAsync().ConfigureAwait(false);
+        await _container.DisposeAsync();
     }
 
     [Fact]
@@ -55,10 +55,10 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
             "TestApp.Models.Order, TestApp", new Dictionary<string, object?> { ["Name"] = "Old Order", ["Status"] = "Draft" },
             new Dictionary<string, object?> { ["Name"] = "Updated Order", ["Status"] = "Submitted" });
 
-        await _recorder.RecordChangeAsync(change, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _recorder.RecordChangeAsync(change, TestContext.Current.CancellationToken);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(entities);
         Assert.NotEqual(Guid.Empty, entities[0].Id);
         Assert.Equal("TestApp.Models.Order, TestApp", entities[0].TypeAssemblyFullName);
@@ -76,10 +76,10 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
             Timestamp = DateTime.UtcNow.AddHours(-1)
         };
 
-        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(entities);
         Assert.NotEqual(Guid.Empty, entities[0].Id);
         Assert.Equal("UserLogin", entities[0].EventType);
@@ -95,10 +95,10 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
         Assert.NotNull(_recorder);
         Assert.NotNull(_serviceProvider);
         var evt = new AuditEvent("SimpleEvent", "No metadata");
-        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var entity = await context.AuditEvents.FirstOrDefaultAsync(e => e.EventType == "SimpleEvent", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entity = await context.AuditEvents.FirstOrDefaultAsync(e => e.EventType == "SimpleEvent", TestContext.Current.CancellationToken);
         Assert.NotNull(entity);
         Assert.Null(entity.MetadataJson);
     }
@@ -113,10 +113,10 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
             new AuditChange("App.B", new Dictionary<string, object?> { ["y"] = "a" }, new Dictionary<string, object?> { ["y"] = "b" })
         };
 
-        await _recorder.RecordChangesAsync(changes, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _recorder.RecordChangesAsync(changes, TestContext.Current.CancellationToken);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);
         Assert.Contains(entities, e => e.TypeAssemblyFullName == "App.A");
         Assert.Contains(entities, e => e.TypeAssemblyFullName == "App.B");
@@ -128,10 +128,10 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
         Assert.NotNull(_recorder);
         Assert.NotNull(_serviceProvider);
         var events = new[] { new AuditEvent("BulkEvent1", "First"), new AuditEvent("BulkEvent2", "Second", "actor-1") };
-        await _recorder.RecordEventsAsync(events, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _recorder.RecordEventsAsync(events, TestContext.Current.CancellationToken);
         var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);
         Assert.Contains(entities, e => e.EventType == "BulkEvent1");
         Assert.Contains(entities, e => e.EventType == "BulkEvent2");

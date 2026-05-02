@@ -1,0 +1,76 @@
+@namespace Lyo.Comic.Web.Components
+
+<MudCard Class="comic-card h-100" Elevation="2" Style="cursor: pointer;" @onclick="HandleCardClickAsync">
+    <div class="comic-card__cover-wrap">
+        @if (!string.IsNullOrWhiteSpace(CoverImageUrl))
+        {
+            <img src="@CoverImageUrl" alt="@Series.Title cover" class="comic-card__cover"/>
+        }
+        else
+        {
+            <div class="comic-card__cover-placeholder">
+                <MudIcon Icon="@Icons.Material.Filled.AutoStories" Size="Size.Large" Color="Color.Default"/>
+            </div>
+        }
+
+        <div class="comic-card__status-badge @StatusBadgeClass">
+            @Series.Status.ToString()
+        </div>
+
+        @if (Series.ComicType != ComicType.Unknown)
+        {
+            <div class="comic-card__type-badge">
+                @Series.ComicType.ToString()
+            </div>
+        }
+    </div>
+
+    <MudCardContent Class="pa-3">
+        <MudText Typo="Typo.subtitle1" Class="comic-card__title">@Series.Title</MudText>
+
+        @if (!string.IsNullOrWhiteSpace(Series.Author))
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">@Series.Author</MudText>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Series.Description))
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="comic-card__desc">@Series.Description</MudText>
+        }
+
+        <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
+            @if (!string.IsNullOrWhiteSpace(Series.Demographic))
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@Series.Demographic</MudChip>
+            }
+            @if (!string.IsNullOrWhiteSpace(Series.Language))
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@Series.Language.ToUpperInvariant()</MudChip>
+            }
+            @if (Series.PublishedYear.HasValue)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@Series.PublishedYear</MudChip>
+            }
+        </MudStack>
+    </MudCardContent>
+
+    <MudCardActions Class="pa-3 pt-0">
+        <div @onclick:stopPropagation="true" style="display: contents;">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.MenuBook"
+                       OnClick="OnReadClickAsync"
+                       Class="mr-2">
+                Read
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Info"
+                       OnClick="OnDetailsClickAsync">
+                Details
+            </MudButton>
+        </div>
+    </MudCardActions>
+</MudCard>

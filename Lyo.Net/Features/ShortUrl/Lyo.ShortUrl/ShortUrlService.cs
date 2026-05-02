@@ -21,7 +21,7 @@ public sealed class ShortUrlService : ShortUrlServiceBase
     public ShortUrlService(ShortUrlServiceOptions options, IShortUrlGenerator urlGenerator, ILogger<ShortUrlService>? logger = null, IMetrics? metrics = null)
         : base(options, logger, metrics)
     {
-        ArgumentHelpers.ThrowIfNull(urlGenerator, nameof(urlGenerator));
+        ArgumentHelpers.ThrowIfNull(urlGenerator);
         _urlGenerator = urlGenerator;
     }
 

@@ -28,7 +28,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Returns a base URL for MinIO when only a host (and optional port) is given without a scheme; otherwise trims and removes a trailing slash.</summary>
     public static string GetMinioServiceUrl(string hostOrUri)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(hostOrUri, nameof(hostOrUri));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(hostOrUri);
         var t = hostOrUri.Trim().TrimEnd('/');
         if (t.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || t.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             return t;
@@ -39,35 +39,35 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Wasabi S3 endpoint for the given region (e.g. <c>us-east-1</c>).</summary>
     public static string GetWasabiServiceUrl(string wasabiRegion)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(wasabiRegion, nameof(wasabiRegion));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(wasabiRegion);
         return $"https://s3.{wasabiRegion.Trim()}.wasabisys.com";
     }
 
     /// <summary>DigitalOcean Spaces endpoint for the region slug (e.g. <c>nyc3</c>, <c>ams3</c>).</summary>
     public static string GetDigitalOceanSpacesServiceUrl(string regionSlug)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(regionSlug, nameof(regionSlug));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(regionSlug);
         return $"https://{regionSlug.Trim()}.digitaloceanspaces.com";
     }
 
     /// <summary>Cloudflare R2 S3 API endpoint for the account id.</summary>
     public static string GetCloudflareR2ServiceUrl(string accountId)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(accountId, nameof(accountId));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(accountId);
         return $"https://{accountId.Trim()}.r2.cloudflarestorage.com";
     }
 
     /// <summary>Scaleway Object Storage endpoint for the region (e.g. <c>fr-par</c>, <c>nl-ams</c>).</summary>
     public static string GetScalewayObjectStorageServiceUrl(string region)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region, nameof(region));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region);
         return $"https://s3.{region.Trim()}.scw.cloud";
     }
 
     /// <summary>Linode Object Storage endpoint for the cluster region (e.g. <c>us-east-1</c>, <c>eu-central-1</c>).</summary>
     public static string GetLinodeObjectStorageServiceUrl(string region)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region, nameof(region));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(region);
         return $"https://{region.Trim()}.linodeobjects.com";
     }
 
@@ -77,7 +77,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// </summary>
     public static void ApplyMinioDefaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (string.IsNullOrWhiteSpace(options.ServiceUrl))
             return;
 
@@ -88,7 +88,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
     public static void ApplyWasabiDefaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
             return;
 
@@ -98,7 +98,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> (Spaces region slug) when the URL is not already set.</summary>
     public static void ApplyDigitalOceanSpacesDefaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
             return;
 
@@ -111,7 +111,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// </summary>
     public static void ApplyCloudflareR2Defaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.ProviderAccountId))
             return;
 
@@ -122,7 +122,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
     public static void ApplyScalewayDefaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
             return;
 
@@ -132,7 +132,7 @@ public static class S3FileStorageS3CompatibleExtensions
     /// <summary>Sets <see cref="S3FileStorageOptions.ServiceUrl" /> from <see cref="S3FileStorageOptions.Region" /> when the URL is not already set.</summary>
     public static void ApplyLinodeObjectStorageDefaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
             return;
 
@@ -212,11 +212,11 @@ public static class S3FileStorageS3CompatibleExtensions
         string configSectionName,
         Action<S3FileStorageOptions> applyDefaults)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
-        ArgumentHelpers.ThrowIfNull(applyDefaults, nameof(applyDefaults));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+        ArgumentHelpers.ThrowIfNull(applyDefaults);
         RegisterOptionsFromConfiguration(services, configuration, configSectionName, applyDefaults);
         return services.AddS3FileStorageServiceKeyed(keyName);
     }
@@ -227,10 +227,10 @@ public static class S3FileStorageS3CompatibleExtensions
         Action<S3FileStorageOptions> configure,
         Action<S3FileStorageOptions> applyDefaults)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
-        ArgumentHelpers.ThrowIfNull(applyDefaults, nameof(applyDefaults));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configure);
+        ArgumentHelpers.ThrowIfNull(applyDefaults);
         if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
             services.AddSingleton<S3FileStorageOptions>(_ => {
                 var options = new S3FileStorageOptions();

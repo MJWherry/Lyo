@@ -19,7 +19,7 @@ public static class RedisLockServiceExtensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddRedisLock(Action<RedisLockOptions>? configureOptions = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             var options = new RedisLockOptions();
             configureOptions?.Invoke(options);
             services.AddSingleton(options);
@@ -37,8 +37,8 @@ public static class RedisLockServiceExtensions
         /// <summary>Adds RedisLockService with Redis connection string. Registers IConnectionMultiplexer (if not already present) and the lock service.</summary>
         public IServiceCollection AddRedisLock(string redisConnectionString, Action<RedisLockOptions>? configureOptions = null, Action<ConfigurationOptions>? configureRedis = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(redisConnectionString, nameof(redisConnectionString));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(redisConnectionString);
             services.TryAddSingleton<IConnectionMultiplexer>(_ => {
                 var options = ConfigurationOptions.Parse(redisConnectionString);
                 options.AbortOnConnectFail = false;
@@ -52,8 +52,8 @@ public static class RedisLockServiceExtensions
         /// <summary>Adds RedisLockService with configuration from IConfiguration. Registers Redis from the Redis section if not already present.</summary>
         public IServiceCollection AddRedisLockFromConfiguration(IConfiguration configuration, Action<RedisLockOptions>? configureOptions = null, string redisSectionName = "Redis")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
             var options = new RedisLockOptions();
             var lockSection = configuration.GetSection(LockOptions.SectionName);
             if (lockSection.Exists())

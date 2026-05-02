@@ -28,7 +28,7 @@ public class SchedulerServiceTests : IDisposable, IAsyncDisposable
         _service = new(new() { CheckIntervalMs = 100 }, loggerFactory.CreateLogger<SchedulerService>());
     }
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _service.Dispose();
 
@@ -101,15 +101,15 @@ public class SchedulerServiceTests : IDisposable, IAsyncDisposable
         _service.AddSchedule(
             "one-shot-test", null, def, async ct => {
                 ran = true;
-                await File.WriteAllTextAsync(outputPath, "executed", ct).ConfigureAwait(false);
+                await File.WriteAllTextAsync(outputPath, "executed", ct);
             });
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await _service.StartAsync(cts.Token).ConfigureAwait(false);
-        await Task.Delay(500, CancellationToken.None).ConfigureAwait(false);
-        await _service.StopAsync(cts.Token).ConfigureAwait(false);
+        await _service.StartAsync(cts.Token);
+        await Task.Delay(500, CancellationToken.None);
+        await _service.StopAsync(cts.Token);
         Assert.True(ran);
         Assert.True(File.Exists(outputPath));
-        Assert.Equal("executed", await File.ReadAllTextAsync(outputPath, cts.Token).ConfigureAwait(false));
+        Assert.Equal("executed", await File.ReadAllTextAsync(outputPath, cts.Token));
     }
 }

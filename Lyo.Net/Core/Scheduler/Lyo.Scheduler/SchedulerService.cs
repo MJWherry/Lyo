@@ -51,9 +51,9 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
     /// <inheritdoc />
     public void AddSchedule(string id, string? name, ScheduleDefinition definition, Func<CancellationToken, Task> action)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(id, nameof(id));
-        ArgumentHelpers.ThrowIfNull(definition, nameof(definition));
-        ArgumentHelpers.ThrowIfNull(action, nameof(action));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
+        ArgumentHelpers.ThrowIfNull(definition);
+        ArgumentHelpers.ThrowIfNull(action);
         definition.Validate();
         _schedules[id] = (definition, name, action);
         _logger.LogInformation("Added schedule {ScheduleId} ({ScheduleName})", id, name ?? id);
@@ -84,7 +84,7 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
         var reference = asOf ?? DateTime.UtcNow;
         return _schedules.Select(kv => {
                 var info = new ScheduleInfo(kv.Key, kv.Value.Name, kv.Value.Definition);
-                var nextRun = ScheduleCalculator.GetNextRun(kv.Value.Definition, reference);
+                var nextRun = ScheduleCalculator.GetNextRun(kv.Value.Definition, reference, _options.MaxDaysLookAhead);
                 return new ScheduleWithNextRun(info, nextRun);
             })
             .OrderBy(x => x.NextRun.HasValue ? 0 : 1)
@@ -100,7 +100,7 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
         var perSchedule = Math.Max(1, maxRuns / Math.Max(1, _schedules.Count));
         return _schedules.SelectMany(kv => {
                 var info = new ScheduleInfo(kv.Key, kv.Value.Name, kv.Value.Definition);
-                return ScheduleCalculator.GetNextRuns(kv.Value.Definition, reference, perSchedule).Select(runAt => new ScheduleRun(info, runAt));
+                return ScheduleCalculator.GetNextRuns(kv.Value.Definition, reference, perSchedule, _options.MaxDaysLookAhead).Select(runAt => new ScheduleRun(info, runAt));
             })
             .OrderBy(x => x.RunAt)
             .Take(maxRuns)
@@ -154,6 +154,29 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
     private async Task RunAsync(CancellationToken ct)
     {
         _logger.LogDebug("Scheduler loop started, check interval {Interval}ms", _options.CheckIntervalMs);
+#if NET6_0_OR_GREATER
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_options.CheckIntervalMs));
+        while (true) {
+            try {
+                await CheckAndExecuteDueSchedulesAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                break;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Error in scheduler loop");
+                _metrics.RecordError($"{MetricPrefix}.loop_error", ex, DefaultTags);
+            }
+
+            try {
+                if (!await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+                    break;
+            }
+            catch (OperationCanceledException) {
+                break;
+            }
+        }
+#else
         while (!ct.IsCancellationRequested) {
             try {
                 await CheckAndExecuteDueSchedulesAsync(ct).ConfigureAwait(false);
@@ -173,7 +196,7 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
                 break;
             }
         }
-
+#endif
         _logger.LogDebug("Scheduler loop ended");
     }
 
@@ -185,7 +208,7 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
             if (!definition.Enabled || ct.IsCancellationRequested)
                 continue;
 
-            var nextRun = ScheduleCalculator.GetNextRun(definition, now);
+            var nextRun = ScheduleCalculator.GetNextRun(definition, now, _options.MaxDaysLookAhead);
             if (!nextRun.HasValue)
                 continue;
 
@@ -213,6 +236,8 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
         tags.Add(("schedule_id", scheduleId));
         var tagsArray = tags.ToArray();
         _metrics.IncrementCounter($"{MetricPrefix}.executions.started", 1, tagsArray);
+        var driftMs = (DateTime.UtcNow - scheduledTime).TotalMilliseconds;
+        _metrics.RecordTiming($"{MetricPrefix}.executions.drift", TimeSpan.FromMilliseconds(driftMs), tagsArray);
         var stopwatch = Stopwatch.StartNew();
         var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         if (_options.ActionTimeout.HasValue)

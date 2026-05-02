@@ -16,7 +16,7 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder AddIncludes(string include, params string[] rest)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(include, nameof(include));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(include);
         _query.Include.Add(include.Trim());
         foreach (var i in rest)
             _query.Include.Add(i.Trim());
@@ -26,8 +26,8 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder AddIncludes(string[] includes)
     {
-        ArgumentHelpers.ThrowIfNull(includes, nameof(includes));
-        ArgumentHelpers.ThrowIf(includes.Length == 0, "At least one include is required", nameof(includes));
+        ArgumentHelpers.ThrowIfNull(includes);
+        ArgumentHelpers.ThrowIf(includes.Length == 0, "At least one include is required");
 
         foreach (var i in includes)
             _query.Include.Add(i.Trim());
@@ -45,7 +45,7 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder AddSelects(string field, params string[] rest)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(field, nameof(field));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(field);
         _query.Select.Add(field.Trim());
         foreach (var f in rest)
             _query.Select.Add(f.Trim());
@@ -55,7 +55,7 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder AddSelects(string[] fields)
     {
-        ArgumentHelpers.ThrowIfNull(fields, nameof(fields));
+        ArgumentHelpers.ThrowIfNull(fields);
         ArgumentHelpers.ThrowIf(fields.Length == 0, "At least one select field is required", nameof(fields));
 
         foreach (var f in fields)
@@ -66,15 +66,15 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder AddComputedField(string name, string template)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template, nameof(template));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         _query.ComputedFields.Add(new(name, template));
         return this;
     }
 
     public ProjectionQueryReqBuilder AddComputedField(ComputedField computedField)
     {
-        ArgumentHelpers.ThrowIfNull(computedField, nameof(computedField));
+        ArgumentHelpers.ThrowIfNull(computedField);
         _query.ComputedFields.Add(computedField);
         return this;
     }

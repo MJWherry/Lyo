@@ -1,4 +1,6 @@
-namespace Lyo.Common.Tests;
+using System.Collections;
+
+namespace Lyo.Result.Tests;
 
 public class EnsureTests
 {
@@ -16,7 +18,7 @@ public class EnsureTests
         string? nullStr = null;
         var result = Ensure.NotNull(nullStr);
         Assert.False(result.IsSuccess);
-        Assert.Single(result.Errors!);
+        Assert.Single((IEnumerable)result.Errors!);
         Assert.Equal("NULL_VALUE", result.Errors![0].Code);
     }
 

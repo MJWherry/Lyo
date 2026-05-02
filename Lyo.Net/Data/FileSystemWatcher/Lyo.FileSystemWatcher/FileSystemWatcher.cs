@@ -103,7 +103,7 @@ public class FileSystemWatcher : IDisposable
     public int DebounceTimerDelay {
         get => _options.DebounceTimerDelay;
         set {
-            ArgumentHelpers.ThrowIfNegative(value, nameof(value));
+            ArgumentHelpers.ThrowIfNegative(value);
             _options.DebounceTimerDelay = value;
         }
     }
@@ -131,7 +131,7 @@ public class FileSystemWatcher : IDisposable
     /// <exception cref="InvalidOperationException">Thrown when metrics are enabled in options but IMetrics is not provided.</exception>
     public FileSystemWatcher(string path, FileSystemWatcherOptions? options = null, ILogger<FileSystemWatcher>? logger = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path, nameof(path));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         ExceptionThrower.ThrowIfDirectoryNotFound(path);
         ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
         _options = options ?? new();

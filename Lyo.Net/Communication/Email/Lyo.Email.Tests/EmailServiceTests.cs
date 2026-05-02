@@ -43,7 +43,7 @@ public class EmailServiceTests
         var builder = EmailRequestBuilder.New().SetSubject("Test Subject").SetTextBody("Test Body").SetFrom("custom@example.com", "Custom Sender").AddTo("recipient@example.com");
 
         // Will fail at runtime with invalid SMTP, but validates the API
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         result.Data.ShouldNotBeNull();
         result.Data!.FromAddress.ShouldBe("custom@example.com");
@@ -57,7 +57,7 @@ public class EmailServiceTests
         var builder = EmailRequestBuilder.New().SetSubject("Test Subject").SetTextBody("Test Body").AddTo("recipient@example.com");
 
         // Will fail at runtime with invalid SMTP, but validates the API
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         result.Data.ShouldNotBeNull();
         result.Data!.FromAddress.ShouldBe(_options.DefaultFromAddress);
@@ -69,7 +69,7 @@ public class EmailServiceTests
     {
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test Subject").SetTextBody("Test Body").SetFrom("custom@example.com", "Custom").AddTo("recipient@example.com");
-        var result = await service.SendEmailAsync(builder, "override@example.com", "Override", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, "override@example.com", "Override", TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         result.Data.ShouldNotBeNull();
         // Should use the override, not the builder's from
@@ -86,7 +86,7 @@ public class EmailServiceTests
             EmailRequestBuilder.New().SetSubject("Test 2").SetTextBody("Body 2").AddTo("test2@example.com")
         ];
 
-        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken);
         results.ShouldHaveCount(2);
         results.ShouldAllSatisfy(r => r is not null);
     }
@@ -96,7 +96,7 @@ public class EmailServiceTests
     {
         var service = new EmailService(_options, _logger);
         EmailRequestBuilder[] builders = [EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Body").AddTo("test@example.com")];
-        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken);
         results.ShouldHaveCount(1);
     }
 
@@ -112,10 +112,10 @@ public class EmailServiceTests
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Body").AddTo("test@example.com");
 
         // Trigger send (will fail, but event should fire)
-        _ = service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        _ = service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken);
 
         // Give it a moment
-        await Task.Delay(100, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Event should have fired (even on failure)
         eventArgs.ShouldNotBeNull();
@@ -135,10 +135,10 @@ public class EmailServiceTests
         EmailRequestBuilder[] builders = [EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Body").AddTo("test@example.com")];
 
         // Trigger bulk send (will fail, but event should fire)
-        _ = service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        _ = service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken);
 
         // Give it a moment
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Event should have fired
         eventArgs.ShouldNotBeNull();
@@ -157,10 +157,10 @@ public class EmailServiceTests
         };
 
         // Trigger test (will fail, but event should fire)
-        _ = service.TestConnectionAsync(TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        _ = service.TestConnectionAsync(TestContext.Current.CancellationToken).ContinueWith(_ => { }, TestContext.Current.CancellationToken);
 
         // Give it a moment
-        await Task.Delay(200, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Event should have fired
         eventArgs.ShouldNotBeNull();
@@ -178,7 +178,7 @@ public class EmailServiceTests
             .AddCc("cc@example.com")
             .AddBcc("bcc@example.com");
 
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         result.Data.ShouldNotBeNull();
         result.Data!.ToAddresses.ShouldNotBeNull();
@@ -198,7 +198,7 @@ public class EmailServiceTests
     {
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Body").AddTo("test@example.com");
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         result.Timestamp.ShouldBeLessThanOrEqualTo(DateTime.UtcNow);
     }
@@ -210,7 +210,7 @@ public class EmailServiceTests
         // In reality, with invalid SMTP, it will fail, but we can test the structure
         var service = new EmailService(_options, _logger);
         var builder = EmailRequestBuilder.New().SetSubject("Test").SetTextBody("Body").AddTo("test@example.com");
-        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var result = await service.SendEmailAsync(builder, TestContext.Current.CancellationToken);
         result.ShouldNotBeNull();
         // Result will be failure with invalid SMTP, but structure is correct
         if (result.IsSuccess) {

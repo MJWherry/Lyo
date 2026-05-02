@@ -37,27 +37,26 @@
 
                         <MudGrid>
                             <MudItem xs="12" md="4">
-                                <MudTextField T="string"
-                                              Label="Replacement char"
-                                              HelperText="Used for ReplaceWithChar and PreserveBoundary."
-                                              MaxLength="1"
-                                              @bind-Value="_replacementCharText"/>
-                            </MudItem>
-                            <MudItem xs="12" md="8">
-                                <MudTextField T="string"
-                                              Label="Replacement word"
-                                              HelperText="Used when the strategy is ReplaceWithWord."
-                                              @bind-Value="_replacementWord"/>
-                            </MudItem>
-                        </MudGrid>
-
-                        <MudGrid>
-                            <MudItem xs="12" md="6">
                                 <MudSwitch T="bool" Label="Case sensitive" @bind-Value="_caseSensitive"/>
                             </MudItem>
-                            <MudItem xs="12" md="6">
+                            <MudItem xs="12" md="4">
                                 <MudSwitch T="bool" Label="Whole words only" @bind-Value="_matchWholeWordsOnly"/>
                             </MudItem>
+                            @if (_replacementStrategy is ProfanityReplacementStrategy.ReplaceWithChar or ProfanityReplacementStrategy.Mask or ProfanityReplacementStrategy.PreserveBoundary) {
+                                <MudItem xs="12" md="4">
+                                    <MudTextField T="string"
+                                                  Label="Replacement char"
+                                                  MaxLength="1"
+                                                  @bind-Value="_replacementCharText"/>
+                                </MudItem>
+                            }
+                            @if (_replacementStrategy == ProfanityReplacementStrategy.ReplaceWithWord) {
+                                <MudItem xs="12" md="4">
+                                    <MudTextField T="string"
+                                                  Label="Replacement word"
+                                                  @bind-Value="_replacementWord"/>
+                                </MudItem>
+                            }
                         </MudGrid>
 
                         <MudTextField T="string"

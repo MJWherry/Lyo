@@ -14,7 +14,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCompressionService()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<CompressionServiceOptions>(_ => new());
             services.AddSingleton<CompressionService>();
             services.AddSingleton<ICompressionService>(provider => provider.GetRequiredService<CompressionService>());
@@ -26,8 +26,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCompressionService(Action<CompressionServiceOptions> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<CompressionServiceOptions>(_ => {
                 var options = new CompressionServiceOptions();
                 configure(options);
@@ -45,9 +45,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCompressionServiceFromConfiguration(IConfiguration configuration, string configSectionName = "CompressionService")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             services.AddOptions<CompressionServiceOptions>(configSectionName)
                 .Configure<IConfiguration>((options, config) => {
                     config.GetSection(configSectionName).Bind(options);
@@ -65,8 +65,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCompressionServiceKeyed(string keyedServiceName, Action<CompressionServiceOptions>? configure = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName, nameof(keyedServiceName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName);
             services.AddKeyedSingleton<CompressionServiceOptions>(
                 keyedServiceName, (_, _) => {
                     var options = new CompressionServiceOptions();

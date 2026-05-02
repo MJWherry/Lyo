@@ -18,7 +18,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
         IDbContextFactory<ContactUsDbContext> contextFactory,
         ILogger<PostgresContactUsService>? logger = null)
         : base(options.Value, logger)
-        => _contextFactory = ArgumentHelpers.ThrowIfNullReturn(contextFactory, nameof(contextFactory));
+        => _contextFactory = ArgumentHelpers.ThrowIfNullReturn(contextFactory);
 
     /// <inheritdoc />
     protected override async Task<ContactUsSubmitResult> SubmitCoreAsync(ContactUsRequest request, CancellationToken ct)

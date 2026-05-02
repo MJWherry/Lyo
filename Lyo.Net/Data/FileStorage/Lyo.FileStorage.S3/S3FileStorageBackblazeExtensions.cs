@@ -17,7 +17,7 @@ public static class S3FileStorageBackblazeExtensions
     /// </summary>
     public static void ApplyBackblazeB2Defaults(this S3FileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         if (!string.IsNullOrWhiteSpace(options.ServiceUrl) || string.IsNullOrWhiteSpace(options.Region))
             return;
 
@@ -27,7 +27,7 @@ public static class S3FileStorageBackblazeExtensions
     /// <summary>Returns the S3-compatible API URL for a B2 region (e.g. <c>us-west-004</c>).</summary>
     public static string GetS3EndpointForBackblazeRegion(string b2Region)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(b2Region, nameof(b2Region));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(b2Region);
         return $"https://s3.{b2Region.Trim()}.backblazeb2.com";
     }
 
@@ -41,10 +41,10 @@ public static class S3FileStorageBackblazeExtensions
         IConfiguration configuration,
         string configSectionName = BackblazeFileStorageConfigurationSectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         RegisterBackblazeS3OptionsFromConfiguration(services, configuration, configSectionName);
         return services.AddS3FileStorageServiceKeyed(keyName);
     }
@@ -52,9 +52,9 @@ public static class S3FileStorageBackblazeExtensions
     /// <summary>Configures <see cref="S3FileStorageOptions" /> in code and applies <see cref="ApplyBackblazeB2Defaults" />.</summary>
     public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForBackblaze(this IServiceCollection services, string keyName, Action<S3FileStorageOptions> configure)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-        ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+        ArgumentHelpers.ThrowIfNull(configure);
         if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
             services.AddSingleton<S3FileStorageOptions>(_ => {
                 var options = new S3FileStorageOptions();

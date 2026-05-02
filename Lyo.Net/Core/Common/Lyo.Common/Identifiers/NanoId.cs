@@ -92,8 +92,8 @@ public static class NanoId
 
     private static void ValidateArgs(string alphabet, int size)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(size, nameof(size));
-        ArgumentHelpers.ThrowIfNullOrEmpty(alphabet, nameof(alphabet));
+        ArgumentHelpers.ThrowIfNegativeOrZero(size);
+        ArgumentHelpers.ThrowIfNullOrEmpty(alphabet);
         ArgumentHelpers.ThrowIf(alphabet.Length > 255, "Alphabet must not exceed 255 characters.", nameof(alphabet));
     }
 

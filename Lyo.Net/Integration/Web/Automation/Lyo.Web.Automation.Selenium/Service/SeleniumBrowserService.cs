@@ -18,7 +18,7 @@ public sealed class SeleniumBrowserService : ISeleniumBrowserService
 
     public SeleniumBrowserService(SeleniumBrowserOptions serviceOptions, ILoggerFactory? loggerFactory = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(serviceOptions, nameof(serviceOptions));
+        ArgumentHelpers.ThrowIfNull(serviceOptions);
         _serviceOptions = serviceOptions;
         _loggerFactory = loggerFactory;
         _metrics = metrics;

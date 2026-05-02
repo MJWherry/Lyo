@@ -16,7 +16,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCsvService()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<CsvService>(provider => {
                 var logger = provider.GetService<ILogger<CsvService>>();
                 return new(logger);
@@ -33,8 +33,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCsvService(Action<CsvConfiguration> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<CsvService>(provider => {
                 var logger = provider.GetService<ILogger<CsvService>>();
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture);
@@ -53,8 +53,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCsvService(Func<CsvConfiguration> configBuilder)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configBuilder, nameof(configBuilder));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configBuilder);
             services.AddSingleton<CsvService>(provider => {
                 var logger = provider.GetService<ILogger<CsvService>>();
                 return new(logger, configBuilder);
@@ -71,8 +71,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddCsvService(Action<IServiceProvider, CsvConfiguration> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<CsvService>(provider => {
                 var logger = provider.GetService<ILogger<CsvService>>();
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture);

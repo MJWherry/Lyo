@@ -1,7 +1,7 @@
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Ffmpeg.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -26,15 +26,15 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertAsync(AudioConversionRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         return await ConvertFileToFileAsync(request.InputPath, request.OutputPath, ToOptions(request), ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertFileToFileAsync(string inputPath, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var timer = _metrics.StartTimer(Constants.Metrics.ConvertDuration);
         var result = await ConvertCoreAsync(inputPath, outputPath, options, ct).ConfigureAwait(false);
         _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ConvertSuccess : Constants.Metrics.ConvertFailure);
@@ -47,8 +47,8 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertFileToStreamAsync(string inputPath, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         var format = options?.Format ?? _options.DefaultFormat;
         var ext = format.StartsWith(".", StringComparison.Ordinal) ? format : "." + format;
@@ -69,7 +69,7 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<byte[]>> ConvertFileToBytesAsync(string inputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         var format = options?.Format ?? _options.DefaultFormat;
         var ext = format.StartsWith(".", StringComparison.Ordinal) ? format : "." + format;
         var tempPath = FfmpegTempHelper.CreateTempFilePath(ext);
@@ -89,9 +89,9 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertStreamToStreamAsync(Stream inputStream, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         var inputPath = await FfmpegTempHelper.WriteStreamToTempFileAsync(inputStream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -105,9 +105,9 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertStreamToFileAsync(Stream inputStream, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         var inputPath = await FfmpegTempHelper.WriteStreamToTempFileAsync(inputStream, ".tmp", ct).ConfigureAwait(false);
         try {
             return await ConvertFileToFileAsync(inputPath, outputPath, options, ct).ConfigureAwait(false);
@@ -120,7 +120,7 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<byte[]>> ConvertStreamToBytesAsync(Stream inputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         var inputPath = await FfmpegTempHelper.WriteStreamToTempFileAsync(inputStream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -134,7 +134,7 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<byte[]>> ConvertBytesToBytesAsync(byte[] inputBytes, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputBytes, nameof(inputBytes));
+        ArgumentHelpers.ThrowIfNull(inputBytes);
         var inputPath = await FfmpegTempHelper.WriteBytesToTempFileAsync(inputBytes, ".tmp", ct).ConfigureAwait(false);
         try {
             return await ConvertFileToBytesAsync(inputPath, options, ct).ConfigureAwait(false);
@@ -147,8 +147,8 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertBytesToStreamAsync(byte[] inputBytes, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputBytes, nameof(inputBytes));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputBytes);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         var inputPath = await FfmpegTempHelper.WriteBytesToTempFileAsync(inputBytes, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -162,8 +162,8 @@ public sealed class FfmpegAudioConverter : IAudioConverter
     /// <inheritdoc />
     public async Task<Result<bool>> ConvertBytesToFileAsync(byte[] inputBytes, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputBytes, nameof(inputBytes));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNull(inputBytes);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         var inputPath = await FfmpegTempHelper.WriteBytesToTempFileAsync(inputBytes, ".tmp", ct).ConfigureAwait(false);
         try {
             return await ConvertFileToFileAsync(inputPath, outputPath, options, ct).ConfigureAwait(false);

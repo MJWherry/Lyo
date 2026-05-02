@@ -118,12 +118,12 @@ public class KeyStoreIntegrationTests
         var keyStore = new LocalKeyStore();
         const string keyId = "test-key";
         var key = SecureKeyGenerator.GenerateKey();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        var retrieved = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
+        var retrieved = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken);
         Assert.Equal(key, retrieved);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var current = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var current = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken);
         Assert.Equal(key, current);
     }
 

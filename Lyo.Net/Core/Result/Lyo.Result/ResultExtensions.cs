@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using Lyo.Common.Enums;
+using Lyo.Result.Enums;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Extension methods and aggregation for Result types.</summary>
 public static class ResultExtensions

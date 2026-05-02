@@ -75,11 +75,11 @@ app.BuildJobGroup();
 | `Mapster`                                         | `[10,)` |
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
 | `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
-| `UUIDNext`                                        | `4.2.3` |
 
 ### Project references
 
 - `Lyo.Api`
+- `Lyo.Common`
 - `Lyo.Exceptions`
 - `Lyo.Job.Models`
 - `Lyo.MessageQueue.RabbitMq`

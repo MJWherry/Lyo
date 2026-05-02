@@ -44,4 +44,28 @@ public interface IComicStore
 
     /// <summary>Deletes a chapter by id.</summary>
     Task DeleteChapterAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Inserts or updates a page.</summary>
+    Task SavePageAsync(ComicPage page, CancellationToken ct = default);
+
+    /// <summary>Gets a page by id. Returns null if not found.</summary>
+    Task<ComicPage?> GetPageByIdAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Gets all pages for a chapter, ordered by page number ascending.</summary>
+    Task<IReadOnlyList<ComicPage>> GetPagesByChapterAsync(Guid chapterId, CancellationToken ct = default);
+
+    /// <summary>Deletes a page by id.</summary>
+    Task DeletePageAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Inserts or updates a character.</summary>
+    Task SaveCharacterAsync(ComicCharacter character, CancellationToken ct = default);
+
+    /// <summary>Gets a character by id. Returns null if not found.</summary>
+    Task<ComicCharacter?> GetCharacterByIdAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Gets all characters for a series, ordered by name ascending.</summary>
+    Task<IReadOnlyList<ComicCharacter>> GetCharactersBySeriesAsync(Guid seriesId, CancellationToken ct = default);
+
+    /// <summary>Deletes a character by id.</summary>
+    Task DeleteCharacterAsync(Guid id, CancellationToken ct = default);
 }

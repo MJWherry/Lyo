@@ -1,0 +1,624 @@
+@inject ISchedulerService SchedulerService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Schedule Workbench</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Build, validate, and preview schedule definitions. Add test schedules to the in-process scheduler to inspect timing and next-run behaviour.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+
+            <!-- ── Builder ── -->
+            <MudTabPanel Text="Builder">
+                <MudGrid>
+                    <MudItem xs="12" md="7">
+                        <MudPaper Outlined="true" Class="pa-4" Style="height: 100%;">
+                            <MudStack Spacing="3">
+
+                                <!-- Type + Enabled on the same row -->
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudSelect T="ScheduleType" Label="Schedule Type" @bind-Value="_type"
+                                               Variant="Variant.Outlined" Style="flex: 1;">
+                                        <MudSelectItem Value="ScheduleType.Cron">Cron</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.SetTimes">Set Times</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.Interval">Interval</MudSelectItem>
+                                        <MudSelectItem Value="ScheduleType.OneShot">One-Shot</MudSelectItem>
+                                    </MudSelect>
+                                    <MudSwitch T="bool" @bind-Value="_enabled" Label="Enabled"
+                                               Color="Color.Primary" Style="white-space: nowrap;"/>
+                                </MudStack>
+
+                                <MudTextField T="string" Label="Description (optional)" @bind-Value="_description"
+                                              Variant="Variant.Outlined" Lines="3"/>
+
+                                <!-- ── Cron ── -->
+                                @if (_type == ScheduleType.Cron) {
+                                    <MudTextField T="string" Label="Cron Expression" @bind-Value="_cronExpression"
+                                                  Variant="Variant.Outlined"
+                                                  HelperText="5-field: MIN HOUR DOM MON DOW  |  6-field: SEC MIN HOUR DOM MON DOW"
+                                                  Placeholder="e.g. 0 9 * * MON-FRI"/>
+                                    <MudAlert Severity="Severity.Info" Dense="true">
+                                        Examples: &nbsp;<b>0 9 * * MON-FRI</b> (9 am weekdays) &nbsp;|&nbsp;
+                                        <b>*/15 * * * *</b> (every 15 min) &nbsp;|&nbsp;
+                                        <b>0 0 1 * *</b> (1st of every month) &nbsp;|&nbsp;
+                                        <b>0 */6 * * *</b> (every 6 hours)
+                                    </MudAlert>
+                                }
+
+                                <!-- ── Set Times ── -->
+                                @if (_type == ScheduleType.SetTimes) {
+                                    <div>
+                                        <MudText Typo="Typo.subtitle2" Class="mb-1">Times to run</MudText>
+                                        <LyoChipInput Values="@_timesList"
+                                                      ValuesChanged="OnTimesChanged"
+                                                      Placeholder="Type time (HH:mm) and press Enter"
+                                                      ValidationPattern="@_timePattern"
+                                                      ValidationErrorMessage="Enter a valid time in HH:mm format (e.g. 09:30)."/>
+                                    </div>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="DayFlags"
+                                                            Label="Days"
+                                                            Placeholder="Select days..."
+                                                            Items="DayItems"
+                                                            SelectedValues="_selectedDays"
+                                                            SelectedValuesChanged="@(v => _selectedDays = v)"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="MonthFlags"
+                                                            Label="Months"
+                                                            Placeholder="Select months..."
+                                                            Items="MonthItems"
+                                                            SelectedValues="_selectedMonths"
+                                                            SelectedValuesChanged="@(v => _selectedMonths = v)"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <!-- ── Interval ── -->
+                                @if (_type == ScheduleType.Interval) {
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudTimePicker Label="Start time" @bind-Time="_intervalStartTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudTimePicker Label="End time" @bind-Time="_intervalEndTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="4">
+                                            <MudNumericField T="int" Label="Interval (minutes)" @bind-Value="_intervalMinutes"
+                                                             Variant="Variant.Outlined" Min="1"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="DayFlags"
+                                                            Label="Days"
+                                                            Placeholder="Select days..."
+                                                            Items="DayItems"
+                                                            SelectedValues="_selectedDays"
+                                                            SelectedValuesChanged="@(v => _selectedDays = v)"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <LyoCheckSelect TValue="MonthFlags"
+                                                            Label="Months"
+                                                            Placeholder="Select months..."
+                                                            Items="MonthItems"
+                                                            SelectedValues="_selectedMonths"
+                                                            SelectedValuesChanged="@(v => _selectedMonths = v)"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <!-- ── OneShot ── -->
+                                @if (_type == ScheduleType.OneShot) {
+                                    <MudGrid>
+                                        <MudItem xs="12" md="7">
+                                            <MudDatePicker Label="Date (UTC)" @bind-Date="_oneShotDate"
+                                                           Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"
+                                                           MinDate="@DateTime.UtcNow.Date"/>
+                                        </MudItem>
+                                        <MudItem xs="12" md="5">
+                                            <MudTimePicker Label="Time (UTC)" @bind-Time="_oneShotTime"
+                                                           Variant="Variant.Outlined" AmPm="false"/>
+                                        </MudItem>
+                                    </MudGrid>
+                                }
+
+                                <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                                               OnClick="ValidateSchedule" Disabled="@_busy">Validate</MudButton>
+                                    <MudButton Variant="Variant.Outlined" OnClick="PreviewNextRunsAsync"
+                                               Disabled="@_busy">Preview Next Runs</MudButton>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                               OnClick="AddTestScheduleAsync" Disabled="@_busy">Add Test Schedule</MudButton>
+                                </MudStack>
+
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+
+                    <!-- Result panel -->
+                    <MudItem xs="12" md="5">
+                        <MudPaper Outlined="true" Class="pa-4" Style="height: 100%;">
+                            <MudText Typo="Typo.h6" Class="mb-2">Result</MudText>
+                            @if (_validationError != null) {
+                                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_validationError</MudAlert>
+                            }
+                            else if (_validationPassed) {
+                                <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3">Definition is valid.</MudAlert>
+                            }
+
+                            @if (_previewRuns.Count > 0) {
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Next @_previewRuns.Count scheduled run(s):</MudText>
+                                <MudSimpleTable Dense="true">
+                                    <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>UTC</th>
+                                        <th>Local</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @for (var i = 0; i < _previewRuns.Count; i++) {
+                                        var run = _previewRuns[i];
+                                        var idx = i + 1;
+                                        <tr>
+                                            <td>@idx</td>
+                                            <td>@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                            <td>@run.RunAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                            else if (_previewRequested) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found within the look-ahead window.</MudText>
+                            }
+                            else {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Validate or preview the schedule to see results here.</MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <!-- ── Live Schedules ── -->
+            <MudTabPanel Text="@($"Live Schedules ({_liveSchedules.Count})")">
+                <MudStack Spacing="3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                        <MudChip T="string"
+                                 Color="@(SchedulerService.IsRunning ? Color.Success : Color.Default)"
+                                 Size="Size.Small"
+                                 Text="@(SchedulerService.IsRunning ? "Scheduler Running" : "Scheduler Stopped")"/>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
+                                   OnClick="StartSchedulerAsync"
+                                   Disabled="@(SchedulerService.IsRunning || _busy)">Start</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                   OnClick="StopSchedulerAsync"
+                                   Disabled="@(!SchedulerService.IsRunning || _busy)">Stop</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshLive"
+                                   StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+                        <MudSpacer/>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
+                                   OnClick="RemoveAllTestSchedules"
+                                   Disabled="@(_addedIds.Count == 0 || _busy)">Remove All Test Schedules</MudButton>
+                    </MudStack>
+
+                    @if (_liveSchedules.Count == 0) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            No schedules registered. Use the Builder tab to add test schedules.
+                        </MudText>
+                    }
+                    else {
+                        <MudSimpleTable Dense="true" Hover="true">
+                            <thead>
+                            <tr>
+                                <th>Name / ID</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Next Run (UTC)</th>
+                                <th>Enabled</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var s in _liveSchedules) {
+                                <tr>
+                                    <td>
+                                        <MudText Typo="Typo.body2">@(s.Schedule.Name ?? s.Schedule.Id)</MudText>
+                                        @if (s.Schedule.Name != null) {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@s.Schedule.Id</MudText>
+                                        }
+                                    </td>
+                                    <td>
+                                        <MudChip T="string" Text="@s.Schedule.Definition.Type.ToString()"
+                                                 Size="Size.Small" Color="Color.Primary"/>
+                                    </td>
+                                    <td>@(s.Schedule.Definition.Description ?? "—")</td>
+                                    <td>
+                                        @if (s.NextRun.HasValue) {
+                                            <span>@s.NextRun.Value.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                        }
+                                        else {
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">none</MudText>
+                                        }
+                                    </td>
+                                    <td>
+                                        <MudIcon Icon="@(s.Schedule.Definition.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                                 Color="@(s.Schedule.Definition.Enabled ? Color.Success : Color.Default)"
+                                                 Size="Size.Small"/>
+                                    </td>
+                                    <td>
+                                        <MudTooltip Text="Remove">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                           Color="Color.Error"
+                                                           OnClick="@(() => RemoveSchedule(s.Schedule.Id))"/>
+                                        </MudTooltip>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </MudSimpleTable>
+
+                        <MudDivider/>
+
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Upcoming Runs (next 20 across all schedules)</MudText>
+                            @if (_upcomingRuns.Count == 0) {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">No upcoming runs found.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true">
+                                    <thead>
+                                    <tr>
+                                        <th>Run At (UTC)</th>
+                                        <th>Schedule</th>
+                                        <th>Type</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var run in _upcomingRuns) {
+                                        <tr>
+                                            <td>@run.RunAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                            <td>@(run.Schedule.Name ?? run.Schedule.Id)</td>
+                                            <td>@run.Schedule.Definition.Type</td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </div>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+        </MudTabs>
+
+        @if (!string.IsNullOrWhiteSpace(_statusMessage)) {
+            <MudAlert Severity="@_statusSeverity" Dense="true">@_statusMessage</MudAlert>
+        }
+    </MudStack>
+</MudPaper>
+
+@code {
+    private static readonly IReadOnlyList<LyoSelectOption<DayFlags>> DayItems =
+    [
+        new(DayFlags.Sun, "Sunday"),
+        new(DayFlags.Mon, "Monday"),
+        new(DayFlags.Tue, "Tuesday"),
+        new(DayFlags.Wed, "Wednesday"),
+        new(DayFlags.Thu, "Thursday"),
+        new(DayFlags.Fri, "Friday"),
+        new(DayFlags.Sat, "Saturday"),
+    ];
+
+    private static readonly IReadOnlyList<LyoSelectOption<MonthFlags>> MonthItems =
+    [
+        new(MonthFlags.Jan, "January"),
+        new(MonthFlags.Feb, "February"),
+        new(MonthFlags.Mar, "March"),
+        new(MonthFlags.Apr, "April"),
+        new(MonthFlags.May, "May"),
+        new(MonthFlags.Jun, "June"),
+        new(MonthFlags.Jul, "July"),
+        new(MonthFlags.Aug, "August"),
+        new(MonthFlags.Sep, "September"),
+        new(MonthFlags.Oct, "October"),
+        new(MonthFlags.Nov, "November"),
+        new(MonthFlags.Dec, "December"),
+    ];
+
+    private bool _busy;
+    private ScheduleType _type = ScheduleType.Cron;
+    private string _description = string.Empty;
+    private bool _enabled = true;
+
+    private readonly string _timePattern = @"^([01]?\d|2[0-3]):[0-5]\d$";
+
+    // Cron
+    private string _cronExpression = "0 9 * * MON-FRI";
+
+    // SetTimes
+    private IEnumerable<string> _timesList = ["09:00", "17:00"];
+
+    // Interval
+    private TimeSpan? _intervalStartTime = new TimeSpan(9, 0, 0);
+    private TimeSpan? _intervalEndTime = new TimeSpan(17, 0, 0);
+    private int _intervalMinutes = 60;
+
+    // Days + Months (SetTimes + Interval) — stored as individual flag selections
+    private IEnumerable<DayFlags> _selectedDays = [DayFlags.Mon, DayFlags.Tue, DayFlags.Wed, DayFlags.Thu, DayFlags.Fri];
+    private IEnumerable<MonthFlags> _selectedMonths = [MonthFlags.Jan, MonthFlags.Feb, MonthFlags.Mar, MonthFlags.Apr, MonthFlags.May, MonthFlags.Jun, MonthFlags.Jul, MonthFlags.Aug, MonthFlags.Sep, MonthFlags.Oct, MonthFlags.Nov, MonthFlags.Dec];
+
+    // OneShot
+    private DateTime? _oneShotDate = DateTime.UtcNow.Date.AddDays(1);
+    private TimeSpan? _oneShotTime = new TimeSpan(9, 0, 0);
+
+    private string? _validationError;
+    private bool _validationPassed;
+    private bool _previewRequested;
+    private List<ScheduleRun> _previewRuns = [];
+
+    private List<ScheduleWithNextRun> _liveSchedules = [];
+    private List<ScheduleRun> _upcomingRuns = [];
+    private readonly List<string> _addedIds = [];
+
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+    
+    protected override void OnInitialized() => RefreshLive();
+
+    private Task OnTimesChanged(IEnumerable<string> values)
+    {
+        _timesList = values;
+        return Task.CompletedTask;
+    }
+
+    private ScheduleDefinition? TryBuildDefinition(out string? error)
+    {
+        error = null;
+        try {
+            var builder = ScheduleDefinition.Create()
+                .WithDescription(string.IsNullOrWhiteSpace(_description) ? null! : _description)
+                .Enabled(_enabled);
+
+            switch (_type) {
+                case ScheduleType.Cron:
+                    builder.SetCron(_cronExpression?.Trim() ?? string.Empty);
+                    break;
+
+                case ScheduleType.SetTimes:
+                    var timeValues = _timesList.ToList();
+                    if (timeValues.Count == 0) {
+                        error = "Add at least one time.";
+                        return null;
+                    }
+
+                    builder.SetTimes(timeValues.Select(TimeOnly.Parse).ToArray())
+                           .SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f))
+                           .SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
+                    break;
+
+                case ScheduleType.Interval:
+                    if (!_intervalStartTime.HasValue || !_intervalEndTime.HasValue) {
+                        error = "Select start and end times.";
+                        return null;
+                    }
+
+                    builder.SetInterval(
+                               TimeOnly.FromTimeSpan(_intervalStartTime.Value),
+                               TimeOnly.FromTimeSpan(_intervalEndTime.Value),
+                               _intervalMinutes)
+                           .SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f))
+                           .SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
+                    break;
+
+                case ScheduleType.OneShot:
+                    if (!_oneShotDate.HasValue || !_oneShotTime.HasValue) {
+                        error = "Select a date and time.";
+                        return null;
+                    }
+
+                    builder.SetExecuteAt(DateTime.SpecifyKind(_oneShotDate.Value.Date + _oneShotTime.Value, DateTimeKind.Utc));
+                    break;
+
+                default:
+                    error = $"Unknown schedule type: {_type}.";
+                    return null;
+            }
+
+            return builder.Build();
+        }
+        catch (Exception ex) {
+            error = ex.Message;
+            return null;
+        }
+    }
+
+    private void ValidateSchedule()
+    {
+        _validationError = null;
+        _validationPassed = false;
+        _previewRuns = [];
+        _previewRequested = false;
+
+        var def = TryBuildDefinition(out var buildError);
+        if (def == null) {
+            _validationError = buildError ?? "Failed to build definition.";
+            return;
+        }
+
+        try {
+            def.Validate();
+            _validationPassed = true;
+            SetStatus("Schedule is valid.", Severity.Success);
+        }
+        catch (Exception ex) {
+            _validationError = ex.Message;
+        }
+    }
+
+    private async Task PreviewNextRunsAsync()
+    {
+        _busy = true;
+        _previewRequested = true;
+        _previewRuns = [];
+        _validationError = null;
+        _validationPassed = false;
+
+        try {
+            var def = TryBuildDefinition(out var buildError);
+            if (def == null) {
+                _validationError = buildError ?? "Failed to build definition.";
+                return;
+            }
+
+            try {
+                def.Validate();
+            }
+            catch (Exception ex) {
+                _validationError = ex.Message;
+                return;
+            }
+
+            var previewId = $"workbench-preview-{Guid.NewGuid():N}";
+            SchedulerService.AddSchedule(previewId, "Preview", def, _ => Task.CompletedTask);
+            try {
+                _previewRuns = SchedulerService.GetUpcomingRuns(maxRuns: 200)
+                    .Where(r => r.Schedule.Id == previewId)
+                    .Take(15)
+                    .ToList();
+            }
+            finally {
+                SchedulerService.RemoveSchedule(previewId);
+            }
+
+            _validationPassed = true;
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task AddTestScheduleAsync()
+    {
+        _busy = true;
+        try {
+            var def = TryBuildDefinition(out var buildError);
+            if (def == null) {
+                SetStatus(buildError ?? "Failed to build definition.", Severity.Warning);
+                return;
+            }
+
+            try {
+                def.Validate();
+            }
+            catch (Exception ex) {
+                SetStatus($"Validation failed: {ex.Message}", Severity.Warning);
+                return;
+            }
+
+            var rawId = Guid.NewGuid().ToString("N");
+            var id = $"workbench-test-{rawId[..8]}";
+            var name = string.IsNullOrWhiteSpace(_description) ? $"Test – {_type}" : _description;
+            SchedulerService.AddSchedule(id, name, def, _ => Task.CompletedTask);
+            _addedIds.Add(id);
+            RefreshLive();
+            SetStatus($"Added test schedule '{name}'.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private void RemoveSchedule(string id)
+    {
+        SchedulerService.RemoveSchedule(id);
+        _addedIds.Remove(id);
+        RefreshLive();
+        SetStatus($"Removed schedule {id}.", Severity.Info);
+    }
+
+    private void RemoveAllTestSchedules()
+    {
+        foreach (var id in _addedIds.ToList())
+            SchedulerService.RemoveSchedule(id);
+        _addedIds.Clear();
+        RefreshLive();
+        SetStatus("All test schedules removed.", Severity.Info);
+    }
+
+    private void RefreshLive()
+    {
+        _liveSchedules = SchedulerService.GetSchedulesOrderedByNextRun().ToList();
+        _upcomingRuns = SchedulerService.GetUpcomingRuns(maxRuns: 20).ToList();
+    }
+
+    private async Task StartSchedulerAsync()
+    {
+        _busy = true;
+        try {
+            await SchedulerService.StartAsync();
+            RefreshLive();
+            SetStatus("Scheduler started.", Severity.Success);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task StopSchedulerAsync()
+    {
+        _busy = true;
+        try {
+            await SchedulerService.StopAsync();
+            RefreshLive();
+            SetStatus("Scheduler stopped.", Severity.Info);
+        }
+        catch (Exception ex) {
+            SetStatus(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private void SetStatus(string message, Severity severity)
+    {
+        _statusMessage = message;
+        _statusSeverity = severity;
+        var version = ++_statusVersion;
+        Snackbar.Add(message, severity);
+        _ = ClearStatusLaterAsync(version);
+    }
+
+    private async Task ClearStatusLaterAsync(int version)
+    {
+        await Task.Delay(3000);
+        if (version != _statusVersion)
+            return;
+        _statusMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

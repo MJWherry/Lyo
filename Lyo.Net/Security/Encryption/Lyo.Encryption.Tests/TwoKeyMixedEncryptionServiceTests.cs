@@ -80,9 +80,9 @@ public class TwoKeyMixedEncryptionServiceTests
         using var svc = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(dekService, kekService, keyStore);
         var inputText = $"This is a long stream content encrypted with {dekAlgorithm} DEK and {kekAlgorithm} KEK";
         var input = new MemoryStream(Encoding.UTF8.GetBytes(inputText));
-        var result = await svc.EncryptStreamAsync(input, "test-key").ConfigureAwait(false);
+        var result = await svc.EncryptStreamAsync(input, "test-key");
         using var output = new MemoryStream();
-        await svc.DecryptStreamAsync(result, output, "test-key").ConfigureAwait(false);
+        await svc.DecryptStreamAsync(result, output, "test-key");
         var decrypted = Encoding.UTF8.GetString(output.ToArray());
         Assert.Equal(inputText, decrypted);
     }
@@ -101,10 +101,10 @@ public class TwoKeyMixedEncryptionServiceTests
         var inputText = $"Stream encryption test with {dekAlgorithm} DEK and {kekAlgorithm} KEK";
         var input = new MemoryStream(Encoding.UTF8.GetBytes(inputText));
         using var encryptedStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(input, encryptedStream, "test-key", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.EncryptToStreamAsync(input, encryptedStream, "test-key", ct: TestContext.Current.CancellationToken);
         encryptedStream.Position = 0;
         using var decryptedStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, "test-key", ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await svc.DecryptToStreamAsync(encryptedStream, decryptedStream, "test-key", ct: TestContext.Current.CancellationToken);
         var decrypted = Encoding.UTF8.GetString(decryptedStream.ToArray());
         Assert.Equal(inputText, decrypted);
     }

@@ -54,8 +54,8 @@ public class ErrorHandlingTests : IDisposable
             errorFired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.True(handlerCalled);
         Assert.True(errorFired);
     }
@@ -72,8 +72,8 @@ public class ErrorHandlingTests : IDisposable
             errorCount++;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         // Both exceptions should be caught
         Assert.True(errorCount >= 2);
@@ -95,8 +95,8 @@ public class ErrorHandlingTests : IDisposable
         var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileCreated += (_, _) => eventFired = true;
         watcher.Dispose();
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await Task.Delay(500, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         Assert.False(eventFired);
     }
 }

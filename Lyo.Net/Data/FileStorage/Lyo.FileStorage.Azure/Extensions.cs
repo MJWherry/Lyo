@@ -19,8 +19,8 @@ public static class Extensions
     /// <summary>Adds Azure Blob file storage service to the service collection. Requires IFileMetadataStore to be registered.</summary>
     public static IServiceCollection AddAzureFileStorageService(this IServiceCollection services, AzureFileStorageOptions options)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(options);
         services.AddSingleton(options);
         services.AddScoped<AzureFileStorageService>(sp => {
             var opts = sp.GetRequiredService<AzureFileStorageOptions>();
@@ -43,8 +43,8 @@ public static class Extensions
     /// <summary>Adds Azure Blob file storage service from configuration.</summary>
     public static IServiceCollection AddAzureFileStorageService(this IServiceCollection services, string configSectionName = AzureFileStorageOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         services.AddSingleton<AzureFileStorageOptions>(sp => {
             var config = sp.GetRequiredService<IConfiguration>();
             var section = config.GetSection(configSectionName);
@@ -76,7 +76,7 @@ public static class Extensions
     /// <summary>Registers <see cref="AzureMultipartUploadService" /> for S3-style multipart flows using block blob staging.</summary>
     public static IServiceCollection AddAzureMultipartUploadService(this IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
+        ArgumentHelpers.ThrowIfNull(services);
         services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
         services.AddScoped<AzureMultipartUploadService>(sp => {
             var opts = sp.GetRequiredService<AzureFileStorageOptions>();

@@ -12,7 +12,7 @@ public sealed class CacheSchedulerStateStore : ISchedulerStateStore
     private readonly ICacheService _cache;
 
     /// <summary>Creates a new cache-backed state store.</summary>
-    public CacheSchedulerStateStore(ICacheService cache) => _cache = ArgumentHelpers.ThrowIfNullReturn(cache, nameof(cache));
+    public CacheSchedulerStateStore(ICacheService cache) => _cache = ArgumentHelpers.ThrowIfNullReturn(cache);
 
     /// <inheritdoc />
     public async ValueTask<DateTime?> GetLastRunAsync(string scheduleId, CancellationToken ct = default)

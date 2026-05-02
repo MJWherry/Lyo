@@ -13,7 +13,7 @@ public static class Extensions
         /// <summary>Adds <see cref="ITextTokenizer" />, <see cref="ITextDiffService" />, <see cref="IObjectGraphDiffService" />, and optional <see cref="IDiffService" />.</summary>
         public IServiceCollection AddLyoDiff()
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             services.AddSingleton<ITextTokenizer, TextTokenizer>();
             services.AddSingleton<ITextDiffService, TextDiffService>();
             services.AddSingleton<IObjectGraphDiffService, ObjectGraphDiffService>();

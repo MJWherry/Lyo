@@ -1,6 +1,6 @@
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Images.Models;
+using Lyo.Result;
 
 namespace Lyo.Images;
 
@@ -10,8 +10,8 @@ public sealed class QrFrameLayoutService : IQrFrameLayoutService
     /// <inheritdoc />
     public async Task<Result<byte[]>> CompositeQrFramePngAsync(byte[] qrPng, QrFrameLayoutOptions options, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(qrPng, nameof(qrPng));
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(qrPng);
+        ArgumentHelpers.ThrowIfNull(options);
         ct.ThrowIfCancellationRequested();
         try {
             var bytes = await QrFrameLayoutCompositor.ApplyAsync(qrPng, options, ct).ConfigureAwait(false);

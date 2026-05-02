@@ -19,8 +19,8 @@ public sealed class PostgresMigrationHostedService<TContext, TOptions> : IHosted
     /// <summary>Creates a new PostgresMigrationHostedService.</summary>
     public PostgresMigrationHostedService(IServiceProvider services, ILogger<PostgresMigrationHostedService<TContext, TOptions>> logger)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(logger, nameof(logger));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(logger);
         _services = services;
         _logger = logger;
     }
@@ -33,8 +33,8 @@ public sealed class PostgresMigrationHostedService<TContext, TOptions> : IHosted
         if (!options.EnableAutoMigrations)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.Schema, nameof(options.Schema));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.Schema);
         _logger.LogInformation("Running PostgreSQL migrations for {Context} (schema: {Schema})", typeof(TContext).Name, options.Schema);
         var dbContextOptions = new DbContextOptionsBuilder<TContext>().UseNpgsql(
                 options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", options.Schema))

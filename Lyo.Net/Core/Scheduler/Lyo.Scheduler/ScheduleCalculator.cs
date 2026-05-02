@@ -9,12 +9,14 @@ using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 
 namespace Lyo.Scheduler;
 
-internal static class ScheduleCalculator
+/// <summary>Calculates next run times for <see cref="ScheduleDefinition" /> instances.</summary>
+public static class ScheduleCalculator
 {
-    private const int MaxDaysLookAhead = 14;
+    /// <summary>Default look-ahead window used when no explicit value is provided. 366 days covers monthly schedules.</summary>
+    public const int DefaultMaxDaysLookAhead = 366;
 
     /// <summary>Enumerates the next scheduled execution times for a schedule.</summary>
-    public static IEnumerable<DateTime> GetNextRuns(ScheduleDefinition schedule, DateTime? after = null, int maxCount = 100)
+    public static IEnumerable<DateTime> GetNextRuns(ScheduleDefinition schedule, DateTime? after = null, int maxCount = 100, int maxDaysLookAhead = DefaultMaxDaysLookAhead)
     {
         if (!schedule.Enabled)
             yield break;
@@ -22,7 +24,7 @@ internal static class ScheduleCalculator
         var current = after ?? DateTime.UtcNow;
         var count = 0;
         while (count < maxCount) {
-            var next = GetNextRun(schedule, current);
+            var next = GetNextRun(schedule, current, maxDaysLookAhead);
             if (!next.HasValue)
                 yield break;
 
@@ -34,7 +36,7 @@ internal static class ScheduleCalculator
     }
 
     /// <summary>Gets the next scheduled execution time for a recurring schedule, or null if none.</summary>
-    public static DateTime? GetNextRun(ScheduleDefinition schedule, DateTime? after = null)
+    public static DateTime? GetNextRun(ScheduleDefinition schedule, DateTime? after = null, int maxDaysLookAhead = DefaultMaxDaysLookAhead)
     {
         if (!schedule.Enabled)
             return null;
@@ -42,9 +44,10 @@ internal static class ScheduleCalculator
         var now = after ?? DateTime.UtcNow;
         var localNow = GetLocalTime(schedule.TimeZone, now);
         return schedule.Type switch {
-            ScheduleType.SetTimes => GetNextRunSetTimes(schedule, localNow),
-            ScheduleType.Interval => GetNextRunInterval(schedule, localNow),
+            ScheduleType.SetTimes => GetNextRunSetTimes(schedule, localNow, maxDaysLookAhead),
+            ScheduleType.Interval => GetNextRunInterval(schedule, localNow, maxDaysLookAhead),
             ScheduleType.OneShot => GetNextRunOneShot(schedule, now),
+            ScheduleType.Cron => GetNextRunCron(schedule, now),
             var _ => null
         };
     }
@@ -82,12 +85,12 @@ internal static class ScheduleCalculator
         }
     }
 
-    private static DateTime? GetNextRunSetTimes(ScheduleDefinition schedule, DateTime localNow)
+    private static DateTime? GetNextRunSetTimes(ScheduleDefinition schedule, DateTime localNow, int maxDaysLookAhead)
     {
         if (schedule.Times == null || schedule.Times.Count == 0)
             return null;
 
-        for (var i = 0; i <= MaxDaysLookAhead; i++) {
+        for (var i = 0; i <= maxDaysLookAhead; i++) {
             var targetDate = localNow.Date.AddDays(i);
             var dayFlag = GetDayFlagForDate(targetDate);
             var monthFlag = GetMonthFlagForDate(targetDate);
@@ -104,12 +107,12 @@ internal static class ScheduleCalculator
         return null;
     }
 
-    private static DateTime? GetNextRunInterval(ScheduleDefinition schedule, DateTime localNow)
+    private static DateTime? GetNextRunInterval(ScheduleDefinition schedule, DateTime localNow, int maxDaysLookAhead)
     {
         if (schedule.StartTime == null || schedule.EndTime == null || schedule.IntervalMinutes <= 0)
             return null;
 
-        for (var i = 0; i <= MaxDaysLookAhead; i++) {
+        for (var i = 0; i <= maxDaysLookAhead; i++) {
             var targetDate = localNow.Date.AddDays(i);
             var dayFlag = GetDayFlagForDate(targetDate);
             var monthFlag = GetMonthFlagForDate(targetDate);
@@ -135,6 +138,31 @@ internal static class ScheduleCalculator
         return null;
     }
 
+    private static DateTime? GetNextRunCron(ScheduleDefinition schedule, DateTime utcNow)
+    {
+        if (string.IsNullOrWhiteSpace(schedule.CronExpression))
+            return null;
+
+        // Try 6-field (with seconds) first, fall back to standard 5-field.
+        CronExpression? expr = null;
+        try {
+            expr = CronExpression.Parse(schedule.CronExpression!, CronFormat.IncludeSeconds);
+        }
+        catch {
+            try {
+                expr = CronExpression.Parse(schedule.CronExpression!);
+            }
+            catch {
+                return null;
+            }
+        }
+
+        var zone = schedule.TimeZone ?? TimeZoneInfo.Utc;
+        var from = new DateTimeOffset(utcNow, TimeSpan.Zero);
+        var next = expr.GetNextOccurrence(from, zone);
+        return next?.UtcDateTime;
+    }
+
     private static DateTime? GetNextRunOneShot(ScheduleDefinition schedule, DateTime now)
     {
         if (!schedule.ExecuteAt.HasValue)
@@ -150,7 +178,7 @@ internal static class ScheduleCalculator
     private static DateTime GetLocalTime(TimeZoneInfo? timeZone, DateTime utcTime)
     {
         if (timeZone == null)
-            return utcTime.Kind == DateTimeKind.Utc ? utcTime.ToLocalTime() : utcTime;
+            return utcTime.Kind == DateTimeKind.Utc ? utcTime : DateTime.SpecifyKind(utcTime, DateTimeKind.Utc);
 
         return TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone);
     }

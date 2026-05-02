@@ -23,7 +23,7 @@ public class LyoDiscordClient : ApiClient
     public LyoDiscordClient(LyoDiscordClientOptions options, ILogger<LyoDiscordClient>? logger = null, HttpClient? httpClient = null)
         : base(logger ?? NullLogger<LyoDiscordClient>.Instance, httpClient, new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } }, options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         Guilds = new(this);
         Users = new(this);
         Channels = new(this);

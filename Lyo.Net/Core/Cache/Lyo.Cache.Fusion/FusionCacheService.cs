@@ -35,7 +35,7 @@ public sealed class FusionCacheService : ICacheService
         ICachePayloadCodec? payloadCodec = null,
         ICachePayloadSerializer? payloadSerializer = null)
     {
-        ArgumentHelpers.ThrowIfNull(fusionCache, nameof(fusionCache));
+        ArgumentHelpers.ThrowIfNull(fusionCache);
         _fusionCache = fusionCache;
         _logger = logger ?? NullLogger<FusionCacheService>.Instance;
         _options = options ?? new CacheOptions();
@@ -156,7 +156,7 @@ public sealed class FusionCacheService : ICacheService
         if (!_enabled)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var stopwatch = Stopwatch.StartNew();
         try {
             await _fusionCache.RemoveAsync(key.ToLowerInvariant()).ConfigureAwait(false);
@@ -175,7 +175,7 @@ public sealed class FusionCacheService : ICacheService
         if (!_enabled)
             return;
 
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag, nameof(tag));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         var stopwatch = Stopwatch.StartNew();
         try {
             var beforeCount = _items.Count;
@@ -253,7 +253,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
 
@@ -284,7 +284,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
@@ -315,7 +315,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled) {
             var (value, _) = await factory(token).ConfigureAwait(false);
             return value;
@@ -352,7 +352,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
             return await factory(token).ConfigureAwait(false);
@@ -379,7 +379,7 @@ public sealed class FusionCacheService : ICacheService
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, IEnumerable<string>? extraTags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return factory(CancellationToken.None);
 
@@ -404,7 +404,7 @@ public sealed class FusionCacheService : ICacheService
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return factory(CancellationToken.None);
@@ -430,7 +430,7 @@ public sealed class FusionCacheService : ICacheService
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, (TValue? value, string[]? tags)> factory, IEnumerable<string>? extraTags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled) {
             var (value, _) = factory(CancellationToken.None);
             return value;
@@ -461,7 +461,7 @@ public sealed class FusionCacheService : ICacheService
 
     public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var typeExpiration = _options.GetExpirationForType(type);
         if (!_enabled)
             return factory(CancellationToken.None);
@@ -487,7 +487,7 @@ public sealed class FusionCacheService : ICacheService
 
     public TValue GetOrSet<TValue>(string key, TValue value, Action<ICacheEntryOptions>? setupAction = null, IEnumerable<string>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return value;
 
@@ -523,7 +523,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? tags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return value;
 
@@ -554,7 +554,7 @@ public sealed class FusionCacheService : ICacheService
 
     public void Set<T>(string key, T obj, IEnumerable<string>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return;
 
@@ -609,7 +609,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return await PayloadFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
@@ -667,7 +667,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return await PayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
@@ -747,7 +747,7 @@ public sealed class FusionCacheService : ICacheService
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);
 
@@ -813,7 +813,7 @@ public sealed class FusionCacheService : ICacheService
     /// <inheritdoc />
     public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return PayloadFactoryOnlySync(factory);
 
@@ -858,7 +858,7 @@ public sealed class FusionCacheService : ICacheService
     /// <inheritdoc />
     public void SetPayload(string key, ReadOnlySpan<byte> plaintext, IEnumerable<string>? tags = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         if (!_enabled)
             return;
 

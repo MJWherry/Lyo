@@ -112,7 +112,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public TwoKeyEncryptionResult Encrypt(byte[] bytes, string? keyId = null, byte[]? kek = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(bytes, nameof(bytes));
+        ArgumentHelpers.ThrowIfNullOrEmpty(bytes);
         OperationHelpers.ThrowIf(keyId == null && kek == null, "Either keyId or kek must be provided.");
 
         // For very small files (< 4KB), optimize by using a single encryption operation
@@ -237,7 +237,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public async Task<TwoKeyEncryptionResult> EncryptStreamAsync(Stream input, string? keyId = null, byte[]? kek = null, int chunkSize = 1024 * 1024)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
+        ArgumentHelpers.ThrowIfNull(input);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIf(keyId == null && kek == null, "Either keyId or kek must be provided.");
         var dek = CryptographicRandom.GetBytes(GetDekKeyMaterialSize(_dekEncryptionService));
@@ -302,8 +302,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public async Task DecryptStreamAsync(TwoKeyEncryptionResult result, Stream output, string? keyId = null, byte[]? kek = null)
     {
-        ArgumentHelpers.ThrowIfNull(result, nameof(result));
-        ArgumentHelpers.ThrowIfNull(output, nameof(output));
+        ArgumentHelpers.ThrowIfNull(result);
+        ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
         byte[]? kekBytes = null;
         var actualKeyId = result.KeyId;
@@ -470,8 +470,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public async Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(input, nameof(input));
-        ArgumentHelpers.ThrowIfNull(output, nameof(output));
+        ArgumentHelpers.ThrowIfNull(input);
+        ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
         // Read stream format header: [FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes][KeyIdLength][KeyId][KeyVersionLength][KeyVersion]
@@ -738,7 +738,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var inputStream = new MemoryStream(data);
         using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(inputStream, outputStream, keyId, kek, ct: ct).ConfigureAwait(false);
@@ -746,15 +746,15 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public async Task EncryptToFileAsync(Stream input, string outputPath, string? keyId = null, byte[]? kek = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath, nameof(outputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         using var outputStream = File.Create(outputPath);
         await EncryptToStreamAsync(input, outputStream, keyId, kek, chunkSize, ct).ConfigureAwait(false);
     }
 
     public async Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath, nameof(inputPath));
-        ArgumentHelpers.ThrowIfFileNotFound(inputPath, nameof(inputPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath);
+        ArgumentHelpers.ThrowIfFileNotFound(inputPath);
         using var inputStream = File.OpenRead(inputPath);
         using var outputStream = new MemoryStream();
         await DecryptToStreamAsync(inputStream, outputStream, keyId, kek, ct).ConfigureAwait(false);
@@ -763,8 +763,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public byte[] ReEncryptDek(byte[] encryptedDek, string sourceKeyId, string sourceKeyVersion, string? targetKeyId = null, string? targetKeyVersion = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId, nameof(sourceKeyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyVersion, nameof(sourceKeyVersion));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyVersion);
 
         // Determine target keyId (defaults to source if not specified)
         var actualTargetKeyId = targetKeyId ?? sourceKeyId;
@@ -823,8 +823,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId, nameof(sourceKeyId));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyVersion, nameof(sourceKeyVersion));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyVersion);
 
         // Determine target keyId (defaults to source if not specified)
         var actualTargetKeyId = targetKeyId ?? sourceKeyId;

@@ -114,7 +114,7 @@ public class SmsMessageBuilderTests
         builder.SetBody("Test");
 
         // Build() throws ArgumentException/ArgumentNullException when To is null/empty
-        Assert.Throws<ArgumentNullException>(() => builder.Build());
+        Assert.Throws<ArgumentNullException>(builder.Build);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class SmsMessageBuilderTests
         builder.SetTo("+15551234567");
 
         // Build() throws InvalidOperationException when neither body nor media is provided
-        Assert.Throws<InvalidOperationException>(() => builder.Build());
+        Assert.Throws<InvalidOperationException>(builder.Build);
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class SmsMessageBuilderTests
         builder.Clear();
 
         // Build() throws ArgumentException/ArgumentNullException when required fields are null/empty after Clear
-        Assert.Throws<ArgumentNullException>(() => builder.Build());
+        Assert.Throws<ArgumentNullException>(builder.Build);
     }
 
     [Fact]

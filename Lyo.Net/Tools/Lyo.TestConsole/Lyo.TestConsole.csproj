@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Bogus" Version="[35,)"/>
         <PackageReference Include="Mapster" Version="[10,)"/>
         <PackageReference Include="Mapster.DependencyInjection" Version="[10,)"/>
     </ItemGroup>
@@ -61,12 +62,8 @@
         <ProjectReference Include="..\..\Data\Images\Lyo.Images.Skia\Lyo.Images.Skia.csproj"/>
         <ProjectReference Include="..\..\Data\Pdf\Lyo.Pdf.Web.Components\Lyo.Pdf.Web.Components.csproj"/>
         <ProjectReference Include="..\Lyo.Preview\Lyo.Preview.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Content Update="appsettings.Development.json">
-            <DependentUpon>appsettings.json</DependentUpon>
-        </Content>
+        <ProjectReference Include="..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -20,7 +20,7 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
 
     public IReadOnlyList<object?> GetPrimaryKeyValues<TEntity>(TEntity entity, DbContext context)
     {
-        ArgumentHelpers.ThrowIfNull(entity, nameof(entity));
+        ArgumentHelpers.ThrowIfNull(entity);
         var keyMetadata = GetEntityKeyMetadataCached<TEntity>(context);
         var values = new List<object?>(keyMetadata.ExpectedKeyCount);
         values.AddRange(keyMetadata.Properties.Select(property => property.PropertyInfo!.GetValue(entity)));
@@ -29,7 +29,7 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
 
     public IReadOnlyList<object?> GetPrimaryKeyValues(object entity, DbContext context)
     {
-        ArgumentHelpers.ThrowIfNull(entity, nameof(entity));
+        ArgumentHelpers.ThrowIfNull(entity);
         var entry = context.Entry(entity);
         var key = entry.Metadata.FindPrimaryKey();
         OperationHelpers.ThrowIfNull(key, $"No primary key defined for {entry.Metadata.Name}");
@@ -56,9 +56,9 @@ public sealed class TypeConversionService(ICacheService cache, CacheOptions cach
 
     public IReadOnlyList<object?>? TryGetPrimaryKeyValuesFromProjectedDictionary(IReadOnlyDictionary<string, object?> row, Type entityClrType, DbContext context)
     {
-        ArgumentHelpers.ThrowIfNull(row, nameof(row));
-        ArgumentHelpers.ThrowIfNull(entityClrType, nameof(entityClrType));
-        ArgumentHelpers.ThrowIfNull(context, nameof(context));
+        ArgumentHelpers.ThrowIfNull(row);
+        ArgumentHelpers.ThrowIfNull(entityClrType);
+        ArgumentHelpers.ThrowIfNull(context);
         var entityType = context.Model.FindEntityType(entityClrType);
         var pk = entityType?.FindPrimaryKey();
         if (pk is null || pk.Properties.Count == 0)

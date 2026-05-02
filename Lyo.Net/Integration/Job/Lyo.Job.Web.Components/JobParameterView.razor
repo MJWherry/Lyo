@@ -1,0 +1,133 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2" Class="pa-4">
+    <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">Job Parameters</MudText>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add" OnClick="AddParameter">
+            Add Parameter
+        </MudButton>
+    </MudStack>
+
+    @if (_displayParams.Any()) {
+        <MudGrid>
+            @foreach (var p in _displayParams) {
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="1" Class="pa-4">
+                        <MudStack Spacing="2">
+                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                @if (p.IsNew) { <MudChip T="string" Size="Size.Small" Color="Color.Success">New</MudChip> }
+                                else { <span/> }
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error" OnClick="@(() => DeleteParameter(p))"/>
+                            </MudStack>
+                            <MudTextField T="string" Label="Key" @bind-Value="p.Key" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            <MudSelect T="JobParameterType" Label="Type" @bind-Value="p.Type" Variant="Variant.Outlined" Margin="Margin.Dense">
+                                @foreach (JobParameterType t in Enum.GetValues<JobParameterType>()) {
+                                    <MudSelectItem Value="t">@t</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudTextField T="string" Label="Description" @bind-Value="p.Description" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            <MudTextField T="string" Label="Default Value" @bind-Value="p.Value" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                            <MudStack Row Spacing="2">
+                                <MudSwitch T="bool" Label="Required" @bind-Value="p.Required"/>
+                                <MudSwitch T="bool" Label="Allow Multiple" @bind-Value="p.AllowMultiple"/>
+                            </MudStack>
+                            @if (p.EncryptedValue is { Length: > 0 }) {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">Encrypted</MudChip>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+    else {
+        <MudText Typo="Typo.body1" Class="mud-text-secondary">No parameters defined</MudText>
+    }
+
+    @if (_dirty) {
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveChanges" StartIcon="@Icons.Material.Filled.Save">
+            Save Parameters
+        </MudButton>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public IReadOnlyList<JobParameterRes>? JobParameters { get; set; }
+    [Parameter] public Guid JobDefinitionId { get; set; }
+    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
+    [Parameter, EditorRequired] public string DefinitionRoute { get; set; } = "";
+
+    private string ParameterRoute => $"{DefinitionRoute}/Parameter";
+
+    private class ParamModel
+    {
+        public Guid? Id { get; set; }
+        public string Key { get; set; } = "";
+        public JobParameterType Type { get; set; }
+        public string? Value { get; set; }
+        public string? Description { get; set; }
+        public bool Required { get; set; }
+        public bool AllowMultiple { get; set; }
+        public byte[]? EncryptedValue { get; set; }
+        public bool IsNew { get; set; }
+        public bool PendingDelete { get; set; }
+    }
+
+    private List<ParamModel> _displayParams = [];
+    private bool _dirty;
+
+    protected override void OnParametersSet() => Reload();
+
+    private void Reload()
+    {
+        _displayParams = (JobParameters ?? [])
+            .Select(p => new ParamModel {
+                Id = p.Id, Key = p.Key, Type = p.Type, Value = p.Value,
+                Description = p.Description, Required = p.Required,
+                AllowMultiple = p.AllowMultiple, EncryptedValue = p.EncryptedValue
+            })
+            .ToList();
+        _dirty = false;
+    }
+
+    private void AddParameter()
+    {
+        _displayParams.Add(new ParamModel { IsNew = true, Key = $"Param{_displayParams.Count + 1}", Type = JobParameterType.String });
+        _dirty = true;
+    }
+
+    private void DeleteParameter(ParamModel p)
+    {
+        _displayParams.Remove(p);
+        _dirty = true;
+    }
+
+    private async Task SaveChanges()
+    {
+        try {
+            var existing = (JobParameters ?? []).ToDictionary(p => p.Id);
+
+            // Delete removed existing params
+            foreach (var removed in existing.Values.Where(e => _displayParams.All(d => d.Id != e.Id))) {
+                await ApiClient.DeleteAsAsync<object>($"{ParameterRoute}/{removed.Id}");
+            }
+
+            // Create new params
+            foreach (var newP in _displayParams.Where(d => d.IsNew)) {
+                await ApiClient.PostAsAsync<JobParameterReq, JobParameterRes>(ParameterRoute, new JobParameterReq {
+                    JobDefinitionId = JobDefinitionId, Key = newP.Key, Type = newP.Type,
+                    Value = newP.Value, Description = newP.Description,
+                    Required = newP.Required, AllowMultiple = newP.AllowMultiple
+                });
+            }
+
+            Snackbar.Add("Parameters saved", Severity.Success);
+            _dirty = false;
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
+        }
+    }
+}

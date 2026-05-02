@@ -32,7 +32,7 @@ public static class LyoGuid
     /// <summary>Creates a version 3 (MD5 name-based) GUID per RFC 9562. The same <paramref name="ns" /> and <paramref name="name" /> always produce the same GUID.</summary>
     public static Guid CreateV3(Guid ns, string name)
     {
-        ArgumentHelpers.ThrowIfNull(name, nameof(name));
+        ArgumentHelpers.ThrowIfNull(name);
 
         var input = BuildNameInput(ns, name);
         byte[] hash;
@@ -45,7 +45,7 @@ public static class LyoGuid
     /// <summary>Creates a version 5 (SHA-1 name-based) GUID per RFC 9562. The same <paramref name="ns" /> and <paramref name="name" /> always produce the same GUID.</summary>
     public static Guid CreateV5(Guid ns, string name)
     {
-        ArgumentHelpers.ThrowIfNull(name, nameof(name));
+        ArgumentHelpers.ThrowIfNull(name);
 
         var input = BuildNameInput(ns, name);
         byte[] hash;
@@ -144,7 +144,7 @@ public static class LyoGuid
     /// <summary>Generates <paramref name="count" /> version 4 (fully random) GUIDs in a single batch. Uses one RNG fill for all <paramref name="count" /> × 16 bytes.</summary>
     public static Guid[] CreateV4Bulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var result = new Guid[count];
         var buf = new byte[count * 16];
         CryptographicRandom.Fill(buf);
@@ -164,7 +164,7 @@ public static class LyoGuid
     /// </summary>
     public static Guid[] CreateV6Bulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var t = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 10_000L + GregorianEpochOffset;
         var result = new Guid[count];
         var buf = new byte[count * 16];
@@ -192,7 +192,7 @@ public static class LyoGuid
     /// </summary>
     public static Guid[] CreateV7Bulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var ms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var result = new Guid[count];
         var buf = new byte[count * 16];
@@ -216,7 +216,7 @@ public static class LyoGuid
     /// <summary>Generates <paramref name="count" /> PostgreSQL COMB GUIDs in a single batch. All GUIDs share the same millisecond timestamp captured at batch start.</summary>
     public static Guid[] CreateCombPostgresBulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var ms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var result = new Guid[count];
         var buf = new byte[count * 16];
@@ -238,7 +238,7 @@ public static class LyoGuid
     /// <summary>Generates <paramref name="count" /> SQL Server COMB GUIDs in a single batch. All GUIDs share the same millisecond timestamp captured at batch start.</summary>
     public static Guid[] CreateCombSqlServerBulk(int count)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var ms = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var result = new Guid[count];
         var buf = new byte[count * 16];

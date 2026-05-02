@@ -20,8 +20,8 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddAwsKeyStore(Func<IServiceProvider, string> configure)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configure, nameof(configure));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
             services.AddSingleton<AwsKeyStore>(provider => {
                 var secretNamePrefix = configure(provider);
                 var secretsManager = provider.GetRequiredService<IAmazonSecretsManager>();
@@ -37,9 +37,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddAwsKeyStoreFromConfiguration(IConfiguration configuration, string configSectionName = "AwsKeyStore")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             // Register IAmazonSecretsManager from configuration if not already registered
             if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
                 services.AddAmazonSecretsManagerFromConfiguration(configuration, configSectionName);
@@ -59,9 +59,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddAmazonSecretsManagerFromConfiguration(IConfiguration configuration, string configSectionName = "AwsKeyStore")
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
             // Configure AwsKeystoreOptions from configuration
             services.AddSingleton<AwsKeystoreOptions>(_ => {
@@ -133,10 +133,10 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddTwoKeyEncryptionFromConfiguration(IConfiguration configuration, string keyedServiceName, string configSectionName)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName, nameof(keyedServiceName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 
             // Register IAmazonSecretsManager from configuration if not already registered
             if (!services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager)))
@@ -216,9 +216,9 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddTwoKeyEncryptionServiceKeyed(string keyedServiceName, string secretNamePrefix, AwsKeystoreOptions? awsConfig)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName, nameof(keyedServiceName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(secretNamePrefix, nameof(secretNamePrefix));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyedServiceName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(secretNamePrefix);
 
             // Register IAmazonSecretsManager if awsConfig is provided and not already registered
             if (awsConfig != null && !services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager))) {

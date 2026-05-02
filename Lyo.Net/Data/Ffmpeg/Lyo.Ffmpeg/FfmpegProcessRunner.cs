@@ -16,8 +16,8 @@ internal sealed class FfmpegProcessRunner(FfmpegOptions? options, ILogger? logge
 
     public async Task<(int ExitCode, string StdOut, string StdErr)> RunAsync(string executablePath, string arguments, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(executablePath, nameof(executablePath));
-        ArgumentHelpers.ThrowIfNull(arguments, nameof(arguments));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(executablePath);
+        ArgumentHelpers.ThrowIfNull(arguments);
         var cmd = Cli.Wrap(executablePath).WithArguments(arguments);
         if (_options.ProcessOutputMode == FfmpegProcessOutputMode.Passthrough) {
             var stdout = new StringBuilder();

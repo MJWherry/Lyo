@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Result;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud;

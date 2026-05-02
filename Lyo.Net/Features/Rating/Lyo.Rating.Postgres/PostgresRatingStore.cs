@@ -15,7 +15,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <summary>Creates a new PostgresRatingStore.</summary>
     public PostgresRatingStore(IDbContextFactory<RatingDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
@@ -43,7 +43,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task SaveAsync(RatingRecord rating, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(rating, nameof(rating));
+        ArgumentHelpers.ThrowIfNull(rating);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = await context.Ratings.FirstOrDefaultAsync(
                 r => r.ForEntityType == rating.ForEntityType && r.ForEntityId == rating.ForEntityId && r.FromEntityType == rating.FromEntityType &&
@@ -89,7 +89,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<RatingRecord>> GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Ratings.Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -98,8 +98,8 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task<RatingRecord?> GetForEntityFromEntityAsync(EntityRef forEntity, EntityRef fromEntity, string? subject = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.Ratings.FirstOrDefaultAsync(
                 r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forEntity.EntityId && r.FromEntityType == fromEntity.EntityType &&
@@ -112,8 +112,8 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task AddReactionAsync(EntityRef ratingRef, EntityRef fromEntity, RatingReactionType reactionType, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(ratingRef, nameof(ratingRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(ratingRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         if (!Guid.TryParse(ratingRef.EntityId, out var ratingId))
             return;
 
@@ -167,8 +167,8 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task RemoveReactionAsync(EntityRef ratingRef, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(ratingRef, nameof(ratingRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(ratingRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = await context.RatingReactions.FirstOrDefaultAsync(
                 r => r.ForEntityType == ratingRef.EntityType && r.ForEntityId == ratingRef.EntityId && r.FromEntityType == fromEntity.EntityType &&
@@ -195,8 +195,8 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task<RatingReactionRecord?> GetReactionAsync(EntityRef ratingRef, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(ratingRef, nameof(ratingRef));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(ratingRef);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.RatingReactions.FirstOrDefaultAsync(
                 r => r.ForEntityType == ratingRef.EntityType && r.ForEntityId == ratingRef.EntityId && r.FromEntityType == fromEntity.EntityType &&
@@ -209,7 +209,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<RatingRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Ratings.Where(r => r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -218,7 +218,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<RatingRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Ratings.Where(r => r.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
@@ -245,8 +245,8 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityFromEntityAsync(EntityRef forEntity, EntityRef fromEntity, string? subject = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Ratings
             .Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forEntity.EntityId && r.FromEntityType == fromEntity.EntityType &&
@@ -264,7 +264,7 @@ public sealed class PostgresRatingStore : IRatingStore, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Ratings.Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         var ratingIds = entities.Select(e => e.Id.ToString()).ToHashSet();

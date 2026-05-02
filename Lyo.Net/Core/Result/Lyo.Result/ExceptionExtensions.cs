@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Extension methods for converting exceptions to Results.</summary>
 public static class ExceptionExtensions

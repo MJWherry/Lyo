@@ -1,7 +1,9 @@
 @using Lyo.Email.Builders
 @using Lyo.Email.Models
+@using Lyo.Result
 @using Lyo.Web.Components.ChipInput
 @using Lyo.Web.Components.FileUpload
+@using Lyo.Web.Components.Form
 @inject IEmailService EmailService
 @inject ISnackbar Snackbar
 
@@ -25,34 +27,36 @@
                                       ValidationPattern="@_emailValidationPattern"
                                       ValidationErrorMessage="Enter a valid email address."/>
                     </div>
-                    <div>
-                        <MudText Typo="Typo.subtitle2" Class="mb-1">CC</MudText>
-                        <LyoChipInput Values="@_emailCcValues"
-                                      ValuesChanged="OnEmailCcValuesChanged"
-                                      Placeholder="Type email and press Enter"
-                                      ValidationPattern="@_emailValidationPattern"
-                                      ValidationErrorMessage="Enter a valid email address."/>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.subtitle2" Class="mb-1">BCC</MudText>
-                        <LyoChipInput Values="@_emailBccValues"
-                                      ValuesChanged="OnEmailBccValuesChanged"
-                                      Placeholder="Type email and press Enter"
-                                      ValidationPattern="@_emailValidationPattern"
-                                      ValidationErrorMessage="Enter a valid email address."/>
-                    </div>
 
                     <MudGrid>
                         <MudItem xs="12" md="6">
-                            <MudTextField T="string" Label="Subject" @bind-Value="_emailSubject"/>
-                        </MudItem>
-                        <MudItem xs="12" md="3">
                             <MudTextField T="string" Label="From override" @bind-Value="_emailFromAddress"/>
                         </MudItem>
-                        <MudItem xs="12" md="3">
-                            <MudTextField T="string" Label="From name override" @bind-Value="_emailFromName"/>
+                        <MudItem xs="12" md="6">
+                            <LyoNullableTextField Label="From name" Value="@_emailFromName" ValueChanged="v => _emailFromName = v"/>
                         </MudItem>
                     </MudGrid>
+
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">CC</MudText>
+                            <LyoChipInput Values="@_emailCcValues"
+                                          ValuesChanged="OnEmailCcValuesChanged"
+                                          Placeholder="Type email and press Enter"
+                                          ValidationPattern="@_emailValidationPattern"
+                                          ValidationErrorMessage="Enter a valid email address."/>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.subtitle2" Class="mb-1">BCC</MudText>
+                            <LyoChipInput Values="@_emailBccValues"
+                                          ValuesChanged="OnEmailBccValuesChanged"
+                                          Placeholder="Type email and press Enter"
+                                          ValidationPattern="@_emailValidationPattern"
+                                          ValidationErrorMessage="Enter a valid email address."/>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTextField T="string" Label="Subject" @bind-Value="_emailSubject"/>
 
                     <LyoRichTextEditor Value="@_emailHtmlBody"
                                        ValueChanged="OnEmailHtmlBodyChangedAsync"
@@ -170,7 +174,7 @@
     private List<string> _emailBccValues = [];
     private List<string> _emailCcValues = [];
     private string _emailFromAddress = string.Empty;
-    private string _emailFromName = string.Empty;
+    private string? _emailFromName;
     private string _emailHtmlBody = "<p>Hello from Lyo.</p>";
     private Result<EmailRequest>? _lastEmailResult;
     private EmailResult? _lastEmailProviderResult;

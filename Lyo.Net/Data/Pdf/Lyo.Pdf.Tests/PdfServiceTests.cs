@@ -26,7 +26,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         _testPdfsDir = Path.Combine(baseDir, "TestPdfs");
     }
 
-    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync().ConfigureAwait(false);
+    public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
 
@@ -56,7 +56,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         Assert.NotEqual(Guid.Empty, lease.Id);
     }
 
@@ -106,9 +106,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         var outputPath = _tempSession.GetFilePath("output-async.pdf");
-        await _service.SavePdfAsync(lease.Id, outputPath, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await _service.SavePdfAsync(lease.Id, outputPath, TestContext.Current.CancellationToken);
         Assert.True(File.Exists(outputPath));
         Assert.True(new FileInfo(outputPath).Length > 0);
     }
@@ -545,9 +545,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         var sections = new[] { "NO_SUCH_SECTION_123" };
-        var section = await _service.GetSectionAsync(lease.Id, "NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var section = await _service.GetSectionAsync(lease.Id, "NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken);
         Assert.Null(section);
     }
 

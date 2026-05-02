@@ -20,8 +20,8 @@ public static class Extensions
         string? meterVersion = null,
         Action<MeterProviderBuilder>? configureMeterProvider = null)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(meterName, nameof(meterName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(meterName);
         services.AddOpenTelemetry()
             .WithMetrics(builder => {
                 builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(meterName, serviceVersion: meterVersion)).AddMeter(meterName);

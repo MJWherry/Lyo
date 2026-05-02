@@ -57,7 +57,7 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <inheritdoc />
     public async Task<TtsResult<TRequest>> SynthesizeAsync(TRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.SynthesizeDuration)]);
         OnSynthesizing(request);
         var result = await SynthesizeCoreAsync(request, ct).ConfigureAwait(false);
@@ -78,8 +78,8 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <returns>A TtsResult indicating success or failure.</returns>
     public async Task<TtsResult<TRequest>> SynthesizeToFileAsync(string text, string outputFilePath, string? voiceId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var result = await SynthesizeAsync(text, voiceId, ct).ConfigureAwait(false);
         if (result.IsSuccess && result.AudioData != null) {
 #if NETSTANDARD2_0
@@ -99,8 +99,8 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <returns>A TtsResult indicating success or failure.</returns>
     public virtual async Task<TtsResult<TRequest>> SynthesizeToFileAsync(TRequest request, string outputFilePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath, nameof(outputFilePath));
+        ArgumentHelpers.ThrowIfNull(request);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputFilePath);
         var result = await SynthesizeAsync(request, ct).ConfigureAwait(false);
         if (result.IsSuccess && result.AudioData != null) {
 #if NETSTANDARD2_0
@@ -121,8 +121,8 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <returns>A TtsResult indicating success or failure.</returns>
     public async Task<TtsResult<TRequest>> SynthesizeToStreamAsync(string text, Stream outputStream, string? voiceId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         var result = await SynthesizeAsync(text, voiceId, ct).ConfigureAwait(false);
         if (result.IsSuccess && result.AudioData != null)
@@ -138,10 +138,10 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <returns>A TtsResult indicating success or failure.</returns>
     public virtual async Task<TtsResult<TRequest>> SynthesizeToStreamAsync(TRequest request, Stream outputStream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(request);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(outputStream);
         var result = await SynthesizeAsync(request, ct).ConfigureAwait(false);
         if (result.IsSuccess && result.AudioData != null)
             await outputStream.WriteAsync(result.AudioData, 0, result.AudioData.Length, ct).ConfigureAwait(false);
@@ -152,7 +152,7 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <summary>Synthesizes multiple texts to speech in bulk.</summary>
     public async Task<IReadOnlyList<TtsResult<TRequest>>> SynthesizeBulkAsync(IEnumerable<TRequest> requests, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(requests, nameof(requests));
+        ArgumentHelpers.ThrowIfNull(requests);
         var requestList = requests.ToList();
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.BulkSynthesizeDuration)]);
         var sw = Stopwatch.StartNew();

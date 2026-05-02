@@ -20,9 +20,9 @@ public static class Extensions
         IConfiguration configuration,
         string configSectionName = WebRenderOptions.SectionName)
     {
-        ArgumentHelpers.ThrowIfNull(services, nameof(services));
-        ArgumentHelpers.ThrowIfNull(configuration, nameof(configuration));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName, nameof(configSectionName));
+        ArgumentHelpers.ThrowIfNull(services);
+        ArgumentHelpers.ThrowIfNull(configuration);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         if (!services.Any(s => s.ServiceType == typeof(WebRenderOptions))) {
             services.AddSingleton<WebRenderOptions>(_ => {
                 var section = configuration.GetSection(configSectionName);

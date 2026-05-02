@@ -1,4 +1,4 @@
-namespace Lyo.Common.Builders;
+namespace Lyo.Result.Builders;
 
 /// <summary>Fluent builder for creating Result instances.</summary>
 /// <typeparam name="T">The type of the data returned on success.</typeparam>

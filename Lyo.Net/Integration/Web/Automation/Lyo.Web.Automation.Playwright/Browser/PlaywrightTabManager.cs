@@ -19,7 +19,7 @@ public sealed class PlaywrightTabManager
 
     internal PlaywrightTabManager(PlaywrightBrowser browser, ILogger? logger = null)
     {
-        ArgumentHelpers.ThrowIfNull(browser, nameof(browser));
+        ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
         _logger = logger ?? NullLogger.Instance;
     }
@@ -73,7 +73,7 @@ public sealed class PlaywrightTabManager
     /// <summary>Assigns a friendly display name for a page (keyed by <see cref="PlaywrightBrowserTabInfo.PageKey" />).</summary>
     public void SetDisplayName(string pageKey, string? displayName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey, nameof(pageKey));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey);
         ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
 
         if (string.IsNullOrWhiteSpace(displayName))
@@ -105,7 +105,7 @@ public sealed class PlaywrightTabManager
     /// <summary>Switches to the page with the given key (<see cref="PlaywrightBrowserTabInfo.PageKey" />).</summary>
     public void SwitchTo(string pageKey)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey, nameof(pageKey));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey);
         ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
 
         RunTabOp(

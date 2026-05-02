@@ -8,7 +8,6 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Metrics;
@@ -16,6 +15,7 @@ using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Services.WhereClause;
+using Lyo.Result;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
@@ -147,8 +147,8 @@ public class QueryService<TContext>(
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
-            ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
-            ArgumentHelpers.ThrowIfNullOrEmpty(keys, nameof(keys));
+            ArgumentHelpers.ThrowIfNull(keys);
+            ArgumentHelpers.ThrowIfNullOrEmpty(keys);
             using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TResult));
             var matIncludes = includes?.ToList() ?? [];
             var includeArray = matIncludes.Any() ? matIncludes.ToArray() : null;
@@ -221,8 +221,8 @@ public class QueryService<TContext>(
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
-            ArgumentHelpers.ThrowIfNull(keys, nameof(keys));
-            ArgumentHelpers.ThrowIfNullOrEmpty(keys, nameof(keys));
+            ArgumentHelpers.ThrowIfNull(keys);
+            ArgumentHelpers.ThrowIfNullOrEmpty(keys);
             using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TDbModel));
             var matIncludes = includes?.ToList() ?? [];
             await using var setupContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
@@ -288,8 +288,8 @@ public class QueryService<TContext>(
         QueryCoreCacheAugmentation? cacheAugmentation = null)
         where TDbModel : class
     {
-        ArgumentHelpers.ThrowIfNull(queryRequest, nameof(queryRequest));
-        ArgumentHelpers.ThrowIfNull(defaultOrder, nameof(defaultOrder));
+        ArgumentHelpers.ThrowIfNull(queryRequest);
+        ArgumentHelpers.ThrowIfNull(defaultOrder);
         var pagingErrors = QueryPagingBoundsValidator.Validate(queryRequest, queryOptions, queryOptions.MaxPageSize);
         var pathCache = new QueryPathValidationCache();
 
@@ -413,8 +413,8 @@ public class QueryService<TContext>(
         CancellationToken ct)
         where TDbModel : class
     {
-        ArgumentHelpers.ThrowIfNull(queryRequest, nameof(queryRequest));
-        ArgumentHelpers.ThrowIfNull(defaultOrder, nameof(defaultOrder));
+        ArgumentHelpers.ThrowIfNull(queryRequest);
+        ArgumentHelpers.ThrowIfNull(defaultOrder);
 
         // Echo the client request as-is (Select is mutated server-side for computed dependencies).
         var queryRequestForEcho = CloneProjectionQueryReq(queryRequest);
@@ -470,7 +470,6 @@ public class QueryService<TContext>(
         }
 
         OperationHelpers.ThrowIfNull(projectedFieldSpecs, "Projected field specs must be resolved when Select is non-empty.");
-
         var effectiveIncludes = BuildQueryProjectEffectiveIncludes<TDbModel>(projectedFieldSpecs, queryRequest.WhereClause);
 
         // One DbContext for include validation + SQL path when derived includes are non-empty (avoids doubling context startup cost).

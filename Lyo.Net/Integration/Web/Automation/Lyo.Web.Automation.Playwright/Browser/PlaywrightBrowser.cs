@@ -69,7 +69,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         ILogger<PlaywrightBrowser>? logger = null,
         IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         Options = options;
         ExecutionContext = executionContext ?? PlaywrightExecutionContextFactory.Create(options, Guid.NewGuid());
         var baseLogger = logger ?? NullLogger<PlaywrightBrowser>.Instance;
@@ -81,7 +81,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Attaches to an existing page (does not own Playwright resources unless <see cref="PlaywrightBrowserOptions.CloseOwnedResourcesOnDispose" /> is set).</summary>
     public PlaywrightBrowser(IPage page, PlaywrightBrowserOptions? options = null)
     {
-        ArgumentHelpers.ThrowIfNull(page, nameof(page));
+        ArgumentHelpers.ThrowIfNull(page);
         Options = options ?? new PlaywrightBrowserOptions();
         Logger = NullLogger<PlaywrightBrowser>.Instance;
         Metrics = NullMetrics.Instance;
@@ -327,7 +327,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Sets the active page used by this façade (and automation plans).</summary>
     internal void SetActivePage(IPage page)
     {
-        ArgumentHelpers.ThrowIfNull(page, nameof(page));
+        ArgumentHelpers.ThrowIfNull(page);
         Page = page;
         ApplyDefaultTimeouts(Page);
     }
@@ -406,7 +406,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Navigates to a URL (logs with optional redaction).</summary>
     public async Task NavigateToAsync(string url, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url, nameof(url));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
         EnsureStarted();
         await Page!.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
         var forLog = BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs);
@@ -434,7 +434,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Polls for a descendant of <paramref name="parent" />; each attempt runs <see cref="GetDescendantElementCoreAsync" />.</summary>
     internal async Task<IWebAutomationElement> PollForDescendantElementAsync(ILocator parent, ElementLocator child, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(parent, nameof(parent));
+        ArgumentHelpers.ThrowIfNull(parent);
         var locatorTag = $"{child.Kind}:{child.Value}";
         var pollTags = PlaywrightMetricTags.ForOperation(this, "poll_nested", new[] { ("locator", locatorTag) });
         using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.PollDuration)], pollTags);
@@ -481,7 +481,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Resolves a chained path once (first segment respects the current frame stack via <see cref="PlaywrightFrameNavigator" />). Returns <see langword="null" /> if not found.</summary>
     public async Task<IWebAutomationElement?> GetElementChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var getTags = PlaywrightMetricTags.ForOperation(this, "get_chain", new[] { ("locator", locatorDesc) });
@@ -512,7 +512,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// </summary>
     public async Task<IWebAutomationElement> PollForChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var pollTags = PlaywrightMetricTags.ForOperation(this, "poll_chain", new[] { ("locator", locatorDesc) });
@@ -545,7 +545,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Resolves the chain once and returns every match for the final segment. Returns <see langword="null" /> if not found.</summary>
     public async Task<IReadOnlyList<IWebAutomationElement>?> GetElementsChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var getTags = PlaywrightMetricTags.ForOperation(this, "get_many", new[] { ("locator", locatorDesc) });
@@ -573,7 +573,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Waits until at least one match is visible, then returns every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync" />.</summary>
     public async Task<IReadOnlyList<IWebAutomationElement>> PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(chain, nameof(chain));
+        ArgumentHelpers.ThrowIfNull(chain);
         var segments = chain.Segments;
         var locatorDesc = string.Join(" -> ", segments.Select(s => $"{s.Kind}:{s.Value}"));
         var pollTags = PlaywrightMetricTags.ForOperation(this, "poll_many", new[] { ("locator", locatorDesc) });

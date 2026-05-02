@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Images;
 using Lyo.Images.Models;
 using Lyo.Metrics;
 using Lyo.QRCode.Models;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using QRCoder;
@@ -63,7 +63,7 @@ public class QRCoderQRCodeService : IQRCodeService
     /// <summary>Generates a QR code using a builder.</summary>
     public Task<Result<QRCodeRequest>> GenerateAsync(QRCodeBuilder builder, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
+        ArgumentHelpers.ThrowIfNull(builder);
         var (data, options) = builder.Build();
         return GenerateAsync(data, options, ct);
     }
@@ -71,7 +71,7 @@ public class QRCoderQRCodeService : IQRCodeService
     /// <summary>Generates a QR code from text/data.</summary>
     public async Task<Result<QRCodeRequest>> GenerateAsync(string data, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         using var timer = _metrics.StartTimer(_metricNames[nameof(QRCode.Constants.Metrics.GenerateDuration)]);
         var sw = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();
@@ -109,8 +109,8 @@ public class QRCoderQRCodeService : IQRCodeService
     /// <summary>Generates a QR code and writes it to a stream.</summary>
     public async Task<Result<bool>> GenerateToStreamAsync(string data, Stream outputStream, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         try {
             var result = await GenerateAsync(data, options, ct).ConfigureAwait(false);
@@ -132,7 +132,7 @@ public class QRCoderQRCodeService : IQRCodeService
     /// <summary>Generates a QR code and saves it to a file.</summary>
     public async Task<Result<bool>> GenerateToFileAsync(string data, string filePath, QRCodeOptions? options = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         try {
             // Ensure directory exists
             var directory = Path.GetDirectoryName(filePath);
@@ -171,7 +171,7 @@ public class QRCoderQRCodeService : IQRCodeService
         }
 
         sw.Stop();
-        var successCount = results.Count(r => r.IsSuccess && r.Data is QRCodeResult { IsSuccess: true });
+        var successCount = results.Count(r => r is { IsSuccess: true, Data: { IsSuccess: true } });
         var failureCount = results.Count - successCount;
         _logger.LogDebug("Generated {Count} QR codes in batch: {SuccessCount} successful, {FailureCount} failed", requestList.Count, successCount, failureCount);
         return BulkResult<QRCodeRequest, QRCodeResult>.FromResults(results);
@@ -180,7 +180,7 @@ public class QRCoderQRCodeService : IQRCodeService
     /// <inheritdoc />
     public Task<Result<QRCodeImageReadResult>> ReadFromImageAsync(byte[] imageBytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(imageBytes, nameof(imageBytes));
+        ArgumentHelpers.ThrowIfNull(imageBytes);
         return Task.Run(() => QRCodeZxingRead.Decode(imageBytes), ct);
     }
 

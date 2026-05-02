@@ -20,7 +20,7 @@ public sealed class BarcodeBuilder
 
     public BarcodeBuilder WithData(string data)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data, nameof(data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         _data = data;
         return this;
     }
@@ -60,7 +60,7 @@ public sealed class BarcodeBuilder
 
     public BarcodeBuilder WithDarkColor(string color)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color, nameof(color));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color);
         if (!IsValidHexColor(color))
             throw new InvalidFormatException("Color must be in hex format (e.g., '#000000' or '#FF0000').", nameof(color), color, "Hex color format");
 
@@ -70,7 +70,7 @@ public sealed class BarcodeBuilder
 
     public BarcodeBuilder WithLightColor(string color)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color, nameof(color));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(color);
         if (!IsValidHexColor(color))
             throw new InvalidFormatException("Color must be in hex format (e.g., '#FFFFFF' or '#FF0000').", nameof(color), color, "Hex color format");
 
@@ -93,7 +93,7 @@ public sealed class BarcodeBuilder
 
     public (string Data, BarcodeSymbology Symbology, BarcodeOptions Options) Build()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_data, nameof(_data));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(_data);
         var options = new BarcodeOptions();
         if (_format.HasValue)
             options.Format = _format.Value;

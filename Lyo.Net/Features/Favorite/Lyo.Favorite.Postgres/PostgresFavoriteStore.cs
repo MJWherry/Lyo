@@ -15,14 +15,14 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <summary>Creates a new PostgresFavoriteStore.</summary>
     public PostgresFavoriteStore(IDbContextFactory<FavoriteDbContext> contextFactory)
     {
-        ArgumentHelpers.ThrowIfNull(contextFactory, nameof(contextFactory));
+        ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
     public async Task SaveAsync(FavoriteRecord favorite, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(favorite, nameof(favorite));
+        ArgumentHelpers.ThrowIfNull(favorite);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = await context.Favorites.FirstOrDefaultAsync(
                 f => f.ForEntityType == favorite.ForEntityType && f.ForEntityId == favorite.ForEntityId && f.FromEntityType == favorite.FromEntityType &&
@@ -56,8 +56,8 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<FavoriteRecord?> GetAsync(EntityRef forEntity, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.Favorites.FirstOrDefaultAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
@@ -70,8 +70,8 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<bool> IsFavoritedAsync(EntityRef forEntity, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         return await context.Favorites.AnyAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
@@ -82,7 +82,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<FavoriteRecord>> GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Favorites.Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId)
             .OrderBy(f => f.CreatedTimestamp)
@@ -95,7 +95,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<FavoriteRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Favorites.Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId)
             .OrderBy(f => f.CreatedTimestamp)
@@ -108,7 +108,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<IReadOnlyList<FavoriteRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType, nameof(forEntityType));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Favorites.Where(f => f.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
@@ -121,7 +121,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task<int> GetCountForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         return await context.Favorites.CountAsync(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId, ct).ConfigureAwait(false);
     }
@@ -140,8 +140,8 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task DeleteAsync(EntityRef forEntity, EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.Favorites.FirstOrDefaultAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId && f.FromEntityType == fromEntity.EntityType &&
@@ -157,7 +157,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(forEntity, nameof(forEntity));
+        ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Favorites.Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Favorites.RemoveRange(entities);
@@ -167,7 +167,7 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
     /// <inheritdoc />
     public async Task DeleteFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(fromEntity, nameof(fromEntity));
+        ArgumentHelpers.ThrowIfNull(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Favorites.Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == fromEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         context.Favorites.RemoveRange(entities);

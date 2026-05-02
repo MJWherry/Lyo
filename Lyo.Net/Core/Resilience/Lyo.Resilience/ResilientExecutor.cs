@@ -15,7 +15,7 @@ public sealed class ResilientExecutor : IResilientExecutor
     /// <param name="metrics">Optional metrics for execution duration and success/failure (uses NullMetrics if not provided).</param>
     public ResilientExecutor(ResiliencePipelineProvider<string> pipelineProvider, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(pipelineProvider, nameof(pipelineProvider));
+        ArgumentHelpers.ThrowIfNull(pipelineProvider);
         _pipelineProvider = pipelineProvider;
         _metrics = metrics ?? NullMetrics.Instance;
     }
@@ -75,7 +75,7 @@ public sealed class ResilientExecutor : IResilientExecutor
     /// <inheritdoc />
     public async Task<T> ExecuteAsync<T>(string pipelineName, Func<CancellationToken, Task<T>> action, Func<T, bool> isSuccess, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(isSuccess, nameof(isSuccess));
+        ArgumentHelpers.ThrowIfNull(isSuccess);
         pipelineName ??= PipelineNames.Basic;
         var tags = new[] { (Constants.Metrics.PipelineTag, pipelineName) };
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);

@@ -1,0 +1,48 @@
+@using Lyo.Web.Components.Identifiers
+@inject IJsInterop JsInterop
+@inject ISnackbar Snackbar
+
+@if (Entries.Count > 0) {
+    <MudPaper Outlined="true" Class="@($"pa-2 {Class}")">
+        <div class="d-flex justify-space-between align-center mb-1 px-1">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@Entries.Count result(s)</MudText>
+            <MudButton Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.ContentCopy"
+                       Variant="Variant.Text"
+                       OnClick="CopyAllAsync">Copy All</MudButton>
+        </div>
+        <MudDivider/>
+        @foreach (var entry in Entries) {
+            <div class="d-flex align-center justify-space-between py-1 px-1"
+                 style="border-bottom: 1px solid var(--mud-palette-divider);">
+                <div class="d-flex flex-column">
+                    <code style="font-family: monospace; font-size: 0.85rem; word-break: break-all;">@entry.Value</code>
+                    @if (!string.IsNullOrEmpty(entry.Timestamp)) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@entry.Timestamp</MudText>
+                    }
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                               Size="Size.Small"
+                               OnClick="() => CopyItemAsync(entry.Value)"/>
+            </div>
+        }
+    </MudPaper>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<IdEntry> Entries { get; set; } = [];
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private async Task CopyAllAsync()
+    {
+        var text = string.Join(Environment.NewLine, Entries.Select(e => e.Value));
+        await JsInterop.SendToClipboard(text);
+        Snackbar.Add($"Copied {Entries.Count} ID(s) to clipboard.", Severity.Success);
+    }
+
+    private async Task CopyItemAsync(string value)
+    {
+        await JsInterop.SendToClipboard(value);
+        Snackbar.Add("Copied to clipboard.", Severity.Success);
+    }
+}

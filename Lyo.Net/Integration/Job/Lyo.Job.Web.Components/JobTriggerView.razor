@@ -1,0 +1,89 @@
+@inject ISnackbar Snackbar
+
+<MudGrid Class="pa-4">
+    <MudItem xs="12" md="4">
+        <MudPaper Elevation="1" Class="pa-2" Style="height: 500px; overflow-y: auto;">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6">Triggers</MudText>
+                <MudList T="JobTriggerRes" Dense>
+                    @if (JobTriggers?.Any() == true) {
+                        @foreach (var t in JobTriggers) {
+                            <MudListItem T="JobTriggerRes" OnClick="@(() => _selected = t)"
+                                         Class="@(_selected?.Id == t.Id ? "mud-primary" : "")" Style="cursor:pointer;">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@(t.Enabled ? Color.Success : Color.Error)"
+                                             OnClick="@(() => ToggleTrigger(t))" Style="cursor:pointer;">
+                                        @(t.Enabled ? "On" : "Off")
+                                    </MudChip>
+                                    <MudText Typo="Typo.body2">@(t.Description ?? t.ToString())</MudText>
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    }
+                    else {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No triggers</MudText>
+                    }
+                </MudList>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" md="8">
+        @if (_selected != null) {
+            <MudPaper Elevation="1" Class="pa-4">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Trigger Details</MudText>
+                    <MudGrid>
+                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Triggers Job:</b> @_selected.TriggersJobDefinitionId.Truncated()</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Result Key:</b> @_selected.JobResultKey</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Comparator:</b> @_selected.Comparison</MudText></MudItem>
+                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Result Value:</b> @(_selected.JobResultValue ?? "-")</MudText></MudItem>
+                        <MudItem xs="12"><MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText></MudItem>
+                    </MudGrid>
+                    @if (_selected.TriggerParameters?.Any() == true) {
+                        <MudDivider/>
+                        <MudText Typo="Typo.h6">Trigger Parameters</MudText>
+                        <MudGrid>
+                            @foreach (var p in _selected.TriggerParameters) {
+                                <MudItem xs="12" md="6">
+                                    <MudPaper Elevation="1" Class="pa-3">
+                                        <MudText Typo="Typo.subtitle2">@p.Key</MudText>
+                                        <MudText Typo="Typo.body2">Type: @p.Type</MudText>
+                                        @if (p.Value != null) { <MudText Typo="Typo.body2">Value: @p.Value</MudText> }
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+        else {
+            <MudPaper Elevation="1" Class="pa-4">
+                <MudText Typo="Typo.body1" Class="mud-text-secondary">Select a trigger to view details</MudText>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public IReadOnlyList<JobTriggerRes>? JobTriggers { get; set; }
+    [Parameter] public Guid JobDefinitionId { get; set; }
+    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
+    [Parameter, EditorRequired] public string TriggerRoute { get; set; } = "";
+
+    private JobTriggerRes? _selected;
+
+    protected override void OnParametersSet()
+    {
+        if (_selected == null || JobTriggers?.All(t => t.Id != _selected.Id) == true)
+            _selected = JobTriggers?.FirstOrDefault();
+    }
+
+    private async Task ToggleTrigger(JobTriggerRes trigger)
+    {
+        var patch = new PatchRequestBuilder().WithKey(trigger.Id).SetProperty("Enabled", !trigger.Enabled).Build();
+        await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(TriggerRoute, patch);
+        Snackbar.Add($"Trigger {(!trigger.Enabled ? "enabled" : "disabled")}", Severity.Success);
+    }
+}

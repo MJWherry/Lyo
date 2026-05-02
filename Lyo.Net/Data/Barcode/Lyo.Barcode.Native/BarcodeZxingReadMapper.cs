@@ -1,6 +1,6 @@
 using Lyo.Barcode.Models;
 using Lyo.Codes.ZXing;
-using Lyo.Common;
+using Lyo.Result;
 using static Lyo.Barcode.BarcodeErrorCodes;
 
 namespace Lyo.Barcode.Native;

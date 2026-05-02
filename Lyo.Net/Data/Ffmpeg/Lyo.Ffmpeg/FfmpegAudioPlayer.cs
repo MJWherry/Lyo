@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
 using CliWrap;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Ffmpeg.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -26,7 +26,7 @@ public sealed class FfmpegAudioPlayer : IAudioPlayer
     /// <inheritdoc />
     public async Task<Result<bool>> PlayAsync(string filePath, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfFileNotFound(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfFileNotFound(filePath);
         using var timer = _metrics.StartTimer(Constants.Metrics.PlayDuration);
         var result = await PlayCoreAsync(filePath, ct).ConfigureAwait(false);
         _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.PlaySuccess : Constants.Metrics.PlayFailure);
@@ -39,7 +39,7 @@ public sealed class FfmpegAudioPlayer : IAudioPlayer
     /// <inheritdoc />
     public async Task<Result<bool>> PlayStreamAsync(Stream stream, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(stream, nameof(stream));
+        ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
         var inputPath = await FfmpegTempHelper.WriteStreamToTempFileAsync(stream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -53,7 +53,7 @@ public sealed class FfmpegAudioPlayer : IAudioPlayer
     /// <inheritdoc />
     public async Task<Result<bool>> PlayBytesAsync(byte[] bytes, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(bytes, nameof(bytes));
+        ArgumentHelpers.ThrowIfNull(bytes);
         var inputPath = await FfmpegTempHelper.WriteBytesToTempFileAsync(bytes, ".tmp", ct).ConfigureAwait(false);
         try {
             return await PlayAsync(inputPath, ct).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public sealed class FfmpegAudioPlayer : IAudioPlayer
             if (_options.SuppressFfplayOutput)
                 cmd = cmd.WithStandardOutputPipe(PipeTarget.Null).WithStandardErrorPipe(PipeTarget.Null);
 
-            var result = await cmd.ExecuteAsync(ct).ConfigureAwait(false);
+            _ = await cmd.ExecuteAsync(ct).ConfigureAwait(false);
             return Result<bool>.Success(true);
         }
         catch (Exception ex) {

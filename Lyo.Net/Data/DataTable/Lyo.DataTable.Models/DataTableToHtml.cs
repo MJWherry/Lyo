@@ -12,7 +12,7 @@ public static class DataTableToHtml
     /// <returns>Complete HTML document string with table.</returns>
     public static string ToHtmlDocument(DataTable data)
     {
-        ArgumentHelpers.ThrowIfNull(data, nameof(data));
+        ArgumentHelpers.ThrowIfNull(data);
         return BuildHtml(data.Headers, data.Rows, data.Footer);
     }
 

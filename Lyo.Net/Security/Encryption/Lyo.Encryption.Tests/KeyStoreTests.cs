@@ -215,8 +215,8 @@ public class KeyStoreTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        var result = await keyStore.GetKeyAsync(keyId, "1", TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(key, result);
     }
@@ -227,9 +227,9 @@ public class KeyStoreTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var result = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "1", TestContext.Current.CancellationToken);
+        var result = await keyStore.GetCurrentKeyAsync(keyId, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(key, result);
     }
@@ -240,8 +240,8 @@ public class KeyStoreTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -249,8 +249,8 @@ public class KeyStoreTests
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-key", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
+        await keyStore.AddKeyFromStringAsync(keyId, "1", "test-key", TestContext.Current.CancellationToken);
+        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -259,10 +259,10 @@ public class KeyStoreTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.AddKeyAsync(keyId, "2", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken).ConfigureAwait(false));
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        await keyStore.AddKeyAsync(keyId, "2", key, TestContext.Current.CancellationToken);
+        await keyStore.SetCurrentVersionAsync(keyId, "2", TestContext.Current.CancellationToken);
+        Assert.Equal("2", await keyStore.GetCurrentVersionAsync(keyId, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -271,9 +271,9 @@ public class KeyStoreTests
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         var key = Enumerable.Range(1, 32).Select(x => (byte)x).ToArray();
-        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken).ConfigureAwait(false));
-        Assert.False(await keyStore.HasKeyAsync(keyId, "999", TestContext.Current.CancellationToken).ConfigureAwait(false));
+        await keyStore.AddKeyAsync(keyId, "1", key, TestContext.Current.CancellationToken);
+        Assert.True(await keyStore.HasKeyAsync(keyId, "1", TestContext.Current.CancellationToken));
+        Assert.False(await keyStore.HasKeyAsync(keyId, "999", TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -68,9 +68,9 @@ public static class EncryptionServiceExtensions
             AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TDekService : class, IEncryptionService where TKekService : class, IEncryptionService
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyStoreName, nameof(keyStoreName));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyStoreName);
 
             // Register DEK service as keyed if not already registered
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TDekService))) {
@@ -184,9 +184,9 @@ public static class EncryptionServiceExtensions
             AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             where TKeyStore : class, IKeyStore where TDekService : class, IEncryptionService where TKekService : class, IEncryptionService
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName, nameof(keyName));
-            ArgumentHelpers.ThrowIfNull(configKeyStore, nameof(configKeyStore));
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNull(configKeyStore);
 
             // Register key store with keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TKeyStore))) {
@@ -284,7 +284,7 @@ public static class EncryptionServiceExtensions
             RSAEncryptionPadding? padding = null,
             int? maxChunkSize = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             return services.AddScoped(_ => new RsaEncryptionService(publicPemPath, privatePemPath, pfxPath, password, padding, maxChunkSize));
         }
 
@@ -302,7 +302,7 @@ public static class EncryptionServiceExtensions
             string? password = null,
             RSAEncryptionPadding? padding = null)
         {
-            ArgumentHelpers.ThrowIfNull(services, nameof(services));
+            ArgumentHelpers.ThrowIfNull(services);
             return services.AddScoped(_ => new AesGcmRsaEncryptionService(publicPemPath, privatePemPath, pfxPath, password, padding));
         }
     }

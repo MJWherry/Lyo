@@ -207,7 +207,7 @@ public sealed class CompressionService : ICompressionService
 
     private static void ValidateFilePath(string? filePath, string paramName)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(filePath, nameof(filePath));
+        ArgumentHelpers.ThrowIfNullOrEmpty(filePath);
 
         // Canonicalize path to prevent directory traversal attacks (e.g., ../../../etc/passwd)
         // This resolves relative paths and normalizes directory separators
@@ -309,8 +309,8 @@ public sealed class CompressionService : ICompressionService
 
     public void Compress(Stream inputStream, Stream outputStream)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Compressing stream input -> output");
@@ -332,8 +332,8 @@ public sealed class CompressionService : ICompressionService
 
     public void Decompress(Stream inputStream, Stream outputStream)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         _logger.LogDebug("Decompressing stream input -> output");
@@ -364,8 +364,8 @@ public sealed class CompressionService : ICompressionService
 
     public async Task CompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ct.ThrowIfCancellationRequested();
@@ -398,8 +398,8 @@ public sealed class CompressionService : ICompressionService
 
     public async Task DecompressAsync(Stream inputStream, Stream outputStream, int? chunkSize = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ct.ThrowIfCancellationRequested();
@@ -438,7 +438,7 @@ public sealed class CompressionService : ICompressionService
 
     public CompressionInfo CompressString(string text, out byte[] compressed, Encoding? encoding = null)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(text, nameof(text));
+        ArgumentHelpers.ThrowIfNullOrEmpty(text);
         encoding ??= GetEncodingOrDefault(_options.DefaultEncoding);
         _logger.LogDebug("Compressing string of length {Length} with encoding {Encoding}", text.Length, encoding.EncodingName);
         var bytes = encoding.GetBytes(text);
@@ -458,7 +458,7 @@ public sealed class CompressionService : ICompressionService
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.CompressFileDuration);
         ValidateFilePath(inputFilePath, nameof(inputFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath, nameof(inputFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath);
         outputFilePath ??= GetCompressedFilePath(inputFilePath);
         ValidateFilePath(outputFilePath, nameof(outputFilePath));
 
@@ -508,7 +508,7 @@ public sealed class CompressionService : ICompressionService
     {
         using var timer = _metrics.StartTimer(Constants.Metrics.DecompressFileDuration);
         ValidateFilePath(inputFilePath, nameof(inputFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath, nameof(inputFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath);
         outputFilePath ??= GetDecompressedFilePath(inputFilePath);
         ValidateFilePath(outputFilePath, nameof(outputFilePath));
 
@@ -556,7 +556,7 @@ public sealed class CompressionService : ICompressionService
     public async Task<FileCompressionInfo> CompressFileAsync(string inputFilePath, string? outputFilePath = null, CancellationToken ct = default)
     {
         ValidateFilePath(inputFilePath, nameof(inputFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath, nameof(inputFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath);
         ct.ThrowIfCancellationRequested();
         outputFilePath ??= GetCompressedFilePath(inputFilePath);
         ValidateFilePath(outputFilePath, nameof(outputFilePath));
@@ -612,7 +612,7 @@ public sealed class CompressionService : ICompressionService
     public async Task<FileDecompressionInfo> DecompressFileAsync(string inputFilePath, string? outputFilePath = null, CancellationToken ct = default)
     {
         ValidateFilePath(inputFilePath, nameof(inputFilePath));
-        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath, nameof(inputFilePath));
+        ArgumentHelpers.ThrowIfFileNotFound(inputFilePath);
         ct.ThrowIfCancellationRequested();
         outputFilePath ??= GetDecompressedFilePath(inputFilePath);
         ValidateFilePath(outputFilePath, nameof(outputFilePath));
@@ -673,8 +673,8 @@ public sealed class CompressionService : ICompressionService
 
     public double GetCompressionRatio(byte[] originalBytes, byte[] compressedBytes)
     {
-        ArgumentHelpers.ThrowIfNull(originalBytes, nameof(originalBytes));
-        ArgumentHelpers.ThrowIfNull(compressedBytes, nameof(compressedBytes));
+        ArgumentHelpers.ThrowIfNull(originalBytes);
+        ArgumentHelpers.ThrowIfNull(compressedBytes);
         if (originalBytes.Length == 0)
             return 0;
 
@@ -694,7 +694,7 @@ public sealed class CompressionService : ICompressionService
 
     public DecompressionInfo DecompressFromBase64(string base64String, out byte[] decompressed)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(base64String, nameof(base64String));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(base64String);
         _logger.LogDebug("Decoding from base64 and decompressing, base64 length {Length}", base64String.Length);
         byte[] compressedBytes;
         try {
@@ -1153,8 +1153,8 @@ public sealed class CompressionService : ICompressionService
 
     public async Task CompressStringToStreamAsync(string text, Stream outputStream, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text, nameof(text));
-        ArgumentHelpers.ThrowIfNull(outputStream, nameof(outputStream));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         ct.ThrowIfCancellationRequested();
         encoding ??= GetEncodingOrDefault(_options.DefaultEncoding);
@@ -1179,7 +1179,7 @@ public sealed class CompressionService : ICompressionService
 
     public async Task<string> DecompressStringFromStreamAsync(Stream inputStream, Encoding? encoding = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(inputStream, nameof(inputStream));
+        ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         ct.ThrowIfCancellationRequested();
         encoding ??= GetEncodingOrDefault(_options.DefaultEncoding);

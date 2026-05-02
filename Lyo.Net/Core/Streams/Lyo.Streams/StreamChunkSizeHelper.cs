@@ -1,3 +1,5 @@
+// ReSharper disable UnusedMember.Local
+
 namespace Lyo.Streams;
 
 /// <summary>Options for customizing chunk size thresholds used by <see cref="StreamChunkSizeHelper" />.</summary>
@@ -46,7 +48,7 @@ public static class StreamChunkSizeHelper
             return defaultChunkSize ?? options?.DefaultChunkSize ?? DefaultChunkSize;
 
         try {
-            if (stream.CanSeek && stream.Length > 0)
+            if (stream is { CanSeek: true, Length: > 0 })
                 return DetermineChunkSize(stream.Length, options, defaultChunkSize);
         }
         catch {

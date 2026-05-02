@@ -28,7 +28,7 @@ public class FantasyFootballClient : ApiClient
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             }, options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));
         _options = options;
         League = new(this);
@@ -39,7 +39,7 @@ public class FantasyFootballClient : ApiClient
 
     internal static void ValidateSeason(int seasonId, string methodName)
     {
-        ArgumentHelpers.ThrowIfNegativeOrZero(seasonId, nameof(seasonId));
+        ArgumentHelpers.ThrowIfNegativeOrZero(seasonId);
         ArgumentHelpers.ThrowIf(seasonId < 2018, $"{methodName} currently supports ESPN v3 seasons from 2018 onward.", nameof(seasonId));
     }
 

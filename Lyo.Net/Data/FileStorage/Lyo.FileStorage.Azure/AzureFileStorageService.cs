@@ -36,7 +36,7 @@ public class AzureFileStorageService : FileStorageServiceBase
         IFileContentPolicy? contentPolicy = null,
         IFileMalwareScanner? malwareScanner = null)
         : base(
-            ArgumentHelpers.ThrowIfNullReturn(options, nameof(options)), ArgumentHelpers.ThrowIfNullReturn(metadataService, nameof(metadataService)),
+            ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<AzureFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
             auditHandlers, contentPolicy, malwareScanner)
     {

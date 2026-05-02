@@ -21,7 +21,7 @@ internal static class FusionCacheRegistration
         Action<FusionCacheOptions>? configureFusionCache,
         Action<RedisBackplaneOptions>? configureRedisBackplane)
     {
-        ArgumentHelpers.ThrowIfNull(svc, nameof(svc));
+        ArgumentHelpers.ThrowIfNull(svc);
         var cacheOptions = new CacheOptions();
         configureOptions?.Invoke(cacheOptions);
         svc.AddSingleton(cacheOptions);

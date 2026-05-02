@@ -70,7 +70,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     /// <returns>Distance in the specified unit</returns>
     public double DistanceTo(GeoCoordinate other, DistanceUnit unit = DistanceUnit.Meters)
     {
-        ArgumentHelpers.ThrowIfNull(other, nameof(other));
+        ArgumentHelpers.ThrowIfNull(other);
         const double earthRadiusMeters = 6371000; // Earth's radius in meters
         var lat1Rad = Latitude * Math.PI / 180;
         var lat2Rad = other.Latitude * Math.PI / 180;
@@ -97,7 +97,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
     /// <summary>Checks if this coordinate is within a specified radius of another coordinate</summary>
     public bool IsWithinRadius(GeoCoordinate center, double radiusMeters)
     {
-        ArgumentHelpers.ThrowIfNull(center, nameof(center));
+        ArgumentHelpers.ThrowIfNull(center);
         return DistanceTo(center) <= radiusMeters;
     }
 

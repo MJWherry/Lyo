@@ -89,6 +89,10 @@ public sealed class InMemoryMqService : IMqService, IDisposable
         return Task.FromResult(true);
     }
 
+    public Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default) => Task.FromResult(true);
+
+    public Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data) => Task.FromResult(true);
+
     public Task<bool> CreateExchange(
         string exchangeName,
         string exchangeType = "direct",
@@ -100,19 +104,15 @@ public sealed class InMemoryMqService : IMqService, IDisposable
 
     public Task<bool> DeleteExchange(string exchangeName, bool ifUnused = false, CancellationToken ct = default) => Task.FromResult(true);
 
-    public Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default) => Task.FromResult(true);
-
-    public Task<bool> SendToExchange(string exchangeName, string routingKey, byte[] data) => Task.FromResult(true);
-
     private async Task ProcessQueueAsync(string queueName, ConcurrentQueue<byte[]> queue, Func<byte[], Task<bool>> onMessage, CancellationToken ct)
     {
         while (!ct.IsCancellationRequested) {
             if (!queue.TryDequeue(out var data)) {
-                await Task.Delay(10, ct).ConfigureAwait(false);
+                await Task.Delay(10, ct);
                 continue;
             }
 
-            var requeue = await onMessage(data).ConfigureAwait(false);
+            var requeue = await onMessage(data);
             if (requeue)
                 queue.Enqueue(data);
         }

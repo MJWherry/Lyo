@@ -23,8 +23,8 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 
     public async ValueTask<IPermitHandle?> AcquireAsync(string key, int maxConcurrency, TimeSpan? timeout = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key, nameof(key));
-        ArgumentHelpers.ThrowIfNegativeOrZero(maxConcurrency, nameof(maxConcurrency));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNegativeOrZero(maxConcurrency);
 
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;
@@ -54,7 +54,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 
     public async Task ExecuteAsync(string key, int maxConcurrency, Func<CancellationToken, Task> action, TimeSpan? timeout = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(action, nameof(action));
+        ArgumentHelpers.ThrowIfNull(action);
         using (_metrics.StartTimer(Constants.SemaphoreMetrics.ExecuteDuration, [(Constants.SemaphoreMetrics.Tags.Key, key)])) {
             var handle = await AcquireAsync(key, maxConcurrency, timeout, ct).ConfigureAwait(false);
             if (handle == null)
@@ -71,7 +71,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 
     public async Task<T> ExecuteAsync<T>(string key, int maxConcurrency, Func<CancellationToken, Task<T>> action, TimeSpan? timeout = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(action, nameof(action));
+        ArgumentHelpers.ThrowIfNull(action);
         using (_metrics.StartTimer(Constants.SemaphoreMetrics.ExecuteDuration, [(Constants.SemaphoreMetrics.Tags.Key, key)])) {
             var handle = await AcquireAsync(key, maxConcurrency, timeout, ct).ConfigureAwait(false);
             if (handle == null)

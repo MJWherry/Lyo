@@ -1,0 +1,111 @@
+@namespace Lyo.Comic.Web.Components
+
+<div class="comic-search">
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.h5">Browse Comics</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Search by title, type, status, or language.
+                </MudText>
+            </div>
+
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField @bind-Value="_titleContains"
+                                  Label="Title"
+                                  Placeholder="e.g. One Piece, Batman…"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="false"
+                                  OnKeyDown="OnTitleKeyDownAsync"
+                                  Clearable="true"/>
+                </MudItem>
+
+                <MudItem xs="6" sm="3" md="2">
+                    <MudSelect T="ComicType?" @bind-Value="_comicType" Label="Type" Clearable="true">
+                        @foreach (ComicType t in Enum.GetValues<ComicType>())
+                        {
+                            <MudSelectItem T="ComicType?" Value="t">@t.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="6" sm="3" md="2">
+                    <MudSelect T="ComicStatus?" @bind-Value="_status" Label="Status" Clearable="true">
+                        @foreach (ComicStatus s in Enum.GetValues<ComicStatus>())
+                        {
+                            <MudSelectItem T="ComicStatus?" Value="s">@s.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="6" sm="3" md="2">
+                    <MudTextField @bind-Value="_language"
+                                  Label="Language"
+                                  Placeholder="e.g. ja, en, ko"
+                                  Clearable="true"/>
+                </MudItem>
+
+                @if (AvailableTags.Count > 0)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <LyoCheckSelect TValue="string"
+                                        Label="Tags"
+                                        Placeholder="Any tag"
+                                        Items="TagItems"
+                                        SelectedValues="_selectedTags"
+                                        SelectedValuesChanged="@((IEnumerable<string> v) => { _selectedTags = v.ToList(); })"
+                                        Searchable="true"/>
+                    </MudItem>
+                }
+
+                <MudItem xs="6" sm="3" md="2">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               OnClick="SearchAsync"
+                               Disabled="_busy">
+                        @if (_busy)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                        }
+                        Search
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+
+    @if (_searched && _results.Count == 0 && !_busy)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">No results found. Try a different search.</MudAlert>
+    }
+
+    @if (_results.Count > 0)
+    {
+        <MudGrid Spacing="3">
+            @foreach (var series in _results)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <ComicCard Series="series"
+                               CoverImageUrl="@ResolveCoverUrl(series)"
+                               OnRead="OnReadAsync"
+                               OnDetails="OnDetailsAsync"/>
+                </MudItem>
+            }
+        </MudGrid>
+
+        @if (_hasMore)
+        {
+            <div class="d-flex justify-center mt-4">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Default"
+                           OnClick="LoadMoreAsync"
+                           Disabled="_busy">
+                    Load more
+                </MudButton>
+            </div>
+        }
+    }
+</div>

@@ -1,12 +1,15 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 
 namespace Lyo.Exceptions;
 
 /// <summary>
 /// Helper methods for file name and path segment validation (e.g. multipart uploads). For directory/file existence, use <see cref="ExceptionThrower" /> or
 /// <see cref="ArgumentHelpers" />.
+/// Optional <c>paramName</c> uses <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers" />.
 /// </summary>
 public static class FileHelpers
 {
@@ -20,12 +23,12 @@ public static class FileHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfFileNameInvalid([NotNull] string? fileName, string? paramName = null)
+    public static void ThrowIfFileNameInvalid([NotNull] string? fileName, [CallerArgumentExpression("fileName")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName, paramName ?? nameof(fileName));
-        ArgumentHelpers.ThrowIf(fileName.Contains(".."), "File name must not contain path traversal (..).", paramName ?? nameof(fileName));
-        ArgumentHelpers.ThrowIf(Path.IsPathRooted(fileName), "File name must be a relative path or simple file name, not an absolute path.", paramName ?? nameof(fileName));
-        ArgumentHelpers.ThrowIf(fileName.IndexOfAny(InvalidFileNameChars) >= 0, $"File name contains invalid characters: {fileName}", paramName ?? nameof(fileName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName, paramName);
+        ArgumentHelpers.ThrowIf(fileName.Contains(".."), "File name must not contain path traversal (..).", paramName);
+        ArgumentHelpers.ThrowIf(Path.IsPathRooted(fileName), "File name must be a relative path or simple file name, not an absolute path.", paramName);
+        ArgumentHelpers.ThrowIf(fileName.IndexOfAny(InvalidFileNameChars) >= 0, $"File name contains invalid characters: {fileName}", paramName);
     }
 
     /// <summary>Validates and returns a safe file name for multipart uploads. Trims path and returns only the final segment.</summary>
@@ -37,11 +40,11 @@ public static class FileHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string GetValidFileName([NotNull] string? pathOrFileName, string? paramName = null)
+    public static string GetValidFileName([NotNull] string? pathOrFileName, [CallerArgumentExpression("pathOrFileName")] string? paramName = null)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pathOrFileName, paramName ?? nameof(pathOrFileName));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(pathOrFileName, paramName);
         var fileName = Path.GetFileName(pathOrFileName);
-        ArgumentHelpers.ThrowIfNullOrEmpty(fileName, paramName ?? nameof(fileName));
+        ArgumentHelpers.ThrowIfNullOrEmpty(fileName, paramName);
         ThrowIfFileNameInvalid(fileName, paramName);
         return fileName;
     }
@@ -55,8 +58,7 @@ public static class FileHelpers
             return false;
 
         var name = Path.GetFileName(pathOrFileName);
-        if (string.IsNullOrWhiteSpace(name) || name.IndexOf("..", StringComparison.Ordinal) >= 0 || Path.IsPathRooted(pathOrFileName!) ||
-            name.IndexOfAny(InvalidFileNameChars) >= 0)
+        if (string.IsNullOrWhiteSpace(name) || name.IndexOf("..", StringComparison.Ordinal) >= 0 || Path.IsPathRooted(pathOrFileName) || name.IndexOfAny(InvalidFileNameChars) >= 0)
             return false;
 
         fileName = name;

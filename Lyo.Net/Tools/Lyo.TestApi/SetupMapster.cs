@@ -6,6 +6,7 @@ using Lyo.DateAndTime;
 using Lyo.Discord.Postgres;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Geolocation.Models.Enums;
+using Lyo.Job.Postgres;
 using Lyo.People.Models.Enum;
 using Lyo.People.Postgres.Database;
 using Lyo.Query.Models.Common;
@@ -75,6 +76,7 @@ public static class SetupMapster
         // This prevents Mapster from trying to instantiate the abstract type during Compile().
         config.NewConfig<WhereClause, WhereClause>().ConstructUsing(src => src);
         config.NewConfig<FileMetadataEntity, FileMetadataEntity>();
+        config.ConfigureJobMappings();
         config.ConfigureDateTimeMappings().ConfigurePersonMappings().ConfigureTwilioMappings().ConfigureDiscordMappings().Compile();
         services.AddSingleton(config);
         services.AddScoped<IMapper, ServiceMapper>();

@@ -1,4 +1,4 @@
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Static factory methods for Result&lt;Unit&gt; (void/unit results).</summary>
 public static class ResultVoid

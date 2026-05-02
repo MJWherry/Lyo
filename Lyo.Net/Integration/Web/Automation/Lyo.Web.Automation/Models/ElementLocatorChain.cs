@@ -29,14 +29,14 @@ public sealed class ElementLocatorChain
     /// <summary>Wraps a single segment (same as <see cref="ElementLocator.Then" /> for the first step).</summary>
     public static implicit operator ElementLocatorChain(ElementLocator locator)
     {
-        ArgumentHelpers.ThrowIfNull(locator, nameof(locator));
+        ArgumentHelpers.ThrowIfNull(locator);
         return new(locator);
     }
 
     /// <summary>Appends a segment (fluent: <c>loc.Then(...).Then(...)</c>).</summary>
     public ElementLocatorChain Then(ElementLocator next)
     {
-        ArgumentHelpers.ThrowIfNull(next, nameof(next));
+        ArgumentHelpers.ThrowIfNull(next);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(next.Value, nameof(next));
         var merged = new ElementLocator[Segments.Count + 1];
         for (var i = 0; i < Segments.Count; i++)
@@ -51,7 +51,7 @@ public sealed class ElementLocatorChain
 
     private static void ValidateSegments(IReadOnlyList<ElementLocator> segments)
     {
-        ArgumentHelpers.ThrowIfNull(segments, nameof(segments));
+        ArgumentHelpers.ThrowIfNull(segments);
         ArgumentHelpers.ThrowIf(segments.Count < 1, "At least one locator segment is required.", nameof(segments));
 
         foreach (var s in segments) {

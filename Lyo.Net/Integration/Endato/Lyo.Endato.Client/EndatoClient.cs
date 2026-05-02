@@ -21,7 +21,7 @@ public class EndatoClient : ApiClient
             loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), httpClient,
             new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } }, options)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));
         _options = options;
         _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;

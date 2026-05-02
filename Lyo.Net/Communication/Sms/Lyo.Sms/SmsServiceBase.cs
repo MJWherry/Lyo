@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
+using Lyo.Result;
 using Lyo.Sms.Builders;
 using Lyo.Sms.Models;
 using Microsoft.Extensions.Logging;
@@ -39,7 +39,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <param name="metrics">Optional metrics instance for tracking SMS operations.</param>
     protected SmsServiceBase(SmsServiceOptions options, ILogger? logger = null, IMetrics? metrics = null)
     {
-        ArgumentHelpers.ThrowIfNull(options, nameof(options));
+        ArgumentHelpers.ThrowIfNull(options);
         Options = options;
         Logger = logger ?? NullLogger.Instance;
         Metrics = options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
@@ -57,7 +57,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <inheritdoc />
     public async Task<TResult> SendAsync(SmsRequest request, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(request, nameof(request));
+        ArgumentHelpers.ThrowIfNull(request);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.SendDuration)]);
         OnMessageSending(request);
         var result = await SendCoreAsync(request, ct).ConfigureAwait(false);
@@ -82,8 +82,8 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <inheritdoc />
     public Task<TResult> SendSmsAsync(string to, string body, string? from = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to, nameof(to));
-        ArgumentHelpers.ThrowIfNull(body, nameof(body));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
+        ArgumentHelpers.ThrowIfNull(body);
         var builder = SmsMessageBuilder.New().SetTo(to).SetBody(body);
         if (!string.IsNullOrWhiteSpace(from))
             builder.SetFrom(from!);
@@ -99,7 +99,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <inheritdoc />
     public Task<TResult> SendAsync(SmsMessageBuilder builder, string? from = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(builder, nameof(builder));
+        ArgumentHelpers.ThrowIfNull(builder);
         var message = builder.Build();
         if (!string.IsNullOrWhiteSpace(from))
             message.From = from;
@@ -115,10 +115,10 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <inheritdoc />
     public Task<TResult> SendMmsAsync(string to, IEnumerable<string> mediaUrls, string? body = null, string? from = null, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to, nameof(to));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
         var mediaUrlList = mediaUrls.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(mediaUrlList, nameof(mediaUrls));
-        var uris = mediaUrlList.Select(url => UriHelpers.GetValidUri(url, nameof(url))).ToList();
+        var uris = mediaUrlList.Select(url => UriHelpers.GetValidUri(url)).ToList();
         return SendMmsAsync(to, uris, body, from, ct);
     }
 
@@ -290,7 +290,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     /// <inheritdoc />
     public async Task<BulkResult<SmsRequest>> SendBulkAsync(BulkSmsBuilder bulkBuilder, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfNull(bulkBuilder, nameof(bulkBuilder));
+        ArgumentHelpers.ThrowIfNull(bulkBuilder);
         var builders = bulkBuilder.Build().ToList();
         try {
             ArgumentHelpers.ThrowIfNullOrNotInRange(builders.Count, 1, Options.MaxBulkSmsLimit, nameof(bulkBuilder));

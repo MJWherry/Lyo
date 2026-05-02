@@ -181,8 +181,8 @@ public sealed class ZipFileBuilder
     // Fallback for netstandard2.0
     private static string GetRelativePathNetStandard(string basePath, string targetPath)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(basePath, nameof(basePath));
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetPath, nameof(targetPath));
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(basePath);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetPath);
         var baseUri = new Uri(AppendSlash(basePath));
         var targetUri = new Uri(targetPath);
         var relativeUri = baseUri.MakeRelativeUri(targetUri);

@@ -40,7 +40,8 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         try {
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            WriteRandomBytes(path, sizeBytes);
+            using var stream = _ctx.Storage.OpenCreate(path);
+            WriteRandomBytesToStream(stream, sizeBytes, GetRandom());
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateRandomFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateRandomFileSuccess);
@@ -60,7 +61,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public IReadOnlyList<string> CreateRandomFiles(int count, long sizeBytes)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++)
             paths.Add(CreateRandomFile(sizeBytes));
@@ -77,7 +78,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         try {
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            await WriteRandomBytesAsync(path, sizeBytes, ct).ConfigureAwait(false);
+            await WriteRandomBytesToStorageAsync(path, sizeBytes, ct).ConfigureAwait(false);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateRandomFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateRandomFileSuccess);
@@ -97,7 +98,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<IReadOnlyList<string>> CreateRandomFilesAsync(int count, long sizeBytes, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++) {
             ct.ThrowIfCancellationRequested();
@@ -113,8 +114,8 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public IReadOnlyList<string> CreateRandomFiles(int count, long sizeBytes, Func<int, string> nameSelector)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
-        ArgumentHelpers.ThrowIfNull(nameSelector, nameof(nameSelector));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
+        ArgumentHelpers.ThrowIfNull(nameSelector);
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++)
             paths.Add(CreateRandomFile(sizeBytes, nameSelector(i)));
@@ -124,8 +125,8 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<IReadOnlyList<string>> CreateRandomFilesAsync(int count, long sizeBytes, Func<int, string> nameSelector, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(count, nameof(count));
-        ArgumentHelpers.ThrowIfNull(nameSelector, nameof(nameSelector));
+        ArgumentHelpers.ThrowIfNegativeOrZero(count);
+        ArgumentHelpers.ThrowIfNull(nameSelector);
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++) {
             ct.ThrowIfCancellationRequested();
@@ -142,17 +143,19 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateZipFile(TempDirectorySpec spec, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(spec, nameof(spec));
+        ArgumentHelpers.ThrowIfNull(spec);
         var sw = Stopwatch.StartNew();
         string? path = null;
         try {
             var zipName = name ?? (GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + ".zip");
             path = _ctx.ResolvePath(zipName, false);
             var random = GetRandom();
-            using (var archive = ZipFile.Open(path, ZipArchiveMode.Create))
+
+            using (var zipStream = _ctx.Storage.OpenCreate(path))
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: false))
                 PopulateZipDirectory(archive, string.Empty, spec, random);
 
-            var sizeBytes = new FileInfo(path).Length;
+            var sizeBytes = _ctx.Storage.GetFileLength(path);
             _ctx.ValidateSize(sizeBytes);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateZipFileDuration, sw.Elapsed);
@@ -160,8 +163,8 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             return path;
         }
         catch (Exception ex) {
-            if (path != null && File.Exists(path)) {
-                try { File.Delete(path); }
+            if (path != null && _ctx.Storage.FileExists(path)) {
+                try { _ctx.Storage.DeleteFile(path); }
                 catch { /* best-effort cleanup */ }
             }
 
@@ -219,15 +222,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateTextFile(int lines, int charsPerLine, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(lines, nameof(lines));
-        ArgumentHelpers.ThrowIfNegativeOrZero(charsPerLine, nameof(charsPerLine));
+        ArgumentHelpers.ThrowIfNegativeOrZero(lines);
+        ArgumentHelpers.ThrowIfNegativeOrZero(charsPerLine);
         var sw = Stopwatch.StartNew();
         try {
             var text = BuildText(lines, charsPerLine, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(text);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            File.WriteAllText(path, text, Encoding.UTF8);
+            _ctx.Storage.WriteAllText(path, text, Encoding.UTF8);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateTextFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateTextFileSuccess);
@@ -244,19 +247,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<string> CreateTextFileAsync(int lines, int charsPerLine, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(lines, nameof(lines));
-        ArgumentHelpers.ThrowIfNegativeOrZero(charsPerLine, nameof(charsPerLine));
+        ArgumentHelpers.ThrowIfNegativeOrZero(lines);
+        ArgumentHelpers.ThrowIfNegativeOrZero(charsPerLine);
         var sw = Stopwatch.StartNew();
         try {
             var text = BuildText(lines, charsPerLine, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(text);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(path, text, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(path, text, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _ctx.Storage.WriteAllTextAsync(path, text, Encoding.UTF8, ct).ConfigureAwait(false);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateTextFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateTextFileSuccess);
@@ -273,15 +272,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateCsvFile(int rows, int columns, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(rows, nameof(rows));
-        ArgumentHelpers.ThrowIfNegativeOrZero(columns, nameof(columns));
+        ArgumentHelpers.ThrowIfNegativeOrZero(rows);
+        ArgumentHelpers.ThrowIfNegativeOrZero(columns);
         var sw = Stopwatch.StartNew();
         try {
             var csv = BuildCsv(rows, columns, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(csv);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            File.WriteAllText(path, csv, Encoding.UTF8);
+            _ctx.Storage.WriteAllText(path, csv, Encoding.UTF8);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateCsvFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateCsvFileSuccess);
@@ -298,19 +297,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<string> CreateCsvFileAsync(int rows, int columns, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegativeOrZero(rows, nameof(rows));
-        ArgumentHelpers.ThrowIfNegativeOrZero(columns, nameof(columns));
+        ArgumentHelpers.ThrowIfNegativeOrZero(rows);
+        ArgumentHelpers.ThrowIfNegativeOrZero(columns);
         var sw = Stopwatch.StartNew();
         try {
             var csv = BuildCsv(rows, columns, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(csv);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(path, csv, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(path, csv, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _ctx.Storage.WriteAllTextAsync(path, csv, Encoding.UTF8, ct).ConfigureAwait(false);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateCsvFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateCsvFileSuccess);
@@ -327,15 +322,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateJsonFile(int depth, int keysPerObject, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject, nameof(keysPerObject));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject);
         var sw = Stopwatch.StartNew();
         try {
             var json = BuildJson(depth, keysPerObject, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(json);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            File.WriteAllText(path, json, Encoding.UTF8);
+            _ctx.Storage.WriteAllText(path, json, Encoding.UTF8);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateJsonFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateJsonFileSuccess);
@@ -352,19 +347,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<string> CreateJsonFileAsync(int depth, int keysPerObject, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject, nameof(keysPerObject));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject);
         var sw = Stopwatch.StartNew();
         try {
             var json = BuildJson(depth, keysPerObject, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(json);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(path, json, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(path, json, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _ctx.Storage.WriteAllTextAsync(path, json, Encoding.UTF8, ct).ConfigureAwait(false);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateJsonFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateJsonFileSuccess);
@@ -385,11 +376,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string SimulateDirectory(TempDirectorySpec spec, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(spec, nameof(spec));
+        ArgumentHelpers.ThrowIfNull(spec);
         var sw = Stopwatch.StartNew();
         try {
             var dirPath = _ctx.ResolvePath(name, true);
-            Directory.CreateDirectory(dirPath);
+            _ctx.Storage.CreateDirectory(dirPath);
             _ctx.RegisterDirectory(dirPath);
             PopulateDirectory(dirPath, spec);
             _ctx.Metrics.RecordTiming(Constants.Metrics.SimulateDirectoryDuration, sw.Elapsed);
@@ -410,11 +401,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<string> SimulateDirectoryAsync(TempDirectorySpec spec, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNull(spec, nameof(spec));
+        ArgumentHelpers.ThrowIfNull(spec);
         var sw = Stopwatch.StartNew();
         try {
             var dirPath = _ctx.ResolvePath(name, true);
-            Directory.CreateDirectory(dirPath);
+            _ctx.Storage.CreateDirectory(dirPath);
             _ctx.RegisterDirectory(dirPath);
             await PopulateDirectoryAsync(dirPath, spec, ct).ConfigureAwait(false);
             _ctx.Metrics.RecordTiming(Constants.Metrics.SimulateDirectoryDuration, sw.Elapsed);
@@ -435,10 +426,10 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateDirectoryTree(int depth, int filesPerDirectory, long fileSizeBytes, int dirsPerLevel = 2, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegative(filesPerDirectory, nameof(filesPerDirectory));
-        ArgumentHelpers.ThrowIfNegative(fileSizeBytes, nameof(fileSizeBytes));
-        ArgumentHelpers.ThrowIfNegative(dirsPerLevel, nameof(dirsPerLevel));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegative(filesPerDirectory);
+        ArgumentHelpers.ThrowIfNegative(fileSizeBytes);
+        ArgumentHelpers.ThrowIfNegative(dirsPerLevel);
         var sw = Stopwatch.StartNew();
         try {
             var spec = BuildTreeSpec(depth, filesPerDirectory, fileSizeBytes, dirsPerLevel);
@@ -458,10 +449,10 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public Task<string> CreateDirectoryTreeAsync(int depth, int filesPerDirectory, long fileSizeBytes, int dirsPerLevel = 2, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegative(filesPerDirectory, nameof(filesPerDirectory));
-        ArgumentHelpers.ThrowIfNegative(fileSizeBytes, nameof(fileSizeBytes));
-        ArgumentHelpers.ThrowIfNegative(dirsPerLevel, nameof(dirsPerLevel));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegative(filesPerDirectory);
+        ArgumentHelpers.ThrowIfNegative(fileSizeBytes);
+        ArgumentHelpers.ThrowIfNegative(dirsPerLevel);
         var spec = BuildTreeSpec(depth, filesPerDirectory, fileSizeBytes, dirsPerLevel);
         return SimulateDirectoryAsync(spec, name, ct);
     }
@@ -473,15 +464,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string CreateXmlFile(int depth, int keysPerObject, string? name = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject, nameof(keysPerObject));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject);
         var sw = Stopwatch.StartNew();
         try {
             var xml = BuildXml(depth, keysPerObject, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(xml);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-            File.WriteAllText(path, xml, Encoding.UTF8);
+            _ctx.Storage.WriteAllText(path, xml, Encoding.UTF8);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateXmlFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateXmlFileSuccess);
@@ -498,19 +489,15 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public async Task<string> CreateXmlFileAsync(int depth, int keysPerObject, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNegative(depth, nameof(depth));
-        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject, nameof(keysPerObject));
+        ArgumentHelpers.ThrowIfNegative(depth);
+        ArgumentHelpers.ThrowIfNegativeOrZero(keysPerObject);
         var sw = Stopwatch.StartNew();
         try {
             var xml = BuildXml(depth, keysPerObject, GetRandom());
             var sizeBytes = Encoding.UTF8.GetByteCount(xml);
             _ctx.ValidateSize(sizeBytes);
             var path = _ctx.ResolvePath(name, false);
-#if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await File.WriteAllTextAsync(path, xml, Encoding.UTF8, ct);
-#else
-            await Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(path, xml, Encoding.UTF8); }, ct).ConfigureAwait(false);
-#endif
+            await _ctx.Storage.WriteAllTextAsync(path, xml, Encoding.UTF8, ct).ConfigureAwait(false);
             _ctx.RegisterFile(path, sizeBytes);
             _ctx.Metrics.RecordTiming(Constants.Metrics.CreateXmlFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.CreateXmlFileSuccess);
@@ -531,17 +518,18 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     public string ExtractZipFile(string zipPath, string? targetDirName = null)
     {
         _ctx.ThrowIfDisposed();
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipPath, nameof(zipPath));
-        if (!File.Exists(zipPath))
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipPath);
+        if (!_ctx.Storage.FileExists(zipPath))
             throw new FileNotFoundException($"Zip file not found: {zipPath}", zipPath);
 
         var sw = Stopwatch.StartNew();
         string? destDir = null;
         try {
-            // Pre-validate per-file sizes from zip metadata before writing any bytes
+            // Pre-validate per-file sizes from zip metadata before writing any bytes.
             if (_ctx.Options.MaxFileSizeBytes.HasValue) {
-                using var preCheck = ZipFile.OpenRead(zipPath);
-                foreach (var entry in preCheck.Entries.Where(e => e.Length > 0)) {
+                using var preCheck = _ctx.Storage.OpenRead(zipPath);
+                using var preArchive = new ZipArchive(preCheck, ZipArchiveMode.Read, leaveOpen: false);
+                foreach (var entry in preArchive.Entries.Where(e => e.Length > 0)) {
                     if (entry.Length > _ctx.Options.MaxFileSizeBytes.Value)
                         throw new InvalidOperationException(
                             $"Zip entry '{entry.FullName}' ({entry.Length:N0} bytes) exceeds the per-file size limit of {_ctx.Options.MaxFileSizeBytes.Value:N0} bytes.");
@@ -551,22 +539,36 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             var dirName = targetDirName
                           ?? (Path.GetFileNameWithoutExtension(zipPath) + "_" + Guid.NewGuid().ToString("N")[..8]);
             destDir = _ctx.ResolvePath(dirName, true);
-            Directory.CreateDirectory(destDir);
-            ZipFile.ExtractToDirectory(zipPath, destDir);
+            _ctx.Storage.CreateDirectory(destDir);
+
+            using var zipStream = _ctx.Storage.OpenRead(zipPath);
+            using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: false);
+            foreach (var entry in archive.Entries) {
+                var entryDest = Path.Combine(destDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
+                if (entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal)) {
+                    _ctx.Storage.CreateDirectory(entryDest);
+                    _ctx.RegisterDirectory(entryDest);
+                }
+                else {
+                    var parentDir = Path.GetDirectoryName(entryDest);
+                    if (!string.IsNullOrEmpty(parentDir))
+                        _ctx.Storage.CreateDirectory(parentDir);
+
+                    using var entryStream = entry.Open();
+                    using var destStream = _ctx.Storage.OpenCreate(entryDest);
+                    entryStream.CopyTo(destStream);
+                    _ctx.RegisterFile(entryDest, entry.Length);
+                }
+            }
 
             _ctx.RegisterDirectory(destDir);
-            foreach (var dir in Directory.EnumerateDirectories(destDir, "*", SearchOption.AllDirectories))
-                _ctx.RegisterDirectory(dir);
-            foreach (var file in Directory.EnumerateFiles(destDir, "*", SearchOption.AllDirectories))
-                _ctx.RegisterFile(file, new FileInfo(file).Length);
-
             _ctx.Metrics.RecordTiming(Constants.Metrics.ExtractZipFileDuration, sw.Elapsed);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.ExtractZipFileSuccess);
             return destDir;
         }
         catch (Exception ex) {
-            if (destDir != null && Directory.Exists(destDir)) {
-                try { Directory.Delete(destDir, true); } catch { /* best effort */ }
+            if (destDir != null && _ctx.Storage.DirectoryExists(destDir)) {
+                try { _ctx.Storage.DeleteDirectory(destDir); } catch { /* best effort */ }
             }
             _ctx.Metrics.RecordError(Constants.Metrics.ExtractZipFileDuration, ex);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.ExtractZipFileFailure);
@@ -592,7 +594,8 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             var fileName = GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + _ctx.Options.FileExtension;
             var filePath = _ctx.EnsureWithinSession(Path.Combine(dirPath, fileName));
             _ctx.ValidateSize(sizeBytes);
-            WriteRandomBytes(filePath, sizeBytes);
+            using var stream = _ctx.Storage.OpenCreate(filePath);
+            WriteRandomBytesToStream(stream, sizeBytes, GetRandom());
             _ctx.RegisterFile(filePath, sizeBytes);
         }
 
@@ -602,7 +605,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         foreach (var subSpec in spec.Subdirectories) {
             var subDirName = GenerateName(_ctx.Options.DirectoryPrefix, _ctx.Options.DirectorySuffix, _ctx.Options.DirectoryNamingStrategy);
             var subDirPath = _ctx.EnsureWithinSession(Path.Combine(dirPath, subDirName));
-            Directory.CreateDirectory(subDirPath);
+            _ctx.Storage.CreateDirectory(subDirPath);
             _ctx.RegisterDirectory(subDirPath);
             PopulateDirectory(subDirPath, subSpec);
         }
@@ -616,7 +619,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             var fileName = GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + _ctx.Options.FileExtension;
             var filePath = _ctx.EnsureWithinSession(Path.Combine(dirPath, fileName));
             _ctx.ValidateSize(sizeBytes);
-            await WriteRandomBytesAsync(filePath, sizeBytes, ct).ConfigureAwait(false);
+            await WriteRandomBytesToStorageAsync(filePath, sizeBytes, ct).ConfigureAwait(false);
             _ctx.RegisterFile(filePath, sizeBytes);
         }
 
@@ -627,37 +630,16 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             ct.ThrowIfCancellationRequested();
             var subDirName = GenerateName(_ctx.Options.DirectoryPrefix, _ctx.Options.DirectorySuffix, _ctx.Options.DirectoryNamingStrategy);
             var subDirPath = _ctx.EnsureWithinSession(Path.Combine(dirPath, subDirName));
-            Directory.CreateDirectory(subDirPath);
+            _ctx.Storage.CreateDirectory(subDirPath);
             _ctx.RegisterDirectory(subDirPath);
             await PopulateDirectoryAsync(subDirPath, subSpec, ct).ConfigureAwait(false);
         }
     }
 
-    private static void WriteRandomBytes(string path, long sizeBytes)
+    private async Task WriteRandomBytesToStorageAsync(string path, long sizeBytes, CancellationToken ct)
     {
         if (sizeBytes == 0) {
-            File.Create(path).Dispose();
-            return;
-        }
-
-        var bufferSize = (int)Math.Min(RandomChunkSize, sizeBytes);
-        var buffer = new byte[bufferSize];
-        var random = GetRandom();
-
-        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
-        var remaining = sizeBytes;
-        while (remaining > 0) {
-            var toWrite = (int)Math.Min(buffer.Length, remaining);
-            random.NextBytes(buffer);
-            fs.Write(buffer, 0, toWrite);
-            remaining -= toWrite;
-        }
-    }
-
-    private static async Task WriteRandomBytesAsync(string path, long sizeBytes, CancellationToken ct)
-    {
-        if (sizeBytes == 0) {
-            File.Create(path).Dispose();
+            _ctx.Storage.TouchFile(path);
             return;
         }
 
@@ -666,9 +648,9 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         var random = GetRandom();
 
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-        await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
+        await using var stream = _ctx.Storage.OpenCreate(path);
 #else
-        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize);
+        using var stream = _ctx.Storage.OpenCreate(path);
 #endif
         var remaining = sizeBytes;
         while (remaining > 0) {
@@ -676,9 +658,9 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             var toWrite = (int)Math.Min(buffer.Length, remaining);
             random.NextBytes(buffer);
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            await fs.WriteAsync(buffer.AsMemory(0, toWrite), ct);
+            await stream.WriteAsync(buffer.AsMemory(0, toWrite), ct);
 #else
-            await fs.WriteAsync(buffer, 0, toWrite, ct).ConfigureAwait(false);
+            await stream.WriteAsync(buffer, 0, toWrite, ct).ConfigureAwait(false);
 #endif
             remaining -= toWrite;
         }

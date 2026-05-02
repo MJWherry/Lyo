@@ -2,7 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Lyo.Common;
+namespace Lyo.Result;
 
 /// <summary>Guard/Ensure helpers that return Result instead of throwing. Use for validation flows.</summary>
 public static class Ensure
