@@ -2,16 +2,13 @@ using Lyo.Common.Records;
 
 namespace Lyo.IO.Temp.Models;
 
-/// <summary>
-/// Fluent builder for <see cref="TempDirectorySpec"/>.
-/// Obtain an instance via <see cref="TempDirectorySpec.Builder()"/>.
-/// </summary>
+/// <summary>Fluent builder for <see cref="TempDirectorySpec" />. Obtain an instance via <see cref="TempDirectorySpec.Builder()" />.</summary>
 public sealed class TempDirectorySpecBuilder
 {
+    private readonly List<TempDirectorySpec> _subdirectories = [];
     private int _fileCount;
     private long _fileSizeBytes;
     private Func<int, long>? _fileSizeSelector;
-    private readonly List<TempDirectorySpec> _subdirectories = [];
 
     internal TempDirectorySpecBuilder() { }
 
@@ -23,14 +20,10 @@ public sealed class TempDirectorySpecBuilder
         return this;
     }
 
-    /// <summary>Sets the number of files and uniform size using a <see cref="FileSizeUnitInfo"/> unit.</summary>
-    public TempDirectorySpecBuilder WithFiles(int count, FileSizeUnitInfo unit, double amount)
-        => WithFiles(count, unit.ConvertToBytes(amount));
+    /// <summary>Sets the number of files and uniform size using a <see cref="FileSizeUnitInfo" /> unit.</summary>
+    public TempDirectorySpecBuilder WithFiles(int count, FileSizeUnitInfo unit, double amount) => WithFiles(count, unit.ConvertToBytes(amount));
 
-    /// <summary>
-    /// Sets a per-file size selector function. The function receives the 0-based file index
-    /// and returns the size in bytes. Overrides <c>WithFiles</c> size when set.
-    /// </summary>
+    /// <summary>Sets a per-file size selector function. The function receives the 0-based file index and returns the size in bytes. Overrides <c>WithFiles</c> size when set.</summary>
     public TempDirectorySpecBuilder WithFileSizeSelector(Func<int, long> selector)
     {
         _fileSizeSelector = selector;

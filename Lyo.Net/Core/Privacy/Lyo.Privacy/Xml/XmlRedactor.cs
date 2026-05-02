@@ -8,7 +8,6 @@ using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Internal;
 using Lyo.Privacy.Metrics;
-using Lyo.Privacy.Text;
 
 namespace Lyo.Privacy.Xml;
 

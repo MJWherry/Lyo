@@ -449,23 +449,23 @@
         if (MetricsStore == null)
             return;
 
-        var keyTags = new[] { (CacheConstants.Metrics.Tags.Key, _cacheKey) };
-        var tagTags = new[] { (CacheConstants.Metrics.Tags.Tag, _cacheTag) };
-        _hitSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.HitSuccess, keyTags);
-        _missSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.MissSuccess, keyTags);
-        _setSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.SetSuccess, keyTags);
-        _removeSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.RemoveSuccess, keyTags);
-        _removeByTagSuccess = MetricsStore.GetCounterValue(CacheConstants.Metrics.RemoveByTagSuccess, tagTags);
-        _hitDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.HitDuration, keyTags)?.Count ?? 0;
-        _hitDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.HitDuration, keyTags)?.Average ?? 0;
-        _missDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.MissDuration, keyTags)?.Count ?? 0;
-        _missDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.MissDuration, keyTags)?.Average ?? 0;
-        _setDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.SetDuration, keyTags)?.Count ?? 0;
-        _setDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.SetDuration, keyTags)?.Average ?? 0;
-        _removeDurationCount = MetricsStore.GetHistogram(CacheConstants.Metrics.RemoveDuration, keyTags)?.Count ?? 0;
-        _removeDurationAverageMs = MetricsStore.GetHistogram(CacheConstants.Metrics.RemoveDuration, keyTags)?.Average ?? 0;
-        _removeByTagItemsRemoved = Convert.ToInt64(MetricsStore.GetGaugeValue(CacheConstants.Metrics.RemoveByTagItemsRemoved, tagTags) ?? 0);
-        _cacheSizeGauge = MetricsStore.GetGaugeValue(CacheConstants.Metrics.CacheSize);
+        var keyTags = new[] { (Constants.Metrics.Tags.Key, _cacheKey) };
+        var tagTags = new[] { (Constants.Metrics.Tags.Tag, _cacheTag) };
+        _hitSuccess = MetricsStore.GetCounterValue(Constants.Metrics.HitSuccess, keyTags);
+        _missSuccess = MetricsStore.GetCounterValue(Constants.Metrics.MissSuccess, keyTags);
+        _setSuccess = MetricsStore.GetCounterValue(Constants.Metrics.SetSuccess, keyTags);
+        _removeSuccess = MetricsStore.GetCounterValue(Constants.Metrics.RemoveSuccess, keyTags);
+        _removeByTagSuccess = MetricsStore.GetCounterValue(Constants.Metrics.RemoveByTagSuccess, tagTags);
+        _hitDurationCount = MetricsStore.GetHistogram(Constants.Metrics.HitDuration, keyTags)?.Count ?? 0;
+        _hitDurationAverageMs = MetricsStore.GetHistogram(Constants.Metrics.HitDuration, keyTags)?.Average ?? 0;
+        _missDurationCount = MetricsStore.GetHistogram(Constants.Metrics.MissDuration, keyTags)?.Count ?? 0;
+        _missDurationAverageMs = MetricsStore.GetHistogram(Constants.Metrics.MissDuration, keyTags)?.Average ?? 0;
+        _setDurationCount = MetricsStore.GetHistogram(Constants.Metrics.SetDuration, keyTags)?.Count ?? 0;
+        _setDurationAverageMs = MetricsStore.GetHistogram(Constants.Metrics.SetDuration, keyTags)?.Average ?? 0;
+        _removeDurationCount = MetricsStore.GetHistogram(Constants.Metrics.RemoveDuration, keyTags)?.Count ?? 0;
+        _removeDurationAverageMs = MetricsStore.GetHistogram(Constants.Metrics.RemoveDuration, keyTags)?.Average ?? 0;
+        _removeByTagItemsRemoved = Convert.ToInt64(MetricsStore.GetGaugeValue(Constants.Metrics.RemoveByTagItemsRemoved, tagTags) ?? 0);
+        _cacheSizeGauge = MetricsStore.GetGaugeValue(Constants.Metrics.CacheSize);
         _lastMetricsRefresh = DateTime.UtcNow;
     }
 

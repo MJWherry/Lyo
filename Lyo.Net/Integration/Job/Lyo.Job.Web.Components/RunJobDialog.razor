@@ -30,7 +30,11 @@
                 </MudItem>
 
                 @if (_paramModels.Any()) {
-                    <MudItem xs="12"><MudDivider/><MudText Typo="Typo.h6" Class="mt-2 mb-2">Parameters</MudText></MudItem>
+                    <MudItem xs="12">
+                        <MudDivider/>
+                        <MudText Typo="Typo.h6" Class="mt-2 mb-2">Parameters</MudText>
+                    </MudItem>
+
                     @foreach (var p in _paramModels) {
                         <MudItem xs="12">
                             <MudPaper Class="pa-4" Elevation="1">
@@ -85,11 +89,21 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    [Parameter, EditorRequired] public IEnumerable<JobDefinitionRes>? JobDefinitions { get; set; }
-    [Parameter] public JobDefinitionRes? SelectedJobDefinition { get; set; }
-    [Parameter, EditorRequired] public string RunRoute { get; set; } = "";
-    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public IEnumerable<JobDefinitionRes>? JobDefinitions { get; set; }
+
+    [Parameter]
+    public JobDefinitionRes? SelectedJobDefinition { get; set; }
+
+    [Parameter][EditorRequired]
+    public string RunRoute { get; set; } = "";
+
+    [Inject]
+    IApiClient ApiClient { get; set; } = null!;
 
     private JobDefinitionRes? _selectedDef;
     private string _createdBy = "gateway";
@@ -99,28 +113,36 @@
     private class ParamModel
     {
         public JobParameterRes Param { get; init; } = null!;
+
         public string StringValue { get; set; } = "";
+
         public bool BoolValue { get; set; }
+
         public int? IntValue { get; set; }
+
         public long? LongValue { get; set; }
+
         public DateTime? DateTimeValue { get; set; }
+
         public bool Encrypted { get; set; }
 
-        public bool IsEmpty() => Param.Type switch {
-            JobParameterType.Bool => false,
-            JobParameterType.Int => !IntValue.HasValue,
-            JobParameterType.Long => !LongValue.HasValue,
-            JobParameterType.DateTime => !DateTimeValue.HasValue,
-            _ => string.IsNullOrWhiteSpace(StringValue)
-        };
+        public bool IsEmpty()
+            => Param.Type switch {
+                JobParameterType.Bool => false,
+                JobParameterType.Int => !IntValue.HasValue,
+                JobParameterType.Long => !LongValue.HasValue,
+                JobParameterType.DateTime => !DateTimeValue.HasValue,
+                var _ => string.IsNullOrWhiteSpace(StringValue)
+            };
 
-        public string? ValueAsString() => Param.Type switch {
-            JobParameterType.Bool => BoolValue.ToString().ToLower(),
-            JobParameterType.Int => IntValue?.ToString(),
-            JobParameterType.Long => LongValue?.ToString(),
-            JobParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
-            _ => StringValue
-        };
+        public string? ValueAsString()
+            => Param.Type switch {
+                JobParameterType.Bool => BoolValue.ToString().ToLower(),
+                JobParameterType.Int => IntValue?.ToString(),
+                JobParameterType.Long => LongValue?.ToString(),
+                JobParameterType.DateTime => DateTimeValue?.ToString("yyyy-MM-ddTHH:mm:ss"),
+                var _ => StringValue
+            };
     }
 
     protected override void OnInitialized()
@@ -132,33 +154,36 @@
     private void OnDefinitionChanged(JobDefinitionRes? def)
     {
         _selectedDef = def;
-        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel {
-            Param = p,
-            StringValue = p.Value ?? ""
-        }).ToList();
+        _paramModels = (def?.JobParameters ?? []).Select(p => new ParamModel { Param = p, StringValue = p.Value ?? "" }).ToList();
     }
 
     private bool IsValid()
     {
-        if (_selectedDef == null || string.IsNullOrWhiteSpace(_createdBy)) return false;
+        if (_selectedDef == null || string.IsNullOrWhiteSpace(_createdBy))
+            return false;
+
         return _paramModels.Where(p => p.Param.Required).All(p => !p.IsEmpty());
     }
 
     private async Task Submit()
     {
-        if (_selectedDef == null) return;
+        if (_selectedDef == null)
+            return;
+
         try {
             var req = new JobRunReq {
                 JobDefinitionId = _selectedDef.Id,
                 CreatedBy = _createdBy,
                 AllowTriggers = _allowTriggers,
                 JobRunParameters = _paramModels.Select(p => new JobRunParameterReq {
-                    Key = p.Param.Key,
-                    Type = p.Param.Type,
-                    Value = p.ValueAsString(),
-                    Description = p.Param.Description
-                }).ToList()
+                        Key = p.Param.Key,
+                        Type = p.Param.Type,
+                        Value = p.ValueAsString(),
+                        Description = p.Param.Description
+                    })
+                    .ToList()
             };
+
             var result = await ApiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(RunRoute + "/Create", req);
             Snackbar.Add($"Job run {result?.Data?.Id.Truncated() ?? "?"} created", Severity.Success);
             MudDialog.Close(DialogResult.Ok(result));
@@ -167,4 +192,5 @@
             Snackbar.Add($"Failed: {ex.Message}", Severity.Error);
         }
     }
+
 }

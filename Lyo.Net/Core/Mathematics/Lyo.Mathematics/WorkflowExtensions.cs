@@ -9,7 +9,6 @@ public static class MathematicsWorkflowExtensions
     public static double[] ToMagnitudes(this ComplexNumber[] samples)
     {
         ArgumentHelpers.ThrowIfNull(samples);
-
         var magnitudes = new double[samples.Length];
         for (var i = 0; i < samples.Length; i++)
             magnitudes[i] = samples[i].Magnitude;

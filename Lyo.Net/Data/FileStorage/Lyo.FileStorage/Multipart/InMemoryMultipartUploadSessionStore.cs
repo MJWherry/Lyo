@@ -11,7 +11,6 @@ public sealed class InMemoryMultipartUploadSessionStore : IMultipartUploadSessio
     public Task CreateAsync(MultipartUploadSessionRecord session, CancellationToken ct = default)
     {
         OperationHelpers.ThrowIf(!_sessions.TryAdd(session.SessionId, session), $"Session {session.SessionId} already exists.");
-
         return Task.CompletedTask;
     }
 

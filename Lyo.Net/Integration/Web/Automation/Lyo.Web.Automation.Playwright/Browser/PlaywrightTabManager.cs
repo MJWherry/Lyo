@@ -75,7 +75,6 @@ public sealed class PlaywrightTabManager
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey);
         ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
-
         if (string.IsNullOrWhiteSpace(displayName))
             _displayNames.Remove(id);
         else
@@ -91,7 +90,7 @@ public sealed class PlaywrightTabManager
                 var ctx = _browser.GetRequiredContext();
                 var pages = ctx.Pages;
                 OperationHelpers.ThrowIf(pages.Count == 0, "No pages available.");
-                ArgumentHelpers.ThrowIfNotInRange(index, 0, pages.Count - 1, nameof(index));
+                ArgumentHelpers.ThrowIfNotInRange(index, 0, pages.Count - 1);
                 _browser.SetActivePage(pages[index]);
             });
 
@@ -107,7 +106,6 @@ public sealed class PlaywrightTabManager
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey);
         ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
-
         RunTabOp(
             "switch_key", () => {
                 foreach (var p in _browser.GetRequiredContext().Pages) {

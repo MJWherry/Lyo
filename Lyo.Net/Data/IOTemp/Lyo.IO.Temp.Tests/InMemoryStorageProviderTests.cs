@@ -6,10 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.IO.Temp.Tests;
 
-/// <summary>
-/// Tests for <see cref="InMemoryIOTempStorageProvider"/>, including direct provider operations,
-/// full session integration, and DI registration.
-/// </summary>
+/// <summary>Tests for <see cref="InMemoryIOTempStorageProvider" />, including direct provider operations, full session integration, and DI registration.</summary>
 public sealed class InMemoryStorageProviderTests
 {
     private static InMemoryIOTempStorageProvider NewProvider() => new();
@@ -17,16 +14,13 @@ public sealed class InMemoryStorageProviderTests
     private static IOTempSession NewSession(InMemoryIOTempStorageProvider storage)
     {
         var options = new IOTempSessionOptions { RootDirectory = storage.RootPath };
-        return new IOTempSession(options, storageProvider: storage);
+        return new(options, storageProvider: storage);
     }
 
     private static IOTempService NewService(InMemoryIOTempStorageProvider storage)
     {
-        var options = new IOTempServiceOptions {
-            TempRoot = "/mem-svc",
-            DirectoryName = Guid.NewGuid().ToString("N")
-        };
-        return new IOTempService(options, storageProvider: storage);
+        var options = new IOTempServiceOptions { TempRoot = "/mem-svc", DirectoryName = Guid.NewGuid().ToString("N") };
+        return new(options, storageProvider: storage);
     }
 
     private static string ReadAllText(InMemoryIOTempStorageProvider storage, string path)
@@ -43,7 +37,7 @@ public sealed class InMemoryStorageProviderTests
         stream.CopyTo(ms);
         return ms.ToArray();
     }
-    
+
     [Fact]
     public void RootPath_is_unique_per_instance()
     {
@@ -114,7 +108,6 @@ public sealed class InMemoryStorageProviderTests
         storage.WriteAllText(dir + "/file2.txt", "b", Encoding.UTF8);
         storage.CreateDirectory(dir + "/subdir");
         storage.WriteAllText(dir + "/subdir/deep.txt", "c", Encoding.UTF8); // should NOT appear
-
         var entries = storage.EnumerateEntries(dir).ToList();
         Assert.Equal(3, entries.Count); // file1, file2, subdir
         Assert.Contains(entries, e => !e.IsDirectory && e.FullPath.EndsWith("file1.txt"));
@@ -269,15 +262,15 @@ public sealed class InMemoryStorageProviderTests
         var created = storage.GetFileCreationTimeUtc(path);
         Assert.True(created >= before && created <= DateTimeOffset.UtcNow.AddSeconds(1));
     }
-    
+
     [Fact]
     public void OpenCreate_stream_commits_bytes_on_dispose()
     {
         var storage = NewProvider();
         var path = storage.RootPath + "/streamed.bin";
-        using (var stream = storage.OpenCreate(path)) {
+        using (var stream = storage.OpenCreate(path))
             stream.Write(new byte[] { 10, 20, 30 }, 0, 3);
-        }
+
         Assert.Equal(new byte[] { 10, 20, 30 }, ReadAllBytes(storage, path));
     }
 
@@ -287,9 +280,9 @@ public sealed class InMemoryStorageProviderTests
         var storage = NewProvider();
         var path = storage.RootPath + "/replace.bin";
         storage.WriteAllBytes(path, new byte[] { 1, 2, 3, 4, 5 });
-        using (var stream = storage.OpenCreate(path)) {
+        using (var stream = storage.OpenCreate(path))
             stream.Write(new byte[] { 99 }, 0, 1);
-        }
+
         Assert.Equal(new byte[] { 99 }, ReadAllBytes(storage, path));
     }
 
@@ -299,9 +292,9 @@ public sealed class InMemoryStorageProviderTests
         var storage = NewProvider();
         var path = storage.RootPath + "/append.bin";
         storage.WriteAllBytes(path, new byte[] { 1, 2 });
-        using (var stream = storage.OpenAppend(path)) {
+        using (var stream = storage.OpenAppend(path))
             stream.Write(new byte[] { 3, 4 }, 0, 2);
-        }
+
         Assert.Equal(new byte[] { 1, 2, 3, 4 }, ReadAllBytes(storage, path));
     }
 
@@ -372,7 +365,7 @@ public sealed class InMemoryStorageProviderTests
         await storage.CopyFileAsync(src, dst, TestContext.Current.CancellationToken);
         Assert.Equal("hello", ReadAllText(storage, dst));
     }
-    
+
     [Fact]
     public void Session_InMemory_CreateFile_from_text_is_tracked()
     {
@@ -497,7 +490,6 @@ public sealed class InMemoryStorageProviderTests
         // pre-seed an external file in the same provider
         var external = storage.RootPath + "/external.txt";
         storage.WriteAllText(external, "external content", Encoding.UTF8);
-
         var dest = session.CopyFrom(external);
         Assert.Contains(dest, session.Files);
         Assert.Equal("external content", ReadAllText(storage, dest));
@@ -511,7 +503,6 @@ public sealed class InMemoryStorageProviderTests
         using var session = NewSession(storage);
         var external = storage.RootPath + "/tomove.txt";
         storage.WriteAllText(external, "move me", Encoding.UTF8);
-
         var dest = session.MoveFrom(external);
         Assert.Contains(dest, session.Files);
         Assert.Equal("move me", ReadAllText(storage, dest));
@@ -583,9 +574,10 @@ public sealed class InMemoryStorageProviderTests
             sessionDir = session.SessionDirectory;
             session.CreateFile("content");
         }
+
         Assert.False(storage.DirectoryExists(sessionDir));
     }
-    
+
     [Fact]
     public void Session_InMemory_Generator_CreateRandomFile_is_tracked_with_correct_size()
     {
@@ -669,11 +661,7 @@ public sealed class InMemoryStorageProviderTests
     {
         var storage = NewProvider();
         using var session = NewSession(storage);
-        var spec = new TempDirectorySpec {
-            FileCount = 2,
-            FileSizeBytes = 32,
-            Subdirectories = [TempDirectorySpec.Flat(1, 16)]
-        };
+        var spec = new TempDirectorySpec { FileCount = 2, FileSizeBytes = 32, Subdirectories = [TempDirectorySpec.Flat(1, 16)] };
         var dir = session.Generator.SimulateDirectory(spec);
         Assert.True(storage.DirectoryExists(dir));
         // 2 root files + 1 sub file = 3 tracked files
@@ -710,6 +698,7 @@ public sealed class InMemoryStorageProviderTests
             serviceDir = service.ServiceDirectory;
             service.CreateSession().Dispose();
         }
+
         Assert.False(storage.DirectoryExists(serviceDir));
     }
 
@@ -724,7 +713,7 @@ public sealed class InMemoryStorageProviderTests
         service.Cleanup(); // age=0 → all non-active files eligible
         Assert.False(storage.FileExists(path));
     }
-    
+
     [Fact]
     public void AddIOTempService_uses_registered_IIOTempStorageProvider()
     {

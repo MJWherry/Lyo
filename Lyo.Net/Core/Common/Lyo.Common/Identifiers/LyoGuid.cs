@@ -33,7 +33,6 @@ public static class LyoGuid
     public static Guid CreateV3(Guid ns, string name)
     {
         ArgumentHelpers.ThrowIfNull(name);
-
         var input = BuildNameInput(ns, name);
         byte[] hash;
         using (var md5 = MD5.Create())
@@ -46,7 +45,6 @@ public static class LyoGuid
     public static Guid CreateV5(Guid ns, string name)
     {
         ArgumentHelpers.ThrowIfNull(name);
-
         var input = BuildNameInput(ns, name);
         byte[] hash;
         using (var sha1 = SHA1.Create())

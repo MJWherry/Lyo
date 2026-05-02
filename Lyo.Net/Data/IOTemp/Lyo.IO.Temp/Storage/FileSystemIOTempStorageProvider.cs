@@ -3,9 +3,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.IO.Temp.Storage;
 
-/// <summary>
-/// Default <see cref="IIOTempStorageProvider"/> implementation backed by <see cref="System.IO"/>.
-/// </summary>
+/// <summary>Default <see cref="IIOTempStorageProvider" /> implementation backed by <see cref="System.IO" />.</summary>
 // ReSharper disable once InconsistentNaming
 public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 {
@@ -16,7 +14,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
     }
 
     public string RootPath { get; }
-    
+
     public bool DirectoryExists(string path) => Directory.Exists(path);
 
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
@@ -42,11 +40,11 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 
     public void EnsureDirectoryAccessible(string path)
     {
-        ExceptionThrower.ThrowIfDirectoryNotAccessible(path, nameof(path));
-        var probePath = System.IO.Path.Combine(path, $".rw-check-{Guid.NewGuid():N}.tmp");
+        ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
+        var probePath = Path.Combine(path, $".rw-check-{Guid.NewGuid():N}.tmp");
         try {
             File.WriteAllText(probePath, "rw");
-            ExceptionThrower.ThrowIfFileNotAccessible(probePath, nameof(probePath));
+            ExceptionThrower.ThrowIfFileNotAccessible(probePath);
         }
         finally {
             if (File.Exists(probePath))
@@ -90,14 +88,18 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 
     public long GetFileLength(string path) => new FileInfo(path).Length;
 
-    public DateTimeOffset GetFileCreationTimeUtc(string path) => new DateTimeOffset(new FileInfo(path).CreationTimeUtc, TimeSpan.Zero);
-    
+    public DateTimeOffset GetFileCreationTimeUtc(string path) => new(new FileInfo(path).CreationTimeUtc, TimeSpan.Zero);
+
     public Task WriteAllBytesAsync(string path, byte[] data, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         return File.WriteAllBytesAsync(path, data, ct);
 #else
-        return Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllBytes(path, data); }, ct);
+        return Task.Run(
+            () => {
+                ct.ThrowIfCancellationRequested();
+                File.WriteAllBytes(path, data);
+            }, ct);
 #endif
     }
 
@@ -106,7 +108,11 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         return File.WriteAllTextAsync(path, text, encoding, ct);
 #else
-        return Task.Run(() => { ct.ThrowIfCancellationRequested(); File.WriteAllText(path, text, encoding); }, ct);
+        return Task.Run(
+            () => {
+                ct.ThrowIfCancellationRequested();
+                File.WriteAllText(path, text, encoding);
+            }, ct);
 #endif
     }
 
@@ -115,7 +121,11 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         return File.AppendAllTextAsync(path, text, encoding, ct);
 #else
-        return Task.Run(() => { ct.ThrowIfCancellationRequested(); File.AppendAllText(path, text, encoding); }, ct);
+        return Task.Run(
+            () => {
+                ct.ThrowIfCancellationRequested();
+                File.AppendAllText(path, text, encoding);
+            }, ct);
 #endif
     }
 

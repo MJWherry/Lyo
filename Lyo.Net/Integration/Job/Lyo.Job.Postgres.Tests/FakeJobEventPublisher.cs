@@ -3,17 +3,14 @@ using Lyo.Job.Models.Events;
 namespace Lyo.Job.Postgres.Tests;
 
 /// <summary>
-/// In-memory <see cref="IJobEventPublisher"/> for integration tests.
-/// Captures every publish call so tests can assert what was sent, and exposes
-/// <see cref="SetConnected"/> to simulate a disconnected transport.
+/// In-memory <see cref="IJobEventPublisher" /> for integration tests. Captures every publish call so tests can assert what was sent, and exposes <see cref="SetConnected" />
+/// to simulate a disconnected transport.
 /// </summary>
 public sealed class FakeJobEventPublisher : IJobEventPublisher
 {
     private bool _connected = true;
 
     public List<(string Event, Guid RunId)> Published { get; } = [];
-
-    public void SetConnected(bool value) => _connected = value;
 
     public bool IsConnected() => _connected;
 
@@ -49,12 +46,11 @@ public sealed class FakeJobEventPublisher : IJobEventPublisher
         return Task.CompletedTask;
     }
 
-    public Task SubscribeToDefinitionUpdatesAsync(string subscriberQueueName, Func<byte[], Task<bool>> handler, CancellationToken ct = default)
-        => Task.CompletedTask;
+    public Task SubscribeToDefinitionUpdatesAsync(string subscriberQueueName, Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default)
-        => Task.CompletedTask;
+    public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default)
-        => Task.CompletedTask;
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default) => Task.CompletedTask;
+
+    public void SetConnected(bool value) => _connected = value;
 }

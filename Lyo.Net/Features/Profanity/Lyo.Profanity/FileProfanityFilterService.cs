@@ -435,7 +435,6 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
         using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
         using var sr = new StreamReader(fs, encoding);
         return await sr.ReadToEndAsync().ConfigureAwait(false);
-
 #endif
     }
 

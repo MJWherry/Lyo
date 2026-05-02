@@ -1,4 +1,5 @@
 using Lyo.Compression;
+using Lyo.Encryption;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,10 +32,7 @@ internal static class FusionCacheRegistration
 
         svc.AddSingleton<ICachePayloadCodec>(sp =>
 #if NET10_0_OR_GREATER
-            new CachePayloadCodec(
-                sp.GetRequiredService<CacheOptions>(),
-                sp.GetRequiredService<ICompressionService>(),
-                sp.GetService<Encryption.IEncryptionService>())
+                new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>())
 #else
                 new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>())
 #endif

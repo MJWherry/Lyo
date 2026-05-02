@@ -30,9 +30,8 @@ namespace Lyo.Tools.Postgres;
 public sealed record MigrationStatus(string Name, bool IsApplied);
 
 /// <summary>
-/// Runs EF Core migrations on demand for any postgres context.
-/// Reads the connection string from ConnectionStringProvider at call time,
-/// so changes made via the menu take effect immediately.
+/// Runs EF Core migrations on demand for any postgres context. Reads the connection string from ConnectionStringProvider at call time, so changes made via the menu take
+/// effect immediately.
 /// </summary>
 public sealed class MigrationRunner
 {
@@ -45,27 +44,47 @@ public sealed class MigrationRunner
         _logger = logger;
     }
 
-    public Task RunAuditAsync(CancellationToken ct = default)             => MigrateLatestAsync<AuditDbContext>("audit", ct);
-    public Task RunChangeTrackerAsync(CancellationToken ct = default)     => MigrateLatestAsync<ChangeTrackerDbContext>("change_tracker", ct);
-    public Task RunComicAsync(CancellationToken ct = default)             => MigrateLatestAsync<ComicDbContext>("comic", ct);
-    public Task RunCommentAsync(CancellationToken ct = default)           => MigrateLatestAsync<CommentDbContext>("comment", ct);
-    public Task RunConfigAsync(CancellationToken ct = default)            => MigrateLatestAsync<ConfigDbContext>("config", ct);
-    public Task RunContactUsAsync(CancellationToken ct = default)         => MigrateLatestAsync<ContactUsDbContext>("contact", ct);
-    public Task RunDiscordAsync(CancellationToken ct = default)           => MigrateLatestAsync<DiscordDbContext>("discord", ct);
-    public Task RunEmailAsync(CancellationToken ct = default)             => MigrateLatestAsync<EmailDbContext>("email", ct);
-    public Task RunEndatoAsync(CancellationToken ct = default)            => MigrateLatestAsync<EndatoDbContext>("endato", ct);
-    public Task RunFavoriteAsync(CancellationToken ct = default)          => MigrateLatestAsync<FavoriteDbContext>("favorite", ct);
+    public Task RunAuditAsync(CancellationToken ct = default) => MigrateLatestAsync<AuditDbContext>("audit", ct);
+
+    public Task RunChangeTrackerAsync(CancellationToken ct = default) => MigrateLatestAsync<ChangeTrackerDbContext>("change_tracker", ct);
+
+    public Task RunComicAsync(CancellationToken ct = default) => MigrateLatestAsync<ComicDbContext>("comic", ct);
+
+    public Task RunCommentAsync(CancellationToken ct = default) => MigrateLatestAsync<CommentDbContext>("comment", ct);
+
+    public Task RunConfigAsync(CancellationToken ct = default) => MigrateLatestAsync<ConfigDbContext>("config", ct);
+
+    public Task RunContactUsAsync(CancellationToken ct = default) => MigrateLatestAsync<ContactUsDbContext>("contact", ct);
+
+    public Task RunDiscordAsync(CancellationToken ct = default) => MigrateLatestAsync<DiscordDbContext>("discord", ct);
+
+    public Task RunEmailAsync(CancellationToken ct = default) => MigrateLatestAsync<EmailDbContext>("email", ct);
+
+    public Task RunEndatoAsync(CancellationToken ct = default) => MigrateLatestAsync<EndatoDbContext>("endato", ct);
+
+    public Task RunFavoriteAsync(CancellationToken ct = default) => MigrateLatestAsync<FavoriteDbContext>("favorite", ct);
+
     public Task RunFileMetadataStoreAsync(CancellationToken ct = default) => MigrateLatestAsync<FileMetadataStoreDbContext>("filestore", ct);
-    public Task RunHomeInventoryAsync(CancellationToken ct = default)     => MigrateLatestAsync<HomeInventoryDbContext>("home_inventory", ct);
-    public Task RunJobAsync(CancellationToken ct = default)               => MigrateLatestAsync<JobContext>("job", ct);
-    public Task RunNoteAsync(CancellationToken ct = default)              => MigrateLatestAsync<NoteDbContext>("note", ct);
-    public Task RunPeopleAsync(CancellationToken ct = default)            => MigrateLatestAsync<PeopleDbContext>("people", ct);
-    public Task RunRatingAsync(CancellationToken ct = default)            => MigrateLatestAsync<RatingDbContext>("rating", ct);
-    public Task RunReportingAsync(CancellationToken ct = default)         => MigrateLatestAsync<ReportingDbContext>("report", ct);
-    public Task RunShortUrlAsync(CancellationToken ct = default)          => MigrateLatestAsync<ShortUrlDbContext>("url", ct);
-    public Task RunSmsAsync(CancellationToken ct = default)               => MigrateLatestAsync<SmsDbContext>("sms", ct);
-    public Task RunSmsTwilioAsync(CancellationToken ct = default)         => MigrateLatestAsync<TwilioSmsDbContext>("sms", ct);
-    public Task RunTagAsync(CancellationToken ct = default)               => MigrateLatestAsync<TagDbContext>("tag", ct);
+
+    public Task RunHomeInventoryAsync(CancellationToken ct = default) => MigrateLatestAsync<HomeInventoryDbContext>("home_inventory", ct);
+
+    public Task RunJobAsync(CancellationToken ct = default) => MigrateLatestAsync<JobContext>("job", ct);
+
+    public Task RunNoteAsync(CancellationToken ct = default) => MigrateLatestAsync<NoteDbContext>("note", ct);
+
+    public Task RunPeopleAsync(CancellationToken ct = default) => MigrateLatestAsync<PeopleDbContext>("people", ct);
+
+    public Task RunRatingAsync(CancellationToken ct = default) => MigrateLatestAsync<RatingDbContext>("rating", ct);
+
+    public Task RunReportingAsync(CancellationToken ct = default) => MigrateLatestAsync<ReportingDbContext>("report", ct);
+
+    public Task RunShortUrlAsync(CancellationToken ct = default) => MigrateLatestAsync<ShortUrlDbContext>("url", ct);
+
+    public Task RunSmsAsync(CancellationToken ct = default) => MigrateLatestAsync<SmsDbContext>("sms", ct);
+
+    public Task RunSmsTwilioAsync(CancellationToken ct = default) => MigrateLatestAsync<TwilioSmsDbContext>("sms", ct);
+
+    public Task RunTagAsync(CancellationToken ct = default) => MigrateLatestAsync<TagDbContext>("tag", ct);
 
     public async Task RunAllAsync(CancellationToken ct = default)
     {
@@ -91,7 +110,7 @@ public sealed class MigrationRunner
         await RunSmsTwilioAsync(ct);
         await RunTagAsync(ct);
     }
-    
+
     /// <summary>Applies all pending migrations for the given context to the latest version.</summary>
     public async Task MigrateLatestAsync<TContext>(string schema, CancellationToken ct)
         where TContext : DbContext
@@ -109,10 +128,7 @@ public sealed class MigrationRunner
         }
     }
 
-    /// <summary>
-    /// Migrates to a specific target migration (can be older than current to roll back).
-    /// Pass "0" or Migration.InitialDatabase to roll back all migrations.
-    /// </summary>
+    /// <summary>Migrates to a specific target migration (can be older than current to roll back). Pass "0" or Migration.InitialDatabase to roll back all migrations.</summary>
     public async Task MigrateToAsync<TContext>(string schema, string targetMigration, CancellationToken ct)
         where TContext : DbContext
     {
@@ -135,7 +151,7 @@ public sealed class MigrationRunner
         where TContext : DbContext
     {
         await using var context = CreateContext<TContext>(schema);
-        var all     = context.Database.GetMigrations().ToList();
+        var all = context.Database.GetMigrations().ToList();
         var applied = (await context.Database.GetAppliedMigrationsAsync(ct)).ToHashSet(StringComparer.Ordinal);
         return all.Select(m => new MigrationStatus(m, applied.Contains(m))).ToList();
     }
@@ -149,12 +165,11 @@ public sealed class MigrationRunner
         return applied.LastOrDefault();
     }
 
-    private TContext CreateContext<TContext>(string schema) where TContext : DbContext
+    private TContext CreateContext<TContext>(string schema)
+        where TContext : DbContext
     {
         var connStr = _connStr.GetOrThrow();
-        var options = new DbContextOptionsBuilder<TContext>()
-            .UseNpgsql(connStr, n => n.MigrationsHistoryTable("__EFMigrationsHistory", schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<TContext>().UseNpgsql(connStr, n => n.MigrationsHistoryTable("__EFMigrationsHistory", schema)).Options;
         return (TContext)Activator.CreateInstance(typeof(TContext), options)!;
     }
 

@@ -7,10 +7,15 @@ namespace Lyo.Privacy.Abstractions;
 
 /// <summary>Sanitised text plus per-kind counts. Does not echo discovered secrets in <see cref="ToString" />.</summary>
 /// <param name="InputUtf16Length">UTF-16 code units in the input to the redactor (<c>null</c> when input was <c>null</c>).</param>
-/// <param name="OutputUtf16Length">UTF-16 code units in <see cref="Text"/> (<c>null</c> when <see cref="Text"/> is <c>null</c>).</param>
+/// <param name="OutputUtf16Length">UTF-16 code units in <see cref="Text" /> (<c>null</c> when <see cref="Text" /> is <c>null</c>).</param>
 /// <param name="PolicyName">Same policy name supplied to the redactor policy / JSON options, when any.</param>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public sealed record RedactionResult(string? Text, IReadOnlyDictionary<RedactionKind, int> CountsByKind, int? InputUtf16Length = null, int? OutputUtf16Length = null, string? PolicyName = null)
+public sealed record RedactionResult(
+    string? Text,
+    IReadOnlyDictionary<RedactionKind, int> CountsByKind,
+    int? InputUtf16Length = null,
+    int? OutputUtf16Length = null,
+    string? PolicyName = null)
 {
     public int TotalRuns => CountsByKind.Values.Sum();
 

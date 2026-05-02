@@ -199,7 +199,7 @@ public class S3FileStorageService : FileStorageServiceBase
         var meta = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         var expirationTime = expiration ?? TimeSpan.FromHours(1);
-        ArgumentHelpers.ThrowIfNotInRange(expirationTime, TimeSpan.Zero, TimeSpan.FromDays(7), nameof(expirationTime));
+        ArgumentHelpers.ThrowIfNotInRange(expirationTime, TimeSpan.Zero, TimeSpan.FromDays(7));
         var objectKey = await FindObjectKeyAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
         if (objectKey == null) {
             Logger.LogWarning("File {FileId} not found in S3, cannot generate pre-signed URL", fileId);

@@ -1,5 +1,3 @@
-@using Lyo.Job.Web.Components
-@using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 
 <JobManagement BaseRoute="@_baseRoute" StatisticsRoute="@_statsRoute"/>
@@ -10,10 +8,9 @@
 
     protected override void OnInitialized()
     {
-        var baseUrl = (Configuration["JobDashboard:BaseApiUrl"]
-                    ?? Configuration["ApiClient:BaseUrl"]
-                    ?? "http://localhost:5251").TrimEnd('/');
+        var baseUrl = (Configuration["JobDashboard:BaseApiUrl"] ?? Configuration["ApiClient:BaseUrl"] ?? "http://localhost:5251").TrimEnd('/');
         _baseRoute = $"{baseUrl}/Job";
         _statsRoute = Configuration["JobDashboard:StatisticsApiUrl"];
     }
+
 }

@@ -2,9 +2,6 @@ using System.Collections.Concurrent;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
-using Lyo.Common;
-using Lyo.Job.Models;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -12,7 +9,6 @@ using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Lyo.Result;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Constants = Lyo.Job.Models.Constants;
 
 namespace Lyo.Job.Worker;
@@ -20,29 +16,25 @@ namespace Lyo.Job.Worker;
 /// <summary>
 /// Base class for all job workers. Handles the complete job lifecycle:
 /// <list type="number">
-///   <item>Receive a run ID from the worker queue.</item>
-///   <item>Fetch the full <see cref="JobRunRes"/> from the Job API.</item>
-///   <item>Mark the run as <c>Running</c> via <c>POST /Job/Run/{id}/Started</c>.</item>
-///   <item>Subscribe to cancellation signals for this worker type.</item>
-///   <item>Call the abstract <see cref="ExecuteAsync"/> with a rich context object.</item>
-///   <item>Catch unhandled exceptions and mark the run as <c>Failure</c>.</item>
-///   <item>Report results via <c>POST /Job/Run/{id}/Finished</c>.</item>
+/// <item>Receive a run ID from the worker queue.</item> <item>Fetch the full <see cref="JobRunRes" /> from the Job API.</item>
+/// <item>Mark the run as <c>Running</c> via <c>POST /Job/Run/{id}/Started</c>.</item> <item>Subscribe to cancellation signals for this worker type.</item>
+/// <item>Call the abstract <see cref="ExecuteAsync" /> with a rich context object.</item> <item>Catch unhandled exceptions and mark the run as <c>Failure</c>.</item>
+/// <item>Report results via <c>POST /Job/Run/{id}/Finished</c>.</item>
 /// </list>
-/// Subclasses only need to implement <see cref="ExecuteAsync"/>.
+/// Subclasses only need to implement <see cref="ExecuteAsync" />.
 /// </summary>
 public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
 {
-    private static readonly string[] RunIncludes =
-        ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
+    private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
+
+    private readonly string _apiBaseUrl;
 
     private readonly IApiClient _apiClient;
     private readonly IJobEventPublisher _eventPublisher;
-    private readonly string _apiBaseUrl;
 
     /// <summary>
-    /// Per-run cancellation sources, keyed by run ID. Populated when a run starts so that a
-    /// cancellation message from <see cref="IJobEventPublisher.SubscribeToRunCancellationsAsync"/>
-    /// can cancel the correct token.
+    /// Per-run cancellation sources, keyed by run ID. Populated when a run starts so that a cancellation message from
+    /// <see cref="IJobEventPublisher.SubscribeToRunCancellationsAsync" /> can cancel the correct token.
     /// </summary>
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellationSources = new();
 
@@ -56,9 +48,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
     /// <param name="apiClient">HTTP client used to call the Job API.</param>
     /// <param name="eventPublisher">Job event publisher used for cancellation subscription.</param>
     /// <param name="workerType">
-    /// Worker type identifier. Must match the <c>WorkerType</c> on the <see cref="JobDefinition"/> entities
-    /// this worker handles. Determines both the queue name (<c>job.run.{workerType}</c>) and the
-    /// cancellation subscription queue.
+    /// Worker type identifier. Must match the <c>WorkerType</c> on the <see cref="JobDefinition" /> entities this worker handles. Determines both the queue name
+    /// (<c>job.run.{workerType}</c>) and the cancellation subscription queue.
     /// </param>
     /// <param name="apiBaseUrl">Base URL of the Job API (e.g. <c>https://api.example.com</c>).</param>
     /// <param name="logger">Optional logger.</param>
@@ -106,10 +97,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
 
         // 2. Mark as Running.
         var include = string.Join("&include=", RunIncludes);
-        var startedRun = await _apiClient
-            .PostAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunStarted(runId)}?include={include}", ct: ct)
-            .ConfigureAwait(false);
-
+        var startedRun = await _apiClient.PostAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunStarted(runId)}?include={include}", ct: ct).ConfigureAwait(false);
         if (startedRun is null) {
             Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
             return ResultVoid.Failure("Failed to start run", "StartFailed");
@@ -118,13 +106,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         // 3. Create per-run linked CancellationTokenSource so cancellation signals can stop ExecuteAsync.
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _runCancellationSources[runId] = runCts;
-
         var results = new JobWorkerResultBuilder();
         var ctx = new JobWorkerContextImpl(startedRun, Logger, runCts.Token, results);
-
         using var heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var heartbeatTask = RunHeartbeatAsync(runId, heartbeatCts.Token);
-
         try {
             Logger.LogInformation("Executing job run {RunId}", runId);
             await ExecuteAsync(ctx).ConfigureAwait(false);
@@ -139,9 +124,13 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
             results.AddError(ex.Message);
         }
         finally {
-            _runCancellationSources.TryRemove(runId, out _);
+            _runCancellationSources.TryRemove(runId, out var _);
             await heartbeatCts.CancelAsync().ConfigureAwait(false);
-            try { await heartbeatTask.ConfigureAwait(false); } catch { /* heartbeat task already cancelled */ }
+            try {
+                await heartbeatTask.ConfigureAwait(false);
+            }
+            catch { /* heartbeat task already cancelled */
+            }
         }
 
         // 4. Report results.
@@ -149,10 +138,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         return ResultVoid.Success();
     }
 
-    /// <summary>
-    /// Implement this to perform the actual work. Use <paramref name="ctx"/> to read parameters,
-    /// add results, check the cancellation token, and log messages.
-    /// </summary>
+    /// <summary>Implement this to perform the actual work. Use <paramref name="ctx" /> to read parameters, add results, check the cancellation token, and log messages.</summary>
     protected abstract Task ExecuteAsync(IJobWorkerContext ctx);
 
     private async Task<JobRunRes?> FetchRunAsync(Guid runId, CancellationToken ct)
@@ -173,8 +159,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false)) {
             try {
                 var patch = PatchRequestBuilder.ForId(runId).SetProperty("LastHeartbeatUtc", DateTime.UtcNow).Build();
-                await _apiClient.PatchAsAsync<PatchRequest, object>(
-                    $"{_apiBaseUrl}/{Constants.Rest.Job.Runs}/{runId}", patch, ct: ct).ConfigureAwait(false);
+                await _apiClient.PatchAsAsync<PatchRequest, object>($"{_apiBaseUrl}/{Constants.Rest.Job.Runs}/{runId}", patch, ct: ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 break;
@@ -188,8 +173,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
     private async Task ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
     {
         try {
-            await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>(
-                    $"{_apiBaseUrl}/{Constants.Rest.Job.RunFinished(runId)}", results, ct: ct)
+            await _apiClient.PostAsAsync<IReadOnlyList<JobRunResultReq>, JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunFinished(runId)}", results, ct: ct)
                 .ConfigureAwait(false);
         }
         catch (Exception ex) {
@@ -207,15 +191,14 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         return Task.CompletedTask;
     }
 
-    private sealed class JobWorkerContextImpl(
-        JobRunRes run,
-        ILogger logger,
-        CancellationToken cancellationToken,
-        JobWorkerResultBuilder results) : IJobWorkerContext
+    private sealed class JobWorkerContextImpl(JobRunRes run, ILogger logger, CancellationToken cancellationToken, JobWorkerResultBuilder results) : IJobWorkerContext
     {
         public JobRunRes Run { get; } = run;
+
         public ILogger Logger { get; } = logger;
+
         public CancellationToken CancellationToken { get; } = cancellationToken;
+
         public JobWorkerResultBuilder Results { get; } = results;
     }
 }

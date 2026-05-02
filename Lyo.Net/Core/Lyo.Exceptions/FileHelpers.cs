@@ -8,8 +8,7 @@ namespace Lyo.Exceptions;
 
 /// <summary>
 /// Helper methods for file name and path segment validation (e.g. multipart uploads). For directory/file existence, use <see cref="ExceptionThrower" /> or
-/// <see cref="ArgumentHelpers" />.
-/// Optional <c>paramName</c> uses <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers" />.
+/// <see cref="ArgumentHelpers" />. Optional <c>paramName</c> uses <see cref="CallerArgumentExpressionAttribute" /> like <see cref="ArgumentHelpers" />.
 /// </summary>
 public static class FileHelpers
 {

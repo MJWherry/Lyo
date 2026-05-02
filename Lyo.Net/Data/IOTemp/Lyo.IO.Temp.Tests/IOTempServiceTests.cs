@@ -1,6 +1,5 @@
 using System.Text;
 using Lyo.Common.Records;
-using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,14 +9,12 @@ namespace Lyo.IO.Temp.Tests;
 
 public sealed class IOTempServiceTests : IDisposable
 {
-    private static IOTempServiceOptions TestOptions() => new() {
-        TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-tests"),
-        DirectoryName = Guid.NewGuid().ToString("N")
-    };
-
     private readonly IOTempService _service = new(TestOptions());
 
     public void Dispose() => _service.Dispose();
+
+    private static IOTempServiceOptions TestOptions()
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
 
     [Fact]
     public void AddIOTempService_registers_service()
@@ -32,9 +29,7 @@ public sealed class IOTempServiceTests : IDisposable
     public void AddIOTempServiceWithAutoCleanup_registers_hosted_service()
     {
         var services = new ServiceCollection();
-        services.AddIOTempServiceWithAutoCleanup(
-            cleanupInterval: TimeSpan.FromHours(1),
-            initialDelay: TimeSpan.FromMinutes(5));
+        services.AddIOTempServiceWithAutoCleanup(TimeSpan.FromHours(1), TimeSpan.FromMinutes(5));
         var provider = services.BuildServiceProvider();
         var hostedServices = provider.GetServices<IHostedService>().ToList();
         Assert.Contains(hostedServices, s => s is IOTempCleanupWorker);
@@ -45,8 +40,7 @@ public sealed class IOTempServiceTests : IDisposable
     public void AddIOTempServiceWithAutoCleanup_with_config_action_registers_services()
     {
         var services = new ServiceCollection();
-        services.AddIOTempServiceWithAutoCleanup(
-            o => o.TempRoot = Path.Combine(Path.GetTempPath(), "lyo-di-test"));
+        services.AddIOTempServiceWithAutoCleanup(o => o.TempRoot = Path.Combine(Path.GetTempPath(), "lyo-di-test"));
         var provider = services.BuildServiceProvider();
         Assert.NotNull(provider.GetService<IIOTempService>());
         provider.Dispose();
@@ -112,6 +106,7 @@ public sealed class IOTempServiceTests : IDisposable
             Assert.Equal(1, _service.ActiveSessionCount);
             Assert.True(Directory.Exists(session.SessionDirectory));
         }
+
         Assert.Equal(0, _service.ActiveSessionCount);
     }
 
@@ -143,8 +138,8 @@ public sealed class IOTempServiceTests : IDisposable
     [Fact]
     public void GetOrCreateSession_with_options_returns_same_session_on_second_call()
     {
-        using var session1 = _service.GetOrCreateSession("same-key", new IOTempSessionOptions());
-        using var session2 = _service.GetOrCreateSession("same-key", new IOTempSessionOptions());
+        using var session1 = _service.GetOrCreateSession("same-key", new());
+        using var session2 = _service.GetOrCreateSession("same-key", new());
         Assert.Same(session1, session2);
     }
 
@@ -160,10 +155,7 @@ public sealed class IOTempServiceTests : IDisposable
     }
 
     [Fact]
-    public void ReleaseSession_noop_on_unknown_key()
-    {
-        _service.ReleaseSession("does-not-exist");
-    }
+    public void ReleaseSession_noop_on_unknown_key() => _service.ReleaseSession("does-not-exist");
 
     [Fact]
     public void GetStats_reflects_active_sessions_and_bytes()
@@ -207,10 +199,7 @@ public sealed class IOTempServiceTests : IDisposable
     [Fact]
     public async Task CleanupWorker_starts_and_stops_without_error()
     {
-        var options = Options.Create(new IOTempCleanupOptions {
-            InitialDelay = TimeSpan.FromHours(24),
-            Interval = TimeSpan.FromHours(24)
-        });
+        var options = Options.Create(new IOTempCleanupOptions { InitialDelay = TimeSpan.FromHours(24), Interval = TimeSpan.FromHours(24) });
         using var worker = new IOTempCleanupWorker(_service, options);
         await worker.StartAsync(TestContext.Current.CancellationToken);
         await worker.StopAsync(TestContext.Current.CancellationToken);
@@ -241,9 +230,7 @@ public sealed class IOTempServiceTests : IDisposable
     [Fact]
     public void WithMaxFileSize_and_WithMaxTotalSize_chain_on_service_options()
     {
-        var opts = new IOTempServiceOptions()
-            .WithMaxFileSize(FileSizeUnitInfo.Megabyte, 10)
-            .WithMaxTotalSize(FileSizeUnitInfo.Gigabyte, 1);
+        var opts = new IOTempServiceOptions().WithMaxFileSize(FileSizeUnitInfo.Megabyte, 10).WithMaxTotalSize(FileSizeUnitInfo.Gigabyte, 1);
         Assert.Equal(FileSizeUnitInfo.Megabyte.ConvertToBytes(10), opts.MaxFileSizeBytes);
         Assert.Equal(FileSizeUnitInfo.Gigabyte.ConvertToBytes(1), opts.MaxTotalSizeBytes);
     }
@@ -297,10 +284,9 @@ public sealed class IOTempServiceTests : IDisposable
     public void MaxFileCount_throw_strategy_prevents_exceeding_limit()
     {
         var serviceOpts = new IOTempServiceOptions {
-            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-tests"),
-            DirectoryName = Guid.NewGuid().ToString("N"),
-            MaxFileCount = 2
+            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-tests"), DirectoryName = Guid.NewGuid().ToString("N"), MaxFileCount = 2
         };
+
         using var service = new IOTempService(serviceOpts);
         using var session = service.CreateSession();
         session.Generator.CreateRandomFile(1);
@@ -312,10 +298,9 @@ public sealed class IOTempServiceTests : IDisposable
     public void MaxFileCount_is_propagated_to_session_from_service()
     {
         var serviceOpts = new IOTempServiceOptions {
-            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-prop-tests"),
-            DirectoryName = Guid.NewGuid().ToString("N"),
-            MaxFileCount = 1
+            TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-service-maxcount-prop-tests"), DirectoryName = Guid.NewGuid().ToString("N"), MaxFileCount = 1
         };
+
         using var service = new IOTempService(serviceOpts);
         using var session = service.CreateSession();
         session.CreateFile("first");

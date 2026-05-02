@@ -62,7 +62,7 @@ public static class QueryCacheInvalidation
         foreach (var keys in distinctKeySets) {
             await cache.InvalidateCacheItemByTag(QueryCacheTagBuilder.EntityInstanceTag(entityClrType, keys)).ConfigureAwait(false);
             // Direct key removal: canonical GET entries (same base key as instance tag, plus optional :raw).
-            await cache.InvalidateCacheItem(QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(entityClrType, keys, null, false)).ConfigureAwait(false);
+            await cache.InvalidateCacheItem(QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(entityClrType, keys)).ConfigureAwait(false);
             await cache.InvalidateCacheItem(QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(entityClrType, keys, null, true)).ConfigureAwait(false);
         }
 

@@ -8,7 +8,6 @@ using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Playwright;
-using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Playwright.Browser;
 
@@ -259,7 +258,6 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         }
 
         OperationHelpers.ThrowIf(Page != null && !_ownsPlaywrightStack, "Browser is attached to an external page; do not call StartBrowserAsync.");
-
         using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StartBrowserDuration)], PlaywrightMetricTags.ForOperation(this, "start_browser"));
         ct.ThrowIfCancellationRequested();
         _playwright = await Microsoft.Playwright.Playwright.CreateAsync().ConfigureAwait(false);

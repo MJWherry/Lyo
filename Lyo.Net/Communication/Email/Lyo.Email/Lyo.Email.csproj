@@ -9,10 +9,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj" />
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
         <ProjectReference Include="..\Lyo.Email.Models\Lyo.Email.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/></ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="MailKit" Version="[4.15,)"/>

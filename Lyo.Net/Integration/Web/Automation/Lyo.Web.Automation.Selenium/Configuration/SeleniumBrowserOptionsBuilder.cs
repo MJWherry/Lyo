@@ -167,7 +167,7 @@ public sealed class SeleniumBrowserOptionsBuilder
     /// <inheritdoc cref="SeleniumBrowserOptions.PollingDelayBetweenAttempts" />
     public SeleniumBrowserOptionsBuilder PollingDelayBetweenAttempts(TimeSpan delay)
     {
-        ArgumentHelpers.ThrowIfNotInRange(delay, TimeSpan.Zero, null, nameof(delay));
+        ArgumentHelpers.ThrowIfNotInRange(delay, TimeSpan.Zero, null);
         _options.PollingDelayBetweenAttempts = delay;
         return this;
     }

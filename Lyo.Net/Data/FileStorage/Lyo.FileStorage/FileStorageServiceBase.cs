@@ -894,7 +894,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
-        ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue, nameof(batchSize));
+        ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue);
         OperationHelpers.ThrowIfNull(TwoKeyEncryptionService, "ITwoKeyEncryptionService is not configured. Cannot rotate DEKs without encryption service.");
         var requestedFileIds = fileIds.Where(fileId => fileId != Guid.Empty).Distinct().ToList();
         if (requestedFileIds.Count == 0)
@@ -1657,8 +1657,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         => fileExtension switch {
             var _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
 #if !NETSTANDARD2_0
-            _ when fileExtension == BrotliExtension => CompressionAlgorithm.Brotli,
-            _ when fileExtension == ZLibExtension => CompressionAlgorithm.ZLib,
+            var _ when fileExtension == BrotliExtension => CompressionAlgorithm.Brotli,
+            var _ when fileExtension == ZLibExtension => CompressionAlgorithm.ZLib,
 #endif
             var _ when fileExtension == DeflateExtension => CompressionAlgorithm.Deflate,
             var _ when fileExtension == SnappierExtension => CompressionAlgorithm.Snappier,

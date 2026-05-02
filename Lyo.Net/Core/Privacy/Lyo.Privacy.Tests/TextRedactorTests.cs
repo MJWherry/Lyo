@@ -56,7 +56,7 @@ public sealed class TextRedactorTests
     [Fact]
     public void Redact_literal_case_insensitive()
     {
-        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new LiteralSubstringRedactionRule("ACME Corp", true))));
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new LiteralSubstringRedactionRule("ACME Corp"))));
         var res = r.Redact("acme corp and Acme Corp");
         Assert.Equal("[redacted] and [redacted]", res.Text);
         Assert.Equal(2, res.CountsByKind[RedactionKind.Literal]);

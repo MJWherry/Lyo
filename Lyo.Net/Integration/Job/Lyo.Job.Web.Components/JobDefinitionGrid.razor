@@ -41,23 +41,24 @@
 </LyoDataGridProjected>
 
 @code {
-    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
-    [Parameter, EditorRequired] public string BaseRoute { get; set; } = "Job";
+
+    [Parameter][EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
 
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
+
     private string _runRoute => $"{BaseRoute.TrimEnd('/')}/Run";
+
     private string _scheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
+
     private string _triggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("Name"),
-        new("Type"),
-        new("WorkerType", "Worker Type"),
-        new("Enabled", type: FilterPropertyType.Bool),
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Type"), new("WorkerType", "Worker Type"), new("Enabled", type: FilterPropertyType.Bool)];
 
     private static object[] GetKey(object? item)
     {
@@ -68,23 +69,24 @@
     private async Task<JobDefinitionRes?> FetchDefinition(object? id, string[]? includes = null)
     {
         var req = new QueryReq { Keys = [[id!]], Amount = 1 };
-        if (includes != null) req.Include.AddRange(includes);
+        if (includes != null)
+            req.Include.AddRange(includes);
+
         var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", req);
         return res?.Items?.FirstOrDefault();
     }
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(
-            $"{_definitionRoute}/Query",
-            new QueryReq { Amount = 200, Include = ["JobParameters"] });
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-        var parameters = new DialogParameters<RunJobDialog>
-        {
-            { d => d.JobDefinitions, res?.Items ?? [] },
-            { d => d.RunRoute, _runRoute }
+        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", new() { Amount = 200, Include = ["JobParameters"] });
+        var options = new DialogOptions {
+            MaxWidth = MaxWidth.ExtraLarge,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
         };
+
+        var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, res?.Items ?? [] }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -93,21 +95,25 @@
 
     private async Task ViewDefinition(object? item)
     {
-        if (item == null) return;
+        if (item == null)
+            return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (id == null)
+            return;
 
         var def = await FetchDefinition(id, ["JobSchedules.JobScheduleParameters", "JobTriggerTriggersJobDefinitions", "JobParameters"]);
-        if (def == null) return;
+        if (def == null)
+            return;
 
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
-        var parameters = new DialogParameters<JobDefinitionView>
-        {
+        var parameters = new DialogParameters<JobDefinitionView> {
             { d => d.JobDefinition, def },
             { d => d.DefinitionRoute, _definitionRoute },
             { d => d.ScheduleRoute, _scheduleRoute },
             { d => d.TriggerRoute, _triggerRoute }
         };
+
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, options);
         var r = await dialog.Result;
         if (r is { Canceled: false })
@@ -116,20 +122,25 @@
 
     private async Task RunJob(object? item)
     {
-        if (item == null) return;
+        if (item == null)
+            return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (id == null)
+            return;
 
         var def = await FetchDefinition(id, ["JobParameters"]);
-        if (def == null) return;
+        if (def == null)
+            return;
 
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-        var parameters = new DialogParameters<RunJobDialog>
-        {
-            { d => d.JobDefinitions, new List<JobDefinitionRes> { def } },
-            { d => d.SelectedJobDefinition, def },
-            { d => d.RunRoute, _runRoute }
+        var options = new DialogOptions {
+            MaxWidth = MaxWidth.ExtraLarge,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
         };
+
+        var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, new List<JobDefinitionRes> { def } }, { d => d.SelectedJobDefinition, def }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -138,10 +149,13 @@
 
     private async Task ToggleDefinition(object? item)
     {
-        if (item == null) return;
+        if (item == null)
+            return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
         var enabledVal = ProjectedValueHelper.GetValue(item, "Enabled");
-        if (id == null) return;
+        if (id == null)
+            return;
 
         var currentEnabled = enabledVal is true || enabledVal?.ToString() == "True";
         var patch = new PatchRequestBuilder().WithKey(id).SetProperty("Enabled", !currentEnabled).Build();
@@ -152,15 +166,14 @@
 
     private async Task BulkToggle(bool value)
     {
-        if (_dataGrid?.SelectedItems is not { Count: > 0 } selected) return;
+        if (_dataGrid?.SelectedItems is not { Count: > 0 } selected)
+            return;
+
         var ids = selected.Select(i => ProjectedValueHelper.GetValue(i, "Id")).Where(i => i != null).ToList();
-        var patch = new PatchRequestBuilder()
-            .WithOneOfIdentifier("Id", ids)
-            .SetProperty("Enabled", value)
-            .AllowMultiple()
-            .Build();
+        var patch = new PatchRequestBuilder().WithOneOfIdentifier("Id", ids).SetProperty("Enabled", value).AllowMultiple().Build();
         await ApiClient.PatchAsAsync<PatchRequest, PatchBulkResult<object>>($"{_definitionRoute}/Bulk", patch);
         Snackbar.Add($"{(value ? "Enabled" : "Disabled")} {ids.Count} definition(s)", Severity.Success);
         await _dataGrid!.RefreshData();
     }
+
 }

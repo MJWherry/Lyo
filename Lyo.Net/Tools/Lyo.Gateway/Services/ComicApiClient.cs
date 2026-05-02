@@ -1,11 +1,9 @@
+using System.Net;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Comic.Api.Models;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Gateway.Services;
@@ -35,8 +33,7 @@ public sealed class ComicApiClient : ApiClient, IComicApiClient
     public ComicApiClient(HttpClient httpClient, IOptions<ComicApiClientOptions> options, JsonSerializerOptions serializerOptions)
         : base(httpClient: httpClient, options: options.Value, serializerOptions: serializerOptions) { }
 
-    public Task<byte[]> GetFileAsync(Guid id, CancellationToken ct = default)
-        => HttpClient.GetByteArrayAsync($"files/{id}", ct);
+    public Task<byte[]> GetFileAsync(Guid id, CancellationToken ct = default) => HttpClient.GetByteArrayAsync($"files/{id}", ct);
 
     public async Task<IReadOnlyList<FileBatchEntry>> GetFilesBatchAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
     {
@@ -53,8 +50,7 @@ public sealed class ComicApiClient : ApiClient, IComicApiClient
         return result;
     }
 
-    public string GetFileUrl(Guid id)
-        => $"{BaseOptions.BaseUrl?.TrimEnd('/')}/files/{id}";
+    public string GetFileUrl(Guid id) => $"{BaseOptions.BaseUrl?.TrimEnd('/')}/files/{id}";
 }
 
 public static class ComicApiClientExtensions
@@ -70,20 +66,14 @@ public static class ComicApiClientExtensions
             section.Bind(options);
 
         services.AddSingleton(Options.Create(options));
-
         services.AddHttpClient<IComicApiClient, ComicApiClient>()
             .ConfigureHttpClient(client => {
                 // Set BaseAddress here so it's in place before ApiClient constructor runs
                 if (!string.IsNullOrWhiteSpace(options.BaseUrl))
-                    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+                    client.BaseAddress = new(options.BaseUrl.TrimEnd('/') + "/");
 
-                foreach (var enc in (options.AcceptEncodings ?? [])
-                             .Select(e => e.Trim().ToLowerInvariant())
-                             .Where(e => e is "gzip" or "deflate" or "br")
-                             .Distinct())
-                {
-                    if (client.DefaultRequestHeaders.AcceptEncoding.All(h =>
-                            !string.Equals(h.Value, enc, StringComparison.OrdinalIgnoreCase)))
+                foreach (var enc in (options.AcceptEncodings ?? []).Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
+                    if (client.DefaultRequestHeaders.AcceptEncoding.All(h => !string.Equals(h.Value, enc, StringComparison.OrdinalIgnoreCase)))
                         client.DefaultRequestHeaders.AcceptEncoding.Add(new(enc));
                 }
             })
@@ -92,13 +82,18 @@ public static class ComicApiClientExtensions
                 if (!options.EnableAutoResponseDecompression)
                     return handler;
 
-                var methods = System.Net.DecompressionMethods.None;
-                foreach (var enc in options.AcceptEncodings ?? [])
-                {
-                    if (enc.Equals("gzip",    StringComparison.OrdinalIgnoreCase)) methods |= System.Net.DecompressionMethods.GZip;
-                    if (enc.Equals("deflate", StringComparison.OrdinalIgnoreCase)) methods |= System.Net.DecompressionMethods.Deflate;
-                    if (enc.Equals("br",      StringComparison.OrdinalIgnoreCase)) methods |= System.Net.DecompressionMethods.Brotli;
+                var methods = DecompressionMethods.None;
+                foreach (var enc in options.AcceptEncodings ?? []) {
+                    if (enc.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+                        methods |= DecompressionMethods.GZip;
+
+                    if (enc.Equals("deflate", StringComparison.OrdinalIgnoreCase))
+                        methods |= DecompressionMethods.Deflate;
+
+                    if (enc.Equals("br", StringComparison.OrdinalIgnoreCase))
+                        methods |= DecompressionMethods.Brotli;
                 }
+
                 handler.AutomaticDecompression = methods;
                 return handler;
             });

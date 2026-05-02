@@ -17,16 +17,8 @@ public sealed class CharacterEntityConfiguration : IEntityTypeConfiguration<Char
         builder.Property(e => e.Role).HasMaxLength(50).HasColumnName("role");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-
-        builder.HasOne(e => e.Series)
-               .WithMany(s => s.Characters)
-               .HasForeignKey(e => e.SeriesId)
-               .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(e => e.Volumes)
-               .WithMany(v => v.Characters)
-               .UsingEntity(j => j.ToTable("character_volume"));
-
+        builder.HasOne(e => e.Series).WithMany(s => s.Characters).HasForeignKey(e => e.SeriesId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(e => e.Volumes).WithMany(v => v.Characters).UsingEntity(j => j.ToTable("character_volume"));
         builder.HasIndex(e => e.SeriesId).HasDatabaseName("ix_comic_character_series");
         builder.HasIndex(e => e.Name).HasDatabaseName("ix_comic_character_name");
     }

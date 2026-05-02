@@ -44,6 +44,5 @@ public sealed record DecodedStackTrace(
     /// <summary>Total depth of the full inner-exception chain.</summary>
     public int InnerExceptionDepth => InnerExceptions.Count;
 
-    public override string ToString()
-        => $"{UserFrameCount} user / {SystemFrameCount} system frames [{CrashSiteConfidence}] fp={Fingerprint}";
+    public override string ToString() => $"{UserFrameCount} user / {SystemFrameCount} system frames [{CrashSiteConfidence}] fp={Fingerprint}";
 }

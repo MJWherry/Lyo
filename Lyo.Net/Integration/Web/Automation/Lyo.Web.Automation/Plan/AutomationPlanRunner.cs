@@ -30,7 +30,6 @@ public static class AutomationPlanRunner
         ArgumentHelpers.ThrowIfNull(session);
         ArgumentHelpers.ThrowIfNull(plan);
         ArgumentHelpers.ThrowIf(plan.Steps == null, "AutomationPlan.Steps cannot be null.", nameof(plan));
-
         var runId = AutomationGuid.CreateTimeOrdered();
         var state = new PlanExecutionState();
         var options = runtime ?? new AutomationPlanRuntimeOptions();
@@ -103,9 +102,8 @@ public static class AutomationPlanRunner
                         if (hooks?.BeforeStepAsync is { } before)
                             await before(stepContext, runCt).ConfigureAwait(false);
 
-                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotBeforeEachStep) {
+                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotBeforeEachStep)
                             await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, i, stepExecutionId, "before", logger, runCt).ConfigureAwait(false);
-                        }
 
                         var sw = Stopwatch.StartNew();
                         Exception? failure = null;
@@ -132,9 +130,8 @@ public static class AutomationPlanRunner
                                     .ConfigureAwait(false);
                             }
 
-                            if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnStepFailure) {
+                            if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnStepFailure)
                                 await TryWritePlanVariablesAsync(artifacts, dirOpts, state, runId, i, "failed", logger, runCt).ConfigureAwait(false);
-                            }
 
                             var stepOutcome = ClassifyStepFailure(failure, runCt);
                             artifacts?.LogLine(
@@ -165,13 +162,11 @@ public static class AutomationPlanRunner
                         }
 
                         var stepResult = new AutomationPlanStepResult(sw.Elapsed);
-                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotAfterEachSuccessfulStep) {
+                        if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotAfterEachSuccessfulStep)
                             await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, i, stepExecutionId, "after", logger, runCt).ConfigureAwait(false);
-                        }
 
-                        if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesAfterEachSuccessfulStep) {
+                        if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesAfterEachSuccessfulStep)
                             await TryWritePlanVariablesAsync(artifacts, dirOpts, state, runId, i, "after", logger, runCt).ConfigureAwait(false);
-                        }
 
                         instr?.OnStepCompleted(new(runId, stepExecutionId, planStepId, i, step, sw.Elapsed));
                         instr?.OnStepOutcome(new(runId, planStepId, stepExecutionId, i, AutomationPlanStepOutcome.Success, sw.Elapsed, step, null));
@@ -193,9 +188,8 @@ public static class AutomationPlanRunner
                     "Automation plan completed {AutomationRunId} outcome={RunOutcome} durationMs={DurationMs}", runId, AutomationPlanRunOutcome.Completed,
                     swTotal.ElapsedMilliseconds);
 
-                if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnRunEnd) {
+                if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesOnRunEnd)
                     await TryWritePlanVariablesAsync(artifacts, dirOpts, state, runId, null, "final", logger, ct).ConfigureAwait(false);
-                }
 
                 artifacts?.LogLine($"RUN_COMPLETED outcome=Completed durationMs={swTotal.ElapsedMilliseconds}");
                 return new(state.ToSnapshot(), state.ToContext());
@@ -436,7 +430,6 @@ public static class AutomationPlanRunner
 
         var foundList = state.ElementLists.TryGetValue(step.ElementsListRefName, out var list);
         OperationHelpers.ThrowIf(!foundList, $"Unknown element list ref '{step.ElementsListRefName}'.");
-
         var result = new List<string>(list.Count);
         foreach (var element in list) {
             if (step.Kind == ElementDataExtractKind.Text)
@@ -461,7 +454,6 @@ public static class AutomationPlanRunner
     {
         var foundLines = state.StringLists.TryGetValue(step.VariableName, out var lines);
         OperationHelpers.ThrowIf(!foundLines, $"Unknown string list variable '{step.VariableName}'.");
-
         using (BeginStepCorrelationScope(logger, stepLogScope)) {
             var bindings = CreateBindings(state, browser);
             var full = Path.GetFullPath(await ExpandPlanTemplateAsync(step.FilePath, bindings, runtime, ct).ConfigureAwait(false));
@@ -496,7 +488,6 @@ public static class AutomationPlanRunner
         using (BeginStepCorrelationScope(logger, stepLogScope)) {
             var http = runtime?.HttpClient;
             OperationHelpers.ThrowIfNull(http, "DownloadUrlsToDirectory requires AutomationPlanRuntimeOptions.HttpClient to be set.");
-
             IReadOnlyList<string> urlSource;
             if (step.UrlListFromCompletedStepIndex is { } stepIdx) {
                 var foundFrame = state.TryGetStringListAtCompletedStep(stepIdx, step.UrlListVariableName, out var fromFrame);
@@ -600,8 +591,9 @@ public static class AutomationPlanRunner
 
         public Dictionary<string, List<string>> StringLists { get; } = new(StringComparer.Ordinal);
 
-        public void ThrowIfRefNameTaken(string refName) =>
-            OperationHelpers.ThrowIf(Elements.ContainsKey(refName) || ElementLists.ContainsKey(refName), $"Duplicate ref name '{refName}'. Ref names must be unique within a plan.");
+        public void ThrowIfRefNameTaken(string refName)
+            => OperationHelpers.ThrowIf(
+                Elements.ContainsKey(refName) || ElementLists.ContainsKey(refName), $"Duplicate ref name '{refName}'. Ref names must be unique within a plan.");
 
         public IWebAutomationElement ResolveElement(string refName)
         {

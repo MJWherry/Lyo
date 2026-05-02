@@ -5,7 +5,6 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Lyo.IO.Temp;
 
@@ -62,13 +61,10 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Adds <see cref="IIOTempService"/> and registers <see cref="IOTempCleanupWorker"/> as a hosted background service
-    /// that periodically calls <see cref="IIOTempService.Cleanup"/>.
+    /// Adds <see cref="IIOTempService" /> and registers <see cref="IOTempCleanupWorker" /> as a hosted background service that periodically calls
+    /// <see cref="IIOTempService.Cleanup" />.
     /// </summary>
-    public static IServiceCollection AddIOTempServiceWithAutoCleanup(
-        this IServiceCollection services,
-        TimeSpan? cleanupInterval = null,
-        TimeSpan? initialDelay = null)
+    public static IServiceCollection AddIOTempServiceWithAutoCleanup(this IServiceCollection services, TimeSpan? cleanupInterval = null, TimeSpan? initialDelay = null)
     {
         ArgumentHelpers.ThrowIfNull(services);
         services.AddIOTempService();
@@ -77,9 +73,7 @@ public static class Extensions
         return services;
     }
 
-    /// <summary>
-    /// Adds <see cref="IIOTempService"/> with an options callback and registers <see cref="IOTempCleanupWorker"/>.
-    /// </summary>
+    /// <summary>Adds <see cref="IIOTempService" /> with an options callback and registers <see cref="IOTempCleanupWorker" />.</summary>
     public static IServiceCollection AddIOTempServiceWithAutoCleanup(
         this IServiceCollection services,
         Action<IOTempServiceOptions> configureService,
@@ -96,11 +90,15 @@ public static class Extensions
 
     private static void ConfigureCleanupOptions(IServiceCollection services, TimeSpan? interval, TimeSpan? delay)
     {
-        if (interval.HasValue || delay.HasValue)
+        if (interval.HasValue || delay.HasValue) {
             services.Configure<IOTempCleanupOptions>(o => {
-                if (interval.HasValue) o.Interval = interval.Value;
-                if (delay.HasValue) o.InitialDelay = delay.Value;
+                if (interval.HasValue)
+                    o.Interval = interval.Value;
+
+                if (delay.HasValue)
+                    o.InitialDelay = delay.Value;
             });
+        }
     }
 
     private static IOTempService CreateService(IServiceProvider provider)
@@ -110,8 +108,7 @@ public static class Extensions
         var metrics = provider.GetService<IMetrics>();
         var options = provider.GetRequiredService<IOTempServiceOptions>();
         // Resolve a registered IIOTempStorageProvider if present; otherwise default to the filesystem provider.
-        var storageProvider = provider.GetService<IIOTempStorageProvider>()
-                              ?? new FileSystemIOTempStorageProvider(options.RootDirectory);
+        var storageProvider = provider.GetService<IIOTempStorageProvider>() ?? new FileSystemIOTempStorageProvider(options.RootDirectory);
         return new(options, logger, metrics, loggerFactory, storageProvider);
     }
 }

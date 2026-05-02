@@ -10,6 +10,7 @@ public sealed class AddTagReq
 public sealed class AddRatingReq
 {
     public string FromEntityType { get; set; } = string.Empty;
+
     public string FromEntityId { get; set; } = string.Empty;
 
     /// <summary>Optional subject for the rating (e.g. "art", "story"). Null = general rating.</summary>
@@ -29,7 +30,9 @@ public sealed class AddRatingReq
 public sealed class AddCommentReq
 {
     public string FromEntityType { get; set; } = string.Empty;
+
     public string FromEntityId { get; set; } = string.Empty;
+
     public string Content { get; set; } = string.Empty;
 
     /// <summary>The comment this is a reply to, or null if top-level.</summary>
@@ -40,6 +43,7 @@ public sealed class AddCommentReq
 public sealed class AddFavoriteReq
 {
     public string FromEntityType { get; set; } = string.Empty;
+
     public string FromEntityId { get; set; } = string.Empty;
 }
 
@@ -47,5 +51,6 @@ public sealed class AddFavoriteReq
 public sealed class RemoveFavoriteReq
 {
     public string FromEntityType { get; set; } = string.Empty;
+
     public string FromEntityId { get; set; } = string.Empty;
 }

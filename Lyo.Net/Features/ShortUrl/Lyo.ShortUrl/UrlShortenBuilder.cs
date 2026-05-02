@@ -22,7 +22,7 @@ public sealed class UrlShortenBuilder
     /// <exception cref="InvalidFormatException">Thrown when URL format is invalid.</exception>
     public UrlShortenBuilder SetLongUrl(string longUrl, bool enforceHttps = false)
     {
-        var uri = UriHelpers.GetValidWebUri(longUrl, nameof(longUrl));
+        var uri = UriHelpers.GetValidWebUri(longUrl);
 
         // Enforce HTTPS if requested
         if (enforceHttps && uri.Scheme == Uri.UriSchemeHttp) {
@@ -46,9 +46,7 @@ public sealed class UrlShortenBuilder
             return this;
         }
 
-        FormatHelpers.ThrowIfInvalidFormat(
-            alias, AliasRegex, "Custom alias must contain only alphanumeric characters and hyphens: {0}", nameof(alias), "Alphanumeric and hyphens only");
-
+        FormatHelpers.ThrowIfInvalidFormat(alias, AliasRegex, "Custom alias must contain only alphanumeric characters and hyphens: {0}", "Alphanumeric and hyphens only");
         _customAlias = alias;
         return this;
     }

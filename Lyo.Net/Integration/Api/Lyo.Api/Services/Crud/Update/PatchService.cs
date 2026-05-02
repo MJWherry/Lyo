@@ -85,7 +85,7 @@ public class PatchService<TContext>(
 
             var keys = typeConversion.GetPrimaryKeyValues(entity, context);
             cache.Set(
-                QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys, null, false), result.NewData!,
+                QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), keys), result.NewData!,
                 cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
                     ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
                     : ["entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)), QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), keys)]);

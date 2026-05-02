@@ -452,7 +452,7 @@ public static class Utilities
     /// <exception cref="IOException">Thrown when the file cannot be accessed due to I/O errors</exception>
     public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default)
     {
-        ExceptionThrower.ThrowIfDirectoryNotAccessible(path, nameof(path));
+        ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
         if (!File.Exists(path))
             return Task.FromResult<byte[]?>(null);
 

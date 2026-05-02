@@ -77,7 +77,7 @@ public class UpdateService<TContext>(
 
         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
         cache.Set(
-            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys, null, false), result.NewData!,
+            QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(typeof(TDbModel), entityKeys), result.NewData!,
             cacheOptions.QueryCacheTagGranularity == QueryCacheTagGranularity.Broad
                 ? QueryCacheTagBuilder.BuildSingleEntityGetRootTypeTags<TDbModel>()
                 : ["entities", QueryCacheTagBuilder.EntityTypeTag(typeof(TDbModel)), QueryCacheTagBuilder.EntityInstanceTag(typeof(TDbModel), entityKeys)]);

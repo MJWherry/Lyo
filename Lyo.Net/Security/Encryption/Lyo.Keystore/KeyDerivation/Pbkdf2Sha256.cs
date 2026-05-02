@@ -8,13 +8,11 @@ internal static class Pbkdf2Sha256
 {
     public static byte[] DeriveBytes(byte[] password, byte[] salt, int iterations, int dkLen)
     {
-        ArgumentHelpers.ThrowIfLessThan(iterations, 1, nameof(iterations));
-        ArgumentHelpers.ThrowIfLessThan(dkLen, 1, nameof(dkLen));
-
+        ArgumentHelpers.ThrowIfLessThan(iterations, 1);
+        ArgumentHelpers.ThrowIfLessThan(dkLen, 1);
         const int hLen = 32;
         var l = (dkLen + hLen - 1) / hLen;
         ArgumentHelpers.ThrowIfGreaterThan(l, int.MaxValue / hLen, nameof(dkLen));
-
         using var hmac = new HMACSHA256(password);
         var dk = new byte[dkLen];
         var offset = 0;

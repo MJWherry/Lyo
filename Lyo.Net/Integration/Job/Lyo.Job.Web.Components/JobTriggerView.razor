@@ -34,22 +34,36 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Trigger Details</MudText>
                     <MudGrid>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Triggers Job:</b> @_selected.TriggersJobDefinitionId.Truncated()</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Result Key:</b> @_selected.JobResultKey</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Comparator:</b> @_selected.Comparison</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Result Value:</b> @(_selected.JobResultValue ?? "-")</MudText></MudItem>
-                        <MudItem xs="12"><MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText></MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Triggers Job:</b> @_selected.TriggersJobDefinitionId.Truncated()</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Result Key:</b> @_selected.JobResultKey</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Comparator:</b> @_selected.Comparison</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Result Value:</b> @(_selected.JobResultValue ?? "-")</MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText>
+                        </MudItem>
                     </MudGrid>
                     @if (_selected.TriggerParameters?.Any() == true) {
                         <MudDivider/>
+
                         <MudText Typo="Typo.h6">Trigger Parameters</MudText>
+
                         <MudGrid>
                             @foreach (var p in _selected.TriggerParameters) {
                                 <MudItem xs="12" md="6">
                                     <MudPaper Elevation="1" Class="pa-3">
                                         <MudText Typo="Typo.subtitle2">@p.Key</MudText>
                                         <MudText Typo="Typo.body2">Type: @p.Type</MudText>
-                                        @if (p.Value != null) { <MudText Typo="Typo.body2">Value: @p.Value</MudText> }
+                                        @if (p.Value != null) {
+                                            <MudText Typo="Typo.body2">Value: @p.Value</MudText>
+                                        }
                                     </MudPaper>
                                 </MudItem>
                             }
@@ -67,10 +81,18 @@
 </MudGrid>
 
 @code {
-    [Parameter] public IReadOnlyList<JobTriggerRes>? JobTriggers { get; set; }
-    [Parameter] public Guid JobDefinitionId { get; set; }
-    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
-    [Parameter, EditorRequired] public string TriggerRoute { get; set; } = "";
+
+    [Parameter]
+    public IReadOnlyList<JobTriggerRes>? JobTriggers { get; set; }
+
+    [Parameter]
+    public Guid JobDefinitionId { get; set; }
+
+    [Parameter][EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public string TriggerRoute { get; set; } = "";
 
     private JobTriggerRes? _selected;
 
@@ -86,4 +108,5 @@
         await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(TriggerRoute, patch);
         Snackbar.Add($"Trigger {(!trigger.Enabled ? "enabled" : "disabled")}", Severity.Success);
     }
+
 }

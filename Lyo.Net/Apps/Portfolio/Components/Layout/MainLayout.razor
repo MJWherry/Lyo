@@ -1,12 +1,14 @@
-@using Lyo.Portfolio.Components.Layout
 @inherits LayoutComponentBase
 @inject ILocalStorageService LocalStorage
 @inject NavigationManager NavigationManager
 
 @if (_initialized) {
     <MudThemeProvider Theme="@Themes.Default" IsDarkMode="@_isDarkMode"/>
+
     <MudPopoverProvider/>
+
     <MudDialogProvider/>
+
     <MudSnackbarProvider/>
 
     <MudLayout>
@@ -99,4 +101,5 @@ else {
     }
 
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
 }

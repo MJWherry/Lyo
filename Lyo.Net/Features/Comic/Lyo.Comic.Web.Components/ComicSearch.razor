@@ -24,8 +24,7 @@
 
                 <MudItem xs="6" sm="3" md="2">
                     <MudSelect T="ComicType?" @bind-Value="_comicType" Label="Type" Clearable="true">
-                        @foreach (ComicType t in Enum.GetValues<ComicType>())
-                        {
+                        @foreach (var t in Enum.GetValues<ComicType>()) {
                             <MudSelectItem T="ComicType?" Value="t">@t.ToString()</MudSelectItem>
                         }
                     </MudSelect>
@@ -33,8 +32,7 @@
 
                 <MudItem xs="6" sm="3" md="2">
                     <MudSelect T="ComicStatus?" @bind-Value="_status" Label="Status" Clearable="true">
-                        @foreach (ComicStatus s in Enum.GetValues<ComicStatus>())
-                        {
+                        @foreach (var s in Enum.GetValues<ComicStatus>()) {
                             <MudSelectItem T="ComicStatus?" Value="s">@s.ToString()</MudSelectItem>
                         }
                     </MudSelect>
@@ -47,15 +45,16 @@
                                   Clearable="true"/>
                 </MudItem>
 
-                @if (AvailableTags.Count > 0)
-                {
+                @if (AvailableTags.Count > 0) {
                     <MudItem xs="12" sm="6" md="4">
                         <LyoCheckSelect TValue="string"
                                         Label="Tags"
                                         Placeholder="Any tag"
                                         Items="TagItems"
                                         SelectedValues="_selectedTags"
-                                        SelectedValuesChanged="@((IEnumerable<string> v) => { _selectedTags = v.ToList(); })"
+                                        SelectedValuesChanged="@(v => {
+                                                                   _selectedTags = v.ToList();
+                                                               })"
                                         Searchable="true"/>
                     </MudItem>
                 }
@@ -66,8 +65,7 @@
                                FullWidth="true"
                                OnClick="SearchAsync"
                                Disabled="_busy">
-                        @if (_busy)
-                        {
+                        @if (_busy) {
                             <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
                         }
                         Search
@@ -77,16 +75,13 @@
         </MudStack>
     </MudPaper>
 
-    @if (_searched && _results.Count == 0 && !_busy)
-    {
+    @if (_searched && _results.Count == 0 && !_busy) {
         <MudAlert Severity="Severity.Info" Class="mb-4">No results found. Try a different search.</MudAlert>
     }
 
-    @if (_results.Count > 0)
-    {
+    @if (_results.Count > 0) {
         <MudGrid Spacing="3">
-            @foreach (var series in _results)
-            {
+            @foreach (var series in _results) {
                 <MudItem xs="12" sm="6" md="4" lg="3">
                     <ComicCard Series="series"
                                CoverImageUrl="@ResolveCoverUrl(series)"
@@ -96,8 +91,7 @@
             }
         </MudGrid>
 
-        @if (_hasMore)
-        {
+        @if (_hasMore) {
             <div class="d-flex justify-center mt-4">
                 <MudButton Variant="Variant.Outlined"
                            Color="Color.Default"

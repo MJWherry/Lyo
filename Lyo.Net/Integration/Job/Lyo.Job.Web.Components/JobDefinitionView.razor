@@ -39,10 +39,12 @@
                 </MudGrid>
             </MudTabPanel>
             <MudTabPanel Text="Parameters">
-                <JobParameterView JobParameters="JobDefinition?.JobParameters" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" DefinitionRoute="@DefinitionRoute"/>
+                <JobParameterView JobParameters="JobDefinition?.JobParameters" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient"
+                                  DefinitionRoute="@DefinitionRoute"/>
             </MudTabPanel>
             <MudTabPanel Text="Schedules">
-                <JobScheduleView JobSchedules="JobDefinition?.JobSchedules" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" ScheduleRoute="@ScheduleRoute"/>
+                <JobScheduleView JobSchedules="JobDefinition?.JobSchedules" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient"
+                                 ScheduleRoute="@ScheduleRoute"/>
             </MudTabPanel>
             <MudTabPanel Text="Triggers">
                 <JobTriggerView JobTriggers="JobDefinition?.JobTriggers" JobDefinitionId="@(JobDefinition?.Id ?? Guid.Empty)" ApiClient="ApiClient" TriggerRoute="@TriggerRoute"/>
@@ -56,12 +58,24 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    [Parameter, EditorRequired] public JobDefinitionRes? JobDefinition { get; set; }
-    [Parameter, EditorRequired] public string DefinitionRoute { get; set; } = "";
-    [Parameter] public string ScheduleRoute { get; set; } = "";
-    [Parameter] public string TriggerRoute { get; set; } = "";
-    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public JobDefinitionRes? JobDefinition { get; set; }
+
+    [Parameter][EditorRequired]
+    public string DefinitionRoute { get; set; } = "";
+
+    [Parameter]
+    public string ScheduleRoute { get; set; } = "";
+
+    [Parameter]
+    public string TriggerRoute { get; set; } = "";
+
+    [Inject]
+    IApiClient ApiClient { get; set; } = null!;
 
     private string _editName = "";
     private string? _editDescription;
@@ -75,7 +89,9 @@
 
     protected override void OnParametersSet()
     {
-        if (JobDefinition == null) return;
+        if (JobDefinition == null)
+            return;
+
         _editName = JobDefinition.Name;
         _editDescription = JobDefinition.Description;
         _editType = JobDefinition.Type;
@@ -89,20 +105,11 @@
 
     private async Task Save()
     {
-        if (JobDefinition == null) return;
+        if (JobDefinition == null)
+            return;
+
         try {
-            var patch = new PatchRequestBuilder()
-                .WithKey(JobDefinition.Id)
-                .SetProperty("Name", _editName)
-                .SetProperty("Description", _editDescription)
-                .SetProperty("Type", _editType)
-                .SetProperty("WorkerType", _editWorkerType)
-                .SetProperty("Enabled", _editEnabled)
-                .SetProperty("MaxRetryCount", _editMaxRetryCount)
-                .SetProperty("RetryBackoffSeconds", _editRetryBackoffSeconds)
-                .SetProperty("TimeoutMinutes", _editTimeoutMinutes)
-                .SetProperty("MaxConcurrentRuns", _editMaxConcurrentRuns)
-                .Build();
+            var patch = new PatchRequestBuilder().WithKey(JobDefinition.Id).SetProperty("Name", _editName).SetProperty("Description", _editDescription).SetProperty("Type", _editType).SetProperty("WorkerType", _editWorkerType).SetProperty("Enabled", _editEnabled).SetProperty("MaxRetryCount", _editMaxRetryCount).SetProperty("RetryBackoffSeconds", _editRetryBackoffSeconds).SetProperty("TimeoutMinutes", _editTimeoutMinutes).SetProperty("MaxConcurrentRuns", _editMaxConcurrentRuns).Build();
             await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(DefinitionRoute, patch);
             Snackbar.Add("Definition saved", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
@@ -113,4 +120,5 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
+
 }

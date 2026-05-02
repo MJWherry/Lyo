@@ -95,7 +95,7 @@ public sealed class TabManager
                 var driver = _scraper.GetRequiredDriver();
                 var handles = driver.WindowHandles.ToList();
                 OperationHelpers.ThrowIf(handles.Count == 0, "No browser tabs available.");
-                ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1, nameof(index));
+                ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1);
                 driver.SwitchTo().Window(handles[index]);
             });
 
@@ -287,7 +287,7 @@ public sealed class TabManager
                 var driver = _scraper.GetRequiredDriver();
                 var handles = driver.WindowHandles.ToList();
                 OperationHelpers.ThrowIf(handles.Count == 0, "No tabs to close.");
-                ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1, nameof(index));
+                ArgumentHelpers.ThrowIfNotInRange(index, 0, handles.Count - 1);
                 CloseSingleTabByHandle(handles[index]);
             });
 

@@ -3,18 +3,11 @@ namespace Lyo.FileStorage;
 /// <summary>Enforces a maximum number of bytes read from the inner stream (decompression bomb / policy limit).</summary>
 internal sealed class MaxDecompressedBytesReadStream : Stream
 {
+    private readonly Guid _fileId;
     private readonly Stream _inner;
     private readonly long _maxBytes;
-    private readonly Guid _fileId;
-    private long _totalRead;
     private bool _disposed;
-
-    public MaxDecompressedBytesReadStream(Stream inner, long maxBytes, Guid fileId)
-    {
-        _inner = inner;
-        _maxBytes = maxBytes;
-        _fileId = fileId;
-    }
+    private long _totalRead;
 
     public override bool CanRead => !_disposed && _inner.CanRead;
 
@@ -27,6 +20,13 @@ internal sealed class MaxDecompressedBytesReadStream : Stream
     public override long Position {
         get => throw new NotSupportedException();
         set => throw new NotSupportedException();
+    }
+
+    public MaxDecompressedBytesReadStream(Stream inner, long maxBytes, Guid fileId)
+    {
+        _inner = inner;
+        _maxBytes = maxBytes;
+        _fileId = fileId;
     }
 
     public override int Read(byte[] buffer, int offset, int count)

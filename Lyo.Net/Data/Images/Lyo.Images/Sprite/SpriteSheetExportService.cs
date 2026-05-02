@@ -175,7 +175,7 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
         var n = sampled.Count;
         ArgumentHelpers.ThrowIf(n == 0, "Sample list must not be empty.", nameof(sampled));
         targetCount = Math.Max(1, targetCount);
-        ArgumentHelpers.ThrowIfLessThan(targetCount, n, nameof(targetCount), "Target count must be at least the number of samples.");
+        ArgumentHelpers.ThrowIfLessThan(targetCount, n, "Target count must be at least the number of samples.");
         if (targetCount == n)
             return sampled;
 

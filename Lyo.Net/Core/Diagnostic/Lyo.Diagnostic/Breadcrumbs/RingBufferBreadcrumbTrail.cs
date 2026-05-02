@@ -3,9 +3,9 @@ namespace Lyo.Diagnostic.Breadcrumbs;
 /// <summary>Thread-safe bounded breadcrumb trail using a FIFO queue; oldest entries drop when over capacity.</summary>
 public sealed class RingBufferBreadcrumbTrail : IBreadcrumbTrail
 {
+    private readonly int _capacity;
     private readonly object _lock = new();
     private readonly Queue<Breadcrumb> _queue = new();
-    private readonly int _capacity;
     private readonly IBreadcrumbRedactor _redactor;
 
     /// <param name="capacity">Maximum entries retained; must be at least 1.</param>
@@ -14,6 +14,7 @@ public sealed class RingBufferBreadcrumbTrail : IBreadcrumbTrail
     {
         if (capacity < 1)
             throw new ArgumentOutOfRangeException(nameof(capacity));
+
         _capacity = capacity;
         _redactor = redactor ?? PassThroughBreadcrumbRedactor.Instance;
     }
@@ -25,13 +26,13 @@ public sealed class RingBufferBreadcrumbTrail : IBreadcrumbTrail
         lock (_lock) {
             while (_queue.Count >= _capacity)
                 _queue.Dequeue();
+
             _queue.Enqueue(safe);
         }
     }
 
     /// <inheritdoc />
-    public void Add(string category, string message, IReadOnlyDictionary<string, string>? data = null)
-        => Add(new Breadcrumb(DateTimeOffset.UtcNow, category, message, data));
+    public void Add(string category, string message, IReadOnlyDictionary<string, string>? data = null) => Add(new(DateTimeOffset.UtcNow, category, message, data));
 
     /// <inheritdoc />
     public IReadOnlyList<Breadcrumb> Snapshot()

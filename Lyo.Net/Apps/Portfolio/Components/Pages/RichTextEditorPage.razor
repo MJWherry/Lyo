@@ -59,16 +59,53 @@
 </MudContainer>
 
 <style>
-    .rte-preview { min-height: 180px; line-height: 1.55; word-break: break-word; }
+    .rte-preview {
+        min-height: 180px;
+        line-height: 1.55;
+        word-break: break-word;
+    }
+
     .rte-preview h1, .rte-preview h2, .rte-preview h3, .rte-preview h4, .rte-preview h5,
-    .rte-preview p, .rte-preview blockquote, .rte-preview pre, .rte-preview ul, .rte-preview ol { margin-top: 0; }
-    .rte-preview blockquote { margin-left: 0; padding-left: 12px; border-left: 4px solid var(--mud-palette-primary); color: var(--mud-palette-text-secondary); }
-    .rte-preview pre { position: relative; padding: 12px; padding-top: 28px; border-radius: 4px; overflow-x: auto; border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 70%, transparent 30%); background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-text-primary) 8%); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; line-height: 1.5; }
-    .rte-preview pre code { display: block; white-space: pre-wrap; color: inherit; font-family: inherit; font-size: inherit; line-height: inherit; tab-size: 4; }
-    .rte-preview :last-child { margin-bottom: 0; }
+    .rte-preview p, .rte-preview blockquote, .rte-preview pre, .rte-preview ul, .rte-preview ol {
+        margin-top: 0;
+    }
+
+    .rte-preview blockquote {
+        margin-left: 0;
+        padding-left: 12px;
+        border-left: 4px solid var(--mud-palette-primary);
+        color: var(--mud-palette-text-secondary);
+    }
+
+    .rte-preview pre {
+        position: relative;
+        padding: 12px;
+        padding-top: 28px;
+        border-radius: 4px;
+        overflow-x: auto;
+        border: 1px solid color-mix(in srgb, var(--mud-palette-lines-default) 70%, transparent 30%);
+        background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-text-primary) 8%);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        line-height: 1.5;
+    }
+
+    .rte-preview pre code {
+        display: block;
+        white-space: pre-wrap;
+        color: inherit;
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        tab-size: 4;
+    }
+
+    .rte-preview :last-child {
+        margin-bottom: 0;
+    }
 </style>
 
 @code {
+
     [CascadingParameter]
     private MainLayout? Layout { get; set; }
 
@@ -99,4 +136,5 @@
     private void Clear() => _html = string.Empty;
 
     private void ToggleReadOnly() => _readOnly = !_readOnly;
+
 }

@@ -37,19 +37,36 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.h6">Schedule Details</MudText>
                     <MudGrid>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Type:</b> @_selected.Type</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Days:</b> @_selected.DayFlags</MudText></MudItem>
-                        <MudItem xs="6"><MudText Typo="Typo.body2"><b>Months:</b> @_selected.MonthFlags</MudText></MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Type:</b> @_selected.Type</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Description:</b> @(_selected.Description ?? "-")</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Days:</b> @_selected.DayFlags</MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.body2"><b>Months:</b> @_selected.MonthFlags</MudText>
+                        </MudItem>
                         @if (_selected.CronExpression != null) {
-                            <MudItem xs="12"><MudText Typo="Typo.body2"><b>Cron:</b> @_selected.CronExpression</MudText></MudItem>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.body2"><b>Cron:</b> @_selected.CronExpression</MudText>
+                            </MudItem>
                         }
                         @if (_selected.StartTime != null || _selected.EndTime != null) {
-                            <MudItem xs="6"><MudText Typo="Typo.body2"><b>Start:</b> @(_selected.StartTime?.ToString("HH:mm") ?? "-")</MudText></MudItem>
-                            <MudItem xs="6"><MudText Typo="Typo.body2"><b>End:</b> @(_selected.EndTime?.ToString("HH:mm") ?? "-")</MudText></MudItem>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2"><b>Start:</b> @(_selected.StartTime?.ToString("HH:mm") ?? "-")</MudText>
+                            </MudItem>
+
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2"><b>End:</b> @(_selected.EndTime?.ToString("HH:mm") ?? "-")</MudText>
+                            </MudItem>
                         }
                         @if (_selected.IntervalMinutes != null) {
-                            <MudItem xs="6"><MudText Typo="Typo.body2"><b>Interval (min):</b> @_selected.IntervalMinutes</MudText></MudItem>
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2"><b>Interval (min):</b> @_selected.IntervalMinutes</MudText>
+                            </MudItem>
                         }
                         @if (_selected.Times?.Any() == true) {
                             <MudItem xs="12">
@@ -64,14 +81,18 @@
                     </MudGrid>
                     @if (_selected.Parameters?.Any() == true) {
                         <MudDivider/>
+
                         <MudText Typo="Typo.h6">Schedule Parameters</MudText>
+
                         <MudGrid>
                             @foreach (var p in _selected.Parameters) {
                                 <MudItem xs="12" md="6">
                                     <MudPaper Elevation="1" Class="pa-3">
                                         <MudText Typo="Typo.subtitle2">@p.Key</MudText>
                                         <MudText Typo="Typo.body2">Type: @p.Type</MudText>
-                                        @if (p.Value != null) { <MudText Typo="Typo.body2">Value: @p.Value</MudText> }
+                                        @if (p.Value != null) {
+                                            <MudText Typo="Typo.body2">Value: @p.Value</MudText>
+                                        }
                                     </MudPaper>
                                 </MudItem>
                             }
@@ -89,10 +110,18 @@
 </MudGrid>
 
 @code {
-    [Parameter] public IReadOnlyList<JobScheduleRes>? JobSchedules { get; set; }
-    [Parameter] public Guid JobDefinitionId { get; set; }
-    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
-    [Parameter, EditorRequired] public string ScheduleRoute { get; set; } = "";
+
+    [Parameter]
+    public IReadOnlyList<JobScheduleRes>? JobSchedules { get; set; }
+
+    [Parameter]
+    public Guid JobDefinitionId { get; set; }
+
+    [Parameter][EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public string ScheduleRoute { get; set; } = "";
 
     private JobScheduleRes? _selected;
 
@@ -108,4 +137,5 @@
         await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(ScheduleRoute, patch);
         Snackbar.Add($"Schedule {(!schedule.Enabled ? "enabled" : "disabled")}", Severity.Success);
     }
+
 }

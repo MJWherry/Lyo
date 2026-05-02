@@ -43,7 +43,7 @@ public class BrowserPreview : IPreviewService
     public async Task<string?> PreviewFileAsync(string pathOrUrl, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pathOrUrl);
-        UriHelpers.ThrowIfInvalidUri(pathOrUrl, nameof(pathOrUrl));
+        UriHelpers.ThrowIfInvalidUri(pathOrUrl);
         var bytes = await File.ReadAllBytesAsync(pathOrUrl, ct).ConfigureAwait(false);
         if (bytes.Length == 0) {
             _logger.LogWarning("Preview file is empty: {Path}", pathOrUrl);

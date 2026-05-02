@@ -81,7 +81,7 @@ public sealed class SmsMessageBuilder
     /// <exception cref="InvalidFormatException">Thrown when URL format is invalid, not absolute, or not a web URL.</exception>
     public SmsMessageBuilder AddAttachment(string url)
     {
-        var uri = UriHelpers.GetValidWebUri(url, nameof(url));
+        var uri = UriHelpers.GetValidWebUri(url);
         _request.MediaUrls.Add(uri);
         return this;
     }

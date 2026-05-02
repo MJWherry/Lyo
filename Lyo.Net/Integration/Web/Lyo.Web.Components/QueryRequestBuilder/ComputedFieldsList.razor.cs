@@ -1,6 +1,5 @@
 using Lyo.Query.Models.Common.Request;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Lyo.Web.Components.QueryRequestBuilder;
 

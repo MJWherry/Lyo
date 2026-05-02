@@ -34,9 +34,6 @@ public sealed record TraceSanitiserOptions
 
     public static TraceSanitiserOptions Default { get; } = new();
 
-    public override string ToString()
-        => $"StripPaths={StripFilePaths} RemoveSystem={RemoveSystemFrames} RemoveGenerated={RemoveCompilerGeneratedFrames} IncludeMsg={IncludeExceptionMessage}";
-
     /// <summary>Aggressive preset: strips paths, system frames, and compiler noise. Suitable for public-facing API error responses.</summary>
     public static TraceSanitiserOptions PublicApiSafe { get; } = new() {
         StripFilePaths = true,
@@ -45,4 +42,7 @@ public sealed record TraceSanitiserOptions
         RemoveCompilerGeneratedFrames = true,
         IncludeExceptionMessage = false
     };
+
+    public override string ToString()
+        => $"StripPaths={StripFilePaths} RemoveSystem={RemoveSystemFrames} RemoveGenerated={RemoveCompilerGeneratedFrames} IncludeMsg={IncludeExceptionMessage}";
 }

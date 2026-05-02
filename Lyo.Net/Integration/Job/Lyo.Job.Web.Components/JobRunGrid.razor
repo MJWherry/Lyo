@@ -39,20 +39,20 @@
 </LyoDataGridProjected>
 
 @code {
-    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
-    [Parameter, EditorRequired] public string BaseRoute { get; set; } = "Job";
+
+    [Parameter][EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public string BaseRoute { get; set; } = "Job";
 
     private string _runRoute => $"{BaseRoute.TrimEnd('/')}/Run";
+
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
 
     private LyoDataGridProjected? _dataGrid;
 
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("JobDefinition.Name", "Definition"),
-        new("State"),
-        new("Result"),
-    ];
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("JobDefinition.Name", "Definition"), new("State"), new("Result")];
 
     private static object[] GetKey(object? item)
     {
@@ -62,16 +62,15 @@
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(
-            $"{_definitionRoute}/Query",
-            new QueryReq { Amount = 200, Include = ["JobParameters"] });
-
-        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
-        var parameters = new DialogParameters<RunJobDialog>
-        {
-            { d => d.JobDefinitions, res?.Items ?? [] },
-            { d => d.RunRoute, _runRoute }
+        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/Query", new() { Amount = 200, Include = ["JobParameters"] });
+        var options = new DialogOptions {
+            MaxWidth = MaxWidth.ExtraLarge,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
         };
+
+        var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, res?.Items ?? [] }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -80,22 +79,20 @@
 
     private async Task ViewRun(object? item)
     {
-        if (item == null) return;
-        var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (item == null)
+            return;
 
-        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>(
-            $"{_runRoute}/Query",
-            new QueryReq { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var res = await ApiClient.PostAsAsync<QueryReq, QueryRes<JobRunRes>>($"{_runRoute}/Query", new() { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
         var run = res?.Items?.FirstOrDefault();
-        if (run == null) return;
+        if (run == null)
+            return;
 
         var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseButton = true };
-        var parameters = new DialogParameters<JobRunDetailView>
-        {
-            { d => d.JobRun, run },
-            { d => d.RunRoute, _runRoute }
-        };
+        var parameters = new DialogParameters<JobRunDetailView> { { d => d.JobRun, run }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<JobRunDetailView>("Job Run Details", parameters, options);
         var r = await dialog.Result;
         if (r is { Canceled: false })
@@ -104,9 +101,13 @@
 
     private async Task RerunJob(object? item)
     {
-        if (item == null) return;
+        if (item == null)
+            return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (id == null)
+            return;
+
         try {
             await ApiClient.PostAsAsync<object>($"{_runRoute}/{id}/Rerun");
             Snackbar.Add("Re-run queued", Severity.Success);
@@ -119,9 +120,13 @@
 
     private async Task CancelRun(object? item)
     {
-        if (item == null) return;
+        if (item == null)
+            return;
+
         var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (id == null)
+            return;
+
         try {
             await ApiClient.PostAsAsync<object>($"{_runRoute}/{id}/Cancel");
             Snackbar.Add("Cancel requested", Severity.Info);
@@ -134,13 +139,16 @@
 
     private async Task DeleteRun(object? item)
     {
-        if (item == null) return;
-        var id = ProjectedValueHelper.GetValue(item, "Id");
-        if (id == null) return;
+        if (item == null)
+            return;
 
-        var confirmed = await DialogService.ShowMessageBoxAsync("Confirm Delete",
-            $"Delete job run {id?.ToString()?[..8]}...?", yesText: "Delete", cancelText: "Cancel");
-        if (confirmed != true) return;
+        var id = ProjectedValueHelper.GetValue(item, "Id");
+        if (id == null)
+            return;
+
+        var confirmed = await DialogService.ShowMessageBoxAsync("Confirm Delete", $"Delete job run {id?.ToString()?[..8]}...?", "Delete", cancelText: "Cancel");
+        if (confirmed != true)
+            return;
 
         try {
             await ApiClient.DeleteAsAsync<object>($"{_runRoute}/{id}");
@@ -151,4 +159,5 @@
             Snackbar.Add($"Delete failed: {ex.Message}", Severity.Error);
         }
     }
+
 }

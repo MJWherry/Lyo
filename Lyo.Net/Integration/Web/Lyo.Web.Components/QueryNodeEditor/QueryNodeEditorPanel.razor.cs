@@ -3,7 +3,6 @@ using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Lyo.Web.Components.QueryNodeEditor;
 

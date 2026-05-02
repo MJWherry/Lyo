@@ -13,13 +13,12 @@ public interface IIOTempService : IDisposable
     IIOTempSession CreateSession(IOTempSessionOptions? options = null);
 
     /// <summary>
-    /// Returns the existing session for <paramref name="key"/> or creates a new one if none exists (or the previous one was disposed).
-    /// When creating, <paramref name="options"/> are applied; if the session already exists the options are ignored.
-    /// Useful for per-request / per-pipeline session pools.
+    /// Returns the existing session for <paramref name="key" /> or creates a new one if none exists (or the previous one was disposed). When creating,
+    /// <paramref name="options" /> are applied; if the session already exists the options are ignored. Useful for per-request / per-pipeline session pools.
     /// </summary>
     IIOTempSession GetOrCreateSession(string key, IOTempSessionOptions? options = null);
 
-    /// <summary>Disposes and removes the keyed session registered under <paramref name="key"/>. No-op if the key is not found.</summary>
+    /// <summary>Disposes and removes the keyed session registered under <paramref name="key" />. No-op if the key is not found.</summary>
     void ReleaseSession(string key);
 
     /// <summary>Returns aggregate statistics for this service instance.</summary>

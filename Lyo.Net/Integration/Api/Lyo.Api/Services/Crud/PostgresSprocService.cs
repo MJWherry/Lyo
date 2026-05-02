@@ -29,7 +29,6 @@ public sealed class PostgresSprocService<TContext>(
     {
         logger.LogDebug("Executing {StoredProcedureName} with {StoredProcedureParameterCount} parameters", storedProcName, parameters?.Count);
         ArgumentHelpers.ThrowIf(!SprocNameRegex.IsMatch(storedProcName), "Stored procedure name contains invalid characters.", nameof(storedProcName));
-
         extraCacheTags ??= [];
         var cacheKey = GenerateCacheKey<TResult>(storedProcName, parameters);
         var cacheTags = new List<string>(2 + extraCacheTags.Length) { "sprocs", $"sprocs:{typeof(TResult).Name}" };

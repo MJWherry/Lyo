@@ -12,7 +12,6 @@ public sealed class NotificationPublisher(IServiceProvider services, ILogger<Not
         where TNotification : INotification
     {
         ArgumentHelpers.ThrowIfNull(notification);
-
         var handlers = services.GetServices<INotificationHandler<TNotification>>();
         foreach (var handler in handlers) {
             try {

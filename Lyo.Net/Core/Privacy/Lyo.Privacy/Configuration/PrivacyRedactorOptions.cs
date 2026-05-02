@@ -2,7 +2,6 @@ using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Json;
 using Lyo.Privacy.Policy;
-using Lyo.Privacy.Text;
 
 namespace Lyo.Privacy.Configuration;
 

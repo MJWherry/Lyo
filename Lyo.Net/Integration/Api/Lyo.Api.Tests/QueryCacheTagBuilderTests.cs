@@ -49,7 +49,7 @@ public sealed class QueryCacheTagBuilderTests
     {
         var t = typeof(QueryCacheTagBuilderTests);
         object?[] pk = [42];
-        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk), QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, null, false));
+        Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk), QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk));
     }
 
     [Fact]

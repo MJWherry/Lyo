@@ -83,7 +83,6 @@ public class BoundingBox : IEquatable<BoundingBox>
     public static BoundingBox FromCenterAndRadius(GeoCoordinate center, double radiusMeters)
     {
         ArgumentHelpers.ThrowIfNull(center);
-
         const double metersPerDegreeLat = 111320.0;
         var metersPerDegreeLon = 111320.0 * Math.Cos(center.Latitude * Math.PI / 180);
         var latOffset = radiusMeters / metersPerDegreeLat;

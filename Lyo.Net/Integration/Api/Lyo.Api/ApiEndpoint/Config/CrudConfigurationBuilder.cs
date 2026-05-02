@@ -245,7 +245,6 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     internal (ApiFeatureFlag Features, CrudConfiguration<TDbContext, TDbEntity, TRequest> Config) Build()
     {
         OperationHelpers.ThrowIf(!_flagsSet, "Call WithFlags(...) to specify ApiFeatureFlag values for WithCrud (e.g. ApiFeatureFlag.All).");
-
         var config = new CrudConfiguration<TDbContext, TDbEntity, TRequest> {
             AfterCreate = _afterCreate,
             AfterDelete = _afterDelete,

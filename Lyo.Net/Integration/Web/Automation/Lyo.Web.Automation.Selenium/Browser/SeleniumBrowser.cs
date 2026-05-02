@@ -577,12 +577,10 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         for (var i = 0; i < segments.Count; i++) {
             ct.ThrowIfCancellationRequested();
             var by = ElementLocatorMapping.ToBy(segments[i]);
-            if (i == 0) {
+            if (i == 0)
                 current = await Task.Run(() => SeleniumPolling.TryWaitForElement(driver, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
-            }
-            else {
+            else
                 current = await Task.Run(() => SeleniumPolling.TryWaitForNestedElement(driver, current!, by, Options.SeleniumMaxWaitSeconds, Logger, ct), ct).ConfigureAwait(false);
-            }
 
             if (current == null)
                 return null;

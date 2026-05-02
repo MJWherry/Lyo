@@ -2079,7 +2079,7 @@ public class PdfService : IPdfService, IDisposable
 
     private PdfColumnarText BuildColumnarText(List<PdfWord> words, int columnCount, double? yTolerance)
     {
-        ArgumentHelpers.ThrowIfLessThan(columnCount, 1, nameof(columnCount), "Column count must be at least 1.");
+        ArgumentHelpers.ThrowIfLessThan(columnCount, 1, "Column count must be at least 1.");
         if (words.Count == 0)
             return new(Enumerable.Repeat(string.Empty, columnCount).ToList());
 

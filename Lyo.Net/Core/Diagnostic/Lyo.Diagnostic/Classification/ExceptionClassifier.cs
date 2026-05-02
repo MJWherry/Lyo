@@ -100,7 +100,6 @@ public sealed class ExceptionClassifier : IExceptionClassifier
     public ClassifiedExceptionResult ClassifyByTypeName(string exceptionTypeName)
     {
         ArgumentHelpers.ThrowIfNull(exceptionTypeName);
-
         foreach (var i in _options.CustomMappings) {
             if (exceptionTypeName.Contains(i.Key, StringComparison.OrdinalIgnoreCase))
                 return BuildCustomResult(i.Value, exceptionTypeName);

@@ -121,7 +121,7 @@ public sealed class BulkSmsBuilder
                 nameof(messageIndex), messageIndex, 0, _messages.Count - 1, $"Message index {messageIndex} is out of range. Valid range: 0 to {_messages.Count - 1}.");
         }
 
-        var uri = UriHelpers.GetValidWebUri(url, nameof(url));
+        var uri = UriHelpers.GetValidWebUri(url);
         var message = _messages[messageIndex];
         message.MediaUrls.Add(uri);
         return this;

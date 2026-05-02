@@ -10,23 +10,13 @@ namespace Lyo.FileStorage;
 /// </summary>
 internal sealed class HashVerifyingReadStream : Stream
 {
-    private readonly HashingStream _hashingStream;
     private readonly byte[]? _expectedHash;
-    private readonly bool _throwOnMismatch;
-    private readonly ILogger _logger;
     private readonly Guid _fileId;
     private readonly SysCryptoHashAlgorithm _hashAlgorithm;
+    private readonly HashingStream _hashingStream;
+    private readonly ILogger _logger;
+    private readonly bool _throwOnMismatch;
     private bool _disposed;
-
-    public HashVerifyingReadStream(Stream inner, SysCryptoHashAlgorithm hashAlgorithm, byte[]? expectedHash, bool throwOnMismatch, ILogger logger, Guid fileId)
-    {
-        _hashAlgorithm = hashAlgorithm;
-        _hashingStream = new(inner, hashAlgorithm);
-        _expectedHash = expectedHash;
-        _throwOnMismatch = throwOnMismatch;
-        _logger = logger;
-        _fileId = fileId;
-    }
 
     public override bool CanRead => _hashingStream.CanRead;
 
@@ -41,13 +31,22 @@ internal sealed class HashVerifyingReadStream : Stream
         set => throw new NotSupportedException();
     }
 
+    public HashVerifyingReadStream(Stream inner, SysCryptoHashAlgorithm hashAlgorithm, byte[]? expectedHash, bool throwOnMismatch, ILogger logger, Guid fileId)
+    {
+        _hashAlgorithm = hashAlgorithm;
+        _hashingStream = new(inner, hashAlgorithm);
+        _expectedHash = expectedHash;
+        _throwOnMismatch = throwOnMismatch;
+        _logger = logger;
+        _fileId = fileId;
+    }
+
     public override int Read(byte[] buffer, int offset, int count) => _hashingStream.Read(buffer, offset, count);
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct) => _hashingStream.ReadAsync(buffer, offset, count, ct);
 
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
-        => _hashingStream.ReadAsync(buffer, ct);
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default) => _hashingStream.ReadAsync(buffer, ct);
 #endif
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -105,9 +104,10 @@ internal sealed class HashVerifyingReadStream : Stream
         if (a.Length != b.Length)
             return false;
 
-        for (var i = 0; i < a.Length; i++)
+        for (var i = 0; i < a.Length; i++) {
             if (a[i] != b[i])
                 return false;
+        }
 
         return true;
     }

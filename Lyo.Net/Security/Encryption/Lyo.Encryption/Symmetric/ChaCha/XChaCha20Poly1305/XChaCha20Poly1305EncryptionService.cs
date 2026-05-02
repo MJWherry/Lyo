@@ -32,7 +32,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
         if (key != null)
-            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32, nameof(key));
+            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
 
         byte[]? actualKey = null;
         string? keyVersion = null;
@@ -78,9 +78,9 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize, nameof(bytes));
+        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
         if (key != null)
-            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32, nameof(key));
+            ArgumentHelpers.ThrowIfNotInRange(key, 32, 32);
 
         byte[]? actualKey = null;
         string? keyVersion = null;
@@ -125,7 +125,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null)
     {
         const int minEncryptedSize = 50;
-        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize, nameof(encryptedBytes));
+        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(encryptedBytes);
         return DecryptFromStream(ms, keyId, key);
     }
@@ -136,7 +136,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
     {
         const int minEncryptedSize = 50;
-        ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize, nameof(count));
+        ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(buffer, offset, count, false);
         return DecryptFromStream(ms, keyId, key);
     }

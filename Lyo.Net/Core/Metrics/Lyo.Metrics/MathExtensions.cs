@@ -13,7 +13,6 @@ public static class MathExtensions
         ArgumentHelpers.ThrowIfNull(snapshot);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNull(percentiles);
-
         var histogram = snapshot.Histograms.Values.FirstOrDefault(h => string.Equals(h.Name, name, StringComparison.Ordinal));
         return percentiles.ToDictionary(p => p.ToString("0.###"), p => histogram.Percentile(p));
     }

@@ -28,7 +28,6 @@ public class QueryReqBuilder(QueryReq? baseQuery = null)
     {
         ArgumentHelpers.ThrowIfNull(includes);
         ArgumentHelpers.ThrowIf(includes.Length == 0, "At least one include is required");
-
         foreach (var i in includes)
             _query.Include.Add(i.Trim());
 

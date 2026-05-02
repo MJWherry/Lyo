@@ -37,7 +37,6 @@ internal sealed class AutomationPlanRunArtifacts : IDisposable
     public static AutomationPlanRunArtifacts? TryCreate(AutomationPlanRunDirectoryOptions directoryOptions, Guid runId)
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(directoryOptions.RootDirectory), "PlanRunDirectory.RootDirectory must be non-empty.", nameof(directoryOptions));
-
         var root = Path.GetFullPath(directoryOptions.RootDirectory);
         var runRoot = directoryOptions.NestRunUnderRoot ? Path.Combine(root, directoryOptions.RunFolderName ?? runId.ToString("N")) : root;
         var logsDir = Path.Combine(runRoot, directoryOptions.LogsSubdirectory);

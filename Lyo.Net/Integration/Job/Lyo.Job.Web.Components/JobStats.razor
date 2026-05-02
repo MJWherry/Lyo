@@ -4,16 +4,22 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
     @if (string.IsNullOrEmpty(StatisticsRoute)) {
         <MudAlert Severity="Severity.Info">Statistics route not configured. Set StatisticsRoute on JobManagement to enable.</MudAlert>
+
         return;
     }
 
     @if (_loading) {
-        <MudGrid><MudItem xs="12">
-            <MudCard><MudCardContent Class="d-flex justify-center align-center" Style="height: 200px;">
-                <MudProgressCircular Color="Color.Primary" Indeterminate/>
-                <MudText Class="ml-3">Loading statistics...</MudText>
-            </MudCardContent></MudCard>
-        </MudItem></MudGrid>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardContent Class="d-flex justify-center align-center" Style="height: 200px;">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate/>
+                        <MudText Class="ml-3">Loading statistics...</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
         return;
     }
 
@@ -66,7 +72,11 @@
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudCard>
-                    <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Result Distribution</MudText></CardHeaderContent></MudCardHeader>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Result Distribution</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
                     <MudCardContent>
                         @if (ResultData().Sum() > 0) {
                             <MudChart T="double" ChartType="ChartType.Pie"
@@ -85,7 +95,11 @@
             </MudItem>
             <MudItem xs="12" md="6">
                 <MudCard>
-                    <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Runtime (seconds)</MudText></CardHeaderContent></MudCardHeader>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Runtime (seconds)</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
                     <MudCardContent>
                         <MudChart ChartType="ChartType.Bar"
                                   ChartOptions="@_barOptions"
@@ -100,7 +114,11 @@
 
     <!-- Detail table -->
     <MudCard Class="mt-4">
-        <MudCardHeader><CardHeaderContent><MudText Typo="Typo.h6">Detailed Statistics</MudText></CardHeaderContent></MudCardHeader>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Detailed Statistics</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
         <MudCardContent>
             <MudDataGrid Items="@_filtered" Striped Hover Filterable SortMode="SortMode.Multiple" Pagination PageSize="15">
                 <Columns>
@@ -120,7 +138,10 @@
                         <CellTemplate>
                             @if (context.Item.AvgRunTimeMs.HasValue) {
                                 <MudText>@TimeSpan.FromMilliseconds(context.Item.AvgRunTimeMs.Value).ToString(@"mm\:ss")</MudText>
-                            } else { <MudText>-</MudText> }
+                            }
+                            else {
+                                <MudText>-</MudText>
+                            }
                         </CellTemplate>
                     </TemplateColumn>
                     <TemplateColumn Title="Last Run">
@@ -140,11 +161,16 @@
 </MudContainer>
 
 @code {
-    [Parameter, EditorRequired] public IApiClient ApiClient { get; set; } = null!;
-    [Parameter] public string? StatisticsRoute { get; set; }
+
+    [Parameter][EditorRequired]
+    public IApiClient ApiClient { get; set; } = null!;
+
+    [Parameter]
+    public string? StatisticsRoute { get; set; }
 
     private bool _loading;
     private IReadOnlyList<SpJobStatistic> _stats = [];
+
     private IEnumerable<SpJobStatistic> _filtered => _stats;
 
     private static readonly string[] ResultLabels = ["Success", "Failure", "Warn", "Partial", "Cancelled", "Skipped", "Timeout", "Unknown"];
@@ -154,29 +180,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrEmpty(StatisticsRoute)) return;
+        if (string.IsNullOrEmpty(StatisticsRoute))
+            return;
+
         _loading = true;
-        try { _stats = await ApiClient.GetAsAsync<IReadOnlyList<SpJobStatistic>>(StatisticsRoute) ?? []; }
-        catch (Exception ex) { Logger.LogError(ex, "Failed to load job statistics"); }
-        finally { _loading = false; }
+        try {
+            _stats = await ApiClient.GetAsAsync<IReadOnlyList<SpJobStatistic>>(StatisticsRoute) ?? [];
+        }
+        catch (Exception ex) {
+            Logger.LogError(ex, "Failed to load job statistics");
+        }
+        finally {
+            _loading = false;
+        }
     }
 
     private double[] ResultData()
     {
         var s = _filtered.ToList();
-        return [s.Sum(j => j.SuccessCount), s.Sum(j => j.FailureCount), s.Sum(j => j.SuccessWithWarningsCount),
-                s.Sum(j => j.PartialSuccessCount), s.Sum(j => j.CancelledCount), s.Sum(j => j.SkippedCount),
-                s.Sum(j => j.TimeoutCount), s.Sum(j => j.UnknownCount)];
+        return [s.Sum(j => j.SuccessCount), s.Sum(j => j.FailureCount), s.Sum(j => j.SuccessWithWarningsCount), s.Sum(j => j.PartialSuccessCount), s.Sum(j => j.CancelledCount), s.Sum(j => j.SkippedCount), s.Sum(j => j.TimeoutCount), s.Sum(j => j.UnknownCount)];
     }
 
     private string[] JobLabels() => _filtered.Select(j => j.JobName.Length > 15 ? j.JobName[..12] + "..." : j.JobName).ToArray();
 
-    private List<ChartSeries<double>> RuntimeSeries() =>
-    [
-        new() { Name = "Average", Data = _filtered.Select(j => (j.AvgRunTimeMs ?? 0) / 1000).ToArray() },
-        new() { Name = "Min", Data = _filtered.Select(j => (j.MinRunTimeMs ?? 0) / 1000).ToArray() },
-        new() { Name = "Max", Data = _filtered.Select(j => (j.MaxRunTimeMs ?? 0) / 1000).ToArray() },
-    ];
+    private List<ChartSeries<double>> RuntimeSeries() => [new() { Name = "Average", Data = _filtered.Select(j => (j.AvgRunTimeMs ?? 0) / 1000).ToArray() }, new() { Name = "Min", Data = _filtered.Select(j => (j.MinRunTimeMs ?? 0) / 1000).ToArray() }, new() { Name = "Max", Data = _filtered.Select(j => (j.MaxRunTimeMs ?? 0) / 1000).ToArray() }];
 
     private double OverallSuccessRate()
     {
@@ -187,7 +214,10 @@
     private string AverageRuntime()
     {
         var withData = _filtered.Where(j => j.AvgRunTimeMs.HasValue).ToList();
-        if (!withData.Any()) return "-";
+        if (!withData.Any())
+            return "-";
+
         return TimeSpan.FromMilliseconds(withData.Average(j => j.AvgRunTimeMs!.Value)).ToString(@"mm\:ss");
     }
+
 }

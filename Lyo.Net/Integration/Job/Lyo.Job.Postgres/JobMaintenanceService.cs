@@ -1,31 +1,28 @@
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
-using JobState = Lyo.Job.Models.Enums.JobState;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
+using JobState = Lyo.Job.Models.Enums.JobState;
 
 namespace Lyo.Job.Postgres;
 
 /// <summary>
 /// Background service that runs maintenance tasks on the job database on a periodic schedule:
 /// <list type="bullet">
-///   <item>
-///     <term>Dead job detection</term>
-///     <description>
-///     Scans <c>Running</c>/<c>Cancelling</c> runs whose <c>LastHeartbeatUtc</c> is older than
-///     <c>JobDefinition.TimeoutMinutes</c> and transitions them to <c>Finished / Failure</c>.
-///     </description>
-///   </item>
-///   <item>
-///     <term>Circuit breaker reset</term>
-///     <description>
-///     Re-enables job definitions whose circuit breaker has been tripped and whose
-///     <c>CircuitBreakerResetMinutes</c> cooldown has elapsed.
-///     </description>
-///   </item>
+/// <item>
+/// <term>Dead job detection</term>
+/// <description>
+/// Scans <c>Running</c>/<c>Cancelling</c> runs whose <c>LastHeartbeatUtc</c> is older than <c>JobDefinition.TimeoutMinutes</c> and transitions them to
+/// <c>Finished / Failure</c>.
+/// </description>
+/// </item>
+/// <item>
+/// <term>Circuit breaker reset</term>
+/// <description>Re-enables job definitions whose circuit breaker has been tripped and whose <c>CircuitBreakerResetMinutes</c> cooldown has elapsed.</description>
+/// </item>
 /// </list>
-/// Register via <see cref="Extensions.AddJobMaintenanceService"/>.
+/// Register via <see cref="Extensions.AddJobMaintenanceService" />.
 /// </summary>
 public sealed class JobMaintenanceService : BackgroundService
 {
@@ -60,10 +57,8 @@ public sealed class JobMaintenanceService : BackgroundService
     private async Task RunMaintenanceAsync(CancellationToken ct)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-
         await FailDeadJobsAsync(db, ct).ConfigureAwait(false);
         await ResetCircuitBreakersAsync(db, ct).ConfigureAwait(false);
-
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -72,12 +67,8 @@ public sealed class JobMaintenanceService : BackgroundService
         var now = DateTime.UtcNow;
 
         // Load running/cancelling runs that have a heartbeat timeout defined on their definition.
-        var candidates = await db.JobRuns
-            .Include(r => r.JobDefinition)
-            .Where(r =>
-                (r.State == JobState.Running || r.State == JobState.Cancelling) &&
-                r.LastHeartbeatUtc != null &&
-                r.JobDefinition.TimeoutMinutes > 0)
+        var candidates = await db.JobRuns.Include(r => r.JobDefinition)
+            .Where(r => (r.State == JobState.Running || r.State == JobState.Cancelling) && r.LastHeartbeatUtc != null && r.JobDefinition.TimeoutMinutes > 0)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -87,9 +78,8 @@ public sealed class JobMaintenanceService : BackgroundService
                 continue;
 
             _logger.LogWarning(
-                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastHeartbeat:u} " +
-                "(timeout {TimeoutMinutes} min) — marking as failed",
-                run.Id, run.JobDefinition.Name, run.LastHeartbeatUtc, run.JobDefinition.TimeoutMinutes);
+                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastHeartbeat:u} " + "(timeout {TimeoutMinutes} min) — marking as failed", run.Id,
+                run.JobDefinition.Name, run.LastHeartbeatUtc, run.JobDefinition.TimeoutMinutes);
 
             run.State = JobState.Finished;
             run.Result = JobRunResult.Timeout;
@@ -100,24 +90,13 @@ public sealed class JobMaintenanceService : BackgroundService
     private async Task ResetCircuitBreakersAsync(JobContext db, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
-
-        var tripped = await db.JobDefinitions
-            .Where(d =>
-                !d.Enabled &&
-                d.CircuitBreakerResetMinutes > 0 &&
-                d.CircuitBreakerTrippedAt != null)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
-
+        var tripped = await db.JobDefinitions.Where(d => !d.Enabled && d.CircuitBreakerResetMinutes > 0 && d.CircuitBreakerTrippedAt != null).ToListAsync(ct).ConfigureAwait(false);
         foreach (var def in tripped) {
             var resetAt = def.CircuitBreakerTrippedAt!.Value.AddMinutes(def.CircuitBreakerResetMinutes);
             if (now < resetAt)
                 continue;
 
-            _logger.LogInformation(
-                "Resetting circuit breaker for definition {DefinitionName} ({DefinitionId}) — cooldown elapsed",
-                def.Name, def.Id);
-
+            _logger.LogInformation("Resetting circuit breaker for definition {DefinitionName} ({DefinitionId}) — cooldown elapsed", def.Name, def.Id);
             def.Enabled = true;
             def.CircuitBreakerTrippedAt = null;
         }

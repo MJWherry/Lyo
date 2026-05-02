@@ -39,21 +39,21 @@ public sealed class BarcodeBuilder
 
     public BarcodeBuilder WithModuleWidthPixels(int pixels)
     {
-        ArgumentHelpers.ThrowIfNotInRange(pixels, 1, int.MaxValue, nameof(pixels));
+        ArgumentHelpers.ThrowIfNotInRange(pixels, 1, int.MaxValue);
         _moduleWidthPixels = pixels;
         return this;
     }
 
     public BarcodeBuilder WithBarHeightPixels(int pixels)
     {
-        ArgumentHelpers.ThrowIfNotInRange(pixels, 1, int.MaxValue, nameof(pixels));
+        ArgumentHelpers.ThrowIfNotInRange(pixels, 1, int.MaxValue);
         _barHeightPixels = pixels;
         return this;
     }
 
     public BarcodeBuilder WithQuietZoneModules(int modules)
     {
-        ArgumentHelpers.ThrowIfNotInRange(modules, 0, int.MaxValue, nameof(modules));
+        ArgumentHelpers.ThrowIfNotInRange(modules, 0, int.MaxValue);
         _quietZoneModules = modules;
         return this;
     }

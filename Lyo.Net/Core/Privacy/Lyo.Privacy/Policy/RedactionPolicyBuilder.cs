@@ -152,8 +152,5 @@ public sealed class RedactionPolicyBuilder
     public RedactionPolicy Build()
         => new(_rules.ToArray(), _placeholder, _mergeAdjacent, _policyName) { NeverRedactSubstrings = _neverRedact.Count == 0 ? Array.Empty<string>() : _neverRedact.ToArray() };
 
-    private static HashSet<string>? ToBinSet(IReadOnlyCollection<string>? bins) 
-        => bins is null || bins.Count == 0 
-            ? null 
-            : new(bins, StringComparer.Ordinal);
+    private static HashSet<string>? ToBinSet(IReadOnlyCollection<string>? bins) => bins is null || bins.Count == 0 ? null : new(bins, StringComparer.Ordinal);
 }

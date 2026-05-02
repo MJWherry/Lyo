@@ -4,12 +4,19 @@ namespace Lyo.Comic.Api.Models.Response;
 public sealed record ComicVolumeRes
 {
     public Guid Id { get; init; }
+
     public Guid SeriesId { get; init; }
+
     public decimal? VolumeNumber { get; init; }
+
     public string? Title { get; init; }
+
     public string? CoverImageRef { get; init; }
+
     public DateTime? PublishedDate { get; init; }
+
     public DateTime CreatedTimestamp { get; init; }
+
     public DateTime? UpdatedTimestamp { get; init; }
 
     /// <summary>Tags applied to this volume.</summary>
@@ -30,6 +37,6 @@ public sealed record ComicVolumeRes
     /// <summary>Whether the requesting user has favorited this volume. Null when the caller is anonymous.</summary>
     public bool? IsFavorited { get; init; }
 
-    /// <summary>Resolved URL for the volume cover image. Populated when <see cref="CoverImageRef"/> is a valid file storage GUID.</summary>
+    /// <summary>Resolved URL for the volume cover image. Populated when <see cref="CoverImageRef" /> is a valid file storage GUID.</summary>
     public string? CoverImageUrl => CoverImageRef != null && Guid.TryParse(CoverImageRef, out var id) ? $"/files/{id}" : null;
 }

@@ -51,7 +51,7 @@ public class ApiClient : IApiClient
     public async Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {ResultTypeName}", Get, uri, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -75,7 +75,7 @@ public class ApiClient : IApiClient
         CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {QueryTypeName} {ResultTypeName}", Get, uri, typeof(TRequest).FullName, typeof(TResult).FullName)) {
             var queryParams = ToQueryString(query, enumerableDelimiter);
@@ -94,7 +94,7 @@ public class ApiClient : IApiClient
     public async Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri}", HttpMethod.Get, uri)) {
             Logger.LogDebug("Sending GET request for file");
@@ -114,7 +114,7 @@ public class ApiClient : IApiClient
         CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         Logger.LogDebug("Sending streaming GET request for file: {Uri}", uri);
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -142,7 +142,7 @@ public class ApiClient : IApiClient
     public async Task<(byte[] Content, FileTypeInfo FileType)> GetFileWithTypeAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri}", HttpMethod.Get, uri)) {
             Logger.LogDebug("Sending GET request for file");
@@ -160,7 +160,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName} {ResultTypeName}", Patch, uri, typeof(TRequest).FullName, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -182,7 +182,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> PutAsAsync<TRequest, TResult>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName} {ResultTypeName}", Put, uri, typeof(TRequest).FullName, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -200,7 +200,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName} {ResultTypeName}", Post, uri, typeof(TRequest).FullName, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -218,7 +218,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {ResultTypeName}", Post, uri, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -237,7 +237,7 @@ public class ApiClient : IApiClient
     public async Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {RequestTypeName}", Post, uri, typeof(TRequest).FullName)) {
             Logger.LogDebug("Sending request");
@@ -261,20 +261,20 @@ public class ApiClient : IApiClient
         CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
-        var safeFileName = !string.IsNullOrWhiteSpace(fileName) ? FileHelpers.GetValidFileName(fileName, nameof(fileName)) : $"file{fileType.DefaultExtension}";
+        var safeFileName = !string.IsNullOrWhiteSpace(fileName) ? FileHelpers.GetValidFileName(fileName) : $"file{fileType.DefaultExtension}";
         return await PostFileAsAsyncCore<TResult>(uri, stream, fileType, safeFileName, before, ct).ConfigureAwait(false);
     }
 
     public async Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
-        FileHelpers.ThrowIfFileNameInvalid(fileName, nameof(fileName));
+        FileHelpers.ThrowIfFileNameInvalid(fileName);
         var fileType = FileTypeInfo.FromFilePath(fileName);
         return await PostFileAsAsyncCore<TResult>(uri, stream, fileType, fileName, before, ct).ConfigureAwait(false);
     }
@@ -303,7 +303,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> PostFileAsAsync<TResult>(string uri, string filePath, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var fileName = Path.GetFileName(filePath);
@@ -323,7 +323,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? body = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName} {ResultTypeName}", Delete, uri, typeof(TRequest).FullName, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");
@@ -345,7 +345,7 @@ public class ApiClient : IApiClient
     public async Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri, nameof(uri));
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
 
         using (Logger.BeginScope("{RequestMethodName} {Uri} {ResultTypeName}", Delete, uri, typeof(TResult).FullName)) {
             Logger.LogDebug("Sending request");

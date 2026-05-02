@@ -128,7 +128,7 @@ public class CachePayloadTests
         var services = new ServiceCollection();
         services.AddSingleton(new CacheOptions { Payload = new() { AutoEncrypt = true, EncryptionKeyId = "k" } });
         services.AddCompressionService();
-        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), null));
+        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
         var codec = services.BuildServiceProvider().GetRequiredService<ICachePayloadCodec>();
         Assert.Throws<InvalidOperationException>(() => codec.Encode([1, 2, 3]));
     }

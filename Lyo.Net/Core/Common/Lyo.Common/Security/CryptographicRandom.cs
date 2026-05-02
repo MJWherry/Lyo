@@ -13,7 +13,6 @@ public static class CryptographicRandom
     public static byte[] GetBytes(int length)
     {
         ArgumentHelpers.ThrowIfNegative(length);
-
         if (length == 0)
             return [];
 
@@ -43,7 +42,6 @@ public static class CryptographicRandom
     public static int GetInt32(int fromInclusive, int toExclusive)
     {
         ArgumentHelpers.ThrowIf(fromInclusive >= toExclusive, "toExclusive must be greater than fromInclusive.", nameof(toExclusive));
-
         var range = (ulong)((long)toExclusive - fromInclusive);
         if (range == 1)
             return fromInclusive;
@@ -55,7 +53,6 @@ public static class CryptographicRandom
     private static ulong NextUInt64Exclusive(ulong range)
     {
         ArgumentHelpers.ThrowIfLessThan(range, 2UL);
-
         var limit = ulong.MaxValue - ulong.MaxValue % range;
         var buf = new byte[8];
         ulong value;

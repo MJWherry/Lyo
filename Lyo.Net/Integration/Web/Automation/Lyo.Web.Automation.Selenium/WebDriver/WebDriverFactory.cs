@@ -76,9 +76,8 @@ public static class WebDriverFactory
         if (scripts == null)
             return;
 
-        foreach (var script in scripts.Where(s => !string.IsNullOrWhiteSpace(s))) {
+        foreach (var script in scripts.Where(s => !string.IsNullOrWhiteSpace(s)))
             driver.ExecuteCdpCommand("Page.addScriptToEvaluateOnNewDocument", new() { { "source", script } });
-        }
     }
 
     private static FirefoxDriver CreateFirefox(SeleniumBrowserOptions options, SeleniumExecutionContext? context)

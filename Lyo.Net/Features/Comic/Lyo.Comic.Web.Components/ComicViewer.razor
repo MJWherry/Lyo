@@ -4,8 +4,7 @@
 <div id="@_viewerId" class="comic-viewer" tabindex="0" @ref="_viewerRef">
 
     @* ── Loading overlay ─────────────────────────────────────────── *@
-    @if (_loadingPage)
-    {
+    @if (_loadingPage) {
         <div class="comic-viewer__loading">
             <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary"/>
         </div>
@@ -13,15 +12,13 @@
 
     @* ── Page image ──────────────────────────────────────────────── *@
     <div class="comic-viewer__page-area">
-        @if (!string.IsNullOrWhiteSpace(_currentImageUrl))
-        {
+        @if (!string.IsNullOrWhiteSpace(_currentImageUrl)) {
             <img src="@_currentImageUrl"
                  alt="Page @CurrentPage"
                  class="comic-viewer__page-img @(_loadingPage ? "comic-viewer__page-img--hidden" : "")"
                  @onload="OnImageLoaded"/>
         }
-        else if (!_loadingPage)
-        {
+        else if (!_loadingPage) {
             <div class="comic-viewer__no-image">
                 <MudIcon Icon="@Icons.Material.Filled.BrokenImage" Color="Color.Default" Style="font-size: 4rem; opacity: 0.3;"/>
                 <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
@@ -55,8 +52,7 @@
                            title="Close viewer"/>
 
             @* Chapter selector ─────────────────────────────────────── *@
-            @if (Chapters.Count > 0)
-            {
+            @if (Chapters.Count > 0) {
                 <MudSelect T="ComicChapter"
                            Value="CurrentChapter"
                            ValueChanged="OnChapterSelectedAsync"
@@ -66,8 +62,7 @@
                            Class="comic-viewer__chapter-select"
                            AnchorOrigin="Origin.BottomRight"
                            TransformOrigin="Origin.TopRight">
-                    @foreach (var chapter in Chapters)
-                    {
+                    @foreach (var chapter in Chapters) {
                         <MudSelectItem T="ComicChapter" Value="chapter">@ChapterToString(chapter)</MudSelectItem>
                     }
                 </MudSelect>

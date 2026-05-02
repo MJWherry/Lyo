@@ -27,9 +27,9 @@ const _instances = new Map();
 // would have to re-decode (or re-fetch) when the <img> element needs it.
 const _prefetchedImages = new Map();
 
-const SWIPE_THRESHOLD_PX  = 50;   // minimum horizontal distance to count as swipe
-const SWIPE_MAX_VERTICAL  = 150;  // reject swipe if vertical drift exceeds this
-const TAP_MAX_MOVE_PX     = 10;   // finger movement under this is a tap, not a swipe
+const SWIPE_THRESHOLD_PX = 50;   // minimum horizontal distance to count as swipe
+const SWIPE_MAX_VERTICAL = 150;  // reject swipe if vertical drift exceeds this
+const TAP_MAX_MOVE_PX = 10;   // finger movement under this is a tap, not a swipe
 const TAP_MAX_DURATION_MS = 300;  // touch shorter than this is a tap
 
 const NAV_DEBOUNCE_MS = 300; // delay before notifying Blazor after rapid page changes
@@ -60,10 +60,10 @@ export function initViewer(viewerId, dotNetRef) {
     };
 
     // @onclick was removed from the Blazor tap zones; JS handles all navigation.
-    const leftZone  = el.querySelector('.comic-viewer__tap-zone--left');
+    const leftZone = el.querySelector('.comic-viewer__tap-zone--left');
     const rightZone = el.querySelector('.comic-viewer__tap-zone--right');
-    if (leftZone)  leftZone.addEventListener('click', () => navigate(state, -1));
-    if (rightZone) rightZone.addEventListener('click', () => navigate(state,  1));
+    if (leftZone) leftZone.addEventListener('click', () => navigate(state, -1));
+    if (rightZone) rightZone.addEventListener('click', () => navigate(state, 1));
 
     state.onKeyDown = (e) => {
         if (!el.contains(document.activeElement) && document.activeElement !== el) return;
@@ -71,12 +71,12 @@ export function initViewer(viewerId, dotNetRef) {
         else if (e.key === 'ArrowLeft') navigate(state, -1);
     };
     document.addEventListener('keydown', state.onKeyDown);
-    el.focus({ preventScroll: true });
+    el.focus({preventScroll: true});
 
     state.onTouchStart = (e) => {
         const touch = e.touches[0];
-        state.touchStartX    = touch.clientX;
-        state.touchStartY    = touch.clientY;
+        state.touchStartX = touch.clientX;
+        state.touchStartY = touch.clientY;
         state.touchStartTime = Date.now();
         state.touchOnOverlay = !!e.target.closest(
             '.comic-viewer__top-bar, .comic-viewer__bottom-bar'
@@ -86,12 +86,12 @@ export function initViewer(viewerId, dotNetRef) {
     state.onTouchEnd = (e) => {
         if (state.touchOnOverlay) return;
 
-        const touch  = e.changedTouches[0];
-        const dx     = touch.clientX - state.touchStartX;
-        const dy     = touch.clientY - state.touchStartY;
-        const dt     = Date.now() - state.touchStartTime;
-        const absDx  = Math.abs(dx);
-        const absDy  = Math.abs(dy);
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - state.touchStartX;
+        const dy = touch.clientY - state.touchStartY;
+        const dt = Date.now() - state.touchStartTime;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
 
         if (absDx >= SWIPE_THRESHOLD_PX && absDy <= SWIPE_MAX_VERTICAL) {
             e.preventDefault();
@@ -112,8 +112,8 @@ export function initViewer(viewerId, dotNetRef) {
         }
     };
 
-    el.addEventListener('touchstart', state.onTouchStart, { passive: true });
-    el.addEventListener('touchend',   state.onTouchEnd,   { passive: false });
+    el.addEventListener('touchstart', state.onTouchStart, {passive: true});
+    el.addEventListener('touchend', state.onTouchEnd, {passive: false});
 
     _instances.set(viewerId, state);
 }
@@ -124,7 +124,7 @@ export function disposeViewer(viewerId) {
 
     document.removeEventListener('keydown', state.onKeyDown);
     state.el.removeEventListener('touchstart', state.onTouchStart);
-    state.el.removeEventListener('touchend',   state.onTouchEnd);
+    state.el.removeEventListener('touchend', state.onTouchEnd);
     clearTimeout(state.navDebounceTimer);
 
     for (const url of Object.values(state.urlMap))
@@ -158,7 +158,7 @@ export function setPageState(viewerId, currentPage, totalPages) {
     const state = _instances.get(viewerId);
     if (!state) return;
     state.currentPage = currentPage;
-    state.totalPages  = totalPages;
+    state.totalPages = totalPages;
 }
 
 /** Clear the URL map and release prefetch image refs when the chapter changes. */

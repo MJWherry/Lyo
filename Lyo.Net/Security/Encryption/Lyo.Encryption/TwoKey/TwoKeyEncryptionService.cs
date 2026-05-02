@@ -180,8 +180,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     public byte[] Decrypt(byte[] encryptedData, byte[] encryptedDataEncryptionKey, string? keyId = null, byte[]? kek = null, string? keyVersion = null, byte[]? salt = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(encryptedData, 1, long.MaxValue, nameof(encryptedData));
-        ArgumentHelpers.ThrowIfNotInRange(encryptedDataEncryptionKey, 1, long.MaxValue, nameof(encryptedDataEncryptionKey));
+        ArgumentHelpers.ThrowIfNotInRange(encryptedData, 1, long.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(encryptedDataEncryptionKey, 1, long.MaxValue);
         byte[]? kekBytes = null;
         if (kek != null)
             kekBytes = kek;

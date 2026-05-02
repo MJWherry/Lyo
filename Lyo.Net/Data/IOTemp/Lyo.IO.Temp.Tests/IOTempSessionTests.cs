@@ -1,19 +1,17 @@
+using System.Diagnostics;
 using System.Text;
-using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
 
 namespace Lyo.IO.Temp.Tests;
 
 public sealed class IOTempSessionTests : IDisposable
 {
-    private static IOTempServiceOptions TestOptions() => new() {
-        TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-session-tests"),
-        DirectoryName = Guid.NewGuid().ToString("N")
-    };
-
     private readonly IOTempService _service = new(TestOptions());
 
     public void Dispose() => _service.Dispose();
+
+    private static IOTempServiceOptions TestOptions()
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-session-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
 
     [Fact]
     public void Dispose_cleans_up_directory()
@@ -24,6 +22,7 @@ public sealed class IOTempSessionTests : IDisposable
             session.TouchFile("test.txt");
             Assert.True(Directory.Exists(sessionDir));
         }
+
         Assert.False(Directory.Exists(sessionDir));
     }
 
@@ -199,9 +198,7 @@ public sealed class IOTempSessionTests : IDisposable
         session.Generator.CreateRandomFile(512);
         session.Generator.CreateRandomFile(512);
         Assert.Equal(2, session.Files.Count);
-
         session.Clear();
-
         Assert.Empty(session.Files);
         Assert.Empty(session.Directories);
     }
@@ -212,9 +209,7 @@ public sealed class IOTempSessionTests : IDisposable
         using var session = _service.CreateSession();
         session.Generator.CreateRandomFile(1024);
         Assert.True(session.GetTotalBytesUsed() > 0);
-
         session.Clear();
-
         Assert.Equal(0, session.GetTotalBytesUsed());
     }
 
@@ -224,9 +219,7 @@ public sealed class IOTempSessionTests : IDisposable
         using var session = _service.CreateSession();
         var path = session.Generator.CreateRandomFile(256);
         Assert.True(File.Exists(path));
-
         session.Clear();
-
         Assert.False(File.Exists(path));
     }
 
@@ -235,9 +228,7 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         session.Generator.CreateRandomFile(256);
-
         session.Clear();
-
         var path = session.TouchFile();
         Assert.True(File.Exists(path));
         Assert.Single(session.Files);
@@ -255,7 +246,9 @@ public sealed class IOTempSessionTests : IDisposable
             Assert.Equal("hello copy", File.ReadAllText(dest));
             Assert.Contains(dest, session.Files);
         }
-        finally { File.Delete(src); }
+        finally {
+            File.Delete(src);
+        }
     }
 
     [Fact]
@@ -268,7 +261,9 @@ public sealed class IOTempSessionTests : IDisposable
             session.CopyFrom(src);
             Assert.Equal(2048, session.GetTotalBytesUsed());
         }
-        finally { File.Delete(src); }
+        finally {
+            File.Delete(src);
+        }
     }
 
     [Fact]
@@ -285,7 +280,9 @@ public sealed class IOTempSessionTests : IDisposable
             Assert.Contains(dest, session.Directories);
             Assert.Equal(2, session.Files.Count);
         }
-        finally { Directory.Delete(srcDir, true); }
+        finally {
+            Directory.Delete(srcDir, true);
+        }
     }
 
     [Fact]
@@ -360,7 +357,9 @@ public sealed class IOTempSessionTests : IDisposable
             Assert.True(File.Exists(dest));
             Assert.Equal("async copy content", File.ReadAllText(dest));
         }
-        finally { File.Delete(src); }
+        finally {
+            File.Delete(src);
+        }
     }
 
     [Fact]
@@ -376,7 +375,9 @@ public sealed class IOTempSessionTests : IDisposable
             Assert.True(Directory.Exists(dest));
             Assert.Equal(2, Directory.GetFiles(dest).Length);
         }
-        finally { Directory.Delete(srcDir, true); }
+        finally {
+            Directory.Delete(srcDir, true);
+        }
     }
 
     [Fact]
@@ -634,14 +635,17 @@ public sealed class IOTempSessionTests : IDisposable
             File.WriteAllText(src, "event test");
             session.CopyFrom(src);
         }
-        finally { File.Delete(src); }
+        finally {
+            File.Delete(src);
+        }
+
         Assert.Single(raised);
     }
 
     [Fact]
     public void DebuggerDisplay_attribute_is_present()
     {
-        var attrs = typeof(IOTempSession).GetCustomAttributes(typeof(System.Diagnostics.DebuggerDisplayAttribute), false);
+        var attrs = typeof(IOTempSession).GetCustomAttributes(typeof(DebuggerDisplayAttribute), false);
         Assert.NotEmpty(attrs);
     }
 
@@ -668,7 +672,7 @@ public sealed class IOTempSessionTests : IDisposable
         using var session = _service.CreateSession();
         session.Generator.CreateRandomFile(1000);
         session.AssertTotalSize(1000);
-        session.AssertTotalSize(990, toleranceBytes: 20);
+        session.AssertTotalSize(990, 20);
     }
 
     [Fact]
@@ -676,6 +680,6 @@ public sealed class IOTempSessionTests : IDisposable
     {
         using var session = _service.CreateSession();
         session.Generator.CreateRandomFile(500);
-        Assert.Throws<InvalidOperationException>(() => session.AssertTotalSize(600, toleranceBytes: 10));
+        Assert.Throws<InvalidOperationException>(() => session.AssertTotalSize(600, 10));
     }
 }

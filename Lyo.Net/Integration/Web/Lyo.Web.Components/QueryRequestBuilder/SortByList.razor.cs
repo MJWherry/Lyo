@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using Lyo.Query.Models.Common;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using SortDirectionEnum = Lyo.Common.Enums.SortDirection;
 
 namespace Lyo.Web.Components.QueryRequestBuilder;

@@ -14,9 +14,7 @@ public static class ErrorOccurrenceMapper
     /// <summary>Maximum breadcrumbs copied into <see cref="ErrorOccurrenceRecord.BreadcrumbsSnapshot" />.</summary>
     public const int DefaultMaxBreadcrumbsInSnapshot = 50;
 
-    /// <summary>
-    /// Builds a record from a diagnostic context. When <paramref name="sanitiser" /> is provided, crash site and exception message come from the sanitised trace.
-    /// </summary>
+    /// <summary>Builds a record from a diagnostic context. When <paramref name="sanitiser" /> is provided, crash site and exception message come from the sanitised trace.</summary>
     public static ErrorOccurrenceRecord FromDiagnosticContext(
         DiagnosticContext context,
         IReadOnlyList<Breadcrumb>? breadcrumbs = null,
@@ -26,9 +24,9 @@ public static class ErrorOccurrenceMapper
     {
         if (context is null)
             throw new ArgumentNullException(nameof(context));
+
         string? crashLocation;
         string? exceptionMessage;
-
         if (sanitiser is not null) {
             var st = sanitiser.Sanitise(context);
             crashLocation = st.CrashSite;
@@ -40,20 +38,9 @@ public static class ErrorOccurrenceMapper
         }
 
         var snap = SnapshotBreadcrumbs(breadcrumbs, maxBreadcrumbsInSnapshot);
-
         return new(
-            context.OccurrenceId,
-            context.Fingerprint,
-            context.Classification.Kind.ToString(),
-            context.ServiceName,
-            context.Classification.Severity,
-            context.OccurredAt,
-            context.Request.CorrelationId,
-            crashLocation,
-            exceptionMessage,
-            context.Environment,
-            breadcrumbs?.Count ?? 0,
-            snap);
+            context.OccurrenceId, context.Fingerprint, context.Classification.Kind.ToString(), context.ServiceName, context.Classification.Severity, context.OccurredAt,
+            context.Request.CorrelationId, crashLocation, exceptionMessage, context.Environment, breadcrumbs?.Count ?? 0, snap);
     }
 
     private static IReadOnlyList<Breadcrumb>? SnapshotBreadcrumbs(IReadOnlyList<Breadcrumb>? breadcrumbs, int maxCount)
@@ -68,6 +55,7 @@ public static class ErrorOccurrenceMapper
         var skip = breadcrumbs.Count - maxCount;
         for (var i = skip; i < breadcrumbs.Count; i++)
             list.Add(breadcrumbs[i]);
+
         return list;
     }
 
@@ -75,10 +63,10 @@ public static class ErrorOccurrenceMapper
     {
         if (s is null || s.Length == 0)
             return s;
+
         return s.Length <= max ? s : s.Substring(0, max);
     }
 
     /// <summary>Returns true when <paramref name="severity" /> is at least <paramref name="minimum" />.</summary>
-    public static bool MeetsMinimumSeverity(ExceptionSeverity severity, ExceptionSeverity minimum)
-        => (int)severity >= (int)minimum;
+    public static bool MeetsMinimumSeverity(ExceptionSeverity severity, ExceptionSeverity minimum) => (int)severity >= (int)minimum;
 }

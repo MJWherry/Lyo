@@ -16,20 +16,17 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     private const int RandomChunkSize = 81920; // 80 KB write buffer
 
     private static readonly string[] WordBank = [
-        "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog",
-        "hello", "world", "temp", "file", "data", "test", "sample", "value",
-        "alpha", "beta", "gamma", "delta", "lorem", "ipsum", "dolor", "amet",
-        "red", "green", "blue", "black", "white", "fast", "slow", "big", "small"
+        "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "hello", "world",
+        "temp", "file", "data", "test", "sample", "value", "alpha", "beta", "gamma", "delta",
+        "lorem", "ipsum", "dolor", "amet", "red", "green", "blue", "black", "white", "fast",
+        "slow", "big", "small"
     ];
 
     private static long _nameSequence;
 
     private readonly IOTempGeneratorContext _ctx;
 
-    internal IOTempFileGenerator(IOTempGeneratorContext context)
-    {
-        _ctx = context;
-    }
+    internal IOTempFileGenerator(IOTempGeneratorContext context) => _ctx = context;
 
 #region Random-bytes files
 
@@ -55,8 +52,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
-    public string CreateRandomFile(FileSizeUnitInfo unit, double amount, string? name = null)
-        => CreateRandomFile(unit.ConvertToBytes(amount), name);
+    public string CreateRandomFile(FileSizeUnitInfo unit, double amount, string? name = null) => CreateRandomFile(unit.ConvertToBytes(amount), name);
 
     public IReadOnlyList<string> CreateRandomFiles(int count, long sizeBytes)
     {
@@ -65,11 +61,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++)
             paths.Add(CreateRandomFile(sizeBytes));
+
         return paths;
     }
 
-    public IReadOnlyList<string> CreateRandomFiles(int count, FileSizeUnitInfo unit, double amount)
-        => CreateRandomFiles(count, unit.ConvertToBytes(amount));
+    public IReadOnlyList<string> CreateRandomFiles(int count, FileSizeUnitInfo unit, double amount) => CreateRandomFiles(count, unit.ConvertToBytes(amount));
 
     public async Task<string> CreateRandomFileAsync(long sizeBytes, string? name = null, CancellationToken ct = default)
     {
@@ -119,6 +115,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         var paths = new List<string>(count);
         for (var i = 0; i < count; i++)
             paths.Add(CreateRandomFile(sizeBytes, nameSelector(i)));
+
         return paths;
     }
 
@@ -147,13 +144,13 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         var sw = Stopwatch.StartNew();
         string? path = null;
         try {
-            var zipName = name ?? (GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + ".zip");
+            var zipName = name ?? GenerateName(_ctx.Options.FilePrefix, _ctx.Options.FileSuffix, _ctx.Options.FileNamingStrategy) + ".zip";
             path = _ctx.ResolvePath(zipName, false);
             var random = GetRandom();
-
-            using (var zipStream = _ctx.Storage.OpenCreate(path))
-            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: false))
-                PopulateZipDirectory(archive, string.Empty, spec, random);
+            using (var zipStream = _ctx.Storage.OpenCreate(path)) {
+                using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, false))
+                    PopulateZipDirectory(archive, string.Empty, spec, random);
+            }
 
             var sizeBytes = _ctx.Storage.GetFileLength(path);
             _ctx.ValidateSize(sizeBytes);
@@ -164,8 +161,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
         catch (Exception ex) {
             if (path != null && _ctx.Storage.FileExists(path)) {
-                try { _ctx.Storage.DeleteFile(path); }
-                catch { /* best-effort cleanup */ }
+                try {
+                    _ctx.Storage.DeleteFile(path);
+                }
+                catch { /* best-effort cleanup */
+                }
             }
 
             _ctx.Metrics.RecordError(Constants.Metrics.CreateZipFileDuration, ex);
@@ -395,8 +395,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
-    public string SimulateDirectory(int fileCount, long fileSizeBytes, string? name = null)
-        => SimulateDirectory(TempDirectorySpec.Flat(fileCount, fileSizeBytes), name);
+    public string SimulateDirectory(int fileCount, long fileSizeBytes, string? name = null) => SimulateDirectory(TempDirectorySpec.Flat(fileCount, fileSizeBytes), name);
 
     public async Task<string> SimulateDirectoryAsync(TempDirectorySpec spec, string? name = null, CancellationToken ct = default)
     {
@@ -528,21 +527,20 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             // Pre-validate per-file sizes from zip metadata before writing any bytes.
             if (_ctx.Options.MaxFileSizeBytes.HasValue) {
                 using var preCheck = _ctx.Storage.OpenRead(zipPath);
-                using var preArchive = new ZipArchive(preCheck, ZipArchiveMode.Read, leaveOpen: false);
+                using var preArchive = new ZipArchive(preCheck, ZipArchiveMode.Read, false);
                 foreach (var entry in preArchive.Entries.Where(e => e.Length > 0)) {
-                    if (entry.Length > _ctx.Options.MaxFileSizeBytes.Value)
+                    if (entry.Length > _ctx.Options.MaxFileSizeBytes.Value) {
                         throw new InvalidOperationException(
                             $"Zip entry '{entry.FullName}' ({entry.Length:N0} bytes) exceeds the per-file size limit of {_ctx.Options.MaxFileSizeBytes.Value:N0} bytes.");
+                    }
                 }
             }
 
-            var dirName = targetDirName
-                          ?? (Path.GetFileNameWithoutExtension(zipPath) + "_" + Guid.NewGuid().ToString("N")[..8]);
+            var dirName = targetDirName ?? Path.GetFileNameWithoutExtension(zipPath) + "_" + Guid.NewGuid().ToString("N")[..8];
             destDir = _ctx.ResolvePath(dirName, true);
             _ctx.Storage.CreateDirectory(destDir);
-
             using var zipStream = _ctx.Storage.OpenRead(zipPath);
-            using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: false);
+            using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, false);
             foreach (var entry in archive.Entries) {
                 var entryDest = Path.Combine(destDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
                 if (entry.FullName.EndsWith("/", StringComparison.Ordinal) || entry.FullName.EndsWith("\\", StringComparison.Ordinal)) {
@@ -567,9 +565,13 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             return destDir;
         }
         catch (Exception ex) {
-            if (destDir != null && _ctx.Storage.DirectoryExists(destDir)) {
-                try { _ctx.Storage.DeleteDirectory(destDir); } catch { /* best effort */ }
-            }
+            if (destDir != null && _ctx.Storage.DirectoryExists(destDir))
+                try {
+                    _ctx.Storage.DeleteDirectory(destDir);
+                }
+                catch { /* best effort */
+                }
+
             _ctx.Metrics.RecordError(Constants.Metrics.ExtractZipFileDuration, ex);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.ExtractZipFileFailure);
             _ctx.Logger.LogError(ex, "Failed extracting zip {ZipPath} in session {SessionDirectory}", zipPath, _ctx.SessionDirectory);
@@ -646,7 +648,6 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         var bufferSize = (int)Math.Min(RandomChunkSize, sizeBytes);
         var buffer = new byte[bufferSize];
         var random = GetRandom();
-
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         await using var stream = _ctx.Storage.OpenCreate(path);
 #else
@@ -695,15 +696,18 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     {
         var sb = new StringBuilder();
         for (var c = 0; c < columns; c++) {
-            if (c > 0) sb.Append(',');
+            if (c > 0)
+                sb.Append(',');
+
             sb.Append("col_").Append(c);
         }
 
         sb.Append('\n');
-
         for (var r = 0; r < rows; r++) {
             for (var c = 0; c < columns; c++) {
-                if (c > 0) sb.Append(',');
+                if (c > 0)
+                    sb.Append(',');
+
                 switch (random.Next(3)) {
                     case 0:
                         sb.Append(random.Next(100000));
@@ -744,6 +748,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
             if (i < keysPerObject - 1)
                 sb.Append(',');
+
             sb.Append('\n');
         }
 
@@ -783,6 +788,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
                 BuildXmlObject(child, depth - 1, keysPerObject, random);
             else
                 child.Value = $"val_{random.Next(10000)}";
+
             parent.Add(child);
         }
     }
@@ -796,11 +802,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         for (var i = 0; i < dirsPerLevel; i++)
             subdirs.Add(BuildTreeSpec(depth - 1, filesPerDir, fileSize, dirsPerLevel));
 
-        return new TempDirectorySpec {
-            FileCount = filesPerDir,
-            FileSizeBytes = fileSize,
-            Subdirectories = subdirs
-        };
+        return new() { FileCount = filesPerDir, FileSizeBytes = fileSize, Subdirectories = subdirs };
     }
 
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
@@ -822,7 +824,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     [ThreadStatic]
     private static Random? _threadRandom;
 
-    private static Random GetRandom() => _threadRandom ??= new Random();
+    private static Random GetRandom() => _threadRandom ??= new();
 #endif
 
 #endregion

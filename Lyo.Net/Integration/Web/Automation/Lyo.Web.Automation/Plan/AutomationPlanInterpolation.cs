@@ -55,7 +55,7 @@ public static class AutomationPlanInterpolation
         if (formatter != null && !formatter.TryValidateTemplate(work, out var err))
             throw new InvalidOperationException($"Automation plan template is invalid: {err}");
 
-        foreach (var m in SingleBraceToken.Matches(work).Cast<Match>().OrderByDescending(x => x.Index)) {
+        foreach (var m in SingleBraceToken.Matches(work).OrderByDescending(x => x.Index)) {
             var inner = m.Groups["inner"].Value;
             var colon = inner.IndexOf(':');
             var selector = (colon >= 0 ? inner.Substring(0, colon) : inner).Trim();
@@ -122,7 +122,6 @@ public static class AutomationPlanInterpolation
             var refName = parts[1];
             var foundEl = b.Elements.TryGetValue(refName, out var el);
             OperationHelpers.ThrowIf(!foundEl || el == null, $"Unknown element ref '{refName}'.");
-
             if (parts[2].Equals("text", StringComparison.OrdinalIgnoreCase)) {
                 OperationHelpers.ThrowIf(parts.Length != 3, $"Invalid element text placeholder '{{{s}}}'.");
                 return await el.GetTextAsync(ct).ConfigureAwait(false);

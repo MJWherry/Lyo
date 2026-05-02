@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.IO.Temp.Models;
 
 /// <summary>
-/// Wires an <see cref="IOTempFileGenerator"/> to its owning session without exposing session internals publicly.
-/// All members are delegates sourced from <see cref="IOTempSession"/> at construction time.
+/// Wires an <see cref="IOTempFileGenerator" /> to its owning session without exposing session internals publicly. All members are delegates sourced from
+/// <see cref="IOTempSession" /> at construction time.
 /// </summary>
 internal sealed record IOTempGeneratorContext(
     string SessionDirectory,
@@ -19,5 +19,4 @@ internal sealed record IOTempGeneratorContext(
     IOTempSessionOptions Options,
     ILogger Logger,
     IMetrics Metrics,
-    IIOTempStorageProvider Storage
-);
+    IIOTempStorageProvider Storage);

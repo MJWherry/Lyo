@@ -8,7 +8,10 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for URI validation and parsing.</summary>
-/// <remarks>Optional name parameters use <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers"/>: when omitted, the compiler fills <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c> explicitly when preferred.</remarks>
+/// <remarks>
+/// Optional name parameters use <see cref="CallerArgumentExpressionAttribute" /> like <see cref="ArgumentHelpers" />: when omitted, the compiler fills
+/// <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c> explicitly when preferred.
+/// </remarks>
 public static class UriHelpers
 {
     [DoesNotReturn]

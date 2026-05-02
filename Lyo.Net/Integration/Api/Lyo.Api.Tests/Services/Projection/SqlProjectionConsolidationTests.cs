@@ -82,7 +82,7 @@ public sealed class SqlProjectionConsolidationTests
         var service = new ProjectionService();
         var (specs, pathErrors) = service.ResolveProjectedFields<NestedPerson>(["ContactAddresses.*"]);
         Assert.Empty(pathErrors);
-        var issues = service.CollectProjectionFieldIssues<NestedPerson>(specs, true);
+        var issues = service.CollectProjectionFieldIssues<NestedPerson>(specs);
         Assert.Empty(issues);
     }
 

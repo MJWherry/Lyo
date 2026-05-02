@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Features\Comic\Lyo.Comic\Lyo.Comic.csproj" />
-        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj" />
+        <ProjectReference Include="..\..\..\Features\Comic\Lyo.Comic\Lyo.Comic.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
     </ItemGroup>
 
 </Project>

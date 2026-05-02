@@ -33,7 +33,6 @@ builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);
 builder.Services.AddLocalLock(options => options.EnableMetrics = true);
 builder.Services.AddLocalKeyedSemaphore(options => options.EnableMetrics = true);
 builder.Services.AddScoped<PortfolioFileTransformer>();
-
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
 builder.Services.AddLyoApiClient();
@@ -42,14 +41,8 @@ builder.Services.AddSingleton(_ => new JsonSerializerOptions {
 });
 
 // Web components
-
 builder.Services.AddScoped<IJsInterop, JsInterop>();
-builder.Services.AddSingleton(_ => new JsonSerializerOptions {
-    WriteIndented = true,
-    PropertyNameCaseInsensitive = true,
-    Converters = { new JsonStringEnumConverter() }
-});
-
+builder.Services.AddSingleton(_ => new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } });
 builder.Services.AddHttpClient();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<ClientStore>();

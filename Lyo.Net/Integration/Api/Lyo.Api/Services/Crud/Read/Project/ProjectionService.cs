@@ -81,7 +81,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
     public SqlProjectionBuildResult<TDbModel> TryBuildSqlProjectionExpression<TDbModel>(IReadOnlyList<ProjectedFieldSpec> specs, bool projectionPathsAlreadyValidated = false)
         where TDbModel : class
     {
-        if (specs.Count == 0 || (!projectionPathsAlreadyValidated && CollectProjectionFieldIssues<TDbModel>(specs, true).Count > 0))
+        if (specs.Count == 0 || (!projectionPathsAlreadyValidated && CollectProjectionFieldIssues<TDbModel>(specs).Count > 0))
             return new(null, null);
 
         var plan = BuildSqlProjectionConversionPlan(typeof(TDbModel), specs);
@@ -1184,9 +1184,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             }
 
             if (spec.NormalizedParts.Length == 1 && spec.NormalizedParts[0] == "*") {
-                if (!allowSelectWildcards) {
+                if (!allowSelectWildcards)
                     list.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Projection path '{spec.RequestedPath}' is not valid (wildcard-only)."));
-                }
 
                 continue;
             }
@@ -1426,9 +1425,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         var trimmed = template.Trim();
 
         // Entire template is a bare-dotted path (no braces)
-        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase)) {
+        if (placeholders.Count == 1 && string.Equals(placeholders[0], trimmed, StringComparison.OrdinalIgnoreCase))
             return TryResolveRowValueForTemplate(row, placeholders[0], out var val) ? FormatResolvedValueThroughFormatter(val, "") : string.Empty;
-        }
 
         // No '.' in placeholder names: SmartFormat resolves placeholders from the row as a flat dictionary (incl. format specs like {CreatedAt:yyyy-MM-dd}).
         if (placeholders.All(p => !p.Contains('.')))

@@ -27,21 +27,18 @@ public sealed class IOTempSessionOptions
 
     public long? MaxFileSizeBytes { get; init; } = FileSizeUnitInfo.Gigabyte.ConvertToBytes(1);
 
-    /// <summary>
-    /// Maximum total bytes for all files in this session.
-    /// When exceeded, <see cref="OverflowStrategy"/> governs whether old/large files are deleted or an exception is thrown.
-    /// </summary>
+    /// <summary>Maximum total bytes for all files in this session. When exceeded, <see cref="OverflowStrategy" /> governs whether old/large files are deleted or an exception is thrown.</summary>
     public long? MaxTotalSizeBytes { get; init; }
 
     /// <summary>
-    /// Maximum number of tracked files allowed in this session at any one time.
-    /// When exceeded, <see cref="OverflowStrategy"/> governs whether the oldest/largest files are deleted or an exception is thrown.
+    /// Maximum number of tracked files allowed in this session at any one time. When exceeded, <see cref="OverflowStrategy" /> governs whether the oldest/largest files are
+    /// deleted or an exception is thrown.
     /// </summary>
     public int? MaxFileCount { get; init; }
 
     /// <summary>
-    /// Optional target lifetime for files in this session.
-    /// The cleanup worker and <see cref="IIOTempService.Cleanup()"/> will honour this when set; otherwise the service-level lifetime applies.
+    /// Optional target lifetime for files in this session. The cleanup worker and <see cref="IIOTempService.Cleanup()" /> will honour this when set; otherwise the service-level
+    /// lifetime applies.
     /// </summary>
     public TimeSpan? FileLifetime { get; init; }
 

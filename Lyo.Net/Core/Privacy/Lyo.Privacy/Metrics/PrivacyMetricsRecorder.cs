@@ -11,9 +11,8 @@ internal static class PrivacyMetricsRecorder
 
     public static void RecordTextRedactionResult(IMetrics metrics, RedactionResult result, string? policyName)
     {
-        if (result.TotalRuns > 0) {
+        if (result.TotalRuns > 0)
             metrics.IncrementCounter(PrivacyMetricNames.TextRedactionRuns, result.TotalRuns, PrivacyObservation.TagsForPolicy(policyName));
-        }
 
         foreach (var kv in result.CountsByKind) {
             if (kv.Value <= 0)
@@ -25,9 +24,8 @@ internal static class PrivacyMetricsRecorder
 
     public static void RecordJsonRedactionResult(IMetrics metrics, RedactionResult result, string? policyName)
     {
-        if (result.CountsByKind.TryGetValue(RedactionKind.JsonKey, out var jsonKeys) && jsonKeys > 0) {
+        if (result.CountsByKind.TryGetValue(RedactionKind.JsonKey, out var jsonKeys) && jsonKeys > 0)
             metrics.IncrementCounter(PrivacyMetricNames.JsonKeyRedactions, jsonKeys, PrivacyObservation.TagsForPolicy(policyName));
-        }
 
         foreach (var kv in result.CountsByKind) {
             if (kv.Value <= 0)

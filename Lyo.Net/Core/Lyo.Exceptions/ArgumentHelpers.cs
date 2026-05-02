@@ -9,9 +9,9 @@ namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for argument validation that throw ArgumentException, ArgumentNullException, or ArgumentOutsideRangeException.</summary>
 /// <remarks>
-/// Optional name parameters follow the same pattern as <see cref="ArgumentNullException.ThrowIfNull(object?, string?)"/>: when you omit them at the call site,
-/// the compiler supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute"/>), which becomes <see cref="ArgumentException.ParamName"/>.
-/// Pass <c>nameof(...)</c> explicitly when you want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
+/// Optional name parameters follow the same pattern as <see cref="ArgumentNullException.ThrowIfNull(object?, string?)" />: when you omit them at the call site, the compiler
+/// supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c>
+/// explicitly when you want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
 /// </remarks>
 public static class ArgumentHelpers
 {
@@ -156,7 +156,12 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNullOrNotInRange<T>(T? value, T? min = default, T? max = default, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    public static void ThrowIfNullOrNotInRange<T>(
+        T? value,
+        T? min = default,
+        T? max = default,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
         where T : IComparable<T>, IConvertible
     {
         ThrowIfNull(value, paramName);
@@ -174,7 +179,12 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotInRange(DateTime value, DateTime? min = null, DateTime? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    public static void ThrowIfNotInRange(
+        DateTime value,
+        DateTime? min = null,
+        DateTime? max = null,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
     {
         if ((min.HasValue && value < min.Value) || (max.HasValue && value > max.Value))
             ThrowArgumentOutsideRange(paramName, value, min, max, message);
@@ -192,7 +202,12 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNullOrNotInRange(DateTime? value, DateTime? min = null, DateTime? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    public static void ThrowIfNullOrNotInRange(
+        DateTime? value,
+        DateTime? min = null,
+        DateTime? max = null,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
     {
         ThrowIfNull(value, paramName);
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
@@ -209,7 +224,12 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotInRange(TimeSpan value, TimeSpan? min = null, TimeSpan? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    public static void ThrowIfNotInRange(
+        TimeSpan value,
+        TimeSpan? min = null,
+        TimeSpan? max = null,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
     {
         if ((min.HasValue && value < min.Value) || (max.HasValue && value > max.Value))
             ThrowArgumentOutsideRange(paramName, value.ToString(), min?.ToString(), max?.ToString(), message);
@@ -227,7 +247,12 @@ public static class ArgumentHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNullOrNotInRange(TimeSpan? value, TimeSpan? min = null, TimeSpan? max = null, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    public static void ThrowIfNullOrNotInRange(
+        TimeSpan? value,
+        TimeSpan? min = null,
+        TimeSpan? max = null,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        string? message = null)
     {
         ThrowIfNull(value, paramName);
         ThrowIfNotInRange(value.Value, min, max, paramName, message);

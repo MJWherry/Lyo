@@ -47,7 +47,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithSampleRate(int sampleRate)
     {
-        ArgumentHelpers.ThrowIfNotInRange(sampleRate, 1, int.MaxValue, nameof(sampleRate));
+        ArgumentHelpers.ThrowIfNotInRange(sampleRate, 1, int.MaxValue);
         _sampleRate = sampleRate;
         return this;
     }
@@ -55,7 +55,7 @@ public sealed class FFmpegCommandBuilder
     /// <inheritdoc />
     public FFmpegCommandBuilder WithChannels(int channels)
     {
-        ArgumentHelpers.ThrowIfNotInRange(channels, 1, int.MaxValue, nameof(channels));
+        ArgumentHelpers.ThrowIfNotInRange(channels, 1, int.MaxValue);
         _channels = channels;
         return this;
     }

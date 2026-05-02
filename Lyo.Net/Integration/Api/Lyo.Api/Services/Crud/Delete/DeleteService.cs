@@ -62,9 +62,8 @@ public class DeleteService<TContext>(
         await loaderService.LoadIncludes(context, entity, includes, ct);
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, null, entity, context, before, after, ct);
-        if (result.IsSuccess) {
+        if (result.IsSuccess)
             await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
-        }
 
         if (result.IsSuccess)
             RecordCrudSuccess(operation, typeof(TDbModel));
@@ -119,9 +118,8 @@ public class DeleteService<TContext>(
         var keys = request.Keys?.FirstOrDefault() ?? [];
         var primaryKeyForCache = typeConversion.GetPrimaryKeyValues(entity, context);
         var result = await DeleteInternal<TDbModel, TResult>(keys, request, entity, context, before, after, ct);
-        if (result.IsSuccess) {
+        if (result.IsSuccess)
             await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [primaryKeyForCache], ct).ConfigureAwait(false);
-        }
 
         if (result.IsSuccess)
             RecordCrudSuccess(operation, typeof(TDbModel));

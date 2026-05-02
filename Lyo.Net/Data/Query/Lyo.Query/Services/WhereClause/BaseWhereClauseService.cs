@@ -102,13 +102,11 @@ public class BaseWhereClauseService : IWhereClauseService
     /// <inheritdoc cref="IWhereClauseService.ExplainMatch{TEntity}" />
     public virtual WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? queryNode)
     {
-        if (entity is null) {
+        if (entity is null)
             return new(new() { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" }, null, "Entity is null.");
-        }
 
-        if (queryNode is null) {
+        if (queryNode is null)
             return new(new() { Passed = false, Kind = WhereClauseExplainKind.None, Path = "" }, null, "Where clause is null.");
-        }
 
         var root = BuildExplainNode<TEntity>(entity, queryNode, "");
         var (blockingPath, failureSummary) = ComputeBlockingFailure(root);

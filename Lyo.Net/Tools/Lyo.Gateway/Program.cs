@@ -67,7 +67,6 @@ builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, ne
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
 builder.Services.AddSingleton<IIOTempService>(new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
-
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
 builder.Services.AddLyoApiClient();

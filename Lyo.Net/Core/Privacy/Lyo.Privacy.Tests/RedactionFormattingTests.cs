@@ -35,7 +35,7 @@ public sealed class RedactionFormattingTests
     public void Phone_options_leading_and_trailing_digit_counts_union_digits_only()
     {
         var opts = new PhoneMaskOptions { LeadingDigitsVisible = 1, TrailingDigitsVisible = 2, DigitsOnlyOutput = true };
-        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new PhoneRedactionRule(opts, 10))));
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new PhoneRedactionRule(opts))));
         var res = r.Redact("call +1-555-123-4567");
         Assert.Equal("call 1********67", res.Text);
     }

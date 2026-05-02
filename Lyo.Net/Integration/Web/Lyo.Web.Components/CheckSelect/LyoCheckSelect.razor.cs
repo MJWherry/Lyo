@@ -1,19 +1,19 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Lyo.Web.Components.CheckSelect;
 
 /// <summary>
-/// A generic multi-select dropdown with a checkbox list and optional search — modelled on the filter-panel
-/// pattern. Renders as an outlined trigger button that opens a <c>MudMenu</c> popover.
+/// A generic multi-select dropdown with a checkbox list and optional search — modelled on the filter-panel pattern. Renders as an outlined trigger button that opens a
+/// <c>MudMenu</c> popover.
 /// </summary>
 /// <typeparam name="TValue">Value type for each option (e.g. an enum).</typeparam>
-public partial class LyoCheckSelect<TValue> where TValue : notnull
+public partial class LyoCheckSelect<TValue>
+    where TValue : notnull
 {
-    private MudBlazor.MudMenu? _menu;
+    private List<LyoSelectOption<TValue>> _filteredItems = [];
+    private MudMenu? _menu;
     private string _search = string.Empty;
     private HashSet<TValue> _selected = new(EqualityComparer<TValue>.Default);
-    private List<LyoSelectOption<TValue>> _filteredItems = [];
 
     /// <summary>Label shown above the trigger button.</summary>
     [Parameter]
@@ -24,7 +24,8 @@ public partial class LyoCheckSelect<TValue> where TValue : notnull
     public string Placeholder { get; set; } = "Select...";
 
     /// <summary>The full list of options to show in the dropdown.</summary>
-    [Parameter, EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public IReadOnlyList<LyoSelectOption<TValue>> Items { get; set; } = [];
 
     /// <summary>Currently selected values.</summary>
@@ -39,10 +40,8 @@ public partial class LyoCheckSelect<TValue> where TValue : notnull
     [Parameter]
     public bool Searchable { get; set; }
 
-    private string TriggerText
-    {
-        get
-        {
+    private string TriggerText {
+        get {
             if (_selected.Count == 0)
                 return Placeholder;
 
@@ -58,6 +57,17 @@ public partial class LyoCheckSelect<TValue> where TValue : notnull
 
     private bool IsPlaceholder => _selected.Count == 0;
 
+    private string Search {
+        get => _search;
+        set {
+            if (_search == value)
+                return;
+
+            _search = value;
+            ApplyFilter();
+        }
+    }
+
     protected override void OnParametersSet()
     {
         var incoming = new HashSet<TValue>(SelectedValues ?? [], EqualityComparer<TValue>.Default);
@@ -65,18 +75,6 @@ public partial class LyoCheckSelect<TValue> where TValue : notnull
             _selected = incoming;
 
         ApplyFilter();
-    }
-
-    private string Search
-    {
-        get => _search;
-        set
-        {
-            if (_search == value)
-                return;
-            _search = value;
-            ApplyFilter();
-        }
     }
 
     private void ApplyFilter()
@@ -89,7 +87,7 @@ public partial class LyoCheckSelect<TValue> where TValue : notnull
         var lower = _search.ToLowerInvariant();
         _filteredItems = Items.Where(i => i.Label.ToLowerInvariant().Contains(lower)).ToList();
     }
-    
+
     private async Task Toggle(TValue value)
     {
         if (!_selected.Add(value))

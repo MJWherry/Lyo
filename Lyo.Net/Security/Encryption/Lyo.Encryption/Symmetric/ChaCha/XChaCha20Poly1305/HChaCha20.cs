@@ -9,7 +9,6 @@ internal static class HChaCha20
     public static void Block(ReadOnlySpan<byte> key32, ReadOnlySpan<byte> nonce16, Span<byte> out32)
     {
         ArgumentHelpers.ThrowIf(key32.Length != 32 || nonce16.Length != 16 || out32.Length != 32, "HChaCha20 requires a 32-byte key, 16-byte nonce, and 32-byte output.");
-
         Span<uint> st = stackalloc uint[16];
         st[0] = 0x61707865;
         st[1] = 0x3320646e;

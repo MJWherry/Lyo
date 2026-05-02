@@ -1,6 +1,6 @@
 namespace Lyo.IO.Temp;
 
-/// <summary>Configuration for the <see cref="IOTempCleanupWorker"/> background service.</summary>
+/// <summary>Configuration for the <see cref="IOTempCleanupWorker" /> background service.</summary>
 public sealed class IOTempCleanupOptions
 {
     public const string SectionName = "IOTempCleanup";

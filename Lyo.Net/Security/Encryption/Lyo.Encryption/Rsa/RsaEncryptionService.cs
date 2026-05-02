@@ -122,7 +122,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
     /// <exception cref="ArgumentOutsideRangeException">Thrown when bytes is empty (length is less than MinInputSize) or exceeds maximum allowed size (MaxInputSize)</exception>
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize, nameof(bytes));
+        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
         // RSA uses keys from constructor, not parameters (for interface compliance)
         ArgumentHelpers.ThrowIf(keyId != null, "RSA encryption service uses keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
         ArgumentHelpers.ThrowIf(key != null, "RSA encryption service uses keys from constructor. The 'key' parameter is not supported.", nameof(key));
@@ -170,7 +170,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
         // Check if this is chunked data (starts with length prefix) or single encrypted block
         // Single RSA encrypted block size is deterministic based on key size
         var expectedEncryptedChunkSize = _rsa.KeySize / 8;
-        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, expectedEncryptedChunkSize, Options.MaxInputSize, nameof(encryptedBytes));
+        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, expectedEncryptedChunkSize, Options.MaxInputSize);
         // If data is exactly one encrypted chunk size, check if it's chunked or single block
         if (encryptedBytes.Length == expectedEncryptedChunkSize) {
             // Try direct decryption first (single block)

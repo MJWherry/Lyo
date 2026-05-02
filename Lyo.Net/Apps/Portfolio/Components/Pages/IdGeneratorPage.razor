@@ -8,8 +8,10 @@
 </MudContainer>
 
 @code {
+
     [CascadingParameter]
     private MainLayout? Layout { get; set; }
 
     protected override void OnInitialized() => Layout?.SetPageTitle("ID Generator");
+
 }

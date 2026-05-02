@@ -1,7 +1,6 @@
 using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Services;
 using Lyo.Comment;
-using Lyo.Common.Identifiers;
 using Lyo.Favorite;
 using Lyo.Rating;
 using Lyo.Tag;
@@ -25,155 +24,108 @@ public static class ChapterEndpoints
         group.MapGet("/{id:guid}/tags", GetTags);
         group.MapPost("/{id:guid}/tags", AddTag);
         group.MapDelete("/{id:guid}/tags/{tag}", RemoveTag);
-
         group.MapGet("/{id:guid}/ratings", GetRatings);
         group.MapPost("/{id:guid}/ratings", AddRating);
-
         group.MapGet("/{id:guid}/comments", GetComments);
         group.MapPost("/{id:guid}/comments", AddComment);
-
         group.MapPost("/{id:guid}/favorites", AddFavorite);
         group.MapDelete("/{id:guid}/favorites", RemoveFavorite);
-
         return app;
     }
 
-    private static async Task<IResult> GetChapterById(
-        Guid id,
-        IComicStore store,
-        ComicEnrichmentService enricher,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetChapterById(Guid id, IComicStore store, ComicEnrichmentService enricher, CancellationToken ct = default)
     {
         var chapter = await store.GetChapterByIdAsync(id, ct);
-        return chapter == null 
-            ? Results.NotFound() 
-            : Results.Ok(await enricher.EnrichChapterAsync(chapter, ct: ct));
+        return chapter == null ? Results.NotFound() : Results.Ok(await enricher.EnrichChapterAsync(chapter, ct: ct));
     }
 
-    private static async Task<IResult> GetPages(
-        Guid id,
-        IComicStore store,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetPages(Guid id, IComicStore store, CancellationToken ct = default)
     {
         var pages = await store.GetPagesByChapterAsync(id, ct);
         return Results.Ok(pages);
     }
 
-    private static async Task<IResult> GetTags(
-        Guid id,
-        ITagStore tagStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetTags(Guid id, ITagStore tagStore, CancellationToken ct = default)
     {
         var tags = await tagStore.GetTagsForEntityAsync(new(EntityType, id.ToString()), ct: ct);
         return Results.Ok(tags.Select(t => t.Tag).ToList());
     }
 
-    private static async Task<IResult> AddTag(
-        Guid id,
-        AddTagReq req,
-        ITagStore tagStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> AddTag(Guid id, AddTagReq req, ITagStore tagStore, CancellationToken ct = default)
     {
         await tagStore.AddTagAsync(new(EntityType, id.ToString()), req.Tag, ct: ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> RemoveTag(
-        Guid id,
-        string tag,
-        ITagStore tagStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> RemoveTag(Guid id, string tag, ITagStore tagStore, CancellationToken ct = default)
     {
         await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ct: ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetRatings(
-        Guid id,
-        IRatingStore ratingStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetRatings(Guid id, IRatingStore ratingStore, CancellationToken ct = default)
     {
-        var ratings = await ratingStore.GetForEntityAsync(new EntityRef(EntityType, id.ToString()), ct);
+        var ratings = await ratingStore.GetForEntityAsync(new(EntityType, id.ToString()), ct);
         return Results.Ok(ratings);
     }
 
-    private static async Task<IResult> AddRating(
-        Guid id,
-        AddRatingReq req,
-        IRatingStore ratingStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> AddRating(Guid id, AddRatingReq req, IRatingStore ratingStore, CancellationToken ct = default)
     {
         var record = new RatingRecord {
-            Id             = Guid.NewGuid(),
-            ForEntityType  = EntityType,
-            ForEntityId    = id.ToString(),
+            Id = Guid.NewGuid(),
+            ForEntityType = EntityType,
+            ForEntityId = id.ToString(),
             FromEntityType = req.FromEntityType,
-            FromEntityId   = req.FromEntityId,
-            Subject        = req.Subject,
-            Title          = req.Title,
-            Value          = req.Value,
-            Message        = req.Message
+            FromEntityId = req.FromEntityId,
+            Subject = req.Subject,
+            Title = req.Title,
+            Value = req.Value,
+            Message = req.Message
         };
+
         await ratingStore.SaveAsync(record, ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetComments(
-        Guid id,
-        ICommentStore commentStore,
-        bool includeReplies = true,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetComments(Guid id, ICommentStore commentStore, bool includeReplies = true, CancellationToken ct = default)
     {
         var comments = await commentStore.GetForEntityAsync(new(EntityType, id.ToString()), includeReplies, ct);
         return Results.Ok(comments);
     }
 
-    private static async Task<IResult> AddComment(
-        Guid id,
-        AddCommentReq req,
-        ICommentStore commentStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> AddComment(Guid id, AddCommentReq req, ICommentStore commentStore, CancellationToken ct = default)
     {
         var record = new CommentRecord {
-            Id               = Guid.NewGuid(),
-            ForEntityType    = EntityType,
-            ForEntityId      = id.ToString(),
-            FromEntityType   = req.FromEntityType,
-            FromEntityId     = req.FromEntityId,
-            Content          = req.Content,
+            Id = Guid.NewGuid(),
+            ForEntityType = EntityType,
+            ForEntityId = id.ToString(),
+            FromEntityType = req.FromEntityType,
+            FromEntityId = req.FromEntityId,
+            Content = req.Content,
             ReplyToCommentId = req.ReplyToCommentId
         };
+
         await commentStore.SaveAsync(record, ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> AddFavorite(
-        Guid id,
-        AddFavoriteReq req,
-        IFavoriteStore favoriteStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> AddFavorite(Guid id, AddFavoriteReq req, IFavoriteStore favoriteStore, CancellationToken ct = default)
     {
         var record = new FavoriteRecord {
-            Id             = Guid.NewGuid(),
-            ForEntityType  = EntityType,
-            ForEntityId    = id.ToString(),
+            Id = Guid.NewGuid(),
+            ForEntityType = EntityType,
+            ForEntityId = id.ToString(),
             FromEntityType = req.FromEntityType,
-            FromEntityId   = req.FromEntityId
+            FromEntityId = req.FromEntityId
         };
+
         await favoriteStore.SaveAsync(record, ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> RemoveFavorite(
-        Guid id,
-        [FromBody] RemoveFavoriteReq req,
-        IFavoriteStore favoriteStore,
-        CancellationToken ct = default)
+    private static async Task<IResult> RemoveFavorite(Guid id, [FromBody] RemoveFavoriteReq req, IFavoriteStore favoriteStore, CancellationToken ct = default)
     {
-        await favoriteStore.DeleteAsync(
-            new EntityRef(EntityType, id.ToString()),
-            new EntityRef(req.FromEntityType, req.FromEntityId),
-            ct);
+        await favoriteStore.DeleteAsync(new(EntityType, id.ToString()), new(req.FromEntityType, req.FromEntityId), ct);
         return Results.NoContent();
     }
 }

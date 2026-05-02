@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
-using Lyo.Privacy.Text;
 
 namespace Lyo.Privacy.Xml;
 

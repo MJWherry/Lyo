@@ -51,7 +51,7 @@ public sealed class QRCodeBuilder
     /// <exception cref="ArgumentException">Thrown when size is not positive.</exception>
     public QRCodeBuilder WithSize(int size)
     {
-        ArgumentHelpers.ThrowIfNotInRange(size, 1, int.MaxValue, nameof(size));
+        ArgumentHelpers.ThrowIfNotInRange(size, 1, int.MaxValue);
         _size = size;
         return this;
     }
@@ -111,7 +111,7 @@ public sealed class QRCodeBuilder
     public QRCodeBuilder WithIcon(byte[] iconBytes, int iconSizePercent = 15, bool drawIconBorder = true)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(iconBytes);
-        ArgumentHelpers.ThrowIfNotInRange(iconSizePercent, 1, QRCodeIconOptions.MaxIconSizePercent, nameof(iconSizePercent));
+        ArgumentHelpers.ThrowIfNotInRange(iconSizePercent, 1, QRCodeIconOptions.MaxIconSizePercent);
         _icon = new() { IconBytes = iconBytes, IconSizePercent = iconSizePercent, DrawIconBorder = drawIconBorder };
         return this;
     }

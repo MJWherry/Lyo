@@ -6,11 +6,8 @@ namespace Lyo.IO.Temp.Tests;
 
 public sealed class IOTempFileGeneratorTests
 {
-    private static IOTempServiceOptions GetTestOptions() => new()
-    {
-        TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests"),
-        DirectoryName = Guid.NewGuid().ToString("N")
-    };
+    private static IOTempServiceOptions GetTestOptions()
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
 
     [Fact]
     public void Session_exposes_Generator()
@@ -164,10 +161,11 @@ public sealed class IOTempFileGeneratorTests
             var paths = session.Generator.CreateRandomFiles(5, 512);
             Assert.Equal(5, paths.Count);
             Assert.Equal(5, session.Files.Count);
-            Assert.All(paths, p => {
-                Assert.True(File.Exists(p));
-                Assert.Equal(512, new FileInfo(p).Length);
-            });
+            Assert.All(
+                paths, p => {
+                    Assert.True(File.Exists(p));
+                    Assert.Equal(512, new FileInfo(p).Length);
+                });
         }
         finally {
             TryDeleteRoot(options);
@@ -282,20 +280,12 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
-            var spec = new TempDirectorySpec {
-                FileCount = 2,
-                FileSizeBytes = 128,
-                Subdirectories = [
-                    TempDirectorySpec.Flat(3, 64),
-                    TempDirectorySpec.Flat(1, 256)
-                ]
-            };
+            var spec = new TempDirectorySpec { FileCount = 2, FileSizeBytes = 128, Subdirectories = [TempDirectorySpec.Flat(3, 64), TempDirectorySpec.Flat(1, 256)] };
             var rootDir = session.Generator.SimulateDirectory(spec);
-
             Assert.True(Directory.Exists(rootDir));
 
             // root has 2 files + 2 subdirs
-            Assert.Equal(2, Directory.GetFiles(rootDir).Length);  // 2 is intentional — Assert.Single would be wrong here
+            Assert.Equal(2, Directory.GetFiles(rootDir).Length); // 2 is intentional — Assert.Single would be wrong here
             var subdirs = Directory.GetDirectories(rootDir);
             Assert.Equal(2, subdirs.Length);
 
@@ -368,11 +358,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var spec = new TempDirectorySpec {
-                FileCount = 1,
-                FileSizeBytes = 64,
-                Subdirectories = [TempDirectorySpec.Flat(2, 32)]
-            };
+            var spec = new TempDirectorySpec { FileCount = 1, FileSizeBytes = 64, Subdirectories = [TempDirectorySpec.Flat(2, 32)] };
             var rootDir = await session.Generator.SimulateDirectoryAsync(spec, null, TestContext.Current.CancellationToken);
             Assert.Single(Directory.GetFiles(rootDir));
             var sub = Directory.GetDirectories(rootDir).Single();
@@ -682,10 +668,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
-            var spec = TempDirectorySpec.Builder()
-                .WithFiles(2, 256)
-                .WithSubdirectory(sub => sub.WithFiles(2, 128))
-                .Build();
+            var spec = TempDirectorySpec.Builder().WithFiles(2, 256).WithSubdirectory(sub => sub.WithFiles(2, 128)).Build();
             var zipPath = session.Generator.CreateZipFile(spec);
             using var archive = ZipFile.OpenRead(zipPath);
             Assert.Equal(4, archive.Entries.Count);
@@ -754,7 +737,9 @@ public sealed class IOTempFileGeneratorTests
             Assert.True(File.Exists(path));
             Assert.True(new FileInfo(path).Length > 0);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -769,7 +754,9 @@ public sealed class IOTempFileGeneratorTests
             Assert.StartsWith("<root>", content);
             Assert.Contains("</root>", content);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -782,7 +769,9 @@ public sealed class IOTempFileGeneratorTests
             var path = session.Generator.CreateXmlFile(1, 2);
             Assert.Contains(path, session.Files);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -795,7 +784,9 @@ public sealed class IOTempFileGeneratorTests
             var path = session.Generator.CreateXmlFile(1, 2, "data.xml");
             Assert.Equal("data.xml", Path.GetFileName(path));
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -810,7 +801,9 @@ public sealed class IOTempFileGeneratorTests
             var content = File.ReadAllText(path);
             Assert.Contains("<root>", content);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -825,7 +818,9 @@ public sealed class IOTempFileGeneratorTests
             Assert.True(Directory.Exists(extractDir));
             Assert.Equal(3, Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).Length);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -840,7 +835,9 @@ public sealed class IOTempFileGeneratorTests
             session.Generator.ExtractZipFile(zipPath);
             Assert.True(session.Files.Count > countBefore);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -854,7 +851,9 @@ public sealed class IOTempFileGeneratorTests
             var extractDir = session.Generator.ExtractZipFile(zipPath, "my-extract");
             Assert.Equal("my-extract", Path.GetFileName(extractDir));
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -866,7 +865,9 @@ public sealed class IOTempFileGeneratorTests
             using var session = service.CreateSession();
             Assert.Throws<FileNotFoundException>(() => session.Generator.ExtractZipFile("/nonexistent/file.zip"));
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -881,7 +882,9 @@ public sealed class IOTempFileGeneratorTests
             Assert.True(Directory.Exists(extractDir));
             Assert.Equal(2, Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).Length);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -896,7 +899,9 @@ public sealed class IOTempFileGeneratorTests
             var allDirs = Directory.GetDirectories(root, "*", SearchOption.AllDirectories);
             Assert.True(allDirs.Length >= 2, $"Expected nested dirs but got {allDirs.Length}");
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -911,7 +916,9 @@ public sealed class IOTempFileGeneratorTests
             Assert.Equal(3, Directory.GetFiles(root).Length);
             Assert.Empty(Directory.GetDirectories(root));
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -924,7 +931,9 @@ public sealed class IOTempFileGeneratorTests
             var root = session.Generator.CreateDirectoryTree(1, 1, 32);
             Assert.Contains(root, session.Directories);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -935,11 +944,13 @@ public sealed class IOTempFileGeneratorTests
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
             // depth=1, 2 files per dir, 2 dirs per level: root has 2 files + 2 subdirs each with 2 files = 6 files total
-            var root = session.Generator.CreateDirectoryTree(1, 2, 16, dirsPerLevel: 2);
+            var root = session.Generator.CreateDirectoryTree(1, 2, 16, 2);
             var allFiles = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
             Assert.Equal(6, allFiles.Length);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     [Fact]
@@ -954,7 +965,9 @@ public sealed class IOTempFileGeneratorTests
             var allFiles = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
             Assert.True(allFiles.Length >= 2);
         }
-        finally { TryDeleteRoot(options); }
+        finally {
+            TryDeleteRoot(options);
+        }
     }
 
     private static void TryDeleteRoot(IOTempServiceOptions options)

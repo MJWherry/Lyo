@@ -128,7 +128,6 @@ public static class Ksuid
             ArgumentHelpers.ThrowIf(c >= 128, $"Invalid KSUID character '{c}'.", nameof(ksuid));
             var value = DecodeMap[c];
             ArgumentHelpers.ThrowIf(value == 255, $"Invalid KSUID character '{c}'.", nameof(ksuid));
-
             ulong carry = value;
             for (var j = 4; j >= 0; j--) {
                 var cur = (ulong)words[j] * 62 + carry;

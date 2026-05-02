@@ -230,39 +230,40 @@ services.AddSingleton<IIOTempStorageProvider>(new FtpIOTempStorageProvider(...))
 services.AddIOTempService();
 ```
 
-The provider interface covers: directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length, creation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers).
+The provider interface covers: directory create/delete/enumerate, file touch/read/write/append/copy/move/delete, streaming open (read, create, append), file metadata (length,
+creation time), async variants of all write operations, and an `EnsureDirectoryAccessible` hook (used for R/W probing; may be a no-op for in-memory providers).
 
 ## Configuration
 
 ### IOTempServiceOptions
 
-| Option               | Default                  | Description                                           |
-|----------------------|--------------------------|-------------------------------------------------------|
-| `TempRoot`           | `Path.GetTempPath()`     | OS temp root. Parent of `DirectoryName`.              |
-| `DirectoryName`      | `"lyo-io-temp"`          | Subdirectory under `TempRoot`.                        |
-| `FileLifetime`       | `null`                   | Default expiry for `Cleanup()` with no argument.      |
-| `MaxFileSizeBytes`   | 1 GB                     | Per-file hard limit.                                  |
-| `MaxTotalSizeBytes`  | 10 GB                    | Total size limit across the service directory.        |
-| `OverflowStrategy`   | `ThrowException`         | `ThrowException`, `DeleteOldest`, or `DeleteLargest`. |
-| `EnableMetrics`      | `true`                   | Record metrics via `IMetrics`.                        |
+| Option              | Default              | Description                                           |
+|---------------------|----------------------|-------------------------------------------------------|
+| `TempRoot`          | `Path.GetTempPath()` | OS temp root. Parent of `DirectoryName`.              |
+| `DirectoryName`     | `"lyo-io-temp"`      | Subdirectory under `TempRoot`.                        |
+| `FileLifetime`      | `null`               | Default expiry for `Cleanup()` with no argument.      |
+| `MaxFileSizeBytes`  | 1 GB                 | Per-file hard limit.                                  |
+| `MaxTotalSizeBytes` | 10 GB                | Total size limit across the service directory.        |
+| `OverflowStrategy`  | `ThrowException`     | `ThrowException`, `DeleteOldest`, or `DeleteLargest`. |
+| `EnableMetrics`     | `true`               | Record metrics via `IMetrics`.                        |
 
 ### IOTempSessionOptions
 
-| Option                  | Default      | Description                                              |
-|-------------------------|--------------|----------------------------------------------------------|
-| `FileNamingStrategy`    | `Guid`       | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`.     |
-| `FileExtension`         | `.tmp`       | Extension appended to auto-named files.                  |
-| `FilePrefix`/`Suffix`   | `null`       | Optional pre/suffix for generated file names.            |
-| `MaxFileSizeBytes`      | 1 GB         | Per-file hard limit.                                     |
-| `MaxTotalSizeBytes`     | `null`       | Per-session total limit.                                 |
-| `OverflowStrategy`      | `ThrowException` | Action when total limit is exceeded.                 |
+| Option                | Default          | Description                                          |
+|-----------------------|------------------|------------------------------------------------------|
+| `FileNamingStrategy`  | `Guid`           | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`. |
+| `FileExtension`       | `.tmp`           | Extension appended to auto-named files.              |
+| `FilePrefix`/`Suffix` | `null`           | Optional pre/suffix for generated file names.        |
+| `MaxFileSizeBytes`    | 1 GB             | Per-file hard limit.                                 |
+| `MaxTotalSizeBytes`   | `null`           | Per-session total limit.                             |
+| `OverflowStrategy`    | `ThrowException` | Action when total limit is exceeded.                 |
 
 ### IOTempCleanupOptions
 
-| Option          | Default       | Description                                                 |
-|-----------------|---------------|-------------------------------------------------------------|
-| `InitialDelay`  | 5 minutes     | Delay before the first cleanup run after app startup.       |
-| `Interval`      | 1 hour        | How often to run cleanup after the initial run.             |
+| Option         | Default   | Description                                           |
+|----------------|-----------|-------------------------------------------------------|
+| `InitialDelay` | 5 minutes | Delay before the first cleanup run after app startup. |
+| `Interval`     | 1 hour    | How often to run cleanup after the initial run.       |
 
 <!-- LYO_README_SYNC:BEGIN -->
 

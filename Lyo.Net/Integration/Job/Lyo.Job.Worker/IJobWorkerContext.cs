@@ -4,9 +4,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Worker;
 
 /// <summary>
-/// Provides all context a worker implementation needs during execution:
-/// the fully-loaded run, a structured logger, a cancellation token, and
-/// a fluent result builder for reporting outcomes back to the job server.
+/// Provides all context a worker implementation needs during execution: the fully-loaded run, a structured logger, a cancellation token, and a fluent result builder for
+/// reporting outcomes back to the job server.
 /// </summary>
 public interface IJobWorkerContext
 {
@@ -17,8 +16,8 @@ public interface IJobWorkerContext
     ILogger Logger { get; }
 
     /// <summary>
-    /// Token that is cancelled when the host is shutting down or a cancellation request is received
-    /// via <see cref="Lyo.Job.Models.Events.IJobEventPublisher.SubscribeToRunCancellationsAsync"/>.
+    /// Token that is cancelled when the host is shutting down or a cancellation request is received via
+    /// <see cref="Lyo.Job.Models.Events.IJobEventPublisher.SubscribeToRunCancellationsAsync" />.
     /// </summary>
     CancellationToken CancellationToken { get; }
 

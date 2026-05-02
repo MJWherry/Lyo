@@ -345,10 +345,7 @@ public sealed class QueryHistoryEndpointConfigBuilder<TDbEntity>
         return this;
     }
 
-    internal void Validate()
-    {
-        OperationHelpers.ThrowIf(StartTime == null || EndTime == null, "Call TimeRange(start, end) on the query history builder.");
-    }
+    internal void Validate() => OperationHelpers.ThrowIf(StartTime == null || EndTime == null, "Call TimeRange(start, end) on the query history builder.");
 }
 
 /// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithMetadata" />.</summary>

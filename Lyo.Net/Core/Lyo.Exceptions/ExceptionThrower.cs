@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for throwing generic exceptions (FileNotFoundException, DirectoryNotFoundException, UnauthorizedAccessException, IOException).</summary>
-/// <remarks>Where a <c>paramName</c> argument exists, it follows the <see cref="ArgumentHelpers"/> convention (<see cref="CallerArgumentExpressionAttribute"/> when omitted).</remarks>
+/// <remarks>Where a <c>paramName</c> argument exists, it follows the <see cref="ArgumentHelpers" /> convention (<see cref="CallerArgumentExpressionAttribute" /> when omitted).</remarks>
 public static class ExceptionThrower
 {
     [DoesNotReturn]

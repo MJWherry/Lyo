@@ -34,7 +34,7 @@ public sealed class ComicSeries
     /// <summary>Gets or sets the primary author or writer of the series.</summary>
     public string? Author { get; set; }
 
-    /// <summary>Gets or sets the artist. May differ from <see cref="Author"/> in series where the writer and illustrator are separate people.</summary>
+    /// <summary>Gets or sets the artist. May differ from <see cref="Author" /> in series where the writer and illustrator are separate people.</summary>
     public string? Artist { get; set; }
 
     /// <summary>Gets or sets the original publisher (e.g. "Shueisha", "Viz Media", "Marvel").</summary>

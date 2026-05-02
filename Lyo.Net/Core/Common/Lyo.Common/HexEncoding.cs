@@ -18,7 +18,7 @@ public static class HexEncoding
         var chars = new char[bytes.Length * 2];
         for (var i = 0; i < bytes.Length; i++) {
             var b = bytes[i];
-            chars[i * 2]     = NibbleToHexUpper(b >> 4);
+            chars[i * 2] = NibbleToHexUpper(b >> 4);
             chars[i * 2 + 1] = NibbleToHexUpper(b & 0xF);
         }
         return new(chars);

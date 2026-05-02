@@ -1,6 +1,6 @@
 namespace Lyo.IO.Temp.Models;
 
-/// <summary>Aggregate statistics for a running <see cref="IOTempService"/> instance.</summary>
+/// <summary>Aggregate statistics for a running <see cref="IOTempService" /> instance.</summary>
 public record IOTempServiceStats(
     /// <summary>Number of currently tracked (non-disposed) sessions.</summary>
     int ActiveSessionCount,
@@ -9,5 +9,4 @@ public record IOTempServiceStats(
     /// <summary>Sum of bytes used across all active sessions.</summary>
     long TotalBytesUsed,
     /// <summary>The service's own temp directory path.</summary>
-    string ServiceDirectory
-);
+    string ServiceDirectory);

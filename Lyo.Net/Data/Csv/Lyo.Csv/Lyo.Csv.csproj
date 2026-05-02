@@ -10,8 +10,9 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj" />
-        <ProjectReference Include="..\Lyo.Csv.Models\Lyo.Csv.Models.csproj"/></ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\Lyo.Csv.Models\Lyo.Csv.Models.csproj"/>
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="CsvHelper" Version="[33.1,)"/>

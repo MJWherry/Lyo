@@ -96,7 +96,7 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
     /// </exception>
     public override byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(plaintext, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
+        ArgumentHelpers.ThrowIfNotInRange(plaintext, Options.MinInputSize, Options.MaxInputSize);
         // AES-GCM-RSA uses RSA keys from constructor, not keyId
         ArgumentHelpers.ThrowIf(keyId != null, "AES-GCM-RSA encryption service uses RSA keys from constructor. The 'keyId' parameter is not supported.", nameof(keyId));
 
@@ -163,7 +163,7 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
         using var br = new BinaryReader(ms);
         // Minimum size: hasEmbeddedKey flag (1) + at least some data
         const int minEncryptedSize = 1 + 4 + AesGcmHelper.NonceSize + AesGcmHelper.TagSize;
-        ArgumentHelpers.ThrowIfNotInRange(encryptedData, minEncryptedSize, Options.MaxInputSize, nameof(encryptedData));
+        ArgumentHelpers.ThrowIfNotInRange(encryptedData, minEncryptedSize, Options.MaxInputSize);
         var hasEmbeddedKey = br.ReadByte() == 1;
         byte[]? aesKey = null;
         byte[]? nonce = null;
@@ -208,9 +208,8 @@ public sealed class AesGcmRsaEncryptionService : EncryptionServiceBase, IDisposa
                 // keyNonce = [key bytes][nonce bytes]
                 // Nonce is always 12 bytes, so key is the rest
                 var keySize = keyNonce.Length - AesGcmHelper.NonceSize;
-                if (keySize != _aesKeyLengthBytes) {
+                if (keySize != _aesKeyLengthBytes)
                     throw new DecryptionFailedException($"Invalid decrypted AES key size: {keySize} bytes. Expected {_aesKeyLengthBytes} bytes for this service configuration.");
-                }
 
                 aesKey = new byte[keySize];
                 Buffer.BlockCopy(keyNonce, 0, aesKey, 0, keySize);

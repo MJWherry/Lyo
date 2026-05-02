@@ -4,15 +4,25 @@ namespace Lyo.Comic.Api.Models.Response;
 public sealed record ComicChapterRes
 {
     public Guid Id { get; init; }
+
     public Guid SeriesId { get; init; }
+
     public Guid? VolumeId { get; init; }
+
     public decimal ChapterNumber { get; init; }
+
     public string? Title { get; init; }
+
     public string Language { get; init; } = string.Empty;
+
     public int? PageCount { get; init; }
+
     public DateTime? PublishedDate { get; init; }
+
     public string? Source { get; init; }
+
     public DateTime CreatedTimestamp { get; init; }
+
     public DateTime? UpdatedTimestamp { get; init; }
 
     /// <summary>Tags applied to this chapter.</summary>

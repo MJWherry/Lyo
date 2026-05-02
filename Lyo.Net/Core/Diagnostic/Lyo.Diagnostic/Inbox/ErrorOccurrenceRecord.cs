@@ -23,6 +23,5 @@ public sealed record ErrorOccurrenceRecord(
     /// <summary>Builds the canonical grouping key for this occurrence.</summary>
     public ErrorGroupKey GroupKey => new(Fingerprint, ExceptionKind, ServiceName);
 
-    public override string ToString()
-        => $"{OccurrenceId} {ExceptionKind} fp={Fingerprint} @ {OccurredAt:u}";
+    public override string ToString() => $"{OccurrenceId} {ExceptionKind} fp={Fingerprint} @ {OccurredAt:u}";
 }

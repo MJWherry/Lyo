@@ -53,7 +53,6 @@ public sealed class ElementLocatorChain
     {
         ArgumentHelpers.ThrowIfNull(segments);
         ArgumentHelpers.ThrowIf(segments.Count < 1, "At least one locator segment is required.", nameof(segments));
-
         foreach (var s in segments) {
             ArgumentHelpers.ThrowIfNull(s, nameof(segments));
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(s.Value, nameof(segments));

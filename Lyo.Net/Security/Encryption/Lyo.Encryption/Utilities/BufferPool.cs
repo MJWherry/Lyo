@@ -80,7 +80,6 @@ internal static class BufferPool
     public static byte[] RentExact(int size, bool exactSize = false)
     {
         ArgumentHelpers.ThrowIfNegativeOrZero(size);
-
         if (!exactSize)
             return Rent(size);
 

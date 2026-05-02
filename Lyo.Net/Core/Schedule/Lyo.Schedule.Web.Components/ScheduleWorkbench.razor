@@ -41,6 +41,7 @@
                                                   Variant="Variant.Outlined"
                                                   HelperText="5-field: MIN HOUR DOM MON DOW  |  6-field: SEC MIN HOUR DOM MON DOW"
                                                   Placeholder="e.g. 0 9 * * MON-FRI"/>
+
                                     <MudAlert Severity="Severity.Info" Dense="true">
                                         Examples: &nbsp;<b>0 9 * * MON-FRI</b> (9 am weekdays) &nbsp;|&nbsp;
                                         <b>*/15 * * * *</b> (every 15 min) &nbsp;|&nbsp;
@@ -95,6 +96,7 @@
                                                              Variant="Variant.Outlined" Min="1"/>
                                         </MudItem>
                                     </MudGrid>
+
                                     <MudGrid>
                                         <MudItem xs="12" md="6">
                                             <LyoCheckSelect TValue="DayFlags"
@@ -132,11 +134,14 @@
 
                                 <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
                                     <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                                               OnClick="ValidateSchedule" Disabled="@_busy">Validate</MudButton>
+                                               OnClick="ValidateSchedule" Disabled="@_busy">Validate
+                                    </MudButton>
                                     <MudButton Variant="Variant.Outlined" OnClick="PreviewNextRunsAsync"
-                                               Disabled="@_busy">Preview Next Runs</MudButton>
+                                               Disabled="@_busy">Preview Next Runs
+                                    </MudButton>
                                     <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                               OnClick="AddTestScheduleAsync" Disabled="@_busy">Add Test Schedule</MudButton>
+                                               OnClick="AddTestScheduleAsync" Disabled="@_busy">Add Test Schedule
+                                    </MudButton>
                                 </MudStack>
 
                             </MudStack>
@@ -156,6 +161,7 @@
 
                             @if (_previewRuns.Count > 0) {
                                 <MudText Typo="Typo.subtitle2" Class="mb-2">Next @_previewRuns.Count scheduled run(s):</MudText>
+
                                 <MudSimpleTable Dense="true">
                                     <thead>
                                     <tr>
@@ -198,16 +204,20 @@
                                  Text="@(SchedulerService.IsRunning ? "Scheduler Running" : "Scheduler Stopped")"/>
                         <MudButton Variant="Variant.Outlined" Color="Color.Success" Size="Size.Small"
                                    OnClick="StartSchedulerAsync"
-                                   Disabled="@(SchedulerService.IsRunning || _busy)">Start</MudButton>
+                                   Disabled="@(SchedulerService.IsRunning || _busy)">Start
+                        </MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
                                    OnClick="StopSchedulerAsync"
-                                   Disabled="@(!SchedulerService.IsRunning || _busy)">Stop</MudButton>
+                                   Disabled="@(!SchedulerService.IsRunning || _busy)">Stop
+                        </MudButton>
                         <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="RefreshLive"
-                                   StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+                                   StartIcon="@Icons.Material.Filled.Refresh">Refresh
+                        </MudButton>
                         <MudSpacer/>
                         <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small"
                                    OnClick="RemoveAllTestSchedules"
-                                   Disabled="@(_addedIds.Count == 0 || _busy)">Remove All Test Schedules</MudButton>
+                                   Disabled="@(_addedIds.Count == 0 || _busy)">Remove All Test Schedules
+                        </MudButton>
                     </MudStack>
 
                     @if (_liveSchedules.Count == 0) {
@@ -307,31 +317,11 @@
 </MudPaper>
 
 @code {
-    private static readonly IReadOnlyList<LyoSelectOption<DayFlags>> DayItems =
-    [
-        new(DayFlags.Sun, "Sunday"),
-        new(DayFlags.Mon, "Monday"),
-        new(DayFlags.Tue, "Tuesday"),
-        new(DayFlags.Wed, "Wednesday"),
-        new(DayFlags.Thu, "Thursday"),
-        new(DayFlags.Fri, "Friday"),
-        new(DayFlags.Sat, "Saturday"),
-    ];
+    private static readonly IReadOnlyList<LyoSelectOption<DayFlags>> DayItems = [new(DayFlags.Sun, "Sunday"), new(DayFlags.Mon, "Monday"), new(DayFlags.Tue, "Tuesday"), new(DayFlags.Wed, "Wednesday"), new(DayFlags.Thu, "Thursday"), new(DayFlags.Fri, "Friday"), new(DayFlags.Sat, "Saturday")];
 
-    private static readonly IReadOnlyList<LyoSelectOption<MonthFlags>> MonthItems =
-    [
-        new(MonthFlags.Jan, "January"),
-        new(MonthFlags.Feb, "February"),
-        new(MonthFlags.Mar, "March"),
-        new(MonthFlags.Apr, "April"),
-        new(MonthFlags.May, "May"),
-        new(MonthFlags.Jun, "June"),
-        new(MonthFlags.Jul, "July"),
-        new(MonthFlags.Aug, "August"),
-        new(MonthFlags.Sep, "September"),
-        new(MonthFlags.Oct, "October"),
-        new(MonthFlags.Nov, "November"),
-        new(MonthFlags.Dec, "December"),
+    private static readonly IReadOnlyList<LyoSelectOption<MonthFlags>> MonthItems = [
+        new(MonthFlags.Jan, "January"), new(MonthFlags.Feb, "February"), new(MonthFlags.Mar, "March"), new(MonthFlags.Apr, "April"), new(MonthFlags.May, "May"), new(MonthFlags.Jun, "June"), new(MonthFlags.Jul, "July"), new(MonthFlags.Aug, "August"), new(MonthFlags.Sep, "September"), new(MonthFlags.Oct, "October"),
+        new(MonthFlags.Nov, "November"), new(MonthFlags.Dec, "December")
     ];
 
     private bool _busy;
@@ -354,7 +344,11 @@
 
     // Days + Months (SetTimes + Interval) — stored as individual flag selections
     private IEnumerable<DayFlags> _selectedDays = [DayFlags.Mon, DayFlags.Tue, DayFlags.Wed, DayFlags.Thu, DayFlags.Fri];
-    private IEnumerable<MonthFlags> _selectedMonths = [MonthFlags.Jan, MonthFlags.Feb, MonthFlags.Mar, MonthFlags.Apr, MonthFlags.May, MonthFlags.Jun, MonthFlags.Jul, MonthFlags.Aug, MonthFlags.Sep, MonthFlags.Oct, MonthFlags.Nov, MonthFlags.Dec];
+
+    private IEnumerable<MonthFlags> _selectedMonths = [
+        MonthFlags.Jan, MonthFlags.Feb, MonthFlags.Mar, MonthFlags.Apr, MonthFlags.May, MonthFlags.Jun, MonthFlags.Jul, MonthFlags.Aug, MonthFlags.Sep, MonthFlags.Oct,
+        MonthFlags.Nov, MonthFlags.Dec
+    ];
 
     // OneShot
     private DateTime? _oneShotDate = DateTime.UtcNow.Date.AddDays(1);
@@ -372,7 +366,7 @@
     private string _statusMessage = string.Empty;
     private Severity _statusSeverity = Severity.Info;
     private int _statusVersion;
-    
+
     protected override void OnInitialized() => RefreshLive();
 
     private Task OnTimesChanged(IEnumerable<string> values)
@@ -385,15 +379,11 @@
     {
         error = null;
         try {
-            var builder = ScheduleDefinition.Create()
-                .WithDescription(string.IsNullOrWhiteSpace(_description) ? null! : _description)
-                .Enabled(_enabled);
-
+            var builder = ScheduleDefinition.Create().WithDescription(string.IsNullOrWhiteSpace(_description) ? null! : _description).Enabled(_enabled);
             switch (_type) {
                 case ScheduleType.Cron:
                     builder.SetCron(_cronExpression?.Trim() ?? string.Empty);
                     break;
-
                 case ScheduleType.SetTimes:
                     var timeValues = _timesList.ToList();
                     if (timeValues.Count == 0) {
@@ -401,25 +391,16 @@
                         return null;
                     }
 
-                    builder.SetTimes(timeValues.Select(TimeOnly.Parse).ToArray())
-                           .SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f))
-                           .SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
+                    builder.SetTimes(timeValues.Select(TimeOnly.Parse).ToArray()).SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f)).SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
                     break;
-
                 case ScheduleType.Interval:
                     if (!_intervalStartTime.HasValue || !_intervalEndTime.HasValue) {
                         error = "Select start and end times.";
                         return null;
                     }
 
-                    builder.SetInterval(
-                               TimeOnly.FromTimeSpan(_intervalStartTime.Value),
-                               TimeOnly.FromTimeSpan(_intervalEndTime.Value),
-                               _intervalMinutes)
-                           .SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f))
-                           .SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
+                    builder.SetInterval(TimeOnly.FromTimeSpan(_intervalStartTime.Value), TimeOnly.FromTimeSpan(_intervalEndTime.Value), _intervalMinutes).SetDays(_selectedDays.Aggregate(DayFlags.None, (acc, f) => acc | f)).SetMonths(_selectedMonths.Aggregate(MonthFlags.None, (acc, f) => acc | f));
                     break;
-
                 case ScheduleType.OneShot:
                     if (!_oneShotDate.HasValue || !_oneShotTime.HasValue) {
                         error = "Select a date and time.";
@@ -428,7 +409,6 @@
 
                     builder.SetExecuteAt(DateTime.SpecifyKind(_oneShotDate.Value.Date + _oneShotTime.Value, DateTimeKind.Utc));
                     break;
-
                 default:
                     error = $"Unknown schedule type: {_type}.";
                     return null;
@@ -448,7 +428,6 @@
         _validationPassed = false;
         _previewRuns = [];
         _previewRequested = false;
-
         var def = TryBuildDefinition(out var buildError);
         if (def == null) {
             _validationError = buildError ?? "Failed to build definition.";
@@ -472,7 +451,6 @@
         _previewRuns = [];
         _validationError = null;
         _validationPassed = false;
-
         try {
             var def = TryBuildDefinition(out var buildError);
             if (def == null) {
@@ -491,10 +469,7 @@
             var previewId = $"workbench-preview-{Guid.NewGuid():N}";
             SchedulerService.AddSchedule(previewId, "Preview", def, _ => Task.CompletedTask);
             try {
-                _previewRuns = SchedulerService.GetUpcomingRuns(maxRuns: 200)
-                    .Where(r => r.Schedule.Id == previewId)
-                    .Take(15)
-                    .ToList();
+                _previewRuns = SchedulerService.GetUpcomingRuns(maxRuns: 200).Where(r => r.Schedule.Id == previewId).Take(15).ToList();
             }
             finally {
                 SchedulerService.RemoveSchedule(previewId);
@@ -560,6 +535,7 @@
     {
         foreach (var id in _addedIds.ToList())
             SchedulerService.RemoveSchedule(id);
+
         _addedIds.Clear();
         RefreshLive();
         SetStatus("All test schedules removed.", Severity.Info);
@@ -617,6 +593,7 @@
         await Task.Delay(3000);
         if (version != _statusVersion)
             return;
+
         _statusMessage = string.Empty;
         await InvokeAsync(StateHasChanged);
     }

@@ -91,7 +91,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
     public override byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null)
     {
-        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize, nameof(bytes));
+        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
         if (key != null)
             ValidateKey(key);
 
@@ -142,7 +142,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null)
     {
         const int minEncryptedSize = 27;
-        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize, nameof(encryptedBytes));
+        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(encryptedBytes);
         return DecryptFromStream(ms, keyId, key);
     }
@@ -153,7 +153,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)
     {
         const int minEncryptedSize = 27;
-        ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize, nameof(count));
+        ArgumentHelpers.ThrowIfNotInRange(count, minEncryptedSize, Options.MaxInputSize);
         using var ms = new MemoryStream(buffer, offset, count, false);
         return DecryptFromStream(ms, keyId, key);
     }
@@ -242,5 +242,6 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         }
     }
 
-    private void ValidateKey(byte[] k) => ArgumentHelpers.ThrowIf(k.Length != RequiredKeyBytes, $"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(k));
+    private void ValidateKey(byte[] k)
+        => ArgumentHelpers.ThrowIf(k.Length != RequiredKeyBytes, $"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(k));
 }

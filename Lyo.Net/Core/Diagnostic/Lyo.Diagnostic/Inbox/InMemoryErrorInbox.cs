@@ -11,27 +11,13 @@ public sealed class InMemoryErrorInboxOptions
 public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
 {
     private readonly object _lock = new();
-    private readonly List<ErrorOccurrenceRecord> _occurrences = new();
     private readonly int _maxOccurrences;
+    private readonly List<ErrorOccurrenceRecord> _occurrences = new();
 
     public InMemoryErrorInbox(InMemoryErrorInboxOptions? options = null)
     {
         var o = options ?? new InMemoryErrorInboxOptions();
         _maxOccurrences = Math.Max(1, o.MaxOccurrences);
-    }
-
-    /// <inheritdoc />
-    public ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken cancellationToken = default)
-    {
-        if (record is null)
-            throw new ArgumentNullException(nameof(record));
-        lock (_lock) {
-            _occurrences.Add(record);
-            while (_occurrences.Count > _maxOccurrences)
-                _occurrences.RemoveAt(0);
-        }
-
-        return default;
     }
 
     /// <inheritdoc />
@@ -49,10 +35,7 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
     {
         var cutoff = DateTimeOffset.UtcNow - window;
         lock (_lock) {
-            return _occurrences
-                .Where(r => r.OccurredAt >= cutoff && KeysEqual(r.GroupKey, key))
-                .OrderByDescending(r => r.OccurredAt)
-                .ToList();
+            return _occurrences.Where(r => r.OccurredAt >= cutoff && KeysEqual(r.GroupKey, key)).OrderByDescending(r => r.OccurredAt).ToList();
         }
     }
 
@@ -61,6 +44,7 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
     {
         if (occurrenceId is null)
             throw new ArgumentNullException(nameof(occurrenceId));
+
         lock (_lock) {
             for (var i = _occurrences.Count - 1; i >= 0; i--) {
                 if (_occurrences[i].OccurrenceId == occurrenceId) {
@@ -74,21 +58,30 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
         return false;
     }
 
-    private static bool KeysEqual(ErrorGroupKey a, ErrorGroupKey b)
-        => a.Fingerprint == b.Fingerprint && a.ExceptionKind == b.ExceptionKind && a.ServiceName == b.ServiceName;
+    /// <inheritdoc />
+    public ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken cancellationToken = default)
+    {
+        if (record is null)
+            throw new ArgumentNullException(nameof(record));
+
+        lock (_lock) {
+            _occurrences.Add(record);
+            while (_occurrences.Count > _maxOccurrences)
+                _occurrences.RemoveAt(0);
+        }
+
+        return default;
+    }
+
+    private static bool KeysEqual(ErrorGroupKey a, ErrorGroupKey b) => a.Fingerprint == b.Fingerprint && a.ExceptionKind == b.ExceptionKind && a.ServiceName == b.ServiceName;
 
     private static List<ErrorGroupSummary> Summarise(List<ErrorOccurrenceRecord> items)
     {
         if (items.Count == 0)
             return [];
 
-        return items
-            .GroupBy(r => r.GroupKey)
-            .Select(g => new ErrorGroupSummary(
-                g.Key,
-                g.Count(),
-                g.Min(x => x.OccurredAt),
-                g.Max(x => x.OccurredAt)))
+        return items.GroupBy(r => r.GroupKey)
+            .Select(g => new ErrorGroupSummary(g.Key, g.Count(), g.Min(x => x.OccurredAt), g.Max(x => x.OccurredAt)))
             .OrderByDescending(s => s.LastSeen)
             .ToList();
     }

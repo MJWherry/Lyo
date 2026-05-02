@@ -5,33 +5,69 @@
         <MudTabs Elevation="2" Rounded ApplyEffectsToContainer Class="mt-2">
             <MudTabPanel Text="Summary">
                 <MudGrid Class="pa-4">
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>ID:</b> @JobRun?.Id.Truncated()</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Definition:</b> @(JobRun?.JobDefinition?.Name ?? "-")</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>State:</b> @JobRun?.State</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Result:</b> @(JobRun?.Result?.ToString() ?? "-")</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Created:</b> @JobRun?.CreatedTimestamp.ToString("g")</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Started:</b> @(JobRun?.StartedTimestamp?.ToString("g") ?? "-")</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Finished:</b> @(JobRun?.FinishedTimestamp?.ToString("g") ?? "-")</MudText></MudItem>
-                    <MudItem xs="6" md="3"><MudText Typo="Typo.body2"><b>Retry #:</b> @JobRun?.RetryAttempt</MudText></MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>ID:</b> @JobRun?.Id.Truncated()</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Definition:</b> @(JobRun?.JobDefinition?.Name ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>State:</b> @JobRun?.State</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Result:</b> @(JobRun?.Result?.ToString() ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Created:</b> @JobRun?.CreatedTimestamp.ToString("g")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Started:</b> @(JobRun?.StartedTimestamp?.ToString("g") ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Finished:</b> @(JobRun?.FinishedTimestamp?.ToString("g") ?? "-")</MudText>
+                    </MudItem>
+                    <MudItem xs="6" md="3">
+                        <MudText Typo="Typo.body2"><b>Retry #:</b> @JobRun?.RetryAttempt</MudText>
+                    </MudItem>
                 </MudGrid>
             </MudTabPanel>
             <MudTabPanel Text="@($"Parameters ({JobRun?.JobRunParameters?.Count ?? 0})")">
                 <MudSimpleTable Dense Class="pa-2">
-                    <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+                    <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
                     <tbody>
-                        @foreach (var p in JobRun?.JobRunParameters ?? []) {
-                            <tr><td>@p.Key</td><td>@p.Type</td><td>@p.Value</td></tr>
-                        }
+                    @foreach (var p in JobRun?.JobRunParameters ?? []) {
+                        <tr>
+                            <td>@p.Key</td>
+                            <td>@p.Type</td>
+                            <td>@p.Value</td>
+                        </tr>
+                    }
                     </tbody>
                 </MudSimpleTable>
             </MudTabPanel>
             <MudTabPanel Text="@($"Results ({JobRun?.JobRunResults?.Count ?? 0})")">
                 <MudSimpleTable Dense Class="pa-2">
-                    <thead><tr><th>Key</th><th>Type</th><th>Value</th></tr></thead>
+                    <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
                     <tbody>
-                        @foreach (var r in JobRun?.JobRunResults ?? []) {
-                            <tr><td>@r.Key</td><td>@r.Type</td><td>@r.Value</td></tr>
-                        }
+                    @foreach (var r in JobRun?.JobRunResults ?? []) {
+                        <tr>
+                            <td>@r.Key</td>
+                            <td>@r.Type</td>
+                            <td>@r.Value</td>
+                        </tr>
+                    }
                     </tbody>
                 </MudSimpleTable>
             </MudTabPanel>
@@ -51,19 +87,29 @@
     <DialogActions>
         <MudButton OnClick="@(() => MudDialog.Cancel())">Close</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Rerun"
-                   StartIcon="@Icons.Material.Filled.Refresh">Re-Run</MudButton>
+                   StartIcon="@Icons.Material.Filled.Refresh">Re-Run
+        </MudButton>
         @if (JobRun?.State == JobState.Running) {
             <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="Cancel"
-                       StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                       StartIcon="@Icons.Material.Filled.Cancel">Cancel
+            </MudButton>
         }
     </DialogActions>
 </MudDialog>
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
-    [Parameter, EditorRequired] public JobRunRes? JobRun { get; set; }
-    [Parameter, EditorRequired] public string RunRoute { get; set; } = "";
-    [Inject] IApiClient ApiClient { get; set; } = null!;
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter][EditorRequired]
+    public JobRunRes? JobRun { get; set; }
+
+    [Parameter][EditorRequired]
+    public string RunRoute { get; set; } = "";
+
+    [Inject]
+    IApiClient ApiClient { get; set; } = null!;
 
     private async Task Rerun()
     {
@@ -72,7 +118,9 @@
             Snackbar.Add("Re-run queued", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
-        catch (Exception ex) { Snackbar.Add($"Re-run failed: {ex.Message}", Severity.Error); }
+        catch (Exception ex) {
+            Snackbar.Add($"Re-run failed: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task Cancel()
@@ -82,13 +130,17 @@
             Snackbar.Add("Cancel requested", Severity.Info);
             MudDialog.Close(DialogResult.Ok(true));
         }
-        catch (Exception ex) { Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error); }
+        catch (Exception ex) {
+            Snackbar.Add($"Cancel failed: {ex.Message}", Severity.Error);
+        }
     }
 
-    private static Color GetLogColor(JobLogLevel level) => level switch {
-        JobLogLevel.Error or JobLogLevel.Critical => Color.Error,
-        JobLogLevel.Warning => Color.Warning,
-        JobLogLevel.Debug => Color.Default,
-        _ => Color.Info
-    };
+    private static Color GetLogColor(JobLogLevel level)
+        => level switch {
+            JobLogLevel.Error or JobLogLevel.Critical => Color.Error,
+            JobLogLevel.Warning => Color.Warning,
+            JobLogLevel.Debug => Color.Default,
+            var _ => Color.Info
+        };
+
 }

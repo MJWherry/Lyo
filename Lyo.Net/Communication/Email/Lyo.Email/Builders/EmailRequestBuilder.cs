@@ -49,7 +49,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddTo(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", nameof(email), "Email (e.g., user@example.com)");
+        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
         _message.To.Add(new MailboxAddress(name ?? email, email));
         return this;
     }
@@ -94,7 +94,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddCc(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", nameof(email), "Email (e.g., user@example.com)");
+        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
         _message.Cc.Add(new MailboxAddress(name ?? email, email));
         return this;
     }
@@ -139,7 +139,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder AddBcc(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", nameof(email), "Email (e.g., user@example.com)");
+        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
         _message.Bcc.Add(new MailboxAddress(name ?? email, email));
         return this;
     }
@@ -160,7 +160,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder SetFrom(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", nameof(email), "Email (e.g., user@example.com)");
+        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
         _message.From.Add(new MailboxAddress(name ?? email, email));
         return this;
     }
@@ -181,7 +181,7 @@ public sealed class EmailRequestBuilder
     /// <returns>The EmailRequestBuilder instance for method chaining.</returns>
     public EmailRequestBuilder SetReplyTo(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", nameof(email), "Email (e.g., user@example.com)");
+        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
         _message.ReplyTo.Add(new MailboxAddress(name ?? email, email));
         return this;
     }

@@ -18,7 +18,6 @@ using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using CommonExtensions = Lyo.Common.Extensions;
 using SortDirection = MudBlazor.SortDirection;
@@ -604,7 +603,7 @@ public partial class LyoDataGrid<T>
         var propertyDef = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field);
         var displayName = propertyDef?.DisplayName ?? condition.Field;
         var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
-        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, true);
+        var valueText = ChipLabelHelper.FormatFilterValue(condition.Value);
         return $"{displayName} {comparatorText} {valueText}";
     }
 
@@ -741,7 +740,6 @@ public partial class LyoDataGrid<T>
     private async Task BulkExport(FileTypeFlags flag)
     {
         ArgumentHelpers.ThrowIf(!CommonExtensions.IsSingleFlag(flag), "Only a single export type is allowed.", nameof(flag));
-
         if (!string.IsNullOrEmpty(Route)) {
             await BulkExportViaApi(flag);
             return;

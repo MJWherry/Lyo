@@ -8,10 +8,12 @@
 </MudContainer>
 
 @code {
+
     [CascadingParameter]
     private MainLayout? Layout { get; set; }
 
     public readonly Dictionary<string, List<string>> Routes = new();
 
     protected override void OnInitialized() => Layout?.SetPageTitle("Query Builder");
+
 }

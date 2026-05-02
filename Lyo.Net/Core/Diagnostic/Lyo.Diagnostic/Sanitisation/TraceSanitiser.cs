@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Lyo.Diagnostic.Classification;
 using Lyo.Diagnostic.Context;
 using Lyo.Diagnostic.StackTrace;
 using Lyo.Exceptions;
@@ -7,7 +6,7 @@ using Lyo.Exceptions;
 namespace Lyo.Diagnostic.Sanitisation;
 
 /// <summary>Strips PII-sensitive content (file paths, machine names, server paths) from decoded stack traces before they are exposed in API responses or logs. Thread-safe singleton.</summary>
-public sealed partial class TraceSanitiser : ITraceSanitiser
+public sealed class TraceSanitiser : ITraceSanitiser
 {
     // Matches Windows absolute paths: C:\Users\..., \\server\share\...
     private static readonly Regex WindowsPathRegex = new(@"[A-Za-z]:\\[^\s]+|\\\\[^\s]+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
@@ -53,8 +52,7 @@ public sealed partial class TraceSanitiser : ITraceSanitiser
     private bool FrameIsAllowed(StackFrame frame)
         => (!_options.RemoveSystemFrames || frame.Category == FrameCategory.UserCode) && (!_options.RemoveCompilerGeneratedFrames || !frame.IsCompilerGenerated);
 
-    private SanitisedFrame SanitiseFrame(StackFrame frame)
-        => new(frame.ShortMethod, SanitiseLocationSummary(frame), frame.Category, frame.IsAsync, frame.IsLambda);
+    private SanitisedFrame SanitiseFrame(StackFrame frame) => new(frame.ShortMethod, SanitiseLocationSummary(frame), frame.Category, frame.IsAsync, frame.IsLambda);
 
     private string? SanitiseLocationSummary(StackFrame frame)
     {

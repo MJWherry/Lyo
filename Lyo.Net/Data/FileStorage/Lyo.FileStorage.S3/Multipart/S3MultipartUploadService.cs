@@ -73,7 +73,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                 .ConfigureAwait(false);
 
             OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
-
             uploadId = init.UploadId;
         }
         catch (Exception ex) {
@@ -108,7 +107,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
     /// <inheritdoc />
     public Task<MultipartPartDescriptor> GetPresignedPartUploadAsync(Guid sessionId, int partNumber, CancellationToken ct = default)
     {
-        ArgumentHelpers.ThrowIfLessThan(partNumber, 1, nameof(partNumber));
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1);
         return GetPresignedPartUploadCoreAsync(sessionId, partNumber, ct);
     }
 
@@ -295,7 +294,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         OperationHelpers.ThrowIf(session.ProviderKind != expectedKind, $"Session {sessionId} is not an {expectedKind} session.");
         OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
         OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
-
         return session;
     }
 

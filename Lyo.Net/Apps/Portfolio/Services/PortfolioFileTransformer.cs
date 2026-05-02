@@ -473,8 +473,7 @@ public sealed class PortfolioFileTransformer
             EncryptionAlgorithm.AesCcm => new AesCcmEncryptionService(keyStore, aesGcmOrCcmKeySize),
             EncryptionAlgorithm.AesSiv => new AesSivEncryptionService(keyStore, aesSivKeySize),
             EncryptionAlgorithm.XChaCha20Poly1305 => new XChaCha20Poly1305EncryptionService(keyStore),
-            var _ => throw new NotSupportedException(
-                $"{algorithm} is not supported. Use AES-GCM, ChaCha20-Poly1305, AES-CCM, AES-SIV, or XChaCha20-Poly1305.")
+            var _ => throw new NotSupportedException($"{algorithm} is not supported. Use AES-GCM, ChaCha20-Poly1305, AES-CCM, AES-SIV, or XChaCha20-Poly1305.")
         };
 
     private static ITwoKeyEncryptionService CreateTwoKeyEncryptionService(
@@ -498,30 +497,46 @@ public sealed class PortfolioFileTransformer
         var kx = new XChaCha20Poly1305EncryptionService(keyStore);
         return (dataAlgorithm, keyAlgorithm) switch {
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(dg, kg, keyStore),
-            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(dg, kch, keyStore),
+            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(
+                dg, kch, keyStore),
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesGcmEncryptionService>(dg, kc, keyStore),
             (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesGcmEncryptionService>(dg, ksiv, keyStore),
-            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(dg, kx, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, ChaCha20Poly1305EncryptionService>(dch, kg, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kch, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, ChaCha20Poly1305EncryptionService>(dch, kc, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, ChaCha20Poly1305EncryptionService>(dch, ksiv, keyStore),
-            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kx, keyStore),
+            (EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(
+                dg, kx, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, kg, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kch, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, kc, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, ChaCha20Poly1305EncryptionService>(
+                dch, ksiv, keyStore),
+            (EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(dch, kx, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesCcmEncryptionService>(dc, kg, keyStore),
-            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(dc, kch, keyStore),
+            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(
+                dc, kch, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesCcmEncryptionService>(dc, kc, keyStore),
             (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesCcmEncryptionService>(dc, ksiv, keyStore),
-            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(dc, kx, keyStore),
+            (EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesCcmEncryptionService>(
+                dc, kx, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, AesSivEncryptionService>(dsiv, kg, keyStore),
-            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesSivEncryptionService>(dsiv, kch, keyStore),
+            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, AesSivEncryptionService>(
+                dsiv, kch, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, AesSivEncryptionService>(dsiv, kc, keyStore),
             (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, AesSivEncryptionService>(dsiv, ksiv, keyStore),
-            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesSivEncryptionService>(dsiv, kx, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, XChaCha20Poly1305EncryptionService>(dx, kg, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kch, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, XChaCha20Poly1305EncryptionService>(dx, kc, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, XChaCha20Poly1305EncryptionService>(dx, ksiv, keyStore),
-            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kx, keyStore),
+            (EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305) => new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, AesSivEncryptionService>(
+                dsiv, kx, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesGcm) => new TwoKeyEncryptionService<AesGcmEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, kg, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.ChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kch, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesCcm) => new TwoKeyEncryptionService<AesCcmEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, kc, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.AesSiv) => new TwoKeyEncryptionService<AesSivEncryptionService, XChaCha20Poly1305EncryptionService>(
+                dx, ksiv, keyStore),
+            (EncryptionAlgorithm.XChaCha20Poly1305, EncryptionAlgorithm.XChaCha20Poly1305) =>
+                new TwoKeyEncryptionService<XChaCha20Poly1305EncryptionService, XChaCha20Poly1305EncryptionService>(dx, kx, keyStore),
             var _ => throw new NotSupportedException($"{dataAlgorithm}/{keyAlgorithm} is not supported (symmetric algorithms only).")
         };
     }

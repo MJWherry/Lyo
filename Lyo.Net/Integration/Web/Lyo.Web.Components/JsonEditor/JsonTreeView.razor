@@ -1,8 +1,5 @@
 @using System.Text.Json
-@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Web.Virtualization
-@using MudBlazor
-
 <div id="@RootId" class="lyo-json-tree" style="@($"--lyo-json-font-size: {FontSize};")" @ref="_treeContainerRef">
     @if (Root != null) {
         <Virtualize Items="@GetVisibleRows()" ItemSize="@TreeRowItemSize" Context="row" OverscanCount="12">

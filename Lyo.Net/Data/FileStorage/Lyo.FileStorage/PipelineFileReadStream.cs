@@ -3,17 +3,10 @@ namespace Lyo.FileStorage;
 /// <summary>Wraps a <see cref="PipeReader" /> stream backed by an in-flight async pipeline; cancels and awaits the pipeline on dispose.</summary>
 internal sealed class PipelineFileReadStream : Stream
 {
+    private readonly CancellationTokenSource _cts;
     private readonly Stream _inner;
     private readonly Task _pipelineTask;
-    private readonly CancellationTokenSource _cts;
     private bool _disposed;
-
-    public PipelineFileReadStream(Stream inner, Task pipelineTask, CancellationTokenSource cts)
-    {
-        _inner = inner;
-        _pipelineTask = pipelineTask;
-        _cts = cts;
-    }
 
     public override bool CanRead => !_disposed && _inner.CanRead;
 
@@ -26,6 +19,13 @@ internal sealed class PipelineFileReadStream : Stream
     public override long Position {
         get => throw new NotSupportedException();
         set => throw new NotSupportedException();
+    }
+
+    public PipelineFileReadStream(Stream inner, Task pipelineTask, CancellationTokenSource cts)
+    {
+        _inner = inner;
+        _pipelineTask = pipelineTask;
+        _cts = cts;
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -90,8 +90,7 @@ internal sealed class PipelineFileReadStream : Stream
             try {
                 await _pipelineTask.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) {
-            }
+            catch (OperationCanceledException) { }
 
             _cts.Dispose();
         }

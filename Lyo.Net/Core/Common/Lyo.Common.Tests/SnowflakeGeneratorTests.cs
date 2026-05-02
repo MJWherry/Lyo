@@ -31,7 +31,6 @@ public class SnowflakeGeneratorTests
         var before = DateTimeOffset.UtcNow;
         var sf = gen.Next();
         var after = DateTimeOffset.UtcNow;
-
         var ts = sf.GetTimestampUtc(gen.Layout);
         Assert.True(ts >= before.AddMilliseconds(-1), "Embedded timestamp is before generation time.");
         Assert.True(ts <= after.AddMilliseconds(1), "Embedded timestamp is after generation time.");

@@ -17,8 +17,7 @@ internal static class HkdfRfc5869
 
     public static byte[] Expand(byte[] prk, int length, byte[] info)
     {
-        ArgumentHelpers.ThrowIfNotInRange(length, 0, HashLen * 255, nameof(length));
-
+        ArgumentHelpers.ThrowIfNotInRange(length, 0, HashLen * 255);
         var n = (length + HashLen - 1) / HashLen;
         var okm = new byte[length];
         var offset = 0;

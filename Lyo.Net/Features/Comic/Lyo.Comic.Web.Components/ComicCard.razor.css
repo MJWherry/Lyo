@@ -55,11 +55,25 @@
     color: #fff;
 }
 
-.comic-card__status-badge--ongoing   { background: #2ecc71; }
-.comic-card__status-badge--completed { background: #3498db; }
-.comic-card__status-badge--hiatus    { background: #f39c12; }
-.comic-card__status-badge--cancelled { background: #e74c3c; }
-.comic-card__status-badge--unknown   { background: #7f8c8d; }
+.comic-card__status-badge--ongoing {
+    background: #2ecc71;
+}
+
+.comic-card__status-badge--completed {
+    background: #3498db;
+}
+
+.comic-card__status-badge--hiatus {
+    background: #f39c12;
+}
+
+.comic-card__status-badge--cancelled {
+    background: #e74c3c;
+}
+
+.comic-card__status-badge--unknown {
+    background: #7f8c8d;
+}
 
 .comic-card__type-badge {
     position: absolute;

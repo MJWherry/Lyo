@@ -25,7 +25,6 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNegativeOrZero(maxConcurrency);
-
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;
         var entry = GetOrCreateEntry(normalizedKey, maxConcurrency);

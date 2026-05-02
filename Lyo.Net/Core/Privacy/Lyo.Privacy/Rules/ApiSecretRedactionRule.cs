@@ -9,7 +9,7 @@ namespace Lyo.Privacy.Rules;
 public sealed class ApiSecretRedactionRule : IRedactionRule
 {
     private static readonly Regex AwsKey = new(@"\bAKIA[0-9A-Z]{16}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    
+
     private static readonly Regex GitHubPat = new(@"\bgh[psuro]_[A-Za-z0-9_]{36,255}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex Assignment = new(

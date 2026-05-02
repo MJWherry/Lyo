@@ -1,4 +1,3 @@
-@using Lyo.Web.Components.Identifiers
 @inject IJsInterop JsInterop
 @inject ISnackbar Snackbar
 
@@ -9,7 +8,8 @@
             <MudButton Size="Size.Small"
                        StartIcon="@Icons.Material.Filled.ContentCopy"
                        Variant="Variant.Text"
-                       OnClick="CopyAllAsync">Copy All</MudButton>
+                       OnClick="CopyAllAsync">Copy All
+            </MudButton>
         </div>
         <MudDivider/>
         @foreach (var entry in Entries) {
@@ -30,8 +30,12 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public List<IdEntry> Entries { get; set; } = [];
-    [Parameter] public string Class { get; set; } = string.Empty;
+
+    [Parameter][EditorRequired]
+    public List<IdEntry> Entries { get; set; } = [];
+
+    [Parameter]
+    public string Class { get; set; } = string.Empty;
 
     private async Task CopyAllAsync()
     {
@@ -45,4 +49,5 @@
         await JsInterop.SendToClipboard(value);
         Snackbar.Add("Copied to clipboard.", Severity.Success);
     }
+
 }

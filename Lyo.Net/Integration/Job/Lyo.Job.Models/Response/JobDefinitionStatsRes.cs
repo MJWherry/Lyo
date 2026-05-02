@@ -1,8 +1,6 @@
 namespace Lyo.Job.Models.Response;
 
-/// <summary>
-/// Aggregated statistics for a job definition, computed over a rolling window (default 30 days).
-/// </summary>
+/// <summary>Aggregated statistics for a job definition, computed over a rolling window (default 30 days).</summary>
 public sealed record JobDefinitionStatsRes
 {
     public Guid JobDefinitionId { get; init; }
@@ -16,7 +14,7 @@ public sealed record JobDefinitionStatsRes
     /// <summary>Runs with result <c>Failure</c>.</summary>
     public int FailureCount { get; init; }
 
-    /// <summary>Percentage of successful runs (0–100). Null when <see cref="TotalRuns"/> is 0.</summary>
+    /// <summary>Percentage of successful runs (0–100). Null when <see cref="TotalRuns" /> is 0.</summary>
     public double? SuccessRate { get; init; }
 
     /// <summary>Average execution time in milliseconds (start → finish). Null when no finished runs exist.</summary>
@@ -31,10 +29,7 @@ public sealed record JobDefinitionStatsRes
     /// <summary>UTC timestamp of the most recent successful run.</summary>
     public DateTime? LastSuccessAt { get; init; }
 
-    /// <summary>
-    /// Current consecutive failure streak at time of query.
-    /// Reset to 0 when a successful run completes.
-    /// </summary>
+    /// <summary>Current consecutive failure streak at time of query. Reset to 0 when a successful run completes.</summary>
     public int ConsecutiveFailures { get; init; }
 
     /// <summary>Number of days the statistics window covers.</summary>

@@ -17,6 +17,5 @@ public sealed record RequestMetadata(
     /// <summary>Creates an empty metadata record for non-HTTP contexts.</summary>
     public static RequestMetadata Empty { get; } = new(null, null, null, null, null, null, null, new Dictionary<string, string>());
 
-    public override string ToString()
-        => HttpMethod is null && Path is null ? "(no request)" : $"{HttpMethod ?? "?"} {Path ?? "?"}";
+    public override string ToString() => HttpMethod is null && Path is null ? "(no request)" : $"{HttpMethod ?? "?"} {Path ?? "?"}";
 }

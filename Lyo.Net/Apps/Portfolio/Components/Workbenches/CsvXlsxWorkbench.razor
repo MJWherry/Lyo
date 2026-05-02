@@ -69,6 +69,7 @@
 
                     @if (_csvTable != null) {
                         <MudText Typo="Typo.subtitle2">Preview (@_csvTable.Rows.Count row(s))</MudText>
+
                         <DataTablePreview Table="@_csvTable"/>
                     }
                 </MudStack>
@@ -98,7 +99,9 @@
                     </MudPaper>
 
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxReexportAsync" Disabled="@(_xlsxTable == null)">Download .xlsx (re-export)</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxReexportAsync" Disabled="@(_xlsxTable == null)">Download .xlsx
+                            (re-export)
+                        </MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxAsCsvAsync" Disabled="@(_xlsxBytes == null)">Download as .csv</MudButton>
                         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadXlsxHtmlAsync" Disabled="@(_xlsxBytes == null)">Download HTML table</MudButton>
                     </MudStack>
@@ -109,6 +112,7 @@
 
                     @if (_xlsxTable != null) {
                         <MudText Typo="Typo.subtitle2">Preview (@_xlsxTable.Rows.Count row(s))</MudText>
+
                         <DataTablePreview Table="@_xlsxTable"/>
                     }
                 </MudStack>
@@ -171,6 +175,7 @@
 
                     @if (_mergedTable != null) {
                         <MudText Typo="Typo.subtitle2">Merged (@_mergedTable.Rows.Count row(s))</MudText>
+
                         <DataTablePreview Table="@_mergedTable"/>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedCsvAsync">Download merged .csv</MudButton>
@@ -219,6 +224,7 @@
                                         AllowTreeEditing="false"
                                         DefaultViewMode="JsonEditorViewMode.Tree"/>
                         </MudPaper>
+
                         <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="DownloadDictJsonAsync" Disabled="@(_dictJsonBytes == null)">Download JSON</MudButton>
                     }
                 </MudStack>

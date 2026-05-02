@@ -1,32 +1,37 @@
 namespace Lyo.Schedule.Models;
 
 /// <summary>
-/// Parses cron expressions and calculates the next occurrence time.
-/// Supports standard 5-field and extended 6-field (with seconds) formats.
-/// Field syntax: values, ranges (n-m), steps (*/n or n-m/n), comma-separated lists,
-/// named months (JAN-DEC) and days (SUN-SAT), and <c>?</c> as an alias for <c>*</c>.
-/// When both day-of-month and day-of-week are restricted, OR logic is applied (Vixie cron behaviour).
+/// Parses cron expressions and calculates the next occurrence time. Supports standard 5-field and extended 6-field (with seconds) formats. Field syntax: values, ranges
+/// (n-m), steps (*/n or n-m/n), comma-separated lists, named months (JAN-DEC) and days (SUN-SAT), and <c>?</c> as an alias for <c>*</c>. When both day-of-month and day-of-week are
+/// restricted, OR logic is applied (Vixie cron behaviour).
 /// </summary>
 public sealed class CronExpression
 {
-    private readonly bool _domRestricted;
-    private readonly bool _dowRestricted;
-    private readonly SortedSet<int> _seconds;
-    private readonly SortedSet<int> _minutes;
-    private readonly SortedSet<int> _hours;
-    private readonly SortedSet<int> _daysOfMonth;
-    private readonly SortedSet<int> _months;
-    private readonly SortedSet<int> _daysOfWeek; // 0=Sunday … 6=Saturday
-
     // Index matches the numeric value (index 0 is unused for months).
-    private static readonly string[] MonthNames = [string.Empty, "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    private static readonly string[] MonthNames = [
+        string.Empty, "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP",
+        "OCT", "NOV", "DEC"
+    ];
 
     private static readonly string[] DayOfWeekNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    private readonly SortedSet<int> _daysOfMonth;
+    private readonly SortedSet<int> _daysOfWeek; // 0=Sunday … 6=Saturday
+    private readonly bool _domRestricted;
+    private readonly bool _dowRestricted;
+    private readonly SortedSet<int> _hours;
+    private readonly SortedSet<int> _minutes;
+    private readonly SortedSet<int> _months;
+    private readonly SortedSet<int> _seconds;
 
     private CronExpression(
-        bool domRestricted, bool dowRestricted,
-        SortedSet<int> seconds, SortedSet<int> minutes, SortedSet<int> hours,
-        SortedSet<int> daysOfMonth, SortedSet<int> months, SortedSet<int> daysOfWeek)
+        bool domRestricted,
+        bool dowRestricted,
+        SortedSet<int> seconds,
+        SortedSet<int> minutes,
+        SortedSet<int> hours,
+        SortedSet<int> daysOfMonth,
+        SortedSet<int> months,
+        SortedSet<int> daysOfWeek)
     {
         _domRestricted = domRestricted;
         _dowRestricted = dowRestricted;
@@ -46,12 +51,11 @@ public sealed class CronExpression
             throw new FormatException("Cron expression cannot be null or empty.");
 
         var parts = expression.Trim().Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        bool hasSeconds = format == CronFormat.IncludeSeconds;
-        int expectedParts = hasSeconds ? 6 : 5;
-
-        if (parts.Length != expectedParts)
-            throw new FormatException(
-                $"Expected {expectedParts} fields but found {parts.Length} in cron expression '{expression}'.");
+        var hasSeconds = format == CronFormat.IncludeSeconds;
+        var expectedParts = hasSeconds ? 6 : 5;
+        if (parts.Length != expectedParts) {
+            throw new FormatException($"Expected {expectedParts} fields but found {parts.Length} in cron expression '{expression}'.");
+        }
 
         var i = 0;
         var seconds = hasSeconds ? ParseField(parts[i++], 0, 59, null) : [0];
@@ -64,26 +68,20 @@ public sealed class CronExpression
         var rawDow = ParseField(parts[i], 0, 7, DayOfWeekNames);
         // Normalize alternate Sunday value (7) to 0.
         var dows = new SortedSet<int>(rawDow.Select(d => d % 7));
-
-        return new CronExpression(domRestricted, dowRestricted, seconds, minutes, hours, doms, months, dows);
+        return new(domRestricted, dowRestricted, seconds, minutes, hours, doms, months, dows);
     }
 
     /// <summary>
-    /// Returns the next occurrence strictly after <paramref name="from"/>, evaluated in
-    /// <paramref name="zone"/>. Returns <c>null</c> if no occurrence is found within four years.
+    /// Returns the next occurrence strictly after <paramref name="from" />, evaluated in <paramref name="zone" />. Returns <c>null</c> if no occurrence is found within four
+    /// years.
     /// </summary>
     public DateTimeOffset? GetNextOccurrence(DateTimeOffset from, TimeZoneInfo zone)
     {
         var localFrom = TimeZoneInfo.ConvertTime(from, zone);
 
         // Advance by one second and strip sub-second precision.
-        var dt = new DateTime(
-            localFrom.Year, localFrom.Month, localFrom.Day,
-            localFrom.Hour, localFrom.Minute, localFrom.Second,
-            DateTimeKind.Unspecified).AddSeconds(1);
-
+        var dt = new DateTime(localFrom.Year, localFrom.Month, localFrom.Day, localFrom.Hour, localFrom.Minute, localFrom.Second, DateTimeKind.Unspecified).AddSeconds(1);
         var limit = dt.AddYears(4);
-
         while (dt <= limit) {
             if (!_months.Contains(dt.Month)) {
                 dt = AdvanceToNextMonth(dt);
@@ -100,6 +98,7 @@ public sealed class CronExpression
                 dt = nextHour.HasValue
                     ? new(dt.Year, dt.Month, dt.Day, nextHour.Value, 0, 0, DateTimeKind.Unspecified)
                     : new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0, DateTimeKind.Unspecified).AddDays(1);
+
                 continue;
             }
 
@@ -108,6 +107,7 @@ public sealed class CronExpression
                 dt = nextMin.HasValue
                     ? new(dt.Year, dt.Month, dt.Day, dt.Hour, nextMin.Value, 0, DateTimeKind.Unspecified)
                     : new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, 0, 0, DateTimeKind.Unspecified).AddHours(1);
+
                 continue;
             }
 
@@ -116,6 +116,7 @@ public sealed class CronExpression
                 dt = nextSec.HasValue
                     ? new(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, nextSec.Value, DateTimeKind.Unspecified)
                     : new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0, DateTimeKind.Unspecified).AddMinutes(1);
+
                 continue;
             }
 
@@ -138,25 +139,28 @@ public sealed class CronExpression
         // Vixie cron: OR when both fields are restricted; otherwise the restricted field wins.
         if (_domRestricted && _dowRestricted)
             return _daysOfMonth.Contains(dt.Day) || _daysOfWeek.Contains((int)dt.DayOfWeek);
+
         if (_domRestricted)
             return _daysOfMonth.Contains(dt.Day);
+
         if (_dowRestricted)
             return _daysOfWeek.Contains((int)dt.DayOfWeek);
+
         return true;
     }
 
     private DateTime AdvanceToNextMonth(DateTime dt)
     {
         var next = FirstGreaterThan(_months, dt.Month);
-        return next.HasValue
-            ? new(dt.Year, next.Value, 1, 0, 0, 0, DateTimeKind.Unspecified)
-            : new DateTime(dt.Year + 1, _months.Min, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        return next.HasValue ? new(dt.Year, next.Value, 1, 0, 0, 0, DateTimeKind.Unspecified) : new DateTime(dt.Year + 1, _months.Min, 1, 0, 0, 0, DateTimeKind.Unspecified);
     }
 
     private static int? FirstGreaterThan(SortedSet<int> set, int value)
     {
         foreach (var v in set)
-            if (v > value) return v;
+            if (v > value)
+                return v;
+
         return null;
     }
 
@@ -169,12 +173,11 @@ public sealed class CronExpression
             var seg = segment.Trim();
             if (seg.Length == 0)
                 throw new FormatException($"Empty segment in cron field '{field}'.");
+
             ParseSegment(seg, min, max, names, result);
         }
 
-        return result.Count == 0 
-            ? throw new FormatException($"No valid values in cron field '{field}'.") 
-            : result;
+        return result.Count == 0 ? throw new FormatException($"No valid values in cron field '{field}'.") : result;
     }
 
     private static void ParseSegment(string seg, int min, int max, string[]? names, SortedSet<int> result)
@@ -222,8 +225,10 @@ public sealed class CronExpression
 
         if (!int.TryParse(s, out var val))
             throw new FormatException($"Cannot parse '{s}' as a cron field value.");
+
         if (val < min || val > max)
             throw new FormatException($"Value {val} is outside the allowed range [{min}, {max}].");
+
         return val;
     }
 }

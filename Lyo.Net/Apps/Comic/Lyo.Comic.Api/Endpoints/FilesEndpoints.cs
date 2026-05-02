@@ -1,10 +1,6 @@
 using Lyo.Comic.Api.Models.Response;
 using Lyo.FileStorage;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Comic.Api.Endpoints;
 
@@ -16,23 +12,18 @@ public static class FilesEndpoints
     public static IEndpointRouteBuilder MapFilesEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/files").WithTags("Files").WithOpenApi();
-
         group.MapGet("/{id:guid}", GetFile);
         group.MapPost("/batch", GetFilesBatch);
         group.MapPost("/upload", UploadFile).DisableAntiforgery();
         group.MapDelete("/{id:guid}", DeleteFile);
-
         return app;
     }
 
-    private static async Task<IResult> GetFile(
-        Guid id,
-        [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage,
-        CancellationToken ct = default)
+    private static async Task<IResult> GetFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {
         try {
             var metadata = await fileStorage.GetMetadataAsync(id, ct);
-            var bytes    = await fileStorage.GetFileAsync(id, ct);
+            var bytes = await fileStorage.GetFileAsync(id, ct);
             return Results.Bytes(bytes, metadata.ContentType ?? DefaultContentType);
         }
         catch (FileNotFoundException) {
@@ -65,19 +56,11 @@ public static class FilesEndpoints
         CancellationToken ct = default)
     {
         await using var stream = file.OpenReadStream();
-        var result = await fileStorage.SaveFromStreamAsync(
-            stream, file.Length, file.FileName,
-            uploadOptions.Compress,
-            uploadOptions.Encrypt,
-            uploadOptions.KeyId,
-            ct: ct);
+        var result = await fileStorage.SaveFromStreamAsync(stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, ct: ct);
         return Results.Ok(new { result.Id });
     }
 
-    private static async Task<IResult> DeleteFile(
-        Guid id,
-        [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage,
-        CancellationToken ct = default)
+    private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {
         try {
             var deleted = await fileStorage.DeleteFileAsync(id, ct);
@@ -92,8 +75,8 @@ public static class FilesEndpoints
     {
         try {
             var metadata = await fileStorage.GetMetadataAsync(id, ct);
-            var bytes    = await fileStorage.GetFileAsync(id, ct);
-            return new FileBatchEntry(id, metadata.ContentType ?? DefaultContentType, Convert.ToBase64String(bytes));
+            var bytes = await fileStorage.GetFileAsync(id, ct);
+            return new(id, metadata.ContentType ?? DefaultContentType, Convert.ToBase64String(bytes));
         }
         catch (FileNotFoundException) {
             return null;

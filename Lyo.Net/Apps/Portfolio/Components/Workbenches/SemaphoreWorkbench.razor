@@ -50,10 +50,15 @@
                                 Acquire permits until full, then verify an additional acquire times out for the same key.
                             </MudText>
                             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                <MudButton Variant="Variant.Filled" OnClick="AcquirePermitAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Permit</MudButton>
-                                <MudButton Variant="Variant.Outlined" OnClick="AcquireUntilFullAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Until Full</MudButton>
-                                <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || HeldPermitCount < _maxConcurrency)">Competing Acquire</MudButton>
-                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleasePermitsAsync" Disabled="@(_busy || HeldPermitCount == 0)">Release All</MudButton>
+                                <MudButton Variant="Variant.Filled" OnClick="AcquirePermitAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Permit
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="AcquireUntilFullAsync" Disabled="@(_busy || HeldPermitCount >= _maxConcurrency)">Acquire Until Full
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || HeldPermitCount < _maxConcurrency)">Competing
+                                    Acquire
+                                </MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleasePermitsAsync" Disabled="@(_busy || HeldPermitCount == 0)">Release All
+                                </MudButton>
                             </MudStack>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">Held permits: @HeldPermitCount / @_maxConcurrency</MudText>
                         </MudStack>
@@ -63,7 +68,9 @@
                         <MudStack Spacing="2">
                             <MudText Typo="Typo.h6">Burst Demo</MudText>
                             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunSemaphoreDemoAsync" Disabled="@(_busy || HeldPermitCount != 0)">Run With Semaphore</MudButton>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunSemaphoreDemoAsync" Disabled="@(_busy || HeldPermitCount != 0)">Run With
+                                    Semaphore
+                                </MudButton>
                                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RunUnlockedDemoAsync" Disabled="@_busy">Run Without Semaphore</MudButton>
                                 <MudButton Variant="Variant.Text" OnClick="RefreshMetricsAsync" Disabled="@_busy">Refresh Metrics</MudButton>
                                 <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
@@ -453,16 +460,16 @@
         if (MetricsStore == null)
             return Task.CompletedTask;
 
-        var tags = new[] { (SemaphoreConstants.SemaphoreMetrics.Tags.Key, _key) };
-        _acquireSuccess = MetricsStore.GetCounterValue(SemaphoreConstants.SemaphoreMetrics.AcquireSuccess, tags);
-        _acquireFailure = MetricsStore.GetCounterValue(SemaphoreConstants.SemaphoreMetrics.AcquireFailure, tags);
-        var acquireDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.AcquireDuration, tags);
+        var tags = new[] { (Constants.SemaphoreMetrics.Tags.Key, _key) };
+        _acquireSuccess = MetricsStore.GetCounterValue(Constants.SemaphoreMetrics.AcquireSuccess, tags);
+        _acquireFailure = MetricsStore.GetCounterValue(Constants.SemaphoreMetrics.AcquireFailure, tags);
+        var acquireDuration = MetricsStore.GetHistogram(Constants.SemaphoreMetrics.AcquireDuration, tags);
         _acquireDurationCount = acquireDuration?.Count ?? 0;
         _acquireDurationAverageMs = acquireDuration?.Average ?? 0;
-        var releaseDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.ReleaseDuration, tags);
+        var releaseDuration = MetricsStore.GetHistogram(Constants.SemaphoreMetrics.ReleaseDuration, tags);
         _releaseDurationCount = releaseDuration?.Count ?? 0;
         _releaseDurationAverageMs = releaseDuration?.Average ?? 0;
-        var executeDuration = MetricsStore.GetHistogram(SemaphoreConstants.SemaphoreMetrics.ExecuteDuration, tags);
+        var executeDuration = MetricsStore.GetHistogram(Constants.SemaphoreMetrics.ExecuteDuration, tags);
         _executeDurationCount = executeDuration?.Count ?? 0;
         _executeDurationAverageMs = executeDuration?.Average ?? 0;
         _lastMetricsRefresh = DateTime.UtcNow;

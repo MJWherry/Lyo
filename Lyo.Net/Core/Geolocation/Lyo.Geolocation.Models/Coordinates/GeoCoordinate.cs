@@ -14,7 +14,6 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
         get => _latitude;
         set {
             ArgumentHelpers.ThrowIfNotInRange(value, -90.0, 90.0, nameof(Latitude), "Latitude must be between -90 and 90 degrees");
-
             _latitude = value;
         }
     }
@@ -24,7 +23,6 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
         get => _longitude;
         set {
             ArgumentHelpers.ThrowIfNotInRange(value, -180.0, 180.0, nameof(Longitude), "Longitude must be between -180 and 180 degrees");
-
             _longitude = value;
         }
     }

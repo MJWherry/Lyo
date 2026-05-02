@@ -6,44 +6,44 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bogus" Version="[35,)" />
-        <PackageReference Include="Spectre.Console" Version="0.55.2" />
+        <PackageReference Include="Bogus" Version="[35,)"/>
+        <PackageReference Include="Spectre.Console" Version="0.55.2"/>
     </ItemGroup>
 
     <ItemGroup>
         <!-- Base -->
-        <ProjectReference Include="..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj" />
+        <ProjectReference Include="..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
 
         <!-- Core -->
-        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj" />
-        <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj" />
-        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj" />
+        <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
 
         <!-- Communication -->
-        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj" />
-        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Postgres\Lyo.Sms.Postgres.csproj" />
-        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj" />
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Postgres\Lyo.Sms.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
 
         <!-- Features -->
-        <ProjectReference Include="..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Favorite\Lyo.Favorite.Postgres\Lyo.Favorite.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj" />
-        <ProjectReference Include="..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj" />
+        <ProjectReference Include="..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Comment\Lyo.Comment.Postgres\Lyo.Comment.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Favorite\Lyo.Favorite.Postgres\Lyo.Favorite.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Rating\Lyo.Rating.Postgres\Lyo.Rating.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
 
         <!-- Data -->
-        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj" />
+        <ProjectReference Include="..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
 
         <!-- Integration -->
-        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj" />
-        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj" />
-        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj" />
-        <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj" />
+        <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

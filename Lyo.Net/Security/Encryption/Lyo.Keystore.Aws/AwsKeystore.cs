@@ -156,7 +156,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     public async Task AddKeyAsync(string keyId, string version, byte[] key, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
-        ArgumentHelpers.ThrowIfNullOrNotInRange(key, 1, long.MaxValue, nameof(key));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(key, 1, long.MaxValue);
 
         // Use the prefix as the secret name (e.g., "dev/CourtCanary/FileStore")
         var secretName = _secretNamePrefix;
@@ -295,7 +295,6 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var hasKeyForCurrent = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(!hasKeyForCurrent, $"Key '{keyId}' version {version} does not exist. Add the key before setting it as current.");
-
         var versionString = version;
         var currentVersionSecretName = GetCurrentVersionSecretName(keyId);
         try {
@@ -369,7 +368,6 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
         ArgumentNullException.ThrowIfNull(metadata);
         var hasKeyForMetadata = await HasKeyAsync(keyId, version, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(!hasKeyForMetadata, $"Key '{keyId}' version {version} does not exist. Add the key before setting metadata.");
-
         var metadataSecretName = GetMetadataSecretName(keyId, version);
         var metadataJson = JsonSerializer.Serialize(metadata);
         try {

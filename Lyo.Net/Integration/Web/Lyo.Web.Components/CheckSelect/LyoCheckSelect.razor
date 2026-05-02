@@ -51,11 +51,13 @@
                             <MudButton Size="Size.Small" Variant="Variant.Text" Ripple="false"
                                        Class="lyo-check-select-toolbar-btn"
                                        OnClick="SelectAll"
-                                       Disabled="@(_filteredItems.Count == 0)">Select All</MudButton>
+                                       Disabled="@(_filteredItems.Count == 0)">Select All
+                            </MudButton>
                             <MudButton Size="Size.Small" Variant="Variant.Text" Ripple="false"
                                        Class="lyo-check-select-toolbar-btn"
                                        OnClick="ClearAll"
-                                       Disabled="@(_selected.Count == 0)">Clear</MudButton>
+                                       Disabled="@(_selected.Count == 0)">Clear
+                            </MudButton>
                         </div>
                     </div>
 
@@ -88,7 +90,8 @@
                 <MudDivider/>
                 <div class="pa-2 d-flex justify-end">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
-                               Ripple="false" OnClick="CloseAsync">Done</MudButton>
+                               Ripple="false" OnClick="CloseAsync">Done
+                    </MudButton>
                 </div>
 
             </div>

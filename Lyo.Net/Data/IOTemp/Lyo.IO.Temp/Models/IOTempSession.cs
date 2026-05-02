@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
@@ -19,10 +20,11 @@ public sealed class IOTempSession : IIOTempSession
     private const int DisposeRetryCount = 3;
     private const int DisposeRetryDelayMs = 150;
 
-    /// <summary>UTF-8 without BOM so written bytes match <see cref="Encoding.GetByteCount"/> and stream roundtrips.</summary>
+    /// <summary>UTF-8 without BOM so written bytes match <see cref="Encoding.GetByteCount" /> and stream roundtrips.</summary>
     private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     private static long _nameSequence;
+    private readonly DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private readonly List<string> _directories = [];
     private readonly List<string> _files = [];
     private readonly ILogger<IOTempSession> _logger;
@@ -30,11 +32,17 @@ public sealed class IOTempSession : IIOTempSession
     private readonly Action<string>? _onDispose;
     private readonly IOTempSessionOptions _options;
     private readonly IIOTempStorageProvider _storage;
-    private readonly DateTimeOffset _createdAt = DateTimeOffset.UtcNow;
     private bool _disposed;
     private long _totalBytesUsed;
 
-    public IOTempSession(IOTempSessionOptions? options = null, ILogger<IOTempSession>? logger = null, IMetrics? metrics = null, Action<string>? onDispose = null, IIOTempStorageProvider? storageProvider = null)
+    private string DebugDisplay => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
+
+    public IOTempSession(
+        IOTempSessionOptions? options = null,
+        ILogger<IOTempSession>? logger = null,
+        IMetrics? metrics = null,
+        Action<string>? onDispose = null,
+        IIOTempStorageProvider? storageProvider = null)
     {
         _options = options ?? new IOTempSessionOptions();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.RootDirectory, nameof(_options.RootDirectory));
@@ -56,30 +64,9 @@ public sealed class IOTempSession : IIOTempSession
 
     public IIOTempFileGenerator Generator { get; }
 
-    private string DebugDisplay
-        => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
-
     public event Action<string>? FileCreated;
 
     public event Action<string>? DirectoryCreated;
-
-#region Inspection
-
-    public long GetTotalBytesUsed() => Interlocked.Read(ref _totalBytesUsed);
-
-    public TempSessionSnapshot GetSnapshot()
-    {
-        ThrowIfDisposed();
-        return new TempSessionSnapshot(
-            SessionDirectory,
-            new List<string>(_files),
-            new List<string>(_directories),
-            GetTotalBytesUsed(),
-            _createdAt
-        );
-    }
-
-#endregion
 
 #region Sub-sessions
 
@@ -102,10 +89,23 @@ public sealed class IOTempSession : IIOTempSession
             FileLifetime = _options.FileLifetime,
             OverflowStrategy = _options.OverflowStrategy
         };
+
         var sub = new IOTempSession(subOptions, _logger, _metrics, storageProvider: _storage);
         _directories.Add(sub.SessionDirectory);
         DirectoryCreated?.Invoke(sub.SessionDirectory);
         return sub;
+    }
+
+#endregion
+
+#region Inspection
+
+    public long GetTotalBytesUsed() => Interlocked.Read(ref _totalBytesUsed);
+
+    public TempSessionSnapshot GetSnapshot()
+    {
+        ThrowIfDisposed();
+        return new(SessionDirectory, new List<string>(_files), new List<string>(_directories), GetTotalBytesUsed(), _createdAt);
     }
 
 #endregion
@@ -116,8 +116,7 @@ public sealed class IOTempSession : IIOTempSession
     {
         ThrowIfDisposed();
         // Provider-level enumeration walks all descendants; apply glob pattern client-side if provided.
-        return EnumerateAllFiles(SessionDirectory)
-            .Where(f => pattern == null || MatchesGlob(Path.GetFileName(f), pattern));
+        return EnumerateAllFiles(SessionDirectory).Where(f => pattern == null || MatchesGlob(Path.GetFileName(f), pattern));
     }
 
     public IEnumerable<string> EnumerateDirectories()
@@ -131,9 +130,10 @@ public sealed class IOTempSession : IIOTempSession
         foreach (var entry in _storage.EnumerateEntries(dir)) {
             if (!entry.IsDirectory)
                 yield return entry.FullPath;
-            else
+            else {
                 foreach (var sub in EnumerateAllFiles(entry.FullPath))
                     yield return sub;
+            }
         }
     }
 
@@ -142,7 +142,9 @@ public sealed class IOTempSession : IIOTempSession
         foreach (var entry in _storage.EnumerateEntries(dir)) {
             if (!entry.IsDirectory)
                 continue;
+
             yield return entry.FullPath;
+
             foreach (var sub in EnumerateAllDirectories(entry.FullPath))
                 yield return sub;
         }
@@ -151,7 +153,9 @@ public sealed class IOTempSession : IIOTempSession
     private static bool MatchesGlob(string name, string pattern)
     {
         // Simple * wildcard support matching the original Directory.EnumerateFiles pattern behaviour.
-        if (pattern == "*") return true;
+        if (pattern == "*")
+            return true;
+
         if (!pattern.Contains('*') && !pattern.Contains('?'))
             return string.Equals(name, pattern, StringComparison.OrdinalIgnoreCase);
 
@@ -159,11 +163,16 @@ public sealed class IOTempSession : IIOTempSession
         var parts = pattern.Split('*');
         var pos = 0;
         foreach (var part in parts) {
-            if (part.Length == 0) continue;
+            if (part.Length == 0)
+                continue;
+
             var idx = name.IndexOf(part, pos, StringComparison.OrdinalIgnoreCase);
-            if (idx < 0) return false;
+            if (idx < 0)
+                return false;
+
             pos = idx + part.Length;
         }
+
         return true;
     }
 
@@ -209,10 +218,9 @@ public sealed class IOTempSession : IIOTempSession
         try {
             var safePath = EnsurePathWithinSession(path);
             OperationHelpers.ThrowIf(
-                string.Equals(safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-                    SessionDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-                    GetPathComparison()),
-                "Cannot delete the session root directory.");
+                string.Equals(
+                    safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                    SessionDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), GetPathComparison()), "Cannot delete the session root directory.");
 
             if (!_storage.DirectoryExists(safePath)) {
                 _directories.Remove(safePath);
@@ -220,21 +228,20 @@ public sealed class IOTempSession : IIOTempSession
                 return false;
             }
 
-            var prefix = safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                         + Path.DirectorySeparatorChar;
+            var prefix = safePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
             var comparison = GetPathComparison();
-
             var filesUnder = _files.Where(f => f.StartsWith(prefix, comparison)).ToList();
             var freedBytes = filesUnder.Sum(f => _storage.FileExists(f) ? _storage.GetFileLength(f) : 0L);
             var dirsUnder = _directories.Where(d => d.StartsWith(prefix, comparison)).ToList();
-
             _storage.DeleteDirectory(safePath);
+            foreach (var f in filesUnder)
+                _files.Remove(f);
 
-            foreach (var f in filesUnder) _files.Remove(f);
-            foreach (var d in dirsUnder) _directories.Remove(d);
+            foreach (var d in dirsUnder)
+                _directories.Remove(d);
+
             _directories.Remove(safePath);
             Interlocked.Add(ref _totalBytesUsed, -freedBytes);
-
             _metrics.RecordTiming(Constants.Metrics.DeleteDirectoryDuration, sw.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.DeleteDirectorySuccess);
             return true;
@@ -288,7 +295,6 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
         if (_storage.FileExists(dest)) {
@@ -299,7 +305,6 @@ public sealed class IOTempSession : IIOTempSession
 
         dest = EnsurePathWithinSession(dest);
         _storage.MoveFile(sourcePath, dest);
-
         _files.Add(dest);
         Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
@@ -312,6 +317,7 @@ public sealed class IOTempSession : IIOTempSession
         var dest = Path.Combine(SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+
         dest = EnsurePathWithinSession(dest);
         CopyDirectoryRecursive(sourcePath, dest);
         _storage.DeleteDirectory(sourcePath);
@@ -338,9 +344,9 @@ public sealed class IOTempSession : IIOTempSession
             var newSize = Utf8NoBom.GetByteCount(text);
             ValidateFileSizeForOverwrite(oldSize, newSize);
             _storage.WriteAllText(safePath, text, Utf8NoBom);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
+
             Interlocked.Add(ref _totalBytesUsed, newSize - oldSize);
             _metrics.RecordTiming(Constants.Metrics.WriteFileDuration, sw.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.WriteFileSuccess);
@@ -366,9 +372,9 @@ public sealed class IOTempSession : IIOTempSession
             var oldSize = _storage.GetFileLength(safePath);
             ValidateFileSizeForOverwrite(oldSize, data.Length);
             _storage.WriteAllBytes(safePath, data.ToArray());
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
+
             Interlocked.Add(ref _totalBytesUsed, data.Length - oldSize);
             _metrics.RecordTiming(Constants.Metrics.WriteFileDuration, sw.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.WriteFileSuccess);
@@ -396,9 +402,9 @@ public sealed class IOTempSession : IIOTempSession
             var newSize = Utf8NoBom.GetByteCount(text);
             ValidateFileSizeForOverwrite(oldSize, newSize);
             await _storage.WriteAllTextAsync(safePath, text, Utf8NoBom, ct).ConfigureAwait(false);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
+
             Interlocked.Add(ref _totalBytesUsed, newSize - oldSize);
             _metrics.RecordTiming(Constants.Metrics.WriteFileDuration, sw.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.WriteFileSuccess);
@@ -424,9 +430,9 @@ public sealed class IOTempSession : IIOTempSession
             var oldSize = _storage.GetFileLength(safePath);
             ValidateFileSizeForOverwrite(oldSize, data.Length);
             await _storage.WriteAllBytesAsync(safePath, data.ToArray(), ct).ConfigureAwait(false);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
+
             Interlocked.Add(ref _totalBytesUsed, data.Length - oldSize);
             _metrics.RecordTiming(Constants.Metrics.WriteFileDuration, sw.Elapsed);
             _metrics.IncrementCounter(Constants.Metrics.WriteFileSuccess);
@@ -449,7 +455,8 @@ public sealed class IOTempSession : IIOTempSession
         ThrowIfDisposed();
         foreach (var file in _files.ToList()) {
             try {
-                if (_storage.FileExists(file)) _storage.DeleteFile(file);
+                if (_storage.FileExists(file))
+                    _storage.DeleteFile(file);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete file {File} during Clear() in session {SessionDirectory}", file, SessionDirectory);
@@ -457,9 +464,12 @@ public sealed class IOTempSession : IIOTempSession
         }
 
         foreach (var dir in _directories.ToList()) {
-            if (dir == SessionDirectory) continue;
+            if (dir == SessionDirectory)
+                continue;
+
             try {
-                if (_storage.DirectoryExists(dir)) _storage.DeleteDirectory(dir);
+                if (_storage.DirectoryExists(dir))
+                    _storage.DeleteDirectory(dir);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete directory {Dir} during Clear() in session {SessionDirectory}", dir, SessionDirectory);
@@ -537,7 +547,6 @@ public sealed class IOTempSession : IIOTempSession
             using var fs = _storage.OpenAppend(safePath);
             var bytes = data.ToArray();
             fs.Write(bytes, 0, bytes.Length);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -568,7 +577,6 @@ public sealed class IOTempSession : IIOTempSession
             var byteCount = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(byteCount);
             _storage.AppendAllText(safePath, text, Utf8NoBom);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -597,7 +605,6 @@ public sealed class IOTempSession : IIOTempSession
 
             ValidateFileSize(data.Length);
             await _storage.AppendAllTextAsync(safePath, Utf8NoBom.GetString(data.ToArray()), Utf8NoBom, ct).ConfigureAwait(false);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -628,7 +635,6 @@ public sealed class IOTempSession : IIOTempSession
             var byteCount = Utf8NoBom.GetByteCount(text);
             ValidateFileSize(byteCount);
             await _storage.AppendAllTextAsync(safePath, text, Utf8NoBom, ct).ConfigureAwait(false);
-
             if (!_files.Contains(safePath))
                 _files.Add(safePath);
 
@@ -649,10 +655,8 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
-
         if (_storage.FileExists(dest)) {
             var ext = Path.GetExtension(destName);
             var stem = Path.GetFileNameWithoutExtension(destName);
@@ -671,7 +675,6 @@ public sealed class IOTempSession : IIOTempSession
     {
         var dirName = Path.GetFileName(sourcePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         var dest = Path.Combine(SessionDirectory, dirName);
-
         if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
 
@@ -686,7 +689,6 @@ public sealed class IOTempSession : IIOTempSession
     {
         var size = _storage.GetFileLength(sourcePath);
         ValidateFileSize(size);
-
         var destName = Path.GetFileName(sourcePath);
         var dest = Path.Combine(SessionDirectory, destName);
         if (_storage.FileExists(dest)) {
@@ -709,6 +711,7 @@ public sealed class IOTempSession : IIOTempSession
         var dest = Path.Combine(SessionDirectory, dirName);
         if (_storage.DirectoryExists(dest))
             dest = Path.Combine(SessionDirectory, $"{dirName}_{Guid.NewGuid():N}");
+
         dest = EnsurePathWithinSession(dest);
         await CopyDirectoryRecursiveAsync(sourcePath, dest, ct).ConfigureAwait(false);
         _directories.Add(dest);
@@ -968,8 +971,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
-    public Task<string> CreateDirectoryAsync(string? name = null, CancellationToken ct = default)
-        => Task.FromResult(CreateDirectory(name));
+    public Task<string> CreateDirectoryAsync(string? name = null, CancellationToken ct = default) => Task.FromResult(CreateDirectory(name));
 
 #endregion
 
@@ -988,7 +990,10 @@ public sealed class IOTempSession : IIOTempSession
             _metrics.IncrementCounter(Constants.Metrics.DisposeSessionSuccess);
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Couldn't delete session directory {SessionDirectory} after {Retries} attempts during Dispose. Directory may be orphaned.", SessionDirectory, DisposeRetryCount);
+            _logger.LogError(
+                ex, "Couldn't delete session directory {SessionDirectory} after {Retries} attempts during Dispose. Directory may be orphaned.", SessionDirectory,
+                DisposeRetryCount);
+
             _metrics.RecordError(Constants.Metrics.DisposeSessionDuration, ex);
             _metrics.IncrementCounter(Constants.Metrics.DisposeSessionFailure);
         }
@@ -1003,7 +1008,7 @@ public sealed class IOTempSession : IIOTempSession
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         return ValueTask.CompletedTask;
 #else
-        return new ValueTask(Task.CompletedTask);
+        return new(Task.CompletedTask);
 #endif
     }
 
@@ -1013,25 +1018,14 @@ public sealed class IOTempSession : IIOTempSession
 
     private IOTempGeneratorContext BuildGeneratorContext()
         => new(
-            SessionDirectory: SessionDirectory,
-            ThrowIfDisposed: ThrowIfDisposed,
-            ResolvePath: ResolvePath,
-            EnsureWithinSession: EnsurePathWithinSession,
-            ValidateSize: ValidateFileSize,
-            RegisterFile: (path, bytes) => {
+            SessionDirectory, ThrowIfDisposed, ResolvePath, EnsurePathWithinSession, ValidateFileSize, (path, bytes) => {
                 _files.Add(path);
                 Interlocked.Add(ref _totalBytesUsed, bytes);
                 FileCreated?.Invoke(path);
-            },
-            RegisterDirectory: path => {
+            }, path => {
                 _directories.Add(path);
                 DirectoryCreated?.Invoke(path);
-            },
-            Options: _options,
-            Logger: _logger,
-            Metrics: _metrics,
-            Storage: _storage
-        );
+            }, _options, _logger, _metrics, _storage);
 
     private string CreateSessionDirectory()
     {
@@ -1082,14 +1076,14 @@ public sealed class IOTempSession : IIOTempSession
 
     private void ValidateFileSize(long sizeBytes)
     {
-        OperationHelpers.ThrowIf(_options.MaxFileSizeBytes.HasValue && sizeBytes > _options.MaxFileSizeBytes.Value,
+        OperationHelpers.ThrowIf(
+            _options.MaxFileSizeBytes.HasValue && sizeBytes > _options.MaxFileSizeBytes.Value,
             $"File size {sizeBytes:N0} bytes exceeds the per-file limit of {_options.MaxFileSizeBytes!.Value:N0} bytes.");
 
         if (_options.MaxFileCount.HasValue && _files.Count >= _options.MaxFileCount.Value) {
             switch (_options.OverflowStrategy) {
                 case TempOverflowStrategy.ThrowException:
-                    OperationHelpers.ThrowIf(true,
-                        $"Session already has {_files.Count} tracked files, which meets the limit of {_options.MaxFileCount.Value}.");
+                    OperationHelpers.ThrowIf(true, $"Session already has {_files.Count} tracked files, which meets the limit of {_options.MaxFileCount.Value}.");
                     break;
                 case TempOverflowStrategy.DeleteOldest:
                 case TempOverflowStrategy.DeleteLargest:
@@ -1109,8 +1103,10 @@ public sealed class IOTempSession : IIOTempSession
 
         switch (_options.OverflowStrategy) {
             case TempOverflowStrategy.ThrowException:
-                OperationHelpers.ThrowIf(true,
+                OperationHelpers.ThrowIf(
+                    true,
                     $"Adding {sizeBytes:N0} bytes would exceed session total limit of {_options.MaxTotalSizeBytes.Value:N0} bytes (current: {Interlocked.Read(ref _totalBytesUsed):N0} bytes).");
+
                 break;
             case TempOverflowStrategy.DeleteOldest:
             case TempOverflowStrategy.DeleteLargest:
@@ -1123,22 +1119,28 @@ public sealed class IOTempSession : IIOTempSession
 
     private void ValidateFileSizeForOverwrite(long oldSizeBytes, long newSizeBytes)
     {
-        OperationHelpers.ThrowIf(_options.MaxFileSizeBytes.HasValue && newSizeBytes > _options.MaxFileSizeBytes.Value,
+        OperationHelpers.ThrowIf(
+            _options.MaxFileSizeBytes.HasValue && newSizeBytes > _options.MaxFileSizeBytes.Value,
             $"File size {newSizeBytes:N0} bytes exceeds the per-file limit of {_options.MaxFileSizeBytes!.Value:N0} bytes.");
 
-        if (_options.MaxTotalSizeBytes == null) return;
+        if (_options.MaxTotalSizeBytes == null)
+            return;
+
         var delta = newSizeBytes - oldSizeBytes;
-        if (delta <= 0) return;
+        if (delta <= 0)
+            return;
 
         var projected = Interlocked.Read(ref _totalBytesUsed) + delta;
-        OperationHelpers.ThrowIf(projected > _options.MaxTotalSizeBytes.Value,
+        OperationHelpers.ThrowIf(
+            projected > _options.MaxTotalSizeBytes.Value,
             $"Writing {newSizeBytes:N0} bytes (delta: +{delta:N0}) would exceed session total limit of {_options.MaxTotalSizeBytes.Value:N0} bytes (current: {Interlocked.Read(ref _totalBytesUsed):N0} bytes).");
     }
 
     private void FreeFileCountFor(int requiredSlots)
     {
         var excess = _files.Count - _options.MaxFileCount!.Value + requiredSlots;
-        if (excess <= 0) return;
+        if (excess <= 0)
+            return;
 
         var candidates = _options.OverflowStrategy == TempOverflowStrategy.DeleteOldest
             ? _files.Where(_storage.FileExists).OrderBy(_storage.GetFileCreationTimeUtc).ToList()
@@ -1146,7 +1148,9 @@ public sealed class IOTempSession : IIOTempSession
 
         var freed = 0;
         foreach (var file in candidates) {
-            if (freed >= excess) break;
+            if (freed >= excess)
+                break;
+
             var size = _storage.FileExists(file) ? _storage.GetFileLength(file) : 0L;
             try {
                 _storage.DeleteFile(file);
@@ -1160,8 +1164,7 @@ public sealed class IOTempSession : IIOTempSession
             }
         }
 
-        OperationHelpers.ThrowIf(freed < excess,
-            $"Could not free {excess} file slot(s): only freed {freed}. Session file count limit: {_options.MaxFileCount.Value}.");
+        OperationHelpers.ThrowIf(freed < excess, $"Could not free {excess} file slot(s): only freed {freed}. Session file count limit: {_options.MaxFileCount.Value}.");
     }
 
     private void FreeTotalSpaceFor(long requiredBytes)
@@ -1184,14 +1187,16 @@ public sealed class IOTempSession : IIOTempSession
                 _files.Remove(entry.FullPath);
                 Interlocked.Add(ref _totalBytesUsed, -entry.Length);
                 freed += entry.Length;
-                _logger.LogInformation("Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", entry.FullPath, entry.Length, SessionDirectory);
+                _logger.LogInformation(
+                    "Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", entry.FullPath, entry.Length, SessionDirectory);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete {FilePath} during overflow cleanup in session {SessionDirectory}", entry.FullPath, SessionDirectory);
             }
         }
 
-        OperationHelpers.ThrowIf(freed < needed,
+        OperationHelpers.ThrowIf(
+            freed < needed,
             $"Could not free sufficient space: needed {needed:N0} bytes freed, freed {freed:N0} bytes. Session total limit: {_options.MaxTotalSizeBytes.Value:N0} bytes.");
     }
 
@@ -1213,7 +1218,7 @@ public sealed class IOTempSession : IIOTempSession
         }
 
         if (lastEx != null)
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(lastEx).Throw();
+            ExceptionDispatchInfo.Capture(lastEx).Throw();
     }
 
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(IOTempSession));
@@ -1223,6 +1228,7 @@ public sealed class IOTempSession : IIOTempSession
         try {
             if (!_storage.DirectoryExists(_options.RootDirectory))
                 ExceptionThrower.ThrowIfDirectoryNotFound(_options.RootDirectory, nameof(_options.RootDirectory));
+
             _storage.EnsureDirectoryAccessible(_options.RootDirectory);
         }
         catch (Exception ex) {

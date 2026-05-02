@@ -30,21 +30,15 @@ public class ClientStore(ILocalStorageService sessionStorage)
 
     public async Task<string?> GetPageNameAsync() => await sessionStorage.GetItemAsync<string?>(PageNameKey);
 
-    public async Task SetGridStateAsync<T>(string gridKey, LyoDataGridState<T> state)
-        => await sessionStorage.SetItemAsync($"{GridStatePrefix}{gridKey}", state);
+    public async Task SetGridStateAsync<T>(string gridKey, LyoDataGridState<T> state) => await sessionStorage.SetItemAsync($"{GridStatePrefix}{gridKey}", state);
 
-    public async Task<LyoDataGridState<T>?> GetGridStateAsync<T>(string gridKey)
-        => await sessionStorage.GetItemAsync<LyoDataGridState<T>?>($"{GridStatePrefix}{gridKey}");
+    public async Task<LyoDataGridState<T>?> GetGridStateAsync<T>(string gridKey) => await sessionStorage.GetItemAsync<LyoDataGridState<T>?>($"{GridStatePrefix}{gridKey}");
 
-    public async Task RemoveGridStateAsync(string gridKey)
-        => await sessionStorage.RemoveItemAsync($"{GridStatePrefix}{gridKey}");
+    public async Task RemoveGridStateAsync(string gridKey) => await sessionStorage.RemoveItemAsync($"{GridStatePrefix}{gridKey}");
 
-    public async Task SetQueryWorkbenchStateAsync(string json)
-        => await sessionStorage.SetItemAsync(QueryWorkbenchStateKey, json);
+    public async Task SetQueryWorkbenchStateAsync(string json) => await sessionStorage.SetItemAsync(QueryWorkbenchStateKey, json);
 
-    public async Task<string?> GetQueryWorkbenchStateAsync()
-        => await sessionStorage.GetItemAsync<string?>(QueryWorkbenchStateKey);
+    public async Task<string?> GetQueryWorkbenchStateAsync() => await sessionStorage.GetItemAsync<string?>(QueryWorkbenchStateKey);
 
-    public async Task RemoveQueryWorkbenchStateAsync()
-        => await sessionStorage.RemoveItemAsync(QueryWorkbenchStateKey);
+    public async Task RemoveQueryWorkbenchStateAsync() => await sessionStorage.RemoveItemAsync(QueryWorkbenchStateKey);
 }

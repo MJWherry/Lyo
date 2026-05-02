@@ -28,6 +28,7 @@
 </MudContainer>
 
 @code {
+
     [CascadingParameter]
     private MainLayout? Layout { get; set; }
 
@@ -50,4 +51,5 @@
     private bool _ignoreCase;
 
     protected override void OnInitialized() => Layout?.SetPageTitle("Text Diff");
+
 }

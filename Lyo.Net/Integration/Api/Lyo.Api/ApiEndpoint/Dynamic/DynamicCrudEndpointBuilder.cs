@@ -708,10 +708,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         var task = (Task)meta.Cache.CreateAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, ct])!;
         await task.ConfigureAwait(false);
@@ -751,10 +752,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         var task = (Task)meta.Cache.CreateBulkAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, ct])!;
         await task.ConfigureAwait(false);
@@ -841,10 +843,11 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
@@ -860,10 +863,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (request == null)
+        if (request == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         EnsureKeyOnUpdateData(request, meta);
         var task = (Task)meta.Cache.UpdateAsync.Invoke(updateService, [request, null, null, ct])!;
@@ -888,10 +892,11 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
@@ -907,10 +912,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (requests == null)
+        if (requests == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         foreach (var req in (IEnumerable)requests)
             EnsureKeyOnUpdateData(req!, meta);
@@ -931,10 +937,11 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
@@ -950,10 +957,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (request == null)
+        if (request == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         EnsureKeyOnUpsertData(request, meta);
         var task = (Task)meta.Cache.UpsertAsync.Invoke(upsertService, [request, null, null, null, null, null, null, ct])!;
@@ -978,10 +986,11 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null)
+        if (body == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
@@ -997,10 +1006,11 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (requests == null)
+        if (requests == null) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Request body is required", DateTime.UtcNow)),
                 statusCode: 400);
+        }
 
         foreach (var req in (IEnumerable)requests)
             EnsureKeyOnUpsertData(req!, meta);

@@ -16,6 +16,5 @@ public sealed record LogEnricherOptions
 
     public static LogEnricherOptions Default { get; } = new();
 
-    public override string ToString()
-        => $"AllFrames={IncludeAllFrames} InnerExceptions={IncludeInnerExceptions} MaxDepth={MaxInnerExceptionDepth}";
+    public override string ToString() => $"AllFrames={IncludeAllFrames} InnerExceptions={IncludeInnerExceptions} MaxDepth={MaxInnerExceptionDepth}";
 }

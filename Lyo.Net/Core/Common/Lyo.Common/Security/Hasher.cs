@@ -4,9 +4,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Common.Security;
 
-/// <summary>
-/// SHA-2 digest helpers for <c>netstandard2.0</c> and modern .NET (one-shot <see cref="SHA256.HashData(ReadOnlySpan{byte})" /> APIs when available).
-/// </summary>
+/// <summary>SHA-2 digest helpers for <c>netstandard2.0</c> and modern .NET (one-shot <see cref="SHA256.HashData(ReadOnlySpan{byte})" /> APIs when available).</summary>
 public static class Hasher
 {
     /// <summary>Computes a SHA-2 digest of <paramref name="data" />. Supported <paramref name="digestBits" />: <c>256</c>, <c>384</c>, <c>512</c>.</summary>
@@ -33,7 +31,7 @@ public static class Hasher
             256 => SHA256.HashData(data),
             384 => SHA384.HashData(data),
             512 => SHA512.HashData(data),
-            _ => throw new ArgumentOutOfRangeException(nameof(digestBits), digestBits, "Supported values: 256, 384, 512."),
+            var _ => throw new ArgumentOutOfRangeException(nameof(digestBits), digestBits, "Supported values: 256, 384, 512.")
         };
 #else
         using var alg = CreateSha2(digestBits);

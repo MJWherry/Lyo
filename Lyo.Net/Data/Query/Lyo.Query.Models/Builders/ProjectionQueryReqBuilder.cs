@@ -28,7 +28,6 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     {
         ArgumentHelpers.ThrowIfNull(includes);
         ArgumentHelpers.ThrowIf(includes.Length == 0, "At least one include is required");
-
         foreach (var i in includes)
             _query.Include.Add(i.Trim());
 
@@ -57,7 +56,6 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     {
         ArgumentHelpers.ThrowIfNull(fields);
         ArgumentHelpers.ThrowIf(fields.Length == 0, "At least one select field is required", nameof(fields));
-
         foreach (var f in fields)
             _query.Select.Add(f.Trim());
 

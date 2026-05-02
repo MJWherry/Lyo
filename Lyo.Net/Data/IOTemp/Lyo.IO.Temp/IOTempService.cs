@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
@@ -15,19 +17,22 @@ public sealed class IOTempService : IIOTempService
 {
     private static long _nameSequence;
     private readonly ConcurrentDictionary<string, IIOTempSession> _activeSessions = [];
-    private readonly ConcurrentDictionary<string, IIOTempSession> _keyedSessions = [];
     private readonly object _keyedSessionLock = new();
-    private readonly IIOTempStorageProvider _storage;
+    private readonly ConcurrentDictionary<string, IIOTempSession> _keyedSessions = [];
     private readonly ILogger<IOTempService> _logger;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly IMetrics _metrics;
 
     private readonly IOTempServiceOptions _options;
+    private readonly IIOTempStorageProvider _storage;
     private bool _disposed;
 
-    public string ServiceDirectory { get; }
-
-    public IOTempService(IOTempServiceOptions? options = null, ILogger<IOTempService>? logger = null, IMetrics? metrics = null, ILoggerFactory? loggerFactory = null, IIOTempStorageProvider? storageProvider = null)
+    public IOTempService(
+        IOTempServiceOptions? options = null,
+        ILogger<IOTempService>? logger = null,
+        IMetrics? metrics = null,
+        ILoggerFactory? loggerFactory = null,
+        IIOTempStorageProvider? storageProvider = null)
     {
         _options = options ?? new IOTempServiceOptions();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.TempRoot);
@@ -39,6 +44,8 @@ public sealed class IOTempService : IIOTempService
         EnsureRootExists();
         ServiceDirectory = CreateServiceDirectory();
     }
+
+    public string ServiceDirectory { get; }
 
     public int ActiveSessionCount => _activeSessions.Count;
 
@@ -71,13 +78,13 @@ public sealed class IOTempService : IIOTempService
     {
         ThrowIfDisposed();
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
-
         if (_keyedSessions.TryGetValue(key, out var existing))
             return existing;
 
         lock (_keyedSessionLock) {
             if (_keyedSessions.TryGetValue(key, out existing))
                 return existing;
+
             var session = CreateSession(options);
             _keyedSessions[key] = session;
             return session;
@@ -95,12 +102,7 @@ public sealed class IOTempService : IIOTempService
     {
         ThrowIfDisposed();
         var totalBytes = _activeSessions.Values.Sum(s => s.GetTotalBytesUsed());
-        return new IOTempServiceStats(
-            ActiveSessionCount: _activeSessions.Count,
-            KeyedSessionCount: _keyedSessions.Count,
-            TotalBytesUsed: totalBytes,
-            ServiceDirectory: ServiceDirectory
-        );
+        return new(_activeSessions.Count, _keyedSessions.Count, totalBytes, ServiceDirectory);
     }
 
 #endregion
@@ -163,7 +165,6 @@ public sealed class IOTempService : IIOTempService
         var stopwatch = Stopwatch.StartNew();
         var deletedDirectories = 0;
         var deletedFiles = 0;
-
         if (!_storage.DirectoryExists(ServiceDirectory)) {
             _logger.LogDebug("Service directory {ServiceDirectory} does not exist, skipping cleanup", ServiceDirectory);
             return;
@@ -302,13 +303,13 @@ public sealed class IOTempService : IIOTempService
 
     private void OnSessionDisposed(string sessionDirectory)
     {
-        if (!_activeSessions.TryRemove(sessionDirectory, out _))
+        if (!_activeSessions.TryRemove(sessionDirectory, out var _))
             return;
 
         // Remove from keyed pool if this session was registered there
         foreach (var kvp in _keyedSessions) {
             if (kvp.Value.SessionDirectory == sessionDirectory) {
-                _keyedSessions.TryRemove(kvp.Key, out _);
+                _keyedSessions.TryRemove(kvp.Key, out var _);
                 break;
             }
         }
@@ -365,9 +366,7 @@ public sealed class IOTempService : IIOTempService
 #if NET5_0_OR_GREATER
         return OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 #else
-        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 #endif
     }
 
@@ -413,7 +412,7 @@ public sealed class IOTempService : IIOTempService
         }
 
         if (lastEx != null)
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(lastEx).Throw();
+            ExceptionDispatchInfo.Capture(lastEx).Throw();
     }
 
 #endregion

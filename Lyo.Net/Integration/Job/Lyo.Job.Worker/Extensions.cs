@@ -11,11 +11,10 @@ namespace Lyo.Job.Worker;
 public static class Extensions
 {
     /// <summary>
-    /// Registers a <typeparamref name="TWorker"/> as a singleton hosted service.
-    /// Requires <see cref="IMqService"/>, <see cref="IApiClient"/>, and <see cref="IJobEventPublisher"/>
-    /// to be registered.
+    /// Registers a <typeparamref name="TWorker" /> as a singleton hosted service. Requires <see cref="IMqService" />, <see cref="IApiClient" />, and
+    /// <see cref="IJobEventPublisher" /> to be registered.
     /// </summary>
-    /// <typeparam name="TWorker">The concrete worker type (must extend <see cref="JobWorkerBase"/>).</typeparam>
+    /// <typeparam name="TWorker">The concrete worker type (must extend <see cref="JobWorkerBase" />).</typeparam>
     /// <param name="services">The service collection.</param>
     /// <param name="workerType">Worker type string — must match the <c>WorkerType</c> on job definitions.</param>
     /// <param name="apiBaseUrl">Base URL of the Job API.</param>
@@ -35,9 +34,9 @@ public static class Extensions
             var eventPublisher = sp.GetRequiredService<IJobEventPublisher>();
             var logger = sp.GetService<ILogger<TWorker>>();
             var metrics = sp.GetService<IMetrics>();
-            return (TWorker)Activator.CreateInstance(
-                typeof(TWorker), mqService, apiClient, eventPublisher, workerType, apiBaseUrl, logger, metrics, maxRequeueCount, dlqName)!;
+            return (TWorker)Activator.CreateInstance(typeof(TWorker), mqService, apiClient, eventPublisher, workerType, apiBaseUrl, logger, metrics, maxRequeueCount, dlqName)!;
         });
+
         services.AddHostedService(sp => sp.GetRequiredService<TWorker>());
         return services;
     }

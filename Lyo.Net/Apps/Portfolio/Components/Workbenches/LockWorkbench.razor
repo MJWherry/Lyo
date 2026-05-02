@@ -50,8 +50,10 @@
                                     </MudText>
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                                         <MudButton Variant="Variant.Filled" OnClick="AcquireHeldLockAsync" Disabled="@(_busy || _heldLock != null)">Acquire</MudButton>
-                                        <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || _heldLock == null)">Competing Acquire</MudButton>
-                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleaseHeldLockAsync" Disabled="@(_busy || _heldLock == null)">Release</MudButton>
+                                        <MudButton Variant="Variant.Outlined" OnClick="TryCompetingAcquireAsync" Disabled="@(_busy || _heldLock == null)">Competing Acquire
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ReleaseHeldLockAsync" Disabled="@(_busy || _heldLock == null)">Release
+                                        </MudButton>
                                     </MudStack>
                                 </MudStack>
                             </MudPaper>
@@ -63,7 +65,9 @@
                                         Launch several workers at once to show how the lock serializes access to the critical section.
                                     </MudText>
                                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunLockedDemoAsync" Disabled="@(_busy || _heldLock != null)">Run With Lock</MudButton>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunLockedDemoAsync" Disabled="@(_busy || _heldLock != null)">Run With
+                                            Lock
+                                        </MudButton>
                                         <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="RunUnlockedDemoAsync" Disabled="@_busy">Run Without Lock</MudButton>
                                         <MudButton Variant="Variant.Text" OnClick="RefreshMetricsAsync" Disabled="@_busy">Refresh Metrics</MudButton>
                                         <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ClearEvents">Clear Events</MudButton>
@@ -462,16 +466,16 @@
         if (MetricsStore == null)
             return Task.CompletedTask;
 
-        var tags = new[] { (LockConstants.Metrics.Tags.Key, _lockKey) };
-        _acquireSuccess = MetricsStore.GetCounterValue(LockConstants.Metrics.AcquireSuccess, tags);
-        _acquireFailure = MetricsStore.GetCounterValue(LockConstants.Metrics.AcquireFailure, tags);
-        var acquireDuration = MetricsStore.GetHistogram(LockConstants.Metrics.AcquireDuration, tags);
+        var tags = new[] { (Constants.Metrics.Tags.Key, _lockKey) };
+        _acquireSuccess = MetricsStore.GetCounterValue(Constants.Metrics.AcquireSuccess, tags);
+        _acquireFailure = MetricsStore.GetCounterValue(Constants.Metrics.AcquireFailure, tags);
+        var acquireDuration = MetricsStore.GetHistogram(Constants.Metrics.AcquireDuration, tags);
         _acquireDurationCount = acquireDuration?.Count ?? 0;
         _acquireDurationAverageMs = acquireDuration?.Average ?? 0;
-        var releaseDuration = MetricsStore.GetHistogram(LockConstants.Metrics.ReleaseDuration, tags);
+        var releaseDuration = MetricsStore.GetHistogram(Constants.Metrics.ReleaseDuration, tags);
         _releaseDurationCount = releaseDuration?.Count ?? 0;
         _releaseDurationAverageMs = releaseDuration?.Average ?? 0;
-        var executeDuration = MetricsStore.GetHistogram(LockConstants.Metrics.ExecuteDuration, tags);
+        var executeDuration = MetricsStore.GetHistogram(Constants.Metrics.ExecuteDuration, tags);
         _executeDurationCount = executeDuration?.Count ?? 0;
         _executeDurationAverageMs = executeDuration?.Average ?? 0;
         _lastMetricsRefresh = DateTime.UtcNow;

@@ -24,9 +24,8 @@ public sealed class PhoneRedactionRule : IRedactionRule, IRedactionMatchFormatte
             if (MaskOptions.OnlyFirstDigitAmongLastN is { } w && w < 1)
                 throw new ArgumentOutOfRangeException(nameof(options), "OnlyFirstDigitAmongLastN must be at least 1 when set.");
 
-            if (MaskOptions.OnlyFirstDigitAmongLastN is null && MaskOptions.LeadingDigitsVisible == 0 && MaskOptions.TrailingDigitsVisible == 0) {
+            if (MaskOptions.OnlyFirstDigitAmongLastN is null && MaskOptions.LeadingDigitsVisible == 0 && MaskOptions.TrailingDigitsVisible == 0)
                 throw new ArgumentException("Specify LeadingDigitsVisible and/or TrailingDigitsVisible, OnlyFirstDigitAmongLastN, or UsePolicyPlaceholder.", nameof(options));
-            }
 
             if (MaskOptions.LeadingDigitsVisible < 0 || MaskOptions.TrailingDigitsVisible < 0)
                 throw new ArgumentOutOfRangeException(nameof(options));

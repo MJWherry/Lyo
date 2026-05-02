@@ -51,7 +51,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     ];
 
     private static readonly string[] AsyncMarkers = ["MoveNext", "AsyncTaskMethodBuilder", "AsyncStateMachine"];
-    
+
     private readonly StackTraceDecoderOptions _options;
     private readonly string[] _systemPrefixes;
     private readonly string[] _userPrefixes;
@@ -74,7 +74,6 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     public DecodedStackTrace Decode(Exception exception)
     {
         ArgumentHelpers.ThrowIfNull(exception);
-
         var inners = new List<DecodedStackTrace>();
         var inner = exception.InnerException;
         while (inner is not null) {
@@ -114,7 +113,6 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var innerBuilder = (StringBuilder?)null;
         foreach (var line in lines) {
             var trimmed = line.TrimStart();
-
             if (InnerExceptionSeparator.IsMatch(line)) {
                 if (innerBuilder is not null)
                     innerBlocks.Add(innerBuilder.ToString());
@@ -188,7 +186,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
 
         return (string.Empty, string.Empty, stripped);
     }
-    
+
     private FrameCategory ClassifyFrame(string stripped)
     {
         // User-supplied prefixes take priority so internal libs are never
@@ -199,11 +197,9 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         if (TestFrameworkPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)))
             return FrameCategory.TestFramework;
 
-        return _systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)) 
-            ? FrameCategory.SystemOrThirdParty 
-            : FrameCategory.UserCode;
+        return _systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)) ? FrameCategory.SystemOrThirdParty : FrameCategory.UserCode;
     }
-    
+
     private static CrashSiteConfidence ScoreCrashSite(StackFrame? frame)
     {
         if (frame is null)
@@ -219,7 +215,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
             (false, false) => CrashSiteConfidence.Low
         };
     }
-    
+
     private static IReadOnlyList<FrameGroup> BuildGroups(IReadOnlyList<StackFrame> frames)
     {
         var groups = new List<FrameGroup>();
@@ -244,7 +240,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
 
     private static IReadOnlyList<string> BuildNamespaces(IReadOnlyList<StackFrame> userFrames)
         => userFrames.Select(f => f.Namespace).Where(ns => !string.IsNullOrEmpty(ns)).Distinct(StringComparer.Ordinal).OrderBy(ns => ns, StringComparer.Ordinal).ToList();
-    
+
     private IReadOnlyList<RecursionInfo> DetectRecursion(IReadOnlyList<StackFrame> frames)
     {
         var results = new List<RecursionInfo>();

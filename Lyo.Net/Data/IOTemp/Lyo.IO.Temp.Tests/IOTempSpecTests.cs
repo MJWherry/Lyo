@@ -1,27 +1,20 @@
 using Lyo.Common.Records;
-using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
 
 namespace Lyo.IO.Temp.Tests;
 
 public sealed class IOTempSpecTests : IDisposable
 {
-    private static IOTempServiceOptions TestOptions() => new() {
-        TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-spec-tests"),
-        DirectoryName = Guid.NewGuid().ToString("N")
-    };
-
     private readonly IOTempService _service = new(TestOptions());
 
     public void Dispose() => _service.Dispose();
 
+    private static IOTempServiceOptions TestOptions() => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-spec-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
+
     [Fact]
     public void Builder_creates_spec_with_files()
     {
-        var spec = TempDirectorySpec.Builder()
-            .WithFiles(5, 1024)
-            .Build();
-
+        var spec = TempDirectorySpec.Builder().WithFiles(5, 1024).Build();
         Assert.Equal(5, spec.FileCount);
         Assert.Equal(1024, spec.FileSizeBytes);
         Assert.Null(spec.FileSizeSelector);
@@ -31,10 +24,7 @@ public sealed class IOTempSpecTests : IDisposable
     [Fact]
     public void Builder_creates_spec_with_file_size_unit()
     {
-        var spec = TempDirectorySpec.Builder()
-            .WithFiles(3, FileSizeUnitInfo.Kilobyte, 4)
-            .Build();
-
+        var spec = TempDirectorySpec.Builder().WithFiles(3, FileSizeUnitInfo.Kilobyte, 4).Build();
         Assert.Equal(3, spec.FileCount);
         Assert.Equal(4096, spec.FileSizeBytes);
     }
@@ -42,11 +32,7 @@ public sealed class IOTempSpecTests : IDisposable
     [Fact]
     public void Builder_creates_spec_with_file_size_selector()
     {
-        var spec = TempDirectorySpec.Builder()
-            .WithFiles(2, 512)
-            .WithFileSizeSelector(i => (i + 1) * 1024)
-            .Build();
-
+        var spec = TempDirectorySpec.Builder().WithFiles(2, 512).WithFileSizeSelector(i => (i + 1) * 1024).Build();
         Assert.NotNull(spec.FileSizeSelector);
         Assert.Equal(1024, spec.FileSizeSelector(0));
         Assert.Equal(2048, spec.FileSizeSelector(1));
@@ -55,12 +41,7 @@ public sealed class IOTempSpecTests : IDisposable
     [Fact]
     public void Builder_creates_spec_with_subdirectories()
     {
-        var spec = TempDirectorySpec.Builder()
-            .WithFiles(2, 512)
-            .WithSubdirectory(sub => sub.WithFiles(3, 256))
-            .WithSubdirectory(TempDirectorySpec.Flat(1, 128))
-            .Build();
-
+        var spec = TempDirectorySpec.Builder().WithFiles(2, 512).WithSubdirectory(sub => sub.WithFiles(3, 256)).WithSubdirectory(TempDirectorySpec.Flat(1, 128)).Build();
         Assert.NotNull(spec.Subdirectories);
         Assert.Equal(2, spec.Subdirectories!.Count);
         Assert.Equal(3, spec.Subdirectories[0].FileCount);
@@ -92,11 +73,7 @@ public sealed class IOTempSpecTests : IDisposable
     {
         using var session = _service.CreateSession();
         var sizes = new long[] { 100, 200, 300 };
-        var spec = new TempDirectorySpec {
-            FileCount = 3,
-            FileSizeBytes = 0,
-            FileSizeSelector = i => sizes[i]
-        };
+        var spec = new TempDirectorySpec { FileCount = 3, FileSizeBytes = 0, FileSizeSelector = i => sizes[i] };
         session.Generator.SimulateDirectory(spec);
         var files = session.Files.OrderBy(f => new FileInfo(f).Length).ToList();
         Assert.Equal(3, files.Count);

@@ -99,7 +99,6 @@ public static class SharedEntityMetadataCache
         var currentType = rootType;
         var parts = path.Split('.', StringSplitOptions.RemoveEmptyEntries);
         ArgumentHelpers.ThrowIf(parts.Length == 0, $"Invalid selected field path '{path}'.");
-
         var normalizedParts = new List<string>(parts.Length);
         var lastWasCollection = false;
         for (var i = 0; i < parts.Length; i++) {
@@ -109,7 +108,6 @@ public static class SharedEntityMetadataCache
             var part = parts[i];
             if (part == "*") {
                 ArgumentHelpers.ThrowIf(i != parts.Length - 1, $"Selected field '{path}' contains '*' in an invalid position.");
-
                 normalizedParts.Add(part);
                 break;
             }
@@ -121,7 +119,6 @@ public static class SharedEntityMetadataCache
 
             var property = ResolvePropertyCore(currentType, part);
             ArgumentHelpers.ThrowIf(property == null, $"Selected field '{path}' not found on type '{currentType.Name}'.");
-
             normalizedParts.Add(property.Name);
             currentType = property.PropertyType;
             lastWasCollection = IsCollectionType(currentType);

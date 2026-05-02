@@ -65,10 +65,7 @@ public static class RedactionPolicyFingerprint
         }
     }
 
-    private static string FormatBins(HashSet<string>? s) 
-        => s is null or { Count: 0 } 
-            ? "-" 
-            : string.Join(",", s.OrderBy(x => x, StringComparer.Ordinal));
+    private static string FormatBins(HashSet<string>? s) => s is null or { Count: 0 } ? "-" : string.Join(",", s.OrderBy(x => x, StringComparer.Ordinal));
 
     private static void WriteUtf8Line(Stream s, string line)
     {

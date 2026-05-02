@@ -7,7 +7,8 @@ namespace Lyo.Diagnostic.Context;
 /// <summary>The fully enriched diagnostic payload produced for one exception occurrence. Safe to serialise and return in an API error response (after sanitisation).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagnosticContext(
-    DateTimeOffset OccurredAt, string OccurrenceId,
+    DateTimeOffset OccurredAt,
+    string OccurrenceId,
     DecodedStackTrace Trace,
     ClassifiedExceptionResult Classification,
     RequestMetadata Request,
@@ -25,6 +26,5 @@ public sealed record DiagnosticContext(
     /// <summary>Shortcut to the most likely crash location summary, e.g. "OrderService.cs:87".</summary>
     public string? CrashLocation => Trace.LikelyCrashSite?.LocationSummary;
 
-    public override string ToString()
-        => $"{Classification.Kind} [{Classification.Severity}] {ServiceName ?? "?"} @ {OccurredAt:u}";
+    public override string ToString() => $"{Classification.Kind} [{Classification.Severity}] {ServiceName ?? "?"} @ {OccurredAt:u}";
 }

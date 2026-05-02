@@ -171,7 +171,6 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
         OperationHelpers.ThrowIfNull(session, $"Multipart session {sessionId} was not found.");
         OperationHelpers.ThrowIf(session.Status != MultipartSessionStatus.Active, $"Session {sessionId} is not active.");
         OperationHelpers.ThrowIf(DateTime.UtcNow > session.ExpiresUtc, $"Session {sessionId} has expired.");
-
         return session;
     }
 

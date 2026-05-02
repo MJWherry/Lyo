@@ -65,8 +65,8 @@ public abstract class ImageServiceBase : IImageService
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        ArgumentHelpers.ThrowIfNotInRange(width, 1, int.MaxValue, nameof(width));
-        ArgumentHelpers.ThrowIfNotInRange(height, 1, int.MaxValue, nameof(height));
+        ArgumentHelpers.ThrowIfNotInRange(width, 1, int.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(height, 1, int.MaxValue);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.ResizeDuration)]);
         ct.ThrowIfCancellationRequested();
         try {
@@ -103,10 +103,10 @@ public abstract class ImageServiceBase : IImageService
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        ArgumentHelpers.ThrowIfNotInRange(x, 0, int.MaxValue, nameof(x));
-        ArgumentHelpers.ThrowIfNotInRange(y, 0, int.MaxValue, nameof(y));
-        ArgumentHelpers.ThrowIfNotInRange(width, 1, int.MaxValue, nameof(width));
-        ArgumentHelpers.ThrowIfNotInRange(height, 1, int.MaxValue, nameof(height));
+        ArgumentHelpers.ThrowIfNotInRange(x, 0, int.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(y, 0, int.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(width, 1, int.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(height, 1, int.MaxValue);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.CropDuration)]);
         ct.ThrowIfCancellationRequested();
         try {
@@ -216,8 +216,8 @@ public abstract class ImageServiceBase : IImageService
     {
         ArgumentHelpers.ThrowIfNull(inputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNotInRange(maxWidth, 1, int.MaxValue, nameof(maxWidth));
-        ArgumentHelpers.ThrowIfNotInRange(maxHeight, 1, int.MaxValue, nameof(maxHeight));
+        ArgumentHelpers.ThrowIfNotInRange(maxWidth, 1, int.MaxValue);
+        ArgumentHelpers.ThrowIfNotInRange(maxHeight, 1, int.MaxValue);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.ThumbnailDuration)]);
         ct.ThrowIfCancellationRequested();
         try {
@@ -332,7 +332,7 @@ public abstract class ImageServiceBase : IImageService
     {
         ArgumentHelpers.ThrowIfNull(imageStream);
         OperationHelpers.ThrowIfNotReadable(imageStream, $"Stream '{nameof(imageStream)}' must be readable.");
-        ArgumentHelpers.ThrowIfNotInRange(colorCount, 1, 256, nameof(colorCount));
+        ArgumentHelpers.ThrowIfNotInRange(colorCount, 1, 256);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.PaletteDuration)]);
         ct.ThrowIfCancellationRequested();
         try {
@@ -427,7 +427,7 @@ public abstract class ImageServiceBase : IImageService
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        ArgumentHelpers.ThrowIfNotInRange(quality, 1, 100, nameof(quality));
+        ArgumentHelpers.ThrowIfNotInRange(quality, 1, 100);
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.CompressDuration)]);
         ct.ThrowIfCancellationRequested();
         try {

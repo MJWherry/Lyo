@@ -30,13 +30,9 @@ public static class CollectionExtensions
         }
     }
 #else
-    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
-        => Enumerable.DistinctBy(source, keySelector);
+    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector) => Enumerable.DistinctBy(source, keySelector);
 
-    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(
-        this IEnumerable<TSource> source,
-        Func<TSource, TKey> keySelector,
-        IEqualityComparer<TKey>? comparer)
+    public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey>? comparer)
         => Enumerable.DistinctBy(source, keySelector, comparer);
 #endif
 }

@@ -9,9 +9,8 @@ public static class TwoKeyDekValidation
         var alg = (EncryptionAlgorithm)dekAlgorithmId;
         switch (alg) {
             case EncryptionAlgorithm.AesGcm:
-                if (dekKeyMaterialBytes is not (16 or 24 or 32)) {
+                if (dekKeyMaterialBytes is not (16 or 24 or 32))
                     throw new InvalidDataException($"Invalid DEK key material length {dekKeyMaterialBytes} for AES-GCM. Expected 16, 24, or 32 bytes.");
-                }
 
                 break;
             case EncryptionAlgorithm.ChaCha20Poly1305:
@@ -20,15 +19,13 @@ public static class TwoKeyDekValidation
 
                 break;
             case EncryptionAlgorithm.AesCcm:
-                if (dekKeyMaterialBytes is not (16 or 24 or 32)) {
+                if (dekKeyMaterialBytes is not (16 or 24 or 32))
                     throw new InvalidDataException($"Invalid DEK key material length {dekKeyMaterialBytes} for AES-CCM. Expected 16, 24, or 32 bytes.");
-                }
 
                 break;
             case EncryptionAlgorithm.AesSiv:
-                if (dekKeyMaterialBytes is not (32 or 48 or 64)) {
+                if (dekKeyMaterialBytes is not (32 or 48 or 64))
                     throw new InvalidDataException($"Invalid DEK key material length {dekKeyMaterialBytes} for AES-SIV. Expected 32, 48, or 64 bytes.");
-                }
 
                 break;
             case EncryptionAlgorithm.XChaCha20Poly1305:
@@ -44,9 +41,8 @@ public static class TwoKeyDekValidation
     /// <summary>Throws if plaintext DEK length does not match the header-declared length.</summary>
     public static void ValidatePlaintextDekLength(byte[] plaintextDek, int expectedBytes)
     {
-        if (plaintextDek.Length != expectedBytes) {
+        if (plaintextDek.Length != expectedBytes)
             throw new InvalidDataException($"Decrypted DEK length {plaintextDek.Length} does not match header-declared DEK key material length {expectedBytes}.");
-        }
     }
 
     /// <summary>

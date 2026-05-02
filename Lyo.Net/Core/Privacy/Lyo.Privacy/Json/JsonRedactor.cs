@@ -8,7 +8,6 @@ using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Internal;
 using Lyo.Privacy.Metrics;
-using Lyo.Privacy.Text;
 
 namespace Lyo.Privacy.Json;
 
@@ -175,9 +174,7 @@ public sealed class JsonRedactor : IStructuredRedactor
     {
         Bump(counts);
         if (el.ValueKind is JsonValueKind.Object or JsonValueKind.Array) {
-            w.WriteStringValue(strat == JsonKeyRedactionStrategy.HashStable 
-                ? StableHash(keyName, el) 
-                : _options.Placeholder);
+            w.WriteStringValue(strat == JsonKeyRedactionStrategy.HashStable ? StableHash(keyName, el) : _options.Placeholder);
             return;
         }
 

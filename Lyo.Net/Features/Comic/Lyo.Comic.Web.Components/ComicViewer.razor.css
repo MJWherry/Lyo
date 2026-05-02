@@ -70,8 +70,15 @@
     cursor: pointer;
 }
 
-.comic-viewer__tap-zone--left  { left: 0;   width: 35%; }
-.comic-viewer__tap-zone--right { right: 0;  width: 35%; }
+.comic-viewer__tap-zone--left {
+    left: 0;
+    width: 35%;
+}
+
+.comic-viewer__tap-zone--right {
+    right: 0;
+    width: 35%;
+}
 
 /* Centre zone sits above left/right but is narrower; used only for overlay toggle */
 .comic-viewer__tap-zone--center {
@@ -98,10 +105,15 @@
     pointer-events: none;
 }
 
-.comic-viewer__tap-arrow--left  { left: 12px; }
-.comic-viewer__tap-arrow--right { right: 12px; }
+.comic-viewer__tap-arrow--left {
+    left: 12px;
+}
 
-.comic-viewer__tap-zone--left:hover  .comic-viewer__tap-arrow,
+.comic-viewer__tap-arrow--right {
+    right: 12px;
+}
+
+.comic-viewer__tap-zone--left:hover .comic-viewer__tap-arrow,
 .comic-viewer__tap-zone--right:hover .comic-viewer__tap-arrow {
     opacity: 1;
 }
@@ -120,7 +132,7 @@
 
 .comic-viewer__top-bar {
     top: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 100%);
     padding: 8px 4px 32px;
     display: flex;
     align-items: center;
@@ -128,7 +140,7 @@
 
 .comic-viewer__bottom-bar {
     bottom: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 100%);
     padding: 32px 0 0;
     color: #fff;
 }
@@ -146,8 +158,13 @@
     pointer-events: none;
 }
 
-.comic-viewer__top-bar.comic-viewer__overlay--hidden    { transform: translateY(-100%); }
-.comic-viewer__bottom-bar.comic-viewer__overlay--hidden { transform: translateY(100%); }
+.comic-viewer__top-bar.comic-viewer__overlay--hidden {
+    transform: translateY(-100%);
+}
+
+.comic-viewer__bottom-bar.comic-viewer__overlay--hidden {
+    transform: translateY(100%);
+}
 
 /* ── Text / control tweaks inside overlays ───────────────────────── */
 
@@ -166,7 +183,17 @@
 
 @media (max-width: 600px) {
     .comic-viewer__tap-zone--left,
-    .comic-viewer__tap-zone--right { width: 40%; }
-    .comic-viewer__tap-zone--center { left: 40%; width: 20%; }
-    .comic-viewer__chapter-select { min-width: 110px; max-width: 140px; }
+    .comic-viewer__tap-zone--right {
+        width: 40%;
+    }
+
+    .comic-viewer__tap-zone--center {
+        left: 40%;
+        width: 20%;
+    }
+
+    .comic-viewer__chapter-select {
+        min-width: 110px;
+        max-width: 140px;
+    }
 }

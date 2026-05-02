@@ -15,8 +15,7 @@
 </MudContainer>
 
 @* Viewer renders as a fixed full-screen overlay — outside the container so it fills the viewport *@
-@if (_viewerOpen && _activeSeries is not null)
-{
+@if (_viewerOpen && _activeSeries is not null) {
     <ComicViewer Series="_activeSeries"
                  Chapters="_chapters"
                  CurrentChapter="_currentChapter"
@@ -31,17 +30,14 @@
 }
 
 @code {
+
     protected override string PageName { get; set; } = "Comics";
 
     private IReadOnlyList<string> _availableTags = [];
 
     private const string ComicApiPrefix = "api/comic";
 
-    protected override async Task OnPageInitializedAsync()
-    {
-        _availableTags = await ComicApi.GetAsAsync<IReadOnlyList<string>>($"{ComicApiPrefix}/series/tags")
-                         ?? [];
-    }
+    protected override async Task OnPageInitializedAsync() => _availableTags = await ComicApi.GetAsAsync<IReadOnlyList<string>>($"{ComicApiPrefix}/series/tags") ?? [];
 
     private ComicViewer? _viewer;
     private bool _viewerOpen;
@@ -54,12 +50,11 @@
     // Page-image cache: keyed by page number for the active chapter.
     // Populated upfront when a chapter is opened so every LoadPageImageAsync
     // call is instant (no per-page API round-trip).
-    private Dictionary<int, string?> _pageImageCache = [];
+    private readonly Dictionary<int, string?> _pageImageCache = [];
 
     private async Task<IReadOnlyList<ComicSeries>> SearchAsync(ComicSeriesQuery query, CancellationToken ct)
     {
-        var results = await ComicApi.PostAsAsync<ComicSeriesQuery, ComicSeriesRes[]>(
-            $"{ComicApiPrefix}/series/search", query, ct: ct);
+        var results = await ComicApi.PostAsAsync<ComicSeriesQuery, ComicSeriesRes[]>($"{ComicApiPrefix}/series/search", query, ct: ct);
         return results?.Select(ToSeries).ToList() ?? [];
     }
 
@@ -67,54 +62,46 @@
     {
         if (series.CoverImageRef != null && Guid.TryParse(series.CoverImageRef, out var id))
             return $"/comic-files/{id}";
+
         return series.CoverImageRef;
     }
-    
+
     private async Task OpenViewerAsync(ComicSeries series)
     {
-        _activeSeries   = series;
-        _chapters       = await GetChaptersAsync(series.Id);
+        _activeSeries = series;
+        _chapters = await GetChaptersAsync(series.Id);
         _currentChapter = _chapters.Count > 0 ? _chapters[0] : null;
-        _currentPage    = 1;
-        _totalPages     = _currentChapter?.PageCount ?? 0;
-        _viewerOpen     = true;
-
+        _currentPage = 1;
+        _totalPages = _currentChapter?.PageCount ?? 0;
+        _viewerOpen = true;
         if (_currentChapter is not null)
             await CacheChapterPagesAsync(_currentChapter);
     }
 
     private async Task<IReadOnlyList<ComicChapter>> GetChaptersAsync(Guid seriesId)
     {
-        var results = await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>(
-            $"{ComicApiPrefix}/series/{seriesId}/chapters");
+        var results = await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/series/{seriesId}/chapters");
         return results ?? [];
     }
 
     private async Task CacheChapterPagesAsync(ComicChapter chapter)
     {
         _pageImageCache.Clear();
-        var pages = await ComicApi.GetAsAsync<IReadOnlyList<ComicPageRes>>(
-            $"{ComicApiPrefix}/chapters/{chapter.Id}/pages") ?? [];
-
-        foreach (var page in pages)
-        {
-            _pageImageCache[page.PageNumber] = Guid.TryParse(page.ImageRef, out var id)
-                ? $"/comic-files/{id}"
-                : page.ImageRef;
+        var pages = await ComicApi.GetAsAsync<IReadOnlyList<ComicPageRes>>($"{ComicApiPrefix}/chapters/{chapter.Id}/pages") ?? [];
+        foreach (var page in pages) {
+            _pageImageCache[page.PageNumber] = Guid.TryParse(page.ImageRef, out var id) ? $"/comic-files/{id}" : page.ImageRef;
         }
     }
 
-    private Task ShowDetailsAsync(ComicSeries series)
-    {
+    private Task ShowDetailsAsync(ComicSeries series) =>
         // TODO: open a details dialog / side panel using your preferred approach
-        return Task.CompletedTask;
-    }
+        Task.CompletedTask;
 
     private async Task OnChapterChangedAsync(ComicChapter chapter)
     {
         _currentChapter = chapter;
-        _currentPage    = 1;
-        _totalPages     = chapter.PageCount ?? 0;
+        _currentPage = 1;
+        _totalPages = chapter.PageCount ?? 0;
         await CacheChapterPagesAsync(chapter);
         if (_viewer is not null)
             await _viewer.ReloadPageAsync(1);
@@ -123,8 +110,8 @@
     private async Task OnPreviousChapterChangedAsync(ComicChapter chapter)
     {
         _currentChapter = chapter;
-        _totalPages     = chapter.PageCount ?? 0;
-        _currentPage    = _totalPages > 0 ? _totalPages : 1;
+        _totalPages = chapter.PageCount ?? 0;
+        _currentPage = _totalPages > 0 ? _totalPages : 1;
         await CacheChapterPagesAsync(chapter);
         if (_viewer is not null)
             await _viewer.ReloadPageAsync(_currentPage);
@@ -139,44 +126,39 @@
 
     private void CloseViewer()
     {
-        _viewerOpen     = false;
-        _activeSeries   = null;
+        _viewerOpen = false;
+        _activeSeries = null;
         _currentChapter = null;
-        _currentPage    = 1;
-        _totalPages     = 0;
-        _chapters       = [];
+        _currentPage = 1;
+        _totalPages = 0;
+        _chapters = [];
     }
 
-    private Task<string?> LoadPageImageAsync(
-        ComicSeries   series,
-        ComicChapter  chapter,
-        int           page,
-        CancellationToken ct)
+    private Task<string?> LoadPageImageAsync(ComicSeries series, ComicChapter chapter, int page, CancellationToken ct)
     {
         _pageImageCache.TryGetValue(page, out var imageData);
         return Task.FromResult(string.IsNullOrEmpty(imageData) ? null : imageData);
     }
 
-    private static ComicSeries ToSeries(ComicSeriesRes r) => new()
-    {
-        Id               = r.Id,
-        Title            = r.Title,
-        Slug             = r.Slug,
-        ComicType        = r.ComicType,
-        Status           = r.Status,
-        Description      = r.Description,
-        Language         = r.Language,
-        PublishedYear    = r.PublishedYear,
-        Author           = r.Author,
-        Artist           = r.Artist,
-        Publisher        = r.Publisher,
-        Source           = r.Source,
-        CoverImageRef    = r.CoverImageRef,
-        Demographic      = r.Demographic,
-        CreatedTimestamp = r.CreatedTimestamp,
-        UpdatedTimestamp = r.UpdatedTimestamp,
-        AlternateTitles  = r.AlternateTitles
-            .Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language })
-            .ToList(),
-    };
+    private static ComicSeries ToSeries(ComicSeriesRes r)
+        => new() {
+            Id = r.Id,
+            Title = r.Title,
+            Slug = r.Slug,
+            ComicType = r.ComicType,
+            Status = r.Status,
+            Description = r.Description,
+            Language = r.Language,
+            PublishedYear = r.PublishedYear,
+            Author = r.Author,
+            Artist = r.Artist,
+            Publisher = r.Publisher,
+            Source = r.Source,
+            CoverImageRef = r.CoverImageRef,
+            Demographic = r.Demographic,
+            CreatedTimestamp = r.CreatedTimestamp,
+            UpdatedTimestamp = r.UpdatedTimestamp,
+            AlternateTitles = r.AlternateTitles.Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList()
+        };
+
 }

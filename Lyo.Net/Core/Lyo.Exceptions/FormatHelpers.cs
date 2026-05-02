@@ -10,7 +10,10 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>Helper methods for format validation that throw InvalidFormatException.</summary>
-/// <remarks>Optional name parameters use <see cref="CallerArgumentExpressionAttribute"/> like <see cref="ArgumentHelpers"/>: when omitted at the call site, the compiler supplies the caller's expression for <see cref="ArgumentException.ParamName" />. Override with <c>nameof(...)</c> when you want a CLR parameter name.</remarks>
+/// <remarks>
+/// Optional name parameters use <see cref="CallerArgumentExpressionAttribute" /> like <see cref="ArgumentHelpers" />: when omitted at the call site, the compiler supplies
+/// the caller's expression for <see cref="ArgumentException.ParamName" />. Override with <c>nameof(...)</c> when you want a CLR parameter name.
+/// </remarks>
 public static class FormatHelpers
 {
     private static readonly Regex HexColorRegex = new(@"^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$", RegexOptions.Compiled);
@@ -185,7 +188,12 @@ public static class FormatHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfInvalidFormat([NotNull] string? value, Regex regex, string message, [CallerArgumentExpression("value")] string? paramName = null, params string[] validFormats)
+    public static void ThrowIfInvalidFormat(
+        [NotNull] string? value,
+        Regex regex,
+        string message,
+        [CallerArgumentExpression("value")] string? paramName = null,
+        params string[] validFormats)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value, paramName);
         if (!regex.IsMatch(value))
@@ -272,8 +280,7 @@ public static class FormatHelpers
         ArgumentHelpers.ThrowIfNull(value, paramName);
         var len = value.Length;
         if (len < minLength || len > maxLength) {
-            ThrowInvalidFormat(
-                $"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName, value, $"Length between {minLength} and {maxLength}");
+            ThrowInvalidFormat($"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName, value, $"Length between {minLength} and {maxLength}");
         }
     }
 

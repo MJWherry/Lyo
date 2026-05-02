@@ -3,9 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using Lyo.Common.Security;
 using System.Text.RegularExpressions;
 using Lyo.Common.Enums;
+using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Common;
@@ -18,7 +18,6 @@ public static class Utilities
     public static double ConvertFromBytes(long bytes, FileSizeUnit targetUnit)
     {
         ArgumentHelpers.ThrowIfNegative(bytes);
-
         var power = (int)targetUnit;
         return bytes / Math.Pow(1024, power);
     }
@@ -26,7 +25,6 @@ public static class Utilities
     public static long ConvertToBytes(double size, FileSizeUnit sourceUnit)
     {
         ArgumentHelpers.ThrowIfNegative(size);
-
         var power = (int)sourceUnit;
         return (long)(size * Math.Pow(1024, power));
     }
