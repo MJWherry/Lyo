@@ -5,6 +5,7 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
+// ReSharper disable InconsistentNaming
 
 namespace Lyo.Encryption.Benchmarks;
 
@@ -96,15 +97,15 @@ public class TwoKeyEncryptionBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _data100MB?.Dispose();
-        _data1GB?.Dispose();
-        _data2GB?.Dispose();
-        _encrypted100MBAesGcm?.Dispose();
-        _encrypted1GBAesGcm?.Dispose();
-        _encrypted2GBAesGcm?.Dispose();
-        _encrypted100MBChacha?.Dispose();
-        _encrypted1GBChacha?.Dispose();
-        _encrypted2GBChacha?.Dispose();
+        _data100MB.Dispose();
+        _data1GB.Dispose();
+        _data2GB.Dispose();
+        _encrypted100MBAesGcm.Dispose();
+        _encrypted1GBAesGcm.Dispose();
+        _encrypted2GBAesGcm.Dispose();
+        _encrypted100MBChacha.Dispose();
+        _encrypted1GBChacha.Dispose();
+        _encrypted2GBChacha.Dispose();
     }
 
     private Stream CreateTestDataStream(long size)

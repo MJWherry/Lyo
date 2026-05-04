@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text.RegularExpressions;
+using Lyo.Common;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -139,7 +140,7 @@ public static class QueryRequestScorer
         var templateCount = 0;
         var uniquePlaceholders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var cf in computedFields) {
-            if (string.IsNullOrWhiteSpace(cf?.Template))
+            if (cf.Template.IsNullOrWhitespace())
                 continue;
 
             templateCount++;

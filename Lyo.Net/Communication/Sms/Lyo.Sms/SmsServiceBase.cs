@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
@@ -85,12 +86,12 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(to);
         ArgumentHelpers.ThrowIfNull(body);
         var builder = SmsMessageBuilder.New().SetTo(to).SetBody(body);
-        if (!string.IsNullOrWhiteSpace(from))
-            builder.SetFrom(from!);
+        if (!from.IsNullOrWhitespace())
+            builder.SetFrom(from);
         else {
             var defaultFrom = Options.DefaultFromPhoneNumber;
-            if (!string.IsNullOrWhiteSpace(defaultFrom))
-                builder.SetFrom(defaultFrom!);
+            if (!defaultFrom.IsNullOrWhitespace())
+                builder.SetFrom(defaultFrom);
         }
 
         return SendAsync(builder, null, ct);
@@ -128,15 +129,15 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
         var mediaUrlList = mediaUrls.ToList();
         ArgumentHelpers.ThrowIfNullOrEmpty(mediaUrlList, nameof(mediaUrls));
         var builder = SmsMessageBuilder.New().SetTo(to);
-        if (!string.IsNullOrWhiteSpace(body))
+        if (!body.IsNullOrWhitespace())
             builder.SetBody(body);
 
-        if (!string.IsNullOrWhiteSpace(from))
-            builder.SetFrom(from!);
+        if (!from.IsNullOrWhitespace())
+            builder.SetFrom(from);
         else {
             var defaultFrom = GetDefaultFromPhoneNumber();
-            if (!string.IsNullOrWhiteSpace(defaultFrom))
-                builder.SetFrom(defaultFrom!);
+            if (!defaultFrom.IsNullOrWhitespace())
+                builder.SetFrom(defaultFrom);
         }
 
         foreach (var mediaUrl in mediaUrlList)

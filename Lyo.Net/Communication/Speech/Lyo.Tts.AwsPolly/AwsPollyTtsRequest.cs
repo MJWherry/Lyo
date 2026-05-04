@@ -64,12 +64,12 @@ public class AwsPollyTtsRequest : TtsRequest
 
     public override string ToString()
     {
-        var parts = new List<string> { $"Text: {Text.Substring(0, Math.Min(Text.Length, 50))}{(Text.Length > 50 ? "..." : "")}" };
+        var parts = new List<string> { $"Text: {Text[..Math.Min(Text.Length, 50)]}{(Text.Length > 50 ? "..." : "")}" };
         if (VoiceId.HasValue)
             parts.Add($"VoiceId: {VoiceId.Value.ToString()}");
 
         if (LanguageCode != null)
-            parts.Add($"LanguageCode: {LanguageCode.Bcp47 ?? LanguageCode.Iso6391 ?? LanguageCode.Iso6393 ?? LanguageCode.Name}");
+            parts.Add($"LanguageCode: {LanguageCode.Bcp47}");
 
         parts.Add($"OutputFormat: {OutputFormat.GetStringValue()}");
         return string.Join(" | ", parts);

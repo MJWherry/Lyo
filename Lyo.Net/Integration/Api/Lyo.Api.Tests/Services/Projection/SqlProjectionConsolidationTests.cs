@@ -1,4 +1,6 @@
 using Lyo.Api.Services.Crud.Read.Project;
+// ReSharper disable UnusedMember.Local
+// ReSharper disable ClassNeverInstantiated.Local
 
 namespace Lyo.Api.Tests.Services.Projection;
 

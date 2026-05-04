@@ -11,81 +11,82 @@ namespace Lyo.Tag.Postgres;
 /// <summary>Extension methods for PostgreSQL tag store registration.</summary>
 public static class Extensions
 {
-    /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection (IDbContextFactory only).</summary>
-    public static IServiceCollection AddTagDbContextFactory(this IServiceCollection services, Action<PostgresTagOptions> configure)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresTagOptions();
-        configure(options);
-        return services.AddTagDbContextFactory(options);
-    }
+        /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection (IDbContextFactory only).</summary>
+        public IServiceCollection AddTagDbContextFactory(Action<PostgresTagOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresTagOptions();
+            configure(options);
+            return services.AddTagDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL tag DbContextFactory using configuration binding.</summary>
-    public static IServiceCollection AddTagDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresTagOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresTagOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL tag DbContextFactory using configuration binding.</summary>
+        public IServiceCollection AddTagDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresTagOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresTagOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddTagDbContextFactory(options);
-    }
+            return services.AddTagDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection.</summary>
-    public static IServiceCollection AddTagDbContextFactory(this IServiceCollection services, PostgresTagOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresTagOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<TagDbContext, PostgresTagOptions>();
-        services.AddDbContextFactory<TagDbContext>(dbOpts => dbOpts.UseNpgsql(
-            options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresTagOptions.Schema)));
+        /// <summary>Adds PostgreSQL tag DbContextFactory to the service collection.</summary>
+        public IServiceCollection AddTagDbContextFactory(PostgresTagOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton<IOptions<PostgresTagOptions>>(Options.Create(options));
+            services.AddPostgresMigrations<TagDbContext, PostgresTagOptions>();
+            services.AddDbContextFactory<TagDbContext>(dbOpts => dbOpts.UseNpgsql(
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresTagOptions.Schema)));
 
-        return services;
-    }
+            return services;
+        }
 
-    /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore (ITagStore) to the service collection.</summary>
-    public static IServiceCollection AddPostgresTagStore(this IServiceCollection services, Action<PostgresTagOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresTagOptions();
-        configure(options);
-        return services.AddPostgresTagStore(options);
-    }
+        /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore (ITagStore) to the service collection.</summary>
+        public IServiceCollection AddPostgresTagStore(Action<PostgresTagOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresTagOptions();
+            configure(options);
+            return services.AddPostgresTagStore(options);
+        }
 
-    /// <summary>Adds PostgreSQL tag store using configuration binding.</summary>
-    public static IServiceCollection AddPostgresTagStoreFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresTagOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresTagOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL tag store using configuration binding.</summary>
+        public IServiceCollection AddPostgresTagStoreFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresTagOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresTagOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPostgresTagStore(options);
-    }
+            return services.AddPostgresTagStore(options);
+        }
 
-    /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore to the service collection.</summary>
-    public static IServiceCollection AddPostgresTagStore(this IServiceCollection services, PostgresTagOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddTagDbContextFactory(options);
-        services.AddSingleton<ITagStore, PostgresTagStore>();
-        return services;
+        /// <summary>Adds PostgreSQL tag DbContextFactory and PostgresTagStore to the service collection.</summary>
+        public IServiceCollection AddPostgresTagStore(PostgresTagOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddTagDbContextFactory(options);
+            services.AddSingleton<ITagStore, PostgresTagStore>();
+            return services;
+        }
     }
 }

@@ -112,7 +112,7 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     /// <returns>The TimeZoneInfo, or null if TimeZoneId is invalid or not set.</returns>
     public TimeZoneInfo? TimeZone {
         get {
-            if (string.IsNullOrWhiteSpace(TimeZoneId))
+            if (TimeZoneId.IsNullOrWhitespace())
                 return null;
 
             try {
@@ -159,13 +159,14 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
                 _byCountry[location.Country] = [];
 
             _byCountry[location.Country].Add(location);
-            if (!string.IsNullOrWhiteSpace(location.TimeZoneId)) {
-                var timeZoneKey = location.TimeZoneId!.Trim();
-                if (!_byTimeZone.ContainsKey(timeZoneKey))
-                    _byTimeZone[timeZoneKey] = [];
+            if (location.TimeZoneId.IsNullOrWhitespace())
+                continue;
 
-                _byTimeZone[timeZoneKey].Add(location);
-            }
+            var timeZoneKey = location.TimeZoneId.Trim();
+            if (!_byTimeZone.ContainsKey(timeZoneKey))
+                _byTimeZone[timeZoneKey] = [];
+
+            _byTimeZone[timeZoneKey].Add(location);
         }
     }
 
@@ -194,10 +195,10 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     /// <returns>An enumerable of geographic info for the specified timezone.</returns>
     public static IEnumerable<GeographicInfo> ByTimeZone(string? timeZoneId)
     {
-        if (string.IsNullOrWhiteSpace(timeZoneId))
-            return Enumerable.Empty<GeographicInfo>();
+        if (timeZoneId.IsNullOrWhitespace())
+            return [];
 
-        var timeZoneKey = timeZoneId!.Trim();
+        var timeZoneKey = timeZoneId.Trim();
         return _byTimeZone.TryGetValue(timeZoneKey, out var locations) ? locations : [];
     }
 
@@ -206,10 +207,10 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     /// <returns>The first geographic info for the timezone, or Unknown if not found.</returns>
     public static GeographicInfo FromTimeZone(string? timeZoneId)
     {
-        if (string.IsNullOrWhiteSpace(timeZoneId))
+        if (timeZoneId.IsNullOrWhitespace())
             return Unknown;
 
-        var timeZoneKey = timeZoneId!.Trim();
+        var timeZoneKey = timeZoneId.Trim();
         return _byTimeZone.TryGetValue(timeZoneKey, out var locations) && locations.Count > 0 ? locations[0] : Unknown;
     }
 

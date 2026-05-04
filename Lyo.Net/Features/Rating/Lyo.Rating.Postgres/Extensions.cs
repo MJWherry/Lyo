@@ -11,81 +11,82 @@ namespace Lyo.Rating.Postgres;
 /// <summary>Extension methods for PostgreSQL rating store registration.</summary>
 public static class Extensions
 {
-    /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection (IDbContextFactory only).</summary>
-    public static IServiceCollection AddRatingDbContextFactory(this IServiceCollection services, Action<PostgresRatingOptions> configure)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresRatingOptions();
-        configure(options);
-        return services.AddRatingDbContextFactory(options);
-    }
+        /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection (IDbContextFactory only).</summary>
+        public IServiceCollection AddRatingDbContextFactory(Action<PostgresRatingOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresRatingOptions();
+            configure(options);
+            return services.AddRatingDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL rating DbContextFactory using configuration binding.</summary>
-    public static IServiceCollection AddRatingDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresRatingOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresRatingOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL rating DbContextFactory using configuration binding.</summary>
+        public IServiceCollection AddRatingDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresRatingOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresRatingOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddRatingDbContextFactory(options);
-    }
+            return services.AddRatingDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection.</summary>
-    public static IServiceCollection AddRatingDbContextFactory(this IServiceCollection services, PostgresRatingOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresRatingOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<RatingDbContext, PostgresRatingOptions>();
-        services.AddDbContextFactory<RatingDbContext>(dbOpts => dbOpts.UseNpgsql(
-            options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresRatingOptions.Schema)));
+        /// <summary>Adds PostgreSQL rating DbContextFactory to the service collection.</summary>
+        public IServiceCollection AddRatingDbContextFactory(PostgresRatingOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton<IOptions<PostgresRatingOptions>>(Options.Create(options));
+            services.AddPostgresMigrations<RatingDbContext, PostgresRatingOptions>();
+            services.AddDbContextFactory<RatingDbContext>(dbOpts => dbOpts.UseNpgsql(
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresRatingOptions.Schema)));
 
-        return services;
-    }
+            return services;
+        }
 
-    /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore (IRatingStore) to the service collection.</summary>
-    public static IServiceCollection AddPostgresRatingStore(this IServiceCollection services, Action<PostgresRatingOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresRatingOptions();
-        configure(options);
-        return services.AddPostgresRatingStore(options);
-    }
+        /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore (IRatingStore) to the service collection.</summary>
+        public IServiceCollection AddPostgresRatingStore(Action<PostgresRatingOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresRatingOptions();
+            configure(options);
+            return services.AddPostgresRatingStore(options);
+        }
 
-    /// <summary>Adds PostgreSQL rating store using configuration binding.</summary>
-    public static IServiceCollection AddPostgresRatingStoreFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresRatingOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresRatingOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL rating store using configuration binding.</summary>
+        public IServiceCollection AddPostgresRatingStoreFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresRatingOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresRatingOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPostgresRatingStore(options);
-    }
+            return services.AddPostgresRatingStore(options);
+        }
 
-    /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore to the service collection.</summary>
-    public static IServiceCollection AddPostgresRatingStore(this IServiceCollection services, PostgresRatingOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddRatingDbContextFactory(options);
-        services.AddSingleton<IRatingStore, PostgresRatingStore>();
-        return services;
+        /// <summary>Adds PostgreSQL rating DbContextFactory and PostgresRatingStore to the service collection.</summary>
+        public IServiceCollection AddPostgresRatingStore(PostgresRatingOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddRatingDbContextFactory(options);
+            services.AddSingleton<IRatingStore, PostgresRatingStore>();
+            return services;
+        }
     }
 }

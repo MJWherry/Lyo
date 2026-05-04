@@ -29,7 +29,7 @@ public static class AutomationPlanRunner
     {
         ArgumentHelpers.ThrowIfNull(session);
         ArgumentHelpers.ThrowIfNull(plan);
-        ArgumentHelpers.ThrowIf(plan.Steps == null, "AutomationPlan.Steps cannot be null.", nameof(plan));
+        ArgumentHelpers.ThrowIfNull(plan.Steps, "AutomationPlan.Steps cannot be null.");
         var runId = AutomationGuid.CreateTimeOrdered();
         var state = new PlanExecutionState();
         var options = runtime ?? new AutomationPlanRuntimeOptions();
@@ -456,7 +456,7 @@ public static class AutomationPlanRunner
 
         var foundList = state.ElementLists.TryGetValue(step.ElementsListRefName, out var list);
         OperationHelpers.ThrowIf(!foundList, $"Unknown element list ref '{step.ElementsListRefName}'.");
-        var result = new List<string>(list.Count);
+        var result = new List<string>(list!.Count);
         foreach (var element in list) {
             if (step.Kind == ElementDataExtractKind.Text)
                 result.Add(await element.GetTextAsync(ct).ConfigureAwait(false));
@@ -487,7 +487,7 @@ public static class AutomationPlanRunner
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
-            var text = string.Join(Environment.NewLine, lines);
+            var text = string.Join(Environment.NewLine, lines!);
             await Task.Run(
                     () => {
                         using (BeginStepCorrelationScope(logger, stepLogScope)) {

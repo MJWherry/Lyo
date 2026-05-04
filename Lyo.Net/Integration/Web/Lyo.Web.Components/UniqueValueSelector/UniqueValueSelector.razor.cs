@@ -45,7 +45,7 @@ public partial class UniqueValueSelector<T>
 
     protected override void OnParametersSet()
     {
-        var incoming = new HashSet<string>(SelectedValues ?? []);
+        var incoming = new HashSet<string>(SelectedValues);
         if (!_selectedValues.SetEquals(incoming))
             _selectedValues = incoming;
 
@@ -80,8 +80,9 @@ public partial class UniqueValueSelector<T>
 
     private async Task SelectAll()
     {
-        _selectedValues = _filteredItems.Where(item => item.Value != null)
-            .Select(item => item.Value!.ToString() ?? string.Empty)
+        _selectedValues = _filteredItems
+            .Where(item => item.Value != null)
+            .Select(item => item.Value!.ToString())
             .Where(value => !string.IsNullOrEmpty(value))
             .ToHashSet();
 

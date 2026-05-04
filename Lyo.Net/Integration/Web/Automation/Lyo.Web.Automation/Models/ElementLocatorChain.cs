@@ -40,7 +40,7 @@ public sealed class ElementLocatorChain
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(next.Value, nameof(next));
         var merged = new ElementLocator[Segments.Count + 1];
         for (var i = 0; i < Segments.Count; i++)
-            merged[i] = Segments[i]!;
+            merged[i] = Segments[i];
 
         merged[Segments.Count] = next;
         return new(merged);
@@ -63,7 +63,7 @@ public sealed class ElementLocatorChain
     {
         var copy = new ElementLocator[segments.Count];
         for (var i = 0; i < segments.Count; i++)
-            copy[i] = segments[i]!;
+            copy[i] = segments[i];
 
         return copy;
     }

@@ -59,7 +59,7 @@ public sealed class RedisLockService : ILockService
                             if (remaining <= TimeSpan.Zero)
                                 break;
 
-                            var waitTask = ((TaskCompletionSource<bool>)tcsRef[0]!).Task;
+                            var waitTask = ((TaskCompletionSource<bool>)tcsRef[0]).Task;
                             var delayTask = Task.Delay(remaining, ct);
                             var completed = await Task.WhenAny(waitTask, delayTask).ConfigureAwait(false);
                             if (completed == delayTask)

@@ -1,5 +1,4 @@
 using Lyo.Config.Api.Models;
-using Lyo.Config;
 using Lyo.Exceptions;
 
 namespace Lyo.Config.Api.Client;

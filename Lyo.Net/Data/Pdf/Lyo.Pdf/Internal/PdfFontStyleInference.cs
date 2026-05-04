@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Pdf.Models;
 
 namespace Lyo.Pdf.Internal;
@@ -31,7 +32,7 @@ internal static class PdfFontStyleInference
 
     public static bool InferBold(string? fontName, bool pdfPigBold)
     {
-        if (string.IsNullOrEmpty(fontName))
+        if (fontName.IsNullOrEmpty())
             return pdfPigBold;
 
         var n = fontName;
@@ -46,7 +47,7 @@ internal static class PdfFontStyleInference
 
     public static bool InferItalic(string? fontName, bool pdfPigItalic)
     {
-        if (string.IsNullOrEmpty(fontName))
+        if (fontName.IsNullOrEmpty())
             return pdfPigItalic;
 
         var n = fontName;

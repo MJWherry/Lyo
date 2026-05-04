@@ -9,7 +9,7 @@ namespace Lyo.Hashing;
 /// <seealso cref="Shared" />
 public sealed class HashingService(HashingOptions? options = null) : IHashingService
 {
-    /// <summary>Singleton with <see cref="HashingOptions.Default" /> (<see cref="Random.Shared" /> style).</summary>
+    /// <summary>Singleton with <see cref="HashingOptions.Default" /></summary>
     public static HashingService Shared { get; } = new(HashingOptions.Default);
 
     private readonly HashingOptions _options = options ?? HashingOptions.Default;

@@ -34,7 +34,7 @@ public class ValidationException : Exception
     public ValidationException(Dictionary<string, IReadOnlyList<string>> errors)
         : base("Validation failed. See Errors property for details.")
         => Errors = errors != null
-            ? new(errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToList().AsReadOnly() ?? (IReadOnlyList<string>)Array.Empty<string>().ToList().AsReadOnly()))
+            ? new(errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToList().AsReadOnly() ?? (IReadOnlyList<string>)Array.Empty<string>().ToList().AsReadOnly()))
             : new Dictionary<string, IReadOnlyList<string>>();
 
     /// <summary>Initializes a new instance of the <see cref="ValidationException" /> class with validation errors.</summary>

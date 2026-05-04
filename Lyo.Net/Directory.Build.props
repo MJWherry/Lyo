@@ -3,10 +3,12 @@
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <NuGetAuditMode>direct</NuGetAuditMode>
         <Deterministic>true</Deterministic>
         <Authors>Matthew Wherry</Authors>
         <Owners>Matthew Wherry</Owners>
         <Copyright>Copyright © Lyo</Copyright>
+        <NoWarn>$(NoWarn);CS8618</NoWarn>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/mjwherry/Lyo</RepositoryUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

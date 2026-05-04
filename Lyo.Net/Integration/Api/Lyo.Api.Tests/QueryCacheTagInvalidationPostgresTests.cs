@@ -70,7 +70,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
             Assert.True(result.IsSuccess);
             var def = result.Items![0];
-            return def.JobRuns!.Single(r => r.Id == runId).CreatedBy;
+            return def.JobRuns.Single(r => r.Id == runId).CreatedBy;
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromQuery());
@@ -126,7 +126,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         {
             var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestContext.Current.CancellationToken);
             Assert.NotNull(entity);
-            return entity!.Name;
+            return entity.Name;
         }
 
         Assert.Contains($"GTagInv_{suffix}", await NameFromGet(), StringComparison.Ordinal);
@@ -150,7 +150,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
         {
             var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestContext.Current.CancellationToken);
             Assert.NotNull(entity);
-            return entity!.JobRuns!.Single(r => r.Id == runId).CreatedBy;
+            return entity.JobRuns.Single(r => r.Id == runId).CreatedBy;
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromGet());

@@ -5,6 +5,7 @@ using Lyo.Sms.Twilio;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
 using Twilio.Clients;
+// ReSharper disable ObjectCreationAsStatement
 
 namespace Lyo.Sms.Tests;
 

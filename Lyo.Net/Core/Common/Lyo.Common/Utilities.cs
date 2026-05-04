@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -40,7 +39,7 @@ public static class Utilities
             return null;
 
         var sanitizedQueryString = uri.Trim();
-        if (string.IsNullOrEmpty(sanitizedQueryString))
+        if (sanitizedQueryString.IsNullOrEmpty())
             return null;
 
         var matches = SensitiveUriRegex.Matches(sanitizedQueryString);
@@ -56,8 +55,7 @@ public static class Utilities
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsScalarType(Type type) => type.IsPrimitive || type.IsEnum || ScalarTypes.Contains(type);
 
-    [return: NotNull]
-    public static byte[] Hash([NotNull] string path)
+    public static byte[] Hash(string path)
     {
         ArgumentHelpers.ThrowIfFileNotFound(path);
         using var stream = File.OpenRead(path);
@@ -65,8 +63,7 @@ public static class Utilities
         return sha256.ComputeHash(stream);
     }
 
-    [return: NotNull]
-    public static byte[] Hash([NotNull] byte[] input)
+    public static byte[] Hash(byte[] input)
     {
         ArgumentHelpers.ThrowIfNull(input);
 #if NETSTANDARD2_0
@@ -78,8 +75,7 @@ public static class Utilities
     }
 
     /// <summary>Computes SHA256 hash of a stream asynchronously.</summary>
-    [return: NotNull]
-    public static async Task<byte[]> HashAsync([NotNull] Stream stream, CancellationToken ct = default)
+    public static async Task<byte[]> HashAsync(Stream stream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(stream);
         OperationHelpers.ThrowIfNotReadable(stream, $"Stream '{nameof(stream)}' must be readable.");
@@ -95,8 +91,7 @@ public static class Utilities
     }
 
     /// <summary>Computes SHA256 hash of a file asynchronously.</summary>
-    [return: NotNull]
-    public static async Task<byte[]> HashAsync([NotNull] string path, CancellationToken ct = default)
+    public static async Task<byte[]> HashAsync(string path, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(path);
 #if NET6_0_OR_GREATER
@@ -108,8 +103,7 @@ public static class Utilities
     }
 
     /// <summary>Extracts the property name from a LINQ expression<br />Usage: GetPropertyName(x => x.FirstName) returns "FirstName"</summary>
-    [return: NotNull]
-    public static string GetPropertyName<T, TProperty>([NotNull] Expression<Func<T, TProperty>> expression)
+    public static string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> expression)
     {
         if (expression.Body is MemberExpression memberExpression)
             return memberExpression.Member.Name;
@@ -125,8 +119,7 @@ public static class Utilities
     }
 
     /// <summary>Gets the full property path for nested properties<br />Usage: GetPropertyPath(x => x.Address.Street) returns "Address.Street" </summary>
-    [return: NotNull]
-    public static string GetPropertyPath<T, TProperty>([NotNull] Expression<Func<T, TProperty>> expression)
+    public static string GetPropertyPath<T, TProperty>(Expression<Func<T, TProperty>> expression)
     {
         var path = string.Empty;
         var currentExpression = expression.Body;
@@ -135,7 +128,7 @@ public static class Utilities
             currentExpression = memberExpression.Expression;
         }
 
-        ArgumentHelpers.ThrowIf(string.IsNullOrEmpty(path), "Invalid expression. Must be a property access expression.");
+        ArgumentHelpers.ThrowIf(path.IsNullOrEmpty(), "Invalid expression. Must be a property access expression.");
         return path;
     }
 }

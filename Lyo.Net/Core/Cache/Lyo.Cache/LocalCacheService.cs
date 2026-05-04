@@ -711,9 +711,8 @@ public sealed class LocalCacheService : ICacheService
         CancellationToken token = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
-        OperationHelpers.ThrowIf(
-            _payloadCodec == null || _payloadSerializer == null,
-            "Typed payload cache requires ICachePayloadCodec and ICachePayloadSerializer (use AddLocalCache which registers both).");
+        OperationHelpers.ThrowIfNull(_payloadCodec, "Typed payload cache requires ICachePayloadCodec.");
+        OperationHelpers.ThrowIfNull(_payloadSerializer, "Typed payload cache requires ICachePayloadSerializer.");
 
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)

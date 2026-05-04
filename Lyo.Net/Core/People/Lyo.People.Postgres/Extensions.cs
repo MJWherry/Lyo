@@ -11,78 +11,76 @@ namespace Lyo.People.Postgres;
 /// <summary>Extension methods for PostgreSQL People database context registration.</summary>
 public static class Extensions
 {
-    /// <summary>Adds PeopleDbContext to the service collection.</summary>
     /// <param name="services">The service collection</param>
-    /// <param name="connectionString">The PostgreSQL connection string</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddPeopleDbContext(this IServiceCollection services, string connectionString)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        return services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString })
-            .AddScoped<PeopleDbContext>(sp => sp.GetRequiredService<IDbContextFactory<PeopleDbContext>>().CreateDbContext());
-    }
+        /// <summary>Adds PeopleDbContext to the service collection.</summary>
+        /// <param name="connectionString">The PostgreSQL connection string</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddPeopleDbContext(string connectionString)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
+            return services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString })
+                .AddScoped<PeopleDbContext>(sp => sp.GetRequiredService<IDbContextFactory<PeopleDbContext>>().CreateDbContext());
+        }
 
-    /// <summary>Adds PeopleDbContext to the service collection.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configure">Action to configure the DbContext options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddPeopleDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddDbContext<PeopleDbContext>(configure);
-        return services;
-    }
+        /// <summary>Adds PeopleDbContext to the service collection.</summary>
+        /// <param name="configure">Action to configure the DbContext options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddPeopleDbContext(Action<DbContextOptionsBuilder> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddDbContext<PeopleDbContext>(configure);
+            return services;
+        }
 
-    /// <summary>Adds PostgreSQL People DbContextFactory to the service collection.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configure">Action to configure the PostgreSQL People options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddPeopleDbContextFactory(this IServiceCollection services, Action<PostgresPeopleOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresPeopleOptions();
-        configure(options);
-        return services.AddPeopleDbContextFactory(options);
-    }
+        /// <summary>Adds PostgreSQL People DbContextFactory to the service collection.</summary>
+        /// <param name="configure">Action to configure the PostgreSQL People options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddPeopleDbContextFactory(Action<PostgresPeopleOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresPeopleOptions();
+            configure(options);
+            return services.AddPeopleDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL People DbContextFactory to the service collection using configuration binding.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
-    /// <param name="configSectionName">The configuration section name (defaults to PostgresPeopleOptions.SectionName)</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddPeopleDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresPeopleOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresPeopleOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL People DbContextFactory to the service collection using configuration binding.</summary>
+        /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
+        /// <param name="configSectionName">The configuration section name (defaults to PostgresPeopleOptions.SectionName)</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddPeopleDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresPeopleOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresPeopleOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPeopleDbContextFactory(options);
-    }
+            return services.AddPeopleDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL People DbContextFactory to the service collection.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="options">The PostgreSQL People options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddPeopleDbContextFactory(this IServiceCollection services, PostgresPeopleOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresPeopleOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>();
-        services.AddDbContextFactory<PeopleDbContext>(dbOptions => dbOptions.UseNpgsql(
-            options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPeopleOptions.Schema)));
+        /// <summary>Adds PostgreSQL People DbContextFactory to the service collection.</summary>
+        /// <param name="options">The PostgreSQL People options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddPeopleDbContextFactory(PostgresPeopleOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton(Options.Create(options));
+            services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>();
+            services.AddDbContextFactory<PeopleDbContext>(dbOptions => dbOptions.UseNpgsql(
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPeopleOptions.Schema)));
 
-        return services;
+            return services;
+        }
     }
 }

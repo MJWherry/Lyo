@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -80,6 +81,9 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
     /// <summary>Gets a value indicating whether the worker is currently running.</summary>
     public bool IsRunning { get; private set; }
+    
+    /// <summary>Milliseconds to wait during <see cref="StopAsync" /> for in-flight messages to complete before giving up. Defaults to 30 000 ms (30 seconds).</summary>
+    protected virtual int DrainTimeoutMs => 30_000;
 
     /// <summary>Initializes a new instance of the queue worker.</summary>
     /// <param name="mqService">The message queue service.</param>
@@ -92,9 +96,6 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// Dead-letter queue name. When <paramref name="maxRequeueCount" /> is reached, the message is published here instead of being dropped. When null, messages that
     /// exceed the requeue limit are dropped (logged at Error level).
     /// </param>
-    /// <summary>Milliseconds to wait during <see cref="StopAsync" /> for in-flight messages to complete before giving up. Defaults to 30 000 ms (30 seconds).</summary>
-    protected virtual int DrainTimeoutMs => 30_000;
-
     protected QueueWorkerBase(
         IMqService mqService,
         string queueName,
@@ -292,7 +293,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
             envelope.RequeueCount, _dlqName ?? "(dropped)");
 
         Metrics.IncrementCounter("queue.worker.messages.dropped.max_requeue", tags: [("queue", QueueName)]);
-        if (!string.IsNullOrWhiteSpace(_dlqName)) {
+        if (!_dlqName.IsNullOrWhitespace()) {
             try {
                 await MqService.SendToQueue(_dlqName, originalBytes).ConfigureAwait(false);
                 Metrics.IncrementCounter("queue.worker.messages.dlq", tags: [("queue", QueueName), ("dlq", _dlqName)]);

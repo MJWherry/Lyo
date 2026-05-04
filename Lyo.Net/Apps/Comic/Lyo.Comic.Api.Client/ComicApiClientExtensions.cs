@@ -29,7 +29,7 @@ public static class ComicApiClientExtensions
                 if (!string.IsNullOrWhiteSpace(baseUrl))
                     client.BaseAddress = new Uri($"{baseUrl.TrimEnd('/')}/", UriKind.Absolute);
 
-                foreach (var enc in (options.AcceptEncodings ?? []).Select(e => e.Trim().ToLowerInvariant()).Distinct()) {
+                foreach (var enc in (options.AcceptEncodings).Select(e => e.Trim().ToLowerInvariant()).Distinct()) {
 #if NETSTANDARD2_0
                     if (enc is not ("gzip" or "deflate"))
                         continue;
@@ -47,7 +47,7 @@ public static class ComicApiClientExtensions
                     return handler;
 
                 var methods = DecompressionMethods.None;
-                foreach (var enc in options.AcceptEncodings ?? []) {
+                foreach (var enc in options.AcceptEncodings) {
                     if (enc.Equals("gzip", StringComparison.OrdinalIgnoreCase))
                         methods |= DecompressionMethods.GZip;
 

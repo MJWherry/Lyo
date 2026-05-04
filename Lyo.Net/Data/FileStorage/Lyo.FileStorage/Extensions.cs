@@ -14,44 +14,47 @@ namespace Lyo.FileStorage;
 
 public static class Extensions
 {
-    /// <summary>Registers a singleton <see cref="IFileOperationContextAccessor" /> using async-local storage.</summary>
-    public static IServiceCollection AddFileOperationContextAccessor(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<IFileOperationContextAccessor, FileOperationContextAccessor>();
-        return services;
-    }
+        /// <summary>Registers a singleton <see cref="IFileOperationContextAccessor" /> using async-local storage.</summary>
+        public IServiceCollection AddFileOperationContextAccessor()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<IFileOperationContextAccessor, FileOperationContextAccessor>();
+            return services;
+        }
 
-    /// <summary>Registers an in-memory multipart session store (single-node / tests).</summary>
-    public static IServiceCollection AddInMemoryMultipartUploadSessionStore(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<InMemoryMultipartUploadSessionStore>();
-        services.AddSingleton<IMultipartUploadSessionStore>(sp => sp.GetRequiredService<InMemoryMultipartUploadSessionStore>());
-        return services;
-    }
+        /// <summary>Registers an in-memory multipart session store (single-node / tests).</summary>
+        public IServiceCollection AddInMemoryMultipartUploadSessionStore()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<InMemoryMultipartUploadSessionStore>();
+            services.AddSingleton<IMultipartUploadSessionStore>(sp => sp.GetRequiredService<InMemoryMultipartUploadSessionStore>());
+            return services;
+        }
 
-    /// <summary>
-    /// Registers <see cref="InMemoryMultipartUploadSessionStore" /> only when no <see cref="IMultipartUploadSessionStore" /> is already registered (for example PostgreSQL file
-    /// metadata registration may add <c>PostgresMultipartUploadSessionStore</c> first).
-    /// </summary>
-    public static IServiceCollection TryAddInMemoryMultipartUploadSessionStoreIfMissing(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        if (!services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))
-            services.AddInMemoryMultipartUploadSessionStore();
+        /// <summary>
+        /// Registers <see cref="InMemoryMultipartUploadSessionStore" /> only when no <see cref="IMultipartUploadSessionStore" /> is already registered (for example PostgreSQL file
+        /// metadata registration may add <c>PostgresMultipartUploadSessionStore</c> first).
+        /// </summary>
+        public IServiceCollection TryAddInMemoryMultipartUploadSessionStoreIfMissing()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            if (!services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))
+                services.AddInMemoryMultipartUploadSessionStore();
 
-        return services;
-    }
+            return services;
+        }
 
-    /// <summary>Registers <see cref="LocalMultipartUploadService" /> for server-side multipart uploads to local disk staging.</summary>
-    public static IServiceCollection AddLocalMultipartUploadService(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
-        services.AddScoped<LocalMultipartUploadService>();
-        services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<LocalMultipartUploadService>());
-        return services;
+        /// <summary>Registers <see cref="LocalMultipartUploadService" /> for server-side multipart uploads to local disk staging.</summary>
+        public IServiceCollection AddLocalMultipartUploadService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
+            services.AddScoped<LocalMultipartUploadService>();
+            services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<LocalMultipartUploadService>());
+            return services;
+        }
     }
 
     /// <param name="services">The service collection</param>

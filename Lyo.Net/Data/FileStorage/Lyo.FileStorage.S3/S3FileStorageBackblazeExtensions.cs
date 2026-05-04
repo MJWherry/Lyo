@@ -31,45 +31,47 @@ public static class S3FileStorageBackblazeExtensions
         return $"https://s3.{b2Region.Trim()}.backblazeb2.com";
     }
 
-    /// <summary>
-    /// Registers <see cref="S3FileStorageOptions" /> from configuration, applies <see cref="ApplyBackblazeB2Defaults" />, then returns the same builder as
-    /// <see cref="Extensions.AddS3FileStorageServiceKeyed" />.
-    /// </summary>
-    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForBackblaze(
-        this IServiceCollection services,
-        string keyName,
-        IConfiguration configuration,
-        string configSectionName = BackblazeFileStorageConfigurationSectionName)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        RegisterBackblazeS3OptionsFromConfiguration(services, configuration, configSectionName);
-        return services.AddS3FileStorageServiceKeyed(keyName);
-    }
-
-    /// <summary>Configures <see cref="S3FileStorageOptions" /> in code and applies <see cref="ApplyBackblazeB2Defaults" />.</summary>
-    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForBackblaze(this IServiceCollection services, string keyName, Action<S3FileStorageOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
-        ArgumentHelpers.ThrowIfNull(configure);
-        if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
-            services.AddSingleton<S3FileStorageOptions>(_ => {
-                var options = new S3FileStorageOptions();
-                configure(options);
-                options.ApplyBackblazeB2Defaults();
-                return options;
-            });
+        /// <summary>
+        /// Registers <see cref="S3FileStorageOptions" /> from configuration, applies <see cref="ApplyBackblazeB2Defaults" />, then returns the same builder as
+        /// <see cref="Extensions.AddS3FileStorageServiceKeyed" />.
+        /// </summary>
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForBackblaze(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = BackblazeFileStorageConfigurationSectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            RegisterBackblazeS3OptionsFromConfiguration(services, configuration, configSectionName);
+            return services.AddS3FileStorageServiceKeyed(keyName);
         }
 
-        return services.AddS3FileStorageServiceKeyed(keyName);
-    }
+        /// <summary>Configures <see cref="S3FileStorageOptions" /> in code and applies <see cref="ApplyBackblazeB2Defaults" />.</summary>
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForBackblaze(string keyName, Action<S3FileStorageOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            ArgumentHelpers.ThrowIfNull(configure);
+            if (!services.Any(s => s.ServiceType == typeof(S3FileStorageOptions))) {
+                services.AddSingleton<S3FileStorageOptions>(_ => {
+                    var options = new S3FileStorageOptions();
+                    configure(options);
+                    options.ApplyBackblazeB2Defaults();
+                    return options;
+                });
+            }
 
-    /// <summary>Same keyed multipart registration as <see cref="Extensions.AddKeyedS3MultipartUploadService" />; kept for discoverability when using B2.</summary>
-    public static IServiceCollection AddKeyedS3MultipartUploadServiceForBackblaze(this IServiceCollection services, string serviceKey)
-        => services.AddKeyedS3MultipartUploadService(serviceKey);
+            return services.AddS3FileStorageServiceKeyed(keyName);
+        }
+
+        /// <summary>Same keyed multipart registration as <see cref="Extensions.AddKeyedS3MultipartUploadService" />; kept for discoverability when using B2.</summary>
+        public IServiceCollection AddKeyedS3MultipartUploadServiceForBackblaze(string serviceKey)
+            => services.AddKeyedS3MultipartUploadService(serviceKey);
+    }
 
     private static void RegisterBackblazeS3OptionsFromConfiguration(IServiceCollection services, IConfiguration configuration, string configSectionName)
     {

@@ -5,7 +5,6 @@ public sealed class ConfigApiPollingOptions
 {
     public const string SectionName = "ConfigApiPolling";
 
-    /// <summary>When false the hosted poll loop stays idle after <see cref="IHostedService.StartAsync" /> and the ledger is never populated by this component.</summary>
     public bool Enabled { get; set; } = true;
 
     /// <summary>Passed to Config API routing (<c>/api/config/{kind}/{id}</c>).</summary>

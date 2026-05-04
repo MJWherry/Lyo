@@ -85,13 +85,13 @@ public class CacheServiceTests : IDisposable
         var key = "test-key-2";
         var callCount = 0;
         var result1 = await service.GetOrSetAsync<string>(
-            key, ct => {
+            key, _ => {
                 callCount++;
                 return Task.FromResult("value-1")!;
             }, token: TestContext.Current.CancellationToken);
 
         var result2 = await service.GetOrSetAsync<string>(
-            key, ct => {
+            key, _ => {
                 callCount++;
                 return Task.FromResult("value-2")!;
             }, token: TestContext.Current.CancellationToken);
@@ -249,7 +249,7 @@ public class CacheServiceTests : IDisposable
 
         // First call should work
         var result1 = await service.GetOrSetAsync<string>(
-            key, ct => {
+            key, _ => {
                 callCount++;
                 return Task.FromResult("value-1")!;
             }, token: TestContext.Current.CancellationToken);
@@ -260,7 +260,7 @@ public class CacheServiceTests : IDisposable
         // Simulate cache failure by using a different key and forcing an error
         // The fallback should call factory again
         var result2 = await service.GetOrSetAsync<string>(
-            key + "-new", ct => {
+            key + "-new", _ => {
                 callCount++;
                 if (callCount == 1)
                     throw new("Cache error");
@@ -287,7 +287,7 @@ public class CacheServiceTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-key-tags";
         var tags = new[] { "tag1", "tag2" };
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken);
 
         // Verify item exists
         var result = service.GetOrSet<string>(key, _ => "default");

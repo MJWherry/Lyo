@@ -146,8 +146,8 @@ public static class ArgumentHelpers
 
     /// <summary>Throws an ArgumentOutsideRangeException if the value is null or not within the specified range.</summary>
     /// <param name="value">The value to check.</param>
-    /// <param name="min">The minimum allowed value (inclusive).</param>
-    /// <param name="max">The maximum allowed value (inclusive).</param>
+    /// <param name="min">Inclusive minimum; use <c>default</c> to skip the minimum check.</param>
+    /// <param name="max">Inclusive maximum; use <c>default</c> to skip the maximum check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>
     /// <param name="message">Optional custom error message.</param>
     /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
@@ -157,7 +157,7 @@ public static class ArgumentHelpers
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNullOrNotInRange<T>(
-        T? value,
+        [NotNull] T? value,
         T? min = default,
         T? max = default,
         [CallerArgumentExpression("value")] string? paramName = null,
@@ -256,24 +256,6 @@ public static class ArgumentHelpers
     {
         ThrowIfNull(value, paramName);
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
-    }
-
-    /// <summary>Throws NotInRangeException if the value is null or not within the specified range.</summary>
-    /// <param name="value">The value to check. If null, throws ArgumentNullException.</param>
-    /// <param name="min">The minimum allowed value (inclusive). Default is 0.</param>
-    /// <param name="max">The maximum allowed value (inclusive).</param>
-    /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>
-    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
-    /// <exception cref="ArgumentOutsideRangeException">Thrown when value is not in the range [min, max].</exception>
-#if NET6_0_OR_GREATER
-    [StackTraceHidden]
-#endif
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNullOrNotInRange<T>([NotNull] T? value, T min, T max, [CallerArgumentExpression("value")] string? paramName = null)
-        where T : IConvertible, IComparable<T>
-    {
-        ThrowIfNull(value, paramName);
-        ThrowIfNotInRange(value, min, max, paramName);
     }
 
     /// <summary>Throws NotInRangeException if the array length is null or not within the specified range.</summary>

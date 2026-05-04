@@ -1,10 +1,11 @@
 ﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
+#else
+using System.Text.RegularExpressions;
 #endif
 
 namespace Lyo.Encryption.Rsa;
@@ -92,8 +93,7 @@ public static class RsaKeyLoader
             InverseQ = crt.QInv.ToByteArrayUnsigned()
         };
     }
-#endif
-
+#else
     private static byte[] ReadPem(string pem, string section)
     {
         var match = Regex.Match(pem, $"-----BEGIN {section}-----(.*?)-----END {section}-----", RegexOptions.Singleline);
@@ -101,4 +101,5 @@ public static class RsaKeyLoader
             ? throw new FormatException($"PEM section '{section}' not found.")
             : Convert.FromBase64String(match.Groups[1].Value.Replace("\n", "").Replace("\r", "").Trim());
     }
+#endif
 }

@@ -34,7 +34,7 @@ public class RsaKeyLoaderTests : IDisposable, IAsyncDisposable
     [Fact]
     public void LoadFromPemFiles_PublicOnly_ReturnsRsaButDecryptFails()
     {
-        var (pub, priv) = GeneratePemFiles();
+        var (pub, _) = GeneratePemFiles();
         using var rsaPub = RsaKeyLoader.LoadFromPemFiles(pub);
         Assert.NotNull(rsaPub);
         var data = new byte[] { 5, 6, 7 };

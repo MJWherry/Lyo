@@ -11,75 +11,76 @@ namespace Lyo.HomeInventory.Postgres;
 /// <summary>DI registration for PostgreSQL home-inventory storage.</summary>
 public static class Extensions
 {
-    public static IServiceCollection AddHomeInventoryDbContextFactory(this IServiceCollection services, Action<PostgresHomeInventoryOptions> configure)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresHomeInventoryOptions();
-        configure(options);
-        return services.AddHomeInventoryDbContextFactory(options);
-    }
+        public IServiceCollection AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresHomeInventoryOptions();
+            configure(options);
+            return services.AddHomeInventoryDbContextFactory(options);
+        }
 
-    public static IServiceCollection AddHomeInventoryDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresHomeInventoryOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresHomeInventoryOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        public IServiceCollection AddHomeInventoryDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresHomeInventoryOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresHomeInventoryOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddHomeInventoryDbContextFactory(options);
-    }
+            return services.AddHomeInventoryDbContextFactory(options);
+        }
 
-    public static IServiceCollection AddHomeInventoryDbContextFactory(this IServiceCollection services, PostgresHomeInventoryOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresHomeInventoryOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<HomeInventoryDbContext, PostgresHomeInventoryOptions>();
-        services.AddDbContextFactory<HomeInventoryDbContext>(dbOpts => dbOpts.UseNpgsql(
-            options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresHomeInventoryOptions.Schema)));
+        public IServiceCollection AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton<IOptions<PostgresHomeInventoryOptions>>(Options.Create(options));
+            services.AddPostgresMigrations<HomeInventoryDbContext, PostgresHomeInventoryOptions>();
+            services.AddDbContextFactory<HomeInventoryDbContext>(dbOpts => dbOpts.UseNpgsql(
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresHomeInventoryOptions.Schema)));
 
-        return services;
-    }
+            return services;
+        }
 
-    public static IServiceCollection AddPostgresHomeInventoryStore(this IServiceCollection services, Action<PostgresHomeInventoryOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresHomeInventoryOptions();
-        configure(options);
-        return services.AddPostgresHomeInventoryStore(options);
-    }
+        public IServiceCollection AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresHomeInventoryOptions();
+            configure(options);
+            return services.AddPostgresHomeInventoryStore(options);
+        }
 
-    public static IServiceCollection AddPostgresHomeInventoryStoreFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresHomeInventoryOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresHomeInventoryOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        public IServiceCollection AddPostgresHomeInventoryStoreFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresHomeInventoryOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresHomeInventoryOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPostgresHomeInventoryStore(options);
-    }
+            return services.AddPostgresHomeInventoryStore(options);
+        }
 
-    public static IServiceCollection AddPostgresHomeInventoryStore(this IServiceCollection services, PostgresHomeInventoryOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddHomeInventoryDbContextFactory(options);
-        services.AddSingleton<IHomeInventoryStore, PostgresHomeInventoryStore>();
-        return services;
+        public IServiceCollection AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddHomeInventoryDbContextFactory(options);
+            services.AddSingleton<IHomeInventoryStore, PostgresHomeInventoryStore>();
+            return services;
+        }
     }
 }

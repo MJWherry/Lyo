@@ -1,4 +1,3 @@
-using Lyo.Config;
 using Lyo.Config.Api.Endpoints;
 using Lyo.Config.Api.Security;
 using Lyo.Config.Postgres;

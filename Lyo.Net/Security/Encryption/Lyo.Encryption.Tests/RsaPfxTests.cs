@@ -29,7 +29,7 @@ public class RsaPfxTests : IDisposable, IAsyncDisposable
     [Fact]
     public void LoadFromPemFiles_PublicOnly_AllowsPublicEncryptionButNotDecryption()
     {
-        var (pub, priv) = GeneratePemFiles();
+        var (pub, _) = GeneratePemFiles();
         // Load only public key
         var rsaPub = RsaKeyLoader.LoadFromPemFiles(pub);
         Assert.NotNull(rsaPub);
@@ -49,9 +49,9 @@ public class RsaPfxTests : IDisposable, IAsyncDisposable
         (string pubPath, string privPath) GeneratePemFiles()
         {
             using var rsa = RSA.Create(2048);
-            var pub = rsa.ExportSubjectPublicKeyInfo();
+            var pubs = rsa.ExportSubjectPublicKeyInfo();
             var priv = rsa.ExportPkcs8PrivateKey();
-            var pubPem = "-----BEGIN PUBLIC KEY-----\n" + Convert.ToBase64String(pub) + "\n-----END PUBLIC KEY-----";
+            var pubPem = "-----BEGIN PUBLIC KEY-----\n" + Convert.ToBase64String(pubs) + "\n-----END PUBLIC KEY-----";
             var privPem = "-----BEGIN PRIVATE KEY-----\n" + Convert.ToBase64String(priv) + "\n-----END PRIVATE KEY-----";
             var pubPath = _tempSession.CreateFile(pubPem);
             var privPath = _tempSession.CreateFile(privPem);

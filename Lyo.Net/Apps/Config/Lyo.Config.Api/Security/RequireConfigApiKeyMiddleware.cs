@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Lyo.Config.Api.Security;
@@ -20,7 +19,7 @@ public sealed class ConfigApiSecurityOptions
 public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions<ConfigApiSecurityOptions> optionsAccessor)
 {
     private readonly RequestDelegate _next = next;
-    private readonly ConfigApiSecurityOptions _options = optionsAccessor.Value ?? new();
+    private readonly ConfigApiSecurityOptions _options = optionsAccessor.Value;
 
     public Task Invoke(HttpContext ctx) => !_options.RequireApiKey ? _next(ctx) : InvokeProtectedAsync(ctx);
 
@@ -91,6 +90,5 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         return credential.Length != 0;
     }
 
-    private static string? TrimHeaderSecret(StringValues supplied)
-        => supplied.ToString()?.Trim();
+    private static string? TrimHeaderSecret(StringValues supplied) => supplied.ToString().Trim();
 }

@@ -206,8 +206,8 @@ public static class Extensions
             }
 
             return targetType.IsNumericType()
-                ? Convert.ChangeType(obj, targetType, CultureInfo.InvariantCulture)
-                : throw new InvalidOperationException($"Cannot convert '{obj}' of type '{obj.GetType().Name}' to '{targetType.Name}'.");
+                ? Convert.ChangeType(obj!, targetType, CultureInfo.InvariantCulture)
+                : throw new InvalidOperationException($"Cannot convert '{obj}' of type '{obj?.GetType().Name}' to '{targetType.Name}'.");
         }
     }
 

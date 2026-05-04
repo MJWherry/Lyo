@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Security.Authentication;
+using Lyo.Common;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
@@ -87,13 +88,13 @@ public sealed class EmailService : IEmailService
         OnEmailSending(emailRequest);
         _logger.LogInformation("Sending email to {Recipients} with subject: {Subject}", recipients, message.Subject);
 
-        async ValueTask<string> SendEmailCore(CancellationToken ct)
+        async ValueTask<string> SendEmailCore(CancellationToken ct2)
         {
-            using var client = await CreateAndConnectSmtpClientAsync(ct).ConfigureAwait(false);
-            var result = await client.SendAsync(message, ct).ConfigureAwait(false);
+            using var client = await CreateAndConnectSmtpClientAsync(ct2).ConfigureAwait(false);
+            var result = await client.SendAsync(message, ct2).ConfigureAwait(false);
             try {
                 if (client.IsConnected) {
-                    await client.DisconnectAsync(true, ct).ConfigureAwait(false);
+                    await client.DisconnectAsync(true, ct2).ConfigureAwait(false);
                     _logger.LogDebug("Disconnected from SMTP server");
                 }
             }
@@ -172,13 +173,13 @@ public sealed class EmailService : IEmailService
         OnEmailSending(request);
         _logger.LogInformation("Sending email to {Recipients} with subject: {Subject}", recipients, message.Subject);
 
-        async ValueTask<string> SendEmailCore(CancellationToken ct)
+        async ValueTask<string> SendEmailCore(CancellationToken ct2)
         {
-            using var client = await CreateAndConnectSmtpClientAsync(ct).ConfigureAwait(false);
-            var result = await client.SendAsync(message, ct).ConfigureAwait(false);
+            using var client = await CreateAndConnectSmtpClientAsync(ct2).ConfigureAwait(false);
+            var result = await client.SendAsync(message, ct2).ConfigureAwait(false);
             try {
                 if (client.IsConnected) {
-                    await client.DisconnectAsync(true, ct).ConfigureAwait(false);
+                    await client.DisconnectAsync(true, ct2).ConfigureAwait(false);
                     _logger.LogDebug("Disconnected from SMTP server");
                 }
             }
@@ -425,10 +426,10 @@ public sealed class EmailService : IEmailService
         var sw = Stopwatch.StartNew();
         _logger.LogInformation("Testing SMTP connection to {Host}:{Port}", _emailServiceOptions.Host, _emailServiceOptions.Port);
 
-        async ValueTask<bool> TestConnectionCore(CancellationToken ct)
+        async ValueTask<bool> TestConnectionCore(CancellationToken ct2)
         {
-            using var client = await CreateAndConnectSmtpClientAsync(ct).ConfigureAwait(false);
-            await client.DisconnectAsync(true, ct).ConfigureAwait(false);
+            using var client = await CreateAndConnectSmtpClientAsync(ct2).ConfigureAwait(false);
+            await client.DisconnectAsync(true, ct2).ConfigureAwait(false);
             return true;
         }
 
@@ -522,7 +523,7 @@ public sealed class EmailService : IEmailService
         var bodyBuilder = new BodyBuilder();
 
         // Set From address
-        if (!string.IsNullOrWhiteSpace(request.FromAddress))
+        if (!request.FromAddress.IsNullOrWhitespace())
             message.From.Add(new MailboxAddress(request.FromName ?? request.FromAddress, request.FromAddress));
         else
             message.From.Add(new MailboxAddress(_emailServiceOptions.DefaultFromName, _emailServiceOptions.DefaultFromAddress));
@@ -546,7 +547,7 @@ public sealed class EmailService : IEmailService
         }
 
         // Set Subject
-        if (!string.IsNullOrWhiteSpace(request.Subject))
+        if (!request.Subject.IsNullOrWhitespace())
             message.Subject = request.Subject;
 
         // Add attachments

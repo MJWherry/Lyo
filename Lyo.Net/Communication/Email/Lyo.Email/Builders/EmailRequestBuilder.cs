@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
@@ -257,7 +258,7 @@ public sealed class EmailRequestBuilder
     public EmailRequestBuilder AddAttachment(EmailAttachment attachment)
     {
         ArgumentHelpers.ThrowIfNull(attachment);
-        var contentType = !string.IsNullOrWhiteSpace(attachment.ContentType) ? ContentType.Parse(attachment.ContentType) : null;
+        var contentType = !attachment.ContentType.IsNullOrWhitespace() ? ContentType.Parse(attachment.ContentType) : null;
         if (contentType != null)
             _bodyBuilder.Attachments.Add(attachment.FileName, attachment.Data, contentType);
         else

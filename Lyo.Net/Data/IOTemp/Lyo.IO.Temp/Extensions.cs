@@ -11,81 +11,82 @@ namespace Lyo.IO.Temp;
 /// <summary>Extension methods for registering IO temp service with dependency injection.</summary>
 public static class Extensions
 {
-    /// <summary>Adds IO temp service with default options.</summary>
-    public static IServiceCollection AddIOTempService(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<IOTempServiceOptions>(_ => new());
-        services.AddSingleton(CreateService);
-        services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
-        return services;
-    }
+        /// <summary>Adds IO temp service with default options.</summary>
+        public IServiceCollection AddIOTempService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<IOTempServiceOptions>(_ => new());
+            services.AddSingleton(CreateService);
+            services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
+            return services;
+        }
 
-    /// <summary>Adds IO temp service with options configuration callback.</summary>
-    public static IServiceCollection AddIOTempService(this IServiceCollection services, Action<IOTempServiceOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddSingleton<IOTempServiceOptions>(_ => {
-            var options = new IOTempServiceOptions();
-            configure(options);
-            return options;
-        });
+        /// <summary>Adds IO temp service with options configuration callback.</summary>
+        public IServiceCollection AddIOTempService(Action<IOTempServiceOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddSingleton<IOTempServiceOptions>(_ => {
+                var options = new IOTempServiceOptions();
+                configure(options);
+                return options;
+            });
 
-        services.AddSingleton(CreateService);
-        services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
-        return services;
-    }
+            services.AddSingleton(CreateService);
+            services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
+            return services;
+        }
 
-    /// <summary>Adds IO temp service with options bound from configuration.</summary>
-    public static IServiceCollection AddIOTempServiceFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = IOTempServiceOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        services.AddSingleton<IOTempServiceOptions>(_ => {
-            var options = new IOTempServiceOptions();
-            var section = configuration.GetSection(configSectionName);
-            if (section.Exists())
-                section.Bind(options);
+        /// <summary>Adds IO temp service with options bound from configuration.</summary>
+        public IServiceCollection AddIOTempServiceFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = IOTempServiceOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddSingleton<IOTempServiceOptions>(_ => {
+                var options = new IOTempServiceOptions();
+                var section = configuration.GetSection(configSectionName);
+                if (section.Exists())
+                    section.Bind(options);
 
-            return options;
-        });
+                return options;
+            });
 
-        services.AddSingleton(CreateService);
-        services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
-        return services;
-    }
+            services.AddSingleton(CreateService);
+            services.AddSingleton<IIOTempService>(provider => provider.GetRequiredService<IOTempService>());
+            return services;
+        }
 
-    /// <summary>
-    /// Adds <see cref="IIOTempService" /> and registers <see cref="IOTempCleanupWorker" /> as a hosted background service that periodically calls
-    /// <see cref="IIOTempService.Cleanup" />.
-    /// </summary>
-    public static IServiceCollection AddIOTempServiceWithAutoCleanup(this IServiceCollection services, TimeSpan? cleanupInterval = null, TimeSpan? initialDelay = null)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddIOTempService();
-        ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
-        services.AddHostedService<IOTempCleanupWorker>();
-        return services;
-    }
+        /// <summary>
+        /// Adds <see cref="IIOTempService" /> and registers <see cref="IOTempCleanupWorker" /> as a hosted background service that periodically calls
+        /// <see cref="IIOTempService.Cleanup" />.
+        /// </summary>
+        public IServiceCollection AddIOTempServiceWithAutoCleanup(TimeSpan? cleanupInterval = null, TimeSpan? initialDelay = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddIOTempService();
+            ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
+            services.AddHostedService<IOTempCleanupWorker>();
+            return services;
+        }
 
-    /// <summary>Adds <see cref="IIOTempService" /> with an options callback and registers <see cref="IOTempCleanupWorker" />.</summary>
-    public static IServiceCollection AddIOTempServiceWithAutoCleanup(
-        this IServiceCollection services,
-        Action<IOTempServiceOptions> configureService,
-        TimeSpan? cleanupInterval = null,
-        TimeSpan? initialDelay = null)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configureService);
-        services.AddIOTempService(configureService);
-        ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
-        services.AddHostedService<IOTempCleanupWorker>();
-        return services;
+        /// <summary>Adds <see cref="IIOTempService" /> with an options callback and registers <see cref="IOTempCleanupWorker" />.</summary>
+        public IServiceCollection AddIOTempServiceWithAutoCleanup(
+            Action<IOTempServiceOptions> configureService,
+            TimeSpan? cleanupInterval = null,
+            TimeSpan? initialDelay = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configureService);
+            services.AddIOTempService(configureService);
+            ConfigureCleanupOptions(services, cleanupInterval, initialDelay);
+            services.AddHostedService<IOTempCleanupWorker>();
+            return services;
+        }
     }
 
     private static void ConfigureCleanupOptions(IServiceCollection services, TimeSpan? interval, TimeSpan? delay)

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Espn.Fantasy.Football.Models.Request;
 using Lyo.Exceptions;
 
@@ -15,8 +16,9 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Sets the player ids for a player-card request.</summary>
     public FantasyFilterReqBuilder WithPlayerIds(IEnumerable<int> playerIds)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(playerIds);
-        var ids = playerIds.Distinct().ToArray();
+        var idList = playerIds.AsReadOnlyList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(idList);
+        var ids = idList.Distinct().ToArray();
         _players = (_players ?? new()) with { FilterIds = new() { Value = ids } };
         return this;
     }
@@ -24,7 +26,7 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Sets the scoring period filter ESPN expects for player-card stats.</summary>
     public FantasyFilterReqBuilder WithTopScoringPeriod(int scoringPeriodId, IEnumerable<string>? additionalPeriodIds = null)
     {
-        ArgumentHelpers.ThrowIf(scoringPeriodId <= 0, "Value must be greater than zero.", nameof(scoringPeriodId));
+        ArgumentHelpers.ThrowIfLessThanOrEqual(scoringPeriodId, 0, "Value must be greater than zero.", nameof(scoringPeriodId));
         var additionalValues = additionalPeriodIds?.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct().ToArray();
         _players = (_players ?? new()) with {
             FilterStatsForTopScoringPeriodIds = new() { Value = scoringPeriodId, AdditionalValue = additionalValues is { Length: > 0 } ? additionalValues : null }
@@ -36,8 +38,8 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Sets the transaction types to include.</summary>
     public FantasyFilterReqBuilder WithTransactionTypes(IEnumerable<string> types)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(types);
-        var values = types.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct().ToArray();
+        var typeList = types.AsReadOnlyList();
+        var values = typeList.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct().ToArray();
         ArgumentHelpers.ThrowIfNullOrEmpty(values, nameof(types));
         _transactions = new() { FilterType = new() { Value = values } };
         return this;
@@ -54,8 +56,8 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Adds multiple topic type groups to the league chat filter.</summary>
     public FantasyFilterReqBuilder WithTopicTypes(IEnumerable<string> topicTypes, int sortPriority = 1, bool sortAsc = false)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(topicTypes);
-        foreach (var topicType in topicTypes.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct())
+        var topicTypeList = topicTypes.AsReadOnlyList();
+        foreach (var topicType in topicTypeList.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct())
             AddTopicType(topicType, sortPriority, sortAsc);
 
         ArgumentHelpers.ThrowIfNullOrEmpty(_topicsByType, nameof(topicTypes));

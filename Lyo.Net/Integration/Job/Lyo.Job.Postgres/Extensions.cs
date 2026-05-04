@@ -29,144 +29,141 @@ namespace Lyo.Job.Postgres;
 /// <summary>Extension methods for PostgreSQL job management database context registration.</summary>
 public static class Extensions
 {
-    /// <summary>Adds JobContext to the service collection.</summary>
     /// <param name="services">The service collection</param>
-    /// <param name="connectionString">The PostgreSQL connection string</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddJobDbContext(this IServiceCollection services, string connectionString)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        return services.AddJobDbContextFactory(new PostgresJobOptions { ConnectionString = connectionString })
-            .AddScoped<JobContext>(sp => sp.GetRequiredService<IDbContextFactory<JobContext>>().CreateDbContext());
-    }
+        /// <summary>Adds JobContext to the service collection.</summary>
+        /// <param name="connectionString">The PostgreSQL connection string</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddJobDbContext(string connectionString)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
+            return services.AddJobDbContextFactory(new PostgresJobOptions { ConnectionString = connectionString })
+                .AddScoped<JobContext>(sp => sp.GetRequiredService<IDbContextFactory<JobContext>>().CreateDbContext());
+        }
 
-    /// <summary>Adds JobContext to the service collection.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configure">Action to configure the DbContext options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddJobDbContext(this IServiceCollection services, Action<DbContextOptionsBuilder> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddDbContext<JobContext>(configure);
-        return services;
-    }
+        /// <summary>Adds JobContext to the service collection.</summary>
+        /// <param name="configure">Action to configure the DbContext options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddJobDbContext(Action<DbContextOptionsBuilder> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddDbContext<JobContext>(configure);
+            return services;
+        }
 
-    /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection with optional auto-migrations.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configure">Action to configure the PostgreSQL job options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddJobDbContextFactory(this IServiceCollection services, Action<PostgresJobOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresJobOptions();
-        configure(options);
-        return services.AddJobDbContextFactory(options);
-    }
+        /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection with optional auto-migrations.</summary>
+        /// <param name="configure">Action to configure the PostgreSQL job options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddJobDbContextFactory(Action<PostgresJobOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresJobOptions();
+            configure(options);
+            return services.AddJobDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection using configuration binding.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
-    /// <param name="configSectionName">The configuration section name (defaults to PostgresJobOptions.SectionName)</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddJobDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresJobOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresJobOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection using configuration binding.</summary>
+        /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
+        /// <param name="configSectionName">The configuration section name (defaults to PostgresJobOptions.SectionName)</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddJobDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresJobOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresJobOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddJobDbContextFactory(options);
-    }
+            return services.AddJobDbContextFactory(options);
+        }
 
-    /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection with optional auto-migrations.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="options">The PostgreSQL job options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddJobDbContextFactory(this IServiceCollection services, PostgresJobOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresJobOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<JobContext, PostgresJobOptions>();
-        services.AddDbContextFactory<JobContext>(dbOptions => dbOptions.UseNpgsql(
-            options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresJobOptions.Schema)));
+        /// <summary>Adds PostgreSQL job management DbContextFactory to the service collection with optional auto-migrations.</summary>
+        /// <param name="options">The PostgreSQL job options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddJobDbContextFactory(PostgresJobOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton<IOptions<PostgresJobOptions>>(Options.Create(options));
+            services.AddPostgresMigrations<JobContext, PostgresJobOptions>();
+            services.AddDbContextFactory<JobContext>(dbOptions => dbOptions.UseNpgsql(
+                options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresJobOptions.Schema)));
 
-        return services;
-    }
+            return services;
+        }
 
-    /// <summary>
-    /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
-    /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
-    /// </summary>
-    public static IServiceCollection AddPostgresJobManagement(this IServiceCollection services, Action<PostgresJobOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresJobOptions();
-        configure(options);
-        return services.AddPostgresJobManagement(options);
-    }
+        /// <summary>
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
+        /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
+        /// </summary>
+        public IServiceCollection AddPostgresJobManagement(Action<PostgresJobOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresJobOptions();
+            configure(options);
+            return services.AddPostgresJobManagement(options);
+        }
 
-    /// <summary>Adds job management with PostgreSQL backend using configuration binding.</summary>
-    public static IServiceCollection AddPostgresJobManagementFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresJobOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(configuration);
-        var options = new PostgresJobOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds job management with PostgreSQL backend using configuration binding.</summary>
+        public IServiceCollection AddPostgresJobManagementFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresJobOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(configuration);
+            var options = new PostgresJobOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPostgresJobManagement(options);
-    }
+            return services.AddPostgresJobManagement(options);
+        }
 
-    /// <summary>
-    /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
-    /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
-    /// </summary>
-    public static IServiceCollection AddPostgresJobManagement(this IServiceCollection services, PostgresJobOptions options)
-    {
-        services.AddJobDbContextFactory(options);
-        services.AddLyoCrudServices<JobContext>();
-        services.AddScoped<JobService>();
-        // Register a no-op publisher so JobService can be resolved without a message-queue transport.
-        // Call AddMqJobEventPublisher() afterwards to replace this with a real implementation.
-        services.TryAddSingleton<IJobEventPublisher, NullJobEventPublisher>();
-        return services;
-    }
+        /// <summary>
+        /// Adds job management with PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (if enabled), and CRUD services. Requires: AddLyoQueryServices,
+        /// AddFusionCache or AddLocalCache, MapsterMapper.IMapper (add mapping yourself).
+        /// </summary>
+        public IServiceCollection AddPostgresJobManagement(PostgresJobOptions options)
+        {
+            services.AddJobDbContextFactory(options);
+            services.AddLyoCrudServices<JobContext>();
+            services.AddScoped<JobService>();
+            // Register a no-op publisher so JobService can be resolved without a message-queue transport.
+            // Call AddMqJobEventPublisher() afterwards to replace this with a real implementation.
+            services.TryAddSingleton<IJobEventPublisher, NullJobEventPublisher>();
+            return services;
+        }
 
-    /// <summary>
-    /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout) and resets circuit breakers. Requires
-    /// <see cref="IDbContextFactory{JobContext}" /> to be registered (call <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
-    /// </summary>
-    public static IServiceCollection AddJobMaintenanceService(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddHostedService<JobMaintenanceService>();
-        return services;
-    }
+        /// <summary>
+        /// Adds <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout) and resets circuit breakers. Requires
+        /// <see cref="IDbContextFactory{JobContext}" /> to be registered (call <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
+        /// </summary>
+        public IServiceCollection AddJobMaintenanceService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddHostedService<JobMaintenanceService>();
+            return services;
+        }
 
-    /// <summary>
-    /// Registers <see cref="MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> implementation. Requires <see cref="IMqService" /> to already be registered (e.g.
-    /// via <c>AddRabbitMq</c>).
-    /// </summary>
-    public static IServiceCollection AddMqJobEventPublisher(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
-        return services;
+        /// <summary>
+        /// Registers <see cref="MqJobEventPublisher" /> as the <see cref="IJobEventPublisher" /> implementation. Requires <see cref="IMqService" /> to already be registered (e.g.
+        /// via <c>AddRabbitMq</c>).
+        /// </summary>
+        public IServiceCollection AddMqJobEventPublisher()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<IJobEventPublisher, MqJobEventPublisher>();
+            return services;
+        }
     }
 
     /// <summary>Maps job API endpoints. Call after AddPostgresJobManagement.</summary>

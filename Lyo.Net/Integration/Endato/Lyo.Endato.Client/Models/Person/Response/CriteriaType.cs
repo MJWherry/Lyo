@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Lyo.Endato.Client.Models.Person.Response;

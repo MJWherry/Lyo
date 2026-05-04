@@ -11,6 +11,7 @@ public interface ITagStore
     /// <param name="tagType">The tag type (e.g. "tag", "category"). Defaults to "tag".</param>
     /// <param name="fromEntity">Optional: who applied the tag (for audit)</param>
     /// <param name="slug">Optional URL-friendly slug; normalized to empty when null or whitespace.</param>
+    /// <param name="ct">Cancellation token.</param>
     Task AddTagAsync(EntityRef forEntity, string tag, string tagType = "tag", EntityRef? fromEntity = null, string? slug = null, CancellationToken ct = default);
 
     /// <summary>Removes a tag from an entity.</summary>

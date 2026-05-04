@@ -2,7 +2,6 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Comment.Postgres.Database;
-using Lyo.Comic;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comment;
 using Lyo.Common.Enums;
@@ -14,8 +13,6 @@ using Lyo.Rating;
 using Lyo.Rating.Postgres.Database;
 using Lyo.Tag;
 using Lyo.Tag.Postgres.Database;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Comic.Api.Services;
@@ -219,7 +216,7 @@ public sealed class ComicEnrichmentService
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _tagQueryService.Query<TagEntity>(req, e => (object?)e.ForEntityId, SortDirection.Asc, ct);
+                return _tagQueryService.Query<TagEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             },
             ct);
 
@@ -239,7 +236,7 @@ public sealed class ComicEnrichmentService
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _ratingQueryService.Query<RatingEntity>(req, e => (object?)e.ForEntityId, SortDirection.Asc, ct);
+                return _ratingQueryService.Query<RatingEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             },
             ct);
 
@@ -253,14 +250,14 @@ public sealed class ComicEnrichmentService
                     .AddWhere(w => {
                         w.AddEquals(c => c.ForEntityType, SeriesEntityType);
                         w.In(c => c.ForEntityId, chunk);
-                        w.AddEquals(c => c.ReplyToCommentId, (Guid?)null);
+                        w.AddEquals(c => c.ReplyToCommentId, null);
                     })
                     .AddSort(e => e.ForEntityId, SortDirection.Asc)
                     .Done()
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _commentQueryService.Query<CommentEntity>(req, e => (object?)e.ForEntityId, SortDirection.Asc, ct);
+                return _commentQueryService.Query<CommentEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             },
             ct);
 
@@ -282,7 +279,7 @@ public sealed class ComicEnrichmentService
                 .SetPagination(0, _maxQueryPageSize)
                 .Build();
 
-            var res = await _favoriteQueryService.Query<FavoriteEntity>(req, e => (object?)e.ForEntityId, SortDirection.Asc, ct).ConfigureAwait(false);
+            var res = await _favoriteQueryService.Query<FavoriteEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct).ConfigureAwait(false);
             if (!TryDrainQuery(res, "favorites(caller)", out var rows))
                 continue;
 

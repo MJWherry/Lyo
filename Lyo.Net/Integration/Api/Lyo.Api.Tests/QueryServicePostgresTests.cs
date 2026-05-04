@@ -30,7 +30,7 @@ public class QueryServicePostgresTests
         Assert.True(result.Total >= 1);
         var match = result.Items!.FirstOrDefault(i => i.Id == defId);
         Assert.NotNull(match);
-        Assert.Equal("QueryTest1", match!.Name);
+        Assert.Equal("QueryTest1", match.Name);
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class QueryServicePostgresTests
         Assert.NotEmpty(projectedRuns);
         var firstRun = projectedRuns.OfType<IReadOnlyDictionary<string, object?>>().FirstOrDefault();
         Assert.NotNull(firstRun);
-        Assert.True(firstRun!.ContainsKey("CreatedBy"));
+        Assert.True(firstRun.ContainsKey("CreatedBy"));
         Assert.False(firstRun.ContainsKey("JobDefinition"));
     }
 
@@ -783,7 +783,7 @@ public class QueryServicePostgresTests
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var result = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.Equal(defId, result!.Id);
+        Assert.Equal(defId, result.Id);
         Assert.Equal("GetTest", result.Name);
     }
 
@@ -805,7 +805,7 @@ public class QueryServicePostgresTests
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var result = await queryService.Get<JobRun, JobRunRes>([runId], ["JobDefinition"], null, null, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.Equal(runId, result!.Id);
+        Assert.Equal(runId, result.Id);
         Assert.NotNull(result.JobDefinition);
         Assert.Equal(defId, result.JobDefinition!.Id);
     }

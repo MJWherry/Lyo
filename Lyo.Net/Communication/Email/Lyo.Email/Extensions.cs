@@ -5,10 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-#if NETSTANDARD2_0
-#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
-#pragma warning disable CS8604 // Possible null reference argument.
-#endif
 
 namespace Lyo.Email;
 
@@ -29,7 +25,7 @@ public static class Extensions
                 var options = configure(provider);
                 var validator = new EmailServiceOptionsValidator();
                 var validationResult = validator.Validate(null, options);
-                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult?.Failures ?? [])}");
+                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult.Failures ?? [])}");
                 return options;
             });
 
@@ -57,7 +53,7 @@ public static class Extensions
                 configure(provider, options);
                 var validator = new EmailServiceOptionsValidator();
                 var validationResult = validator.Validate(null, options);
-                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult?.Failures ?? [])}");
+                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult.Failures ?? [])}");
                 return options;
             });
 
@@ -85,7 +81,7 @@ public static class Extensions
                 configure(options);
                 var validator = new EmailServiceOptionsValidator();
                 var validationResult = validator.Validate(null, options);
-                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult?.Failures ?? [])}");
+                OperationHelpers.ThrowIf(validationResult.Failed, $"EmailServiceOptions validation failed: {string.Join("; ", validationResult.Failures ?? [])}");
                 return options;
             });
 

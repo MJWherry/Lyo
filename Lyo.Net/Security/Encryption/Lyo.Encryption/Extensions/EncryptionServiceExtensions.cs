@@ -75,7 +75,7 @@ public static class EncryptionServiceExtensions
             // Register DEK service as keyed if not already registered
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TDekService))) {
                 services.AddKeyedSingleton<TDekService>(
-                    keyName, (provider, serviceKey) => {
+                    keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
                         if (typeof(TDekService) == typeof(AesGcmEncryptionService))
@@ -99,14 +99,14 @@ public static class EncryptionServiceExtensions
                 // Register interface for DEK service
                 services.AddKeyedSingleton<IEncryptionService>(
                     keyName,
-                    (provider, serviceKey) => provider.GetKeyedService<TDekService>(keyName) ??
+                    (provider, _) => provider.GetKeyedService<TDekService>(keyName) ??
                         throw new InvalidOperationException($"Keyed encryption service '{keyName}' of type '{typeof(TDekService).Name}' was not found."));
             }
 
             // Register KEK service as keyed if not already registered
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TKekService))) {
                 services.AddKeyedSingleton<TKekService>(
-                    keyName, (provider, serviceKey) => {
+                    keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
                         if (typeof(TKekService) == typeof(AesGcmEncryptionService))
@@ -130,7 +130,7 @@ public static class EncryptionServiceExtensions
 
             // Register TwoKeyEncryptionService as keyed
             return services.AddKeyedSingleton<ITwoKeyEncryptionService>(
-                keyName, (provider, serviceKey) => {
+                keyName, (provider, _) => {
                     var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                     OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
                     var dekService = provider.GetKeyedService<TDekService>(keyName) ??
@@ -190,17 +190,17 @@ public static class EncryptionServiceExtensions
 
             // Register key store with keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TKeyStore))) {
-                services.AddKeyedSingleton<TKeyStore>(keyName, (provider, serviceKey) => configKeyStore(provider));
+                services.AddKeyedSingleton<TKeyStore>(keyName, (provider, _) => configKeyStore(provider));
                 services.AddKeyedSingleton<IKeyStore>(
                     keyName,
-                    (provider, serviceKey) => provider.GetKeyedService<TKeyStore>(keyName) ??
+                    (provider, _) => provider.GetKeyedService<TKeyStore>(keyName) ??
                         throw new InvalidOperationException($"Keyed key store service '{keyName}' of type '{typeof(TKeyStore).Name}' was not found."));
             }
 
             // Register DEK service as keyed
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TDekService))) {
                 services.AddKeyedSingleton<TDekService>(
-                    keyName, (provider, serviceKey) => {
+                    keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyName}' was not found.");
                         if (typeof(TDekService) == typeof(AesGcmEncryptionService))
@@ -224,14 +224,14 @@ public static class EncryptionServiceExtensions
                 // Register interface for DEK service
                 services.AddKeyedSingleton<IEncryptionService>(
                     keyName,
-                    (provider, serviceKey) => provider.GetKeyedService<TDekService>(keyName) ??
+                    (provider, _) => provider.GetKeyedService<TDekService>(keyName) ??
                         throw new InvalidOperationException($"Keyed encryption service '{keyName}' of type '{typeof(TDekService).Name}' was not found."));
             }
 
             // Register KEK service as keyed
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(TKekService))) {
                 services.AddKeyedSingleton<TKekService>(
-                    keyName, (provider, serviceKey) => {
+                    keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStore}' was not found.");
                         if (typeof(TKekService) == typeof(AesGcmEncryptionService))
@@ -255,7 +255,7 @@ public static class EncryptionServiceExtensions
 
             // Register TwoKeyEncryptionService as keyed
             return services.AddKeyedSingleton<ITwoKeyEncryptionService>(
-                keyName, (provider, serviceKey) => {
+                keyName, (provider, _) => {
                     var keyStore = provider.GetKeyedService<IKeyStore>(keyName);
                     OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStore}' was not found.");
                     var dekService = provider.GetKeyedService<TDekService>(keyName) ??

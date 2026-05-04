@@ -288,10 +288,10 @@ public sealed class FileTypeInfo
     /// <returns>The file type, or Unknown if not found.</returns>
     public static FileTypeInfo FromMimeType(string? mimeType)
     {
-        if (string.IsNullOrWhiteSpace(mimeType))
+        if (mimeType.IsNullOrWhitespace())
             return Unknown;
 
-        var trimmed = mimeType!.Trim();
+        var trimmed = mimeType.Trim();
         return _byMimeType.TryGetValue(trimmed, out var type) ? type : Unknown;
     }
 
@@ -300,10 +300,10 @@ public sealed class FileTypeInfo
     /// <returns>The file type, or Unknown if not found.</returns>
     public static FileTypeInfo FromExtension(string? extension)
     {
-        if (string.IsNullOrWhiteSpace(extension))
+        if (extension.IsNullOrWhitespace())
             return Unknown;
 
-        var normalized = extension!.Trim();
+        var normalized = extension.Trim();
         if (!normalized.StartsWith(".", StringComparison.Ordinal))
             normalized = "." + normalized;
 
@@ -321,12 +321,12 @@ public sealed class FileTypeInfo
     /// <returns>The file type, or Unknown if not recognized.</returns>
     public static FileTypeInfo FromFilePath(string? filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
+        if (filePath.IsNullOrWhitespace())
             return Unknown;
 
         var extension = Path.GetExtension(filePath);
-        if (string.IsNullOrWhiteSpace(extension))
-            extension = filePath!.TrimStart('.');
+        if (extension.IsNullOrWhitespace())
+            extension = filePath.TrimStart('.');
 
         return FromExtension(extension);
     }

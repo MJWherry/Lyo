@@ -14,7 +14,7 @@ public class LanguageCodeInfoJsonConverter : JsonConverter<LanguageCodeInfo>
 
         if (reader.TokenType == JsonTokenType.String) {
             var value = reader.GetString();
-            if (string.IsNullOrWhiteSpace(value))
+            if (value.IsNullOrWhitespace())
                 return LanguageCodeInfo.Unknown;
 
             // Try BCP 47 first, then ISO 639-1, then ISO 639-3

@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Result;
 using Lyo.Result.Enums;
@@ -60,8 +61,8 @@ public class ValidatorBuilder<T>
     {
         ArgumentHelpers.ThrowIfNull(selector);
         var compiled = selector.Compile();
-        var resolvedPropertyName = !string.IsNullOrWhiteSpace(propertyName) ? propertyName : GetPropertyPath(selector.Body);
-        resolvedPropertyName = string.IsNullOrWhiteSpace(resolvedPropertyName) ? selector.ToString() : resolvedPropertyName;
+        var resolvedPropertyName = !propertyName.IsNullOrWhitespace() ? propertyName : GetPropertyPath(selector.Body);
+        resolvedPropertyName = resolvedPropertyName.IsNullOrWhitespace() ? selector.ToString() : resolvedPropertyName;
         return new(this, compiled, resolvedPropertyName);
     }
 

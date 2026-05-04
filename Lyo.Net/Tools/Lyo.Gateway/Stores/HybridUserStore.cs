@@ -24,7 +24,7 @@ public class HybridUserStore(ILogger<HybridUserStore> logger, IMemoryCache cache
     public BlazorUserInfo? GetUser(string tokenId)
     {
         var cacheKey = $"user_{tokenId}";
-        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user)) {
+        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user) && user is not null) {
             user.LastActivity = DateTime.UtcNow;
             var cacheOptions = new MemoryCacheEntryOptions { AbsoluteExpiration = user.JwtExpiration, Priority = CacheItemPriority.High };
             cacheOptions.RegisterPostEvictionCallback(PostEvictionDelegate);
@@ -39,7 +39,7 @@ public class HybridUserStore(ILogger<HybridUserStore> logger, IMemoryCache cache
     public void RemoveUser(string tokenId)
     {
         var cacheKey = $"user_{tokenId}";
-        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user))
+        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user) && user is not null)
             logger.LogInformation("Manually removing user {TokenId} ({Email})", tokenId, user.Email);
 
         cache.Remove(cacheKey);
@@ -51,7 +51,7 @@ public class HybridUserStore(ILogger<HybridUserStore> logger, IMemoryCache cache
         var validTokenIds = new List<string>();
         foreach (var tokenId in _tokenIds) {
             var cacheKey = $"user_{tokenId}";
-            if (!cache.TryGetValue(cacheKey, out BlazorUserInfo? user))
+            if (!cache.TryGetValue(cacheKey, out BlazorUserInfo? user) || user is null)
                 continue;
 
             activeUsers.Add(user);
@@ -75,7 +75,7 @@ public class HybridUserStore(ILogger<HybridUserStore> logger, IMemoryCache cache
     public void UpdateUserCurrentPage(string tokenId, string currentPage)
     {
         var cacheKey = $"user_{tokenId}";
-        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user)) {
+        if (cache.TryGetValue(cacheKey, out BlazorUserInfo? user) && user is not null) {
             user.CurrentPage = currentPage;
             user.LastActivity = DateTime.UtcNow;
             var cacheOptions = new MemoryCacheEntryOptions { AbsoluteExpiration = user.JwtExpiration, Priority = CacheItemPriority.High };

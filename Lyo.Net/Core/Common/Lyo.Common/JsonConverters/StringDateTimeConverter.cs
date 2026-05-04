@@ -18,7 +18,7 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
     {
 #if NET9_0_OR_GREATER
         var str = reader.GetString();
-        if (string.IsNullOrEmpty(str))
+        if (str.IsNullOrEmpty())
             throw new JsonException("Cannot parse DateTime from null or empty string.");
 
         foreach (var format in _formats) {
@@ -32,11 +32,11 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
         throw new JsonException($"Could not parse DateTime: '{str}'");
 #else
         var str = reader.GetString();
-        if (string.IsNullOrEmpty(str))
+        if (str.IsNullOrEmpty())
             throw new JsonException("Cannot parse DateTime from null or empty string.");
 
         foreach (var format in _formats) {
-            if (str!.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
                 return dt;
         }
 

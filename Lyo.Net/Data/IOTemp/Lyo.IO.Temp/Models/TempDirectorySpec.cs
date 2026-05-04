@@ -49,13 +49,10 @@ public record TempDirectorySpec
     /// <summary>Creates a flat spec with randomised file count and sizes using <see cref="FileSizeUnitInfo" /> units.</summary>
     public static TempDirectorySpec Random(int minFiles, int maxFiles, FileSizeUnitInfo minUnit, double minAmount, FileSizeUnitInfo maxUnit, double maxAmount)
         => Random(minFiles, maxFiles, minUnit.ConvertToBytes(minAmount), maxUnit.ConvertToBytes(maxAmount));
-
-#if NET6_0_OR_GREATER
-    private static Random GetRandom() => System.Random.Shared;
-#else
+    
     [ThreadStatic]
     private static Random? _rng;
 
     private static Random GetRandom() => _rng ??= new();
-#endif
+
 }

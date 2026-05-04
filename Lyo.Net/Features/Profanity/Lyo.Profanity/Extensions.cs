@@ -23,58 +23,58 @@ public static class Extensions
         services.AddSingleton<IProfanityFilterService>(provider => provider.GetRequiredService<FileProfanityFilterService>());
     }
 
-    /// <summary>Adds file-based profanity filter service with default options.</summary>
     /// <param name="services">The service collection.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddProfanityFilterService(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<FileProfanityFilterOptions>(_ => new());
-        AddFileProfanityFilterService(services);
-        return services;
-    }
+        /// <summary>Adds file-based profanity filter service with default options.</summary>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddProfanityFilterService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<FileProfanityFilterOptions>(_ => new());
+            AddFileProfanityFilterService(services);
+            return services;
+        }
 
-    /// <summary>Adds file-based profanity filter service with options configuration callback.</summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configure">Action to configure the options.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddProfanityFilterService(this IServiceCollection services, Action<FileProfanityFilterOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddSingleton<FileProfanityFilterOptions>(_ => {
-            var options = new FileProfanityFilterOptions();
-            configure(options);
-            return options;
-        });
+        /// <summary>Adds file-based profanity filter service with options configuration callback.</summary>
+        /// <param name="configure">Action to configure the options.</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddSingleton<FileProfanityFilterOptions>(_ => {
+                var options = new FileProfanityFilterOptions();
+                configure(options);
+                return options;
+            });
 
-        AddFileProfanityFilterService(services);
-        return services;
-    }
+            AddFileProfanityFilterService(services);
+            return services;
+        }
 
-    /// <summary>Adds file-based profanity filter service with options bound from configuration.</summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configuration">The configuration.</param>
-    /// <param name="configSectionName">The configuration section name. Default: "ProfanityFilter".</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddProfanityFilterServiceFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = FileProfanityFilterOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        services.AddSingleton<FileProfanityFilterOptions>(_ => {
-            var options = new FileProfanityFilterOptions();
-            var section = configuration.GetSection(configSectionName);
-            if (section.Exists())
-                section.Bind(options);
+        /// <summary>Adds file-based profanity filter service with options bound from configuration.</summary>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="configSectionName">The configuration section name. Default: "ProfanityFilter".</param>
+        /// <returns>The service collection for chaining.</returns>
+        public IServiceCollection AddProfanityFilterServiceFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = FileProfanityFilterOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddSingleton<FileProfanityFilterOptions>(_ => {
+                var options = new FileProfanityFilterOptions();
+                var section = configuration.GetSection(configSectionName);
+                if (section.Exists())
+                    section.Bind(options);
 
-            return options;
-        });
+                return options;
+            });
 
-        AddFileProfanityFilterService(services);
-        return services;
+            AddFileProfanityFilterService(services);
+            return services;
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions;
@@ -52,9 +53,9 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
             _padding.Mode == RSAEncryptionPaddingMode.Pkcs1, "PKCS1 padding is not recommended for security. Use OAEP padding (e.g., OAEP-SHA256) instead.", nameof(padding));
 
         _rsa = RSA.Create();
-        if (!string.IsNullOrEmpty(publicPemPath) && !string.IsNullOrEmpty(privatePemPath))
+        if (!publicPemPath.IsNullOrEmpty() && !privatePemPath.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPemFiles(publicPemPath, privatePemPath);
-        else if (!string.IsNullOrEmpty(pfxPath) && !string.IsNullOrEmpty(password))
+        else if (!pfxPath.IsNullOrEmpty() && !password.IsNullOrEmpty())
             _rsa = RsaKeyLoader.LoadFromPfx(pfxPath, password);
         else
             OperationHelpers.ThrowIf(true, "No RSA key configuration provided. Specify either (publicPemPath, privatePemPath) or (pfxPath, password).");

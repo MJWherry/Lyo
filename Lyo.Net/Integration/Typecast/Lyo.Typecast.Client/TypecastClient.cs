@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lyo.Api.Client;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -43,7 +44,7 @@ public class TypecastClient : ApiClient
     private static Uri CreateBaseAddress(TypecastClientOptions options)
     {
         var b = options.BaseUrl?.Trim();
-        if (string.IsNullOrEmpty(b))
+        if (b.IsNullOrEmpty())
             b = "https://api.typecast.ai";
 
         return new($"{b.TrimEnd('/')}/");

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq;
 
 namespace Lyo.Endato.Client.Models.Person.Response;
 

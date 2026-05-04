@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Config;
+using Lyo.Common;
 using Lyo.Config.Api.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -43,8 +43,8 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
     internal static void ApplyApiKey(HttpRequestHeaders headers, string? apiKey)
     {
         headers.Remove("X-Api-Key");
-        if (!string.IsNullOrWhiteSpace(apiKey))
-            headers.Add("X-Api-Key", apiKey!.Trim());
+        if (!apiKey.IsNullOrEmpty())
+            headers.Add("X-Api-Key", apiKey.Trim());
     }
 
     /// <inheritdoc />

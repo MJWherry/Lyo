@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.ShortUrl.Models;
@@ -32,14 +33,14 @@ public sealed class ShortUrlService : ShortUrlServiceBase
         ct.ThrowIfCancellationRequested();
         try {
             // Validate custom alias if provided
-            if (!string.IsNullOrWhiteSpace(customAlias)) {
+            if (!customAlias.IsNullOrWhitespace()) {
                 if (!Options.AllowCustomAliases) {
                     sw.Stop();
                     return Task.FromResult(
                         UrlShortenResult.FromError("Custom aliases are not allowed", CustomAliasNotAllowed, longUrl, new InvalidOperationException("Custom aliases are disabled")));
                 }
 
-                if (customAlias!.Length < Options.MinAliasLength || customAlias.Length > Options.MaxAliasLength) {
+                if (customAlias.Length < Options.MinAliasLength || customAlias.Length > Options.MaxAliasLength) {
                     sw.Stop();
                     return Task.FromResult(
                         UrlShortenResult.FromError(

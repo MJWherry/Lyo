@@ -91,7 +91,7 @@ public static class Ksuid
     /// <exception cref="ArgumentException">The string is not a valid 27-character KSUID.</exception>
     public static DateTimeOffset GetTimestamp(string ksuid)
     {
-        ArgumentHelpers.ThrowIf(string.IsNullOrEmpty(ksuid) || ksuid.Length != StringLength, $"KSUID must be exactly {StringLength} characters.", nameof(ksuid));
+        ArgumentHelpers.ThrowIf(ksuid.IsNullOrEmpty() || ksuid.Length != StringLength, $"KSUID must be exactly {StringLength} characters.", nameof(ksuid));
         Span<byte> bytes = stackalloc byte[PayloadLength];
         DecodeBase62(ksuid, bytes);
         var secs = ((long)bytes[0] << 24) | ((long)bytes[1] << 16) | ((long)bytes[2] << 8) | bytes[3];

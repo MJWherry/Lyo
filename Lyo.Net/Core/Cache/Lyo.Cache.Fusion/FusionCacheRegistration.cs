@@ -9,6 +9,7 @@ using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 
+
 // Do not add 'using Lyo.Cache.Fusion' - we need ZiggyCreatures.AddFusionCache(), not ours
 
 namespace Lyo.Cache.Fusion;
@@ -31,11 +32,7 @@ internal static class FusionCacheRegistration
             svc.AddCompressionService();
 
         svc.AddSingleton<ICachePayloadCodec>(sp =>
-#if NET10_0_OR_GREATER
                 new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>())
-#else
-                new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>())
-#endif
         );
 
         svc.TryAddSingleton(CachePayloadSerializerRegistration.Create);

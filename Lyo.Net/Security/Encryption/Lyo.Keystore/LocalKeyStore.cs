@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Keystore.KeyDerivation;
 
@@ -43,7 +44,7 @@ public class LocalKeyStore : IKeyStore, IKeyInventoryStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         var actualVersion = version ?? GetCurrentVersion(keyId);
-        if (string.IsNullOrWhiteSpace(actualVersion))
+        if (actualVersion.IsNullOrWhitespace())
             return null;
 
         if (!_keys.TryGetValue(keyId, out var versions) || !versions.TryGetValue(actualVersion, out var key))

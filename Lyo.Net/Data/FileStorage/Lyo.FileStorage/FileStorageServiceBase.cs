@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipelines;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Compression;
 using Lyo.Compression.Models;
@@ -160,7 +161,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             var normalizedPathPrefix = NormalizePathPrefix(pathPrefix);
 
             // Validate path prefix for security
-            if (!string.IsNullOrWhiteSpace(normalizedPathPrefix)) {
+            if (!normalizedPathPrefix.IsNullOrWhitespace()) {
                 ArgumentHelpers.ThrowIf(
                     normalizedPathPrefix.Contains("..") || normalizedPathPrefix.Contains("//") || normalizedPathPrefix.Contains("\\\\"),
                     $"Invalid pathPrefix '{pathPrefix}'. Path prefixes cannot contain '..', '//', or '\\\\' to prevent path traversal attacks.", nameof(pathPrefix));
@@ -788,7 +789,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
         // Get target key version if not specified
         string actualTargetVersion;
-        if (!string.IsNullOrWhiteSpace(targetKeyVersion))
+        if (!targetKeyVersion.IsNullOrWhitespace())
             actualTargetVersion = targetKeyVersion;
         else {
             // Get current version from encryption service
@@ -831,7 +832,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
                     }
 
                     // Skip if not encrypted or missing required fields
-                    if (!fileMetadata.IsEncrypted || fileMetadata.EncryptedDataEncryptionKey == null || string.IsNullOrWhiteSpace(fileMetadata.DataEncryptionKeyVersion)) {
+                    if (!fileMetadata.IsEncrypted || fileMetadata.EncryptedDataEncryptionKey == null || fileMetadata.DataEncryptionKeyVersion.IsNullOrWhitespace()) {
                         Logger.LogWarning("File {FileId} is not encrypted or missing encryption metadata, skipping", fileMetadata.Id);
                         continue;
                     }
@@ -1111,7 +1112,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
     protected static string? NormalizePathPrefix(string? pathPrefix)
     {
-        if (string.IsNullOrWhiteSpace(pathPrefix))
+        if (pathPrefix.IsNullOrWhitespace())
             return null;
 
         var normalized = pathPrefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
@@ -1165,14 +1166,14 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
 
     private (string TargetKeyId, string TargetKeyVersion) ResolveDekRotationTarget(FileStoreResult metadata, string? targetKeyId, string? targetKeyVersion)
     {
-        var resolvedTargetKeyId = string.IsNullOrWhiteSpace(targetKeyId) ? metadata.DataEncryptionKeyId! : targetKeyId;
+        var resolvedTargetKeyId = targetKeyId.IsNullOrWhitespace() ? metadata.DataEncryptionKeyId! : targetKeyId;
         string resolvedTargetKeyVersion;
-        if (!string.IsNullOrWhiteSpace(targetKeyVersion))
+        if (!targetKeyVersion.IsNullOrWhitespace())
             resolvedTargetKeyVersion = targetKeyVersion;
-        else if (!string.IsNullOrWhiteSpace(targetKeyId)) {
+        else if (!targetKeyId.IsNullOrWhitespace()) {
             var rawVersion = TwoKeyEncryptionService!.GetKeyVersion(resolvedTargetKeyId);
             OperationHelpers.ThrowIfNull(rawVersion, $"No current key version available for key ID '{resolvedTargetKeyId}'. Ensure the keystore is properly initialized.");
-            resolvedTargetKeyVersion = rawVersion!;
+            resolvedTargetKeyVersion = rawVersion;
         }
         else
             resolvedTargetKeyVersion = metadata.DataEncryptionKeyVersion!;
@@ -1648,10 +1649,9 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         if (fromDeclaredMime != FileTypeInfo.Unknown)
             return fromDeclaredMime.MimeType;
 
-        if (!string.IsNullOrWhiteSpace(declaredContentType))
-            return declaredContentType.Trim();
-
-        return FileTypeInfo.Unknown.MimeType;
+        return !declaredContentType.IsNullOrWhitespace() 
+            ? declaredContentType.Trim() 
+            : FileTypeInfo.Unknown.MimeType;
     }
 
     protected static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)

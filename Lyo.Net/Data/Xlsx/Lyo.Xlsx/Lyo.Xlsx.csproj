@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClosedXML" Version="[0.99,)"/>
+        <PackageReference Include="ClosedXML" Version="[0.100,)"/>
         <PackageReference Include="ExcelDataReader" Version="[3.8,)"/>
         <PackageReference Include="ExcelDataReader.DataSet" Version="[3.8,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>

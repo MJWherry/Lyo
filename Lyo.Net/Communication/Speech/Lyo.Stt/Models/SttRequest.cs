@@ -62,7 +62,7 @@ public class SttRequest
             parts.Add($"AudioFilePath: {AudioFilePath}");
 
         if (LanguageCode != null)
-            parts.Add($"LanguageCode: {LanguageCode.Bcp47 ?? LanguageCode.Iso6391 ?? LanguageCode.Iso6393 ?? LanguageCode.Name}");
+            parts.Add($"LanguageCode: {LanguageCode.Bcp47}");
 
         if (AudioFormat.HasValue)
             parts.Add($"AudioFormat: {AudioFormat.Value.GetStringValue()}");

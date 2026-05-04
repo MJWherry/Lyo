@@ -37,57 +37,60 @@ public static class Extensions
 {
     private const string FileStorageKey = "comic-files";
 
-    /// <summary>
-    /// Registers all Comic API services: the five postgres stores, enrichment service, local cache, Lyo.Api query/CRUD services (including <c>IQueryService</c> for tag/rating/comment/favorite
-    /// contexts for cached batch enrichment), the custom mapper, and the comic file storage
-    /// stack (LocalKeyStore → TwoKeyEncryption → PostgresFileMetadataStore → LocalFileStorageService).
-    /// </summary>
-    public static IServiceCollection AddComicApi(this IServiceCollection services, IConfiguration configuration)
+    extension(IServiceCollection services)
     {
-        services.AddPostgresComicStoreFromConfiguration(configuration);
-        services.AddPostgresTagStoreFromConfiguration(configuration);
-        services.AddPostgresCommentStoreFromConfiguration(configuration);
-        services.AddPostgresRatingStoreFromConfiguration(configuration);
-        services.AddPostgresFavoriteStoreFromConfiguration(configuration);
-        services.AddScoped<ComicEnrichmentService>();
-        services.AddLocalCache();
-        services.AddLyoQueryServices();
-        services.AddLyoCrudServices<ComicDbContext>();
-        services.AddLyoCrudServices<TagDbContext>();
-        services.AddLyoCrudServices<RatingDbContext>();
-        services.AddLyoCrudServices<CommentDbContext>();
-        services.AddLyoCrudServices<FavoriteDbContext>();
-        services.AddSingleton<ILyoMapper, ComicLyoMapper>();
-        services.AddComicFileStorage(configuration);
-        return services;
-    }
+        /// <summary>
+        /// Registers all Comic API services: the five postgres stores, enrichment service, local cache, Lyo.Api query/CRUD services (including <c>IQueryService</c> for tag/rating/comment/favorite
+        /// contexts for cached batch enrichment), the custom mapper, and the comic file storage
+        /// stack (LocalKeyStore → TwoKeyEncryption → PostgresFileMetadataStore → LocalFileStorageService).
+        /// </summary>
+        public IServiceCollection AddComicApi(IConfiguration configuration)
+        {
+            services.AddPostgresComicStoreFromConfiguration(configuration);
+            services.AddPostgresTagStoreFromConfiguration(configuration);
+            services.AddPostgresCommentStoreFromConfiguration(configuration);
+            services.AddPostgresRatingStoreFromConfiguration(configuration);
+            services.AddPostgresFavoriteStoreFromConfiguration(configuration);
+            services.AddScoped<ComicEnrichmentService>();
+            services.AddLocalCache();
+            services.AddLyoQueryServices();
+            services.AddLyoCrudServices<ComicDbContext>();
+            services.AddLyoCrudServices<TagDbContext>();
+            services.AddLyoCrudServices<RatingDbContext>();
+            services.AddLyoCrudServices<CommentDbContext>();
+            services.AddLyoCrudServices<FavoriteDbContext>();
+            services.AddSingleton<ILyoMapper, ComicLyoMapper>();
+            services.AddComicFileStorage(configuration);
+            return services;
+        }
+   
+        private IServiceCollection AddComicFileStorage(IConfiguration configuration)
+        {
+            var keyId = configuration["ComicFileEncryption:KeyId"] ?? "comic-images";
+            var keySecret = configuration["ComicFileEncryption:KeySecret"] ?? "change-me-in-production";
+            var encrypt = configuration.GetValue("ComicFileEncryption:Encrypt", true);
+            var compress = configuration.GetValue("ComicFileEncryption:Compress", false);
+            var keyStore = new LocalKeyStore();
+            keyStore.AddKeyFromString(keyId, "v1", keySecret);
+            services.AddKeyedSingleton<IKeyStore>(FileStorageKey, (_, _) => keyStore);
+            services.AddKeyedSingleton<LocalKeyStore>(FileStorageKey, (_, _) => keyStore);
+            services.AddEncryptionServiceKeyed(FileStorageKey, FileStorageKey);
+            services.AddKeyedSingleton(FileStorageKey, new ComicFileUploadOptions(encrypt, compress, encrypt ? keyId : null));
+            services.AddFileMetadataStoreDbContextFactoryFromConfiguration(configuration);
+            services.AddKeyedScoped<IFileMetadataStore>(
+                FileStorageKey, (provider, _) => {
+                    var factory = provider.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>();
+                    var dbContext = factory.CreateDbContext();
+                    var loggerFactory = provider.GetService<ILoggerFactory>();
+                    return new PostgresFileMetadataStore(dbContext, loggerFactory);
+                });
 
-    private static IServiceCollection AddComicFileStorage(this IServiceCollection services, IConfiguration configuration)
-    {
-        var keyId = configuration["ComicFileEncryption:KeyId"] ?? "comic-images";
-        var keySecret = configuration["ComicFileEncryption:KeySecret"] ?? "change-me-in-production";
-        var encrypt = configuration.GetValue("ComicFileEncryption:Encrypt", true);
-        var compress = configuration.GetValue("ComicFileEncryption:Compress", false);
-        var keyStore = new LocalKeyStore();
-        keyStore.AddKeyFromString(keyId, "v1", keySecret);
-        services.AddKeyedSingleton<IKeyStore>(FileStorageKey, (_, _) => keyStore);
-        services.AddKeyedSingleton<LocalKeyStore>(FileStorageKey, (_, _) => keyStore);
-        services.AddEncryptionServiceKeyed(FileStorageKey, FileStorageKey);
-        services.AddKeyedSingleton(FileStorageKey, new ComicFileUploadOptions(encrypt, compress, encrypt ? keyId : null));
-        services.AddFileMetadataStoreDbContextFactoryFromConfiguration(configuration);
-        services.AddKeyedScoped<IFileMetadataStore>(
-            FileStorageKey, (provider, _) => {
-                var factory = provider.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>();
-                var dbContext = factory.CreateDbContext();
-                var loggerFactory = provider.GetService<ILoggerFactory>();
-                return new PostgresFileMetadataStore(dbContext, loggerFactory);
-            });
+            services.AddFileStorageServiceKeyed(
+                FileStorageKey, opts => opts.RootDirectoryPath = configuration["ComicFileStorage:RootDirectoryPath"] ?? "./comic-files",
+                provider => provider.GetRequiredKeyedService<IFileMetadataStore>(FileStorageKey), FileStorageKey);
 
-        services.AddFileStorageServiceKeyed(
-            FileStorageKey, opts => opts.RootDirectoryPath = configuration["ComicFileStorage:RootDirectoryPath"] ?? "./comic-files",
-            provider => provider.GetRequiredKeyedService<IFileMetadataStore>(FileStorageKey), FileStorageKey);
-
-        return services;
+            return services;
+        }
     }
 
     /// <summary>Maps enriched/sub-resource Comic API route groups under the given prefix (default: /api/comic), and the file retrieval endpoints at /files.</summary>

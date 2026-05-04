@@ -10,60 +10,60 @@ namespace Lyo.Ffmpeg;
 /// <summary>Extension methods for registering FFmpeg services with dependency injection.</summary>
 public static class Extensions
 {
-    /// <summary>Adds FFmpeg services (AudioPlayer, AudioProber, AudioConverter) with default options.</summary>
     /// <param name="services">The service collection</param>
-    /// <returns>The service collection for chaining</returns>
-    /// <remarks>Call AddLyoMetrics() before this to enable metrics when FfmpegOptions.EnableMetrics is true.</remarks>
-    public static IServiceCollection AddFfmpegServices(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddSingleton<FfmpegOptions>(_ => new());
-        RegisterServices(services);
-        return services;
-    }
+        /// <summary>Adds FFmpeg services (AudioPlayer, AudioProber, AudioConverter) with default options.</summary>
+        /// <returns>The service collection for chaining</returns>
+        /// <remarks>Call AddLyoMetrics() before this to enable metrics when FfmpegOptions.EnableMetrics is true.</remarks>
+        public IServiceCollection AddFfmpegServices()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<FfmpegOptions>(_ => new());
+            RegisterServices(services);
+            return services;
+        }
 
-    /// <summary>Adds FFmpeg services with custom options.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configure">Action to configure the options</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddFfmpegServices(this IServiceCollection services, Action<FfmpegOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddSingleton<FfmpegOptions>(_ => {
-            var options = new FfmpegOptions();
-            configure(options);
-            return options;
-        });
+        /// <summary>Adds FFmpeg services with custom options.</summary>
+        /// <param name="configure">Action to configure the options</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddFfmpegServices(Action<FfmpegOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddSingleton<FfmpegOptions>(_ => {
+                var options = new FfmpegOptions();
+                configure(options);
+                return options;
+            });
 
-        RegisterServices(services);
-        return services;
-    }
+            RegisterServices(services);
+            return services;
+        }
 
-    /// <summary>Adds FFmpeg services using configuration binding.</summary>
-    /// <param name="services">The service collection</param>
-    /// <param name="configuration">The configuration instance</param>
-    /// <param name="configSectionName">The configuration section name (defaults to "FfmpegOptions")</param>
-    /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddFfmpegServicesFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = FfmpegOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        services.AddSingleton<FfmpegOptions>(_ => {
-            var options = new FfmpegOptions();
-            var section = configuration.GetSection(configSectionName);
-            if (section.Exists())
-                section.Bind(options);
+        /// <summary>Adds FFmpeg services using configuration binding.</summary>
+        /// <param name="configuration">The configuration instance</param>
+        /// <param name="configSectionName">The configuration section name (defaults to "FfmpegOptions")</param>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddFfmpegServicesFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = FfmpegOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            services.AddSingleton<FfmpegOptions>(_ => {
+                var options = new FfmpegOptions();
+                var section = configuration.GetSection(configSectionName);
+                if (section.Exists())
+                    section.Bind(options);
 
-            return options;
-        });
+                return options;
+            });
 
-        RegisterServices(services);
-        return services;
+            RegisterServices(services);
+            return services;
+        }
     }
 
     private static void RegisterServices(IServiceCollection services)

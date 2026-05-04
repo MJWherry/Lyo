@@ -82,7 +82,7 @@ public static class AutomationPlanInterpolation
         var s = spec.Trim();
         OperationHelpers.ThrowIf(s.Length == 0, "Template placeholder is empty.");
         if (b.Strings.TryGetValue(s, out var direct))
-            return direct ?? string.Empty;
+            return direct;
 
         var parts = s.Split('.').Select(static p => p.Trim()).Where(static p => p.Length > 0).ToArray();
         OperationHelpers.ThrowIf(
@@ -125,13 +125,13 @@ public static class AutomationPlanInterpolation
             OperationHelpers.ThrowIf(!foundEl || el == null, $"Unknown element ref '{refName}'.");
             if (parts[2].Equals("text", StringComparison.OrdinalIgnoreCase)) {
                 OperationHelpers.ThrowIf(parts.Length != 3, $"Invalid element text placeholder '{{{s}}}'.");
-                return await el.GetTextAsync(ct).ConfigureAwait(false);
+                return await el!.GetTextAsync(ct).ConfigureAwait(false);
             }
 
             if (parts[2].Equals("attr", StringComparison.OrdinalIgnoreCase)) {
                 OperationHelpers.ThrowIf(parts.Length != 4, $"Invalid element attribute placeholder '{{{s}}}'. Use el.ref.attr.attributeName.");
                 var attr = parts[3];
-                return await el.GetAttributeAsync(attr, ct).ConfigureAwait(false) ?? string.Empty;
+                return await el!.GetAttributeAsync(attr, ct).ConfigureAwait(false) ?? string.Empty;
             }
 
             throw new InvalidOperationException($"Unknown element field '{parts[2]}' in '{{{s}}}'. Use text or attr.");

@@ -7,9 +7,13 @@ namespace Lyo.Common.Identifiers;
 /// <remarks>EntityType identifies the kind of entity (e.g. "Person", "Product"). EntityId is typically a Guid string but can be any identifier.</remarks>
 public readonly record struct EntityRef(string EntityType, string EntityId)
 {
-    public string EntityType { get; } = string.IsNullOrWhiteSpace(EntityType) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(EntityType)) : EntityType;
+    public string EntityType { get; } = EntityType.IsNullOrWhitespace()
+        ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(EntityType))
+        : EntityType;
 
-    public string EntityId { get; } = string.IsNullOrWhiteSpace(EntityId) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(EntityId)) : EntityId;
+    public string EntityId { get; } = EntityId.IsNullOrWhitespace()
+        ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(EntityId))
+        : EntityId;
 
     /// <summary>Creates a reference from an entity instance using a selector to extract the key(s).</summary>
     /// <example>EntityRef.For(docket, d => d.Id), EntityRef.For(order, o => new object[] { o.OrderId, o.LineId })</example>
@@ -26,7 +30,7 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
             var _ => [key]
         };
 
-        return For<T>(keys!);
+        return For<T>(keys);
     }
 
     /// <summary>Creates a reference using the full type name of T and the given key(s). Composite keys are ordered and joined with ":".</summary>
@@ -34,7 +38,7 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     public static EntityRef For<T>(params object[] keys)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-        var ordered = keys.Select((k, i) => k?.ToString() is { Length: > 0 } s ? s : throw new ArgumentException($"Key at index {i} cannot be null or empty.", nameof(keys)))
+        var ordered = keys.Select((k, i) => k.ToString() is { Length: > 0 } s ? s : throw new ArgumentException($"Key at index {i} cannot be null or empty.", nameof(keys)))
             .OrderBy(s => s, StringComparer.Ordinal)
             .ToArray();
 

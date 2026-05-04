@@ -179,10 +179,10 @@ public sealed record ProgrammingLanguageInfo(
             _byAlias[Normalize(language.Name)] = language;
             _byAlias[Normalize(language.ShortName)] = language;
             _byAlias[Normalize(language.Slug)] = language;
-            foreach (var alias in language.Aliases.Where(a => !string.IsNullOrWhiteSpace(a)))
+            foreach (var alias in language.Aliases.Where(a => !a.IsNullOrWhitespace()))
                 _byAlias[Normalize(alias)] = language;
 
-            foreach (var extension in language.FileExtensions.Where(e => !string.IsNullOrWhiteSpace(e)))
+            foreach (var extension in language.FileExtensions.Where(e => !e.IsNullOrWhitespace()))
                 _byExtension[NormalizeExtension(extension)] = language;
         }
     }
@@ -191,7 +191,7 @@ public sealed record ProgrammingLanguageInfo(
 
     public static ProgrammingLanguageInfo FromName(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (name.IsNullOrWhitespace())
             return Unknown;
 
         var trimmedName = name.Trim();
@@ -207,34 +207,34 @@ public sealed record ProgrammingLanguageInfo(
 
     public static ProgrammingLanguageInfo FromShortName(string? shortName)
     {
-        if (string.IsNullOrWhiteSpace(shortName))
+        if (shortName.IsNullOrWhitespace())
             return Unknown;
 
-        return _byShortName.TryGetValue(Normalize(shortName!), out var language) ? language : Unknown;
+        return _byShortName.TryGetValue(Normalize(shortName), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromSlug(string? slug)
     {
-        if (string.IsNullOrWhiteSpace(slug))
+        if (slug.IsNullOrWhitespace())
             return Unknown;
 
-        return _bySlug.TryGetValue(Normalize(slug!), out var language) ? language : Unknown;
+        return _bySlug.TryGetValue(Normalize(slug), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromAlias(string? alias)
     {
-        if (string.IsNullOrWhiteSpace(alias))
+        if (alias.IsNullOrWhitespace())
             return Unknown;
 
-        return _byAlias.TryGetValue(Normalize(alias!), out var language) ? language : Unknown;
+        return _byAlias.TryGetValue(Normalize(alias), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromExtension(string? extension)
     {
-        if (string.IsNullOrWhiteSpace(extension))
+        if (extension.IsNullOrWhitespace())
             return Unknown;
 
-        return _byExtension.TryGetValue(NormalizeExtension(extension!), out var language) ? language : Unknown;
+        return _byExtension.TryGetValue(NormalizeExtension(extension), out var language) ? language : Unknown;
     }
 
     private static string Normalize(string value) => value.Trim().ToLowerInvariant();

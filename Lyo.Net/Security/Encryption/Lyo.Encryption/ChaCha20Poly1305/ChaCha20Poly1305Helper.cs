@@ -25,7 +25,7 @@ public static class ChaCha20Poly1305Helper
         return (ciphertext, tag);
 #else
         var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-        chacha.Init(true, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+        chacha.Init(true, new AeadParameters(new(key), 128, nonce, null));
 
         var outBuf = new byte[chacha.GetOutputSize(plaintext.Length)];
         var tlen = 0;
@@ -61,7 +61,7 @@ public static class ChaCha20Poly1305Helper
 
         try {
             var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
-            chacha.Init(false, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+            chacha.Init(false, new AeadParameters(new(key), 128, nonce, null));
 
             var outBuf = new byte[chacha.GetOutputSize(combined.Length)];
             var len = chacha.ProcessBytes(combined, 0, combined.Length, outBuf, 0);

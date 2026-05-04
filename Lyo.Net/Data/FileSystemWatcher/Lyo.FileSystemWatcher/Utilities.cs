@@ -20,17 +20,19 @@ public static class Utilities
         var fingerprintLookup = new Dictionary<string, HashSet<long>>();
         if (enableHashing && oldTree != null) {
             foreach (var (_, entry) in oldTree.EnumerateFiles()) {
-                if (entry.Info is FileInfo fileInfo && entry.FileSize.HasValue) {
-                    sizeLookup.Add(entry.FileSize.Value);
-                    if (entry.Fingerprint != null) {
-                        if (!fingerprintLookup.TryGetValue(entry.Fingerprint, out var sizeSet)) {
-                            sizeSet = new();
-                            fingerprintLookup[entry.Fingerprint] = sizeSet;
-                        }
+                if (entry.Info is not FileInfo _ || !entry.FileSize.HasValue)
+                    continue;
 
-                        sizeSet.Add(entry.FileSize.Value);
-                    }
+                sizeLookup.Add(entry.FileSize.Value);
+                if (entry.Fingerprint == null)
+                    continue;
+
+                if (!fingerprintLookup.TryGetValue(entry.Fingerprint, out var sizeSet)) {
+                    sizeSet = [];
+                    fingerprintLookup[entry.Fingerprint] = sizeSet;
                 }
+
+                sizeSet.Add(entry.FileSize.Value);
             }
         }
 
@@ -132,7 +134,7 @@ public static class Utilities
                     try {
                         var hashBytes = Hash(file, ct);
                         if (hashBytes.Length > 0)
-                            hash = HexEncoding.ToHexString(hashBytes, TextLetterCase.Upper);
+                            hash = HexEncoding.ToHexString(hashBytes);
                     }
                     catch (OperationCanceledException) {
                         throw;
@@ -173,7 +175,7 @@ public static class Utilities
         foreach (var (path, entry) in EnumerateNewSnapshotEntries(newTree.Root)) {
             ct.ThrowIfCancellationRequested();
             if (TryGetSnapshotEntry(oldTree, path, out var value) && value != null) {
-                if (entry.Info is FileInfo fileInfo && value.Info is FileInfo oldFileInfo) {
+                if (entry.Info is FileInfo _ && value.Info is FileInfo _) {
                     var hasChanged = false;
                     if (entry.FileSize.HasValue && value.FileSize.HasValue) {
                         if (entry.FileSize.Value != value.FileSize.Value)

@@ -1,4 +1,3 @@
-using Lyo.Config;
 using Microsoft.Extensions.Primitives;
 
 namespace Lyo.Config.Api.Hosting;

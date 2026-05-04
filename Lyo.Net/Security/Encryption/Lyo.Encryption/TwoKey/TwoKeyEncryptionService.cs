@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Text;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;
@@ -280,19 +281,21 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
             // Get salt from keystore metadata to include in result
             byte[]? salt = null;
-            if (actualKeyId != null && !string.IsNullOrWhiteSpace(keyVersion)) {
-                var keyMetadata = await _keyStore.GetKeyMetadataAsync(actualKeyId, keyVersion).ConfigureAwait(false);
-                if (keyMetadata?.AdditionalData != null && keyMetadata.AdditionalData.TryGetValue("Pbkdf2Salt", out var saltBase64)) {
-                    try {
-                        salt = Convert.FromBase64String(saltBase64);
-                    }
-                    catch (FormatException) {
-                        // Invalid base64, salt will remain null
-                    }
-                }
+            if (actualKeyId == null || keyVersion.IsNullOrWhitespace())
+                return new(encryptedDataStream.ToArray(), encryptedDek, actualKeyId ?? "", keyVersion ?? "", salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+
+            var keyMetadata = await _keyStore.GetKeyMetadataAsync(actualKeyId, keyVersion).ConfigureAwait(false);
+            if (keyMetadata?.AdditionalData == null || !keyMetadata.AdditionalData.TryGetValue("Pbkdf2Salt", out var saltBase64))
+                return new(encryptedDataStream.ToArray(), encryptedDek, actualKeyId, keyVersion, salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+
+            try {
+                salt = Convert.FromBase64String(saltBase64);
+            }
+            catch (FormatException) {
+                // Invalid base64, salt will remain null
             }
 
-            return new(encryptedDataStream.ToArray(), encryptedDek, actualKeyId ?? "", keyVersion ?? "", salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+            return new(encryptedDataStream.ToArray(), encryptedDek, actualKeyId, keyVersion, salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
         }
         finally {
             // Securely clear the DEK from memory
@@ -910,19 +913,21 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
             // Get salt from keystore metadata
             byte[]? salt = null;
-            if (actualKeyId != null && !string.IsNullOrWhiteSpace(keyVersion)) {
-                var keyMetadata = _keyStore.GetKeyMetadata(actualKeyId, keyVersion);
-                if (keyMetadata?.AdditionalData != null && keyMetadata.AdditionalData.TryGetValue("Pbkdf2Salt", out var saltBase64)) {
-                    try {
-                        salt = Convert.FromBase64String(saltBase64);
-                    }
-                    catch (FormatException) {
-                        // Invalid base64, salt will remain null
-                    }
-                }
+            if (actualKeyId == null || keyVersion.IsNullOrWhitespace())
+                return new(encryptedData, encryptedDek, actualKeyId ?? "", keyVersion ?? "", salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+
+            var keyMetadata = _keyStore.GetKeyMetadata(actualKeyId, keyVersion);
+            if (keyMetadata?.AdditionalData == null || !keyMetadata.AdditionalData.TryGetValue("Pbkdf2Salt", out var saltBase64))
+                return new(encryptedData, encryptedDek, actualKeyId, keyVersion, salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+
+            try {
+                salt = Convert.FromBase64String(saltBase64);
+            }
+            catch (FormatException) {
+                // Invalid base64, salt will remain null
             }
 
-            return new(encryptedData, encryptedDek, actualKeyId ?? "", keyVersion ?? "", salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
+            return new(encryptedData, encryptedDek, actualKeyId, keyVersion, salt, (byte)GetDekKeyMaterialSize(_dekEncryptionService));
         }
         finally {
             SecurityUtilities.Clear(dek);

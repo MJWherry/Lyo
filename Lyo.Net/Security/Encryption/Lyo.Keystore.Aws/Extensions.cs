@@ -67,13 +67,13 @@ public static class Extensions
             services.AddSingleton<AwsKeystoreOptions>(_ => {
                 var options = new AwsKeystoreOptions();
                 var section = configuration.GetSection(configSectionName);
-                if (section.Exists()) {
-                    options.AccessKeyId = section["AccessKeyId"];
-                    options.SecretAccessKey = section["SecretAccessKey"];
-                    options.Region = section["Region"];
-                    options.SecretNamePrefix = section["SecretNamePrefix"];
-                }
+                if (!section.Exists())
+                    return options;
 
+                options.AccessKeyId = section["AccessKeyId"];
+                options.SecretAccessKey = section["SecretAccessKey"];
+                options.Region = section["Region"];
+                options.SecretNamePrefix = section["SecretNamePrefix"];
                 return options;
             });
 
@@ -147,13 +147,13 @@ public static class Extensions
                 services.AddSingleton<AwsKeystoreOptions>(_ => {
                     var section = configuration.GetSection(configSectionName);
                     var options = new AwsKeystoreOptions();
-                    if (section.Exists()) {
-                        options.AccessKeyId = section["AccessKeyId"];
-                        options.SecretAccessKey = section["SecretAccessKey"];
-                        options.Region = section["Region"];
-                        options.SecretNamePrefix = section["SecretNamePrefix"];
-                    }
+                    if (!section.Exists())
+                        return options;
 
+                    options.AccessKeyId = section["AccessKeyId"];
+                    options.SecretAccessKey = section["SecretAccessKey"];
+                    options.Region = section["Region"];
+                    options.SecretNamePrefix = section["SecretNamePrefix"];
                     return options;
                 });
             }
@@ -161,27 +161,26 @@ public static class Extensions
             // Register keyed AwsKeyStore - reads SecretNamePrefix from options at resolution time
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName) && s.ServiceType == typeof(AwsKeyStore))) {
                 services.AddKeyedSingleton<AwsKeyStore>(
-                    keyedServiceName, (provider, serviceKey) => {
+                    keyedServiceName, (provider, _) => {
                         var secretsManager = provider.GetRequiredService<IAmazonSecretsManager>();
                         var options = provider.GetRequiredService<AwsKeystoreOptions>();
-                        var prefix = options.SecretNamePrefix ??
-                            throw new InvalidOperationException($"SecretNamePrefix is required in configuration section '{configSectionName}'");
-
+                        OperationHelpers.ThrowIfNullOrWhiteSpace(options.SecretNamePrefix, message: $"SecretNamePrefix is required in configuration section '{configSectionName}'");
+                        var prefix = options.SecretNamePrefix;
                         return new(secretsManager, prefix);
                     });
 
                 services.AddKeyedSingleton<IKeyStore>(
                     keyedServiceName,
-                    (provider, serviceKey) => provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
-                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found."));
+                    (provider, _) => provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
+                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found."));
             }
 
             // Register DEK and KEK services (keyed) - singleton since they're stateless
             if (!services.Any(s => s.ServiceType == typeof(AesGcmEncryptionService) && s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName))) {
                 services.AddKeyedSingleton<AesGcmEncryptionService>(
-                    keyedServiceName, (provider, serviceKey) => {
+                    keyedServiceName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ?? throw new InvalidOperationException(
-                            $"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found.");
+                            $"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found.");
 
                         return new(keyStore);
                     });
@@ -189,21 +188,21 @@ public static class Extensions
                 // Register interface for encryption service
                 services.AddKeyedSingleton<IEncryptionService>(
                     keyedServiceName,
-                    (provider, serviceKey) => provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found."));
+                    (provider, _) => provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found."));
             }
 
             // Register TwoKeyEncryptionService (keyed) - singleton since it's stateless
             return services.AddKeyedSingleton<ITwoKeyEncryptionService>(
-                keyedServiceName, (provider, serviceKey) => {
+                keyedServiceName, (provider, _) => {
                     var keyStore = provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
-                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found.");
+                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found.");
 
                     var dekService = provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found.");
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found.");
 
                     var kekService = provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found.");
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found.");
 
                     return new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(dekService, kekService, keyStore);
                 });
@@ -222,7 +221,7 @@ public static class Extensions
 
             // Register IAmazonSecretsManager if awsConfig is provided and not already registered
             if (awsConfig != null && !services.Any(s => s.ServiceType == typeof(IAmazonSecretsManager))) {
-                services.AddSingleton<IAmazonSecretsManager>(provider => {
+                services.AddSingleton<IAmazonSecretsManager>(_ => {
                     var region = !string.IsNullOrEmpty(awsConfig.Region) ? RegionEndpoint.GetBySystemName(awsConfig.Region) : RegionEndpoint.USEast2; // Default region
                     var config = new AmazonSecretsManagerConfig { RegionEndpoint = region };
                     if (!string.IsNullOrEmpty(awsConfig.AccessKeyId) && !string.IsNullOrEmpty(awsConfig.SecretAccessKey))
@@ -236,23 +235,23 @@ public static class Extensions
             // Register keyed AwsKeyStore
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName) && s.ServiceType == typeof(AwsKeyStore))) {
                 services.AddKeyedSingleton<AwsKeyStore>(
-                    keyedServiceName, (provider, serviceKey) => {
+                    keyedServiceName, (provider, _) => {
                         var secretsManager = provider.GetRequiredService<IAmazonSecretsManager>();
                         return new(secretsManager, secretNamePrefix);
                     });
 
                 services.AddKeyedSingleton<IKeyStore>(
                     keyedServiceName,
-                    (provider, serviceKey) => provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
-                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found."));
+                    (provider, _) => provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
+                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found."));
             }
 
             // Register DEK and KEK services (keyed) - singleton since they're stateless
             if (!services.Any(s => s.ServiceType == typeof(AesGcmEncryptionService) && s.ServiceKey != null && s.ServiceKey.Equals(keyedServiceName))) {
                 services.AddKeyedSingleton<AesGcmEncryptionService>(
-                    keyedServiceName, (provider, serviceKey) => {
+                    keyedServiceName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ?? throw new InvalidOperationException(
-                            $"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found.");
+                            $"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found.");
 
                         return new(keyStore);
                     });
@@ -260,21 +259,21 @@ public static class Extensions
                 // Register interface for encryption service
                 services.AddKeyedSingleton<IEncryptionService>(
                     keyedServiceName,
-                    (provider, serviceKey) => provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found."));
+                    (provider, _) => provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found."));
             }
 
             // Register TwoKeyEncryptionService (keyed) - singleton since it's stateless
             return services.AddKeyedSingleton<ITwoKeyEncryptionService>(
-                keyedServiceName, (provider, serviceKey) => {
+                keyedServiceName, (provider, _) => {
                     var keyStore = provider.GetKeyedService<AwsKeyStore>(keyedServiceName) ??
-                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{typeof(AwsKeyStore).Name}' was not found.");
+                        throw new InvalidOperationException($"Keyed key store service '{keyedServiceName}' of type '{nameof(AwsKeyStore)}' was not found.");
 
                     var dekService = provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found.");
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found.");
 
                     var kekService = provider.GetKeyedService<AesGcmEncryptionService>(keyedServiceName) ?? throw new InvalidOperationException(
-                        $"Keyed encryption service '{keyedServiceName}' of type '{typeof(AesGcmEncryptionService).Name}' was not found.");
+                        $"Keyed encryption service '{keyedServiceName}' of type '{nameof(AesGcmEncryptionService)}' was not found.");
 
                     return new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(dekService, kekService, keyStore);
                 });

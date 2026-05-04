@@ -36,7 +36,7 @@ public sealed class RedactionPolicyBuilder
     /// </summary>
     public RedactionPolicyBuilder WithPolicyName(string? name)
     {
-        _policyName = string.IsNullOrWhiteSpace(name) ? null : name!.Trim();
+        _policyName = name?.Trim();
         return this;
     }
 
@@ -45,9 +45,7 @@ public sealed class RedactionPolicyBuilder
     {
         ArgumentHelpers.ThrowIfNull(literals);
         foreach (var s in literals) {
-            if (string.IsNullOrEmpty(s))
-                throw new ArgumentException("Never-redact literal cannot be null or empty.", nameof(literals));
-
+            ArgumentHelpers.ThrowIfNullOrEmpty(s, "Never-redact literal cannot be null or empty.");
             _neverRedact.Add(s);
         }
 

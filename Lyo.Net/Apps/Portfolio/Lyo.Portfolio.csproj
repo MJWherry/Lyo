@@ -34,6 +34,8 @@
         <ProjectReference Include="..\..\Core\Privacy\Lyo.Privacy.Web.Components\Lyo.Privacy.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
 
+        <ProjectReference Include="..\..\Data\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
+
         <!-- Portfolio API -->
         <ProjectReference Include="..\..\Data\Query\Lyo.Query.Web.Components\Lyo.Query.Web.Components.csproj"/>
 

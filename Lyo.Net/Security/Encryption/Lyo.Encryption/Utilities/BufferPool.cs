@@ -51,9 +51,6 @@ internal static class BufferPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Return(byte[] buffer)
     {
-        if (buffer == null)
-            return;
-
         // Find the matching pool size
         for (var i = 0; i < PoolSizes.Length; i++) {
             if (buffer.Length != PoolSizes[i])

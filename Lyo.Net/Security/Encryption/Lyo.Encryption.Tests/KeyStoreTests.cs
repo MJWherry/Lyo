@@ -4,7 +4,7 @@ namespace Lyo.Encryption.Tests;
 
 public class KeyStoreTests
 {
-    private static readonly string[] expected = ["1", "2", "3"];
+    private static readonly string[] Expected = ["1", "2", "3"];
 
     [Fact]
     public void AddKey_StoresKey()
@@ -171,7 +171,7 @@ public class KeyStoreTests
         keyStore.AddKey(keyId, "2", key);
         var versions = keyStore.GetAvailableVersions(keyId).ToList();
         Assert.Equal(3, versions.Count);
-        Assert.Equal(expected, versions);
+        Assert.Equal(Expected, versions);
     }
 
     [Fact]

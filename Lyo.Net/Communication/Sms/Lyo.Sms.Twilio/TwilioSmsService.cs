@@ -92,7 +92,6 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
 
     /// <summary>Sends an SMS or MMS message using the Twilio API.</summary>
     /// <param name="request">The message to send. Must have a To address and either a body or media attachments.</param>
-    /// <param name="ct">Cancellation token to cancel the operation.</param>
     /// <returns>A Result&lt;SmsRequest&gt; indicating success or failure with details.</returns>
     /// <remarks>Long messages (>160 characters) are automatically split into multiple segments by Twilio.</remarks>
     /// <inheritdoc />

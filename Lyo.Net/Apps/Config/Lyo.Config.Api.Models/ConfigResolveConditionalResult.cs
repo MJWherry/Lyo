@@ -1,5 +1,3 @@
-using Lyo.Config;
-
 namespace Lyo.Config.Api.Models;
 
 /// <summary>Outcome of GET/HEAD resolved config including optional body and opaque ETag for If-None-Match on the next poll.</summary>

@@ -1,4 +1,3 @@
-using Lyo.Config;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 

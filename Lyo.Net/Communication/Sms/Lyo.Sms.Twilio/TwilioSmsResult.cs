@@ -1,4 +1,5 @@
 using System.Globalization;
+using Lyo.Common;
 using Lyo.Result;
 using Lyo.Sms.Models;
 using Twilio.Rest.Api.V2010.Account;
@@ -132,7 +133,7 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
 
     private static decimal? TryParseDecimal(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value.IsNullOrWhitespace())
             return null;
 
         // Remove currency symbols and whitespace

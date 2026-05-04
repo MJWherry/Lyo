@@ -38,7 +38,7 @@ public class InvalidFormatException : ArgumentException
         : base(message, paramName)
     {
         InvalidValue = invalidValue;
-        ValidFormats = validFormats?.Where(f => !string.IsNullOrWhiteSpace(f)).ToList().AsReadOnly() ?? Array.Empty<string>().ToList().AsReadOnly();
+        ValidFormats = validFormats.Where(f => !string.IsNullOrWhiteSpace(f)).ToList().AsReadOnly();
     }
 
     /// <summary>Initializes a new instance of the <see cref="InvalidFormatException" /> class.</summary>
@@ -51,7 +51,7 @@ public class InvalidFormatException : ArgumentException
         : base(message, paramName, innerException)
     {
         InvalidValue = invalidValue;
-        ValidFormats = validFormats?.Where(f => !string.IsNullOrWhiteSpace(f)).ToList().AsReadOnly() ?? Array.Empty<string>().ToList().AsReadOnly();
+        ValidFormats = validFormats.Where(f => !string.IsNullOrWhiteSpace(f)).ToList().AsReadOnly();
     }
 
     public override string ToString() => $"{base.ToString()} (Invalid Value: '{InvalidValue}', Valid Formats: [{string.Join(", ", ValidFormats)}])";

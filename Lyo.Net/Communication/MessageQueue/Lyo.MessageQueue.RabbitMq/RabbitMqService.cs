@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -155,12 +156,12 @@ public sealed class RabbitMqService : IRabbitMqService
         IDictionary<string, object>? arguments = null,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(exchangeName)) {
+        if (exchangeName.IsNullOrWhitespace()) {
             _logger.LogWarning("Cannot create exchange: exchange name is null or empty");
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(exchangeType))
+        if (exchangeType.IsNullOrWhitespace())
             exchangeType = "direct";
 
         if (!IsConnected()) {
@@ -401,7 +402,7 @@ public sealed class RabbitMqService : IRabbitMqService
         }
 
         try {
-            await _publishChannel!.QueueBindAsync(queueName, exchangeName, routingKey ?? "", cancellationToken: ct).ConfigureAwait(false);
+            await _publishChannel!.QueueBindAsync(queueName, exchangeName, routingKey, cancellationToken: ct).ConfigureAwait(false);
             _logger.LogInformation("Bound queue {QueueName} to exchange {ExchangeName} with routing key {RoutingKey}", queueName, exchangeName, routingKey);
             return true;
         }
@@ -418,7 +419,7 @@ public sealed class RabbitMqService : IRabbitMqService
             return false;
         }
 
-        if (data == null || data.Length == 0) {
+        if (data.Length == 0) {
             _logger.LogWarning("Cannot send to queue {QueueName}: data is null or empty", queueName);
             return false;
         }
@@ -464,7 +465,7 @@ public sealed class RabbitMqService : IRabbitMqService
             return false;
         }
 
-        if (data == null || data.Length == 0) {
+        if (data.Length == 0) {
             _logger.LogWarning("Cannot send to exchange {ExchangeName}: data is null or empty", exchangeName);
             return false;
         }
@@ -473,7 +474,7 @@ public sealed class RabbitMqService : IRabbitMqService
             _logger.LogWarning("Cannot send to exchange {ExchangeName}: not connected", exchangeName);
             if (_options.EnableMetrics) {
                 var failureTags = new[] {
-                    (Constants.Metrics.Tags.Exchange, exchangeName), (Constants.Metrics.Tags.RoutingKey, routingKey ?? ""), (Constants.Metrics.Tags.Reason, "not_connected")
+                    (Constants.Metrics.Tags.Exchange, exchangeName), (Constants.Metrics.Tags.RoutingKey, routingKey), (Constants.Metrics.Tags.Reason, "not_connected")
                 };
 
                 _metrics.IncrementCounter(Constants.Metrics.SendToExchangeFailure, 1, failureTags);
@@ -482,11 +483,11 @@ public sealed class RabbitMqService : IRabbitMqService
             return false;
         }
 
-        var tags = new[] { (Constants.Metrics.Tags.Exchange, exchangeName), (Constants.Metrics.Tags.RoutingKey, routingKey ?? "") };
+        var tags = new[] { (Constants.Metrics.Tags.Exchange, exchangeName), (Constants.Metrics.Tags.RoutingKey, routingKey) };
         using var timer = _metrics.StartTimer(Constants.Metrics.SendToExchangeDuration, tags);
         var sw = Stopwatch.StartNew();
         try {
-            await _publishChannel!.BasicPublishAsync(exchangeName, routingKey ?? "", data).ConfigureAwait(false);
+            await _publishChannel!.BasicPublishAsync(exchangeName, routingKey, data).ConfigureAwait(false);
             sw.Stop();
             _logger.LogDebug("Published message to exchange {ExchangeName} with routing key {RoutingKey} ({Size} bytes)", exchangeName, routingKey, data.Length);
             if (_options.EnableMetrics) {
@@ -551,10 +552,10 @@ public sealed class RabbitMqService : IRabbitMqService
             return false;
         }
 
-        if (onMessage == null) {
-            _logger.LogWarning("Cannot subscribe to queue {QueueName}: message handler is null", queueName);
-            return false;
-        }
+        //if (onMessage == null) {
+        //    _logger.LogWarning("Cannot subscribe to queue {QueueName}: message handler is null", queueName);
+        //    return false;
+        //}
 
         if (!IsConnected()) {
             _logger.LogWarning("Cannot subscribe to queue {QueueName}: not connected", queueName);

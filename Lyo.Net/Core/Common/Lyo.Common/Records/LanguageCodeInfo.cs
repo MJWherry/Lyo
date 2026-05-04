@@ -147,17 +147,17 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
         foreach (var langCode in fields) {
             _allCodes.Add(langCode);
             _byBcp47[langCode.Bcp47] = langCode;
-            if (!string.IsNullOrWhiteSpace(langCode.Iso6391)) {
+            if (!langCode.Iso6391.IsNullOrWhitespace()) {
                 // For ISO 639-1, store the first occurrence (base variant)
                 var iso1 = langCode.Iso6391;
-                if (iso1 != null && !_byIso6391.ContainsKey(iso1))
+                if (!_byIso6391.ContainsKey(iso1))
                     _byIso6391[iso1] = langCode;
             }
 
-            if (!string.IsNullOrWhiteSpace(langCode.Iso6393)) {
+            if (!langCode.Iso6393.IsNullOrWhitespace()) {
                 // For ISO 639-3, store the first occurrence (base variant)
                 var iso3 = langCode.Iso6393;
-                if (iso3 != null && !_byIso6393.ContainsKey(iso3))
+                if (!_byIso6393.ContainsKey(iso3))
                     _byIso6393[iso3] = langCode;
             }
         }
@@ -168,10 +168,10 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     /// <returns>The language code, or Unknown if not found.</returns>
     public static LanguageCodeInfo FromBcp47(string? bcp47Code)
     {
-        if (string.IsNullOrWhiteSpace(bcp47Code))
+        if (bcp47Code.IsNullOrWhitespace())
             return Unknown;
 
-        var trimmed = bcp47Code!.Trim();
+        var trimmed = bcp47Code.Trim();
         return _byBcp47.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 
@@ -181,10 +181,10 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     /// <remarks>When multiple language codes share the same ISO 639-1 code, returns the first one (base variant) based on registration order.</remarks>
     public static LanguageCodeInfo FromIso6391(string? iso6391Code)
     {
-        if (string.IsNullOrWhiteSpace(iso6391Code))
+        if (iso6391Code.IsNullOrWhitespace())
             return Unknown;
 
-        var trimmed = iso6391Code!.Trim().ToLowerInvariant();
+        var trimmed = iso6391Code.Trim().ToLowerInvariant();
         return _byIso6391.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 
@@ -194,10 +194,10 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     /// <remarks>When multiple language codes share the same ISO 639-3 code, returns the first one (base variant) based on registration order.</remarks>
     public static LanguageCodeInfo FromIso6393(string? iso6393Code)
     {
-        if (string.IsNullOrWhiteSpace(iso6393Code))
+        if (iso6393Code.IsNullOrWhitespace())
             return Unknown;
 
-        var trimmed = iso6393Code!.Trim().ToLowerInvariant();
+        var trimmed = iso6393Code.Trim().ToLowerInvariant();
         return _byIso6393.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 }

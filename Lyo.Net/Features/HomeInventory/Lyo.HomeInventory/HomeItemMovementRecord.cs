@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Common.Identifiers;
 
 namespace Lyo.HomeInventory;
@@ -29,5 +30,5 @@ public sealed class HomeItemMovementRecord
     public DateTime CreatedTimestamp { get; set; }
 
     public EntityRef? CreatedBy
-        => string.IsNullOrWhiteSpace(CreatedByEntityType) || string.IsNullOrWhiteSpace(CreatedByEntityId) ? null : new EntityRef(CreatedByEntityType, CreatedByEntityId);
+        => CreatedByEntityType.IsNullOrWhitespace() || CreatedByEntityId.IsNullOrWhitespace() ? null : new EntityRef(CreatedByEntityType, CreatedByEntityId);
 }

@@ -1,6 +1,7 @@
 using Lyo.Diagnostic;
 using Lyo.Diagnostic.Breadcrumbs;
 using Lyo.Diagnostic.Inbox;
+using Lyo.Diagnostic.Registration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 

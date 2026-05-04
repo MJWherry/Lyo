@@ -51,13 +51,10 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     /// <summary>Finds a file size unit by its abbreviation.</summary>
     /// <param name="abbreviation">The unit abbreviation (e.g., "KB", "MB", "GB").</param>
     /// <returns>The file size unit info, or Unknown if not found.</returns>
-    public static FileSizeUnitInfo FromAbbreviation(string? abbreviation)
-    {
-        if (string.IsNullOrWhiteSpace(abbreviation))
-            return Unknown;
-
-        return _byAbbreviation.TryGetValue(abbreviation!.Trim(), out var unit) ? unit : Unknown;
-    }
+    public static FileSizeUnitInfo FromAbbreviation(string? abbreviation) 
+        => abbreviation.IsNullOrEmpty() 
+            ? Unknown 
+            : _byAbbreviation.TryGetValue(abbreviation!.Trim(), out var unit) ? unit : Unknown;
 
     /// <summary>Finds a file size unit by FileSizeUnit enum.</summary>
     /// <param name="fileSizeUnit">The FileSizeUnit enum value.</param>

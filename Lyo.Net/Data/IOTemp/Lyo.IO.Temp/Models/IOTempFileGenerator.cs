@@ -25,6 +25,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     private static long _nameSequence;
 
     private readonly IOTempGeneratorContext _ctx;
+    
+    [ThreadStatic]
+    private static Random? _threadRandom;
+
+    private static Random GetRandom() => _threadRandom ??= new();
 
     internal IOTempFileGenerator(IOTempGeneratorContext context) => _ctx = context;
 
@@ -817,15 +822,5 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
         return $"{prefix}{middle}{suffix}";
     }
-
-#if NET6_0_OR_GREATER
-    private static Random GetRandom() => Random.Shared;
-#else
-    [ThreadStatic]
-    private static Random? _threadRandom;
-
-    private static Random GetRandom() => _threadRandom ??= new();
-#endif
-
 #endregion
 }

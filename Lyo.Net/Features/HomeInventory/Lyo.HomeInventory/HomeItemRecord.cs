@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Common.Identifiers;
 
 namespace Lyo.HomeInventory;
@@ -106,5 +107,5 @@ public sealed class HomeItemRecord
 
     public DateTime? UpdatedTimestamp { get; set; }
 
-    public EntityRef? Owner => string.IsNullOrWhiteSpace(OwnerEntityType) || string.IsNullOrWhiteSpace(OwnerEntityId) ? null : new EntityRef(OwnerEntityType, OwnerEntityId);
+    public EntityRef? Owner => OwnerEntityType.IsNullOrWhitespace() || OwnerEntityId.IsNullOrWhitespace() ? null : new EntityRef(OwnerEntityType, OwnerEntityId);
 }

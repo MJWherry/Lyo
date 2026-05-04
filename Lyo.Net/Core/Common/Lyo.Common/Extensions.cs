@@ -1,24 +1,28 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Lyo.Common.Attributes;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
-using Lyo.Exceptions;
 
 #pragma warning disable CS8603 // Possible null reference return.
-
-#if NETSTANDARD2_0
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#endif
 
 namespace Lyo.Common;
 
 public static class Extensions
 {
+    extension([NotNullWhen(false)] string? value)
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNullOrEmpty() => string.IsNullOrEmpty(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNullOrWhitespace() => string.IsNullOrWhiteSpace(value);
+    }
+
     /// <summary>Returns the default value if the string is null or empty.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string OrDefault(this string? value, string defaultValue) => string.IsNullOrEmpty(value) ? defaultValue : value;
@@ -29,7 +33,7 @@ public static class Extensions
 
     public static string Truncated(this string s, in int? start = 4, in int? end = null, in int ellipsesLength = 3)
     {
-        if (string.IsNullOrEmpty(s))
+        if (s.IsNullOrEmpty())
             return string.Empty;
 
         var ellipses = ".".Repeat(Math.Max(0, ellipsesLength));
@@ -263,11 +267,11 @@ public static class Extensions
     /// <returns>The audio format, or Unknown if not recognized.</returns>
     public static AudioFormat GetAudioFormatFromExtension(this string? filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
+        if (filePath.IsNullOrWhitespace())
             return AudioFormat.Unknown;
 
         var extension = Path.GetExtension(filePath).TrimStart('.');
-        if (string.IsNullOrWhiteSpace(extension))
+        if (extension.IsNullOrWhitespace())
             extension = filePath.TrimStart('.');
 
         return extension.ToLowerInvariant() switch {
@@ -289,11 +293,11 @@ public static class Extensions
     /// <returns>The MIME type, or Unknown if not recognized.</returns>
     public static MimeType GetMimeTypeFromExtension(this string? filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
+        if (filePath.IsNullOrWhitespace())
             return MimeType.Unknown;
 
         var extension = Path.GetExtension(filePath).TrimStart('.');
-        if (string.IsNullOrWhiteSpace(extension))
+        if (extension.IsNullOrWhitespace())
             extension = filePath.TrimStart('.');
 
         return Enum.TryParse<MimeType>(extension, out var result) ? result : MimeType.Unknown;

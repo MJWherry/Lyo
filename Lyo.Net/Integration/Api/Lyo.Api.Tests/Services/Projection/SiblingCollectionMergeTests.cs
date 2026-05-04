@@ -3,6 +3,8 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Formatter;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+// ReSharper disable UnusedAutoPropertyAccessor.Local
+// ReSharper disable UnusedMember.Local
 
 namespace Lyo.Api.Tests.Services.Projection;
 
@@ -24,8 +26,8 @@ public sealed class SiblingCollectionMergeTests
         var outRow = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.CreatedTimestamp"));
         Assert.True(outRow.TryGetValue("ContactAddresses.Address", out var mergedObj));
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Equal(2, list!.Count);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        Assert.Equal(2, list.Count);
         Assert.Equal("2026-01-01", list[0]["CreatedTimestamp"]?.ToString());
         Assert.Equal("Broad St", list[0]["a"]?.ToString());
         Assert.Equal("2026-01-02", list[1]["CreatedTimestamp"]?.ToString());
@@ -60,7 +62,7 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
         Assert.True(outRow.TryGetValue("ContactAddresses", out var mergedObj));
         var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Equal(2, list!.Count);
+        Assert.Equal(2, list.Count);
         Assert.Equal("Home", list[0]["Type"]?.ToString());
         var addr0 = Assert.IsAssignableFrom<Dictionary<string, object?>>(list[0]["Address"]);
         Assert.Equal("St", addr0["n"]?.ToString());
@@ -97,7 +99,7 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("contactaddresses.id"));
         Assert.True(outRow.TryGetValue("ContactAddresses", out var mergedObj));
         var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Equal(2, list!.Count);
+        Assert.Equal(2, list.Count);
         Assert.Equal("ca-1", list[0]["Id"]?.ToString());
         var addr0 = Assert.IsAssignableFrom<Dictionary<string, object?>>(list[0]["Address"]);
         Assert.Equal("Hollywood", addr0["StreetName"]?.ToString());
@@ -139,9 +141,9 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
         Assert.DoesNotContain(outRow, kvp => string.Equals(kvp.Key, "ContactAddresses.Address", StringComparison.OrdinalIgnoreCase) && kvp.Value is IList l && l.Count == 0);
         Assert.True(outRow.TryGetValue("ContactAddresses", out var mergedObj));
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Single(list!);
-        var addr = Assert.IsAssignableFrom<Dictionary<string, object?>>(list![0]["Address"]);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        Assert.Single(list);
+        var addr = Assert.IsAssignableFrom<Dictionary<string, object?>>(list[0]["Address"]);
         Assert.Equal("Hollywood", addr["StreetName"]?.ToString());
         Assert.Equal("St", addr["n"]?.ToString());
     }
@@ -166,8 +168,8 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.*"));
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.a"));
         Assert.True(outRow.TryGetValue("ContactAddresses.Address", out var mergedObj));
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Equal(2, list!.Count);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        Assert.Equal(2, list.Count);
         Assert.Equal("St", list[0]["StreetType"]?.ToString());
         Assert.Equal("Main St", list[0]["a"]?.ToString());
         Assert.Equal("Ave", list[1]["StreetType"]?.ToString());
@@ -187,8 +189,8 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(row.ContainsKey("DocketCharges.Code"));
         Assert.False(row.ContainsKey("DocketCharges.Number"));
         Assert.True(row.TryGetValue("DocketCharges", out var merged));
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(merged);
-        Assert.Equal(2, list!.Count);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(merged, exactMatch: false);
+        Assert.Equal(2, list.Count);
         Assert.Equal("A", list[0]["Code"]);
         Assert.Equal("1", list[0]["Number"]);
         Assert.Equal("B", list[1]["Code"]);
@@ -242,8 +244,8 @@ public sealed class SiblingCollectionMergeTests
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("a"));
         Assert.True(outRow.TryGetValue("DocketCharges", out var mergedObj));
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(mergedObj);
-        Assert.Equal(2, list!.Count);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        Assert.Equal(2, list.Count);
         Assert.Equal("A 1", list[0]["a"]?.ToString());
         Assert.Equal("B 2", list[1]["a"]?.ToString());
     }
@@ -265,8 +267,8 @@ public sealed class SiblingCollectionMergeTests
         service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, true);
         service.StripAutoDerivedDependencyLeavesFromMergedCollections(afterComputed, specs, ["DocketCharges.Description", "DocketCharges.Number"]);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
-        var list = Assert.IsAssignableFrom<IList<Dictionary<string, object?>>>(outRow["DocketCharges"]);
-        Assert.Equal(2, list!.Count);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(outRow["DocketCharges"], exactMatch: false);
+        Assert.Equal(2, list.Count);
         Assert.False(list[0].ContainsKey("Description"));
         Assert.False(list[0].ContainsKey("Number"));
         Assert.True(list[0].ContainsKey("a"));
