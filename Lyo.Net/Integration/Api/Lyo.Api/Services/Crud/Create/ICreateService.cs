@@ -11,6 +11,7 @@ public interface ICreateService<TContext>
         TRequest request,
         Action<CreateContext<TRequest, TDbModel, TContext>>? before = null,
         Action<CreateContext<TRequest, TDbModel, TContext>>? after = null,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync = null,
         CancellationToken ct = default)
         where TDbModel : class;
 
@@ -18,6 +19,7 @@ public interface ICreateService<TContext>
         IEnumerable<TRequest> requests,
         Action<CreateContext<TRequest, TDbModel, TContext>>? before = null,
         Action<CreateContext<TRequest, TDbModel, TContext>>? after = null,
+        Func<CreateContext<TRequest, TDbModel, TContext>, Task>? afterAsync = null,
         CancellationToken ct = default)
         where TDbModel : class;
 }

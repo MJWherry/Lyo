@@ -26,7 +26,8 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     private IPlaywright? _playwright;
 
-    private PlaywrightTabManager? _tabs;
+    private PlaywrightTabManager? _nativeTabs;
+    private PlaywrightBrowserTabs? _automationTabs;
 
     /// <summary>Correlation id when created from <see cref="IPlaywrightBrowserService.CreateSession" />; otherwise <see cref="Guid.Empty" />.</summary>
     public Guid SessionId => ExecutionContext?.SessionId ?? Guid.Empty;
@@ -49,8 +50,11 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <summary>Underlying browser context when started.</summary>
     public IBrowserContext? Context { get; private set; }
 
-    /// <summary>Tab / page management.</summary>
-    public PlaywrightTabManager Tabs => _tabs ??= new(this, Logger);
+    /// <summary>Playwright-native page/tab management (advanced APIs). Prefer portable <see cref="Tabs" /> for cross-engine plans.</summary>
+    public PlaywrightTabManager NativeTabs => _nativeTabs ??= new(this, Logger);
+
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => _automationTabs ??= new PlaywrightBrowserTabs(this);
 
     /// <summary>Nested iframe navigation.</summary>
     public PlaywrightFrameNavigator Frames => _frames ??= new(this);
@@ -98,8 +102,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             return;
 
         _disposed = true;
-        _tabs?.ClearDisplayNames();
-        _tabs = null;
+        _nativeTabs?.ClearDisplayNames();
+        _nativeTabs = null;
+        _automationTabs = null;
         _frames = null;
         _dialogs = null;
         _keyboard = null;
@@ -140,8 +145,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             return;
 
         _disposed = true;
-        _tabs?.ClearDisplayNames();
-        _tabs = null;
+        _nativeTabs?.ClearDisplayNames();
+        _nativeTabs = null;
+        _automationTabs = null;
         _frames = null;
         _dialogs = null;
         _keyboard = null;
@@ -179,6 +185,12 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     /// <inheritdoc />
     public IBrowserHeaders? ExtraHeaders => Context != null ? _headerStore ??= new(this) : null;
 
+    /// <inheritdoc />
+    public IWebAutomationNavigator Navigator => this;
+
+    /// <inheritdoc />
+    public IWebAutomationPage CurrentPage => this;
+
     /// <summary>Full HTML source of the current page.</summary>
     public async Task<string> GetPageSourceAsync(CancellationToken ct = default)
     {
@@ -186,9 +198,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         return await Page!.ContentAsync().ConfigureAwait(false);
     }
 
-    Task IWebAutomationBrowser.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
+    Task IWebAutomationNavigator.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
 
-    async Task IWebAutomationBrowser.ReloadAsync(CancellationToken ct)
+    async Task IWebAutomationNavigator.ReloadAsync(CancellationToken ct)
     {
         EnsureStarted();
         ct.ThrowIfCancellationRequested();
@@ -196,25 +208,34 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         Logger.LogDebug("Page reloaded");
     }
 
-    Task<string> IWebAutomationBrowser.GetCurrentUrlAsync(CancellationToken ct)
+    Task<string> IWebAutomationPage.GetCurrentUrlAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         return Task.FromResult(GetCurrentUrl());
     }
 
-    Task<string> IWebAutomationBrowser.GetTitleAsync(CancellationToken ct) => GetTitleAsync(ct);
+    Task<string> IWebAutomationPage.GetTitleAsync(CancellationToken ct) => GetTitleAsync(ct);
 
-    Task<IWebAutomationElement> IWebAutomationBrowser.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct) => PollForChainAsync(chain, ct);
+    Task<IWebAutomationElement> IWebAutomationPage.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct) => PollForChainAsync(chain, ct);
 
-    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationBrowser.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct) => PollForElementsAsync(chain, ct);
+    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationPage.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct) => PollForElementsAsync(chain, ct);
 
-    Task<IWebAutomationElement?> IWebAutomationBrowser.GetElementAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementChainAsync(chain, ct);
+    Task<IWebAutomationElement?> IWebAutomationPage.GetElementAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementChainAsync(chain, ct);
 
-    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationBrowser.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementsChainAsync(chain, ct);
+    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationPage.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementsChainAsync(chain, ct);
 
-    Task<byte[]> IWebAutomationBrowser.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
+    Task<byte[]> IWebAutomationPage.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
 
-    async Task IWebAutomationBrowser.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
+    async Task IWebAutomationPage.SetViewportSizeAsync(int width, int height, CancellationToken ct)
+    {
+        ArgumentHelpers.ThrowIf(width <= 0, "Width must be positive.", nameof(width));
+        ArgumentHelpers.ThrowIf(height <= 0, "Height must be positive.", nameof(height));
+        EnsureStarted();
+        ct.ThrowIfCancellationRequested();
+        await Page!.SetViewportSizeAsync(width, height).ConfigureAwait(false);
+    }
+
+    async Task IWebAutomationNavigator.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
     {
         EnsureStarted();
         var done = false;
@@ -297,8 +318,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StopBrowserDuration)], PlaywrightMetricTags.ForOperation(this, "stop_browser"));
         ct.ThrowIfCancellationRequested();
         try {
-            _tabs?.ClearDisplayNames();
-            _tabs = null;
+            _nativeTabs?.ClearDisplayNames();
+            _nativeTabs = null;
+            _automationTabs = null;
             _frames = null;
             _dialogs = null;
             _keyboard = null;

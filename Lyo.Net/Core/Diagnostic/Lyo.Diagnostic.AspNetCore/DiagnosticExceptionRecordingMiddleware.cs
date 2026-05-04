@@ -48,7 +48,7 @@ public sealed class DiagnosticExceptionRecordingMiddleware(RequestDelegate next)
 
             DiagnosticContext diagnostic;
             try {
-                diagnostic = diagnosticBuilder.Build(ex, requestMeta);
+                diagnostic = await diagnosticBuilder.BuildAsync(ex, requestMeta, context.RequestAborted).ConfigureAwait(false);
             }
             catch (Exception buildEx) {
                 logger.LogWarning(buildEx, "Failed to build diagnostic context");

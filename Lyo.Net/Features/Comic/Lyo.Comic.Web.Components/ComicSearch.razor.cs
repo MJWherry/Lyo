@@ -19,6 +19,8 @@ public partial class ComicSearch
 
     private string? _titleContains;
 
+    private ComicBrowseGridDensity _gridDensity = ComicBrowseGridDensity.Small;
+
     /// <summary>
     /// Executes a search against your data source. Receives a <see cref="ComicSeriesQuery" /> built from the current filter state and a <see cref="CancellationToken" />; must
     /// return a list of matching <see cref="ComicSeries" /> results.
@@ -51,6 +53,15 @@ public partial class ComicSearch
     public int PageSize { get; set; } = 20;
 
     private IReadOnlyList<LyoSelectOption<string>> TagItems => AvailableTags.Select(t => new LyoSelectOption<string>(t, t)).ToList();
+
+    private string ResultsGridClass
+        => _gridDensity switch {
+            ComicBrowseGridDensity.Large => "comic-search__grid comic-search__grid--large",
+            ComicBrowseGridDensity.Small => "comic-search__grid comic-search__grid--small",
+            _ => "comic-search__grid comic-search__grid--small"
+        };
+
+    private void SetGridDensity(ComicBrowseGridDensity density) => _gridDensity = density;
 
     private string? ResolveCoverUrl(ComicSeries series) => ResolveCoverUrlFunc?.Invoke(series);
 

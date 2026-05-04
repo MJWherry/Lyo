@@ -2,7 +2,6 @@
 
 using System.Linq.Expressions;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Client;
 using Lyo.Api.Mapping;
@@ -11,6 +10,7 @@ using Lyo.Audit.Postgres.Database;
 using Lyo.Cache.Fusion;
 using Lyo.Comic.Postgres;
 using Lyo.Comment.Postgres;
+using Lyo.Common;
 using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
@@ -186,9 +186,7 @@ var host = Host.CreateDefaultBuilder(args)
             }, _ => new LocalFileMetadataStore(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestore")), "two-key-aws");
 
         services.AddTransient<IApiClient>(_ => new ApiClient(
-            serializerOptions: new() {
-                PropertyNameCaseInsensitive = true, Converters = { new DateOnlyModelConverter(), new TimeOnlyModelConverter(), new JsonStringEnumConverter() }
-            }));
+            serializerOptions: LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()));
 
         services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" });
         services.AddFusionCacheFromConfiguration(context.Configuration);

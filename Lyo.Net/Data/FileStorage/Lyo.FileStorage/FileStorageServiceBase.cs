@@ -14,6 +14,7 @@ using Lyo.FileStorage.Models;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
 using Lyo.Health;
+using Lyo.Hashing;
 using Lyo.Metrics;
 using Lyo.Streams;
 using Microsoft.Extensions.Logging;

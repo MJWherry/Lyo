@@ -6,7 +6,7 @@ public enum FrameCategory
     /// <summary>Code written by the application developer.</summary>
     UserCode,
 
-    /// <summary>BCL, ASP.NET Core, EF Core, or other well-known library frame.</summary>
+    /// <summary>BCL, Microsoft platform assemblies, and frames matching configured third-party prefixes.</summary>
     SystemOrThirdParty,
 
     /// <summary>Test framework infrastructure (NUnit, xUnit, MSTest).</summary>

@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EmailEngagement(
     DateTime LastCheckedDate,
     bool IsGoodDomain,
@@ -11,4 +14,9 @@ public sealed record EmailEngagement(
     string BestTimeOfTheDay,
     string Frequency,
     string[] Naics,
-    bool IsBounce);
+    bool IsBounce)
+{
+    public override string ToString()
+        => $"EmailEngagement: Score={EngagementScore}, Matched={IsMatched}, Bounce={IsBounce}, GoodDomain={IsGoodDomain}, " +
+           $"Naics={(Naics?.Length ?? 0)}";
+}

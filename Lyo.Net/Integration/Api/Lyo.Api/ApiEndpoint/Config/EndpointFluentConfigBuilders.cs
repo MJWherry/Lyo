@@ -12,6 +12,8 @@ public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
 
     public Action<CreateContext<TRequest, TEntity, TDbContext>>? AfterAction { get; private set; }
 
+    public Func<CreateContext<TRequest, TEntity, TDbContext>, Task>? AfterAsyncAction { get; private set; }
+
     public EndpointAuth? AuthPolicy { get; private set; }
 
     public CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext> Before(Action<CreateContext<TRequest, TEntity, TDbContext>> before)
@@ -26,13 +28,19 @@ public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
         return this;
     }
 
+    public CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext> AfterAsync(Func<CreateContext<TRequest, TEntity, TDbContext>, Task> afterAsync)
+    {
+        AfterAsyncAction = afterAsync;
+        return this;
+    }
+
     public CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext> Auth(EndpointAuth auth)
     {
         AuthPolicy = auth;
         return this;
     }
 
-    public CreateConfig<TRequest, TEntity, TDbContext> Build() => new() { Before = BeforeAction, After = AfterAction, Auth = AuthPolicy };
+    public CreateConfig<TRequest, TEntity, TDbContext> Build() => new() { Before = BeforeAction, After = AfterAction, AfterAsync = AfterAsyncAction, Auth = AuthPolicy };
 }
 
 /// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet" />.</summary>

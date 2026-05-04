@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lyo.Api.Client;
+using Lyo.Common;
 using Lyo.Espn.Fantasy.Football.Models.Request;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -21,12 +22,7 @@ public class FantasyFootballClient : ApiClient
     public FantasyFootballClient(FantasyFootballClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
             loggerFactory?.CreateLogger<FantasyFootballClient>() ?? NullLoggerFactory.Instance.CreateLogger<FantasyFootballClient>(), httpClient,
-            new() {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                PropertyNameCaseInsensitive = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                NumberHandling = JsonNumberHandling.AllowReadingFromString
-            }, options)
+            LyoJsonSerializerOptions.Create(o => o.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull), options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));

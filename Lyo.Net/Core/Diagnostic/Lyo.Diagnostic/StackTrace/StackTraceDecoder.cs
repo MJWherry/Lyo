@@ -1,8 +1,10 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Lyo.Common;
-using Lyo.Common.Security;
+using Lyo.Common.Enums;
+using Lyo.Hashing;
 using Lyo.Exceptions;
+using PackageMetadataModel = global::Lyo.PackageMetadata.PackageMetadata;
 
 namespace Lyo.Diagnostic.StackTrace;
 
@@ -31,6 +33,9 @@ namespace Lyo.Diagnostic.StackTrace;
 /// </example>
 public sealed class StackTraceDecoder : IStackTraceDecoder
 {
+    private const string SyncDecodeBlockedWhenPackageStoreConfigured =
+        "StackTraceDecoderOptions.PackageMetadataStore is set; use DecodeAsync (or clear the store) so package metadata can be resolved asynchronously.";
+
     /// <summary>Parses a full "at …" frame, optionally with "in file:line N".</summary>
     private static readonly Regex FrameRegex = new(@"^\s*at\s+(.+?)\s*(?:in\s+(.+):line\s+(\d+))?\s*$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
@@ -40,10 +45,13 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     /// <summary>Detects "   ---> ExceptionType: message" inner-exception separator.</summary>
     private static readonly Regex InnerExceptionSeparator = new(@"^\s*-{3}>\s*.+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>
+    /// Namespace prefixes always treated as BCL / Microsoft platform (not optional NuGet). For other libraries (FluentValidation,
+    /// AWS SDK, etc.), register <see cref="ExtraSystemPrefixes" /> from config or a store (e.g. Postgres) — the decoder does not
+    /// ship an open-ended built-in vendor list.
+    /// </summary>
     private static readonly string[] BuiltInSystemPrefixes = [
-        "System.", "Microsoft.", "MS.", "Windows.", "mscorlib.", "Interop.", "Internal.", "Newtonsoft.", "AutoMapper.", "Serilog.",
-        "NLog.", "log4net.", "FluentValidation.", "MediatR.", "Polly.", "StackExchange.", "RabbitMQ.", "Npgsql.", "MySql.", "MongoDB.",
-        "Azure.", "AWSSDK.", "Grpc.", "RestSharp.", "Refit."
+        "System.", "Microsoft.", "MS.", "Windows.", "mscorlib.", "Interop.", "Internal."
     ];
 
     private static readonly string[] TestFrameworkPrefixes = [
@@ -67,6 +75,9 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     public DecodedStackTrace Decode(string rawTrace)
     {
         ArgumentHelpers.ThrowIfNull(rawTrace);
+        if (_options.PackageMetadataStore is not null)
+            throw new InvalidOperationException(SyncDecodeBlockedWhenPackageStoreConfigured);
+
         return DecodeInternal(rawTrace);
     }
 
@@ -74,6 +85,9 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     public DecodedStackTrace Decode(Exception exception)
     {
         ArgumentHelpers.ThrowIfNull(exception);
+        if (_options.PackageMetadataStore is not null)
+            throw new InvalidOperationException(SyncDecodeBlockedWhenPackageStoreConfigured);
+
         var inners = new List<DecodedStackTrace>();
         var inner = exception.InnerException;
         while (inner is not null) {
@@ -82,6 +96,156 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         }
 
         return DecodeInternal($"{exception.GetType().FullName}: {exception.Message}\n{exception.StackTrace ?? string.Empty}", inners);
+    }
+
+    /// <inheritdoc />
+    public Task<DecodedStackTrace> DecodeAsync(string rawTrace, CancellationToken cancellationToken = default)
+    {
+        ArgumentHelpers.ThrowIfNull(rawTrace);
+        if (_options.PackageMetadataStore is null)
+            return Task.FromResult(DecodeInternal(rawTrace));
+
+        return DecodeAsyncWithStore(rawTrace, cancellationToken);
+    }
+
+    private async Task<DecodedStackTrace> DecodeAsyncWithStore(string rawTrace, CancellationToken cancellationToken)
+    {
+        var keys = CollectStrippedMethodKeys(rawTrace);
+        var map = keys.Count == 0
+            ? new Dictionary<string, PackageMetadataModel?>()
+            : await _options.PackageMetadataStore!
+                .TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), cancellationToken).ConfigureAwait(false);
+
+        return await DecodeInternalAsync(rawTrace, null, cancellationToken, map).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken cancellationToken = default)
+    {
+        ArgumentHelpers.ThrowIfNull(exception);
+        if (_options.PackageMetadataStore is null)
+            return Decode(exception);
+
+        var store = _options.PackageMetadataStore;
+        var keys = CollectStrippedMethodKeysFromException(exception);
+        var map = keys.Count == 0
+            ? new Dictionary<string, PackageMetadataModel?>()
+            : await store.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), cancellationToken).ConfigureAwait(false);
+
+        var inners = new List<DecodedStackTrace>();
+        var inner = exception.InnerException;
+        while (inner is not null) {
+            var rawInner = $"{inner.GetType().FullName}: {inner.Message}\n{inner.StackTrace ?? string.Empty}";
+            inners.Add(await DecodeInternalAsync(rawInner, [], cancellationToken, map).ConfigureAwait(false));
+            inner = inner.InnerException;
+        }
+
+        var rawOuter =
+            $"{exception.GetType().FullName}: {exception.Message}\n{exception.StackTrace ?? string.Empty}";
+        return await DecodeInternalAsync(rawOuter, inners, cancellationToken, map).ConfigureAwait(false);
+    }
+
+    private async Task<DecodedStackTrace> DecodeInternalAsync(string rawTrace, IReadOnlyList<DecodedStackTrace>? prebuiltInners,
+        CancellationToken cancellationToken, IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap = null)
+    {
+        SplitTrace(rawTrace, out var messageLines, out var frameLines, out var innerBlocks);
+        var allFrames = frameLines.Select(TryParseFrame).OfType<StackFrame>().ToList();
+        await EnrichPackageMetadataAsync(allFrames, cancellationToken, enrichmentMap).ConfigureAwait(false);
+        var analysisFrames = _options.StripAsyncNoise ? allFrames.Where(f => !f.IsCompilerGenerated).ToList() : allFrames;
+        var userFrames = analysisFrames.Where(f => f.Category == FrameCategory.UserCode).ToList();
+        var systemFrames = analysisFrames.Where(f => f.Category == FrameCategory.SystemOrThirdParty).ToList();
+        var testFrames = analysisFrames.Where(f => f.Category == FrameCategory.TestFramework).ToList();
+        var asyncFrames = allFrames.Where(f => f.IsAsync).ToList();
+        var lambdaFrames = allFrames.Where(f => f.IsLambda).ToList();
+        List<DecodedStackTrace> inners;
+        if (prebuiltInners is not null)
+            inners = prebuiltInners.ToList();
+        else {
+            inners = new List<DecodedStackTrace>(innerBlocks.Count);
+            foreach (var b in innerBlocks)
+                inners.Add(await DecodeInternalAsync(b, [], cancellationToken, enrichmentMap).ConfigureAwait(false));
+        }
+
+        var (crashSite, crashConf) = ResolveLikelyCrashSite(userFrames, inners);
+        var deepest = ResolveDeepestUserFrame(userFrames, inners);
+        var lastSystem = systemFrames.Count > 0 ? systemFrames[0] : null;
+        return new(
+            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest,
+            lastSystem, BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
+    }
+
+    private async Task EnrichPackageMetadataAsync(List<StackFrame> allFrames, CancellationToken cancellationToken,
+        IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap)
+    {
+        if (allFrames.Count == 0)
+            return;
+
+        if (enrichmentMap is not null) {
+            ApplyPackageMetadataMap(allFrames, enrichmentMap);
+            return;
+        }
+
+        var store = _options.PackageMetadataStore;
+        if (store is null)
+            return;
+
+        var keys = new string[allFrames.Count];
+        for (var i = 0; i < allFrames.Count; i++)
+            keys[i] = StripForAnalysis(allFrames[i].FullMethod);
+
+        var map =
+            await store.TryGetManyForStrippedMethodPrefixesAsync(keys, cancellationToken).ConfigureAwait(false);
+
+        ApplyPackageMetadataMap(allFrames, map);
+    }
+
+    private static void ApplyPackageMetadataMap(List<StackFrame> allFrames,
+        IReadOnlyDictionary<string, PackageMetadataModel?> map)
+    {
+        for (var i = 0; i < allFrames.Count; i++) {
+            var f = allFrames[i];
+            var key = StripForAnalysis(f.FullMethod);
+            if (map.TryGetValue(key, out var meta) && meta is not null)
+                allFrames[i] = f with { PackageMetadata = meta };
+        }
+    }
+
+    /// <summary>All stripped methods used for package lookups across this textual trace and nested inner blocks (<see cref="SplitTrace"/> semantics).</summary>
+    private static HashSet<string> CollectStrippedMethodKeys(string rawTrace)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        CollectStrippedMethodKeysInto(rawTrace, set);
+        return set;
+    }
+
+    /// <summary>Union of keys across an exception chain (outer plus every <see cref="Exception.InnerException" />).</summary>
+    private static HashSet<string> CollectStrippedMethodKeysFromException(Exception exception)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        var ex = exception;
+        while (ex is not null) {
+            var raw = $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace ?? string.Empty}";
+            CollectStrippedMethodKeysInto(raw, set);
+            ex = ex.InnerException;
+        }
+
+        return set;
+    }
+
+    private static void CollectStrippedMethodKeysInto(string rawTrace, HashSet<string> into)
+    {
+        SplitTrace(rawTrace, out _, out var frameLines, out var innerBlocks);
+
+        foreach (var line in frameLines) {
+            var match = FrameRegex.Match(line);
+            if (!match.Success)
+                continue;
+
+            into.Add(StripForAnalysis(match.Groups[1].Value.Trim()));
+        }
+
+        foreach (var block in innerBlocks)
+            CollectStrippedMethodKeysInto(block, into);
     }
 
     private DecodedStackTrace DecodeInternal(string rawTrace, IReadOnlyList<DecodedStackTrace>? prebuiltInners = null)
@@ -94,12 +258,12 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var testFrames = analysisFrames.Where(f => f.Category == FrameCategory.TestFramework).ToList();
         var asyncFrames = allFrames.Where(f => f.IsAsync).ToList();
         var lambdaFrames = allFrames.Where(f => f.IsLambda).ToList();
-        var crashSite = userFrames.Count > 0 ? userFrames[0] : null;
-        var deepest = userFrames.Count > 0 ? userFrames[^1] : null;
-        var lastSystem = systemFrames.Count > 0 ? systemFrames[0] : null;
         var inners = prebuiltInners ?? innerBlocks.Select(b => DecodeInternal(b, [])).ToList();
+        var (crashSite, crashConf) = ResolveLikelyCrashSite(userFrames, inners);
+        var deepest = ResolveDeepestUserFrame(userFrames, inners);
+        var lastSystem = systemFrames.Count > 0 ? systemFrames[0] : null;
         return new(
-            string.Join("\\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, ScoreCrashSite(crashSite), deepest,
+            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest,
             lastSystem, BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
     }
 
@@ -197,7 +361,49 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         if (TestFrameworkPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)))
             return FrameCategory.TestFramework;
 
-        return _systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)) ? FrameCategory.SystemOrThirdParty : FrameCategory.UserCode;
+        if (_systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)))
+            return FrameCategory.SystemOrThirdParty;
+
+        return _options.RestrictUserCodeToListedPrefixes ? FrameCategory.SystemOrThirdParty : FrameCategory.UserCode;
+    }
+
+    /// <summary>
+    /// Innermost user frame across this exception and nested inners (first user frame in the innermost inner that has one, else
+    /// outer trace’s innermost user frame). Mirrors <see cref="ResolveLikelyCrashSite" /> when root cause is user code.
+    /// </summary>
+    private static StackFrame? ResolveDeepestUserFrame(IReadOnlyList<StackFrame> outerUserFrames, IReadOnlyList<DecodedStackTrace> inners)
+    {
+        for (var i = inners.Count - 1; i >= 0; i--) {
+            var innerUser = inners[i].UserFrames;
+            if (innerUser.Count > 0)
+                return innerUser[0];
+        }
+
+        if (outerUserFrames.Count > 0)
+            return outerUserFrames[0];
+
+        return null;
+    }
+
+    /// <summary>
+    /// Uses the first user-code frame of the innermost nested exception that has one (root cause). Falls back to the outer trace’s first user frame.
+    /// </summary>
+    private static (StackFrame? site, CrashSiteConfidence confidence) ResolveLikelyCrashSite(IReadOnlyList<StackFrame> outerUserFrames, IReadOnlyList<DecodedStackTrace> inners)
+    {
+        for (var i = inners.Count - 1; i >= 0; i--) {
+            var innerUser = inners[i].UserFrames;
+            if (innerUser.Count > 0) {
+                var frame = innerUser[0];
+                return (frame, ScoreCrashSite(frame));
+            }
+        }
+
+        if (outerUserFrames.Count > 0) {
+            var frame = outerUserFrames[0];
+            return (frame, ScoreCrashSite(frame));
+        }
+
+        return (null, CrashSiteConfidence.None);
     }
 
     private static CrashSiteConfidence ScoreCrashSite(StackFrame? frame)
@@ -244,20 +450,95 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     private IReadOnlyList<RecursionInfo> DetectRecursion(IReadOnlyList<StackFrame> frames)
     {
         var results = new List<RecursionInfo>();
+        var threshold = _options.RecursionThreshold;
+        var maxCycle = Math.Max(1, _options.MaxRecursionCycleLength);
         var i = 0;
         while (i < frames.Count) {
-            var run = 1;
-            var pivot = frames[i].FullMethod;
-            while (i + run < frames.Count && frames[i + run].FullMethod == pivot)
-                run++;
+            var bestRun = 0;
+            var bestPeriod = 1;
+            var limit = Math.Min(maxCycle, frames.Count - i);
+            for (var period = 1; period <= limit; period++) {
+                var run = CountRepeatingCycleLength(frames, i, period);
+                if (run < threshold)
+                    continue;
 
-            if (run >= _options.RecursionThreshold)
-                results.Add(new(frames[i], run, i));
+                // One block of length `period` is not repetition; need at least two full cycles (e.g. ABAB, or AAA).
+                var fullCycles = run / period;
+                if (fullCycles < 2)
+                    continue;
 
-            i += run;
+                if (run > bestRun || (run == bestRun && period < bestPeriod)) {
+                    bestRun = run;
+                    bestPeriod = period;
+                }
+            }
+
+            if (bestRun > 0) {
+                if (SegmentContainsRecursionRelevantFrame(frames, i, bestRun))
+                    results.Add(new(frames[i], bestRun, i));
+                i += bestRun;
+            }
+            else {
+                i++;
+            }
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// Repeating known BCL / third-party-only tails (e.g. AutoMapper <c>Map → Map</c>) are ignored. Under
+    /// <see cref="StackTraceDecoderOptions.RestrictUserCodeToListedPrefixes" />, app namespaces are classified as system for
+    /// user-frame counting but must still count here so real overflows are detected.
+    /// </summary>
+    private bool SegmentContainsRecursionRelevantFrame(IReadOnlyList<StackFrame> frames, int start, int length)
+    {
+        var end = start + length;
+        for (var j = start; j < end; j++) {
+            if (FrameIsRecursionRelevantAnchor(frames[j]))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool FrameIsRecursionRelevantAnchor(StackFrame frame)
+    {
+        if (frame.Category is FrameCategory.UserCode or FrameCategory.TestFramework)
+            return true;
+
+        var stripped = StripForAnalysis(frame.FullMethod);
+        return !IsKnownThirdPartyOrBclMethodPrefix(stripped);
+    }
+
+    private bool IsKnownThirdPartyOrBclMethodPrefix(string stripped)
+    {
+        if (TestFrameworkPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)))
+            return true;
+        return _systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal));
+    }
+
+    /// <summary>Counts frames starting at <paramref name="i" /> that form full repeats of the first <paramref name="period" /> signatures.</summary>
+    private static int CountRepeatingCycleLength(IReadOnlyList<StackFrame> frames, int i, int period)
+    {
+        if (period <= 0 || i + period > frames.Count)
+            return 0;
+
+        var run = period;
+        while (i + run + period <= frames.Count && BlockMethodsEqual(frames, i, i + run, period))
+            run += period;
+
+        return run;
+    }
+
+    private static bool BlockMethodsEqual(IReadOnlyList<StackFrame> frames, int a, int b, int len)
+    {
+        for (var j = 0; j < len; j++) {
+            if (frames[a + j].FullMethod != frames[b + j].FullMethod)
+                return false;
+        }
+
+        return true;
     }
 
     private static string BuildFingerprint(IReadOnlyList<StackFrame> userFrames)
@@ -267,6 +548,6 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var key = string.Join("|", userFrames.Select(f => f.FullMethod));
         var hash = Hasher.ComputeSha2(256, Encoding.UTF8.GetBytes(key));
         // First 8 bytes → 16 uppercase hex chars (64-bit prefix of SHA-256).
-        return HexEncoding.ToHexString(hash.AsSpan(0, 8));
+        return HexEncoding.ToHexString(hash.AsSpan(0, 8), TextLetterCase.Upper);
     }
 }

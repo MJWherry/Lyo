@@ -1,4 +1,4 @@
-using Lyo.Streams;
+using Lyo.Hashing;
 using Microsoft.Extensions.Logging;
 using SysCryptoHashAlgorithm = System.Security.Cryptography.HashAlgorithm;
 

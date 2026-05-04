@@ -1,6 +1,6 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Lyo.Api.Mapping;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.DateAndTime;
 using Lyo.Discord.Postgres;
@@ -20,7 +20,7 @@ namespace Lyo.TestApi;
 
 public static class SetupMapster
 {
-    private static readonly JsonSerializerOptions WhereClauseJsonOptions = new() { Converters = { new JsonStringEnumConverter() }, PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions WhereClauseJsonOptions = LyoJsonSerializerOptions.Create();
 
     private static NamePrefix? ParseNamePrefix(string? value) => Enum.TryParse<NamePrefix>(value, true, out var parsed) ? parsed : null;
 

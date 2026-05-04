@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Diagnostic.Web.Components</RootNamespace>
+        <Description>Reusable Blazor components for pasting and analysing .NET stack traces using Lyo.Diagnostic.</Description>
+        <PackageTags>blazor components diagnostics stack-trace mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor" Version="[9.3,)"/>
+    </ItemGroup>
+
+</Project>

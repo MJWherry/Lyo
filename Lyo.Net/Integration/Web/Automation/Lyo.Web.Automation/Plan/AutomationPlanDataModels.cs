@@ -72,7 +72,7 @@ public sealed class AutomationPlanRunDirectoryOptions
     /// <summary>File name for <see cref="WriteRunLogFile" />.</summary>
     public string RunLogFileName { get; init; } = "run.log";
 
-    /// <summary>Viewport PNGs via <see cref="IWebAutomationBrowser.TakeViewportSnapshotPngAsync" />.</summary>
+    /// <summary>Viewport PNGs via <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.TakeViewportSnapshotPngAsync" />.</summary>
     public bool WriteSnapshots { get; init; } = true;
 
     /// <summary>Capture before each step body (after <see cref="AutomationPlanHooks.BeforeStepAsync" />).</summary>

@@ -3,7 +3,7 @@
 Diagnostic utilities: stack trace decoding, exception classification, **breadcrumb trails**, an **in-memory error inbox**, sanitisation, and structured logging for observability.
 
 Source is grouped by feature folder; namespaces match (e.g. `StackTrace/` → `Lyo.Diagnostic.StackTrace`). **`Lyo.Diagnostic`** (root) holds `AddDiagnosticsPackage` in
-`Registration/`.
+`Registration/`. Package metadata DTOs and **`IPackageMetadataStore`** live in **[`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata)**.
 
 | Folder            | Namespace                       |
 |-------------------|---------------------------------|
@@ -18,7 +18,7 @@ Source is grouped by feature folder; namespaces match (e.g. `StackTrace/` → `L
 
 ## Core features
 
-- **Stack trace decoding** (`IStackTraceDecoder`) — frames, crash site, fingerprint (stable hash of user-frame method signatures).
+- **Stack trace decoding** (`IStackTraceDecoder`) — frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional **`IPackageMetadataStore`** from **`Lyo.PackageMetadata`** enriches frames with **`PackageMetadata`** (`Id` + `Name`, …). With a configured store, **`DecodeAsync`** / **`IDiagnosticContextBuilder.BuildAsync`** perform **one** bulk metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained **`InnerException`**), not once per subtree. Sync **`Decode`** / **`Build`** throw when a store is set.
 - **Classification** (`IExceptionClassifier`) — kind, severity, labels.
 - **Diagnostic context** (`IDiagnosticContextBuilder`) — single payload for one failure.
 - **Structured logging** (`IStructuredLogEnricher`) — `ILogger` scopes with `diag.*` properties.
@@ -37,6 +37,23 @@ services.AddDiagnosticsPackage();
 services.AddInMemoryErrorInbox(o => o.MaxOccurrences = 5_000);
 ```
 
+### Optional package metadata (`IPackageMetadataStore`)
+
+Use **`Lyo.PackageMetadata`** (`InMemoryPackageMetadataStore`, or **`Lyo.PackageMetadata.Postgres`**). Pass the store as the last argument to `AddDiagnosticsPackage`, or set `StackTraceDecoderOptions.PackageMetadataStore`. **`TryGetManyForStrippedMethodPrefixesAsync`** resolves many stripped methods at once behind that call; Postgres may cache the ordered prefix catalog in-process (**see `PostgresPackageMetadataOptions.PrefixCatalogCaching`** and **`ClearPrefixCatalogCache`**). When a store is configured, use **`DecodeAsync`** and **`BuildAsync`** — sync **`Decode`** / **`Build`** throws. Lookup methods expose a **`namespacePrefix`** parameter that remains **reserved (unused for matching)**; see **`IPackageMetadataStore`** remarks.
+
+```csharp
+using Lyo.Diagnostic;
+using Lyo.PackageMetadata;
+
+var store = new InMemoryPackageMetadataStore();
+store.Register(["Npgsql."], new PackageMetadata(
+    Guid.Parse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+    "Npgsql",
+    Version: "8.0.0",
+    PackageFileSha512Hex: PackageFileSha512.ComputeHex(System.Array.Empty<byte>()))); // NuGet-aligned SHA-512 of .nupkg bytes (hex)
+services.AddDiagnosticsPackage(packageMetadataStore: store);
+```
+
 For ASP.NET Core (scoped breadcrumbs + automatic recording), use **`Lyo.Diagnostic.AspNetCore`** and `AddLyoDiagnosticsWeb` / `UseDiagnosticExceptionRecording`.
 
 ## Breadcrumbs and PII
@@ -46,7 +63,7 @@ strings, emails, and raw URLs**. Prefer opaque IDs and coarse categories. Option
 
 ## In-memory inbox limits
 
-`InMemoryErrorInbox` drops **oldest** occurrences when over `MaxOccurrences`. Data is **lost on restart** and is **not visible across multiple server processes**. For production
+`InMemoryErrorInbox` drops **oldest** occurrences when over `MaxOccurrences`. Data is **lost on restart** and **is not visible across multiple server processes**. For production
 aggregation, implement `IErrorOccurrenceSink` / `IErrorInboxReader` with Postgres or an external product (e.g. Sentry).
 
 ## Fingerprint
@@ -61,4 +78,4 @@ The fingerprint hashes **user** stack frame method names only (not line numbers)
 
 ## Developing
 
-Unit tests live in **`Lyo.Diagnostic.Tests`**.
+Unit tests live in **`Lyo.Diagnostic.Tests`** and **`Lyo.PackageMetadata.Tests`**.

@@ -8,8 +8,9 @@ namespace Lyo.Privacy.Rules;
 /// <summary>Phone-shaped runs; masking is driven by <see cref="PhoneMaskOptions" />.</summary>
 public sealed class PhoneRedactionRule : IRedactionRule, IRedactionMatchFormatter
 {
+    /// <summary>Group separators use tab/space only — not <see cref="RegexOptions.Singleline" /> \s, so matches never bridge newlines.</summary>
     private static readonly Regex PhoneRegex = new(
-        @"(?<!\d)(?:\+?\d{1,3}[\s\-.]?)?(?:\(\d{2,4}\)|\d{2,4})[\s\-./]?\d{2,4}[\s\-./]?\d{2,4}[\s\-./]?\d{2,9}(?!\d)|(?<!\d)\+?\d{10,15}(?!\d)",
+        @"(?<!\d)(?:\+?\d{1,3}[ \t\-.]?)?(?:\(\d{2,4}\)|\d{2,4})[ \t\-./]?\d{2,4}[ \t\-./]?\d{2,4}[ \t\-./]?\d{2,9}(?!\d)|(?<!\d)\+?\d{10,15}(?!\d)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public PhoneMaskOptions MaskOptions { get; }
@@ -139,38 +140,17 @@ public sealed class PhoneRedactionRule : IRedactionRule, IRedactionMatchFormatte
 
             if (!preserveSeparators)
                 sb.Append(maskChar);
-            else {
-                var prevVis = DigitOrdinalBefore(match, i) is { } p && p > 0 && vis[p - 1];
-                var nextVis = DigitOrdinalAtOrAfter(match, i) is { } na && na < vis.Length && vis[na];
-                sb.Append(prevVis || nextVis ? c : maskChar);
-            }
+            else if (IsPhoneFormattingChar(c))
+                sb.Append(c);
+            else
+                sb.Append(maskChar);
         }
 
         return sb.ToString();
     }
 
-    /// <summary>Count of digits strictly before index <paramref name="end" />.</summary>
-    private static int DigitOrdinalBefore(string match, int end)
-    {
-        var n = 0;
-        for (var j = 0; j < end && j < match.Length; j++) {
-            if (match[j] >= '0' && match[j] <= '9')
-                n++;
-        }
-
-        return n;
-    }
-
-    /// <summary>Digit index of the first digit at or after <paramref name="index" />.</summary>
-    private static int? DigitOrdinalAtOrAfter(string match, int index)
-    {
-        for (var j = index; j < match.Length; j++) {
-            if (match[j] >= '0' && match[j] <= '9')
-                return DigitOrdinalBefore(match, j);
-        }
-
-        return null;
-    }
+    private static bool IsPhoneFormattingChar(char c)
+        => c is '+' or '-' or '.' or '/' or '(' or ')' or ' ' or '\t';
 
     private static int CountDigits(string s)
     {

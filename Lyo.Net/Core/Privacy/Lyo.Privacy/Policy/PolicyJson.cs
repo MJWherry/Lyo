@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Lyo.Exceptions;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
@@ -6,11 +7,17 @@ using Lyo.Privacy.Rules;
 
 namespace Lyo.Privacy.Policy;
 
-/// <summary>Deserialize policy JSON into <see cref="RedactionPolicyBuilder" /> rules.</summary>
+/// <summary>Deserialize policy JSON into <see cref="RedactionPolicyBuilder" /> rules, and serialize <see cref="RedactionPolicy" /> to the same shape.</summary>
 public static class PolicyJson
 {
     private static readonly JsonSerializerOptions JsonOpts = new() {
         PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true
+    };
+
+    private static readonly JsonSerializerOptions WriteOpts = new() {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>Build a policy from JSON. Optional callback mutates the builder before <see cref="RedactionPolicyBuilder.Build" />.</summary>
@@ -36,6 +43,143 @@ public static class PolicyJson
 
         configure?.Invoke(b);
         return b.Build();
+    }
+
+    /// <summary>
+    /// Serializes a policy to JSON suitable for <see cref="Build" />. Rules must be concrete types this library can map; <see cref="DelegateRedactionRule" /> is not supported.
+    /// </summary>
+    public static string SerializePolicy(RedactionPolicy policy, bool writeIndented = true)
+    {
+        ArgumentHelpers.ThrowIfNull(policy);
+        var opts = writeIndented ? WriteOpts : new JsonSerializerOptions(WriteOpts) { WriteIndented = false };
+        return JsonSerializer.Serialize(ToDefinitionDto(policy), opts);
+    }
+
+    /// <summary>Builds the JSON DTO for <see cref="SerializePolicy" /> without stringifying.</summary>
+    public static PolicyDefinitionDto ToDefinitionDto(RedactionPolicy policy)
+    {
+        ArgumentHelpers.ThrowIfNull(policy);
+        var rules = new List<PolicyRuleDto>();
+        foreach (var r in policy.Rules)
+            AppendRuleDtos(rules, r);
+
+        return new PolicyDefinitionDto {
+            Placeholder = policy.Placeholder,
+            Name = policy.Name,
+            MergeAdjacentRuns = policy.MergeAdjacentRuns,
+            NeverRedactSubstrings = policy.NeverRedactSubstrings.Count == 0 ? null : policy.NeverRedactSubstrings.ToList(),
+            Rules = rules.Count == 0 ? null : rules
+        };
+    }
+
+    private static void AppendRuleDtos(ICollection<PolicyRuleDto> rules, IRedactionRule rule)
+    {
+        switch (rule) {
+            case CompositeRedactionRule c:
+                foreach (var inner in c.InnerRules)
+                    AppendRuleDtos(rules, inner);
+
+                break;
+            case DelegateRedactionRule:
+                // ReSharper disable once UseStringInterpolation
+                throw new InvalidOperationException(typeof(DelegateRedactionRule).Name + " cannot be exported to policy JSON.");
+            case EmailRedactionRule e:
+                rules.Add(new PolicyRuleDto { Kind = "EMAIL", EmailOptions = e.Options });
+                break;
+            case PhoneRedactionRule p:
+                rules.Add(new PolicyRuleDto { Kind = "PHONE", PhoneMask = p.MaskOptions, PhoneMinDigits = p.MinDigits });
+                break;
+            case PaymentCardRedactionRule card:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "CARD",
+                    AllowedBins = card.AllowedBin6 is { Count: > 0 } ? card.AllowedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null,
+                    BlockedBins = card.BlockedBin6 is { Count: > 0 } ? card.BlockedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null
+                });
+                break;
+            case UrlRedactionRule:
+                rules.Add(new PolicyRuleDto { Kind = "URL" });
+                break;
+            case IpAddressRedactionRule ip:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "IP",
+                    IpMode = ip.Mode == IpRedactionMode.TruncateLastSegment ? "truncate" : "full"
+                });
+                break;
+            case AddressRedactionRule:
+                rules.Add(new PolicyRuleDto { Kind = "ADDRESS" });
+                break;
+            case IbanRedactionRule:
+                rules.Add(new PolicyRuleDto { Kind = "IBAN" });
+                break;
+            case BankAccountNumberRedactionRule bank:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "BANK",
+                    BankMinNumeric = bank.MinNumericValue == 0 ? null : bank.MinNumericValue
+                });
+                break;
+            case NationalIdRedactionRule n:
+                rules.Add(new PolicyRuleDto { Kind = "NATIONALID", NationalIdPacks = NationalPacksToDtoList(n.Packs) });
+                break;
+            case ApiSecretRedactionRule a:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "APISECRET",
+                    ApiPatterns = ApiPatternsToDtoList(a.Patterns),
+                    ApiMinEntropy = a.MinEntropyBitsPerChar <= 0 ? null : a.MinEntropyBitsPerChar
+                });
+                break;
+            case LiteralSubstringRedactionRule lit:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "LITERAL",
+                    Literal = lit.Needle,
+                    LiteralIgnoreCase = lit.IgnoreCase
+                });
+                break;
+            case RegexRedactionRule rx:
+                rules.Add(new PolicyRuleDto {
+                    Kind = "REGEX",
+                    Regex = rx.Pattern,
+                    RegexKind = rx.Kind.ToString()
+                });
+                break;
+            default:
+                throw new InvalidOperationException($"Cannot export rule type {rule.GetType().Name} to policy JSON.");
+        }
+    }
+
+    private static List<string> NationalPacksToDtoList(NationalIdPacks packs)
+    {
+        var list = new List<string>();
+        if ((packs & NationalIdPacks.UnitedStatesSsn) != 0)
+            list.Add("US_SSN");
+
+        if ((packs & NationalIdPacks.UnitedKingdomNino) != 0)
+            list.Add("UK_NINO");
+
+        if ((packs & NationalIdPacks.GermanySteuerId) != 0)
+            list.Add("DE_STEUER");
+
+        if (list.Count == 0)
+            throw new InvalidOperationException("NationalId rule has no packs set.");
+
+        return list;
+    }
+
+    private static List<string> ApiPatternsToDtoList(ApiSecretPatterns patterns)
+    {
+        var list = new List<string>();
+        if ((patterns & ApiSecretPatterns.AwsAccessKey) != 0)
+            list.Add("AWS");
+
+        if ((patterns & ApiSecretPatterns.GitHubPersonalAccessToken) != 0)
+            list.Add("GITHUB");
+
+        if ((patterns & ApiSecretPatterns.HighEntropyAssignment) != 0)
+            list.Add("ASSIGNMENT");
+
+        if (list.Count == 0)
+            throw new InvalidOperationException("ApiSecret rule has no patterns set.");
+
+        return list;
     }
 
     private static IRedactionRule CreateRule(PolicyRuleDto dto)

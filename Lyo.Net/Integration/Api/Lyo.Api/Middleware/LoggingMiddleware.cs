@@ -35,11 +35,9 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
                 context.Response.StatusCode = 500;
                 var json = JsonSerializer.Serialize(
                     error,
-                    new JsonSerializerOptions {
+                    new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                        WriteIndented = true,
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        Converters = { new JsonStringEnumConverter() }
+                        WriteIndented = true
                     });
 
                 await context.Response.WriteAsync(json);
@@ -55,11 +53,9 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
                 context.Response.StatusCode = 500;
                 var json = JsonSerializer.Serialize(
                     error,
-                    new JsonSerializerOptions {
+                    new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                        WriteIndented = true,
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                        Converters = { new JsonStringEnumConverter() }
+                        WriteIndented = true
                     });
 
                 await context.Response.WriteAsync(json);

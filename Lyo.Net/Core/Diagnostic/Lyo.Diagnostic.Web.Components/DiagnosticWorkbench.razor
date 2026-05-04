@@ -1,0 +1,63 @@
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Diagnostics</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Decode .NET stack traces, preview sanitised frames, and classify exception types using Lyo.Diagnostic.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Stack trace" Class="pa-2">
+                <MudGrid Class="diagnostic-workbench-grid" Style="align-items: stretch;">
+                    <MudItem xs="12" md="6" Style="display: flex;">
+                        <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                            <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Input</MudText>
+                            <MudStack Spacing="2" Style="flex:1 1 auto; min-height:0; overflow-y:auto;">
+                                <StackTraceDecodePanel OnDecoded="OnTraceDecodedAsync" RawTraceLines="16"/>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="6" Style="display: flex;">
+                        <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
+                            <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">Output</MudText>
+                            <MudStack Spacing="0" Style="flex:1 1 auto; min-height:0; display:flex; flex-direction:column;">
+                                <MudTabs Rounded="true" ApplyEffectsToContainer="true" Border="true" Style="flex:1; min-height:0; display:flex; flex-direction:column;">
+                                    <MudTabPanel Text="Summary" Class="pa-2" Style="overflow-y:auto;">
+                                        <DecodedStackTraceSummary Trace="_decoded"/>
+                                    </MudTabPanel>
+                                    <MudTabPanel Text="Frames" Class="pa-2" Style="overflow-y:auto;">
+                                        <StackFrameTable Frames="@(_decoded?.AllFrames ?? Array.Empty<StackFrame>())"/>
+                                    </MudTabPanel>
+                                    <MudTabPanel Text="Sanitised" Class="pa-2" Style="overflow-y:auto;">
+                                        <SanitisedStackTracePanel Trace="_sanitised"/>
+                                    </MudTabPanel>
+                                </MudTabs>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="Classify exception" Class="pa-2">
+                <ExceptionTypeClassifierPanel/>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private readonly ITraceSanitiser _sanitiser = new TraceSanitiser();
+
+    private DecodedStackTrace? _decoded;
+
+    private SanitisedStackTrace? _sanitised;
+
+    private Task OnTraceDecodedAsync(DecodedStackTrace trace)
+    {
+        _decoded = trace;
+        _sanitised = _sanitiser.Sanitise(trace);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+}

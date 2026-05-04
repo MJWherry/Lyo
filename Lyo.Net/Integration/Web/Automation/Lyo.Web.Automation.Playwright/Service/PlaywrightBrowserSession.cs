@@ -27,7 +27,7 @@ public sealed class PlaywrightBrowserSession : IPlaywrightBrowserSession
     IWebAutomationBrowser IWebAutomationSession.Browser => Browser;
 
     /// <inheritdoc />
-    public PlaywrightTabManager Tabs => Browser.Tabs;
+    public PlaywrightTabManager Tabs => Browser.NativeTabs;
 
     /// <inheritdoc />
     public Task StartBrowserAsync(CancellationToken ct = default) => Browser.StartBrowserAsync(ct);

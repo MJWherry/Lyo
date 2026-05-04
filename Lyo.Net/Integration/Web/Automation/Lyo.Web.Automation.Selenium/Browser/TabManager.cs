@@ -7,7 +7,7 @@ using Wm = Lyo.Web.Automation.Core.Constants;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
-/// <summary>Tab/window operations and metadata. Obtain via <see cref="SeleniumBrowser.Tabs" /> or <see cref="ISeleniumBrowserSession.Tabs" />.</summary>
+/// <summary>Tab/window operations and metadata. Obtain via <see cref="SeleniumBrowser.NativeTabs" /> or <see cref="ISeleniumBrowserSession.Tabs" />.</summary>
 public sealed class TabManager
 {
     private readonly Dictionary<string, string> _displayNames = new(StringComparer.Ordinal);

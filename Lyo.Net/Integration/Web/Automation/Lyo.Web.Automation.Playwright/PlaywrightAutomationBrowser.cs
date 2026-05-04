@@ -18,38 +18,54 @@ public sealed class PlaywrightAutomationBrowser(IPage page, float locatorTimeout
     public IBrowserHeaders? ExtraHeaders => Browser.ExtraHeaders;
 
     /// <inheritdoc />
+    public IWebAutomationNavigator Navigator => this;
+
+    /// <inheritdoc />
+    public IWebAutomationPage CurrentPage => this;
+
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => Browser.Tabs;
+
+    /// <inheritdoc />
     public Task NavigateAsync(string url, CancellationToken ct = default) => Browser.NavigateToAsync(url, ct);
 
     /// <inheritdoc />
-    public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).NavigateAsync(url, onRequest, ct);
+    public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default)
+        => ((IWebAutomationNavigator)Browser).NavigateAsync(url, onRequest, ct);
 
     /// <inheritdoc />
-    public Task ReloadAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).ReloadAsync(ct);
+    public Task ReloadAsync(CancellationToken ct = default) => ((IWebAutomationNavigator)Browser).ReloadAsync(ct);
 
     /// <inheritdoc />
     public Task<string> GetPageSourceAsync(CancellationToken ct = default) => Browser.GetPageSourceAsync(ct);
 
     /// <inheritdoc />
-    public Task<string> GetCurrentUrlAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).GetCurrentUrlAsync(ct);
+    public Task<string> GetCurrentUrlAsync(CancellationToken ct = default) => ((IWebAutomationPage)Browser).GetCurrentUrlAsync(ct);
 
     /// <inheritdoc />
-    public Task<string> GetTitleAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).GetTitleAsync(ct);
+    public Task<string> GetTitleAsync(CancellationToken ct = default) => ((IWebAutomationPage)Browser).GetTitleAsync(ct);
 
     /// <inheritdoc />
     public Task<IWebAutomationElement> PollForElementAsync(ElementLocatorChain chain, CancellationToken ct = default)
-        => ((IWebAutomationBrowser)Browser).PollForElementAsync(chain, ct);
+        => ((IWebAutomationPage)Browser).PollForElementAsync(chain, ct);
 
     /// <inheritdoc />
     public Task<IReadOnlyList<IWebAutomationElement>> PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
-        => ((IWebAutomationBrowser)Browser).PollForElementsAsync(chain, ct);
+        => ((IWebAutomationPage)Browser).PollForElementsAsync(chain, ct);
 
     /// <inheritdoc />
-    public Task<IWebAutomationElement?> GetElementAsync(ElementLocatorChain chain, CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).GetElementAsync(chain, ct);
+    public Task<IWebAutomationElement?> GetElementAsync(ElementLocatorChain chain, CancellationToken ct = default)
+        => ((IWebAutomationPage)Browser).GetElementAsync(chain, ct);
 
     /// <inheritdoc />
     public Task<IReadOnlyList<IWebAutomationElement>?> GetElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
-        => ((IWebAutomationBrowser)Browser).GetElementsAsync(chain, ct);
+        => ((IWebAutomationPage)Browser).GetElementsAsync(chain, ct);
 
     /// <inheritdoc />
-    public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default) => ((IWebAutomationBrowser)Browser).TakeViewportSnapshotPngAsync(ct);
+    public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
+        => ((IWebAutomationPage)Browser).TakeViewportSnapshotPngAsync(ct);
+
+    /// <inheritdoc />
+    public Task SetViewportSizeAsync(int width, int height, CancellationToken ct = default)
+        => ((IWebAutomationPage)Browser).SetViewportSizeAsync(width, height, ct);
 }

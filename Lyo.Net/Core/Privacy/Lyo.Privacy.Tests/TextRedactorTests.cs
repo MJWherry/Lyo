@@ -102,4 +102,25 @@ public sealed class TextRedactorTests
         Assert.Contains("*", res.Text);
         Assert.DoesNotContain("[redacted]", res.Text);
     }
+
+    [Fact]
+    public void Phone_matches_do_not_bridge_newlines()
+    {
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits, minDigits: 10))));
+        var res = r.Redact("123-456-7890\n987-654-3210");
+        Assert.NotNull(res.Text);
+        var lines = res.Text.Split('\n');
+        Assert.Equal(2, lines.Length);
+        Assert.Contains("7890", lines[0]);
+        Assert.Contains("3210", lines[1]);
+    }
+
+    [Fact]
+    public void Phone_last_digits_preserves_hyphens_between_masked_digit_groups()
+    {
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits, minDigits: 10))));
+        var res = r.Redact("123-456-7890");
+        Assert.NotNull(res.Text);
+        Assert.Equal("***-***-7890", res.Text);
+    }
 }

@@ -329,6 +329,32 @@ public static class AutomationPlanRunner
             case ReloadAutomationStep:
                 await browser.ReloadAsync(ct).ConfigureAwait(false);
                 return;
+            case SetViewportSizeAutomationStep sv:
+                ArgumentHelpers.ThrowIf(sv.Width <= 0, "Viewport width must be positive.", nameof(sv.Width));
+                ArgumentHelpers.ThrowIf(sv.Height <= 0, "Viewport height must be positive.", nameof(sv.Height));
+                await browser.SetViewportSizeAsync(sv.Width, sv.Height, ct).ConfigureAwait(false);
+                return;
+            case SwitchToTabByIndexAutomationStep sti:
+                ArgumentHelpers.ThrowIf(sti.TabIndex < 0, "Tab index must be non-negative.", nameof(sti.TabIndex));
+                await browser.Tabs.SwitchToTabAsync(sti.TabIndex, ct).ConfigureAwait(false);
+                return;
+            case SwitchToTabByKeyAutomationStep stk:
+                ArgumentHelpers.ThrowIfNullOrWhiteSpace(stk.TabKey, nameof(stk.TabKey));
+                await browser.Tabs.SwitchToTabAsync(await ExpandPlanTemplateAsync(stk.TabKey, bindings, runtime, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+                return;
+            case OpenNewTabAutomationStep ont:
+                string? urlOpen = ont.Url != null ? await ExpandPlanTemplateAsync(ont.Url, bindings, runtime, ct).ConfigureAwait(false) : null;
+                if (string.IsNullOrWhiteSpace(urlOpen))
+                    urlOpen = null;
+
+                var newTabKey = await browser.Tabs.OpenNewTabAsync(urlOpen, ct).ConfigureAwait(false);
+                if (ont.TabKeyVariableName is { } keyVar && !string.IsNullOrWhiteSpace(keyVar))
+                    state.Strings[keyVar] = newTabKey;
+
+                return;
+            case CloseCurrentTabAutomationStep:
+                await browser.Tabs.CloseCurrentTabAsync(ct).ConfigureAwait(false);
+                return;
             case FindElementAutomationStep f:
                 await FindAndStoreElementAsync(browser, state, f.RefName, f.Locator, ct).ConfigureAwait(false);
                 return;

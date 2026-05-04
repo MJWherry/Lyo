@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Endato.Client.Models.Person.Request;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public class PersonQuery
 {
     public string? FirstName { get; set; }
@@ -25,4 +27,7 @@ public class PersonQuery
         LastName = lastName;
         DateOfBirth = dateOfBirth; //.ToString("MM/dd/yyyy");
     }
+
+    public override string ToString()
+        => $"PersonQuery: FirstName='{FirstName}', LastName='{LastName}', Dob='{DateOfBirth}', ResultsPerPage={ResultsPerPage}";
 }

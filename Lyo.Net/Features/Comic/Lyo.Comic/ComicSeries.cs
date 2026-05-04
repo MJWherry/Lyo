@@ -58,6 +58,9 @@ public sealed class ComicSeries
     /// <summary>Gets or sets the alternate and translated titles for this series.</summary>
     public IReadOnlyList<ComicAlternateTitle> AlternateTitles { get; set; } = [];
 
+    /// <summary>Gets or sets tags associated with this series (e.g. from search enrichment).</summary>
+    public IReadOnlyList<string> Tags { get; set; } = [];
+
     /// <inheritdoc />
     public override string ToString() => $"ComicSeries(Id={Id}, Title=\"{Title}\", Slug=\"{Slug}\", Type={ComicType}, Status={Status})";
 }

@@ -14,11 +14,14 @@ public sealed class TagRecord
     /// <summary>Gets or sets the entity id being tagged.</summary>
     public string ForEntityId { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the tag value (e.g. "urgent", "follow-up").</summary>
-    public string Tag { get; set; } = string.Empty;
+    /// <summary>Gets or sets the tag display value (e.g. "urgent", "follow-up").</summary>
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the tag type (e.g. "tag", "category"). Defaults to "tag".</summary>
     public string TagType { get; set; } = "tag";
+
+    /// <summary>Gets or sets an optional URL-friendly slug for this tag assignment.</summary>
+    public string Slug { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the entity type of who applied the tag (e.g. "User"), or null if system-applied.</summary>
     public string? FromEntityType { get; set; }

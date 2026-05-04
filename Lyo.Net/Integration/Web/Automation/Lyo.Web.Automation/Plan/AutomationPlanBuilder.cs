@@ -41,6 +41,45 @@ public sealed class AutomationPlanBuilder
         return this;
     }
 
+    /// <summary>Sets viewport/window size for the active tab (Playwright: layout viewport; Selenium: window size).</summary>
+    public AutomationPlanBuilder SetViewportSize(int width, int height, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIf(width <= 0, "Width must be positive.", nameof(width));
+        ArgumentHelpers.ThrowIf(height <= 0, "Height must be positive.", nameof(height));
+        _steps.Add(new SetViewportSizeAutomationStep(width, height, stepName));
+        return this;
+    }
+
+    /// <summary>Switches tab by zero-based index (<see cref="Lyo.Web.Automation.Abstractions.IWebAutomationTabs" />).</summary>
+    public AutomationPlanBuilder SwitchToTabByIndex(int tabIndex, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIf(tabIndex < 0, "Tab index must be non-negative.", nameof(tabIndex));
+        _steps.Add(new SwitchToTabByIndexAutomationStep(tabIndex, stepName));
+        return this;
+    }
+
+    /// <summary>Switches tab by opaque key (template-expanded).</summary>
+    public AutomationPlanBuilder SwitchToTabByKey(string tabKey, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(tabKey);
+        _steps.Add(new SwitchToTabByKeyAutomationStep(tabKey, stepName));
+        return this;
+    }
+
+    /// <summary>Opens a new tab; <paramref name="url" /> may use template placeholders; optionally stores new tab key in a string variable.</summary>
+    public AutomationPlanBuilder OpenNewTab(string? url = null, string? tabKeyVariableName = null, string? stepName = null)
+    {
+        _steps.Add(new OpenNewTabAutomationStep(url, tabKeyVariableName, stepName));
+        return this;
+    }
+
+    /// <summary>Closes the current tab.</summary>
+    public AutomationPlanBuilder CloseCurrentTab(string? stepName = null)
+    {
+        _steps.Add(new CloseCurrentTabAutomationStep(stepName));
+        return this;
+    }
+
     public AutomationPlanBuilder Delay(int delayMilliseconds, string? stepName = null)
     {
         _steps.Add(new DelayAutomationStep(delayMilliseconds, stepName));

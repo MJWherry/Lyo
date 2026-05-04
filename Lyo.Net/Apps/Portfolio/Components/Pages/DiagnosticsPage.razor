@@ -1,0 +1,16 @@
+@page "/diagnostics"
+
+<PageTitle>Diagnostics — Portfolio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <DiagnosticWorkbench/>
+</MudContainer>
+
+@code {
+
+    [CascadingParameter]
+    private MainLayout? Layout { get; set; }
+
+    protected override void OnInitialized() => Layout?.SetPageTitle("Diagnostics");
+
+}

@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lyo.Api.Models.Error;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ public class ApiClient : IApiClient
         //todo should be moved to each implementation and pull in version from library version
         HttpClient.DefaultRequestHeaders.UserAgent.Add(new("Lyo", "1.0"));
         ConfigureAcceptEncodingHeaders();
-        SerializerOptions = serializerOptions ?? new JsonSerializerOptions();
+        SerializerOptions = serializerOptions ?? LyoJsonSerializerOptions.Create();
         if (HttpClient.BaseAddress == null && !string.IsNullOrWhiteSpace(BaseOptions.BaseUrl))
             HttpClient.BaseAddress = new(BaseOptions.BaseUrl!.TrimEnd('/') + "/");
     }
@@ -215,6 +216,24 @@ public class ApiClient : IApiClient
         }
     }
 
+    /// <summary>Sends a POST with a JSON body when the API returns no body (for example 204 No Content).</summary>
+    protected async Task PostExpectingNoContentAsync<TRequest>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    {
+        if (HttpClient.BaseAddress == null)
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
+
+        using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName}", Post, uri, typeof(TRequest).FullName)) {
+            Logger.LogDebug("Sending request");
+            using var content = CreateJsonContent(body);
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+            request.Content = content;
+            before?.Invoke(request);
+            using var response = await HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+            Logger.LogDebug("{ResponseStatusCode} Response received", response.StatusCode);
+            await EnsureSuccessStatusCodeOrThrowApiExceptionAsync(response, ct).ConfigureAwait(false);
+        }
+    }
+
     public async Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
@@ -378,8 +397,7 @@ public class ApiClient : IApiClient
 
         try {
             var json = await ReadDecodedResponseStringAsync(response, ct).ConfigureAwait(false);
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
-            problemDetails = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
+            problemDetails = JsonSerializer.Deserialize<LyoProblemDetails>(json, SerializerOptions);
             if (problemDetails != null && !string.IsNullOrEmpty(problemDetails.Detail))
                 message = problemDetails.Detail;
         }

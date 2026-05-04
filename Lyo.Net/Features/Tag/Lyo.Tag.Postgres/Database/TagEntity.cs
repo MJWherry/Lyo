@@ -19,15 +19,20 @@ public sealed class TagEntity
     [MaxLength(200)]
     public string ForEntityId { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the tag value (e.g. "urgent", "follow-up").</summary>
+    /// <summary>Gets or sets the tag display value (e.g. "urgent", "follow-up").</summary>
     [Required]
     [MaxLength(200)]
-    public string Tag { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the tag type (e.g. "tag", "category"). Defaults to "tag".</summary>
     [Required]
     [MaxLength(50)]
     public string TagType { get; set; } = "tag";
+
+    /// <summary>Gets or sets an optional URL-friendly slug for this tag assignment.</summary>
+    [Required]
+    [MaxLength(200)]
+    public string Slug { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the entity type of who applied the tag, or null if system-applied.</summary>
     [MaxLength(200)]

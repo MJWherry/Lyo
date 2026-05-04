@@ -1,0 +1,16 @@
+@page "/privacy-redaction"
+
+<PageTitle>Privacy redaction — Portfolio</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <PrivacyWorkbench/>
+</MudContainer>
+
+@code {
+
+    [CascadingParameter]
+    private MainLayout? Layout { get; set; }
+
+    protected override void OnInitialized() => Layout?.SetPageTitle("Privacy redaction");
+
+}

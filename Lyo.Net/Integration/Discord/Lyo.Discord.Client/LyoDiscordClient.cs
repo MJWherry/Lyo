@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using Lyo.Api.Client;
+using Lyo.Common;
 using Lyo.Discord.Client.Managers;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -21,7 +21,7 @@ public class LyoDiscordClient : ApiClient
     public readonly UserManager Users;
 
     public LyoDiscordClient(LyoDiscordClientOptions options, ILogger<LyoDiscordClient>? logger = null, HttpClient? httpClient = null)
-        : base(logger ?? NullLogger<LyoDiscordClient>.Instance, httpClient, new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } }, options)
+        : base(logger ?? NullLogger<LyoDiscordClient>.Instance, httpClient, LyoJsonSerializerOptions.Create(), options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         Guilds = new(this);

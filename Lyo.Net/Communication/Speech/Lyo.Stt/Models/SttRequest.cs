@@ -22,7 +22,6 @@ public class SttRequest
     public LanguageCodeInfo? LanguageCode { get; set; }
 
     /// <summary>Gets or sets the audio format (e.g., "wav", "mp3", "flac").</summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public AudioFormat? AudioFormat { get; set; }
 
     /// <summary>Gets or sets the sample rate in Hz.</summary>

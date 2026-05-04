@@ -1,0 +1,87 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2">
+    <div>
+        <MudText Typo="Typo.subtitle2" Class="mb-1">User code namespace prefixes</MudText>
+        <LyoChipInput Values="@_prefixChips"
+                      ValuesChanged="OnPrefixChipsChanged"
+                      Placeholder="e.g. MyApp or MyApp. — Enter after each prefix"
+                      ShowClearButton="true"/>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+            Only frames under one of these prefixes are <strong>your</strong> code when strict mode is on. When strict mode is off, anything that is not built-in third-party or test framework is also treated as user code (legacy default for APIs).
+        </MudText>
+    </div>
+
+    <MudSwitch @bind-Value="_restrictUserPrefixes"
+               Color="Color.Primary"
+               Label="Strict user code (only prefixes above)"/>
+
+    <div>
+        <MudText Typo="Typo.subtitle2" Class="mb-1">Extra third-party namespace prefixes</MudText>
+        <LyoChipInput Values="@_thirdPartyChips"
+                      ValuesChanged="OnThirdPartyChipsChanged"
+                      Placeholder="e.g. AcmeCorp.Sdk. — optional; add libraries you use"
+                      ShowClearButton="true"/>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+            Add library namespace prefixes you want excluded from user code and crash-site hints (e.g. mocking tools when strict mode is off). There is no exhaustive built-in list of NuGet packages.
+        </MudText>
+    </div>
+
+    <MudTextField @bind-Value="_raw"
+                  Label="Raw stack trace"
+                  Variant="Variant.Outlined"
+                  Lines="@RawTraceLines"
+                  Margin="Margin.None"/>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="DecodeAsync" Disabled="@string.IsNullOrWhiteSpace(_raw)">
+        Decode
+    </MudButton>
+</MudStack>
+
+@code {
+    [Parameter]
+    public EventCallback<DecodedStackTrace> OnDecoded { get; set; }
+
+    [Parameter]
+    public int RawTraceLines { get; set; } = 12;
+
+    private List<string> _prefixChips = [];
+
+    private List<string> _thirdPartyChips = [];
+
+    private bool _restrictUserPrefixes = true;
+
+    private string _raw = string.Empty;
+
+    private Task OnPrefixChipsChanged(IEnumerable<string> values)
+    {
+        _prefixChips = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnThirdPartyChipsChanged(IEnumerable<string> values)
+    {
+        _thirdPartyChips = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private static List<string> TrimmedChips(IEnumerable<string> chips)
+        => chips.Where(static s => !string.IsNullOrWhiteSpace(s)).Select(static s => s.Trim()).ToList();
+
+    private async Task DecodeAsync()
+    {
+        try {
+            var decoder = new StackTraceDecoder(new StackTraceDecoderOptions {
+                UserCodePrefixes = TrimmedChips(_prefixChips),
+                ExtraSystemPrefixes = TrimmedChips(_thirdPartyChips),
+                RestrictUserCodeToListedPrefixes = _restrictUserPrefixes
+            });
+            var decoded = await decoder.DecodeAsync(_raw);
+            await OnDecoded.InvokeAsync(decoded);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+}

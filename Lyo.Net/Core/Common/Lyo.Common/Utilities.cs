@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Lyo.Common.Enums;
-using Lyo.Common.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Common;
@@ -70,7 +69,12 @@ public static class Utilities
     public static byte[] Hash([NotNull] byte[] input)
     {
         ArgumentHelpers.ThrowIfNull(input);
-        return Hasher.ComputeSha2(256, input);
+#if NETSTANDARD2_0
+        using var sha256 = SHA256.Create();
+        return sha256.ComputeHash(input);
+#else
+        return SHA256.HashData(input);
+#endif
     }
 
     /// <summary>Computes SHA256 hash of a stream asynchronously.</summary>

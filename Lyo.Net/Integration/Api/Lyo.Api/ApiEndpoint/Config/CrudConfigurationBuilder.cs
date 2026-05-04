@@ -8,6 +8,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     where TDbContext : DbContext where TDbEntity : class
 {
     private Action<CreateContext<TRequest, TDbEntity, TDbContext>>? _afterCreate;
+    private Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? _afterCreateAsync;
     private Action<DeleteContext<TDbEntity, TDbContext>>? _afterDelete;
 
     private Action<GetContext<TDbEntity, TDbContext>>? _afterGet;
@@ -72,6 +73,12 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> AfterCreate(Action<CreateContext<TRequest, TDbEntity, TDbContext>> after)
     {
         _afterCreate = after;
+        return this;
+    }
+
+    public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> AfterCreateAsync(Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task> afterAsync)
+    {
+        _afterCreateAsync = afterAsync;
         return this;
     }
 
@@ -247,6 +254,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
         OperationHelpers.ThrowIf(!_flagsSet, "Call WithFlags(...) to specify ApiFeatureFlag values for WithCrud (e.g. ApiFeatureFlag.All).");
         var config = new CrudConfiguration<TDbContext, TDbEntity, TRequest> {
             AfterCreate = _afterCreate,
+            AfterCreateAsync = _afterCreateAsync,
             AfterDelete = _afterDelete,
             AfterGet = _afterGet,
             AfterPatch = _afterPatch,

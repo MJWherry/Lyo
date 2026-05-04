@@ -12,8 +12,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Apps\Comic\Lyo.Comic.Api.Client\Lyo.Comic.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Comic\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
         <ProjectReference Include="..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Web.Components\Lyo.Email.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
@@ -55,6 +57,8 @@
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Web.Components\Lyo.Job.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Schedule\Lyo.Schedule.Web.Components\Lyo.Schedule.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\Core\Diagnostic\Lyo.Diagnostic.Web.Components\Lyo.Diagnostic.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Core\Privacy\Lyo.Privacy.Web.Components\Lyo.Privacy.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>

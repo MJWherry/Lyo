@@ -14,6 +14,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

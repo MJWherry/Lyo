@@ -1,6 +1,6 @@
 # Lyo.Web.Automation
 
-**Serializable automation plans** and a shared **runner** for **Selenium** and **Playwright** via `IWebAutomationSession` / `IWebAutomationBrowser`.
+**Serializable automation plans** and a shared **runner** for **Selenium** and **Playwright** via `IWebAutomationSession` / `IWebAutomationBrowser`. The browser façade composes **`IWebAutomationNavigator`** (navigate / reload), **`IWebAutomationPage`** (find elements, source, URL/title, viewport PNG, **`SetViewportSizeAsync`**), **`IWebAutomationTabs`** (list/switch/open/close tabs via opaque keys), cookies, and optional extra headers—the same instance exposes **`Navigator`**, **`CurrentPage`**, and **`Tabs`** for narrower dependencies.
 
 | Project                         | Role                                                                                        |
 |---------------------------------|---------------------------------------------------------------------------------------------|
@@ -8,7 +8,7 @@
 | `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                               |
 | `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                               |
 
-Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, find elements (single or lists), act on elements, extract text or attributes into **string variables**,
+Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on elements, extract text or attributes into **string variables**,
 write files, download URL lists, and store literals or page metadata. String values can be combined with **`{{variableName}}`** placeholders resolved at run time.
 
 ---
@@ -24,6 +24,8 @@ write files, download URL lists, and store literals or page metadata. String val
 Build in code with **`AutomationPlanBuilder`** (assigns a time-ordered **`StepId`** on every step when you did not set one). Deserialize with **`System.Text.Json`** (or anything
 else) in your host — the library does not ship a serializer.
 
+**Viewport / tab JSON discriminators** (polymorphic `type`): **`setViewportSize`** (`width`, `height`), **`switchTabByIndex`** (`tabIndex`), **`switchTabByKey`** (`tabKey`), **`openNewTab`** (`url`, `tabKeyVariableName`), **`closeCurrentTab`**.
+
 ### Locators and chains
 
 - **`ElementLocator`**: One strategy (`ElementLocatorKind`: `Id`, `CssSelector`, `XPath`, …) plus a **`Value`**.
@@ -31,6 +33,17 @@ else) in your host — the library does not ship a serializer.
   `ElementLocator.CssSelector("#app").Then(ElementLocator.CssSelector("button"))`.
 
 Single-segment chains are equivalent to a simple find; multi-segment steps use chain-specific step types in JSON (`findElementChain`, `findElementsChain`, …).
+
+### Browser façade (`IWebAutomationBrowser`)
+
+- **`Navigator`** (`IWebAutomationNavigator`): `NavigateAsync`, `ReloadAsync`.
+- **`CurrentPage`** (`IWebAutomationPage`): `PollForElementAsync` / `GetElementAsync`, `GetPageSourceAsync`, `GetCurrentUrlAsync`, `GetTitleAsync`, `TakeViewportSnapshotPngAsync`, **`SetViewportSizeAsync`**, etc. Applies to the **active tab/window** and **current iframe stack** (after frame navigation). Distinct from Playwright's native `IPage`. Selenium **`SetViewportSizeAsync`** adjusts the OS window size, not necessarily the CSS layout viewport.
+- **`Tabs`** (`IWebAutomationTabs`): `ListTabsAsync`, `SwitchToTabAsync` (by index or opaque **`TabKey`**), `OpenNewTabAsync`, `CloseCurrentTabAsync`, `SetTabDisplayNameAsync`. Tab keys are **opaque** (Selenium window handle vs Playwright page id).
+- **`CookieJar`** / **`ExtraHeaders`**: optional engine capabilities as today.
+
+**Typed sessions** (`ISeleniumBrowserSession` / `IPlaywrightBrowserSession`) still expose engine-native **`Tabs`** pointing at **`SeleniumBrowser.NativeTabs`** (`TabManager`) or **`PlaywrightBrowser.NativeTabs`** (`PlaywrightTabManager`) for advanced operations (predicate switches, window vs tab, etc.).
+
+You can still call navigation and page methods directly on `IWebAutomationBrowser`; it inherits the narrower interfaces.
 
 ### Variables and bindings
 
@@ -173,8 +186,7 @@ await session.Browser.TrySetExtraHeadersAsync(
 
 ### Navigation with request observation
 
-**`NavigateAsync(url, onRequest, ct)`** overload calls `onRequest` with the URL of each outgoing network request observed before, during, and after the page load. Return `true`
-from the callback to signal that the caller found what it needed (stops observation). For Chromium-based Selenium sessions, performance logging must be enabled.
+**`NavigateAsync(url, onRequest, ct)`** overload on **`IWebAutomationNavigator`** calls `onRequest` with the URL of each outgoing network request observed before, during, and after the page load. Return `true` from the callback to signal that the caller found what it needed (stops observation). For Chromium-based Selenium sessions, performance logging must be enabled.
 
 ```csharp
 string? apiUrl = null;
@@ -189,11 +201,11 @@ await session.Browser.NavigateAsync(
 
 ### Page source and snapshots
 
-| Member                                                   | Returns                                  |
-|----------------------------------------------------------|------------------------------------------|
-| `IWebAutomationBrowser.GetPageSourceAsync(ct)`           | Full HTML source of the current document |
-| `IWebAutomationBrowser.TakeViewportSnapshotPngAsync(ct)` | Visible viewport as a PNG byte array     |
-| `IWebAutomationElement.TakeSnapshotPngAsync(ct)`         | Element bounding box as a PNG byte array |
+| Member                                                         | Returns                                  |
+|----------------------------------------------------------------|------------------------------------------|
+| `IWebAutomationPage.GetPageSourceAsync(ct)` (also on browser)  | Full HTML source of the current document |
+| `IWebAutomationPage.TakeViewportSnapshotPngAsync(ct)`          | Visible viewport as a PNG byte array     |
+| `IWebAutomationElement.TakeSnapshotPngAsync(ct)`              | Element bounding box as a PNG byte array |
 
 These are also used internally by the runner when `WriteSnapshots` is enabled.
 

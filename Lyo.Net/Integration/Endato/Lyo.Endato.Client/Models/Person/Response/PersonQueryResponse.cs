@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonQueryResponse(
     IReadOnlyList<Person> Persons,
     /*"smartSearchStatistics": {
@@ -22,4 +25,9 @@ public sealed record PersonQueryResponse(
         "inputErrors": [],
         "warnings": []
     }*/
-);
+)
+{
+    public override string ToString()
+        => $"PersonQueryResponse: Persons={Persons.Count}, RequestId={RequestId}, Type='{RequestType}', " +
+           $"TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}";
+}

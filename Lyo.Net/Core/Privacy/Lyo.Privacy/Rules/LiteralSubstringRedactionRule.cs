@@ -17,6 +17,10 @@ public sealed class LiteralSubstringRedactionRule : IRedactionRule
         _comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
     }
 
+    public string Needle => _needle;
+
+    public bool IgnoreCase => _comparison == StringComparison.OrdinalIgnoreCase;
+
     public RedactionKind Kind => RedactionKind.Literal;
 
     public IEnumerable<RedactionSpan> EnumerateSpans(string input)

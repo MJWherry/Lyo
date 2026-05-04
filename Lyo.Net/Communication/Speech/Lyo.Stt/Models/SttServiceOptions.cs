@@ -13,7 +13,6 @@ public class SttServiceOptions
     public LanguageCodeInfo? DefaultLanguageCode { get; set; }
 
     /// <summary>Gets or sets the default audio format (e.g., "wav", "mp3").</summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public AudioFormat? DefaultAudioFormat { get; set; }
 
     /// <summary>Gets or sets the maximum audio file size in bytes.</summary>

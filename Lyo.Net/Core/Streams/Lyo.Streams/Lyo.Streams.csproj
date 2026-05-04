@@ -10,8 +10,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>Common stream implementations including HashingStream, TeeStream, CountingStream, ProgressStream, and ConcatenatedStream for the Lyo library suite.</Description>
-        <PackageTags>streams hashing tee counting progress concatenated</PackageTags>
+        <Description>Common stream implementations including TeeStream, CountingStream, ProgressStream, and ConcatenatedStream for the Lyo library suite. Incremental hashing: see Lyo.Hashing.</Description>
+        <PackageTags>streams tee counting progress concatenated</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 

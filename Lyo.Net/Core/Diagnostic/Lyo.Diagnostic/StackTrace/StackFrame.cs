@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using PackageMetadataModel = global::Lyo.PackageMetadata.PackageMetadata;
 
 namespace Lyo.Diagnostic.StackTrace;
 
@@ -14,7 +15,8 @@ public sealed record StackFrame(
     int? SourceLine,
     FrameCategory Category,
     bool IsAsync,
-    bool IsLambda)
+    bool IsLambda,
+    PackageMetadataModel? PackageMetadata = null)
 {
     /// <summary>Short file name without directory path, or <see langword="null" />.</summary>
     public string? ShortFileName => SourceFile is null ? null : Path.GetFileName(SourceFile);

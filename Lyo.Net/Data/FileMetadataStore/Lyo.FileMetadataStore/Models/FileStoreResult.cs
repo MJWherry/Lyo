@@ -16,14 +16,11 @@ public record FileStoreResult(
     long SourceFileSize,
     byte[] SourceFileHash,
     bool IsCompressed,
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     CompressionAlgorithm? CompressionAlgorithm,
     long? CompressedFileSize,
     byte[]? CompressedFileHash,
     bool IsEncrypted,
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     EncryptionAlgorithm? DataEncryptionKeyAlgorithm,
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     EncryptionAlgorithm? KeyEncryptionKeyAlgorithm,
     long? EncryptedFileSize,
     byte[]? EncryptedFileHash,
@@ -33,11 +30,9 @@ public record FileStoreResult(
     byte[]? KeyEncryptionKeySalt,
     DateTime Timestamp,
     string? PathPrefix = null,
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     HashAlgorithm? HashAlgorithm = null,
     string? ContentType = null,
     string? TenantId = null,
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     FileAvailability Availability = FileAvailability.Available,
     byte? DekKeyMaterialBytes = null)
 {

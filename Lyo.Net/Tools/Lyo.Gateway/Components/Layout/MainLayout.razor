@@ -67,13 +67,15 @@
                     </MudNavGroup>
                     <MudNavGroup Title="Infrastructure"
                                  Icon="@Icons.Material.Filled.SettingsEthernet"
-                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache, Constants.Page.Jobs, Constants.Page.Schedule)">
+                                 Expanded="@IsExpanded(Constants.Page.RabbitMq, Constants.Page.Metrics, Constants.Page.Locks, Constants.Page.Cache, Constants.Page.Jobs, Constants.Page.Schedule, Constants.Page.Diagnostics, Constants.Page.PrivacyRedaction)">
                         <MudNavLink Href="@Constants.Page.Cache" Icon="@Icons.Material.Filled.Storage">Cache</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Jobs" Icon="@Icons.Material.Filled.Work">Jobs</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Locks" Icon="@Icons.Material.Filled.Lock">Locks</MudNavLink>
                         <MudNavLink Href="@Constants.Page.RabbitMq" Icon="@Icons.Material.Filled.Message">RabbitMq</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Metrics" Icon="@Icons.Material.Filled.HourglassTop">Metrics</MudNavLink>
                         <MudNavLink Href="@Constants.Page.Schedule" Icon="@Icons.Material.Filled.Schedule">Schedule</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.Diagnostics" Icon="@Icons.Material.Filled.BugReport">Diagnostics</MudNavLink>
+                        <MudNavLink Href="@Constants.Page.PrivacyRedaction" Icon="@Icons.Material.Filled.PrivacyTip">Privacy redaction</MudNavLink>
                     </MudNavGroup>
                 </MudNavMenu>
             </div>

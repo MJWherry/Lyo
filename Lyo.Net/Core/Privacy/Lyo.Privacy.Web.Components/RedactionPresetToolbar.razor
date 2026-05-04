@@ -1,0 +1,44 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+    <MudSelect T="string"
+               Label="Preset"
+               Value="_preset"
+               ValueChanged="OnPresetChangedAsync"
+               Variant="Variant.Outlined"
+               Margin="Margin.Dense"
+               Style="min-width: 200px;">
+        @foreach (var p in Presets) {
+            <MudSelectItem Value="@p">@p</MudSelectItem>
+        }
+    </MudSelect>
+</MudStack>
+
+@code {
+    private static readonly string[] Presets = [
+        PrivacyPresetNames.Minimal,
+        PrivacyPresetNames.Logging,
+        PrivacyPresetNames.SupportExport,
+        PrivacyPresetNames.PublicSurface,
+        PrivacyPresetNames.RegressionTesting
+    ];
+
+    [Parameter]
+    public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;
+
+    [Parameter]
+    public EventCallback<RedactionPolicy> OnPolicyChanged { get; set; }
+
+    private string _preset = PrivacyPresetNames.Logging;
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(InitialPreset) && Presets.Contains(InitialPreset))
+            _preset = InitialPreset;
+    }
+
+    private Task OnPresetChangedAsync(string value)
+    {
+        _preset = value;
+        return OnPolicyChanged.InvokeAsync(PrivacyPolicies.FromPreset(_preset));
+    }
+
+}

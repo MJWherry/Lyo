@@ -59,23 +59,40 @@ namespace Lyo.Tag.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("from_entity_type");
 
-                    b.Property<string>("Tag")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
-                        .HasColumnName("tag");
+                        .HasColumnName("name");
+
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("tag")
+                        .HasColumnName("tag_type");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("")
+                        .HasColumnName("slug");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Tag")
-                        .HasDatabaseName("ix_tag_tag");
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_tag_name");
+
+                    b.HasIndex("TagType")
+                        .HasDatabaseName("ix_tag_tag_type");
 
                     b.HasIndex("ForEntityType", "ForEntityId")
                         .HasDatabaseName("ix_tag_for_entity");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "Tag")
+                    b.HasIndex("ForEntityType", "ForEntityId", "TagType", "Name", "Slug")
                         .IsUnique()
-                        .HasDatabaseName("ix_tag_for_entity_tag_unique");
+                        .HasDatabaseName("ix_tag_for_entity_name_unique");
 
                     b.ToTable("tag", "tag");
                 });

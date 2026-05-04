@@ -32,7 +32,7 @@ const SWIPE_MAX_VERTICAL = 150;  // reject swipe if vertical drift exceeds this
 const TAP_MAX_MOVE_PX = 10;   // finger movement under this is a tap, not a swipe
 const TAP_MAX_DURATION_MS = 300;  // touch shorter than this is a tap
 
-const NAV_DEBOUNCE_MS = 300; // delay before notifying Blazor after rapid page changes
+const NAV_DEBOUNCE_MS = 150; // delay before notifying Blazor after rapid page changes
 
 
 export function initViewer(viewerId, dotNetRef) {

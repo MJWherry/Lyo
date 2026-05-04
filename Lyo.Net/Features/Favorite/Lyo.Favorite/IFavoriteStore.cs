@@ -29,6 +29,9 @@ public interface IFavoriteStore
     /// <summary>Gets the number of favorites for an entity.</summary>
     Task<int> GetCountForEntityAsync(EntityRef forEntity, CancellationToken ct = default);
 
+    /// <summary>Gets favorite counts keyed by for-entity id. Missing ids are omitted (treat as zero).</summary>
+    Task<IReadOnlyDictionary<string, int>> GetFavoriteCountsForEntitiesAsync(string forEntityType, IReadOnlyList<string> forEntityIds, CancellationToken ct = default);
+
     /// <summary>Deletes a favorite by id.</summary>
     Task DeleteAsync(Guid id, CancellationToken ct = default);
 

@@ -417,7 +417,8 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             Demographic = e.Demographic,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp,
-            AlternateTitles = e.AlternateTitles.Select(ToAlternateTitle).ToList()
+            AlternateTitles = e.AlternateTitles.Select(ToAlternateTitle).ToList(),
+            Tags = []
         };
 
     private static ComicAlternateTitle ToAlternateTitle(AlternateTitleEntity e)

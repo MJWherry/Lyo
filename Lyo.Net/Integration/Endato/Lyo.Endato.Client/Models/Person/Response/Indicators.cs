@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record Indicators(
     int HasBankruptcyRecords,
     int HasBusinessRecords,
@@ -26,4 +29,10 @@ public sealed record Indicators(
     int HasAddresses,
     int HasCurrentAddresses,
     int HasHistoricalAddresses,
-    int HasDebtRecords);
+    int HasDebtRecords)
+{
+    public override string ToString()
+        => $"Indicators: bankruptcy={HasBankruptcyRecords}, liens={HasLienRecords}, judgments={HasJudgmentRecords}, " +
+           $"property={HasPropertyRecords}, emails={HasEmails}, mobile={HasMobilePhones}, landlines={HasLandLines}, " +
+           $"addresses={HasAddresses}, debt={HasDebtRecords}";
+}

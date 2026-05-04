@@ -12,7 +12,6 @@ public class TtsServiceOptions
     public string? DefaultVoiceId { get; set; }
 
     /// <summary>Gets or sets the default output format (e.g., "mp3", "wav").</summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public AudioFormat? DefaultOutputFormat { get; set; }
 
     /// <summary>Gets or sets the maximum text length allowed for synthesis.</summary>

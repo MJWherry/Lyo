@@ -1,0 +1,41 @@
+<MudStack Spacing="2">
+    <MudTextField @bind-Value="_typeName"
+                  Label="Exception type name"
+                  Variant="Variant.Outlined"
+                  HelperText="Simple name, e.g. NullReferenceException"
+                  Margin="Margin.None"/>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Classify" Disabled="@string.IsNullOrWhiteSpace(_typeName)">
+        Classify
+    </MudButton>
+    @if (_result is { } r) {
+        <MudPaper Outlined="true" Class="pa-3">
+            <MudStack Spacing="2">
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    <MudChip T="string" Text="@r.Kind.ToString()" Color="Color.Primary" Size="Size.Small"/>
+                    <MudChip T="string" Text="@r.Severity.ToString()" Size="Size.Small"/>
+                    @if (r.IsExpectedControlFlow) {
+                        <MudChip T="string" Text="Expected control flow" Size="Size.Small" Color="Color.Info"/>
+                    }
+                </MudStack>
+                <MudText Typo="Typo.subtitle1">@r.Label</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@r.RemediationHint</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Matched: @r.MatchedTypeName</MudText>
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    private readonly IExceptionClassifier _classifier = new ExceptionClassifier();
+
+    private string _typeName = string.Empty;
+
+    private ClassifiedExceptionResult? _result;
+
+    private void Classify()
+    {
+        var name = _typeName.Trim();
+        _result = string.IsNullOrEmpty(name) ? null : _classifier.ClassifyByTypeName(name);
+    }
+
+}

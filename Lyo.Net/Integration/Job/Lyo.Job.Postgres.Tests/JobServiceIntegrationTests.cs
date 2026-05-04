@@ -104,7 +104,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.Id = Guid.NewGuid();
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -171,7 +171,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.Id = Guid.NewGuid();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -203,7 +203,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -227,7 +227,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.State = JobState.Finished; // Finished is not a cancellable state
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -248,7 +248,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.State = JobState.Running;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;
@@ -274,7 +274,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
                 ctx.Entity.StartedTimestamp = DateTime.UtcNow;
                 ctx.Entity.FinishedTimestamp = DateTime.UtcNow;
                 ctx.Entity.Result = JobRunResultEnum.Success;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         Assert.True(runResult.IsSuccess);
         var jobRunId = runResult.Data!.Id;

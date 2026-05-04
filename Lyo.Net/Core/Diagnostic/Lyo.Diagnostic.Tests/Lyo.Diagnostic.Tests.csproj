@@ -30,6 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\PackageMetadata\Lyo.PackageMetadata\Lyo.PackageMetadata.csproj"/>
         <ProjectReference Include="..\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
         <ProjectReference Include="..\Lyo.Diagnostic.AspNetCore\Lyo.Diagnostic.AspNetCore.csproj"/>
     </ItemGroup>

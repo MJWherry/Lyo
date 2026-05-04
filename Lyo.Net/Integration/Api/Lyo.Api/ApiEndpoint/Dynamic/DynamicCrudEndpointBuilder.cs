@@ -13,6 +13,7 @@ using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Common.Request;
 using Microsoft.AspNetCore.Builder;
@@ -98,7 +99,7 @@ public static class DynamicCrudEndpointBuilder
         var routePrefix = string.IsNullOrEmpty(baseRoute) ? "" : baseRoute + "/";
         var entityRoute = $"{routePrefix}{{entityType}}";
         var metadataRoute = $"{routePrefix}Metadata";
-        var jsonOptions = webApp.Services.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var jsonOptions = webApp.Services.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? LyoJsonSerializerOptions.Create();
         var metadata = BuildMetadata(registry);
         webApp.MapGet(metadataRoute, () => Results.Json(metadata)).WithTags("Dynamic").Produces<CrudMetadataResponse>();
         webApp.MapGet($"{entityRoute}/Metadata", ([FromRoute] string entityType, HttpContext httpContext) => HandleGetEntityMetadata<TContext>(registry, entityType, httpContext))

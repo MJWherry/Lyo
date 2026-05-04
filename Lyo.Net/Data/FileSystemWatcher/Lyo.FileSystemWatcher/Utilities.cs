@@ -1,7 +1,8 @@
-using System.Security.Cryptography;
-using System.Text;
+using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Enums;
+using Lyo.Hashing;
+using Lyo.Hashing.Files;
 
 namespace Lyo.FileSystemWatcher;
 
@@ -103,18 +104,14 @@ public static class Utilities
             }
             else if (metadataOnlyFingerprint) {
                 fileSize = fileInfo.Length;
-                fingerprint = FingerprintMetadataOnly(fileInfo.Length, fileInfo.LastWriteTimeUtc);
+                fingerprint = SparseFileFingerprinter.MetadataOnlyHex(fileInfo.Length, fileInfo.LastWriteTimeUtc);
             }
             else if (enableHashing) {
                 fileSize = fileInfo.Length;
                 try {
-                    var fingerprintBytes = Fingerprint(file, fileSize.Value, ct).GetAwaiter().GetResult();
+                    var fingerprintBytes = SparseFileFingerprinter.FingerprintAsync(file, fileSize.Value, ct).GetAwaiter().GetResult();
                     if (fingerprintBytes != null && fingerprintBytes.Length > 0) {
-#if NET9_0_OR_GREATER
-                        fingerprint = Convert.ToHexString(fingerprintBytes);
-#else
-                        fingerprint = ToHexString(fingerprintBytes);
-#endif
+                        fingerprint = HexEncoding.ToHexString(fingerprintBytes, TextLetterCase.Upper);
                     }
                 }
                 catch { /* Ignore fingerprint failures */
@@ -134,13 +131,8 @@ public static class Utilities
                 if (needsHash) {
                     try {
                         var hashBytes = Hash(file, ct);
-                        if (hashBytes.Length > 0) {
-#if NET9_0_OR_GREATER
-                            hash = Convert.ToHexString(hashBytes);
-#else
-                            hash = ToHexString(hashBytes);
-#endif
-                        }
+                        if (hashBytes.Length > 0)
+                            hash = HexEncoding.ToHexString(hashBytes, TextLetterCase.Upper);
                     }
                     catch (OperationCanceledException) {
                         throw;
@@ -428,8 +420,7 @@ public static class Utilities
         try {
             using var stream = File.OpenRead(path);
             ct.ThrowIfCancellationRequested();
-            using var md5 = MD5.Create();
-            return md5.ComputeHash(stream);
+            return Hasher.ComputeMd5(stream);
         }
         catch (UnauthorizedAccessException) {
             return [];
@@ -450,101 +441,14 @@ public static class Utilities
     /// <returns>MD5 hash of (size + sampled bytes), or null if the file does not exist</returns>
     /// <exception cref="UnauthorizedAccessException">Thrown when the file cannot be accessed due to access restrictions</exception>
     /// <exception cref="IOException">Thrown when the file cannot be accessed due to I/O errors</exception>
-    public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default)
-    {
-        ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
-        if (!File.Exists(path))
-            return Task.FromResult<byte[]?>(null);
+    public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default,
+        FileFingerprintOptions? options = null) =>
+        SparseFileFingerprinter.FingerprintAsync(path, fileSize, ct, options);
 
-        const long largeFileThreshold = 100 * 1024 * 1024; // 100MB
-        const long veryLargeThreshold = 1024 * 1024 * 1024; // 1GB
-        const int sampleSize = 128; // Smaller chunks for faster I/O
-        const int veryLargeSampleSize = 64; // Minimal read for very large files
-        if (fileSize > veryLargeThreshold) {
-            var fileInfo = new FileInfo(path);
-            var combined = new byte[8 + veryLargeSampleSize + 8];
-            var sizeBytes = BitConverter.GetBytes(fileSize);
-            var modTimeBytes = BitConverter.GetBytes(fileInfo.LastWriteTimeUtc.Ticks);
-            Array.Copy(sizeBytes, 0, combined, 0, 8);
-            Array.Copy(modTimeBytes, 0, combined, combined.Length - 8, 8);
-            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, veryLargeSampleSize * 2)) {
-                var firstRead = stream.Read(combined, 8, veryLargeSampleSize);
-                if (firstRead < veryLargeSampleSize)
-                    Array.Clear(combined, 8 + firstRead, veryLargeSampleSize - firstRead);
-            }
+    /// <inheritdoc cref="SparseFileFingerprinter.MetadataOnlyHex"/>
+    public static string MetadataOnlyFingerprintHex(long fileSize, DateTime lastWriteTimeUtc) =>
+        SparseFileFingerprinter.MetadataOnlyHex(fileSize, lastWriteTimeUtc);
 
-            using var md5 = MD5.Create();
-            return Task.FromResult<byte[]?>(md5.ComputeHash(combined));
-        }
-
-        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, sampleSize * 2);
-        ct.ThrowIfCancellationRequested();
-        var firstBytes = new byte[sampleSize];
-        var firstBytesRead = fs.Read(firstBytes, 0, sampleSize);
-        var middleBytesRead = 0;
-        var lastBytesRead = 0;
-        byte[]? middleBytes = null;
-        byte[]? lastBytes = null;
-        if (fileSize > largeFileThreshold) {
-            if (fileSize > sampleSize * 2) {
-                middleBytes = new byte[sampleSize];
-                fs.Seek(fileSize / 2, SeekOrigin.Begin);
-                middleBytesRead = fs.Read(middleBytes, 0, sampleSize);
-            }
-
-            if (fileSize > sampleSize) {
-                lastBytes = new byte[sampleSize];
-                fs.Seek(-sampleSize, SeekOrigin.End);
-                lastBytesRead = fs.Read(lastBytes, 0, sampleSize);
-            }
-        }
-        else if (fileSize > sampleSize) {
-            lastBytes = new byte[sampleSize];
-            fs.Seek(-sampleSize, SeekOrigin.End);
-            lastBytesRead = fs.Read(lastBytes, 0, sampleSize);
-        }
-
-        var capacity = 8 + firstBytesRead + middleBytesRead + lastBytesRead;
-        var combined2 = new byte[capacity];
-        var offset = 0;
-        var sizeBytes2 = BitConverter.GetBytes(fileSize);
-        Array.Copy(sizeBytes2, 0, combined2, offset, 8);
-        offset += 8;
-        Array.Copy(firstBytes, 0, combined2, offset, firstBytesRead);
-        offset += firstBytesRead;
-        if (middleBytes != null && middleBytesRead > 0) {
-            Array.Copy(middleBytes, 0, combined2, offset, middleBytesRead);
-            offset += middleBytesRead;
-        }
-
-        if (lastBytes != null && lastBytesRead > 0)
-            Array.Copy(lastBytes, 0, combined2, offset, lastBytesRead);
-
-        using var md52 = MD5.Create();
-        return Task.FromResult<byte[]?>(md52.ComputeHash(combined2));
-    }
-
-    /// <summary>Creates a fingerprint from file metadata only (size + mod time). No file I/O. Used when metadata changed (e.g. touch) for same path.</summary>
-    private static string FingerprintMetadataOnly(long fileSize, DateTime lastWriteTimeUtc)
-    {
-        var combined = new byte[16];
-        BitConverter.GetBytes(fileSize).CopyTo(combined, 0);
-        BitConverter.GetBytes(lastWriteTimeUtc.Ticks).CopyTo(combined, 8);
-        using var md5 = MD5.Create();
-        var hash = md5.ComputeHash(combined);
-#if NET9_0_OR_GREATER
-        return Convert.ToHexString(hash);
-#else
-        return ToHexString(hash);
-#endif
-    }
-
-    public static string ToHexString(byte[] bytes)
-    {
-        var sb = new StringBuilder(bytes.Length * 2);
-        foreach (var b in bytes)
-            sb.Append($"{b:x2}");
-
-        return sb.ToString();
-    }
+    /// <summary>Lowercase hex (legacy shape for this module).</summary>
+    public static string ToHexString(byte[] bytes) => HexEncoding.ToHexString(bytes, TextLetterCase.Lower);
 }

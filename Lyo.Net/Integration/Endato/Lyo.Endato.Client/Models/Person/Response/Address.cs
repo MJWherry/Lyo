@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record Address(
     bool IsDeliverable,
     bool IsMergedAddress,
@@ -40,4 +43,9 @@ public sealed record Address(
     //"phoneNumbers": [],
     //"neighbors": [],
     //"neighborSummaryRecords": []
-);
+)
+{
+    public override string ToString()
+        => $"Address: '{FullAddress}', Order={AddressOrder}, Deliverable={IsDeliverable}, Public={IsPublic}, " +
+           $"City='{City}', State='{State}', Zip='{Zip}'";
+}

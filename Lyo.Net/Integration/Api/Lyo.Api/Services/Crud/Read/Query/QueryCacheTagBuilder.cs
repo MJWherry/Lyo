@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using Lyo.Common.Enums;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.TypeConversion;
+using Lyo.Hashing;
 using Lyo.Query.Models.Common.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -54,7 +56,7 @@ public static class QueryCacheTagBuilder
         return ProjShapeTagMemo.GetOrAdd(
             payload, static p => {
                 var hash = SHA1.HashData(Encoding.UTF8.GetBytes(p));
-                return $"projshape:{Convert.ToHexString(hash).ToLowerInvariant()}";
+                return $"projshape:{HexEncoding.ToHexString(hash.AsSpan(), TextLetterCase.Lower)}";
             });
     }
 

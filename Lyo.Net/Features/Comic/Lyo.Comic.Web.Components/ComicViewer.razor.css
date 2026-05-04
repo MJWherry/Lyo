@@ -47,6 +47,19 @@
     transition: opacity 0.15s ease;
 }
 
+.comic-viewer__loading--nonblocking {
+    background: rgba(13, 13, 13, 0.35);
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 20px;
+    pointer-events: none;
+}
+
+.comic-viewer__page-img--cover-placeholder {
+    opacity: 0.55;
+    filter: saturate(0.85);
+}
+
 .comic-viewer__page-img--hidden {
     opacity: 0;
 }

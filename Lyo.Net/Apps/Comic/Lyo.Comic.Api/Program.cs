@@ -1,4 +1,5 @@
 using Lyo.Api;
+using Lyo.Common;
 using Lyo.Comic.Api;
 using Lyo.Comic.Postgres.Database;
 using Lyo.Csv;
@@ -6,6 +7,7 @@ using Lyo.Xlsx;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
 builder.Services.AddOpenApi();
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();

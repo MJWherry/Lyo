@@ -1,71 +1,57 @@
 # Lyo.Pdf
 
-PDF loading and text extraction for .NET. The main entry point is **`IPdfService`** (implemented by **`PdfService`**): load documents into memory, obtain a stable **`pdfId`**, then
-query words, lines, regions, key–value pairs, and tables. Merging and round-tripping bytes use **PDFsharp**; parsing uses **PdfPig** (UglyToad.PdfPig).
+PDF loading, text extraction, and PDFsharp-backed editing for .NET.
 
-Types such as `PdfWord`, `PdfTextLine`, `PdfBoundingBox`, and `ColumnHeader` live in **`Lyo.Pdf.Models`** (the `IPdfService` contract is defined there).
+- **`IPdfService`** (**`PdfService`**) is the façade for **`Open`** (**`IPdfReadLoader`**), **`CreateEmpty`** / **`OpenForEdit`**, and all **merge** helpers.
+- **`IPdfReadDocument`** exposes **`Text`** (**`IPdfDocumentText`**) and **`Sections`** (**`IPdfDocumentSections`**) — no parallel service surface that repeats the document as the first argument.
+- Layout types (`PdfWord`, `PdfTextLine`, `PdfBoundingBox`, `ColumnHeader`) and contracts live in **`Lyo.Pdf.Models`**.
 
-## `IPdfService` / `PdfService`
+## Loading and lifetime
 
-### Loading and lifetime
+- Open from **file**, **bytes**, or **stream** synchronously (`Open.OpenFrom…`) or asynchronously (`Open.OpenFrom…Async`).
+- Opens from **URL** are **async only** (`OpenFromUrlAsync` / `OpenFromUrlsAsync`): the loader never blocks with sync-over-async.
+- Inject an **`HttpClient`** (from `IHttpClientFactory`) into **`PdfService`** / **`PdfReadLoader`** when fetching URLs so connection pooling and timeouts are consistent.
+- Each open returns **`IPdfReadDocument`**: disposable, caller-owned (PdfPig + byte snapshot). **`SourceBytes`** is the immutable buffer for merges and **`OpenForEdit`**. **`PdfService` itself does not implement `IDisposable`.**
+- Per-PDF size limits use **`PdfServiceOptions.MaxPdfSizeBytes`**.
 
-- Load from **file**, **URL** (optional `HttpClient` from `IHttpClientFactory`), **bytes**, or **stream**.
-- Each successful load returns a **`LoadedPdfLease`**: dispose it (or call `UnloadPdf`) when finished so pages and bytes are released. The service enforces **per-PDF** and **total
-  ** size limits via **`PdfServiceOptions`**.
-- Batch helpers load multiple PDFs and return one lease per document; on failure, already-loaded IDs in that batch are unloaded.
+## Extraction and sections (**`IPdfDocumentText`**, **`IPdfDocumentSections`**)
 
-### Extraction
+Use the document’s facets (**`pdf.Text`** / **`pdf.Sections`**) rather than repeating **`IPdfReadDocument`** elsewhere:
 
-- **Words and lines** — `GetWords` / `GetLines`, optionally per page, with configurable vertical tolerance for line grouping.
-- **Between anchors** — `GetWordsBetween` / `GetLinesBetween` using start/end text on a page.
-- **Bounding regions** — `GetLinesInBoundingBox` for a `PdfBoundingBox` (page + box in PDF points). Includes page text and relevant form/annotation values where they intersect the
-  region.
-- **Columnar text in a region** — `GetColumnarTextInBoundingBox` splits a box into one or more columns (heuristics for two columns; equal bands for more).
-- **Key–value** — `ExtractKeyValuePairs` for known labels; set `keyValueColumnCount` &gt; 1 to split the region into that many vertical bands when the same keys appear side by
-  side.
-- **Tables** — `ExtractTable` / `ExtractDataTable` using `ColumnHeader[]` to find a header row and map cells; can produce **`Lyo.DataTable.Models.DataTable`**.
-- **Sections** — helpers like `GetSection` / `GetLinesBetweenSections` for document sections defined by ordered header names.
-- **Merge and export** — merge loaded PDFs by id; write bytes to file or stream; `GetPdfBytes` for raw content.
+- Words and lines, optional page and line tolerance (`pdf.Text.GetWords` / `GetLines`).
+- Anchors (`GetWordsBetween` / `GetLinesBetween`).
+- Regions (`GetLinesInBoundingBox`, columnar variants).
+- Key–value and tables (`ExtractKeyValuePairs`, `ExtractTable`, `ExtractDataTable`, inference helpers and `ParseBytesAsDataTable`).
+- Section slicing (`pdf.Sections.GetSection`, `GetLinesBetweenSections`, …).
 
-### Dependency injection
+Word-only overloads on **`pdf.Text`** operate on **`PdfWord`** lists and ignore the PdfPig page content; options still reflect the **`PdfServiceOptions`** wired into that service instance.
+
+## Editing and merging (**`IPdfService`**)
+
+- **`CreateEmpty`**, **`OpenForEdit`** (PdfSharp): import pages from another **`IPdfReadDocument`**, remove/insert/reorder pages, **`ToBytes`**, **`Save`**, **`CopyTo`** (+ async counterparts).
+- Merge helpers produce bytes or write to paths/streams from **`byte[]`** buffers (typically **`document.SourceBytes.ToArray()`** from each reader).
+
+## Dependency injection
 
 ```csharp
-using Lyo.Pdf;
-using Lyo.Pdf.Models;
-
-// Startup
 services.AddPdfService();
-// or: services.AddPdfService(o => { ... });
-// or: services.AddPdfServiceFromConfiguration(configuration);
-
-// Inject
-public class MyExtractor(IPdfService pdf)
-{
-    public async Task RunAsync(string path)
-    {
-        await using var lease = await pdf.LoadPdfFromFileAsync(path);
-        var lines = pdf.GetLines(lease.PdfId, page: 1);
-        // ...
-    }
-}
+// Optional: PdfService resolves HttpClient for URL loads if registered
+services.AddHttpClient(/* ... */);
 ```
 
-`AddPdfService` registers **`PdfService`** as scoped and **`IPdfService`** to the same instance. For URL loading, register an `HttpClient` (e.g.
-`services.AddHttpClient(nameof(PdfService), ...)`).
+Scoped registration: **`IPdfService`** and **`PdfService`** share one instance.
 
-## Pairing with the Blazor annotator
+## Blazor annotator
 
-To define regions by drawing boxes in the browser (IDs → `PdfBoundingBox`), use **`Lyo.Pdf.Web.Components`** (MudBlazor UI under **`PdfAnnotator/`**). That project absorbed the
-former standalone **`Lyo.Pdf.Annotator`** package. Feed the resulting boxes into `GetLinesInBoundingBox` / other `IPdfService` region helpers.
+**`Lyo.Pdf.Web.Components`** (MudBlazor under **`PdfAnnotator/`**) uses **`await using`** (or **`using`**) **`IPdfReadDocument`** from **`PdfService.Open`**, then **`pdf.Text.…`** for bounding-box and layout-derived extraction.
 
 ## Dependencies
 
-| Package / project                             | Role                                        |
-|-----------------------------------------------|---------------------------------------------|
-| `UglyToad.PdfPig`                             | Open PDFs, text and layout                  |
-| `PDFsharp`                                    | Merge and byte-level output                 |
-| `Microsoft.Extensions.Http`                   | Optional URL fetch via `IHttpClientFactory` |
-| `Lyo.Pdf.Models`                              | `IPdfService`, DTOs                         |
-| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics` | Shared helpers, metrics                     |
+| Package / project                             | Role                            |
+|-----------------------------------------------|---------------------------------|
+| `UglyToad.PdfPig`                             | Read PDFs, text and layout      |
+| `PDFsharp`                                    | Structural edits and merges     |
+| `Lyo.Pdf.Models`                              | Contracts and DTOs              |
+| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics` | Shared helpers and metrics       |
 
-**Target frameworks:** `netstandard2.0`, `net10.0`.
+Target frameworks: **`netstandard2.0`**, **`net10.0`**.

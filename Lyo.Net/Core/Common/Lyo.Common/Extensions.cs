@@ -7,6 +7,7 @@ using System.Text;
 using Lyo.Common.Attributes;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+using Lyo.Exceptions;
 
 #pragma warning disable CS8603 // Possible null reference return.
 
@@ -249,15 +250,6 @@ public static class Extensions
     /// <param name="state">The US state.</param>
     /// <returns>An enumerable of GeographicInfo values for the state.</returns>
     public static IEnumerable<GeographicInfo> ByState(this USState state) => GeographicInfo.ByState(state);
-
-    public static string ToHexString(this byte[] bytes)
-    {
-        var sb = new StringBuilder(bytes.Length * 2);
-        foreach (var b in bytes)
-            sb.Append($"{b:x2}");
-
-        return sb.ToString();
-    }
 
     public static string ToMimeString(this MimeType mimeType)
     {

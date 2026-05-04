@@ -10,7 +10,6 @@ public class SortBy
     /// <summary>Must match database entity property or decorate the response entity property with DatabaseNameAttribute</summary>
     public string PropertyName { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public SortDirection? Direction { get; set; }
 
     /// <summary>Optional. When omitted, sort order is determined by the list order in the request.</summary>

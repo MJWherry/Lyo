@@ -43,7 +43,9 @@ public sealed class TraceSanitiser : ITraceSanitiser
     private SanitisedStackTrace SanitiseInternal(DecodedStackTrace trace)
     {
         var frames = trace.AllFrames.Where(FrameIsAllowed).Select(SanitiseFrame).ToList();
-        var crashSite = trace.LikelyCrashSite is { } cs && FrameIsAllowed(cs) ? SanitiseLocationSummary(cs) : null;
+        var crashSite = trace.LikelyCrashSite is { } cs && FrameIsAllowed(cs)
+            ? (SanitiseLocationSummary(cs) ?? SanitiseCrashSiteWithoutLocation(cs))
+            : null;
         var message = _options.IncludeExceptionMessage ? SanitiseText(trace.ExceptionMessage) : null;
         var inners = trace.InnerExceptions.Select(SanitiseInternal).ToList();
         return new(message, frames, crashSite, trace.CrashSiteConfidence, trace.Fingerprint, trace.UserNamespaces, trace.HasRecursion, inners);
@@ -51,6 +53,14 @@ public sealed class TraceSanitiser : ITraceSanitiser
 
     private bool FrameIsAllowed(StackFrame frame)
         => (!_options.RemoveSystemFrames || frame.Category == FrameCategory.UserCode) && (!_options.RemoveCompilerGeneratedFrames || !frame.IsCompilerGenerated);
+
+    private string? SanitiseCrashSiteWithoutLocation(StackFrame frame)
+    {
+        // Innermost frame often lacks "in file:line" (release build, stripped PDBs, or truncated dumps) even though we still
+        // know the method — keep sanitised output useful in those cases.
+        var method = frame.ShortMethod;
+        return string.IsNullOrWhiteSpace(method) ? null : SanitiseText(method);
+    }
 
     private SanitisedFrame SanitiseFrame(StackFrame frame) => new(frame.ShortMethod, SanitiseLocationSummary(frame), frame.Category, frame.IsAsync, frame.IsLambda);
 

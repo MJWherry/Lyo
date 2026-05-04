@@ -28,6 +28,7 @@ public static class PrivacyPolicies
                 builder.AddRule(new RegexRedactionRule(@"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", RedactionKind.Custom));
                 break;
             case PrivacyPresetNames.PublicSurface:
+                builder.AddNationalIdRule(NationalIdPacks.UnitedStatesSsn);
                 builder.AddRule(new EmailRedactionRule())
                     .AddRule(new PhoneRedactionRule(PhoneMaskMode.Full))
                     .AddRule(new PaymentCardRedactionRule())
@@ -47,8 +48,9 @@ public static class PrivacyPolicies
     }
 
     private static void AddLoggingCore(RedactionPolicyBuilder builder)
-        => builder.AddRule(new EmailRedactionRule())
-            .AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits))
+        => builder.AddNationalIdRule(NationalIdPacks.UnitedStatesSsn)
+            .AddRule(new EmailRedactionRule())
+            .AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits, 4))
             .AddRule(new PaymentCardRedactionRule())
             .AddRule(new UrlRedactionRule())
             .AddRule(new IpAddressRedactionRule(IpRedactionMode.TruncateLastSegment));

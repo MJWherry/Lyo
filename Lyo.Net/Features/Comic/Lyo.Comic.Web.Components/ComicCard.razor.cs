@@ -1,3 +1,4 @@
+using System.Linq;
 using Lyo.Comic.Enums;
 using Microsoft.AspNetCore.Components;
 
@@ -5,6 +6,8 @@ namespace Lyo.Comic.Web.Components;
 
 public partial class ComicCard
 {
+    private const int MaxVisibleTags = 3;
+
     /// <summary>The comic series this card represents.</summary>
     [Parameter]
     [EditorRequired]
@@ -24,6 +27,24 @@ public partial class ComicCard
     /// <summary>Raised when the user clicks the "Details" button.</summary>
     [Parameter]
     public EventCallback<ComicSeries> OnDetails { get; set; }
+
+    private bool HasAnyDisplayTags => Series.Tags.Any(static t => !string.IsNullOrWhiteSpace(t));
+
+    private IEnumerable<string> VisibleTagChips
+        => Series.Tags.Where(static t => !string.IsNullOrWhiteSpace(t)).Take(MaxVisibleTags);
+
+    private int OverflowTagCount
+    {
+        get {
+            var n = 0;
+            foreach (var t in Series.Tags) {
+                if (!string.IsNullOrWhiteSpace(t))
+                    n++;
+            }
+
+            return n <= MaxVisibleTags ? 0 : n - MaxVisibleTags;
+        }
+    }
 
     private string StatusBadgeClass
         => Series.Status switch {

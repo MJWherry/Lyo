@@ -1,0 +1,15 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.PrivacyRedaction)]
+@inherits AuthorizedPage
+
+<PageTitle>Privacy redaction</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <PrivacyWorkbench/>
+</MudContainer>
+
+@code {
+
+    protected override string PageName { get; set; } = "Privacy redaction";
+
+}

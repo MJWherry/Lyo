@@ -5,17 +5,17 @@
 
     @* ── Loading overlay ─────────────────────────────────────────── *@
     @if (_loadingPage) {
-        <div class="comic-viewer__loading">
+        <div class="comic-viewer__loading @(!string.IsNullOrWhiteSpace(PageAreaImageSrc) ? "comic-viewer__loading--nonblocking" : "")">
             <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary"/>
         </div>
     }
 
     @* ── Page image ──────────────────────────────────────────────── *@
     <div class="comic-viewer__page-area">
-        @if (!string.IsNullOrWhiteSpace(_currentImageUrl)) {
-            <img src="@_currentImageUrl"
-                 alt="Page @CurrentPage"
-                 class="comic-viewer__page-img @(_loadingPage ? "comic-viewer__page-img--hidden" : "")"
+        @if (!string.IsNullOrWhiteSpace(PageAreaImageSrc)) {
+            <img src="@PageAreaImageSrc"
+                 alt="Page @DisplayPage"
+                 class="comic-viewer__page-img @(UseCoverPlaceholderStyle ? "comic-viewer__page-img--cover-placeholder" : "")"
                  @onload="OnImageLoaded"/>
         }
         else if (!_loadingPage) {
@@ -82,7 +82,7 @@
                                title="Previous chapter"/>
 
                 <MudText Typo="Typo.body2" Class="flex-1 text-center" Style="white-space: nowrap;">
-                    @DisplayPage / @TotalPages
+                    @DisplayPage / @EffectiveTotalPages
                 </MudText>
 
                 <MudIconButton Icon="@Icons.Material.Filled.SkipNext"
@@ -97,7 +97,7 @@
                        Value="DisplayPage"
                        ValueChanged="OnSliderChangedAsync"
                        Min="1"
-                       Max="@TotalPages"
+                       Max="@EffectiveTotalPages"
                        Class="comic-viewer__progress-slider"
                        Color="Color.Primary"
                        Immediate="false"/>

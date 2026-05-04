@@ -15,6 +15,5 @@ public sealed class LocalFileStorageServiceOptions
     public bool EnableDuplicateDetection { get; init; } = false;
 
     /// <summary>Strategy for handling duplicate files when duplicate detection is enabled.</summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public DuplicateHandlingStrategy DuplicateStrategy { get; init; } = DuplicateHandlingStrategy.ReturnExisting;
 }

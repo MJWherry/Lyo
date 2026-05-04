@@ -1,0 +1,374 @@
+@inject ISnackbar Snackbar
+@inject IJsInterop Js
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        Rules follow JSON policy order: national IDs → detectors → API patterns → support-export token regexes → custom regex chips. Use <strong>Apply to Redaction tab</strong> to test.
+    </MudText>
+
+    <MudPaper Class="pa-3" Outlined="true">
+        <MudStack Spacing="2">
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2">Templates</MudText>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.Minimal)))">Minimal</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.Logging)))">Logging</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.SupportExport)))">Support export</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.PublicSurface)))">Public surface</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.RegressionTesting)))">Regression testing</MudButton>
+                <MudDivider Vertical="true" FlexItem="true" Class="mx-1"/>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="ApplyAsync">Apply to Redaction tab</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyDraftJsonAsync">Copy draft JSON</MudButton>
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Border="true">
+        <MudTabPanel Text="Policy shell" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_policyLabel" Label="Policy label (metrics / JSON name)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_placeholder" Label="Placeholder" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudSwitch T="bool" @bind-Value="_mergeAdjacent" Color="Color.Primary" Label="Merge adjacent redaction runs"/>
+                        </MudItem>
+                    </MudGrid>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Never redact (literal substrings)</MudText>
+                        <LyoChipInput Values="@_neverRedactChips"
+                                      ValuesChanged="OnNeverRedactChipsChanged"
+                                      Placeholder="Type literal and press Enter — each chip is one never-redact substring"
+                                      ShowClearButton="true"/>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">Ordinal match; entire substring is left unchanged.</MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="National IDs" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudCheckBox T="bool" @bind-Value="_idUsSsn" Label="United States SSN (###-##-#### heuristics)"/>
+                    <MudCheckBox T="bool" @bind-Value="_idUkNino" Label="UK NINO (loose pattern)"/>
+                    <MudCheckBox T="bool" @bind-Value="_idDeSteuer" Label="Germany Steuer-ID (11 digits)"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Run before phone/email so SSN-shaped lines are not missed when phone rules use a higher digit minimum.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Common detectors" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleEmail" Label="Email"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_rulePhone" Label="Phone"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleCard" Label="Payment card (Luhn)"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleUrl" Label="URL"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleIp" Label="IPv4 / IPv6"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleAddress" Label="Postal address heuristic"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleIban" Label="IBAN"/>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCheckBox T="bool" @bind-Value="_ruleBank" Label="Bank account digit run"/>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Phone options" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="string" @bind-Value="_phoneMode" Label="Mask mode" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                                <MudSelectItem Value="@("lastDigits")">Last digits visible</MudSelectItem>
+                                <MudSelectItem Value="@("full")">Full placeholder</MudSelectItem>
+                                <MudSelectItem Value="@("firstOfLast")">First digit of last group</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudNumericField T="int" @bind-Value="_phoneDigitsParam" Label="Digits parameter" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="15" FullWidth="true"
+                                             HelperText="Last-N visible or window for first-of-last."/>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudNumericField T="int" @bind-Value="_phoneMinDigits" Label="Minimum digit count" Variant="Variant.Outlined" Margin="Margin.Dense" Min="7" Max="19" FullWidth="true"/>
+                        </MudItem>
+                    </MudGrid>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Applies when Phone is enabled on Common detectors.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="IP &amp; bank" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="3">
+                    <MudSelect T="string" @bind-Value="_ipMode" Label="IPv4 mode" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true">
+                        <MudSelectItem Value="@("truncate")">Truncate last octet</MudSelectItem>
+                        <MudSelectItem Value="@("full")">Redact full address</MudSelectItem>
+                    </MudSelect>
+                    <MudNumericField T="ulong" @bind-Value="_bankMinNumeric" Label="Bank account: minimum numeric value (0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">IPv4 mode applies when IPv4 / IPv6 detector is enabled.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="API &amp; tokens" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudCheckBox T="bool" @bind-Value="_apiAws" Label="AWS access key id (AKIA…)"/>
+                    <MudCheckBox T="bool" @bind-Value="_apiGithub" Label="GitHub PAT (ghp_ / ghs_ …)"/>
+                    <MudCheckBox T="bool" @bind-Value="_apiAssignment" Label="High-entropy KEY=value assignments"/>
+                    <MudNumericField T="double" @bind-Value="_apiMinEntropy" Label="Minimum entropy (bits/char, 0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                    <MudDivider Class="my-1"/>
+                    <MudCheckBox T="bool" @bind-Value="_extraBearerJwt" Label="Support-export extras: Bearer + JWT-shaped strings (regex rules)"/>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Custom regex" Class="pa-2">
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2">Additional regex rules</MudText>
+                    <LyoChipInput Values="@_regexChips"
+                                  ValuesChanged="OnRegexChipsChanged"
+                                  Placeholder="One .NET regex per chip — Enter to add (kind Custom)"
+                                  ShowClearButton="true"/>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Each chip becomes a regex rule with the policy placeholder per match. Invalid patterns fail on Apply.</MudText>
+                </MudStack>
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>
+
+@code {
+    [Parameter]
+    public EventCallback<RedactionPolicy> OnPolicyApplied { get; set; }
+
+    private List<string> _neverRedactChips = [];
+
+    private List<string> _regexChips = [];
+
+    private string _policyLabel = "Workbench policy";
+
+    private string _placeholder = "[redacted]";
+
+    private bool _mergeAdjacent = true;
+
+    private bool _idUsSsn;
+
+    private bool _idUkNino;
+
+    private bool _idDeSteuer;
+
+    private bool _ruleEmail = true;
+
+    private bool _rulePhone = true;
+
+    private bool _ruleCard = true;
+
+    private bool _ruleUrl = true;
+
+    private bool _ruleIp = true;
+
+    private bool _ruleAddress;
+
+    private bool _ruleIban;
+
+    private bool _ruleBank;
+
+    private string _phoneMode = "lastDigits";
+
+    private int _phoneDigitsParam = 4;
+
+    private int _phoneMinDigits = 10;
+
+    private string _ipMode = "truncate";
+
+    private ulong _bankMinNumeric;
+
+    private bool _apiAws;
+
+    private bool _apiGithub;
+
+    private bool _apiAssignment;
+
+    private double _apiMinEntropy;
+
+    private bool _extraBearerJwt;
+
+    private Task OnNeverRedactChipsChanged(IEnumerable<string> values)
+    {
+        _neverRedactChips = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private Task OnRegexChipsChanged(IEnumerable<string> values)
+    {
+        _regexChips = values.ToList();
+        return Task.CompletedTask;
+    }
+
+    private void ApplyTemplate(string name)
+    {
+        _neverRedactChips = [];
+        _regexChips = [];
+        _policyLabel = $"{name} (workbench)";
+        _mergeAdjacent = true;
+        _apiMinEntropy = 0;
+        _bankMinNumeric = 0;
+        _extraBearerJwt = false;
+        _idUsSsn = _idUkNino = _idDeSteuer = false;
+        _ruleEmail = _rulePhone = _ruleCard = _ruleUrl = _ruleIp = _ruleAddress = _ruleIban = _ruleBank = _apiAws = _apiGithub = _apiAssignment = false;
+
+        switch (name) {
+            case nameof(PrivacyPresetNames.Minimal):
+                _placeholder = "[redacted]";
+                _phoneMode = "lastDigits";
+                _phoneDigitsParam = 4;
+                _phoneMinDigits = 10;
+                _ipMode = "full";
+                break;
+            case nameof(PrivacyPresetNames.Logging):
+                _placeholder = "[redacted]";
+                _idUsSsn = true;
+                _ruleEmail = _rulePhone = _ruleCard = _ruleUrl = _ruleIp = true;
+                _phoneMode = "lastDigits";
+                _phoneDigitsParam = 4;
+                _phoneMinDigits = 10;
+                _ipMode = "truncate";
+                break;
+            case nameof(PrivacyPresetNames.SupportExport):
+                ApplyTemplate(nameof(PrivacyPresetNames.Logging));
+                _policyLabel = $"{PrivacyPresetNames.SupportExport} (workbench)";
+                _extraBearerJwt = true;
+                break;
+            case nameof(PrivacyPresetNames.PublicSurface):
+                _placeholder = "[redacted]";
+                _idUsSsn = true;
+                _ruleEmail = _rulePhone = _ruleCard = _ruleUrl = _ruleIp = _ruleAddress = true;
+                _phoneMode = "full";
+                _ipMode = "full";
+                break;
+            case nameof(PrivacyPresetNames.RegressionTesting):
+                _placeholder = "[REDACTED]";
+                _ruleEmail = _rulePhone = _ruleCard = _ruleUrl = _ruleIp = true;
+                _idUsSsn = true;
+                _phoneMode = "lastDigits";
+                _phoneDigitsParam = 4;
+                _phoneMinDigits = 10;
+                _ipMode = "truncate";
+                break;
+        }
+    }
+
+    private async Task CopyDraftJsonAsync()
+    {
+        try {
+            var json = PolicyJson.SerializePolicy(BuildPolicy());
+            await Js.SendToClipboard(json);
+            Snackbar.Add("Draft policy JSON copied.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        try {
+            var p = BuildPolicy();
+            await OnPolicyApplied.InvokeAsync(p);
+            Snackbar.Add("Policy applied — switch to the Redaction tab to test.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private RedactionPolicy BuildPolicy()
+    {
+        var b = new RedactionPolicyBuilder()
+            .WithPolicyName(string.IsNullOrWhiteSpace(_policyLabel) ? "Workbench policy" : _policyLabel.Trim())
+            .WithPlaceholder(string.IsNullOrWhiteSpace(_placeholder) ? "[redacted]" : _placeholder.Trim())
+            .WithMergeAdjacentRuns(_mergeAdjacent);
+
+        foreach (var literal in _neverRedactChips) {
+            if (!string.IsNullOrWhiteSpace(literal))
+                b.AddNeverRedactSubstring(literal.Trim());
+        }
+
+        var packs = NationalIdPacks.None;
+        if (_idUsSsn)
+            packs |= NationalIdPacks.UnitedStatesSsn;
+        if (_idUkNino)
+            packs |= NationalIdPacks.UnitedKingdomNino;
+        if (_idDeSteuer)
+            packs |= NationalIdPacks.GermanySteuerId;
+        if (packs != NationalIdPacks.None)
+            b.AddNationalIdRule(packs);
+
+        if (_ruleEmail)
+            b.AddRule(new EmailRedactionRule());
+
+        if (_rulePhone) {
+            var mode = _phoneMode switch {
+                "full" => PhoneMaskMode.Full,
+                "firstOfLast" => PhoneMaskMode.FirstDigitOfLastGroup,
+                _ => PhoneMaskMode.LastDigits
+            };
+            b.AddPhoneRule(mode, _phoneDigitsParam, _phoneMinDigits);
+        }
+
+        if (_ruleCard)
+            b.AddRule(new PaymentCardRedactionRule());
+        if (_ruleUrl)
+            b.AddRule(new UrlRedactionRule());
+        if (_ruleIp)
+            b.AddIpRule(_ipMode == "truncate" ? IpRedactionMode.TruncateLastSegment : IpRedactionMode.Full);
+        if (_ruleAddress)
+            b.AddRule(new AddressRedactionRule());
+        if (_ruleIban)
+            b.AddRule(new IbanRedactionRule());
+        if (_ruleBank)
+            b.AddBankAccountRule(_bankMinNumeric);
+
+        var api = ApiSecretPatterns.None;
+        if (_apiAws)
+            api |= ApiSecretPatterns.AwsAccessKey;
+        if (_apiGithub)
+            api |= ApiSecretPatterns.GitHubPersonalAccessToken;
+        if (_apiAssignment)
+            api |= ApiSecretPatterns.HighEntropyAssignment;
+        if (api != ApiSecretPatterns.None)
+            b.AddApiSecretRule(api, _apiMinEntropy);
+
+        if (_extraBearerJwt) {
+            b.AddRule(new RegexRedactionRule(@"(?i)\bBearer\s+[A-Za-z0-9\-._~+/]+=*", RedactionKind.Custom));
+            b.AddRule(new RegexRedactionRule(@"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", RedactionKind.Custom));
+        }
+
+        foreach (var pattern in _regexChips) {
+            if (!string.IsNullOrWhiteSpace(pattern))
+                b.AddRegexRule(pattern.Trim(), RedactionKind.Custom);
+        }
+
+        return b.Build();
+    }
+
+}

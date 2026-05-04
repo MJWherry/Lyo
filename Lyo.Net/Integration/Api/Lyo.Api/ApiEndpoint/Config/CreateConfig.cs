@@ -10,5 +10,8 @@ public sealed record CreateConfig<TRequest, TEntity, TDbContext>
 
     public Action<CreateContext<TRequest, TEntity, TDbContext>>? After { get; init; }
 
+    /// <summary>When non-null, runs after EF save completes instead of the synchronous <see cref="After" /> delegate.</summary>
+    public Func<CreateContext<TRequest, TEntity, TDbContext>, Task>? AfterAsync { get; init; }
+
     public EndpointAuth? Auth { get; init; }
 }

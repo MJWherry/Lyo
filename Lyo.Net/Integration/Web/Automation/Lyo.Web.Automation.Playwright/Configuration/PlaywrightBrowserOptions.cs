@@ -47,8 +47,8 @@ public class PlaywrightBrowserOptions
     public int NavigationTimeoutMs { get; set; } = 30_000;
 
     /// <summary>
-    /// Default timeout for locator actions and <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementAsync" /> /
-    /// <see cref="Lyo.Web.Automation.IWebAutomationBrowser.PollForElementsAsync" /> (milliseconds).
+    /// Default timeout for locator actions and <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.PollForElementAsync" /> /
+    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.PollForElementsAsync" /> (milliseconds).
     /// </summary>
     public float LocatorDefaultTimeoutMs { get; set; } = 30_000f;
 

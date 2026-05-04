@@ -8,6 +8,7 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Metrics;
@@ -48,6 +49,9 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         const string operation = "query_map";
+        ArgumentHelpers.ThrowIfNull(queryRequest);
+        ArgumentHelpers.ThrowIfNull(defaultOrder);
+        using var scope = BeginActionScope("QUERY", typeof(QueryReq), typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
@@ -81,6 +85,9 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         const string operation = "query";
+        ArgumentHelpers.ThrowIfNull(queryRequest);
+        ArgumentHelpers.ThrowIfNull(defaultOrder);
+        using var scope = BeginActionScope("QUERY", typeof(QueryReq), typeof(TDbModel), typeof(TDbModel));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
@@ -112,6 +119,9 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         const string operation = "query_projected";
+        ArgumentHelpers.ThrowIfNull(queryRequest);
+        ArgumentHelpers.ThrowIfNull(defaultOrder);
+        using var scope = BeginActionScope("QUERY PROJECTED", typeof(ProjectionQueryReq), typeof(TDbModel), typeof(object));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
@@ -144,14 +154,13 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         const string operation = "get_map";
+        ArgumentHelpers.ThrowIfNullOrEmpty(keys);
+        IReadOnlyList<string> matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
+        var includeArray = matIncludes.Count == 0 ? null : matIncludes is string[] sa ? sa : matIncludes.ToArray();
+        using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
-            ArgumentHelpers.ThrowIfNull(keys);
-            ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-            using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TResult));
-            var matIncludes = includes?.ToList() ?? [];
-            var includeArray = matIncludes.Any() ? matIncludes.ToArray() : null;
             await using var setupContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             setupContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
             if (matIncludes.Count > 0)
@@ -218,13 +227,12 @@ public class QueryService<TContext>(
         where TDbModel : class
     {
         const string operation = "get";
+        ArgumentHelpers.ThrowIfNullOrEmpty(keys);
+        IReadOnlyList<string> matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
+        using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TDbModel));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
         try {
-            ArgumentHelpers.ThrowIfNull(keys);
-            ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-            using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TDbModel));
-            var matIncludes = includes?.ToList() ?? [];
             await using var setupContext = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             setupContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
             if (matIncludes.Count > 0)

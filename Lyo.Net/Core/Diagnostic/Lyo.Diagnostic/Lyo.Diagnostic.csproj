@@ -14,7 +14,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\PackageMetadata\Lyo.PackageMetadata\Lyo.PackageMetadata.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

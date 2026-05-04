@@ -1,0 +1,50 @@
+@if (Trace is null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Decode a stack trace to see the summary.</MudText>
+}
+else {
+    <MudGrid Spacing="2">
+        <MudItem xs="12">
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                <MudChip T="string" Text="@($"Fingerprint: {Trace.Fingerprint}")" Size="Size.Small"/>
+                <MudChip T="string" Text="@($"Frames: {Trace.TotalFrameCount}")" Size="Size.Small"/>
+                <MudChip T="string" Text="@($"User: {Trace.UserFrameCount} | System: {Trace.SystemFrameCount}")" Size="Size.Small"/>
+                <MudChip T="string" Text="@($"Crash confidence: {Trace.CrashSiteConfidence}")" Size="Size.Small" Color="Color.Primary"/>
+                @if (Trace.HasRecursion) {
+                    <MudChip T="string" Text="Recursion detected" Size="Size.Small" Color="Color.Warning"/>
+                }
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Likely crash site</MudText>
+            <MudText Typo="Typo.body2" Style="white-space: pre-wrap; overflow-wrap: anywhere;">@(Trace.LikelyCrashSite?.ToString() ?? "—")</MudText>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Deepest user frame</MudText>
+            <MudText Typo="Typo.body2" Style="white-space: pre-wrap; overflow-wrap: anywhere;">@(Trace.DeepestUserFrame?.ToString() ?? "—")</MudText>
+        </MudItem>
+        @if (Trace.UserNamespaces.Count > 0) {
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">User namespaces</MudText>
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    @foreach (var ns in Trace.UserNamespaces) {
+                        <MudChip T="string" Text="@ns" Size="Size.Small" Variant="Variant.Outlined"/>
+                    }
+                </MudStack>
+            </MudItem>
+        }
+        @if (!string.IsNullOrWhiteSpace(Trace.ExceptionMessage)) {
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Exception message</MudText>
+                <MudPaper Outlined="true" Class="pa-2">
+                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@Trace.ExceptionMessage</MudText>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    [Parameter]
+    public DecodedStackTrace? Trace { get; set; }
+
+}

@@ -1,10 +1,9 @@
 # Lyo.Streams
 
-Common stream implementations including HashingStream, TeeStream, CountingStream, ProgressStream, and ConcatenatedStream for the Lyo library suite.
+Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).
 
 ## Features
 
-- **HashingStream** – Compute hash while reading/writing stream data
 - **TeeStream** – Duplicate stream output to multiple destinations
 - **CountingStream** – Track bytes read or written
 - **ProgressStream** – Report progress during stream operations
@@ -16,9 +15,11 @@ Common stream implementations including HashingStream, TeeStream, CountingStream
 
 ```csharp
 using Lyo.Streams;
+using Lyo.Hashing;
+using System.Security.Cryptography;
 
-// Hash while reading
-using var hashingStream = new HashingStream(sourceStream, HashAlgorithmName.SHA256);
+// Hash while reading — use Lyo.Hashing.HashingStream
+using var hashingStream = new HashingStream(sourceStream, SHA256.Create());
 await hashingStream.CopyToAsync(destinationStream);
 var hash = hashingStream.GetHash();
 
@@ -56,11 +57,10 @@ await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 
 ## Public API (generated)
 
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
+Top-level `public` types in `*.cs` (*7*). Nested types and file-scoped namespaces may omit some entries.
 
 - `ConcatenatedStream`
 - `CountingStream`
-- `HashingStream`
 - `ProgressStream`
 - `StreamChunkSizeHelper`
 - `StreamChunkSizeOptions`

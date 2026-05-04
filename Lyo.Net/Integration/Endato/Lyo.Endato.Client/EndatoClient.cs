@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using Lyo.Api.Client;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,8 +18,9 @@ public class EndatoClient : ApiClient
 
     public EndatoClient(EndatoClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
-            loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), httpClient,
-            new() { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } }, options)
+            loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), 
+            httpClient,
+            LyoJsonSerializerOptions.Create(), options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));

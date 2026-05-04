@@ -6,6 +6,7 @@ using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Mapping;
 using Lyo.Api.Tests.Host;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Csv;
 using Lyo.Formatter;
 using Lyo.Job.Models.Request;
@@ -39,7 +40,7 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options => {
 });
 
 builder.Services.AddRequestDecompression();
-builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.PropertyNameCaseInsensitive = true);
+builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
 builder.Services.AddLocalCache();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddPostgresJobManagementFromConfiguration(builder.Configuration);

@@ -13,10 +13,8 @@ public class CompressionServiceOptions
 
     public string DefaultEncoding { get; set; } = "utf-8";
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public CompressionLevel DefaultCompressionLevel { get; set; } = CompressionLevel.Optimal;
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public CompressionAlgorithm DefaultAlgorithm { get; set; }
 #if NETSTANDARD2_0
         = CompressionAlgorithm.GZip;

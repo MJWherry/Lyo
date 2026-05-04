@@ -1,5 +1,6 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
+using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Mapping;
 using Lyo.Cache;
 using Lyo.Comic.Api.Endpoints;
@@ -9,16 +10,22 @@ using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Services;
 using Lyo.Comic.Postgres;
 using Lyo.Comic.Postgres.Database;
+using Lyo.Common.Identifiers;
 using Lyo.Comment.Postgres;
+using Lyo.Comment.Postgres.Database;
 using Lyo.Encryption.Extensions;
 using Lyo.Favorite.Postgres;
+using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
 using Lyo.Keystore;
 using Lyo.Rating.Postgres;
+using Lyo.Rating.Postgres.Database;
+using Lyo.Tag;
 using Lyo.Tag.Postgres;
+using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Comic.Api;
@@ -31,7 +38,8 @@ public static class Extensions
     private const string FileStorageKey = "comic-files";
 
     /// <summary>
-    /// Registers all Comic API services: the five postgres stores, enrichment service, local cache, Lyo.Api query/CRUD services, the custom mapper, and the comic file storage
+    /// Registers all Comic API services: the five postgres stores, enrichment service, local cache, Lyo.Api query/CRUD services (including <c>IQueryService</c> for tag/rating/comment/favorite
+    /// contexts for cached batch enrichment), the custom mapper, and the comic file storage
     /// stack (LocalKeyStore → TwoKeyEncryption → PostgresFileMetadataStore → LocalFileStorageService).
     /// </summary>
     public static IServiceCollection AddComicApi(this IServiceCollection services, IConfiguration configuration)
@@ -45,6 +53,10 @@ public static class Extensions
         services.AddLocalCache();
         services.AddLyoQueryServices();
         services.AddLyoCrudServices<ComicDbContext>();
+        services.AddLyoCrudServices<TagDbContext>();
+        services.AddLyoCrudServices<RatingDbContext>();
+        services.AddLyoCrudServices<CommentDbContext>();
+        services.AddLyoCrudServices<FavoriteDbContext>();
         services.AddSingleton<ILyoMapper, ComicLyoMapper>();
         services.AddComicFileStorage(configuration);
         return services;
@@ -126,7 +138,8 @@ public static class Extensions
                                     Language = a.Language
                                 });
                         }
-                    }
+                    },
+                    AfterCreateAsync = ApplyInitialSeriesTagsAsync
                 })
             .Build();
 
@@ -152,5 +165,23 @@ public static class Extensions
             .Build();
 
         return app;
+    }
+
+    private static async Task ApplyInitialSeriesTagsAsync(CreateContext<ComicSeriesReq, SeriesEntity, ComicDbContext> ctx)
+    {
+        var tags = ctx.Request.Tags;
+        if (tags is null || tags.Count == 0)
+            return;
+
+        var tagStore = ctx.Services.GetRequiredService<ITagStore>();
+        var entityRef = new EntityRef("ComicSeries", ctx.Entity.Id.ToString());
+        foreach (var item in tags) {
+            if (string.IsNullOrWhiteSpace(item.Name))
+                continue;
+
+            var tagType = string.IsNullOrWhiteSpace(item.TagType) ? "tag" : item.TagType.Trim();
+            var slug = string.IsNullOrWhiteSpace(item.Slug) ? null : item.Slug.Trim();
+            await tagStore.AddTagAsync(entityRef, item.Name.Trim(), tagType, slug: slug, ct: default).ConfigureAwait(false);
+        }
     }
 }

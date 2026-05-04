@@ -23,7 +23,8 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     private bool _disposed;
     private FrameNavigator? _frames;
     private BrowserKeyboard? _keyboard;
-    private TabManager? _tabs;
+    private TabManager? _nativeTabs;
+    private SeleniumBrowserTabs? _automationTabs;
 
     /// <summary>Gets the underlying WebDriver when the browser is started.</summary>
     public IWebDriver? Driver { get; private set; }
@@ -51,13 +52,16 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
 
     internal string SessionIdLabel => SessionId == Guid.Empty ? "none" : SessionId.ToString("N");
 
-    /// <summary>Tab/window operations, metadata, open/close/switch. Valid after <see cref="StartBrowserAsync" />.</summary>
-    public TabManager Tabs {
+    /// <summary>Selenium-native tab/window operations (advanced APIs). Prefer portable <see cref="Tabs" /> for cross-engine plans.</summary>
+    public TabManager NativeTabs {
         get {
             EnsureDriver();
-            return _tabs ??= new(this, Logger);
+            return _nativeTabs ??= new(this, Logger);
         }
     }
+
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => _automationTabs ??= new SeleniumBrowserTabs(this);
 
     /// <summary>Creates a new browser instance.</summary>
     /// <param name="options">Browser and polling options.</param>
@@ -86,8 +90,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
 
         _disposed = true;
         Driver?.Quit();
-        _tabs?.ClearDisplayNames();
-        _tabs = null;
+        _nativeTabs?.ClearDisplayNames();
+        _nativeTabs = null;
+        _automationTabs = null;
         _alerts = null;
         _frames = null;
         _keyboard = null;
@@ -104,9 +109,15 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
     /// <inheritdoc />
     public IBrowserHeaders? ExtraHeaders => null;
 
-    Task IWebAutomationBrowser.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
+    /// <inheritdoc />
+    public IWebAutomationNavigator Navigator => this;
 
-    async Task IWebAutomationBrowser.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
+    /// <inheritdoc />
+    public IWebAutomationPage CurrentPage => this;
+
+    Task IWebAutomationNavigator.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
+
+    async Task IWebAutomationNavigator.NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct)
     {
         await NavigateToAsync(url, ct).ConfigureAwait(false);
         while (!ct.IsCancellationRequested) {
@@ -137,7 +148,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         ct.ThrowIfCancellationRequested();
     }
 
-    Task<string> IWebAutomationBrowser.GetPageSourceAsync(CancellationToken ct)
+    Task<string> IWebAutomationPage.GetPageSourceAsync(CancellationToken ct)
         => Task.Run(
             () => {
                 EnsureDriver();
@@ -145,7 +156,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 return Driver!.PageSource;
             }, ct);
 
-    Task IWebAutomationBrowser.ReloadAsync(CancellationToken ct)
+    Task IWebAutomationNavigator.ReloadAsync(CancellationToken ct)
         => Task.Run(
             () => {
                 EnsureDriver();
@@ -153,7 +164,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 Driver!.Navigate().Refresh();
             }, ct);
 
-    Task<string> IWebAutomationBrowser.GetCurrentUrlAsync(CancellationToken ct)
+    Task<string> IWebAutomationPage.GetCurrentUrlAsync(CancellationToken ct)
         => Task.Run(
             () => {
                 EnsureDriver();
@@ -161,7 +172,7 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 return Driver!.Url;
             }, ct);
 
-    Task<string> IWebAutomationBrowser.GetTitleAsync(CancellationToken ct)
+    Task<string> IWebAutomationPage.GetTitleAsync(CancellationToken ct)
         => Task.Run(
             () => {
                 EnsureDriver();
@@ -169,16 +180,26 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                 return Driver!.Title;
             }, ct);
 
-    async Task<IWebAutomationElement> IWebAutomationBrowser.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct)
+    async Task<IWebAutomationElement> IWebAutomationPage.PollForElementAsync(ElementLocatorChain chain, CancellationToken ct)
         => await PollForChainAsync(chain, ct).ConfigureAwait(false);
 
-    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationBrowser.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct) => PollForElementsAsync(chain, ct);
+    Task<IReadOnlyList<IWebAutomationElement>> IWebAutomationPage.PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct) => PollForElementsAsync(chain, ct);
 
-    Task<IWebAutomationElement?> IWebAutomationBrowser.GetElementAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementChainAsync(chain, ct);
+    Task<IWebAutomationElement?> IWebAutomationPage.GetElementAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementChainAsync(chain, ct);
 
-    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationBrowser.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementsChainAsync(chain, ct);
+    Task<IReadOnlyList<IWebAutomationElement>?> IWebAutomationPage.GetElementsAsync(ElementLocatorChain chain, CancellationToken ct) => GetElementsChainAsync(chain, ct);
 
-    Task<byte[]> IWebAutomationBrowser.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
+    Task<byte[]> IWebAutomationPage.TakeViewportSnapshotPngAsync(CancellationToken ct) => TakeViewportSnapshotPngAsync(ct);
+
+    Task IWebAutomationPage.SetViewportSizeAsync(int width, int height, CancellationToken ct)
+        => Task.Run(
+            () => {
+                ArgumentHelpers.ThrowIf(width <= 0, "Width must be positive.", nameof(width));
+                ArgumentHelpers.ThrowIf(height <= 0, "Height must be positive.", nameof(height));
+                EnsureDriver();
+                ct.ThrowIfCancellationRequested();
+                Driver!.Manage().Window.Size = new(width, height);
+            }, ct);
 
     /// <summary>Resolved metric name for members of <see cref="Web.Automation.Core.Constants.Metrics" /> (Selenium-specific series).</summary>
     internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
@@ -245,8 +266,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
                         Logger.LogInformation("Browser stopped");
                     }
                     finally {
-                        _tabs?.ClearDisplayNames();
-                        _tabs = null;
+                        _nativeTabs?.ClearDisplayNames();
+                        _nativeTabs = null;
+                        _automationTabs = null;
                         _alerts = null;
                         _frames = null;
                         _keyboard = null;

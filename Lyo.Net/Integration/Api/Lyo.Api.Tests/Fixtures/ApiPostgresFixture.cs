@@ -72,7 +72,7 @@ public sealed class ApiPostgresFixture : IAsyncLifetime
                 ctx.Entity.Id = Guid.NewGuid();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
-            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), TestContext.Current.CancellationToken);
+            }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestContext.Current.CancellationToken);
 
         OperationHelpers.ThrowIf(!result.IsSuccess, $"Failed to seed JobRun: {result.Error?.Detail}");
         return result.Data!.Id;

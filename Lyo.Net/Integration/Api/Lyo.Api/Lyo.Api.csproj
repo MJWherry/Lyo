@@ -16,6 +16,7 @@
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic.AspNetCore\Lyo.Diagnostic.AspNetCore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Core\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
     </ItemGroup>

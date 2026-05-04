@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <Description>Typed HTTP client for the Lyo Comic API (files, tags, DI registration).</Description>
+        <PackageTags>comic api client http</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
+    </ItemGroup>
+
+</Project>

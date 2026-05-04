@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Endato.Client.Models.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record Person(
     string TahoeId,
     Name Name,
@@ -27,4 +30,10 @@ public sealed record Person(
     //"driversLicenseDetail": [],
     bool HasAdditionalData
     //"propensityToPayScore"
-);
+)
+{
+    public override string ToString()
+        => $"Person: TahoeId={TahoeId}, FullName='{FullName}', Age={Age}, Dob={Dob}, Premium={IsPremium}, " +
+           $"Addresses={Addresses.Count}, Emails={EmailAddresses.Count}, Phones={PhoneNumbers.Count}, Associates={Associates.Count}, " +
+           $"Public={IsPublic}, OptOut={IsOptedOut}";
+}

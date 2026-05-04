@@ -1,8 +1,8 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
@@ -46,7 +46,7 @@ public class BuilderTests
             .WithMessage("custom summary")
             .Build();
 
-        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Converters = { new JsonStringEnumConverter() } };
+        var options = LyoJsonSerializerOptions.Create();
         var json = JsonSerializer.Serialize(original, options);
         Assert.Contains("\"errors\"", json);
         Assert.Contains("\"description\"", json);
@@ -72,7 +72,7 @@ public class BuilderTests
                             }
                             """;
 
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
+        var options = LyoJsonSerializerOptions.Create();
         var back = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
         Assert.NotNull(back);
         Assert.True(back!.Errors is null or { Count: 0 });

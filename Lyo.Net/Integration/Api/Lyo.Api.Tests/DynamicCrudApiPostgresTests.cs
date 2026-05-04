@@ -5,6 +5,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Tests.Fixtures;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Job.Models.Response;
 using Lyo.Query.Models.Builders;
@@ -19,11 +20,8 @@ public class DynamicCrudApiPostgresTests : IDisposable
 {
     private const string BaseRoute = "/api/Job/JobDefinition";
 
-    /// <summary>
-    /// Match <see cref="Microsoft.AspNetCore.Http.Json.JsonOptions" /> defaults on the test host: case-insensitive names, numeric enums (same as <c>PostAsJsonAsync</c> without
-    /// custom options).
-    /// </summary>
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+    /// <summary>Match <see cref="Microsoft.AspNetCore.Http.Json.JsonOptions" /> on the test host (<see cref="LyoJsonSerializerOptions" />).</summary>
+    private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
 
     private readonly HttpClient _client;
 

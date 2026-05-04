@@ -1,0 +1,39 @@
+@if (Frames.Count == 0) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No frames.</MudText>
+}
+else {
+    <MudTable Items="@Frames" Dense="true" Hover="true" FixedHeader="true" Height="400px">
+        <HeaderContent>
+            <MudTh>Category</MudTh>
+            <MudTh>Method</MudTh>
+            <MudTh>Location</MudTh>
+            <MudTh>Flags</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Category">
+                <MudChip T="string" Text="@context.Category.ToString()" Size="Size.Small"/>
+            </MudTd>
+            <MudTd DataLabel="Method">
+                <MudText Typo="Typo.body2" Style="font-family: monospace; font-size: 0.85rem;">@context.ShortMethod</MudText>
+            </MudTd>
+            <MudTd DataLabel="Location">@(context.LocationSummary ?? "—")</MudTd>
+            <MudTd DataLabel="Flags">
+                @if (context.IsAsync) {
+                    <MudChip T="string" Text="async" Size="Size.Small" Variant="Variant.Text"/>
+                }
+                @if (context.IsLambda) {
+                    <MudChip T="string" Text="lambda" Size="Size.Small" Variant="Variant.Text"/>
+                }
+                @if (!context.IsAsync && !context.IsLambda) {
+                    <span>—</span>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<StackFrame> Frames { get; set; } = Array.Empty<StackFrame>();
+
+}

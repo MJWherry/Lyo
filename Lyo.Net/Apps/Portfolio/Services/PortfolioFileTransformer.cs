@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using Lyo.Common.Records;
-using Lyo.Common.Security;
+using Lyo.Hashing;
 using Lyo.Compression;
 using Lyo.Compression.Models;
 using Lyo.Encryption;

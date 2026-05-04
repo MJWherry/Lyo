@@ -9,6 +9,7 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
@@ -40,10 +41,10 @@ public class UpdateService<TContext>(
         where TDbModel : class
     {
         const string operation = "update";
-        RecordCrudRequest(operation, typeof(TDbModel));
-        using var timer = StartCrudTimer(operation, typeof(TDbModel));
         ArgumentHelpers.ThrowIfNull(request);
         using var scope = BeginActionScope("UPDATE", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel));
+        using var timer = StartCrudTimer(operation, typeof(TDbModel));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var entities = await FindEntitiesByRequest<TRequest, TDbModel>(context, request, ct);
         if (entities.Count == 0) {
@@ -94,11 +95,11 @@ public class UpdateService<TContext>(
         where TDbModel : class
     {
         const string operation = "update_bulk";
-        RecordCrudRequest(operation, typeof(TDbModel), true);
-        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
-        var requestList = requests as IReadOnlyList<UpdateRequest<TRequest>> ?? requests.ToList();
+        var requestList = requests.AsReadOnlyList();
         ArgumentHelpers.ThrowIfNullOrEmpty(requestList, nameof(requests));
         using var scope = BeginActionScope("UPDATE BULK", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel), true);
+        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
         var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];

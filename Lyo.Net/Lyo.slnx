@@ -68,11 +68,18 @@
     </Folder>
     <Folder Name="/Core/Diagnostic/">
         <Project Path="Core/Diagnostic/Lyo.Diagnostic/Lyo.Diagnostic.csproj"/>
+        <Project Path="Core/Diagnostic/Lyo.Diagnostic.Web.Components/Lyo.Diagnostic.Web.Components.csproj"/>
+    </Folder>
+    <Folder Name="/Core/PackageMetadata/">
+        <Project Path="Core/PackageMetadata/Lyo.PackageMetadata.Postgres/Lyo.PackageMetadata.Postgres.csproj"/>
+        <Project Path="Core/PackageMetadata/Lyo.PackageMetadata.Tests/Lyo.PackageMetadata.Tests.csproj"/>
+        <Project Path="Core/PackageMetadata/Lyo.PackageMetadata/Lyo.PackageMetadata.csproj"/>
     </Folder>
     <Folder Name="/Core/Privacy/">
         <Project Path="Core/Privacy/Lyo.Privacy/Lyo.Privacy.csproj"/>
         <Project Path="Core/Privacy/Lyo.Privacy.AspNetCore/Lyo.Privacy.AspNetCore.csproj"/>
         <Project Path="Core/Privacy/Lyo.Privacy.Tests/Lyo.Privacy.Tests.csproj"/>
+        <Project Path="Core/Privacy/Lyo.Privacy.Web.Components/Lyo.Privacy.Web.Components.csproj"/>
     </Folder>
     <Folder Name="/Core/Diff/">
         <Project Path="Core/Diff/Lyo.Diff/Lyo.Diff.csproj"/>
@@ -199,8 +206,15 @@
     </Folder>
     <Folder Name="/Apps/"/>
     <Folder Name="/Apps/Comic/">
+        <Project Path="Apps/Comic/Lyo.Comic.Api.Client/Lyo.Comic.Api.Client.csproj"/>
         <Project Path="Apps/Comic/Lyo.Comic.Api/Lyo.Comic.Api.csproj"/>
         <Project Path="Apps/Comic/Lyo.Comic.Api.Models/Lyo.Comic.Api.Models.csproj"/>
+    </Folder>
+    <Folder Name="/Apps/Config/">
+        <Project Path="Apps/Config/Lyo.Config.Api.Client/Lyo.Config.Api.Client.csproj"/>
+        <Project Path="Apps/Config/Lyo.Config.Api.Hosting/Lyo.Config.Api.Hosting.csproj"/>
+        <Project Path="Apps/Config/Lyo.Config.Api/Lyo.Config.Api.csproj"/>
+        <Project Path="Apps/Config/Lyo.Config.Api.Models/Lyo.Config.Api.Models.csproj"/>
     </Folder>
     <Folder Name="/Features/"/>
     <Folder Name="/Features/Comic/">
@@ -305,6 +319,10 @@
         <Project Path="Integration/Web/Reporting/Lyo.Web.Reporting/Lyo.Web.Reporting.csproj"/>
     </Folder>
     <Folder Name="/Security/"/>
+    <Folder Name="/Security/Hashing/">
+        <Project Path="Security/Hashing/Lyo.Hashing/Lyo.Hashing.csproj"/>
+        <Project Path="Security/Hashing/Lyo.Hashing.Tests/Lyo.Hashing.Tests.csproj"/>
+    </Folder>
     <Folder Name="/Security/Encryption/">
         <Project Path="Security/Encryption/Lyo.Encryption/Lyo.Encryption.csproj"/>
         <File Path="Security\Encryption\README.md"/>

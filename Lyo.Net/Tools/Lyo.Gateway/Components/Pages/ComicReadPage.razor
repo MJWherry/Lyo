@@ -1,0 +1,251 @@
+@using System.Globalization
+@using Lyo.Comic
+@using Lyo.Comic.Api.Models.Response
+@using Lyo.Comic.Web.Components
+@using Constants = Constants
+@using Microsoft.AspNetCore.WebUtilities
+@inherits AuthorizedPage
+@inject IComicApiClient ComicApi
+@inject NavigationManager Navigator
+@attribute [Route("/" + Constants.Page.ComicsRead + "/{SeriesId:guid}")]
+
+@if (_loadFailed) {
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+        <MudAlert Severity="Severity.Warning" Class="mb-4">Series not found or could not be loaded.</MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/{Constants.Page.Comics}")">
+            Back to comics
+        </MudButton>
+    </MudContainer>
+}
+else if (!_viewerReady || _series is null) {
+    <MudProgressLinear Indeterminate="true"/>
+}
+else {
+    <ComicViewer Series="_series"
+                 CoverImageUrl="@ResolveCoverUrl(_series)"
+                 Chapters="_chapters"
+                 CurrentChapter="_currentChapter"
+                 CurrentPage="_currentPage"
+                 TotalPages="_totalPages"
+                 LoadPageImageAsync="LoadPageImageAsync"
+                 OnChapterChanged="OnChapterChangedAsync"
+                 OnPreviousChapterChanged="OnPreviousChapterChangedAsync"
+                 OnPageChanged="OnPageChangedAsync"
+                 OnClose="CloseAsync"
+                 @ref="_viewer"/>
+}
+
+@code {
+
+    [Parameter]
+    public Guid SeriesId { get; set; }
+
+    protected override string PageName { get; set; } = "Reading";
+
+    private ComicViewer? _viewer;
+    private ComicSeries? _series;
+    private IReadOnlyList<ComicChapter> _chapters = [];
+    private ComicChapter? _currentChapter;
+    private int _currentPage = 1;
+    private int _totalPages;
+
+    private Guid _loadedSeriesId;
+    private bool _loadFailed;
+    private bool _viewerReady;
+
+    private readonly Dictionary<int, string?> _pageImageCache = [];
+
+    private const string ComicApiPrefix = "api/comic";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SeriesId == Guid.Empty)
+            return;
+
+        if (SeriesId == _loadedSeriesId && (_viewerReady || _loadFailed))
+            return;
+
+        _viewerReady = false;
+        _loadFailed = false;
+        _series = null;
+        PageName = "Reading";
+
+        await LoadSeriesViewerAsync(SeriesId);
+    }
+
+    private async Task LoadSeriesViewerAsync(Guid seriesId)
+    {
+        var res = await ComicApi.GetAsAsync<ComicSeriesRes>($"{ComicApiPrefix}/series/{seriesId}");
+        if (res is null) {
+            _loadedSeriesId = seriesId;
+            _loadFailed = true;
+            return;
+        }
+
+        var series = ToSeries(res);
+        var chapters = await GetChaptersAsync(seriesId);
+
+        ComicChapter? chapter;
+        var pageFromQuery = 1;
+
+        if (TryParseReadQuery(chapters, out var chapterFromQuery, out var pageParsed)) {
+            chapter = chapters.FirstOrDefault(c => c.Id == chapterFromQuery) ?? chapters.FirstOrDefault();
+            if (chapter is null) {
+                _loadedSeriesId = seriesId;
+                _loadFailed = true;
+                return;
+            }
+
+            pageFromQuery = ClampPage(pageParsed, chapter.PageCount ?? 1);
+        }
+        else {
+            chapter = chapters.Count > 0 ? chapters[0] : null;
+        }
+
+        _series = series;
+        PageName = string.IsNullOrWhiteSpace(series.Title) ? "Reading" : series.Title;
+        _chapters = chapters;
+        _currentChapter = chapter;
+        _totalPages = chapter?.PageCount ?? 0;
+        _currentPage = chapter is not null ? ClampPage(pageFromQuery, chapter.PageCount ?? 1) : 1;
+
+        if (chapter is not null)
+            await CacheChapterPagesAsync(chapter);
+
+        _loadedSeriesId = seriesId;
+        _viewerReady = true;
+        ReplaceReadUrl(seriesId);
+    }
+
+    private bool TryParseReadQuery(IReadOnlyList<ComicChapter> chapters, out Guid chapterId, out int page)
+    {
+        chapterId = default;
+        page = 1;
+
+        var uri = Navigator.ToAbsoluteUri(Navigator.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (!query.TryGetValue("chapter", out var chapterValues))
+            return false;
+
+        var chapterSegment = chapterValues.ToString();
+        if (string.IsNullOrWhiteSpace(chapterSegment) || !Guid.TryParse(chapterSegment, out var chap))
+            return false;
+
+        if (chapters.All(c => c.Id != chap))
+            return false;
+
+        chapterId = chap;
+
+        if (query.TryGetValue("page", out var pageValues) &&
+            int.TryParse(
+                pageValues.ToString(),
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var p))
+            page = p;
+
+        return true;
+    }
+
+    private static int ClampPage(int p, int pageCount) => Math.Clamp(p, 1, Math.Max(pageCount, 1));
+
+    private void ReplaceReadUrl(Guid seriesId)
+    {
+        if (_currentChapter is null)
+            return;
+
+        var qs = $"chapter={Uri.EscapeDataString(_currentChapter.Id.ToString())}&page={_currentPage.ToString(CultureInfo.InvariantCulture)}";
+        Navigator.NavigateTo($"/{Constants.Page.ComicsRead}/{seriesId}?{qs}", forceLoad: false, replace: true);
+    }
+
+    private async Task<IReadOnlyList<ComicChapter>> GetChaptersAsync(Guid sid)
+        => await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/series/{sid}/chapters") ?? [];
+
+    private async Task CacheChapterPagesAsync(ComicChapter chapter)
+    {
+        _pageImageCache.Clear();
+        var pages = await ComicApi.GetAsAsync<IReadOnlyList<ComicPageRes>>($"{ComicApiPrefix}/chapters/{chapter.Id}/pages") ?? [];
+        foreach (var item in pages) {
+            _pageImageCache[item.PageNumber] =
+                Guid.TryParse(item.ImageRef, out var id) ? $"/comic-files/{id}" : item.ImageRef;
+        }
+    }
+
+    private Task<string?> LoadPageImageAsync(ComicSeries _, ComicChapter __, int pageNum, CancellationToken ct)
+    {
+        _pageImageCache.TryGetValue(pageNum, out var imageData);
+        return Task.FromResult(string.IsNullOrEmpty(imageData) ? null : imageData);
+    }
+
+    private async Task OnChapterChangedAsync(ComicChapter chapter)
+    {
+        _currentChapter = chapter;
+        _currentPage = 1;
+        _totalPages = chapter.PageCount ?? 0;
+        await CacheChapterPagesAsync(chapter);
+        if (_viewer is not null)
+            await _viewer.ReloadPageAsync(1);
+
+        ReplaceReadUrl(_series!.Id);
+    }
+
+    private async Task OnPreviousChapterChangedAsync(ComicChapter chapter)
+    {
+        _currentChapter = chapter;
+        _totalPages = chapter.PageCount ?? 0;
+        _currentPage = _totalPages > 0 ? _totalPages : 1;
+        await CacheChapterPagesAsync(chapter);
+        if (_viewer is not null)
+            await _viewer.ReloadPageAsync(_currentPage);
+
+        ReplaceReadUrl(_series!.Id);
+    }
+
+    private async Task OnPageChangedAsync(int page)
+    {
+        _currentPage = page;
+        if (_viewer is not null)
+            await _viewer.ReloadPageAsync(page);
+
+        ReplaceReadUrl(_series!.Id);
+    }
+
+    private Task CloseAsync()
+    {
+        Navigator.NavigateTo($"/{Constants.Page.Comics}");
+        return Task.CompletedTask;
+    }
+
+    private static string? ResolveCoverUrl(ComicSeries s)
+    {
+        if (s.CoverImageRef != null && Guid.TryParse(s.CoverImageRef, out var id))
+            return $"/comic-files/{id}";
+
+        return s.CoverImageRef;
+    }
+
+    private static ComicSeries ToSeries(ComicSeriesRes r)
+        => new() {
+            Id = r.Id,
+            Title = r.Title,
+            Slug = r.Slug,
+            ComicType = r.ComicType,
+            Status = r.Status,
+            Description = r.Description,
+            Language = r.Language,
+            PublishedYear = r.PublishedYear,
+            Author = r.Author,
+            Artist = r.Artist,
+            Publisher = r.Publisher,
+            Source = r.Source,
+            CoverImageRef = r.CoverImageRef,
+            Demographic = r.Demographic,
+            CreatedTimestamp = r.CreatedTimestamp,
+            UpdatedTimestamp = r.UpdatedTimestamp,
+            AlternateTitles = r.AlternateTitles.Select(a =>
+                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
+        };
+
+}

@@ -10,6 +10,7 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
@@ -43,12 +44,12 @@ public class PatchService<TContext>(
         where TDbModel : class
     {
         const string operation = "patch";
+        ArgumentHelpers.ThrowIfNull(request);
+        using var scope = BeginActionScope("PATCH", typeof(PatchRequest), typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        ArgumentHelpers.ThrowIfNull(request);
         var entityTypeName = typeof(TDbModel).Name;
         var responseTypeName = typeof(TResult).Name;
-        using var scope = BeginActionScope("PATCH", typeof(PatchRequest), typeof(TDbModel), typeof(TResult));
         Logger.LogInformation("Starting patch operation for entity {EntityType} to response {ResponseType}", entityTypeName, responseTypeName);
         await using var context = await ContextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         try {
@@ -113,13 +114,13 @@ public class PatchService<TContext>(
         where TDbModel : class
     {
         const string operation = "patch_bulk";
-        RecordCrudRequest(operation, typeof(TDbModel), true);
-        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
-        var requestList = requests as IReadOnlyList<PatchRequest> ?? requests.ToList();
+        var requestList = requests.AsReadOnlyList();
         ArgumentHelpers.ThrowIfNullOrEmpty(requestList, nameof(requests));
         var entityTypeName = typeof(TDbModel).Name;
         var responseTypeName = typeof(TResult).Name;
         using var scope = BeginActionScope("PATCH BULK", typeof(PatchRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel), true);
+        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
         Logger.LogInformation("Starting bulk patch operation for entity {EntityType} to response {ResponseType}", entityTypeName, responseTypeName);
         var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
         if (!bulkValidation.IsSuccess) {
@@ -323,8 +324,7 @@ public class PatchService<TContext>(
                     var patchedEntities = new List<TDbModel>();
                     foreach (var entity in entities) {
                         var patchResult = PatchEntityProperties<TDbModel, TResult>(entity, request);
-                        if (patchResult != null)
-                            patchedEntities.Add(entity);
+                        patchedEntities.Add(entity);
                     }
 
                     if (patchedEntities.Count > 0)

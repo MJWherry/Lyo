@@ -1,8 +1,7 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Blazored.LocalStorage;
 using Lyo.Api.Client;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
@@ -36,13 +35,16 @@ builder.Services.AddScoped<PortfolioFileTransformer>();
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
 builder.Services.AddLyoApiClient();
-builder.Services.AddSingleton(_ => new JsonSerializerOptions {
-    WriteIndented = true, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter(), new TimeOnlyModelConverter(), new DateOnlyModelConverter() }
+builder.Services.AddSingleton(_ => {
+    var options = LyoJsonSerializerOptions.Create();
+    options.AddLyoDateOnlyModelConverters();
+    options.WriteIndented = true;
+    return options;
 });
 
 // Web components
 builder.Services.AddScoped<IJsInterop, JsInterop>();
-builder.Services.AddSingleton(_ => new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } });
+builder.Services.AddSingleton(_ => LyoJsonSerializerOptions.Create(o => o.WriteIndented = true));
 builder.Services.AddHttpClient();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<ClientStore>();

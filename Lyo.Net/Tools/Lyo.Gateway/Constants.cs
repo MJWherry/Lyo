@@ -49,7 +49,13 @@ public static class Constants
 
         public const string Schedule = "schedule";
 
+        public const string Diagnostics = "diagnostics";
+
+        public const string PrivacyRedaction = "privacy-redaction";
+
         public const string Comics = "comics";
+
+        public const string ComicsRead = "comics/read";
 
         public const string IdGenerator = "id-generator";
     }

@@ -364,8 +364,8 @@ build_project() {
     fi
 }
 
-# Incremental build — only used in the pack-only path when bin/Release output is missing
-# (e.g. first-ever build or after a clean). Skipped entirely when DLLs already exist.
+# Incremental build — used when only the package version changed (same sources).
+# Ensures AssemblyVersion/FileVersion reflect /p:Version before dotnet pack --no-build.
 build_project_incremental() {
     local csproj_file="$1"
     local project_name
@@ -380,14 +380,6 @@ build_project_incremental() {
         print_error "Failed to build $project_name"
         return 1
     fi
-}
-
-# Returns 0 if bin/Release already contains a DLL for this project (i.e. it has been
-# built at least once and does not need a build before packing).
-has_build_output() {
-    local project_dir="$1"
-    local project_name="$2"
-    ls "$project_dir/bin/Release/"*/"${project_name}.dll" >/dev/null 2>&1
 }
 
 # Function to pack a project
@@ -421,7 +413,7 @@ FAILED_PROJECT_PATHS=()
 # Global skipped projects tracker (for summary)
 SKIPPED_PROJECTS=()
 
-# Global pack-only projects tracker (source unchanged, version changed)
+# Global rebuilt-for-version projects tracker (source unchanged, version changed — incremental build then pack)
 PACK_ONLY_PROJECTS=()
 
 # Global built projects tracker (for summary)
@@ -464,9 +456,9 @@ mark_failed() {
 
 # Build and pack a project with its dependencies (depth-first, deps first).
 # Three outcomes per project (unless --force):
-#   source changed            → full rebuild (--no-incremental) + pack
-#   source unchanged, new ver → incremental build (fast) + pack
-#   source unchanged, same ver→ skip entirely
+#   source changed             → full rebuild (--no-incremental) + pack
+#   source unchanged, new ver  → incremental build with VERSION props + pack (must rebuild — pack --no-build cannot refresh assembly metadata)
+#   source unchanged, same ver → skip entirely
 build_and_pack_with_deps() {
     local csproj_file="$1"
     local project_name project_dir
@@ -519,15 +511,11 @@ build_and_pack_with_deps() {
             return 1
         fi
     else
-        # Source unchanged, only version changed — pack the existing build output.
-        # Only build if bin/Release is missing (first-ever build or after a clean).
-        print_pack_only "$project_name — source unchanged, packing new version $VERSION"
-        if ! has_build_output "$project_dir" "$project_name"; then
-            print_info "No build output found for $project_name, building first..."
-            if ! build_project_incremental "$csproj_file"; then
-                mark_failed "$csproj_file"
-                return 1
-            fi
+        # Source unchanged, only version changed — must rebuild so DLL assembly metadata matches /p:Version before dotnet pack --no-build.
+        print_pack_only "$project_name — source unchanged, rebuilding for new version $VERSION then packing"
+        if ! build_project_incremental "$csproj_file"; then
+            mark_failed "$csproj_file"
+            return 1
         fi
     fi
 
@@ -632,7 +620,7 @@ main() {
     echo ""
     print_info "Build Summary:"
     print_success  "Built and packed (source changed): ${#BUILT_PROJECTS[@]} package(s)"
-    print_pack_only "Pack only (new version, same source): ${#PACK_ONLY_PROJECTS[@]} package(s)"
+    print_pack_only "Rebuild + pack (new version, same source): ${#PACK_ONLY_PROJECTS[@]} package(s)"
     print_skip     "Skipped (source and version unchanged): ${#SKIPPED_PROJECTS[@]} package(s)"
 
     if [[ ${#PACK_ONLY_PROJECTS[@]} -gt 0 ]]; then

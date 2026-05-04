@@ -29,7 +29,6 @@ public class IOTempServiceOptions
 
     public string? FilePrefix { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public TempNamingStrategy FileNamingStrategy { get; set; } = TempNamingStrategy.Guid;
 
     public string? FileSuffix { get; set; }

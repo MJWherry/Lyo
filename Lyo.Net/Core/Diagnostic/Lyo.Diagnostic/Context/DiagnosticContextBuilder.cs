@@ -34,4 +34,17 @@ public sealed class DiagnosticContextBuilder(IStackTraceDecoder decoder, IExcept
             DateTimeOffset.UtcNow, _options.OccurrenceIdFactory(), trace, classification, request, trace.Fingerprint, _options.Environment, _options.ServiceName,
             _options.ServiceVersion);
     }
+
+    /// <inheritdoc />
+    public Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken cancellationToken = default)
+        => BuildAsync(exception, RequestMetadata.Empty, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken cancellationToken = default)
+    {
+        ArgumentHelpers.ThrowIfNull(exception);
+        ArgumentHelpers.ThrowIfNull(request);
+        var trace = await decoder.DecodeAsync(exception, cancellationToken).ConfigureAwait(false);
+        return Build(trace, exception, request);
+    }
 }

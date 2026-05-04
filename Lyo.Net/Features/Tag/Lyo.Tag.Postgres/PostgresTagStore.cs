@@ -41,13 +41,16 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task AddTagAsync(EntityRef forEntity, string tag, string tagType = "tag", EntityRef? fromEntity = null, CancellationToken ct = default)
+    public async Task AddTagAsync(EntityRef forEntity, string tag, string tagType = "tag", EntityRef? fromEntity = null, string? slug = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
+        var slugNormalized = NormalizeSlug(slug);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var exists = await context.Tags.AnyAsync(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag && t.TagType == tagType, ct)
+        var exists = await context.Tags.AnyAsync(
+                t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized,
+                ct)
             .ConfigureAwait(false);
 
         if (exists)
@@ -57,8 +60,9 @@ public sealed class PostgresTagStore : ITagStore, IHealth
             Id = Guid.NewGuid(),
             ForEntityType = forEntity.EntityType,
             ForEntityId = forEntity.EntityId,
-            Tag = tag,
+            Name = tag,
             TagType = tagType,
+            Slug = slugNormalized,
             FromEntityType = fromEntity?.EntityType,
             FromEntityId = fromEntity?.EntityId,
             CreatedTimestamp = DateTime.UtcNow
@@ -69,13 +73,14 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     }
 
     /// <inheritdoc />
-    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", CancellationToken ct = default)
+    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", string? slug = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
+        var slugNormalized = NormalizeSlug(slug);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Tag == tag && t.TagType == tagType)
+        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -92,7 +97,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
         if (!string.IsNullOrWhiteSpace(tagType))
             query = query.Where(t => t.TagType == tagType);
 
-        var entities = await query.OrderBy(t => t.Tag).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await query.OrderBy(t => t.Name).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
     }
 
@@ -101,7 +106,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tags.Where(t => t.Tag == tag);
+        var query = context.Tags.Where(t => t.Name == tag);
         if (!string.IsNullOrWhiteSpace(forEntityType))
             query = query.Where(t => t.ForEntityType == forEntityType);
 
@@ -121,7 +126,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
         if (!string.IsNullOrWhiteSpace(tagType))
             query = query.Where(t => t.TagType == tagType);
 
-        return await query.Select(t => t.Tag).Distinct().OrderBy(t => t).ToListAsync(ct).ConfigureAwait(false);
+        return await query.Select(t => t.Name).Distinct().OrderBy(t => t).ToListAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -139,10 +144,14 @@ public sealed class PostgresTagStore : ITagStore, IHealth
             Id = e.Id,
             ForEntityType = e.ForEntityType,
             ForEntityId = e.ForEntityId,
-            Tag = e.Tag,
+            Name = e.Name,
             TagType = e.TagType,
+            Slug = e.Slug,
             FromEntityType = e.FromEntityType,
             FromEntityId = e.FromEntityId,
             CreatedTimestamp = e.CreatedTimestamp
         };
+
+    private static string NormalizeSlug(string? slug)
+        => string.IsNullOrWhiteSpace(slug) ? string.Empty : slug.Trim();
 }

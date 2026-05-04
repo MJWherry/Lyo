@@ -94,20 +94,23 @@ public static class SeriesEndpoints
     private static async Task<IResult> GetTags(Guid id, ITagStore tagStore, CancellationToken ct = default)
     {
         var tags = await tagStore.GetTagsForEntityAsync(new(EntityType, id.ToString()), ct: ct);
-        return Results.Ok(tags.Select(t => t.Tag).ToList());
+        return Results.Ok(tags.Select(t => t.Name).ToList());
     }
 
     private static async Task<IResult> AddTag(Guid id, AddTagReq req, ITagStore tagStore, CancellationToken ct = default)
     {
-        await tagStore.AddTagAsync(new(EntityType, id.ToString()), req.Tag, ct: ct);
+        await tagStore.AddTagAsync(new(EntityType, id.ToString()), req.Name, ResolveTagType(req.TagType), slug: req.Slug, ct: ct);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> RemoveTag(Guid id, string tag, ITagStore tagStore, CancellationToken ct = default)
+    private static async Task<IResult> RemoveTag(Guid id, string tag, string? tagType, string? slug, ITagStore tagStore, CancellationToken ct = default)
     {
-        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ct: ct);
+        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ResolveTagType(tagType), slug: slug, ct: ct);
         return Results.NoContent();
     }
+
+    private static string ResolveTagType(string? tagType)
+        => string.IsNullOrWhiteSpace(tagType) ? "tag" : tagType.Trim();
 
     private static async Task<IResult> GetRatings(Guid id, IRatingStore ratingStore, CancellationToken ct = default)
     {

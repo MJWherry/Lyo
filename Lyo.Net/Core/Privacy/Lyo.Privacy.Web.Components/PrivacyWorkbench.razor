@@ -1,0 +1,132 @@
+@inject ISnackbar Snackbar
+@inject IJsInterop Js
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <div>
+            <MudText Typo="Typo.h5">Privacy redaction</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Preview Lyo.Privacy presets, paste policy JSON, or build a custom rule pack. Operational hygiene only — not a compliance guarantee.
+            </MudText>
+        </div>
+
+        <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Redaction" Class="pa-2">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+                        <PolicyFingerprintChip Policy="_policy"/>
+                        <RedactionPresetToolbar InitialPreset="@InitialPresetKey" OnPolicyChanged="OnPresetFromToolbarAsync"/>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.ContentCopy"
+                                   Disabled="@(_policy is null)"
+                                   OnClick="CopyPolicyJsonAsync">
+                            Copy policy JSON
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => _loadJsonOpen = !_loadJsonOpen)">
+                            @(_loadJsonOpen ? "Hide" : "Show") policy JSON loader
+                        </MudButton>
+                    </MudStack>
+
+                    @if (_loadJsonOpen) {
+                        <MudPaper Class="pa-3" Outlined="true">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.subtitle2">Load policy from JSON</MudText>
+                                <MudTextField @bind-Value="_policyJsonPaste"
+                                              Label="Policy JSON"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Lines="10"
+                                              FullWidth="true"
+                                              Class="privacy-mono-field"
+                                              HelperText="Same structure as PolicyJson.Build — placeholder, name, mergeAdjacentRuns, neverRedactSubstrings, rules[]."/>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="ApplyPastedPolicyAsync">Apply JSON</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    }
+
+                    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Border="true">
+                        <MudTabPanel Text="Text" Class="pa-2">
+                            <TextRedactionPanel Policy="_policy"/>
+                        </MudTabPanel>
+                        <MudTabPanel Text="JSON" Class="pa-2">
+                            <JsonRedactionPanel Policy="_policy" PolicyNameLabel="@(_policy?.Name)"/>
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Policy builder" Class="pa-2">
+                <RedactionPolicyBuilderPanel OnPolicyApplied="OnBuiltPolicyAsync"/>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;
+
+    private RedactionPolicy? _policy;
+
+    private string InitialPresetKey => InitialPreset;
+
+    private bool _loadJsonOpen;
+
+    private string _policyJsonPaste = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        SetPolicy(PrivacyPolicies.FromPreset(string.IsNullOrWhiteSpace(InitialPreset) ? PrivacyPresetNames.Logging : InitialPreset));
+    }
+
+    private void SetPolicy(RedactionPolicy policy)
+    {
+        _policy = policy;
+    }
+
+    private Task OnPresetFromToolbarAsync(RedactionPolicy policy)
+    {
+        SetPolicy(policy);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task OnBuiltPolicyAsync(RedactionPolicy policy)
+    {
+        SetPolicy(policy);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task CopyPolicyJsonAsync()
+    {
+        if (_policy is null)
+            return;
+
+        try {
+            var json = PolicyJson.SerializePolicy(_policy);
+            await Js.SendToClipboard(json);
+            Snackbar.Add("Policy JSON copied.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void ApplyPastedPolicyAsync()
+    {
+        try {
+            SetPolicy(PolicyJson.Build(_policyJsonPaste));
+            Snackbar.Add("Policy loaded from JSON.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+}

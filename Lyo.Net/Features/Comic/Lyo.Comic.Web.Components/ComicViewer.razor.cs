@@ -5,6 +5,11 @@ namespace Lyo.Comic.Web.Components;
 
 public partial class ComicViewer : IAsyncDisposable
 {
+    private const int NeighborPrefetchRadius = 5;
+
+    /// <summary>After a jump (slider / large Δ page), widen the prefetched ± window.</summary>
+    private const int NeighborPrefetchRadiusAfterJump = 8;
+
     // Prefetch cache: page number → URL resolved ahead of time
     private readonly Dictionary<int, string?> _prefetchCache = [];
 
@@ -82,10 +87,26 @@ public partial class ComicViewer : IAsyncDisposable
     [Parameter]
     public EventCallback OnClose { get; set; }
 
+    /// <summary>Optional series cover URL. Warmed in parallel with page loads and shown while the first page is resolving.</summary>
+    [Parameter]
+    public string? CoverImageUrl { get; set; }
+
     [Inject]
     private IJSRuntime Js { get; set; } = default!;
 
     private int EffectiveTotalPages => TotalPages > 0 ? TotalPages : CurrentChapter?.PageCount ?? 1;
+
+    /// <summary>Image shown in the page area: resolved page URL, or cover while the page is still loading.</summary>
+    private string? PageAreaImageSrc
+        => !string.IsNullOrWhiteSpace(_currentImageUrl)
+            ? _currentImageUrl
+            : ShowCoverWhileLoading ? CoverImageUrl
+            : null;
+
+    private bool ShowCoverWhileLoading
+        => _loadingPage && string.IsNullOrWhiteSpace(_currentImageUrl) && !string.IsNullOrWhiteSpace(CoverImageUrl);
+
+    private bool UseCoverPlaceholderStyle => ShowCoverWhileLoading;
 
     /// <summary>
     /// The page number shown in the counter and slider. During rapid JS navigation this reflects the target page immediately; once the image loads it falls back to
@@ -194,7 +215,7 @@ public partial class ComicViewer : IAsyncDisposable
             _jsShownPage = page;
 
         await OnPageChanged.InvokeAsync(page);
-        _ = PrefetchPagesAsync(page);
+        _ = PrefetchPagesAsync(page, false);
     }
 
     /// <summary>Called by JS when the user navigates forward past the last page.</summary>
@@ -223,8 +244,11 @@ public partial class ComicViewer : IAsyncDisposable
         if (LoadPageImageAsync is null || CurrentChapter is null)
             return;
 
-        _lastFetchedChapterId = CurrentChapter.Id;
-        _lastFetchedPage = page;
+        var sameChapterAsLastFetch = _lastFetchedChapterId == CurrentChapter.Id;
+        var prevPageWithinChapter = sameChapterAsLastFetch ? _lastFetchedPage : -1;
+        var wideNeighborPrefetch =
+            prevPageWithinChapter > 0 && sameChapterAsLastFetch && Math.Abs(page - prevPageWithinChapter) > 2;
+
         if (page == _jsShownPage) {
             _jsShownPage = -1;
             _pendingDisplayPage = -1;
@@ -233,8 +257,11 @@ public partial class ComicViewer : IAsyncDisposable
                 _prefetchCache.Remove(page);
             }
 
+            _lastFetchedChapterId = CurrentChapter.Id;
+            _lastFetchedPage = page;
             await SyncJsStateAsync(page);
             StateHasChanged();
+            _ = PrefetchPagesAsync(page, wideNeighborPrefetch);
             return;
         }
 
@@ -244,9 +271,12 @@ public partial class ComicViewer : IAsyncDisposable
             _prefetchCache.Remove(page);
             _loadingPage = false;
             _pendingDisplayPage = -1;
+
+            _lastFetchedChapterId = CurrentChapter.Id;
+            _lastFetchedPage = page;
             StateHasChanged();
             await SyncJsStateAsync(page);
-            _ = PrefetchPagesAsync(page);
+            _ = PrefetchPagesAsync(page, wideNeighborPrefetch);
             return;
         }
 
@@ -261,6 +291,7 @@ public partial class ComicViewer : IAsyncDisposable
             var url = await LoadPageImageAsync(Series, CurrentChapter, page, _cts.Token);
             _currentImageUrl = url;
             _pendingDisplayPage = -1;
+            await WarmCoverAndPrefetchJsAsync();
         }
         catch (OperationCanceledException) {
             return;
@@ -270,8 +301,18 @@ public partial class ComicViewer : IAsyncDisposable
             StateHasChanged();
         }
 
+        _lastFetchedChapterId = CurrentChapter.Id;
+        _lastFetchedPage = page;
         await SyncJsStateAsync(page);
-        _ = PrefetchPagesAsync(page);
+        _ = PrefetchPagesAsync(page, wideNeighborPrefetch);
+    }
+
+    private Task WarmCoverAndPrefetchJsAsync()
+    {
+        if (_jsModule is null || string.IsNullOrWhiteSpace(CoverImageUrl))
+            return Task.CompletedTask;
+
+        return _jsModule.InvokeVoidAsync("prefetchImages", new[] { CoverImageUrl }).AsTask();
     }
 
     /// <summary>
@@ -289,34 +330,54 @@ public partial class ComicViewer : IAsyncDisposable
         catch { }
     }
 
-    private async Task PrefetchPagesAsync(int currentPage)
+    private async Task PrefetchPagesAsync(int currentPage, bool wideNeighborRing)
     {
         if (LoadPageImageAsync is null || CurrentChapter is null || _jsModule is null)
             return;
 
-        foreach (var offset in new[] { 1, 2, 3, -1 }) {
-            var p = currentPage + offset;
-            if (p < 1 || p > EffectiveTotalPages)
-                continue;
+        var radius = wideNeighborRing ? NeighborPrefetchRadiusAfterJump : NeighborPrefetchRadius;
+        var ordered = BuildOrderedPrefetchTargets(currentPage, radius);
 
+        foreach (var p in ordered) {
             if (_prefetchCache.ContainsKey(p))
                 continue;
 
             try {
                 var url = await LoadPageImageAsync(Series, CurrentChapter, p, CancellationToken.None);
-                if (url is null)
+                if (url is null || _prefetchCache.ContainsKey(p))
                     continue;
 
                 _prefetchCache[p] = url;
-                // Register in JS: also warms the browser image cache via new Image()
                 await _jsModule.InvokeVoidAsync("setPageUrl", _viewerId, p, url);
             }
-            catch { }
+            catch {
+                continue;
+            }
         }
+    }
+
+    private List<int> BuildOrderedPrefetchTargets(int currentPage, int radius)
+    {
+        var targets = new List<int>();
+        for (var d = 1; d <= radius; d++) {
+            var next = currentPage + d;
+            if (next >= 1 && next <= EffectiveTotalPages)
+                targets.Add(next);
+
+            var prev = currentPage - d;
+            if (prev >= 1 && prev <= EffectiveTotalPages)
+                targets.Add(prev);
+        }
+
+        return targets;
     }
 
     private void OnImageLoaded()
     {
+        // Cover placeholder fires onload while the real page is still resolving — keep the loading state until then.
+        if (_loadingPage && string.IsNullOrWhiteSpace(_currentImageUrl))
+            return;
+
         _loadingPage = false;
         StateHasChanged();
     }

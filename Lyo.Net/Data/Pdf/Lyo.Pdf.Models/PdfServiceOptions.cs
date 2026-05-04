@@ -8,7 +8,6 @@ public class PdfServiceOptions
 {
     public const string SectionName = "PdfServiceOptions";
     public const long SuggestedMaxPdfSizeBytes = 25L * 1024 * 1024;
-    public const long SuggestedMaxTotalLoadedBytes = 256L * 1024 * 1024;
 
     /// <summary>Two words whose vertical mid-points are within this many points are considered to be on the same line. Default: 5.0</summary>
     public double DefaultYTolerance { get; set; } = 5.0;
@@ -51,12 +50,14 @@ public class PdfServiceOptions
     public long? MaxPdfSizeBytes { get; set; }
 
     /// <summary>
-    /// Optional max total loaded PDF bytes in memory. If not set or <= 0, SuggestedMaxTotalLoadedBytes is used.</summary>
+    /// Obsolete — there is no global PDF registry anymore; callers own <see cref="IPdfReader"/> instances.
+    /// </summary>
+    [Obsolete("No longer enforced; disposed-owned documents replaced the shared catalog. Remove configuration uses.")]
     public long? MaxTotalLoadedBytes { get; set; }
 
     /// <summary>Enable metrics collection for PDF operations. Default: false.</summary>
     public bool EnableMetrics { get; set; } = false;
 
     public override string ToString()
-        => $"PdfServiceOptions: DefaultYTolerance={DefaultYTolerance}, DefaultKeyValueGap={DefaultKeyValueGap}, BoundingBoxOverlapThreshold={BoundingBoxOverlapThreshold}, TableHeaderMergeThreshold={TableHeaderMergeThreshold}, TableHeaderMatchThreshold={TableHeaderMatchThreshold}, TableColumnXTolerance={TableColumnXTolerance}, MaxContinuationYGap={MaxContinuationYGap}, MaxContinuationXDistance={MaxContinuationXDistance}, ValueColumnXTolerance={ValueColumnXTolerance}, KeyValueStackedMaxFirstGap={KeyValueStackedMaxFirstGap}, MaxPdfSizeBytes={MaxPdfSizeBytes}, MaxTotalLoadedBytes={MaxTotalLoadedBytes}, EnableMetrics={EnableMetrics}";
+        => $"PdfServiceOptions: DefaultYTolerance={DefaultYTolerance}, DefaultKeyValueGap={DefaultKeyValueGap}, BoundingBoxOverlapThreshold={BoundingBoxOverlapThreshold}, TableHeaderMergeThreshold={TableHeaderMergeThreshold}, TableHeaderMatchThreshold={TableHeaderMatchThreshold}, TableColumnXTolerance={TableColumnXTolerance}, MaxContinuationYGap={MaxContinuationYGap}, MaxContinuationXDistance={MaxContinuationXDistance}, ValueColumnXTolerance={ValueColumnXTolerance}, KeyValueStackedMaxFirstGap={KeyValueStackedMaxFirstGap}, MaxPdfSizeBytes={MaxPdfSizeBytes}, EnableMetrics={EnableMetrics}";
 }

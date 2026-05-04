@@ -3,7 +3,14 @@ namespace Lyo.Comic.Api.Models.Request;
 /// <summary>Request to add a tag to a comic entity.</summary>
 public sealed class AddTagReq
 {
-    public string Tag { get; set; } = string.Empty;
+    /// <summary>Display / query tag value (e.g. "Fantasy").</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Tag classification (e.g. "tag", "category"). Defaults to "tag".</summary>
+    public string TagType { get; set; } = "tag";
+
+    /// <summary>Optional URL-friendly slug for this tag assignment; stored empty when omitted.</summary>
+    public string? Slug { get; set; }
 }
 
 /// <summary>Request to add or update a rating on a comic entity.</summary>

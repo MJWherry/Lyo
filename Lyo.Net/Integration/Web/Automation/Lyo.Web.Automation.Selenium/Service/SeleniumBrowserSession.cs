@@ -26,7 +26,7 @@ public sealed class SeleniumBrowserSession : ISeleniumBrowserSession
     IWebAutomationBrowser IWebAutomationSession.Browser => Browser;
 
     /// <inheritdoc />
-    public TabManager Tabs => Browser.Tabs;
+    public TabManager Tabs => Browser.NativeTabs;
 
     /// <inheritdoc />
     public Task StartBrowserAsync(CancellationToken ct = default) => Browser.StartBrowserAsync(ct);

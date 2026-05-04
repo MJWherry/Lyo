@@ -10,6 +10,7 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Api.Services.TypeConversion;
 using Lyo.Cache;
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Query.Services.PropertyComparison;
@@ -48,10 +49,10 @@ public class UpsertService<TContext>(
         where TDbModel : class
     {
         const string operation = "upsert";
-        RecordCrudRequest(operation, typeof(TDbModel));
-        using var timer = StartCrudTimer(operation, typeof(TDbModel));
         ArgumentHelpers.ThrowIfNull(request);
         using var scope = BeginActionScope("UPSERT", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel));
+        using var timer = StartCrudTimer(operation, typeof(TDbModel));
         await using var context = await ContextFactory.CreateDbContextAsync(ct);
         var entities = await FindEntitiesByRequest<TRequest, TDbModel>(context, request, ct);
         if (entities.Count == 0) {
@@ -105,11 +106,11 @@ public class UpsertService<TContext>(
         where TDbModel : class
     {
         const string operation = "upsert_bulk";
-        RecordCrudRequest(operation, typeof(TDbModel), true);
-        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
-        var requestList = requests as IReadOnlyList<UpsertRequest<TRequest>> ?? requests.ToList();
+        var requestList = requests.AsReadOnlyList();
         ArgumentHelpers.ThrowIfNullOrEmpty(requestList, nameof(requests));
         using var scope = BeginActionScope("UPSERT BULK", typeof(TRequest), typeof(TDbModel), typeof(TResult));
+        RecordCrudRequest(operation, typeof(TDbModel), true);
+        using var timer = StartCrudTimer(operation, typeof(TDbModel), true);
         var bulkValidation = BulkListRequestValidator.Validate(new(requestList.Count, bulkOptions.MaxAmount));
         if (!bulkValidation.IsSuccess) {
             var err = bulkValidation.Errors![0];
@@ -210,7 +211,8 @@ public class UpsertService<TContext>(
             // Bulk create
             List<CreateResult<TResult>>? createResults = null;
             if (toCreate.Count > 0) {
-                var createBulkResult = await createService.CreateBulkAsync<TRequest, TDbModel, TResult>(toCreate, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), ct);
+                var createBulkResult = await createService.CreateBulkAsync<TRequest, TDbModel, TResult>(
+                    toCreate, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), null, ct);
                 createResults = createBulkResult.Results.ToList();
             }
 
@@ -390,7 +392,7 @@ public class UpsertService<TContext>(
             if (toCreateMap.Count > 0) {
                 var createRequests = toCreateMap.Values.ToList();
                 var createBulkResult = await createService.CreateBulkAsync<TRequest, TDbModel, TResult>(
-                    createRequests, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), ct);
+                    createRequests, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), null, ct);
 
                 foreach (var createResult in createBulkResult.Results)
                     successes.Add(ResultFactory.UpsertCreated(createResult));

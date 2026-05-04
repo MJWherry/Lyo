@@ -17,6 +17,11 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(FindAndActChainAutomationStep), "findAndActChain")]
 [JsonDerivedType(typeof(DelayAutomationStep), "delay")]
 [JsonDerivedType(typeof(ReloadAutomationStep), "reload")]
+[JsonDerivedType(typeof(SetViewportSizeAutomationStep), "setViewportSize")]
+[JsonDerivedType(typeof(SwitchToTabByIndexAutomationStep), "switchTabByIndex")]
+[JsonDerivedType(typeof(SwitchToTabByKeyAutomationStep), "switchTabByKey")]
+[JsonDerivedType(typeof(OpenNewTabAutomationStep), "openNewTab")]
+[JsonDerivedType(typeof(CloseCurrentTabAutomationStep), "closeCurrentTab")]
 [JsonDerivedType(typeof(FindElementsChainAutomationStep), "findElementsChain")]
 [JsonDerivedType(typeof(ExtractElementDataAutomationStep), "extractElementData")]
 [JsonDerivedType(typeof(ExtractElementsListDataAutomationStep), "extractElementsListData")]
@@ -121,7 +126,55 @@ public sealed record ReloadAutomationStep(string? Name = null)
     public override string ToString() => FormatStepDebugLine("reload");
 }
 
-/// <summary>Polls for all matching elements on the chained path and stores them as <see cref="RefName" /> (list ref).</summary>
+/// <summary>Sets viewport/window dimensions for the active tab (engine-specific semantics; see <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.SetViewportSizeAsync" />).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record SetViewportSizeAutomationStep(int Width, int Height, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"setViewportSize {Width}x{Height}");
+}
+
+/// <summary>Switches active tab/page by zero-based index (<see cref="Lyo.Web.Automation.Abstractions.IWebAutomationTabs.SwitchToTabAsync(int, CancellationToken)" />).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record SwitchToTabByIndexAutomationStep(int TabIndex, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"switchTabByIndex index={TabIndex}");
+}
+
+/// <summary>Switches active tab/page by opaque tab key (template-expanded). Selenium: window handle; Playwright: page key hex.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record SwitchToTabByKeyAutomationStep(string TabKey, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"switchTabByKey key={AutomationDisplayText.Ellipsis(TabKey, 48)}");
+}
+
+/// <summary>Opens a new tab; optional URL template; optional variable to store the new tab key.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record OpenNewTabAutomationStep(string? Url = null, string? TabKeyVariableName = null, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var store = string.IsNullOrWhiteSpace(TabKeyVariableName) ? "" : $" storeKey→{TabKeyVariableName}";
+        return FormatStepDebugLine($"openNewTab url={AutomationDisplayText.Ellipsis(Url ?? "", 48)}{store}");
+    }
+}
+
+/// <summary>Closes the current tab/page and activates another if any remain.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record CloseCurrentTabAutomationStep(string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine("closeCurrentTab");
+}
+
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record FindElementsChainAutomationStep(string RefName, ElementLocatorChain Chain, string? Name = null)
     : AutomationStepDefinition(Name)

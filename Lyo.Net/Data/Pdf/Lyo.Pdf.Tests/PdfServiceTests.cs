@@ -21,7 +21,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         var rootDir = Path.Combine(Path.GetTempPath(), "lyo-pdf-tests");
         Directory.CreateDirectory(rootDir);
         _tempSession = new(new() { RootDirectory = rootDir, FileExtension = ".pdf" }, loggerFactory.CreateLogger<IOTempSession>());
-        _service = new(loggerFactory.CreateLogger<PdfService>());
+        _service = new(loggerFactory);
         var baseDir = AppContext.BaseDirectory;
         _testPdfsDir = Path.Combine(baseDir, "TestPdfs");
     }
@@ -38,6 +38,16 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         return Directory.GetFiles(_testPdfsDir, "*.pdf");
     }
 
+    /// <summary>One-page PdfPig-openable PDF whose <see cref="IPdfDocumentText" /> is only needed for synthetic word/layout tests.</summary>
+    private IPdfReader OpenBlankReadPdf()
+    {
+        byte[] bytes;
+        using (var editable = _service.CreateEmpty())
+            bytes = editable.ToBytes();
+
+        return _service.OpenFromBytes(bytes);
+    }
+
     [Fact]
     public void LoadPdfFromFile_ValidPdf_ReturnsLeaseWithValidId()
     {
@@ -45,8 +55,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        Assert.NotEqual(Guid.Empty, lease.Id);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        Assert.True(pdf.GetInfo().PageCount >= 1);
     }
 
     [Fact]
@@ -56,8 +66,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
-        Assert.NotEqual(Guid.Empty, lease.Id);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        Assert.True(pdf.GetInfo().PageCount >= 1);
     }
 
     [Fact]
@@ -67,8 +77,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var info = _service.GetPdfInfo(lease.Id);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var info = pdf.GetInfo();
         Assert.NotNull(info);
         Assert.True(info.PageCount >= 1);
     }
@@ -80,8 +90,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWords(lease.Id);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWords();
         Assert.NotNull(words);
     }
 
@@ -92,9 +102,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
+        using var pdf = _service.OpenFromFile(paths[0]);
         var outputPath = _tempSession.GetFilePath("output.pdf");
-        _service.SavePdf(lease.Id, outputPath);
+        File.WriteAllBytes(outputPath, pdf.SourceBytes.ToArray());
         Assert.True(File.Exists(outputPath));
         Assert.True(new FileInfo(outputPath).Length > 0);
     }
@@ -106,9 +116,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         var outputPath = _tempSession.GetFilePath("output-async.pdf");
-        await _service.SavePdfAsync(lease.Id, outputPath, TestContext.Current.CancellationToken);
+        await File.WriteAllBytesAsync(outputPath, pdf.SourceBytes.ToArray(), TestContext.Current.CancellationToken);
         Assert.True(File.Exists(outputPath));
         Assert.True(new FileInfo(outputPath).Length > 0);
     }
@@ -120,10 +130,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length < 2)
             return;
 
-        var leases = _service.LoadPdfsFromFiles(paths.Take(2).ToArray());
-        Assert.Equal(2, leases.Count);
-        foreach (var lease in leases)
-            lease.Dispose();
+        var docs = _service.OpenFromFiles(paths.Take(2).ToArray());
+        Assert.Equal(2, docs.Count);
+        foreach (var pdf in docs)
+            pdf.Dispose();
     }
 
     [Fact]
@@ -133,17 +143,18 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length < 2)
             return;
 
-        var leases = _service.LoadPdfsFromFiles(paths[0], paths[1]);
+        var docs = _service.OpenFromFiles(paths[0], paths[1]);
         try {
             var outputPath = _tempSession.GetFilePath("merged.pdf");
-            var bytes = _service.MergePdfsToFile([leases[0].Id, leases[1].Id], outputPath);
+            var buffers = docs.Select(d => d.SourceBytes.ToArray()).ToList();
+            var bytes = _service.MergePdfsToFile(buffers, outputPath);
             Assert.True(bytes.Length > 0);
             Assert.True(File.Exists(outputPath));
             Assert.True(new FileInfo(outputPath).Length > 0);
         }
         finally {
-            foreach (var lease in leases)
-                lease.Dispose();
+            foreach (var pdf in docs)
+                pdf.Dispose();
         }
     }
 
@@ -155,8 +166,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             return;
 
         var bytes = File.ReadAllBytes(paths[0]);
-        using var lease = _service.LoadPdfFromBytes(bytes);
-        Assert.NotEqual(Guid.Empty, lease.Id);
+        using var pdf = _service.OpenFromBytes(bytes);
+        Assert.True(pdf.GetInfo().PageCount >= 1);
     }
 
     [Fact]
@@ -167,8 +178,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             return;
 
         using var stream = File.OpenRead(paths[0]);
-        using var lease = _service.LoadPdfFromStream(stream);
-        Assert.NotEqual(Guid.Empty, lease.Id);
+        using var pdf = _service.OpenFromStream(stream);
+        Assert.True(pdf.GetInfo().PageCount >= 1);
     }
 
     [Fact]
@@ -178,8 +189,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var bytes = _service.GetPdfBytes(lease.Id);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var bytes = pdf.SourceBytes.ToArray();
         Assert.NotNull(bytes);
         Assert.True(bytes.Length > 0);
     }
@@ -191,8 +202,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var lines = _service.GetLines(lease.Id);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var lines = pdf.Text.GetLines();
         Assert.NotNull(lines);
         Assert.True(lines.Count > 0, "GetLines should return at least one line");
         Assert.All(
@@ -209,8 +220,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var lines = _service.GetLines(lease.Id, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var lines = pdf.Text.GetLines(1);
         Assert.NotNull(lines);
         Assert.True(lines.Count > 0, "GetLines with page should return lines for that page");
     }
@@ -222,8 +233,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var lines = _service.GetLinesBetween(lease.Id, null, null, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var lines = pdf.Text.GetLinesBetween(null, null, 1);
         Assert.NotNull(lines);
         Assert.True(lines.Count > 0, "GetLinesBetween with null boundaries should return all lines on page");
         Assert.All(lines, line => Assert.NotNull(line.Text));
@@ -236,8 +247,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWordsBetween(lease.Id, null, null, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWordsBetween(null, null, 1);
         Assert.NotNull(words);
         Assert.True(words.Count > 0, "GetWordsBetween with null boundaries should return all words on page");
         Assert.All(words, w => Assert.False(string.IsNullOrWhiteSpace(w.Text)));
@@ -250,9 +261,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
+        using var pdf = _service.OpenFromFile(paths[0]);
         string[] keys = ["Name:", "Date of Birth:", "County:", "Case Status:"];
-        var results = _service.ExtractKeyValuePairs(lease.Id, keys, 1);
+        var results = pdf.Text.ExtractKeyValuePairs(keys, 1);
         Assert.NotNull(results);
         Assert.NotEmpty(results);
         Assert.All(
@@ -271,10 +282,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWords(lease.Id, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWords(1);
         string[] keys = ["Name:", "Date of Birth:", "County:"];
-        var results = _service.ExtractKeyValuePairs(words, keys);
+        var results = pdf.Text.ExtractKeyValuePairs(words, keys);
         Assert.NotNull(results);
         Assert.NotEmpty(results);
         var first = results[0];
@@ -288,9 +299,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
+        using var pdf = _service.OpenFromFile(paths[0]);
         ColumnHeader[] headers = [new("Col1"), new("Col2", true), new("Col3")];
-        var rows = _service.ExtractTable(lease.Id, headers, 1);
+        var rows = pdf.Text.ExtractTable(headers, 1);
         Assert.NotNull(rows);
         foreach (var row in rows) {
             Assert.NotNull(row);
@@ -306,10 +317,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWords(lease.Id, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWords(1);
         ColumnHeader[] headers = [new("A"), new("B")];
-        var rows = _service.ExtractTable(words, headers);
+        var rows = pdf.Text.ExtractTable(words, headers);
         Assert.NotNull(rows);
         foreach (var row in rows)
             Assert.NotNull(row);
@@ -318,11 +329,12 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void ExtractKeyValuePairs_VerticalLayout_SameLineValue_ReadsTextAfterKey()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom));
 
         // Same baseline Y: "Pages:" then value tokens to the right (common in forms).
         var words = new List<PdfWord> { W("Pages:", 10, 52, 100, 96), W("13", 58, 72, 100, 96), W("pages", 74, 108, 100, 96) };
-        var results = _service.ExtractKeyValuePairs(words, ["Pages"], 5.0, PdfKeyValueLayout.Vertical);
+        var results = facetPdf.Text.ExtractKeyValuePairs(words, ["Pages"], 5.0, PdfKeyValueLayout.Vertical);
         Assert.Single(results);
         Assert.True(results[0].Values.TryGetValue("Pages", out var v));
         Assert.NotNull(v);
@@ -332,6 +344,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferKeyValuePairsFromFormatting_UsesFontNameBoldVsRegular()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
             => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
@@ -343,7 +356,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Dev", "Lato-Regular", 55, 100, 170, 160, false)
         };
 
-        var dict = _service.InferKeyValuePairsFromFormatting(words);
+        var dict = facetPdf.Text.InferKeyValuePairsFromFormatting(words);
         Assert.True(dict.TryGetValue("Name", out var n) && n != null && n.Contains("John", StringComparison.Ordinal));
         Assert.True(dict.TryGetValue("Role", out var r) && r != null && r.Contains("Dev", StringComparison.Ordinal));
     }
@@ -351,10 +364,11 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferKeyValuePairsFromFormatting_EqualsDelimiter_CustomOrder()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> { W("Name = Alice", 10, 100, 200, 190), W("Role = Dev", 10, 100, 170, 160) };
-        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Semicolon, ['=']);
+        var dict = facetPdf.Text.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Semicolon, ['=']);
         Assert.True(dict.TryGetValue("Name", out var n) && n != null && n.Contains("Alice", StringComparison.Ordinal));
         Assert.True(dict.TryGetValue("Role", out var r) && r != null && r.Contains("Dev", StringComparison.Ordinal));
     }
@@ -362,6 +376,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferKeyValuePairsFromFormatting_ColonTerminated_NoBold()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> {
@@ -371,7 +386,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Active", 55, 100, 160, 150)
         };
 
-        var dict = _service.InferKeyValuePairsFromFormatting(words);
+        var dict = facetPdf.Text.InferKeyValuePairsFromFormatting(words);
         Assert.True(dict.TryGetValue("Department", out var d) && d != null && d.Contains("Engineering", StringComparison.Ordinal));
         Assert.True(dict.TryGetValue("Status", out var s) && s == "Active");
     }
@@ -379,32 +394,35 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferKeyValuePairsFromFormatting_None_ReturnsEmpty()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
             => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
         var words = new List<PdfWord> { W("Name", "Lato-Bold", 10, 80, 200, 190, true), W("John", "Lato-Regular", 10, 60, 185, 175, false) };
-        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.None);
+        var dict = facetPdf.Text.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.None);
         Assert.Empty(dict);
     }
 
     [Fact]
     public void InferKeyValuePairsFromFormatting_BoldOnly_IgnoresDelimiterLines()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> { W("Department:", 10, 100, 200, 190), W("Engineering", 10, 100, 185, 175) };
-        var dict = _service.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Bold);
+        var dict = facetPdf.Text.InferKeyValuePairsFromFormatting(words, 5.0, 1, PdfInferFormattingFlags.Bold);
         Assert.Empty(dict);
     }
 
     [Fact]
     public void ExtractKeyValuePairs_VerticalLayout_ReadsValueBelowKey()
     {
+        using var facetPdf = OpenBlankReadPdf();
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom));
 
         // Higher top = higher on page; key row then value row below (smaller Y centroid).
         var words = new List<PdfWord> { W("Field:", 10, 52, 102, 98), W("Hello", 12, 48, 89, 85) };
-        var results = _service.ExtractKeyValuePairs(words, ["Field:"], 5.0, PdfKeyValueLayout.Vertical);
+        var results = facetPdf.Text.ExtractKeyValuePairs(words, ["Field:"], 5.0, PdfKeyValueLayout.Vertical);
         Assert.Single(results);
         Assert.True(results[0].Values.TryGetValue("Field:", out var v));
         Assert.Equal("Hello", v);
@@ -417,9 +435,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWords(lease.Id, 1);
-        var results = _service.ExtractKeyValuePairs(words, []);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWords(1);
+        var results = pdf.Text.ExtractKeyValuePairs(words, []);
         Assert.NotNull(results);
         Assert.Single(results);
         Assert.Empty(results[0].Values);
@@ -428,9 +446,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void ExtractTable_EmptyWords_ReturnsEmptyList()
     {
+        using var facetPdf = OpenBlankReadPdf();
         ColumnHeader[] headers = [new("Col1"), new("Col2")];
         IReadOnlyList<PdfWord> emptyWords = [];
-        var rows = _service.ExtractTable(emptyWords, headers);
+        var rows = facetPdf.Text.ExtractTable(emptyWords, headers);
         Assert.NotNull(rows);
         Assert.Empty(rows);
     }
@@ -444,7 +463,8 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
 
         var bytes = File.ReadAllBytes(paths[0]);
         ColumnHeader[] headers = [new("A"), new("B")];
-        var result = _service.ParseBytesAsDataTable(bytes, headers, 1);
+        using var facetPdf = OpenBlankReadPdf();
+        var result = facetPdf.Text.ParseBytesAsDataTable(bytes, headers, 1);
         Assert.True(result.IsSuccess);
         var dt = result.ValueOrThrow();
         Assert.NotNull(dt.Headers);
@@ -458,9 +478,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
+        using var pdf = _service.OpenFromFile(paths[0]);
         ColumnHeader[] headers = [new("A"), new("B")];
-        var dt = _service.ExtractDataTable(lease.Id, headers, 1);
+        var dt = pdf.Text.ExtractDataTable(headers, 1);
         Assert.NotNull(dt);
         Assert.NotNull(dt.Headers);
         Assert.Equal(2, dt.Headers.Count);
@@ -476,10 +496,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        var words = _service.GetWords(lease.Id, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var words = pdf.Text.GetWords(1);
         ColumnHeader[] headers = [new("A"), new("B")];
-        var dt = _service.ExtractDataTable(words, headers);
+        var dt = pdf.Text.ExtractDataTable(words, headers);
         Assert.NotNull(dt);
         Assert.Equal(2, dt.Headers.Count);
         Assert.NotNull(dt.Rows);
@@ -488,9 +508,10 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void ExtractDataTable_EmptyWords_ReturnsEmptyDataTable()
     {
+        using var facetPdf = OpenBlankReadPdf();
         ColumnHeader[] headers = [new("Col1"), new("Col2")];
         IReadOnlyList<PdfWord> emptyWords = [];
-        var dt = _service.ExtractDataTable(emptyWords, headers);
+        var dt = facetPdf.Text.ExtractDataTable(emptyWords, headers);
         Assert.NotNull(dt);
         Assert.Equal(2, dt.Headers.Count);
         Assert.Empty(dt.Rows);
@@ -503,9 +524,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
+        using var pdf = _service.OpenFromFile(paths[0]);
         var sections = new[] { "SUMMARY", "NONEXISTENT_XYZ_SECTION", "FOOTER" };
-        var section = _service.GetSection(lease.Id, "NONEXISTENT_XYZ_SECTION", sections);
+        var section = pdf.Text.GetSection("NONEXISTENT_XYZ_SECTION", sections);
         Assert.Null(section);
     }
 
@@ -516,9 +537,9 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        using var lease = _service.LoadPdfFromFile(paths[0]);
-        _service.GetPdfInfo(lease.Id);
-        var lines = _service.GetLines(lease.Id, 1);
+        using var pdf = _service.OpenFromFile(paths[0]);
+        _ = pdf.GetInfo();
+        var lines = pdf.Text.GetLines(1);
         if (lines.Count == 0)
             return;
 
@@ -528,7 +549,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
 
         var sectionName = firstLineText.Length > 20 ? firstLineText[..20] : firstLineText;
         var sections = new[] { sectionName, "END_MARKER" };
-        var section = _service.GetSection(lease.Id, sectionName, sections);
+        var section = pdf.Text.GetSection(sectionName, sections);
         if (section != null) {
             Assert.Equal(sectionName, section.Name);
             Assert.True(section.StartPage >= 1);
@@ -545,15 +566,16 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         if (paths.Length == 0)
             return;
 
-        await using var lease = await _service.LoadPdfFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         var sections = new[] { "NO_SUCH_SECTION_123" };
-        var section = await _service.GetSectionAsync(lease.Id, "NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken);
+        var section = await pdf.Text.GetSectionAsync("NO_SUCH_SECTION_123", sections, ct: TestContext.Current.CancellationToken);
         Assert.Null(section);
     }
 
     [Fact]
     public void InferTableHeadersFromFormatting_TwoLineUnderlinedHeader_MergesStackedLinesIntoColumnLabels()
     {
+        using var facetPdf = OpenBlankReadPdf();
         var ul = new PdfWordFormat(FontUnderline: true);
 
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null) => new(text, new(left, right, top, bottom), f);
@@ -567,7 +589,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Start", 258, 305, 90, 86, ul)
         };
 
-        var headers = _service.InferTableHeadersFromFormatting(words, 5.0, PdfInferFormattingFlags.Underline);
+        var headers = facetPdf.Text.InferTableHeadersFromFormatting(words, 5.0, PdfInferFormattingFlags.Underline);
         Assert.Equal(3, headers.Length);
         Assert.Equal("Case Event", headers[0].Label);
         Assert.Equal("Calendar Type", headers[1].Label);
@@ -577,6 +599,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferTableHeadersFromFormatting_DoesNotMergeBoldHeaderWithUnstyledDataRowBelow()
     {
+        using var facetPdf = OpenBlankReadPdf();
         var bold = new PdfWordFormat(FontBold: true);
 
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null) => new(text, new(left, right, top, bottom), f);
@@ -588,7 +611,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("someone", 200, 280, 88, 84)
         };
 
-        var headers = _service.InferTableHeadersFromFormatting(words, 5.0, PdfInferFormattingFlags.Bold);
+        var headers = facetPdf.Text.InferTableHeadersFromFormatting(words, 5.0, PdfInferFormattingFlags.Bold);
         Assert.Equal(2, headers.Length);
         Assert.Equal("TIMESTAMP", headers[0].Label);
         Assert.Equal("AUDIT", headers[1].Label);
@@ -597,6 +620,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void InferTableHeadersFromFormatting_SecondRowMustMatchInferenceStyleToMerge()
     {
+        using var facetPdf = OpenBlankReadPdf();
         var ul = new PdfWordFormat(FontUnderline: true);
 
         static PdfWord W(string text, double left, double right, double top, double bottom, PdfWordFormat? f = null) => new(text, new(left, right, top, bottom), f);
@@ -612,7 +636,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Start", 258, 305, 90, 86)
         };
 
-        var h1 = _service.InferTableHeadersFromFormatting(wordsPlainSecondRow, 5.0, PdfInferFormattingFlags.Underline);
+        var h1 = facetPdf.Text.InferTableHeadersFromFormatting(wordsPlainSecondRow, 5.0, PdfInferFormattingFlags.Underline);
         Assert.Equal(3, h1.Length);
         Assert.Equal("Case", h1[0].Label);
         Assert.Equal("Calendar", h1[1].Label);
@@ -626,7 +650,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
             W("Start", 258, 305, 90, 86, ul)
         };
 
-        var h2 = _service.InferTableHeadersFromFormatting(wordsBothRowsUnderlined, 5.0, PdfInferFormattingFlags.Underline);
+        var h2 = facetPdf.Text.InferTableHeadersFromFormatting(wordsBothRowsUnderlined, 5.0, PdfInferFormattingFlags.Underline);
         Assert.True(h2.Length >= 3);
         var flat = string.Join(' ', h2.Select(x => x.Label));
         Assert.Contains("Event", flat, StringComparison.OrdinalIgnoreCase);

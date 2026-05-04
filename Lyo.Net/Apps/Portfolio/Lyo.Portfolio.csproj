@@ -27,8 +27,11 @@
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
         <ProjectReference Include="..\..\Core\Schedule\Lyo.Schedule.Web.Components\Lyo.Schedule.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Core\Diagnostic\Lyo.Diagnostic.Web.Components\Lyo.Diagnostic.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Core\Privacy\Lyo.Privacy.Web.Components\Lyo.Privacy.Web.Components.csproj"/>
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
 
         <!-- Portfolio API -->

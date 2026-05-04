@@ -6,6 +6,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Enums;
+using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
@@ -33,9 +34,10 @@ public class QueryHistoryService<TContext>(
         where TDbModel : class
     {
         const string operation = "query_history";
+        ArgumentHelpers.ThrowIfNull(query);
+        using var scope = BeginActionScope("QUERY TEMPORAL", typeof(HistoryQuery), typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));
-        using var scope = BeginActionScope("QUERY TEMPORAL", typeof(HistoryQuery), typeof(TDbModel), typeof(TResult));
         var pagingErrors = QueryPagingBoundsValidator.Validate(query, queryOptions);
         if (pagingErrors.Count > 0) {
             Logger.LogWarning(

@@ -17,7 +17,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
     private ElementReference _iframe;
     private string? _latestAnnotationsJson;
     private byte[]? _pdfBytes;
-    private LoadedPdfLease? _pdfLease;
+    private IPdfReader? _pdfDoc;
     private bool _resultPhase;
     private bool _viewerAttachPending;
     private string? _viewerHtml;
@@ -47,7 +47,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             catch (JSDisconnectedException) { }
         }
 
-        DisposePdfLease();
+        DisposePdfDoc();
     }
 
     protected override void OnInitialized() => _annotatorController = new(JsRuntime);
@@ -62,8 +62,8 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         if (_annotatorController != null)
             await _annotatorController.ResetAsync();
 
-        DisposePdfLease();
-        _pdfLease = await PdfService.LoadPdfFromBytesAsync(f.Content);
+        DisposePdfDoc();
+        _pdfDoc = await PdfService.OpenFromBytesAsync(f.Content);
         _pdfBytes = f.Content;
         _annotatorHtml = PdfAnnotatorHtml.GetForBlazor(Convert.ToBase64String(f.Content));
         _annotationRows.Clear();
@@ -160,17 +160,17 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         }
 
         var existingByKey = _annotationRows.ToDictionary(x => x.Key, StringComparer.OrdinalIgnoreCase);
-        if (_pdfLease == null) {
+        var pdf = _pdfDoc;
+        if (pdf == null) {
             _annotationRows = parsed.Select(a => CreateOrUpdateResult(a, existingByKey.GetValueOrDefault(a.Key))).ToList();
             return;
         }
 
-        var leaseId = _pdfLease.Id;
         var rows = await Task.Run(() => {
             var list = new List<LyoPdfAnnotationResult>(parsed.Count);
             foreach (var a in parsed) {
                 var result = CreateOrUpdateResult(a, existingByKey.GetValueOrDefault(a.Key));
-                ApplyExtraction(leaseId, a, result);
+                ApplyExtraction(pdf, a, result);
                 list.Add(result);
             }
 
@@ -195,7 +195,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             TableKeyColumnLabel = existing?.TableKeyColumnLabel
         };
 
-    private void ApplyExtraction(Guid leaseId, ParsedAnnotation annotation, LyoPdfAnnotationResult result)
+    private void ApplyExtraction(IPdfReader pdf, ParsedAnnotation annotation, LyoPdfAnnotationResult result)
     {
         result.ExtractedText = string.Empty;
         result.ErrorMessage = null;
@@ -204,17 +204,17 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         result.ColumnTexts = null;
         var region = new PdfBoundingBox(annotation.Page, new(annotation.Left, annotation.Right, annotation.Top, annotation.Bottom));
         try {
-            var lines = PdfService.GetLinesInBoundingBox(leaseId, region, result.YTolerance);
+            var lines = pdf.Text.GetLinesInBoundingBox(region, result.YTolerance);
             var words = lines.SelectMany(l => l.Words).ToList();
             switch (result.ExtractionType) {
                 case PdfAnnotationExtractionType.KeyValue:
-                    ApplyKeyValueExtraction(words, result);
+                    ApplyKeyValueExtraction(pdf, words, result);
                     break;
                 case PdfAnnotationExtractionType.Table:
-                    ApplyTableExtraction(words, result);
+                    ApplyTableExtraction(pdf, words, result);
                     break;
                 default:
-                    ApplyBoundingBoxTextExtraction(lines, words, result);
+                    ApplyBoundingBoxTextExtraction(pdf, lines, words, result);
                     break;
             }
         }
@@ -223,7 +223,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         }
     }
 
-    private void ApplyBoundingBoxTextExtraction(IReadOnlyList<PdfTextLine> lines, IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
+    private static void ApplyBoundingBoxTextExtraction(IPdfReader pdf, IReadOnlyList<PdfTextLine> lines, IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
     {
         var columnCount = Math.Max(1, result.ColumnCount);
         if (columnCount <= 1) {
@@ -232,17 +232,17 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             return;
         }
 
-        var columnar = PdfService.GetColumnarText(words, columnCount, result.YTolerance);
+        var columnar = pdf.Text.GetColumnarText(words, columnCount, result.YTolerance);
         result.ColumnTexts = columnar.Columns.ToList();
         result.ExtractedText = columnar.ToCombinedString().Trim();
     }
 
-    private void ApplyKeyValueExtraction(IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
+    private static void ApplyKeyValueExtraction(IPdfReader pdf, IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
     {
         var knownKeys = result.KnownKeys.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var kvColumnCount = Math.Max(1, result.ColumnCount);
         if (knownKeys.Length == 0) {
-            var inferred = PdfService.InferKeyValuePairsFromFormatting(words, result.YTolerance, kvColumnCount, result.InferFormattingFlags, DelimitersForInference(result));
+            var inferred = pdf.Text.InferKeyValuePairsFromFormatting(words, result.YTolerance, kvColumnCount, result.InferFormattingFlags, DelimitersForInference(result));
             result.KeyValuePairs = inferred;
             result.KnownKeys = [.. inferred.Keys];
             result.ExtractedText = inferred.Count == 0 ? string.Empty : string.Join(Environment.NewLine, inferred.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
@@ -253,17 +253,17 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             return;
         }
 
-        var columns = PdfService.ExtractKeyValuePairs(words, knownKeys, result.YTolerance, result.KeyValueLayout, kvColumnCount);
+        var columns = pdf.Text.ExtractKeyValuePairs(words, knownKeys, result.YTolerance, result.KeyValueLayout, kvColumnCount);
         result.KeyValuePairs = KvColumnResult.Merge(columns);
         result.ExtractedText = result.KeyValuePairs.Count == 0 ? string.Empty : string.Join(Environment.NewLine, result.KeyValuePairs.Select(x => $"{x.Key}: {x.Value ?? "—"}"));
     }
 
-    private void ApplyTableExtraction(IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
+    private static void ApplyTableExtraction(IPdfReader pdf, IReadOnlyList<PdfWord> words, LyoPdfAnnotationResult result)
     {
         var headers = ParseTableHeaders(result.TableHeaders);
         headers = ApplyTableKeyColumnOverride(headers, result.TableKeyColumnLabel);
         if (headers.Length == 0) {
-            headers = PdfService.InferTableHeadersFromFormatting(words, result.YTolerance, result.InferFormattingFlags, DelimitersForInference(result));
+            headers = pdf.Text.InferTableHeadersFromFormatting(words, result.YTolerance, result.InferFormattingFlags, DelimitersForInference(result));
             if (headers.Length == 0) {
                 result.ErrorMessage = "Could not infer table headers with the selected inference options; add headers manually.";
                 return;
@@ -276,7 +276,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             result.TableKeyColumnLabel = headers[0].Label;
 
         headers = ApplyTableKeyColumnOverride(headers, result.TableKeyColumnLabel);
-        result.TableRows = PdfService.ExtractTable(words, headers, result.YTolerance, result.InferFormattingFlags);
+        result.TableRows = pdf.Text.ExtractTable(words, headers, result.YTolerance, result.InferFormattingFlags);
         result.ExtractedText = result.TableRows.Count == 0 ? string.Empty : $"{result.TableRows.Count} row(s) extracted.";
     }
 
@@ -330,14 +330,14 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
         _viewerAttachPending = false;
         _annotationRows.Clear();
         _latestAnnotationsJson = null;
-        DisposePdfLease();
+        DisposePdfDoc();
         await InvokeAsync(StateHasChanged);
     }
 
-    private void DisposePdfLease()
+    private void DisposePdfDoc()
     {
-        _pdfLease?.Dispose();
-        _pdfLease = null;
+        _pdfDoc?.Dispose();
+        _pdfDoc = null;
     }
 
     private static ColumnHeader[] ParseTableHeaders(IEnumerable<string>? headers)
@@ -380,7 +380,7 @@ public partial class LyoPdfAnnotator : IAsyncDisposable
             ColumnTexts = row.ColumnTexts?.ToList()
         };
 
-    /// <summary>Distinct delimiter characters for <see cref="PdfService.InferKeyValuePairsFromFormatting" />, or <c>null</c> to use service defaults.</summary>
+    /// <summary>Distinct delimiter characters for <see cref="IPdfDocumentText.InferKeyValuePairsFromFormatting" />, or <c>null</c> to use defaults.</summary>
     private static IReadOnlyList<char>? DelimitersForInference(LyoPdfAnnotationResult result)
     {
         var s = result.KeyValueInferDelimiters;

@@ -46,6 +46,9 @@ public sealed class ComicSeriesReq
 
     /// <summary>Gets or sets alternate and translated titles for this series.</summary>
     public IReadOnlyList<ComicAlternateTitleReq> AlternateTitles { get; set; } = [];
+
+    /// <summary>Optional tags to attach after the series is created (create / upsert-create only; ignored on update).</summary>
+    public IReadOnlyList<AddTagReq>? Tags { get; set; }
 }
 
 /// <summary>An alternate or translated title within a series request.</summary>

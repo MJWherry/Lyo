@@ -1,7 +1,9 @@
-using System.Security.Cryptography;
+using System.IO;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Enums;
 using Lyo.Exceptions;
+using Lyo.Hashing;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Rules;
 
@@ -18,7 +20,6 @@ public static class RedactionPolicyFingerprint
     {
         ArgumentHelpers.ThrowIfNull(policy);
         ArgumentHelpers.ThrowIfNotInRange(hexCharCount, 0, 64);
-        using var sha = SHA256.Create();
         using var ms = new MemoryStream();
         WriteUtf8Line(ms, policy.Name ?? "");
         WriteUtf8Line(ms, policy.Placeholder);
@@ -31,8 +32,11 @@ public static class RedactionPolicyFingerprint
             AppendRuleDetail(ms, r);
         }
 
-        var hash = sha.ComputeHash(ms.ToArray());
-        return ToHexPrefix(hash, hexCharCount);
+        var payloadBytes = ms.ToArray();
+        var hash = Hasher.ComputeSha256(payloadBytes);
+        return hexCharCount == 0
+            ? string.Empty
+            : HexEncoding.ToHexString(hash.AsSpan(0, Math.Min(hexCharCount / 2, hash.Length)), TextLetterCase.Lower);
     }
 
     private static void AppendRuleDetail(Stream ms, IRedactionRule r)
@@ -71,24 +75,5 @@ public static class RedactionPolicyFingerprint
     {
         var b = Encoding.UTF8.GetBytes(line + "\n");
         s.Write(b, 0, b.Length);
-    }
-
-    private static string ToHexPrefix(byte[] hash, int hexCharCount)
-    {
-        var n = Math.Min(hexCharCount / 2, hash.Length);
-        var chars = new char[n * 2];
-        for (var i = 0; i < n; i++) {
-            var b = hash[i];
-            chars[2 * i] = NibbleHex(b >> 4);
-            chars[2 * i + 1] = NibbleHex(b & 0xF);
-        }
-
-        return new(chars);
-
-        static char NibbleHex(int v)
-        {
-            v &= 0xF;
-            return (char)(v < 10 ? '0' + v : 'a' + (v - 10));
-        }
     }
 }

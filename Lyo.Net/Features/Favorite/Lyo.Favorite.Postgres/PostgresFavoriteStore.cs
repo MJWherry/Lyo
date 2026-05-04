@@ -10,6 +10,7 @@ namespace Lyo.Favorite.Postgres;
 /// <summary>PostgreSQL implementation of IFavoriteStore.</summary>
 public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
 {
+    private const int BatchQueryChunkSize = 500;
     private readonly IDbContextFactory<FavoriteDbContext> _contextFactory;
 
     /// <summary>Creates a new PostgresFavoriteStore.</summary>
@@ -124,6 +125,36 @@ public sealed class PostgresFavoriteStore : IFavoriteStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         return await context.Favorites.CountAsync(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == forEntity.EntityId, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<string, int>> GetFavoriteCountsForEntitiesAsync(string forEntityType, IReadOnlyList<string> forEntityIds, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        ArgumentHelpers.ThrowIfNull(forEntityIds);
+        if (forEntityIds.Count == 0)
+            return new Dictionary<string, int>();
+
+        var distinctIds = forEntityIds.Where(static id => !string.IsNullOrWhiteSpace(id)).Distinct().ToArray();
+        if (distinctIds.Length == 0)
+            return new Dictionary<string, int>();
+
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        var result = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var chunk in distinctIds.Chunk(BatchQueryChunkSize)) {
+            var ids = chunk.ToArray();
+            var rows = await context.Favorites.Where(f => f.ForEntityType == forEntityType && ids.Contains(f.ForEntityId))
+                .GroupBy(f => f.ForEntityId)
+                .Select(g => new { ForEntityId = g.Key, Count = g.Count() })
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
+            foreach (var row in rows)
+                result[row.ForEntityId] = row.Count;
+        }
+
+        return result;
     }
 
     /// <inheritdoc />

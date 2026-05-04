@@ -80,16 +80,34 @@
     }
 
     @if (_results.Count > 0) {
-        <MudGrid Spacing="3">
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.FlexEnd"
+                  Spacing="2"
+                  Class="comic-search__view-toolbar mb-3 flex-wrap">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">View size</MudText>
+            <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton OnClick="@(() => SetGridDensity(ComicBrowseGridDensity.Large))"
+                           Variant="@(_gridDensity == ComicBrowseGridDensity.Large ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_gridDensity == ComicBrowseGridDensity.Large ? Color.Primary : Color.Default)">
+                    Large
+                </MudButton>
+                <MudButton OnClick="@(() => SetGridDensity(ComicBrowseGridDensity.Small))"
+                           Variant="@(_gridDensity == ComicBrowseGridDensity.Small ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_gridDensity == ComicBrowseGridDensity.Small ? Color.Primary : Color.Default)">
+                    Small
+                </MudButton>
+            </MudButtonGroup>
+        </MudStack>
+
+        <div class="@ResultsGridClass">
             @foreach (var series in _results) {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <ComicCard Series="series"
-                               CoverImageUrl="@ResolveCoverUrl(series)"
-                               OnRead="OnReadAsync"
-                               OnDetails="OnDetailsAsync"/>
-                </MudItem>
+                <ComicCard Series="series"
+                           CoverImageUrl="@ResolveCoverUrl(series)"
+                           OnRead="OnReadAsync"
+                           OnDetails="OnDetailsAsync"/>
             }
-        </MudGrid>
+        </div>
 
         @if (_hasMore) {
             <div class="d-flex justify-center mt-4">

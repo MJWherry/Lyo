@@ -29,10 +29,6 @@
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">@Series.Author</MudText>
         }
 
-        @if (!string.IsNullOrWhiteSpace(Series.Description)) {
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="comic-card__desc">@Series.Description</MudText>
-        }
-
         <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
             @if (!string.IsNullOrWhiteSpace(Series.Demographic)) {
                 <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@Series.Demographic</MudChip>
@@ -44,6 +40,21 @@
                 <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@Series.PublishedYear</MudChip>
             }
         </MudStack>
+
+        @if (HasAnyDisplayTags) {
+            <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
+                @foreach (var tag in VisibleTagChips) {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">@tag</MudChip>
+                }
+                @if (OverflowTagCount > 0) {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">+@OverflowTagCount more</MudChip>
+                }
+            </MudStack>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Series.Description)) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="comic-card__desc mt-2">@Series.Description</MudText>
+        }
     </MudCardContent>
 
     <MudCardActions Class="pa-3 pt-0">

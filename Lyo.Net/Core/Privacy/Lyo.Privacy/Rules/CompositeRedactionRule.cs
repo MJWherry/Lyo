@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
@@ -15,9 +16,13 @@ public sealed class CompositeRedactionRule : IRedactionRule
 
     public CompositeRedactionRule(IEnumerable<IRedactionRule> rules)
     {
-        ArgumentHelpers.ThrowIfNullOrEmpty(rules);
-        _rules = rules as IReadOnlyList<IRedactionRule> ?? rules.ToArray();
+        var ruleList = rules.AsReadOnlyList();
+        ArgumentHelpers.ThrowIfNullOrEmpty(ruleList);
+        _rules = ruleList;
     }
+
+    /// <summary>Ordered inner rules (for diagnostics and policy export).</summary>
+    public IReadOnlyList<IRedactionRule> InnerRules => _rules;
 
     public RedactionKind Kind => RedactionKind.Composite;
 

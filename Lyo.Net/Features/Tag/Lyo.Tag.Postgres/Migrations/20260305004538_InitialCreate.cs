@@ -22,8 +22,9 @@ namespace Lyo.Tag.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     for_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    tag = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     tag_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "tag"),
+                    slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false, defaultValue: ""),
                     from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     from_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -40,17 +41,17 @@ namespace Lyo.Tag.Postgres.Migrations
                 columns: new[] { "for_entity_type", "for_entity_id" });
 
             migrationBuilder.CreateIndex(
-                name: "ix_tag_for_entity_tag_unique",
+                name: "ix_tag_for_entity_name_unique",
                 schema: "tag",
                 table: "tag",
-                columns: new[] { "for_entity_type", "for_entity_id", "tag_type", "tag" },
+                columns: new[] { "for_entity_type", "for_entity_id", "tag_type", "name", "slug" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ix_tag_tag",
+                name: "ix_tag_name",
                 schema: "tag",
                 table: "tag",
-                column: "tag");
+                column: "name");
 
             migrationBuilder.CreateIndex(
                 name: "ix_tag_tag_type",
