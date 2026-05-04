@@ -46,7 +46,7 @@ public class PdfServiceOptions
     public double KeyValueStackedMaxFirstGap { get; set; } = 120.0;
 
     /// <summary>
-    /// Optional per-PDF max size in bytes. If not set or <= 0, SuggestedMaxPdfSizeBytes is used.</summary>
+    /// Optional per-PDF max size in bytes. If not set or &lt;= 0, SuggestedMaxPdfSizeBytes is used.</summary>
     public long? MaxPdfSizeBytes { get; set; }
 
     /// <summary>

@@ -1,15 +1,9 @@
 namespace Lyo.FileStorage.Audit;
 
 /// <summary>Event arguments for <see cref="IFileStorageService.FileAuditOccurred" />.</summary>
-public sealed class FileAuditEventArgs : EventArgs
+public sealed class FileAuditEventArgs(FileAuditEvent audit, CancellationToken ct) : EventArgs
 {
-    public FileAuditEvent Audit { get; }
+    public FileAuditEvent Audit { get; } = audit;
 
-    public CancellationToken CancellationToken { get; }
-
-    public FileAuditEventArgs(FileAuditEvent audit, CancellationToken cancellationToken)
-    {
-        Audit = audit;
-        CancellationToken = cancellationToken;
-    }
+    public CancellationToken CancellationToken { get; } = ct;
 }

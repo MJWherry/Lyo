@@ -944,7 +944,7 @@ public sealed class IOTempFileGeneratorTests
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
             // depth=1, 2 files per dir, 2 dirs per level: root has 2 files + 2 subdirs each with 2 files = 6 files total
-            var root = session.Generator.CreateDirectoryTree(1, 2, 16, 2);
+            var root = session.Generator.CreateDirectoryTree(1, 2, 16);
             var allFiles = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
             Assert.Equal(6, allFiles.Length);
         }

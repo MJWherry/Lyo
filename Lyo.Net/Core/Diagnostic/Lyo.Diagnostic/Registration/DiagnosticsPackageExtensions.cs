@@ -6,7 +6,7 @@ using Lyo.Diagnostic.StackTrace;
 using Lyo.PackageMetadata;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Lyo.Diagnostic;
+namespace Lyo.Diagnostic.Registration;
 
 public static class DiagnosticsPackageExtensions
 {

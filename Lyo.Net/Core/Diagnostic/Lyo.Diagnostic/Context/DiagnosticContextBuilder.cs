@@ -36,15 +36,15 @@ public sealed class DiagnosticContextBuilder(IStackTraceDecoder decoder, IExcept
     }
 
     /// <inheritdoc />
-    public Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken cancellationToken = default)
-        => BuildAsync(exception, RequestMetadata.Empty, cancellationToken);
+    public Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken ct = default)
+        => BuildAsync(exception, RequestMetadata.Empty, ct);
 
     /// <inheritdoc />
-    public async Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken cancellationToken = default)
+    public async Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(exception);
         ArgumentHelpers.ThrowIfNull(request);
-        var trace = await decoder.DecodeAsync(exception, cancellationToken).ConfigureAwait(false);
+        var trace = await decoder.DecodeAsync(exception, ct).ConfigureAwait(false);
         return Build(trace, exception, request);
     }
 }

@@ -160,11 +160,12 @@ public static class QueryRequestScorer
     private static IEnumerable<string> ExtractTemplatePlaceholders(string template)
     {
         foreach (Match match in TemplatePlaceholderRegex.Matches(template)) {
-            if (match.Groups.Count > 1 && match.Groups[1].Success) {
-                var name = match.Groups[1].Value.Trim();
-                if (name.Length > 0)
-                    yield return name;
-            }
+            if (match.Groups.Count <= 1 || !match.Groups[1].Success)
+                continue;
+
+            var name = match.Groups[1].Value.Trim();
+            if (name.Length > 0)
+                yield return name;
         }
     }
 

@@ -48,7 +48,7 @@ public class PhoneNumber : IEquatable<PhoneNumber>
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Number?.GetHashCode() ?? 0;
+            var hashCode = Number.GetHashCode();
             hashCode = (hashCode * 397) ^ (CountryCode?.GetHashCode() ?? 0);
             return hashCode;
         }

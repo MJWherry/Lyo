@@ -105,7 +105,7 @@ public partial class QueryNodeEditorItem
         OnNodeChanged.InvokeAsync(Node);
     }
 
-    private Task<IEnumerable<string>> SearchFieldNames(string? value, CancellationToken cancellationToken)
+    private Task<IEnumerable<string>> SearchFieldNames(string? value, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(value))
             return Task.FromResult(PropertyDefinitions.Select(property => property.PropertyName).Where(propertyName => !string.IsNullOrEmpty(propertyName)));

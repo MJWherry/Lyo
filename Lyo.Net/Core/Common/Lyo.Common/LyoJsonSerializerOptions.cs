@@ -4,13 +4,15 @@ using Lyo.Exceptions;
 
 namespace Lyo.Common;
 
-/// <summary>HTTP JSON defaults shared across Lyo APIs and first-party clients: Web preset, camelCase string enums.</summary>
+/// <summary>HTTP JSON defaults shared across Lyo APIs and first-party clients: Web preset, camelCase string enums, <see cref="ReferenceHandler.IgnoreCycles"/> for EF-like graphs.</summary>
 public static class LyoJsonSerializerOptions
 {
     /// <summary>Creates a new options instance (safe for DI or further mutation).</summary>
     public static JsonSerializerOptions Create()
     {
-        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
+        };
         options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         return options;
     }
@@ -38,6 +40,7 @@ public static class LyoJsonSerializerOptions
         target.AllowTrailingCommas = source.AllowTrailingCommas;
         target.ReadCommentHandling = source.ReadCommentHandling;
         target.Encoder = source.Encoder;
+        target.ReferenceHandler = source.ReferenceHandler;
         foreach (var c in source.Converters) {
             if (target.Converters.All(e => e.GetType() != c.GetType()))
                 target.Converters.Add(c);

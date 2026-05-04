@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
@@ -9,6 +5,13 @@ using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
+
+#if !NET5_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 namespace Lyo.IO.Temp;
 
@@ -335,7 +338,7 @@ public sealed class IOTempService : IIOTempService
 
         var parentDir = Path.GetDirectoryName(path);
         OperationHelpers.ThrowIfNullOrWhiteSpace(parentDir, "Could not determine parent directory for service temp path.");
-        _storage.CreateDirectory(parentDir!);
+        _storage.CreateDirectory(parentDir);
         return path;
     }
 

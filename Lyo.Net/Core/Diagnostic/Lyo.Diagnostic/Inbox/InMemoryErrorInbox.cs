@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Diagnostic.Inbox;
 
 /// <summary>Bounds and behaviour for <see cref="InMemoryErrorInbox" />.</summary>
@@ -59,11 +61,9 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
     }
 
     /// <inheritdoc />
-    public ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken cancellationToken = default)
+    public ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken ct = default)
     {
-        if (record is null)
-            throw new ArgumentNullException(nameof(record));
-
+        ArgumentHelpers.ThrowIfNull(record);
         lock (_lock) {
             _occurrences.Add(record);
             while (_occurrences.Count > _maxOccurrences)

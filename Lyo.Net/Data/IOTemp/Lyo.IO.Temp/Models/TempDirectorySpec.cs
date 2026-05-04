@@ -51,7 +51,7 @@ public record TempDirectorySpec
         => Random(minFiles, maxFiles, minUnit.ConvertToBytes(minAmount), maxUnit.ConvertToBytes(maxAmount));
 
 #if NET6_0_OR_GREATER
-    private static System.Random GetRandom() => System.Random.Shared;
+    private static Random GetRandom() => System.Random.Shared;
 #else
     [ThreadStatic]
     private static Random? _rng;

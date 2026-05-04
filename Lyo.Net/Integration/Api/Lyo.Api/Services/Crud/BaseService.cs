@@ -70,6 +70,7 @@ public abstract class BaseService<TContext>(IDbContextFactory<TContext> contextF
         if (typeof(TSource) == typeof(TResult))
             return (TResult)(object)source!;
 
+        ArgumentNullException.ThrowIfNull(source);
         return mapper.Map<TResult>(source);
     }
 }

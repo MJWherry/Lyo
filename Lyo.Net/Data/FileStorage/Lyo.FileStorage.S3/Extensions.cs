@@ -16,58 +16,58 @@ namespace Lyo.FileStorage.S3;
 
 public static class Extensions
 {
-    /// <summary>
-    /// Registers <see cref="S3MultipartUploadService" /> as a keyed <see cref="IMultipartUploadService" /> (same key as keyed <see cref="S3FileStorageService" />). Usually
-    /// called automatically by <see cref="S3FileStorageServiceBuilder.Build" />; call this only to register multipart alone or to replace the default registration.
-    /// </summary>
-    public static IServiceCollection AddKeyedS3MultipartUploadService(this IServiceCollection services, string serviceKey)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceKey);
-        services.AddKeyedScoped<S3MultipartUploadService>(
-            serviceKey, (provider, _) => {
-                var opts = provider.GetRequiredService<S3FileStorageOptions>();
-                var metrics = opts.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                return new(
-                    provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey), opts, provider.GetRequiredService<IAmazonS3>(),
-                    provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileMalwareScanner>(), provider.GetServices<IFileAuditEventHandler>(),
-                    provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
-            });
-
-        services.AddKeyedScoped<IMultipartUploadService>(serviceKey, (provider, _) => provider.GetRequiredKeyedService<S3MultipartUploadService>(serviceKey));
-        return services;
-    }
-
-    /// <summary>
-    /// Same as <see cref="AddKeyedS3MultipartUploadService" /> — alias for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO,
-    /// Wasabi, R2, etc.).
-    /// </summary>
-    public static IServiceCollection AddKeyedAwsMultipartUploadService(this IServiceCollection services, string serviceKey)
-        => services.AddKeyedS3MultipartUploadService(serviceKey);
-
-    /// <summary>Adds a keyed S3 file storage service (AWS, Backblaze B2, MinIO, etc.) to the service collection using a builder pattern.</summary>
-    /// <param name="keyName">The key name for the keyed file storage service</param>
-    /// <returns>A builder for configuring the service and its dependencies</returns>
-    /// <example>
-    /// <code>
-    /// // Use existing keyed services:
-    /// services.AddS3FileStorageServiceKeyed("client-files")
-    ///     .UseFileMetadataStore("postgres-filemetadatastore")
-    ///     .UseEncryptionService("two-key-aws")
-    ///     .ConfigureS3FileStorage("S3FileStorageOptions")
-    ///     .Build(configuration);
-    /// </code>
-    /// </example>
-    public static S3FileStorageServiceBuilder AddS3FileStorageServiceKeyed(this IServiceCollection services, string keyName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
-        return new(services, keyName);
-    }
-
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
     {
+        /// <summary>
+        /// Registers <see cref="S3MultipartUploadService" /> as a keyed <see cref="IMultipartUploadService" /> (same key as keyed <see cref="S3FileStorageService" />). Usually
+        /// called automatically by <see cref="S3FileStorageServiceBuilder.Build" />; call this only to register multipart alone or to replace the default registration.
+        /// </summary>
+        public IServiceCollection AddKeyedS3MultipartUploadService(string serviceKey)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceKey);
+            services.AddKeyedScoped<S3MultipartUploadService>(
+                serviceKey, (provider, _) => {
+                    var opts = provider.GetRequiredService<S3FileStorageOptions>();
+                    var metrics = opts.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                    return new(
+                        provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey), opts, provider.GetRequiredService<IAmazonS3>(),
+                        provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileMalwareScanner>(), provider.GetServices<IFileAuditEventHandler>(),
+                        provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
+                });
+
+            services.AddKeyedScoped<IMultipartUploadService>(serviceKey, (provider, _) => provider.GetRequiredKeyedService<S3MultipartUploadService>(serviceKey));
+            return services;
+        }
+
+        /// <summary>
+        /// Same as <see cref="AddKeyedS3MultipartUploadService" /> — alias for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO,
+        /// Wasabi, R2, etc.).
+        /// </summary>
+        public IServiceCollection AddKeyedAwsMultipartUploadService(string serviceKey)
+            => services.AddKeyedS3MultipartUploadService(serviceKey);
+
+        /// <summary>Adds a keyed S3 file storage service (AWS, Backblaze B2, MinIO, etc.) to the service collection using a builder pattern.</summary>
+        /// <param name="keyName">The key name for the keyed file storage service</param>
+        /// <returns>A builder for configuring the service and its dependencies</returns>
+        /// <example>
+        /// <code>
+        /// // Use existing keyed services:
+        /// services.AddS3FileStorageServiceKeyed("client-files")
+        ///     .UseFileMetadataStore("postgres-filemetadatastore")
+        ///     .UseEncryptionService("two-key-aws")
+        ///     .ConfigureS3FileStorage("S3FileStorageOptions")
+        ///     .Build(configuration);
+        /// </code>
+        /// </example>
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyed(string keyName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
+            return new(services, keyName);
+        }
+   
         /// <summary>Registers IAmazonS3 from configuration. Binds <see cref="S3FileStorageOptions" /> from the specified configuration section.</summary>
         /// <param name="configuration">The configuration (e.g. builder.Configuration).</param>
         /// <param name="configSectionName">The configuration section name (defaults to <see cref="S3FileStorageOptions.SectionName" />).</param>

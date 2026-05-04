@@ -1,6 +1,4 @@
-using System.Threading;
 using Lyo.Exceptions;
-using Lyo.PackageMetadata;
 using Lyo.PackageMetadata.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +11,7 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
     private readonly PostgresPackageMetadataOptions _options;
 
     /// <remarks>Snapshot + <see cref="_mutationVersion" /> together.</remarks>
-    private readonly object _catalogLock = new();
+    private readonly Lock _catalogLock = new();
 
     private PrefixCatalogSnapshot? _catalogSnapshot;
 
@@ -41,24 +39,23 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
     /// Use when another process or tool mutates <c>package_metadata</c> tables without going through <see cref="RegisterManyAsync" />.
     /// When <see cref="PostgresPackageMetadataOptions.PrefixCatalogCaching" /> is <see cref="PostgresPrefixCatalogCachingMode.Disabled" />, there is no snapshot to clear; the method only bumps an internal generation counter (harmless for lookups).
     /// </remarks>
-    public void ClearPrefixCatalogCache()
-        => InvalidateCatalogSnapshot();
+    public void ClearPrefixCatalogCache() => InvalidateCatalogSnapshot();
 
     private sealed record PrefixCatalogSnapshot(long MutationVersion, List<(string Prefix, PackageMetadata Metadata)> Ordered);
 
     /// <inheritdoc />
     public async ValueTask<PackageMetadata?> TryGetForFrameAsync(string namespacePrefix, string strippedMethodPrefix,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(strippedMethodPrefix);
         _ = namespacePrefix;
-        var map = await TryGetManyForStrippedMethodPrefixesAsync([strippedMethodPrefix], cancellationToken).ConfigureAwait(false);
+        var map = await TryGetManyForStrippedMethodPrefixesAsync([strippedMethodPrefix], ct).ConfigureAwait(false);
         return map[strippedMethodPrefix];
     }
 
     /// <inheritdoc />
     public async ValueTask<IReadOnlyDictionary<string, PackageMetadata?>> TryGetManyForStrippedMethodPrefixesAsync(
-        IReadOnlyList<string> strippedMethodPrefixes, CancellationToken cancellationToken = default)
+        IReadOnlyList<string> strippedMethodPrefixes, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(strippedMethodPrefixes);
         var dict = new Dictionary<string, PackageMetadata?>(strippedMethodPrefixes.Count, StringComparer.Ordinal);
@@ -66,11 +63,11 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
             return dict;
 
         var orderedModels = _options.PrefixCatalogCaching == PostgresPrefixCatalogCachingMode.InvalidateOnRegisterManyOrClear
-            ? await ResolveOrderedModelsWithCatalogCacheAsync(cancellationToken).ConfigureAwait(false)
-            : await LoadOrderedModelsColdAsync(cancellationToken).ConfigureAwait(false);
+            ? await ResolveOrderedModelsWithCatalogCacheAsync(ct).ConfigureAwait(false)
+            : await LoadOrderedModelsColdAsync(ct).ConfigureAwait(false);
 
         foreach (var key in strippedMethodPrefixes) {
-            cancellationToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             ArgumentHelpers.ThrowIfNull(key);
 
             if (dict.ContainsKey(key))
@@ -82,15 +79,15 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
         return dict;
     }
 
-    private async Task<List<(string Prefix, PackageMetadata Metadata)>> LoadOrderedModelsColdAsync(CancellationToken cancellationToken)
+    private async Task<List<(string Prefix, PackageMetadata Metadata)>> LoadOrderedModelsColdAsync(CancellationToken ct)
     {
         Interlocked.Increment(ref _prefixCatalogLoadCount);
-        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        return await QueryAndMaterializeOrderedModelsAsync(db, cancellationToken).ConfigureAwait(false);
+        await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        return await QueryAndMaterializeOrderedModelsAsync(db, ct).ConfigureAwait(false);
     }
 
     private async Task<List<(string Prefix, PackageMetadata Metadata)>> ResolveOrderedModelsWithCatalogCacheAsync(
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         lock (_catalogLock) {
             if (_catalogSnapshot is { MutationVersion: var v } snap && v == _mutationVersion) {
@@ -100,28 +97,28 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
         }
 
         Interlocked.Increment(ref _prefixCatalogLoadCount);
-        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        var freshOrdered = await QueryAndMaterializeOrderedModelsAsync(db, cancellationToken).ConfigureAwait(false);
+        await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var freshOrdered = await QueryAndMaterializeOrderedModelsAsync(db, ct).ConfigureAwait(false);
 
         lock (_catalogLock) {
             if (_catalogSnapshot is not null && _catalogSnapshot.MutationVersion == _mutationVersion)
                 return _catalogSnapshot.Ordered;
 
             var immutableCopy = freshOrdered.ConvertAll(static x => x);
-            _catalogSnapshot = new PrefixCatalogSnapshot(_mutationVersion, immutableCopy);
+            _catalogSnapshot = new(_mutationVersion, immutableCopy);
             return immutableCopy;
         }
     }
 
     private static async Task<List<(string Prefix, PackageMetadata Metadata)>> QueryAndMaterializeOrderedModelsAsync(
         PackageMetadataDbContext db,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var rows = await db.StackPrefixes.AsNoTracking()
             .Include(p => p.Package)
             .OrderByDescending(p => p.NormalizedPrefix.Length)
             .ThenBy(p => p.NormalizedPrefix)
-            .ToListAsync(cancellationToken)
+            .ToListAsync(ct)
             .ConfigureAwait(false);
 
         var orderedModels = new List<(string Prefix, PackageMetadata Metadata)>(rows.Count);
@@ -137,31 +134,31 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
 
     /// <inheritdoc />
     public async Task RegisterManyAsync(IReadOnlyList<PackageMetadataRegistration> registrations,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(registrations);
         if (registrations.Count == 0)
             return;
 
-        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
-        await using var tx = await db.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var tx = await db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var utc = DateTime.UtcNow;
 
         foreach (var reg in registrations) {
-            cancellationToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             ArgumentHelpers.ThrowIfNull(reg);
             var pkg = reg.Package;
             ArgumentHelpers.ThrowIfNull(pkg);
 
             var entity = await db.Packages
                 .Include(p => p.StackPrefixes)
-                .FirstOrDefaultAsync(p => p.Id == pkg.Id, cancellationToken)
+                .FirstOrDefaultAsync(p => p.Id == pkg.Id, ct)
                 .ConfigureAwait(false);
 
             if (entity is null) {
                 var created = pkg.CreatedAt ?? utc;
                 var updated = pkg.UpdatedAt ?? utc;
-                entity = new PackageMetadataEntity {
+                entity = new() {
                     CreatedAt = created,
                     UpdatedAt = updated
                 };
@@ -185,7 +182,7 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
                 if (!p.EndsWith(".", StringComparison.Ordinal))
                     p += ".";
 
-                entity.StackPrefixes.Add(new PackageStackPrefixEntity {
+                entity.StackPrefixes.Add(new() {
                     Id = Guid.NewGuid(),
                     PackageMetadataId = entity.Id,
                     NormalizedPrefix = p
@@ -193,8 +190,8 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
             }
         }
 
-        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await tx.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        await tx.CommitAsync(ct).ConfigureAwait(false);
 
         InvalidateCatalogSnapshot();
     }

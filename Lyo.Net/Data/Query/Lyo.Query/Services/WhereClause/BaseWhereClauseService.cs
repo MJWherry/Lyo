@@ -264,7 +264,7 @@ public class BaseWhereClauseService : IWhereClauseService
                     Field = c.Field,
                     Comparison = c.Comparison,
                     FilterValue = c.Value,
-                    ActualValueSummary = TryFormatActualValueSummary<TEntity>(entity, c.Field),
+                    ActualValueSummary = TryFormatActualValueSummary(entity, c.Field),
                     PrimaryPredicatePassed = primaryPredicatePassed,
                     SubClause = subExplain
                 };
@@ -351,7 +351,7 @@ public class BaseWhereClauseService : IWhereClauseService
         void VisitForFailedOrGroups(WhereClauseExplainNode n)
         {
             if (n.Kind == WhereClauseExplainKind.Group && n.GroupOperator == GroupOperatorEnum.Or && !n.Passed && n.Children is { Count: > 0 } orChildren) {
-                var orPath = n.Path ?? "";
+                var orPath = n.Path;
                 foreach (var branch in orChildren) {
                     list.Add(
                         new() {
@@ -918,24 +918,6 @@ public class BaseWhereClauseService : IWhereClauseService
         }
     }
 
-    private int CompareValues(object? left, object? right)
-    {
-        if (left == null && right == null)
-            return 0;
-
-        if (left == null)
-            return -1;
-
-        if (right == null)
-            return 1;
-
-        if (left is not IComparable comparable)
-            return 0;
-
-        var rightConverted = ValueConversion.ConvertToTargetType(right, left.GetType());
-        return comparable.CompareTo(rightConverted);
-    }
-
     private static string ConvertToString(object? value)
     {
         if (value == null)
@@ -945,37 +927,6 @@ public class BaseWhereClauseService : IWhereClauseService
             return jsonElement.GetString() ?? string.Empty;
 
         return value.ToString() ?? string.Empty;
-    }
-
-    private bool MatchesOneOf(object? propertyValue, object? filterValue, Type propertyType)
-    {
-        if (filterValue == null)
-            return false;
-
-        IEnumerable<object> values;
-        switch (filterValue) {
-            case string str:
-                values = str.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
-                break;
-            case JsonElement { ValueKind: JsonValueKind.String } jsonStr:
-                var jsonStringValue = jsonStr.GetString() ?? string.Empty;
-                values = jsonStringValue.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s));
-                break;
-            case JsonElement { ValueKind: JsonValueKind.Array } jsonArray:
-                values = jsonArray.EnumerateArray().Select(e => (object)e);
-                break;
-            case IEnumerable<object> enumerable:
-                values = enumerable;
-                break;
-            case IEnumerable enumerable and not string:
-                values = enumerable.Cast<object>();
-                break;
-            default:
-                values = [filterValue];
-                break;
-        }
-
-        return values.Any(v => Equals(propertyValue, ValueConversion.ConvertToTargetType(v, propertyType)));
     }
 
     private MemberExpression GetPropertyExpression<T>(string propertyName, ParameterExpression parameter)
@@ -1230,22 +1181,16 @@ public class BaseWhereClauseService : IWhereClauseService
     /// <summary>Types that support Contains/StartsWith/EndsWith/Regex using string semantics (including Guid, matched via string representation).</summary>
     private static bool SupportsStringMethodComparisons(Type propertyType) => propertyType == typeof(string) || IsGuidLikeType(propertyType);
 
-    private static Type GetFilterValueParseType(Type propertyType, ComparisonOperatorEnum comparison)
-    {
-        if (SupportsStringMethodComparisons(propertyType) && IsStringOrRegexComparison(comparison))
-            return typeof(string);
-
-        return propertyType;
-    }
+    private static Type GetFilterValueParseType(Type propertyType, ComparisonOperatorEnum comparison) 
+        => SupportsStringMethodComparisons(propertyType) && IsStringOrRegexComparison(comparison) 
+            ? typeof(string) 
+            : propertyType;
 
     /// <summary>RHS for string-method / regex filters on Guid must stay <see cref="string" /> (partial fragments); do not convert to <see cref="Guid" />.</summary>
-    private static Expression GetRhsConstantExpression(object? parsedValue, Type parseType, Expression propertyExpression, ComparisonOperatorEnum comparison)
-    {
-        if (parseType == typeof(string) && propertyExpression.Type != typeof(string) && IsGuidLikeType(propertyExpression.Type) && IsStringOrRegexComparison(comparison))
-            return Expression.Constant(parsedValue, typeof(string));
-
-        return GetValueExpression(parsedValue, parseType, propertyExpression);
-    }
+    private static Expression GetRhsConstantExpression(object? parsedValue, Type parseType, Expression propertyExpression, ComparisonOperatorEnum comparison) 
+        => parseType == typeof(string) && propertyExpression.Type != typeof(string) && IsGuidLikeType(propertyExpression.Type) && IsStringOrRegexComparison(comparison)
+            ? Expression.Constant(parsedValue, typeof(string))
+            : GetValueExpression(parsedValue, parseType, propertyExpression);
 
     private static Expression GetValueExpression(object? value, Type targetType, Expression targetExpression)
     {

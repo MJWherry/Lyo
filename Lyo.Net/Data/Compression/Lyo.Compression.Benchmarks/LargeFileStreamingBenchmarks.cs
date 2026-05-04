@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using Lyo.Compression.Models;
+// ReSharper disable InconsistentNaming
 
 namespace Lyo.Compression.Benchmarks;
 
@@ -60,15 +61,15 @@ public class LargeFileStreamingBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _data100MB?.Dispose();
-        _data1GB?.Dispose();
-        _data2GB?.Dispose();
-        _compressed100MBGZip?.Dispose();
-        _compressed1GBGZip?.Dispose();
-        _compressed2GBGZip?.Dispose();
-        _compressed100MBZstd?.Dispose();
-        _compressed1GBZstd?.Dispose();
-        _compressed2GBZstd?.Dispose();
+        _data100MB.Dispose();
+        _data1GB.Dispose();
+        _data2GB.Dispose();
+        _compressed100MBGZip.Dispose();
+        _compressed1GBGZip.Dispose();
+        _compressed2GBGZip.Dispose();
+        _compressed100MBZstd.Dispose();
+        _compressed1GBZstd.Dispose();
+        _compressed2GBZstd.Dispose();
     }
 
     private Stream CreateTestDataStream(long size)

@@ -4,5 +4,5 @@ namespace Lyo.Diagnostic.Inbox;
 public interface IErrorOccurrenceSink
 {
     /// <summary>Records one occurrence; implementations should be fast and must not throw for triage paths.</summary>
-    ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken cancellationToken = default);
+    ValueTask RecordAsync(ErrorOccurrenceRecord record, CancellationToken ct = default);
 }

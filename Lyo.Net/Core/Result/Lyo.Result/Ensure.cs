@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Lyo.Result;
@@ -37,6 +36,6 @@ public static class Ensure
 
     /// <summary>Ensures the condition is true. Returns Failure if condition is false.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Result<T> That<T>(T value, [NotNull] Func<T, bool> condition, string errorCode, string errorMessage)
+    public static Result<T> That<T>(T value, Func<T, bool> condition, string errorCode, string errorMessage)
         => ValidationHelpers.ValidateCondition(value, condition, errorCode, errorMessage);
 }

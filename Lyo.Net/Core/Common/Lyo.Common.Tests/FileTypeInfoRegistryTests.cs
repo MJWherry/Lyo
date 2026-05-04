@@ -71,4 +71,28 @@ public class FileTypeInfoRegistryTests
         Assert.Same(FileTypeInfo.Rar, FileTypeInfo.FromMimeType("application/vnd.rar"));
         Assert.Same(FileTypeInfo.Csv, FileTypeInfo.FromMimeType("text/comma-separated-values"));
     }
+
+    [Fact]
+    public void FileTypeInfo_PackageManager_FromExtension_And_Category()
+    {
+        Assert.Same(FileTypeInfo.NuGetPackage, FileTypeInfo.FromExtension(".nupkg"));
+        Assert.Same(FileTypeInfo.JavaJar, FileTypeInfo.FromExtension(".jar"));
+        Assert.Same(FileTypeInfo.WindowsInstallerMsi, FileTypeInfo.FromExtension(".msi"));
+        Assert.Equal(FileTypeCategory.PackageManager, FileTypeInfo.NuGetPackage.Category);
+        Assert.Equal(FileTypeCategory.PackageManager, FileTypeInfo.RpmPackage.Category);
+    }
+
+    [Fact]
+    public void FileTypeInfo_RpmPackage_FromMimeType_Aliases_Resolve()
+    {
+        Assert.Same(FileTypeInfo.RpmPackage, FileTypeInfo.FromMimeType(FileTypeInfo.RpmPackage.MimeType));
+        Assert.Same(FileTypeInfo.RpmPackage, FileTypeInfo.FromMimeType("application/redhat-package-manager"));
+        Assert.Same(FileTypeInfo.RpmPackage, FileTypeInfo.FromMimeType("application/x-redhat-package-manager"));
+    }
+
+    [Fact]
+    public void FileTypeInfo_DebianPackage_FromMimeType_Alias_Resolves()
+    {
+        Assert.Same(FileTypeInfo.DebianPackage, FileTypeInfo.FromMimeType("application/x-debian-package"));
+    }
 }

@@ -445,9 +445,8 @@ public class DateAndTimeServiceTests
     [Fact]
     public void GetNextScheduledDateTime_EmptyScheduleTimes_ThrowsArgumentException()
     {
-        var scheduleTimes = new List<TimeOnly>();
         var scheduleFlags = DayFlags.EveryDay;
-        Assert.Throws<ArgumentException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, scheduleTimes, scheduleFlags));
+        Assert.Throws<ArgumentException>(() => DateAndTime.GetNextScheduledDateTime(USState.NY, [], scheduleFlags));
     }
 
     [Fact]
@@ -492,10 +491,9 @@ public class DateAndTimeServiceTests
     [Fact]
     public void IsPastDue_EmptyScheduleTimes_ThrowsArgumentException()
     {
-        var scheduleTimes = new List<TimeOnly>();
         var scheduleFlags = DayFlags.Weekdays;
         var lastRunDateTime = DateTime.UtcNow.AddDays(-1);
-        Assert.Throws<ArgumentException>(() => DateAndTime.IsPastDue(USState.NY, scheduleTimes, scheduleFlags, lastRunDateTime));
+        Assert.Throws<ArgumentException>(() => DateAndTime.IsPastDue(USState.NY, [], scheduleFlags, lastRunDateTime));
     }
 
     [Fact]

@@ -22,5 +22,8 @@ public enum FileTypeCategory
     Encrypted,
 
     /// <summary>Data/text file types (CSV, TXT, JSON, XML, etc.)</summary>
-    DataFiles
+    DataFiles,
+
+    /// <summary>Package manager and distribution artifacts (NuGet, JVM archives, OS installers, etc.)</summary>
+    PackageManager
 }

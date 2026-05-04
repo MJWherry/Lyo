@@ -715,7 +715,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        var task = (Task)meta.Cache.CreateAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, ct])!;
+        var task = (Task)meta.Cache.CreateAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, null, ct])!;
         await task.ConfigureAwait(false);
         var result = meta.Cache.CreateTaskResultProperty.GetValue(task);
         var isSuccess = meta.Cache.CreateResultIsSuccessProperty.GetValue(result);
@@ -759,7 +759,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        var task = (Task)meta.Cache.CreateBulkAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, ct])!;
+        var task = (Task)meta.Cache.CreateBulkAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, null, ct])!;
         await task.ConfigureAwait(false);
         var result = meta.Cache.CreateBulkTaskResultProperty.GetValue(task);
         return Results.Ok(result);

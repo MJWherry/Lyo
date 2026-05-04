@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using PackageMetadataModel = global::Lyo.PackageMetadata.PackageMetadata;
+using PackageMetadataModel = Lyo.PackageMetadata.PackageMetadata;
 
 namespace Lyo.Diagnostic.StackTrace;
 

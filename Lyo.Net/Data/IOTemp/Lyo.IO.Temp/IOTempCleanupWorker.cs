@@ -28,14 +28,14 @@ public sealed class IOTempCleanupWorker : IHostedService, IDisposable
 
     public void Dispose() => _timer?.Dispose();
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken ct)
     {
         _logger.LogInformation("IOTemp cleanup worker starting. InitialDelay: {InitialDelay}, Interval: {Interval}", _options.InitialDelay, _options.Interval);
         _timer = new(DoCleanup, null, _options.InitialDelay, _options.Interval);
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public Task StopAsync(CancellationToken ct)
     {
         _logger.LogInformation("IOTemp cleanup worker stopping.");
         _timer?.Change(Timeout.Infinite, 0);

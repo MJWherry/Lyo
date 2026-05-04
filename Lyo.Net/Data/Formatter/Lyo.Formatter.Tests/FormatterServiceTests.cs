@@ -194,14 +194,14 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public void AddContext_WithAddWhen_PredicateTrue_AddsValue()
     {
-        var template = _service.CreateTemplate("Count: {C}").AddContext(ctx => ctx.AddWhen("C", 5, x => (int?)x! > 0));
+        var template = _service.CreateTemplate("Count: {C}").AddContext(ctx => ctx.AddWhen("C", 5, x => (int?)x > 0));
         Assert.Equal("Count: 5", template.Format());
     }
 
     [Fact]
     public void AddContext_WithAddWhen_PredicateFalse_SkipsValue()
     {
-        var template = _service.CreateTemplate("Count: {C}").AddContext(ctx => ctx.AddWhen("C", 0, x => (int?)x! > 0));
+        var template = _service.CreateTemplate("Count: {C}").AddContext(ctx => ctx.AddWhen("C", 0, x => (int?)x > 0));
         var result = template.Format();
         Assert.Contains("{C}", result);
     }

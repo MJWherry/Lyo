@@ -86,15 +86,15 @@ public static class PatchPropertyAuthorizationApplier
         HttpContext httpContext,
         Type entityType,
         PatchRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         if (authorization == null || IsNoOp(authorization))
             return ValueTask.FromResult(PatchPropertyAuthorizationResult.Ok(request));
 
         if (authorization.Custom != null)
-            return authorization.Custom(httpContext, entityType, request, cancellationToken);
+            return authorization.Custom(httpContext, entityType, request, ct);
 
-        return ApplyPolicyMapAsync(authorization, httpContext, request, cancellationToken);
+        return ApplyPolicyMapAsync(authorization, httpContext, request, ct);
     }
 
     private static bool IsNoOp(PatchPropertyAuthorization authorization)
@@ -104,7 +104,7 @@ public static class PatchPropertyAuthorizationApplier
         PatchPropertyAuthorization authorization,
         HttpContext httpContext,
         PatchRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var map = authorization.PolicyAllowedProperties!;
         var authz = httpContext.RequestServices.GetRequiredService<IAuthorizationService>();

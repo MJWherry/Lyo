@@ -1,4 +1,4 @@
-namespace Lyo.People.Models;
+namespace Lyo.People.Models.Enum;
 
 /// <summary>Name formatting options</summary>
 public enum NameFormat

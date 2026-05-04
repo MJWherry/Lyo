@@ -8,17 +8,14 @@ using Testcontainers.PostgreSql;
 
 namespace Lyo.PackageMetadata.Tests;
 
-public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
+public sealed class PostgresPackageMetadataStoreTests(ITestOutputHelper output) : IAsyncLifetime
 {
     private static readonly string LongRowSha512 =
         "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
 
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
     private IServiceProvider? _serviceProvider;
     private IDbContextFactory<PackageMetadataDbContext>? _factory;
-
-    public PostgresPackageMetadataStoreTests(ITestOutputHelper output) => _output = output;
 
     public async ValueTask InitializeAsync()
     {
@@ -26,7 +23,7 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         var connectionString = _container.GetConnectionString();
         var services = new ServiceCollection();
         services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
+            b.AddProvider(new XunitLoggerProvider(output));
             b.SetMinimumLevel(LogLevel.Debug);
         });
 
@@ -44,12 +41,21 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         var longId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var t0 = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
         ctx.Packages.AddRange(
-            new PackageMetadataEntity { Id = shortId, Name = "ShortMatch", CreatedAt = t0, UpdatedAt = t0 },
+            new PackageMetadataEntity {
+                Id = shortId,
+                Ecosystem = PackageEcosystem.NuGet,
+                Name = "ShortMatch",
+                ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.None,
+                CreatedAt = t0,
+                UpdatedAt = t0
+            },
             new PackageMetadataEntity {
                 Id = longId,
+                Ecosystem = PackageEcosystem.NuGet,
                 Name = "LongMatch",
                 Version = "2.0",
-                PackageFileSha512Hex = LongRowSha512,
+                ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.Sha512,
+                ArtifactDigestHex = LongRowSha512,
                 CreatedAt = t0,
                 UpdatedAt = t0
             });
@@ -76,9 +82,11 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         var meta = await store.TryGetForFrameAsync("", "Npgsql.Internal.NpgsqlConnector.ReadMessage", TestContext.Current.CancellationToken);
 
         Assert.NotNull(meta);
-        Assert.Equal("LongMatch", meta!.Name);
+        Assert.Equal("LongMatch", meta.Name);
         Assert.Equal("2.0", meta.Version);
-        Assert.Equal(LongRowSha512, meta.PackageFileSha512Hex);
+        Assert.Equal(PackageEcosystem.NuGet, meta.Ecosystem);
+        Assert.Equal(ArtifactDigestAlgorithm.Sha512, meta.ArtifactDigestAlgorithm);
+        Assert.Equal(LongRowSha512, meta.ArtifactDigestHex);
         Assert.NotNull(meta.CreatedAt);
         Assert.NotNull(meta.UpdatedAt);
     }
@@ -92,7 +100,7 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         var meta = await store.TryGetForFrameAsync("", "Npgsql.SomethingElse.Type.Method", TestContext.Current.CancellationToken);
 
         Assert.NotNull(meta);
-        Assert.Equal("ShortMatch", meta!.Name);
+        Assert.Equal("ShortMatch", meta.Name);
     }
 
     [Fact]
@@ -185,22 +193,23 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         var reg = new PackageMetadataRegistration(
             ["BulkDemo."],
-            new PackageMetadata(id, "BulkDemo", Version: "1.2.3", PackageFileSha512Hex: LongRowSha512));
+            new PackageMetadata(id, PackageEcosystem.NuGet, "BulkDemo", Version: "1.2.3", ArtifactDigestAlgorithm.Sha512, LongRowSha512));
 
         await store.RegisterManyAsync([reg], TestContext.Current.CancellationToken);
 
         await using var ctx = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entity = await ctx.Packages.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, TestContext.Current.CancellationToken);
         Assert.NotNull(entity);
-        Assert.Equal("1.2.3", entity!.Version);
-        Assert.Equal(LongRowSha512, entity.PackageFileSha512Hex);
+        Assert.Equal("1.2.3", entity.Version);
+        Assert.Equal(ArtifactDigestAlgorithm.Sha512, entity.ArtifactDigestAlgorithm);
+        Assert.Equal(LongRowSha512, entity.ArtifactDigestHex);
         var prefixes = await ctx.StackPrefixes.AsNoTracking().Where(p => p.PackageMetadataId == id).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(prefixes);
         Assert.Equal("BulkDemo.", prefixes[0].NormalizedPrefix);
 
         var meta = await store.TryGetForFrameAsync("", "BulkDemo.My.Type.M", TestContext.Current.CancellationToken);
         Assert.NotNull(meta);
-        Assert.Equal("BulkDemo", meta!.Name);
+        Assert.Equal("BulkDemo", meta.Name);
     }
 
     [Fact]
@@ -218,7 +227,7 @@ public sealed class PostgresPackageMetadataStoreTests : IAsyncLifetime
         Assert.Equal(1, store.PrefixCatalogHitCount);
 
         await store.RegisterManyAsync([
-            new PackageMetadataRegistration(["AfterReg."], new PackageMetadata(id, "AfterReg", Version: "1"))
+            new PackageMetadataRegistration(["AfterReg."], new PackageMetadata(id, PackageEcosystem.NuGet, "AfterReg", Version: "1"))
         ], TestContext.Current.CancellationToken);
 
         _ = await store.TryGetManyForStrippedMethodPrefixesAsync(["AfterReg.Type.M"], TestContext.Current.CancellationToken);

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Exceptions;
-using Lyo.PackageMetadata;
 
 namespace Lyo.PackageMetadata.Postgres.Database;
 
@@ -13,9 +12,11 @@ internal static class PackageMetadataMapping
         ArgumentHelpers.ThrowIfNull(e);
         return new(
             e.Id,
+            e.Ecosystem,
             e.Name,
             e.Version,
-            e.PackageFileSha512Hex,
+            e.ArtifactDigestAlgorithm,
+            e.ArtifactDigestHex,
             e.Title,
             e.Description,
             DeserializeStringList(e.AuthorsJson),
@@ -36,9 +37,11 @@ internal static class PackageMetadataMapping
         ArgumentHelpers.ThrowIfNull(m);
         ArgumentHelpers.ThrowIfNull(e);
         e.Id = m.Id;
+        e.Ecosystem = m.Ecosystem;
         e.Name = m.Name;
         e.Version = m.Version;
-        e.PackageFileSha512Hex = m.PackageFileSha512Hex;
+        e.ArtifactDigestAlgorithm = m.ArtifactDigestAlgorithm;
+        e.ArtifactDigestHex = m.ArtifactDigestHex;
         e.Title = m.Title;
         e.Description = m.Description;
         e.AuthorsJson = SerializeStringList(m.Authors);

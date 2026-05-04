@@ -1,6 +1,6 @@
 # Lyo.PackageMetadata
 
-NuGet-style **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and helpers (e.g. **`PackageFileSha512`**) for correlating stack-trace namespaces with persisted package/catalog data.
+Multi-ecosystem **`PackageMetadata`** rows, **`PackageMetadataRegistration`**, **`IPackageMetadataStore`**, and **`PackageArtifactDigest`** helpers for correlating stack-trace namespaces with persisted package/catalog data.
 
 ## Implementing `IPackageMetadataStore`
 

@@ -21,10 +21,10 @@ public class ChangeTrackerDbContext : DbContext
         return base.SaveChanges();
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         StampTimestamps();
-        return base.SaveChangesAsync(cancellationToken);
+        return base.SaveChangesAsync(ct);
     }
 
     private void StampTimestamps()

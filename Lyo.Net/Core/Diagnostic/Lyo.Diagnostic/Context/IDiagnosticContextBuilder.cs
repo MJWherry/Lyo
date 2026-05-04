@@ -14,8 +14,8 @@ public interface IDiagnosticContextBuilder
     DiagnosticContext Build(DecodedStackTrace trace, Exception exception, RequestMetadata request);
 
     /// <summary>Like <see cref="Build(Exception)" /> but uses <see cref="IStackTraceDecoder.DecodeAsync(Exception, CancellationToken)" /> when a package store is configured.</summary>
-    Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken cancellationToken = default);
+    Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken ct = default);
 
     /// <summary>Like <see cref="Build(Exception, RequestMetadata)" /> but uses asynchronous stack decode when required.</summary>
-    Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken cancellationToken = default);
+    Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken ct = default);
 }

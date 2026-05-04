@@ -12,7 +12,7 @@ public sealed class GuildSettingsChangedNotificationHandler(ILogger<GuildSetting
     : INotificationHandler<GuildSettingsChangedNotification>
 {
     /// <inheritdoc />
-    public Task HandleAsync(GuildSettingsChangedNotification notification, CancellationToken cancellationToken = default)
+    public Task HandleAsync(GuildSettingsChangedNotification notification, CancellationToken ct = default)
     {
         if (diffService.Objects.GetDifferences(notification.Previous, notification.Current).Count == 0)
             return Task.CompletedTask;
@@ -25,7 +25,7 @@ public sealed class GuildSettingsChangedNotificationHandler(ILogger<GuildSetting
             return Task.CompletedTask;
 
         var body = FormatChangeDetails(notification.Previous, notification.Current, notification.Source);
-        return discordGateway.NotifyGuildLogMessageAsync((ulong)notification.GuildId, "Guild settings updated", body, cancellationToken);
+        return discordGateway.NotifyGuildLogMessageAsync((ulong)notification.GuildId, "Guild settings updated", body, ct);
     }
 
     private static string FormatChangeDetails(DiscordGuildSettings before, DiscordGuildSettings after, string source)

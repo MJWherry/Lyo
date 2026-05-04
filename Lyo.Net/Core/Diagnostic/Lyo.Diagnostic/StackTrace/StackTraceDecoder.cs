@@ -1,10 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Hashing;
 using Lyo.Exceptions;
-using PackageMetadataModel = global::Lyo.PackageMetadata.PackageMetadata;
+using PackageMetadataModel = Lyo.PackageMetadata.PackageMetadata;
 
 namespace Lyo.Diagnostic.StackTrace;
 
@@ -46,9 +45,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     private static readonly Regex InnerExceptionSeparator = new(@"^\s*-{3}>\s*.+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// Namespace prefixes always treated as BCL / Microsoft platform (not optional NuGet). For other libraries (FluentValidation,
-    /// AWS SDK, etc.), register <see cref="ExtraSystemPrefixes" /> from config or a store (e.g. Postgres) — the decoder does not
-    /// ship an open-ended built-in vendor list.
+    /// Namespace prefixes always treated as BCL / Microsoft platform (not optional NuGet).
     /// </summary>
     private static readonly string[] BuiltInSystemPrefixes = [
         "System.", "Microsoft.", "MS.", "Windows.", "mscorlib.", "Interop.", "Internal."
@@ -99,28 +96,28 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     }
 
     /// <inheritdoc />
-    public Task<DecodedStackTrace> DecodeAsync(string rawTrace, CancellationToken cancellationToken = default)
+    public Task<DecodedStackTrace> DecodeAsync(string rawTrace, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(rawTrace);
         if (_options.PackageMetadataStore is null)
             return Task.FromResult(DecodeInternal(rawTrace));
 
-        return DecodeAsyncWithStore(rawTrace, cancellationToken);
+        return DecodeAsyncWithStore(rawTrace, ct);
     }
 
-    private async Task<DecodedStackTrace> DecodeAsyncWithStore(string rawTrace, CancellationToken cancellationToken)
+    private async Task<DecodedStackTrace> DecodeAsyncWithStore(string rawTrace, CancellationToken ct)
     {
         var keys = CollectStrippedMethodKeys(rawTrace);
         var map = keys.Count == 0
             ? new Dictionary<string, PackageMetadataModel?>()
             : await _options.PackageMetadataStore!
-                .TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), cancellationToken).ConfigureAwait(false);
+                .TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
 
-        return await DecodeInternalAsync(rawTrace, null, cancellationToken, map).ConfigureAwait(false);
+        return await DecodeInternalAsync(rawTrace, null, ct, map).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken cancellationToken = default)
+    public async Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(exception);
         if (_options.PackageMetadataStore is null)
@@ -130,27 +127,27 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var keys = CollectStrippedMethodKeysFromException(exception);
         var map = keys.Count == 0
             ? new Dictionary<string, PackageMetadataModel?>()
-            : await store.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), cancellationToken).ConfigureAwait(false);
+            : await store.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
 
         var inners = new List<DecodedStackTrace>();
         var inner = exception.InnerException;
         while (inner is not null) {
             var rawInner = $"{inner.GetType().FullName}: {inner.Message}\n{inner.StackTrace ?? string.Empty}";
-            inners.Add(await DecodeInternalAsync(rawInner, [], cancellationToken, map).ConfigureAwait(false));
+            inners.Add(await DecodeInternalAsync(rawInner, [], ct, map).ConfigureAwait(false));
             inner = inner.InnerException;
         }
 
         var rawOuter =
             $"{exception.GetType().FullName}: {exception.Message}\n{exception.StackTrace ?? string.Empty}";
-        return await DecodeInternalAsync(rawOuter, inners, cancellationToken, map).ConfigureAwait(false);
+        return await DecodeInternalAsync(rawOuter, inners, ct, map).ConfigureAwait(false);
     }
 
     private async Task<DecodedStackTrace> DecodeInternalAsync(string rawTrace, IReadOnlyList<DecodedStackTrace>? prebuiltInners,
-        CancellationToken cancellationToken, IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap = null)
+        CancellationToken ct, IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap = null)
     {
         SplitTrace(rawTrace, out var messageLines, out var frameLines, out var innerBlocks);
         var allFrames = frameLines.Select(TryParseFrame).OfType<StackFrame>().ToList();
-        await EnrichPackageMetadataAsync(allFrames, cancellationToken, enrichmentMap).ConfigureAwait(false);
+        await EnrichPackageMetadataAsync(allFrames, ct, enrichmentMap).ConfigureAwait(false);
         var analysisFrames = _options.StripAsyncNoise ? allFrames.Where(f => !f.IsCompilerGenerated).ToList() : allFrames;
         var userFrames = analysisFrames.Where(f => f.Category == FrameCategory.UserCode).ToList();
         var systemFrames = analysisFrames.Where(f => f.Category == FrameCategory.SystemOrThirdParty).ToList();
@@ -163,7 +160,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         else {
             inners = new List<DecodedStackTrace>(innerBlocks.Count);
             foreach (var b in innerBlocks)
-                inners.Add(await DecodeInternalAsync(b, [], cancellationToken, enrichmentMap).ConfigureAwait(false));
+                inners.Add(await DecodeInternalAsync(b, [], ct, enrichmentMap).ConfigureAwait(false));
         }
 
         var (crashSite, crashConf) = ResolveLikelyCrashSite(userFrames, inners);
@@ -174,7 +171,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
             lastSystem, BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
     }
 
-    private async Task EnrichPackageMetadataAsync(List<StackFrame> allFrames, CancellationToken cancellationToken,
+    private async Task EnrichPackageMetadataAsync(List<StackFrame> allFrames, CancellationToken ct,
         IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap)
     {
         if (allFrames.Count == 0)
@@ -194,7 +191,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
             keys[i] = StripForAnalysis(allFrames[i].FullMethod);
 
         var map =
-            await store.TryGetManyForStrippedMethodPrefixesAsync(keys, cancellationToken).ConfigureAwait(false);
+            await store.TryGetManyForStrippedMethodPrefixesAsync(keys, ct).ConfigureAwait(false);
 
         ApplyPackageMetadataMap(allFrames, map);
     }

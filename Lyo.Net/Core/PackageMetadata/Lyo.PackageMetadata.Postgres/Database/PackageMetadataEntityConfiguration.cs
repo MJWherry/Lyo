@@ -10,9 +10,11 @@ public sealed class PackageMetadataEntityConfiguration : IEntityTypeConfiguratio
         builder.ToTable("package", PostgresPackageMetadataOptions.Schema);
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.Ecosystem).IsRequired().HasColumnName("ecosystem");
         builder.Property(e => e.Name).HasMaxLength(300).IsRequired().HasColumnName("name");
         builder.Property(e => e.Version).HasMaxLength(120).HasColumnName("version");
-        builder.Property(e => e.PackageFileSha512Hex).HasMaxLength(128).HasColumnName("package_file_sha512_hex");
+        builder.Property(e => e.ArtifactDigestAlgorithm).IsRequired().HasColumnName("artifact_digest_algorithm");
+        builder.Property(e => e.ArtifactDigestHex).HasMaxLength(128).HasColumnName("artifact_digest_hex");
         builder.Property(e => e.Title).HasMaxLength(500).HasColumnName("title");
         builder.Property(e => e.Description).HasColumnType("text").HasColumnName("description");
         builder.Property(e => e.AuthorsJson).HasColumnType("text").HasColumnName("authors_json");

@@ -50,7 +50,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     {
         await _fixture.SeedJobDefinitionAsync("DynamicQueryTest");
         var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -65,7 +65,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
         await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterA");
         await _fixture.SeedJobDefinitionAsync("DynamicQueryFilterB");
         var request = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "DynamicQueryFilterA") };
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Query", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -86,7 +86,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryProject", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/QueryProject", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -131,7 +131,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Enabled = true
         };
 
-        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync(BaseRoute, entity, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -154,7 +154,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Enabled = true
         };
 
-        var response = await _client.PostAsJsonAsync(BaseRoute, entity, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync(BaseRoute, entity, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<CreateResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -190,7 +190,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     {
         var defId = await _fixture.SeedJobDefinitionAsync("DynamicPatchOriginal");
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = "DynamicPatchModified" } };
-        var response = await _client.PatchAsJsonAsync(BaseRoute, patchRequest, TestContext.Current.CancellationToken);
+        var response = await _client.PatchAsJsonAsync(BaseRoute, patchRequest, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<PatchResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -237,7 +237,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             }
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk", entities, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Bulk", entities, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<CreateBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -287,7 +287,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             new PatchRequest { Keys = [[id2]], Properties = new() { ["Name"] = "DynamicPatchBulk2Mod" } }
         };
 
-        var response = await _client.PatchAsJsonAsync($"{BaseRoute}/Bulk", requests, TestContext.Current.CancellationToken);
+        var response = await _client.PatchAsJsonAsync($"{BaseRoute}/Bulk", requests, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<PatchBulkResult<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
@@ -422,7 +422,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Csv
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.NotEmpty(content);
@@ -438,7 +438,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
             Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Json
         };
 
-        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync($"{BaseRoute}/Export", request, JsonOptions, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.NotEmpty(content);
@@ -449,7 +449,7 @@ public class DynamicCrudApiPostgresTests : IDisposable
     public async Task UnknownEntityType_Returns404()
     {
         var request = new QueryReq { Start = 0, Amount = 10 };
-        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/Query", request, TestContext.Current.CancellationToken);
+        var response = await _client.PostAsJsonAsync("/api/Job/UnknownEntity/Query", request, JsonOptions, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

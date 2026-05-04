@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Tests.Fixtures;
+using Lyo.Common;
 using Lyo.Common.Records;
 using Lyo.Job.Models.Response;
 using Lyo.Query.Models.Builders;
@@ -14,6 +15,8 @@ namespace Lyo.Api.Tests;
 [Collection(ApiPostgresCollection.Name)]
 public class CompressionPostgresTests : IDisposable
 {
+    private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
+
     private readonly HttpClient _client;
     private readonly ApiPostgresFixture _fixture;
 
@@ -47,7 +50,7 @@ public class CompressionPostgresTests : IDisposable
     {
         await _fixture.SeedJobDefinitionAsync("CompressionQueryTarget");
         var requestBody = new QueryReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "CompressionQueryTarget") };
-        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(requestBody);
+        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(requestBody, JsonOptions);
         var gzippedBytes = CompressGzip(jsonBytes);
         using var content = new ByteArrayContent(gzippedBytes);
         content.Headers.ContentType = new(FileTypeInfo.Json.MimeType);
@@ -55,7 +58,7 @@ public class CompressionPostgresTests : IDisposable
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/Query") { Content = content };
         using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result!.IsSuccess);
         Assert.NotNull(result.Items);

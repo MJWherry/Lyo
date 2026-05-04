@@ -191,13 +191,13 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         return Task.CompletedTask;
     }
 
-    private sealed class JobWorkerContextImpl(JobRunRes run, ILogger logger, CancellationToken cancellationToken, JobWorkerResultBuilder results) : IJobWorkerContext
+    private sealed class JobWorkerContextImpl(JobRunRes run, ILogger logger, CancellationToken ct, JobWorkerResultBuilder results) : IJobWorkerContext
     {
         public JobRunRes Run { get; } = run;
 
         public ILogger Logger { get; } = logger;
 
-        public CancellationToken CancellationToken { get; } = cancellationToken;
+        public CancellationToken CancellationToken { get; } = ct;
 
         public JobWorkerResultBuilder Results { get; } = results;
     }

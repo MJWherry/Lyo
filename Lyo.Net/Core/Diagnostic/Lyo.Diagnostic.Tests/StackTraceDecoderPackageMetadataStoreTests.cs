@@ -18,7 +18,7 @@ Npgsql.PostgresException: 23505
     public void Decode_Throws_When_PackageMetadataStore_Configured()
     {
         var store = new InMemoryPackageMetadataStore();
-        store.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, "Npgsql"));
+        store.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var decoder = new StackTraceDecoder(new StackTraceDecoderOptions { PackageMetadataStore = store });
 
         Assert.Throws<InvalidOperationException>(() => decoder.Decode(TraceWithNpgsql));
@@ -30,9 +30,10 @@ Npgsql.PostgresException: 23505
         var store = new InMemoryPackageMetadataStore();
         var meta = new PackageMetadataDto(
             NpgsqlRowId,
+            PackageEcosystem.NuGet,
             "Npgsql",
             Version: "8.0.0",
-            PackageFileSha512Hex:
+            ArtifactDigestAlgorithm.Sha512,
             "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
             ProjectUrl: "https://github.com/npgsql/npgsql");
         store.Register(["Npgsql."], meta);
@@ -44,9 +45,10 @@ Npgsql.PostgresException: 23505
         Assert.Equal(NpgsqlRowId, decoded.AllFrames[0].PackageMetadata!.Id);
         Assert.Equal("Npgsql", decoded.AllFrames[0].PackageMetadata!.Name);
         Assert.Equal("8.0.0", decoded.AllFrames[0].PackageMetadata!.Version);
+        Assert.Equal(ArtifactDigestAlgorithm.Sha512, decoded.AllFrames[0].PackageMetadata!.ArtifactDigestAlgorithm);
         Assert.Equal(
             "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
-            decoded.AllFrames[0].PackageMetadata!.PackageFileSha512Hex);
+            decoded.AllFrames[0].PackageMetadata!.ArtifactDigestHex);
         Assert.Null(decoded.AllFrames[1].PackageMetadata);
     }
 
@@ -54,7 +56,7 @@ Npgsql.PostgresException: 23505
     public async Task DecodeAsync_Classification_Matches_Decode_Without_Store()
     {
         var store = new InMemoryPackageMetadataStore();
-        store.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, "Npgsql"));
+        store.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var withStore = new StackTraceDecoder(new StackTraceDecoderOptions { PackageMetadataStore = store });
         var plain = new StackTraceDecoder();
 
@@ -70,7 +72,7 @@ Npgsql.PostgresException: 23505
     public async Task DecodeAsync_With_Store_Calls_Bulk_Resolve_Once_Per_Decode_Block()
     {
         var inner = new InMemoryPackageMetadataStore();
-        inner.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, "Npgsql"));
+        inner.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var counting = new CountingPackageMetadataStore(inner);
         var decoder = new StackTraceDecoder(new StackTraceDecoderOptions { PackageMetadataStore = counting });
 
@@ -91,7 +93,7 @@ Npgsql.PostgresException: 23505
     public async Task DecodeAsync_With_Store_Embedded_Inner_Block_Single_TryMany()
     {
         var innerStore = new InMemoryPackageMetadataStore();
-        innerStore.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, "Npgsql"));
+        innerStore.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var counting = new CountingPackageMetadataStore(innerStore);
         var decoder = new StackTraceDecoder(new StackTraceDecoderOptions { PackageMetadataStore = counting });
 
@@ -115,7 +117,7 @@ Npgsql.PostgresException: 23505
         var outer = NestedFailureWithInner();
 
         var innerStore = new InMemoryPackageMetadataStore();
-        innerStore.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, "Npgsql"));
+        innerStore.Register(["Npgsql."], new PackageMetadataDto(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var counting = new CountingPackageMetadataStore(innerStore);
         var decoder = new StackTraceDecoder(new StackTraceDecoderOptions { PackageMetadataStore = counting });
 

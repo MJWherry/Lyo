@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Lyo.Api.Models.Error;
 using Lyo.Exceptions;
 

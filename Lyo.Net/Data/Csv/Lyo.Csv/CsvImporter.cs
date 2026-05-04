@@ -1,4 +1,3 @@
-using System.Reflection;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Lyo.Csv.Models;
@@ -7,6 +6,7 @@ using Lyo.Exceptions;
 using Lyo.Result;
 using Microsoft.Extensions.Logging;
 #if NET10_0_OR_GREATER
+using System.Reflection;
 using System.Runtime.CompilerServices;
 #endif
 

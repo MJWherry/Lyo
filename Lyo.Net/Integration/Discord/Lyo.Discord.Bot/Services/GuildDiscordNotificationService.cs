@@ -9,8 +9,8 @@ namespace Lyo.Discord.Bot.Services;
 public sealed class GuildDiscordNotificationService(ICacheService cache, ILogger<GuildDiscordNotificationService> log) : IGuildDiscordNotificationService
 {
     /// <inheritdoc />
-    public Task<bool> TrySendEmbedAsync(DiscordClient client, ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken cancellationToken = default)
-        => TrySendMessageAsync(client, guildId, channelId, null, embed, cancellationToken);
+    public Task<bool> TrySendEmbedAsync(DiscordClient client, ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken ct = default)
+        => TrySendMessageAsync(client, guildId, channelId, null, embed, ct);
 
     /// <inheritdoc />
     public async Task<bool> TrySendMessageAsync(
@@ -19,7 +19,7 @@ public sealed class GuildDiscordNotificationService(ICacheService cache, ILogger
         ulong channelId,
         string? content = null,
         DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         var ch = TryResolveTextChannel(client, guildId, channelId);
         if (ch == null)
@@ -36,7 +36,7 @@ public sealed class GuildDiscordNotificationService(ICacheService cache, ILogger
     }
 
     /// <inheritdoc />
-    public async Task<bool> TrySendMessageAsync(DiscordClient client, ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    public async Task<bool> TrySendMessageAsync(DiscordClient client, ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken ct = default)
     {
         var ch = TryResolveTextChannel(client, guildId, channelId);
         if (ch == null)
@@ -53,35 +53,30 @@ public sealed class GuildDiscordNotificationService(ICacheService cache, ILogger
     }
 
     /// <inheritdoc />
-    public async Task<bool> TrySendEmbedToGuildLogChannelAsync(DiscordClient client, ulong guildId, DiscordEmbed embed, CancellationToken cancellationToken = default)
+    public async Task<bool> TrySendEmbedToGuildLogChannelAsync(DiscordClient client, ulong guildId, DiscordEmbed embed, CancellationToken ct = default)
     {
         if (!TryResolveLogChannelId(guildId, out var logChId))
             return false;
 
-        return await TrySendEmbedAsync(client, guildId, logChId, embed, cancellationToken).ConfigureAwait(false);
+        return await TrySendEmbedAsync(client, guildId, logChId, embed, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<bool> TrySendMessageToGuildLogChannelAsync(
-        DiscordClient client,
-        ulong guildId,
-        string? content = null,
-        DiscordEmbed? embed = null,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> TrySendMessageToGuildLogChannelAsync(DiscordClient client, ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken ct = default)
     {
         if (!TryResolveLogChannelId(guildId, out var logChId))
             return false;
 
-        return await TrySendMessageAsync(client, guildId, logChId, content, embed, cancellationToken).ConfigureAwait(false);
+        return await TrySendMessageAsync(client, guildId, logChId, content, embed, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<bool> TrySendMessageToGuildLogChannelAsync(DiscordClient client, ulong guildId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    public async Task<bool> TrySendMessageToGuildLogChannelAsync(DiscordClient client, ulong guildId, DiscordMessageBuilder message, CancellationToken ct = default)
     {
         if (!TryResolveLogChannelId(guildId, out var logChId))
             return false;
 
-        return await TrySendMessageAsync(client, guildId, logChId, message, cancellationToken).ConfigureAwait(false);
+        return await TrySendMessageAsync(client, guildId, logChId, message, ct).ConfigureAwait(false);
     }
 
     private bool TryResolveLogChannelId(ulong guildId, out ulong logChannelId)

@@ -70,7 +70,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
     {
         unchecked {
             var hash = 17;
-            hash = hash * 31 + (Field?.GetHashCode() ?? 0);
+            hash = hash * 31 + Field.GetHashCode();
             hash = hash * 31 + Comparison.GetHashCode();
             hash = hash * 31 + ValueHash(Value);
             return hash;

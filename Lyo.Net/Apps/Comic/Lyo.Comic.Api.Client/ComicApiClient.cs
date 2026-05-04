@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Comic.Api.Models;
 using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.FileMetadataStore.Models;
@@ -23,7 +22,7 @@ public sealed class ComicApiClient(HttpClient httpClient, ComicApiClientOptions 
     public async Task<IReadOnlyList<FileBatchEntry>> GetFilesBatchAsync(IReadOnlyList<Guid> ids, CancellationToken ct = default)
     {
         var result = await PostAsAsync<FilesBatchReq, FileBatchEntry[]>("files/batch", new(ids), ct: ct);
-        return result ?? [];
+        return result;
     }
 
     public async Task<FileStoreResult?> UploadFileAsync(Stream data, string fileName, CancellationToken ct = default)

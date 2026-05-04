@@ -245,7 +245,12 @@ public sealed class PdfService : IPdfService
             });
 
     /// <inheritdoc />
-    public IPdfWriter CreateEmpty() => new PdfWriter(new());
+    public IPdfWriter CreateEmpty()
+    {
+        var doc = new SharpPdfDoc();
+        doc.AddPage();
+        return new PdfWriter(doc);
+    }
 
     /// <inheritdoc />
     public IPdfWriter OpenForEdit(byte[] pdfBytes)

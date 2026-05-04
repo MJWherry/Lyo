@@ -50,7 +50,7 @@ public sealed class RedisLockService : ILockService
                 if (_options.UsePubSubForAcquireWait) {
                     var notifyChannel = GetNotifyChannel(normalizedKey);
                     var tcsRef = new object[] { new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously) };
-                    Action<RedisChannel, RedisValue> handler = (_, _) => ((TaskCompletionSource<bool>)tcsRef[0]!).TrySetResult(true);
+                    Action<RedisChannel, RedisValue> handler = (_, _) => ((TaskCompletionSource<bool>)tcsRef[0]).TrySetResult(true);
                     await _subscriber.SubscribeAsync(notifyChannel, handler).ConfigureAwait(false);
                     try {
                         while (DateTime.UtcNow < deadline) {

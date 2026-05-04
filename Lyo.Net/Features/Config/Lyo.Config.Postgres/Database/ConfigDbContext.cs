@@ -27,10 +27,10 @@ public class ConfigDbContext : DbContext
         return base.SaveChanges();
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         StampAuditColumns();
-        return base.SaveChangesAsync(cancellationToken);
+        return base.SaveChangesAsync(ct);
     }
 
     private void StampAuditColumns()

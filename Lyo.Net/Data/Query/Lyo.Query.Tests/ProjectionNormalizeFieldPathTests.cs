@@ -29,5 +29,5 @@ public class ProjectionNormalizeFieldPathTests
 
     [Fact]
     public void NormalizeFieldPath_WithCountKeyword_ThrowsWhenNotCollection()
-        => Assert.Throws<ArgumentException>(() => SharedEntityMetadataCache.NormalizeFieldPath(typeof(Person), "Name.Count"));
+        => Assert.Throws<ArgumentNullException>(() => SharedEntityMetadataCache.NormalizeFieldPath(typeof(Person), "Name.Count"));
 }

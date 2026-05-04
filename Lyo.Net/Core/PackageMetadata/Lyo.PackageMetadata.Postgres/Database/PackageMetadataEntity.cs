@@ -1,16 +1,20 @@
 namespace Lyo.PackageMetadata.Postgres.Database;
 
-/// <summary>EF entity: one row per NuGet-style package.</summary>
+/// <summary>EF entity: one row per registered package artifact.</summary>
 public sealed class PackageMetadataEntity
 {
     public Guid Id { get; set; }
+
+    public PackageEcosystem Ecosystem { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
     public string? Version { get; set; }
 
-    /// <summary>SHA-512 of package file bytes, 128 lowercase hex chars, or <see langword="null" /> when unknown.</summary>
-    public string? PackageFileSha512Hex { get; set; }
+    public ArtifactDigestAlgorithm ArtifactDigestAlgorithm { get; set; }
+
+    /// <summary>Lowercase hex digest when <see cref="ArtifactDigestAlgorithm" /> is not <see cref="ArtifactDigestAlgorithm.None" />.</summary>
+    public string? ArtifactDigestHex { get; set; }
 
     public string? Title { get; set; }
 

@@ -11,7 +11,7 @@ public sealed class PropertyComparisonService(ICacheService cache, CacheOptions 
         var entityType = typeof(TEntity);
         var requestType = typeof(TOther);
         var cacheKey = $"PropertyComparison_{entityType.FullName}_{requestType.FullName}";
-        var comparisons = cache.GetOrSet<PropertyComparisonInfo[]>(cacheKey, _ => BuildComparisonInfo(entityType, requestType), cacheOptions.ComparisonInfoExpiration);
+        var comparisons = cache.GetOrSet<PropertyComparisonInfo[]>(cacheKey, _ => BuildComparisonInfo(entityType, requestType), cacheOptions.ComparisonInfoExpiration)!;
         var differences = new Dictionary<string, object?>(comparisons.Length);
         foreach (var comparison in comparisons) {
             var currentValue = comparison.EntityGetter(entity!);
@@ -128,7 +128,7 @@ public sealed class PropertyComparisonService(ICacheService cache, CacheOptions 
         var cacheKey = $"PropertyInfo_{type.FullName}";
         return cache.GetOrSet<Dictionary<string, PropertyInfo>>(
             cacheKey, _ => type.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase),
-            cacheOptions.PropertyInfoExpiration);
+            cacheOptions.PropertyInfoExpiration)!;
     }
 
     private PropertyComparisonTypeMetadata GetTypeMetadata(Type type)
@@ -141,7 +141,7 @@ public sealed class PropertyComparisonService(ICacheService cache, CacheOptions 
                 var underlyingEnumType = isEnum ? type : isNullableEnum ? type.GetGenericArguments()[0] : null;
                 var underlyingType = isNullableEnum ? type.GetGenericArguments()[0] : type;
                 return new(isEnum, isNullableEnum, underlyingEnumType, underlyingType);
-            }, cacheOptions.TypeMetadataExpiration);
+            }, cacheOptions.TypeMetadataExpiration)!;
     }
 
     private Func<object, object?> CreatePropertyGetter(PropertyInfo property)
@@ -154,7 +154,7 @@ public sealed class PropertyComparisonService(ICacheService cache, CacheOptions 
                 var propertyAccess = Expression.Property(cast, property);
                 var convert = Expression.Convert(propertyAccess, typeof(object));
                 return Expression.Lambda<Func<object, object?>>(convert, parameter).Compile();
-            }, cacheOptions.PropertyGetterExpiration);
+            }, cacheOptions.PropertyGetterExpiration)!;
     }
 
     private static Type? GetConversionType(ComparisonStrategy strategy, PropertyComparisonTypeMetadata entityMetadata, PropertyComparisonTypeMetadata requestMetadata)

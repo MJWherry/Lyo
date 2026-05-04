@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Lyo.Result.Enums;
 
 namespace Lyo.Result;
@@ -6,46 +5,47 @@ namespace Lyo.Result;
 /// <summary>Extension methods and aggregation for Result types.</summary>
 public static class ResultExtensions
 {
-    /// <summary>Combines multiple results. All must succeed for the combined result to succeed.</summary>
-    [return: NotNull]
-    public static Result<IReadOnlyList<T>> Combine<T>(this IEnumerable<Result<T>>? results)
+    extension<T>(IEnumerable<Result<T>>? results)
     {
-        if (results == null)
-            return Result<IReadOnlyList<T>>.Failure("NULL_INPUT", "Results collection cannot be null");
+        /// <summary>Combines multiple results. All must succeed for the combined result to succeed.</summary>
+        public Result<IReadOnlyList<T>> Combine()
+        {
+            if (results == null)
+                return Result<IReadOnlyList<T>>.Failure("NULL_INPUT", "Results collection cannot be null");
 
-        var list = results.ToList();
-        if (list.Count == 0)
-            return Result<IReadOnlyList<T>>.Success([]);
+            var list = results.ToList();
+            if (list.Count == 0)
+                return Result<IReadOnlyList<T>>.Success([]);
 
-        var successes = new List<T>();
-        var allErrors = new List<Error>();
-        foreach (var r in list) {
-            if (r.IsSuccess && r.Data != null)
-                successes.Add(r.Data);
-            else if (r.Errors != null)
-                allErrors.AddRange(r.Errors);
+            var successes = new List<T>();
+            var allErrors = new List<Error>();
+            foreach (var r in list) {
+                if (r.IsSuccess && r.Data != null)
+                    successes.Add(r.Data);
+                else if (r.Errors != null)
+                    allErrors.AddRange(r.Errors);
+            }
+
+            return allErrors.Count > 0 ? Result<IReadOnlyList<T>>.Failure(allErrors) : Result<IReadOnlyList<T>>.Success(successes);
         }
 
-        return allErrors.Count > 0 ? Result<IReadOnlyList<T>>.Failure(allErrors) : Result<IReadOnlyList<T>>.Success(successes);
-    }
+        /// <summary>Returns the first successful result, or a combined failure if all failed.</summary>
+        public Result<T> FirstSuccess()
+        {
+            if (results == null)
+                return Result<T>.Failure("NULL_INPUT", "Results collection cannot be null");
 
-    /// <summary>Returns the first successful result, or a combined failure if all failed.</summary>
-    [return: NotNull]
-    public static Result<T> FirstSuccess<T>(this IEnumerable<Result<T>>? results)
-    {
-        if (results == null)
-            return Result<T>.Failure("NULL_INPUT", "Results collection cannot be null");
+            var allErrors = new List<Error>();
+            foreach (var r in results) {
+                if (r.IsSuccess)
+                    return r;
 
-        var allErrors = new List<Error>();
-        foreach (var r in results) {
-            if (r.IsSuccess)
-                return r;
+                if (r.Errors != null)
+                    allErrors.AddRange(r.Errors);
+            }
 
-            if (r.Errors != null)
-                allErrors.AddRange(r.Errors);
+            return Result<T>.Failure(allErrors);
         }
-
-        return Result<T>.Failure(allErrors);
     }
 
     /// <summary>Converts a Result&lt;T&gt; to a Result&lt;TRequest, TResult&gt; by adding a request object.</summary>

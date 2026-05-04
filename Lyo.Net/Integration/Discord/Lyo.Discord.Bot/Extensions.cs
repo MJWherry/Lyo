@@ -47,7 +47,7 @@ public static class Extensions
     extension(IGuildDiscordNotificationService notifications)
     {
         /// <summary>Posts an error-style embed to the configured guild log channel.</summary>
-        public Task NotifyGuildLogErrorAsync(DiscordClient client, ulong guildId, Exception exception, string context, CancellationToken cancellationToken = default)
+        public Task NotifyGuildLogErrorAsync(DiscordClient client, ulong guildId, Exception exception, string context, CancellationToken ct = default)
         {
             var text = Truncate(exception.ToString(), MaxEmbedDescription);
             var embed = new DiscordEmbedBuilder().WithTitle("Bot error")
@@ -57,11 +57,11 @@ public static class Extensions
                 .WithTimestamp(DateTimeOffset.UtcNow)
                 .Build();
 
-            return notifications.TrySendEmbedToGuildLogChannelAsync(client, guildId, embed, cancellationToken);
+            return notifications.TrySendEmbedToGuildLogChannelAsync(client, guildId, embed, ct);
         }
 
         /// <summary>Posts an informational embed to the configured guild log channel.</summary>
-        public Task NotifyGuildLogMessageAsync(DiscordClient client, ulong guildId, string title, string body, CancellationToken cancellationToken = default)
+        public Task NotifyGuildLogMessageAsync(DiscordClient client, ulong guildId, string title, string body, CancellationToken ct = default)
         {
             var embed = new DiscordEmbedBuilder().WithTitle(Truncate(title, 256))
                 .WithColor(new(0x5865F2))
@@ -69,7 +69,7 @@ public static class Extensions
                 .WithTimestamp(DateTimeOffset.UtcNow)
                 .Build();
 
-            return notifications.TrySendEmbedToGuildLogChannelAsync(client, guildId, embed, cancellationToken);
+            return notifications.TrySendEmbedToGuildLogChannelAsync(client, guildId, embed, ct);
         }
     }
 }

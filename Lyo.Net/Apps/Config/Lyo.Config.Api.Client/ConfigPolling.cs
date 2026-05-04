@@ -15,11 +15,11 @@ public static class ConfigPolling
         string appId,
         string? ifNoneMatch,
         TimeSpan delayWhenNotModified,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         var probe = ifNoneMatch;
-        while (!cancellationToken.IsCancellationRequested) {
-            var result = await client.ResolveForAppAsync(appKind, appId, probe, version: null, headOnly: false, cancellationToken).ConfigureAwait(false);
+        while (!ct.IsCancellationRequested) {
+            var result = await client.ResolveForAppAsync(appKind, appId, probe, version: null, headOnly: false, ct).ConfigureAwait(false);
             probe = result.ETag ?? probe;
 
             switch (result.Outcome) {
@@ -28,7 +28,7 @@ public static class ConfigPolling
                     return result.Resolved;
 
                 case ConfigResolveOutcome.NotModified:
-                    await Task.Delay(delayWhenNotModified, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(delayWhenNotModified, ct).ConfigureAwait(false);
                     break;
 
                 default:
@@ -37,7 +37,7 @@ public static class ConfigPolling
             }
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        throw new OperationCanceledException(cancellationToken);
+        ct.ThrowIfCancellationRequested();
+        throw new OperationCanceledException(ct);
     }
 }

@@ -6,9 +6,9 @@ namespace Lyo.Tts.Typecast;
 public sealed class TypecastTtsAppService(TypecastTtsService inner) : ITtsService
 {
     /// <inheritdoc />
-    public async Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken cancellationToken = default)
+    public async Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default)
     {
-        var result = await inner.SynthesizeAsync(text, voiceId, cancellationToken).ConfigureAwait(false);
+        var result = await inner.SynthesizeAsync(text, voiceId, ct).ConfigureAwait(false);
         if (result.IsSuccess && result.AudioData != null)
             return new(true, result.AudioData, null);
 

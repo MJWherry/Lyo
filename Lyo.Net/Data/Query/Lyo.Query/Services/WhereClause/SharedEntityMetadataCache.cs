@@ -118,7 +118,7 @@ public static class SharedEntityMetadataCache
             }
 
             var property = ResolvePropertyCore(currentType, part);
-            ArgumentHelpers.ThrowIf(property == null, $"Selected field '{path}' not found on type '{currentType.Name}'.");
+            ArgumentHelpers.ThrowIfNull(property, $"Selected field '{path}' not found on type '{currentType.Name}'.");
             normalizedParts.Add(property.Name);
             currentType = property.PropertyType;
             lastWasCollection = IsCollectionType(currentType);

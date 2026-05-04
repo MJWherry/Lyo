@@ -44,7 +44,7 @@ public class CsvExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddCsvService((sp, cfg) => cfg.Delimiter = ",");
+        services.AddCsvService((_, cfg) => cfg.Delimiter = ",");
         var provider = services.BuildServiceProvider();
         var csvService = provider.GetRequiredService<ICsvService>();
         Assert.NotNull(csvService);

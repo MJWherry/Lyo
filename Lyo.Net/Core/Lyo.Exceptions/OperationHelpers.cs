@@ -166,16 +166,16 @@ public static class OperationHelpers
     }
 
     /// <summary>Throws an OperationCanceledException if the cancellation token has been cancelled.</summary>
-    /// <param name="cancellationToken">The cancellation token to check.</param>
+    /// <param name="ct">The cancellation token to check.</param>
     /// <exception cref="OperationCanceledException">Thrown when the token has been cancelled.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfCancelled(CancellationToken cancellationToken)
+    public static void ThrowIfCancelled(CancellationToken ct)
     {
-        if (cancellationToken.IsCancellationRequested)
-            ThrowOperationCancelled(cancellationToken);
+        if (ct.IsCancellationRequested)
+            ThrowOperationCancelled(ct);
     }
 
     /// <summary>Throws a NotSupportedException if the condition is true.</summary>

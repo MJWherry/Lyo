@@ -20,9 +20,11 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ecosystem = table.Column<int>(type: "integer", nullable: false),
                     name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     version = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    package_file_sha512_hex = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    artifact_digest_algorithm = table.Column<int>(type: "integer", nullable: false),
+                    artifact_digest_hex = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     description = table.Column<string>(type: "text", nullable: true),
                     authors_json = table.Column<string>(type: "text", nullable: true),

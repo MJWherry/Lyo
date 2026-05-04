@@ -1,5 +1,6 @@
 using Lyo.Common;
 using Lyo.Common.Enums;
+using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models;
 

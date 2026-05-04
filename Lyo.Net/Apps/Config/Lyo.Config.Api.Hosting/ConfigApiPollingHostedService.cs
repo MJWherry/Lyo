@@ -25,18 +25,18 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
         _log = log;
     }
 
-    public override async Task StartAsync(CancellationToken cancellationToken)
+    public override async Task StartAsync(CancellationToken ct)
     {
         var o = _pollingOptions.Value;
         o.ThrowIfMisconfiguredWhenEnabled();
 
         if (!o.Enabled) {
-            await base.StartAsync(cancellationToken).ConfigureAwait(false);
+            await base.StartAsync(ct).ConfigureAwait(false);
             return;
         }
 
-        await EnsureFirstResolveAsync(o, cancellationToken).ConfigureAwait(false);
-        await base.StartAsync(cancellationToken).ConfigureAwait(false);
+        await EnsureFirstResolveAsync(o, ct).ConfigureAwait(false);
+        await base.StartAsync(ct).ConfigureAwait(false);
     }
 
 
@@ -97,14 +97,14 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
         await Task.Delay(d <= TimeSpan.Zero ? TimeSpan.FromSeconds(1) : d, stoppingToken).ConfigureAwait(false);
     }
 
-    private async Task EnsureFirstResolveAsync(ConfigApiPollingOptions o, CancellationToken cancellationToken)
+    private async Task EnsureFirstResolveAsync(ConfigApiPollingOptions o, CancellationToken ct)
     {
         var deadlineUtc =
             o.StartupTimeout is { TotalMilliseconds: > 0 }
                 ? DateTime.UtcNow + o.StartupTimeout.Value
                 : (DateTime?)null;
 
-        while (!cancellationToken.IsCancellationRequested) {
+        while (!ct.IsCancellationRequested) {
             if (deadlineUtc is not null && DateTime.UtcNow > deadlineUtc.Value) {
                 if (o.RequireSuccessOnStartup)
                     throw new TimeoutException(
@@ -117,14 +117,14 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
             }
 
             var result =
-                await _client.ResolveForAppAsync(o.AppKind, o.AppId, _ledger.CurrentEtag, version: null, headOnly: false, cancellationToken)
+                await _client.ResolveForAppAsync(o.AppKind, o.AppId, _ledger.CurrentEtag, version: null, headOnly: false, ct)
                     .ConfigureAwait(false);
 
             switch (result.Outcome) {
                 case ConfigResolveOutcome.Ok:
                     if (result.Resolved == null) {
                         _log.LogWarning("Config API returned OK without a resolved body during startup; retrying.");
-                        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
                         continue;
                     }
 
@@ -133,7 +133,7 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
 
                 case ConfigResolveOutcome.NotModified:
                     _log.LogDebug("Config API returned 304 during startup; snapshot should already be present if the ledger was primed.");
-                    await DelayWhenNotModified(o, cancellationToken).ConfigureAwait(false);
+                    await DelayWhenNotModified(o, ct).ConfigureAwait(false);
                     continue;
 
                 case ConfigResolveOutcome.Failed:
@@ -141,15 +141,15 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
                         "Config API startup resolve failed: HTTP {Status} {Reason}",
                         result.Failure?.StatusCode,
                         result.Failure?.ReasonPhrase);
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
                     continue;
 
                 default:
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
                     continue;
             }
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
     }
 }

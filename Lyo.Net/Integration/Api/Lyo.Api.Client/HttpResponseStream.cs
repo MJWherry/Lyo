@@ -19,11 +19,11 @@ public sealed class HttpResponseStream(Stream inner, HttpResponseMessage respons
     public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
 
 #if NET5_0_OR_GREATER
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        => inner.ReadAsync(buffer, cancellationToken);
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
+        => inner.ReadAsync(buffer, ct);
 #endif
 
-    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => inner.ReadAsync(buffer, offset, count, cancellationToken);
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct) => inner.ReadAsync(buffer, offset, count, ct);
 
     public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
 

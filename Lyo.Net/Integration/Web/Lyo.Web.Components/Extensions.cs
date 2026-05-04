@@ -89,6 +89,8 @@ internal static class Extensions
             FileTypeFlags.Json => Icons.Custom.FileFormats.FileCode,
             FileTypeFlags.Xml => Icons.Custom.FileFormats.FileCode,
             FileTypeFlags.Xlsx => Icons.Custom.FileFormats.FileExcel,
+            FileTypeFlags.Nupkg or FileTypeFlags.Snupkg or FileTypeFlags.Jar or FileTypeFlags.War or FileTypeFlags.Ear or FileTypeFlags.Aar or FileTypeFlags.Deb or FileTypeFlags.Rpm
+                or FileTypeFlags.Msi => Icons.Custom.FileFormats.FileCode,
             var _ => Icons.Material.Filled.Description
         };
 

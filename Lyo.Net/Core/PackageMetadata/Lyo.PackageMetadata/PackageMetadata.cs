@@ -1,18 +1,23 @@
 namespace Lyo.PackageMetadata;
 
-/// <summary>NuGet-gallery-style metadata for a package, suitable for JSON and database persistence. Multiple rows may share the same <see cref="Name" />
-/// with different <see cref="Version" /> values to represent published package versions.</summary>
+/// <summary>Package catalog metadata for a published artifact, suitable for JSON and database persistence. Multiple rows may share the same
+/// <see cref="Name" /> with different <see cref="Version" /> values. Interpretation of <see cref="Name" /> / <see cref="Version" /> depends on
+/// <see cref="Ecosystem" /> (e.g. NuGet package id + version; Maven often uses <c>groupId:artifactId</c> as <see cref="Name" />).</summary>
 /// <param name="Id">Primary key when this row is stored (e.g. Postgres <c>uuid</c>).</param>
-/// <param name="Name">NuGet package id / name (e.g. <c>Npgsql</c>).</param>
-/// <param name="Version">NuGet package version string for this row (e.g. SemVer <c>8.0.0</c>, as returned by the feed). Optional when unknown.</param>
-/// <param name="PackageFileSha512Hex">SHA-512 of the package archive bytes (typically <c>.nupkg</c>) as 128 lowercase hex characters, aligned with NuGet registration SHA512; use <see cref="PackageFileSha512.ComputeHex(byte[])" />.</param>
+/// <param name="Ecosystem">Registry or distribution family for this row.</param>
+/// <param name="Name">Package identity (e.g. NuGet id, or Maven <c>groupId:artifactId</c>).</param>
+/// <param name="Version">Published version string when known (ecosystem-specific format).</param>
+/// <param name="ArtifactDigestAlgorithm">Hash algorithm for <see cref="ArtifactDigestHex" />; <see cref="ArtifactDigestAlgorithm.None" /> when no digest is stored.</param>
+/// <param name="ArtifactDigestHex">Lowercase hex digest of canonical primary artifact bytes (length: 40 for SHA-1, 64 for SHA-256, 128 for SHA-512), or <see langword="null" />.</param>
 /// <param name="CreatedAt">When this metadata row was first stored (UTC). Populated by Postgres store; optional elsewhere.</param>
 /// <param name="UpdatedAt">When this metadata row was last updated (UTC). Populated by Postgres store; optional elsewhere.</param>
 public sealed record PackageMetadata(
     Guid Id,
+    PackageEcosystem Ecosystem,
     string Name,
     string? Version = null,
-    string? PackageFileSha512Hex = null,
+    ArtifactDigestAlgorithm ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.None,
+    string? ArtifactDigestHex = null,
     string? Title = null,
     string? Description = null,
     IReadOnlyList<string>? Authors = null,

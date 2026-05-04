@@ -35,7 +35,7 @@ public sealed class ConcatenatedStreamTests
     public void Throws_on_null_streams()
     {
         Assert.Throws<ArgumentNullException>(() => new ConcatenatedStream(null!));
-        Assert.Throws<ArgumentException>(() => new ConcatenatedStream([new MemoryStream(), null!]));
+        Assert.Throws<ArgumentNullException>(() => new ConcatenatedStream([new MemoryStream(), null!]));
     }
 
     [Fact]

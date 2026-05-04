@@ -575,7 +575,7 @@ public sealed class CompressionService : ICompressionService
             // Determine chunk size based on file size
             var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(inputFilePath);
             await AtomicFileOperationAsync(
-                    outputFilePath, async (tempFilePath, ct) => {
+                    outputFilePath, async (tempFilePath, ct2) => {
 #if NETSTANDARD2_0 && !NETSTANDARD2_1
                         using var inputStream = CreateAsyncReadStream(inputFilePath);
                         using var outputStream = CreateAsyncWriteStream(tempFilePath);
@@ -583,7 +583,7 @@ public sealed class CompressionService : ICompressionService
                         await using var inputStream = CreateAsyncReadStream(inputFilePath);
                         await using var outputStream = CreateAsyncWriteStream(tempFilePath);
 #endif
-                        await CompressAsync(inputStream, outputStream, chunkSize, ct).ConfigureAwait(false);
+                        await CompressAsync(inputStream, outputStream, chunkSize, ct2).ConfigureAwait(false);
                     }, ct)
                 .ConfigureAwait(false);
 

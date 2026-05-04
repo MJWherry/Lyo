@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Lyo.Result;
@@ -36,10 +35,10 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
     /// <summary>Pattern matching - returns a value based on whether the option has a value.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult Match<TResult>([NotNull] Func<T, TResult> onSome, [NotNull] Func<TResult> onNone) => HasValue ? onSome(_value!) : onNone();
+    public TResult Match<TResult>(Func<T, TResult> onSome, Func<TResult> onNone) => HasValue ? onSome(_value!) : onNone();
 
     /// <summary>Executes an action if the option has a value.</summary>
-    public Option<T> IfSome([NotNull] Action<T> action)
+    public Option<T> IfSome(Action<T> action)
     {
         if (HasValue)
             action(_value!);
@@ -48,7 +47,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
     }
 
     /// <summary>Executes an action if the option has no value.</summary>
-    public Option<T> IfNone([NotNull] Action action)
+    public Option<T> IfNone(Action action)
     {
         if (!HasValue)
             action();
@@ -58,11 +57,11 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
     /// <summary>Maps the value to another type if present.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Option<TOut> Map<TOut>([NotNull] Func<T, TOut> mapper) => HasValue ? Option<TOut>.Some(mapper(_value!)) : Option<TOut>.None();
+    public Option<TOut> Map<TOut>(Func<T, TOut> mapper) => HasValue ? Option<TOut>.Some(mapper(_value!)) : Option<TOut>.None();
 
     /// <summary>Binds the value to another option if present.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Option<TOut> Bind<TOut>([NotNull] Func<T, Option<TOut>> binder) => HasValue ? binder(_value!) : Option<TOut>.None();
+    public Option<TOut> Bind<TOut>(Func<T, Option<TOut>> binder) => HasValue ? binder(_value!) : Option<TOut>.None();
 
     /// <summary>Gets the value or returns the default value if none.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +69,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>
 
     /// <summary>Gets the value or returns the result of the factory if none.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetValueOrDefault([NotNull] Func<T> defaultValueFactory) => HasValue ? _value! : defaultValueFactory();
+    public T GetValueOrDefault(Func<T> defaultValueFactory) => HasValue ? _value! : defaultValueFactory();
 
     /// <summary>Converts to Result - Some becomes Success, None becomes Failure.</summary>
     public Result<T> ToResult(string errorCode = "NONE", string errorMessage = "No value present")

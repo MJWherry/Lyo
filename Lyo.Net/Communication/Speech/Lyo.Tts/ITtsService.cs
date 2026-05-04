@@ -5,7 +5,7 @@ namespace Lyo.Tts;
 /// <summary>Non-generic TTS for hosts that register one provider (e.g. Discord bot). Coexists with <see cref="ITtsService{TRequest}" />.</summary>
 public interface ITtsService
 {
-    Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken cancellationToken = default);
+    Task<TtsSynthesisResult> SynthesizeAsync(string text, string? voiceId = null, CancellationToken ct = default);
 }
 
 /// <summary>Service interface for converting text to speech.</summary>

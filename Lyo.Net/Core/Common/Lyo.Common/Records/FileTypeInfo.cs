@@ -100,6 +100,35 @@ public sealed class FileTypeInfo
 
     public static readonly FileTypeInfo LZMAStream = new("LZMA", "application/x-lzma", ".lzma", null, FileTypeCategory.Compressed, "LZMA compressed stream");
 
+    // 📦 Package / distribution
+    public static readonly FileTypeInfo NuGetPackage = new(
+        "NuGet package", "application/x-nupkg", ".nupkg", null, FileTypeCategory.PackageManager, "NuGet package archive");
+
+    public static readonly FileTypeInfo NuGetSymbolsPackage = new(
+        "NuGet symbols package", "application/x-snupkg", ".snupkg", null, FileTypeCategory.PackageManager, "NuGet symbol package archive");
+
+    public static readonly FileTypeInfo JavaJar = new(
+        "JAR", "application/java-archive", ".jar", null, FileTypeCategory.PackageManager, "Java archive (JAR)");
+
+    public static readonly FileTypeInfo JavaWar = new(
+        "WAR", "application/x-java-war", ".war", null, FileTypeCategory.PackageManager, "Java web application archive (WAR)");
+
+    public static readonly FileTypeInfo JavaEar = new(
+        "EAR", "application/x-java-ear", ".ear", null, FileTypeCategory.PackageManager, "Java enterprise archive (EAR)");
+
+    public static readonly FileTypeInfo AndroidAar = new(
+        "AAR", "application/vnd.android.aar", ".aar", null, FileTypeCategory.PackageManager, "Android library archive (AAR)");
+
+    public static readonly FileTypeInfo DebianPackage = new(
+        "Debian package", "application/vnd.debian.binary-package", ".deb", null, FileTypeCategory.PackageManager, "Debian binary package", ["application/x-debian-package"]);
+
+    public static readonly FileTypeInfo RpmPackage = new(
+        "RPM package", "application/x-rpm", ".rpm", null, FileTypeCategory.PackageManager, "RPM package",
+        ["application/redhat-package-manager", "application/x-redhat-package-manager"]);
+
+    public static readonly FileTypeInfo WindowsInstallerMsi = new(
+        "MSI", "application/x-msi", ".msi", null, FileTypeCategory.PackageManager, "Windows Installer package (MSI)");
+
     // 🔒 Encrypted Formats
     public static readonly FileTypeInfo Enc = new("ENC", "application/octet-stream", ".enc", [".crypt", ".aes"], FileTypeCategory.Encrypted, "Encrypted file");
 

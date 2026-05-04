@@ -51,81 +51,81 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
     public bool IsConnected => _gatewayClient != null;
 
     /// <inheritdoc />
-    public Task NotifyGuildLogMessageAsync(ulong guildId, string title, string body, CancellationToken cancellationToken = default)
+    public Task NotifyGuildLogMessageAsync(ulong guildId, string title, string body, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.CompletedTask;
 
-        return GuildNotifications.NotifyGuildLogMessageAsync(_gatewayClient, guildId, title, body, cancellationToken);
+        return GuildNotifications.NotifyGuildLogMessageAsync(_gatewayClient, guildId, title, body, ct);
     }
 
     /// <inheritdoc />
-    public Task NotifyGuildLogErrorAsync(ulong guildId, Exception exception, string context, CancellationToken cancellationToken = default)
+    public Task NotifyGuildLogErrorAsync(ulong guildId, Exception exception, string context, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.CompletedTask;
 
-        return GuildNotifications.NotifyGuildLogErrorAsync(_gatewayClient, guildId, exception, context, cancellationToken);
+        return GuildNotifications.NotifyGuildLogErrorAsync(_gatewayClient, guildId, exception, context, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendEmbedAsync(ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendEmbedAsync(ulong guildId, ulong channelId, DiscordEmbed embed, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendEmbedAsync(_gatewayClient, guildId, channelId, embed, cancellationToken);
+        return GuildNotifications.TrySendEmbedAsync(_gatewayClient, guildId, channelId, embed, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, string? content = null, DiscordEmbed? embed = null, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, content, embed, cancellationToken);
+        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, content, embed, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageAsync(ulong guildId, ulong channelId, DiscordMessageBuilder message, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, message, cancellationToken);
+        return GuildNotifications.TrySendMessageAsync(_gatewayClient, guildId, channelId, message, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendEmbedToGuildLogChannelAsync(ulong guildId, DiscordEmbed embed, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendEmbedToGuildLogChannelAsync(ulong guildId, DiscordEmbed embed, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendEmbedToGuildLogChannelAsync(_gatewayClient, guildId, embed, cancellationToken);
+        return GuildNotifications.TrySendEmbedToGuildLogChannelAsync(_gatewayClient, guildId, embed, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, content, embed, cancellationToken);
+        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, content, embed, ct);
     }
 
     /// <inheritdoc />
-    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, DiscordMessageBuilder message, CancellationToken cancellationToken = default)
+    public Task<bool> TrySendMessageToGuildLogChannelAsync(ulong guildId, DiscordMessageBuilder message, CancellationToken ct = default)
     {
         if (GuildNotifications == null || _gatewayClient == null)
             return Task.FromResult(false);
 
-        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, message, cancellationToken);
+        return GuildNotifications.TrySendMessageToGuildLogChannelAsync(_gatewayClient, guildId, message, ct);
     }
 
-    /// <summary>Runs until <paramref name="cancellationToken" /> is cancelled: connect, block, disconnect.</summary>
-    public virtual async Task RunAsync(CancellationToken cancellationToken)
+    /// <summary>Runs until <paramref name="ct" /> is cancelled: connect, block, disconnect.</summary>
+    public virtual async Task RunAsync(CancellationToken ct)
     {
-        _runCt = cancellationToken;
+        _runCt = ct;
         var cfg = new DiscordConfiguration { Token = Options.Token, TokenType = TokenType.Bot, Intents = Options.Intents };
         ConfigureDiscordConfiguration(cfg);
         using var client = new NativeDiscordClient(cfg);
@@ -137,7 +137,7 @@ public abstract class LyoDiscordBotBase : ILyoDiscordBotGateway
             await client.ConnectAsync().ConfigureAwait(false);
             Logger.LogInformation("Discord bot connected. Cancel the host token to stop.");
             try {
-                await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(Timeout.Infinite, ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException) {
                 // shutdown

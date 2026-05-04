@@ -25,10 +25,15 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
 
             modelBuilder.Entity("Lyo.PackageMetadata.Postgres.Database.PackageMetadataEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                    b.Property<int>("ArtifactDigestAlgorithm")
+                        .IsRequired()
+                        .HasColumnType("integer")
+                        .HasColumnName("artifact_digest_algorithm");
+
+                    b.Property<string>("ArtifactDigestHex")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("artifact_digest_hex");
 
                     b.Property<string>("AuthorsJson")
                         .HasColumnType("text")
@@ -41,6 +46,16 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
+
+                    b.Property<int>("Ecosystem")
+                        .IsRequired()
+                        .HasColumnType("integer")
+                        .HasColumnName("ecosystem");
+
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("LicenseExpression")
                         .HasMaxLength(500)
@@ -62,11 +77,6 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("package_details_url");
-
-                    b.Property<string>("PackageFileSha512Hex")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("package_file_sha512_hex");
 
                     b.Property<string>("PackageTypesJson")
                         .HasColumnType("text")

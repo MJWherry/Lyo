@@ -2,11 +2,6 @@ using System.Security.Cryptography;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 
-// ReSharper disable RedundantSuppressNullableWarningExpression
-#if NETSTANDARD2_1_OR_GREATER
-using System.Buffers;
-#endif
-
 namespace Lyo.Hashing;
 
 /// <summary>A stream wrapper that computes a hash as data flows through it.</summary>
@@ -223,21 +218,4 @@ public sealed class HashingStream : Stream
     }
 
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(HashingStream));
-}
-
-internal static class HashStreamValidation
-{
-    public static void ValidateReadBuffer(byte[]? buffer, int offset, int count)
-    {
-        ArgumentHelpers.ThrowIfNull(buffer);
-        ArgumentHelpers.ThrowIfNotInRange(offset, 0, buffer.Length);
-        ArgumentHelpers.ThrowIfNotInRange(count, 0, buffer.Length - offset);
-    }
-
-    public static void ValidateWriteBuffer(byte[]? buffer, int offset, int count)
-    {
-        ArgumentHelpers.ThrowIfNull(buffer);
-        ArgumentHelpers.ThrowIfNotInRange(offset, 0, buffer.Length);
-        ArgumentHelpers.ThrowIfNotInRange(count, 0, buffer.Length - offset);
-    }
 }

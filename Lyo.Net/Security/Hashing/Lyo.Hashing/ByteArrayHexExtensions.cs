@@ -7,10 +7,13 @@ namespace Lyo.Hashing;
 /// <summary>Byte-array hex formatting that delegates to <see cref="HexEncoding" /> (<c>Lyo.Hashing</c> package).</summary>
 public static class ByteArrayHexExtensions
 {
-    /// <summary>Lowercase hexadecimal (historical default when this lived on <see cref="Extensions" />).</summary>
-    public static string ToHexString(this byte[] bytes)
+    extension(byte[] bytes)
     {
-        ArgumentHelpers.ThrowIfNull(bytes);
-        return HexEncoding.ToHexString(bytes, TextLetterCase.Lower);
+        /// <summary>Lowercase hexadecimal (historical default when this lived on <see cref="Extensions" />).</summary>
+        public string ToHexString()
+        {
+            ArgumentHelpers.ThrowIfNull(bytes);
+            return HexEncoding.ToHexString(bytes, TextLetterCase.Lower);
+        }
     }
 }

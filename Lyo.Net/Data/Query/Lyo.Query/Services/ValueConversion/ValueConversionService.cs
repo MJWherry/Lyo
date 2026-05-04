@@ -73,7 +73,7 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
                 var isNullable = Nullable.GetUnderlyingType(type) != null;
                 var isEnum = underlyingType.IsEnum;
                 return new(underlyingType, isEnum, isNullable, isEnum ? underlyingType : null);
-            }, cacheOptions.TypeMetadataExpiration);
+            }, cacheOptions.TypeMetadataExpiration)!;
     }
 
     private static object ConvertJsonElementToType(JsonElement element, Type targetType, TypeConversionMetadata metadata)
@@ -121,10 +121,9 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
     private static object ConvertToEnum(object value, Type enumType)
     {
         if (value is string stringValue) {
-            if (Enum.TryParse(enumType, stringValue, true, out var enumResult))
-                return enumResult!;
-
-            throw new InvalidOperationException($"Cannot convert string '{stringValue}' to enum type {enumType.Name}");
+            return Enum.TryParse(enumType, stringValue, true, out var enumResult) 
+                ? enumResult 
+                : throw new InvalidOperationException($"Cannot convert string '{stringValue}' to enum type {enumType.Name}");
         }
 
         try {

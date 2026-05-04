@@ -23,8 +23,8 @@ public partial class QueryBuilderSettings
     private string GetSelectedWhereClauseLabel()
         => SelectedWhereClause switch {
             null => "None",
-            GroupClause groupClause => $"{groupClause.Operator} group clause ({groupClause.Children?.Count ?? 0} children)",
+            GroupClause groupClause => $"{groupClause.Operator} group clause ({groupClause.Children.Count} children)",
             ConditionClause condition => $"{condition.Field} {condition.Comparison}",
-            var other => other.ToString() ?? "Unknown"
+            var other => other.ToString()
         };
 }

@@ -19,19 +19,13 @@ public class EmailAddress : IEquatable<EmailAddress>
     public string? Label { get; set; }
 
     /// <inheritdoc />
-    public bool Equals(EmailAddress? other)
-    {
-        if (other == null)
-            return false;
-
-        return string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
-    }
+    public bool Equals(EmailAddress? other) => other != null && string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is EmailAddress other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => Email?.ToLowerInvariant().GetHashCode() ?? 0;
+    public override int GetHashCode() => Email.ToLowerInvariant().GetHashCode();
 
     /// <summary>Equality operator</summary>
     public static bool operator ==(EmailAddress? left, EmailAddress? right) => Equals(left, right);

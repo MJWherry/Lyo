@@ -6,12 +6,12 @@ namespace Lyo.Webhook;
 public static class HttpRequestWebhookExtensions
 {
     /// <summary>Buffers and reads the full request body, then resets the stream position so later middleware or model binding can read again.</summary>
-    public static async Task<ReadOnlyMemory<byte>> ReadRawBodyAsync(this HttpRequest request, CancellationToken cancellationToken = default)
+    public static async Task<ReadOnlyMemory<byte>> ReadRawBodyAsync(this HttpRequest request, CancellationToken ct = default)
     {
         request.EnableBuffering();
         request.Body.Position = 0;
         using (var ms = new MemoryStream((int)Math.Min(request.ContentLength ?? 8192, int.MaxValue))) {
-            await request.Body.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
+            await request.Body.CopyToAsync(ms, ct).ConfigureAwait(false);
             request.Body.Position = 0;
             return ms.ToArray();
         }

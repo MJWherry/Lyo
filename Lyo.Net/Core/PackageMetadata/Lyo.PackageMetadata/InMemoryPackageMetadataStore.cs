@@ -21,13 +21,13 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     }
 
     /// <inheritdoc />
-    public Task RegisterManyAsync(IReadOnlyList<PackageMetadataRegistration> registrations, CancellationToken cancellationToken = default)
+    public Task RegisterManyAsync(IReadOnlyList<PackageMetadataRegistration> registrations, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(registrations);
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
         lock (_gate) {
             foreach (var reg in registrations) {
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
                 ArgumentHelpers.ThrowIfNull(reg);
                 AddPrefixes(reg.NamespacePrefixes, reg.Package);
             }
@@ -63,7 +63,7 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     }
 
     /// <inheritdoc />
-    public ValueTask<PackageMetadata?> TryGetForFrameAsync(string namespacePrefix, string strippedMethodPrefix, CancellationToken cancellationToken = default)
+    public ValueTask<PackageMetadata?> TryGetForFrameAsync(string namespacePrefix, string strippedMethodPrefix, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(strippedMethodPrefix);
         _ = namespacePrefix;
@@ -76,21 +76,21 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
 
     /// <inheritdoc />
     public ValueTask<IReadOnlyDictionary<string, PackageMetadata?>> TryGetManyForStrippedMethodPrefixesAsync(IReadOnlyList<string> strippedMethodPrefixes,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(strippedMethodPrefixes);
-        cancellationToken.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
         var dict = new Dictionary<string, PackageMetadata?>(strippedMethodPrefixes.Count, StringComparer.Ordinal);
         if (strippedMethodPrefixes.Count == 0)
-            return new ValueTask<IReadOnlyDictionary<string, PackageMetadata?>>(dict);
+            return new(dict);
 
         (string Prefix, PackageMetadata Meta)[] snapshot;
         lock (_gate)
             snapshot = _entries.ToArray();
 
         foreach (var key in strippedMethodPrefixes) {
-            cancellationToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             ArgumentHelpers.ThrowIfNull(key);
 
             if (dict.ContainsKey(key))

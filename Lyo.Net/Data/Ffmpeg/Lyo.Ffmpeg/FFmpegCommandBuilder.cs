@@ -20,7 +20,6 @@ public sealed class FFmpegCommandBuilder
     private bool? _overwrite;
     private int? _sampleRate;
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithInput(string inputPath)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPath);
@@ -28,7 +27,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithOutput(string outputPath)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
@@ -36,7 +34,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithCodec(string codec)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(codec);
@@ -44,7 +41,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithSampleRate(int sampleRate)
     {
         ArgumentHelpers.ThrowIfNotInRange(sampleRate, 1, int.MaxValue);
@@ -52,7 +48,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithChannels(int channels)
     {
         ArgumentHelpers.ThrowIfNotInRange(channels, 1, int.MaxValue);
@@ -60,7 +55,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithFormat(string format)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(format);
@@ -68,35 +62,30 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder Overwrite()
     {
         _overwrite = true;
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder NoOverwrite()
     {
         _overwrite = false;
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder NoVideo()
     {
         _noVideo = true;
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithVideo()
     {
         _noVideo = false;
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithArgument(string argument)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(argument);
@@ -104,7 +93,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithArguments(IEnumerable<string> arguments)
     {
         ArgumentHelpers.ThrowIfNull(arguments);
@@ -116,7 +104,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FFmpegCommandBuilder WithDefaults(FfmpegOptions options)
     {
         ArgumentHelpers.ThrowIfNull(options);
@@ -135,7 +122,6 @@ public sealed class FFmpegCommandBuilder
         return this;
     }
 
-    /// <inheritdoc />
     public FfmpegCommand Build()
     {
         OperationHelpers.ThrowIfNullOrWhiteSpace(_inputPath, "Input path is required. Call WithInput().");

@@ -23,11 +23,11 @@ internal sealed class LyoPdfAnnotatorController(IJSRuntime jsRuntime) : IAsyncDi
         _moduleLock.Dispose();
     }
 
-    private async Task<IJSObjectReference> GetModuleAsync(CancellationToken cancellationToken = default)
+    private async Task<IJSObjectReference> GetModuleAsync(CancellationToken ct = default)
     {
-        await _moduleLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await _moduleLock.WaitAsync(ct).ConfigureAwait(false);
         try {
-            _module ??= await jsRuntime.InvokeAsync<IJSObjectReference>("import", cancellationToken, ModuleUrl).ConfigureAwait(false);
+            _module ??= await jsRuntime.InvokeAsync<IJSObjectReference>("import", ct, ModuleUrl).ConfigureAwait(false);
             return _module;
         }
         finally {
@@ -39,48 +39,48 @@ internal sealed class LyoPdfAnnotatorController(IJSRuntime jsRuntime) : IAsyncDi
         ElementReference iframe,
         string htmlContent,
         DotNetObjectReference<T> dotNetHelper,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
         where T : class
     {
-        var module = await GetModuleAsync(cancellationToken).ConfigureAwait(false);
-        return await module.InvokeAsync<int>("attachInlinePdfAnnotator", cancellationToken, iframe, htmlContent, dotNetHelper).ConfigureAwait(false);
+        var module = await GetModuleAsync(ct).ConfigureAwait(false);
+        return await module.InvokeAsync<int>("attachInlinePdfAnnotator", ct, iframe, htmlContent, dotNetHelper).ConfigureAwait(false);
     }
 
-    public async Task DetachInlineAnnotatorAsync(int listenerId, CancellationToken cancellationToken = default)
+    public async Task DetachInlineAnnotatorAsync(int listenerId, CancellationToken ct = default)
     {
-        var module = await GetModuleAsync(cancellationToken).ConfigureAwait(false);
-        await module.InvokeVoidAsync("detachInlinePdfAnnotator", cancellationToken, listenerId).ConfigureAwait(false);
+        var module = await GetModuleAsync(ct).ConfigureAwait(false);
+        await module.InvokeVoidAsync("detachInlinePdfAnnotator", ct, listenerId).ConfigureAwait(false);
     }
 
-    public async Task SetIframeHtmlBlobAsync(ElementReference iframe, string htmlContent, CancellationToken cancellationToken = default)
+    public async Task SetIframeHtmlBlobAsync(ElementReference iframe, string htmlContent, CancellationToken ct = default)
     {
-        var module = await GetModuleAsync(cancellationToken).ConfigureAwait(false);
-        await module.InvokeVoidAsync("setIframeHtmlBlob", cancellationToken, iframe, htmlContent).ConfigureAwait(false);
+        var module = await GetModuleAsync(ct).ConfigureAwait(false);
+        await module.InvokeVoidAsync("setIframeHtmlBlob", ct, iframe, htmlContent).ConfigureAwait(false);
     }
 
-    public async Task RequestDeleteSelectedAnnotationAsync(ElementReference iframe, CancellationToken cancellationToken = default)
+    public async Task RequestDeleteSelectedAnnotationAsync(ElementReference iframe, CancellationToken ct = default)
     {
-        var module = await GetModuleAsync(cancellationToken).ConfigureAwait(false);
-        await module.InvokeVoidAsync("requestDeleteSelectedAnnotation", cancellationToken, iframe).ConfigureAwait(false);
+        var module = await GetModuleAsync(ct).ConfigureAwait(false);
+        await module.InvokeVoidAsync("requestDeleteSelectedAnnotation", ct, iframe).ConfigureAwait(false);
     }
 
-    public async Task<IReadOnlyDictionary<string, PdfBoundingBox>> AnnotateFullscreenAsync(byte[] pdfBytes, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyDictionary<string, PdfBoundingBox>> AnnotateFullscreenAsync(byte[] pdfBytes, CancellationToken ct = default)
     {
         var base64 = Convert.ToBase64String(pdfBytes);
         var html = PdfAnnotatorHtml.GetForBlazor(base64);
-        var module = await GetModuleAsync(cancellationToken).ConfigureAwait(false);
-        var raw = await module.InvokeAsync<JsonElement>("createPdfAnnotator", cancellationToken, html).ConfigureAwait(false);
+        var module = await GetModuleAsync(ct).ConfigureAwait(false);
+        var raw = await module.InvokeAsync<JsonElement>("createPdfAnnotator", ct, html).ConfigureAwait(false);
         return ParseAnnotations(raw);
     }
 
-    public async Task<IReadOnlyDictionary<string, PdfBoundingBox>> AnnotateFullscreenAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyDictionary<string, PdfBoundingBox>> AnnotateFullscreenAsync(Stream stream, CancellationToken ct = default)
     {
         if (stream.CanSeek)
             stream.Position = 0;
 
         using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
-        return await AnnotateFullscreenAsync(ms.ToArray(), cancellationToken).ConfigureAwait(false);
+        await stream.CopyToAsync(ms, ct).ConfigureAwait(false);
+        return await AnnotateFullscreenAsync(ms.ToArray(), ct).ConfigureAwait(false);
     }
 
     public async Task AttachAnnotatorAsync(ElementReference iframe, string htmlContent, LyoPdfAnnotator component)

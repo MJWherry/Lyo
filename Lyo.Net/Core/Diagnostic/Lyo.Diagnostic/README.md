@@ -48,9 +48,11 @@ using Lyo.PackageMetadata;
 var store = new InMemoryPackageMetadataStore();
 store.Register(["Npgsql."], new PackageMetadata(
     Guid.Parse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+    PackageEcosystem.NuGet,
     "Npgsql",
     Version: "8.0.0",
-    PackageFileSha512Hex: PackageFileSha512.ComputeHex(System.Array.Empty<byte>()))); // NuGet-aligned SHA-512 of .nupkg bytes (hex)
+    ArtifactDigestAlgorithm.Sha512,
+    PackageArtifactDigest.ComputeHexSha512(System.Array.Empty<byte>())));
 services.AddDiagnosticsPackage(packageMetadataStore: store);
 ```
 

@@ -27,7 +27,7 @@ public sealed class GuildDatabaseSyncService(
     private static readonly SnowflakeLayout ChatApiSnowflakeLayout = new(22, 1420070400000L);
 
     /// <inheritdoc />
-    public async Task SyncGuildFullAsync(DiscordGuild guild, CancellationToken cancellationToken = default)
+    public async Task SyncGuildFullAsync(DiscordGuild guild, CancellationToken ct = default)
     {
         var gid = new Snowflake(guild.Id).ToInt64();
         using var scope = logger.BeginScope("GuildSync {GuildId}", gid);
@@ -38,7 +38,7 @@ public sealed class GuildDatabaseSyncService(
             var ownerMember = await TryResolveOwnerMemberAsync(guild).ConfigureAwait(false);
             var ownerReq = ownerMember != null ? MapUser(ownerMember) : MapUserStub(ownerId);
             logger.LogInformation("Upserting owner user {OwnerId} before guild row", ownerId);
-            var ownerRes = await lyoDiscordClient.Users.UpsertAsync(ownerReq, cancellationToken).ConfigureAwait(false);
+            var ownerRes = await lyoDiscordClient.Users.UpsertAsync(ownerReq, ct).ConfigureAwait(false);
             logger.LogInformation("Owner user upsert {OwnerId} -> {Result}", ownerId, ownerRes.Result);
         }
 
@@ -56,10 +56,10 @@ public sealed class GuildDatabaseSyncService(
             JoinedDate = joined
         };
 
-        var gRes = await lyoDiscordClient.Guilds.UpsertAsync(guildReq, cancellationToken).ConfigureAwait(false);
+        var gRes = await lyoDiscordClient.Guilds.UpsertAsync(guildReq, ct).ConfigureAwait(false);
         logger.LogInformation("Guild upsert {GuildId} -> {Result}", gid, gRes.Result);
         try {
-            var settings = await lyoDiscordClient.Guilds.GetSettingsAsync(gid, cancellationToken).ConfigureAwait(false) ?? new DiscordGuildSettings();
+            var settings = await lyoDiscordClient.Guilds.GetSettingsAsync(gid, ct).ConfigureAwait(false) ?? new DiscordGuildSettings();
             settings.NormalizeForRead();
             cache.SetGuildSettings(diffService, notificationPublisher, gid, settings, "guild-sync-full");
             logger.LogDebug(
@@ -78,7 +78,7 @@ public sealed class GuildDatabaseSyncService(
 
         if (channelUpserts.Count > 0) {
             logger.LogInformation("Bulk upserting {Count} channels for guild {GuildId}", channelUpserts.Count, gid);
-            var chBulk = await lyoDiscordClient.Channels.UpsertBulkAsync(channelUpserts, cancellationToken).ConfigureAwait(false);
+            var chBulk = await lyoDiscordClient.Channels.UpsertBulkAsync(channelUpserts, ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Channels bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, chBulk.CreatedCount, chBulk.UpdatedCount,
                 chBulk.NoChangeCount, chBulk.FailedCount);
@@ -92,7 +92,7 @@ public sealed class GuildDatabaseSyncService(
 
         if (roleUpserts.Count > 0) {
             logger.LogInformation("Bulk upserting {Count} roles for guild {GuildId}", roleUpserts.Count, gid);
-            var roBulk = await lyoDiscordClient.Roles.UpsertBulkAsync(roleUpserts, cancellationToken).ConfigureAwait(false);
+            var roBulk = await lyoDiscordClient.Roles.UpsertBulkAsync(roleUpserts, ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Roles bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, roBulk.CreatedCount, roBulk.UpdatedCount,
                 roBulk.NoChangeCount, roBulk.FailedCount);
@@ -115,7 +115,7 @@ public sealed class GuildDatabaseSyncService(
 
         if (emojiUpserts.Count > 0) {
             logger.LogInformation("Bulk upserting {Count} emojis for guild {GuildId}", emojiUpserts.Count, gid);
-            var emBulk = await lyoDiscordClient.Emojis.UpsertBulkAsync(emojiUpserts, cancellationToken).ConfigureAwait(false);
+            var emBulk = await lyoDiscordClient.Emojis.UpsertBulkAsync(emojiUpserts, ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Emojis bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, emBulk.CreatedCount, emBulk.UpdatedCount,
                 emBulk.NoChangeCount, emBulk.FailedCount);
@@ -144,7 +144,7 @@ public sealed class GuildDatabaseSyncService(
 
         if (userUpserts.Count > 0) {
             logger.LogInformation("Bulk upserting {Count} users for guild {GuildId}", userUpserts.Count, gid);
-            var uBulk = await lyoDiscordClient.Users.UpsertBulkAsync(userUpserts, cancellationToken).ConfigureAwait(false);
+            var uBulk = await lyoDiscordClient.Users.UpsertBulkAsync(userUpserts, ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Users bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, uBulk.CreatedCount, uBulk.UpdatedCount,
                 uBulk.NoChangeCount, uBulk.FailedCount);
@@ -152,7 +152,7 @@ public sealed class GuildDatabaseSyncService(
 
         if (memberUpserts.Count > 0) {
             logger.LogInformation("Bulk upserting {Count} members for guild {GuildId}", memberUpserts.Count, gid);
-            var mBulk = await lyoDiscordClient.Members.UpsertBulkAsync(memberUpserts, cancellationToken).ConfigureAwait(false);
+            var mBulk = await lyoDiscordClient.Members.UpsertBulkAsync(memberUpserts, ct).ConfigureAwait(false);
             logger.LogInformation(
                 "Members bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, mBulk.CreatedCount, mBulk.UpdatedCount,
                 mBulk.NoChangeCount, mBulk.FailedCount);
@@ -162,7 +162,7 @@ public sealed class GuildDatabaseSyncService(
     }
 
     /// <inheritdoc />
-    public async Task SyncGuildMetadataAsync(DiscordGuild guild, CancellationToken cancellationToken = default)
+    public async Task SyncGuildMetadataAsync(DiscordGuild guild, CancellationToken ct = default)
     {
         var gid = new Snowflake(guild.Id).ToInt64();
         var ownerId = guild.OwnerId != 0 ? new Snowflake(guild.OwnerId).ToInt64() : 0L;
@@ -182,10 +182,10 @@ public sealed class GuildDatabaseSyncService(
         };
 
         logger.LogInformation("Upserting guild metadata for {GuildId}", gid);
-        var gRes = await lyoDiscordClient.Guilds.UpsertAsync(guildReq, cancellationToken).ConfigureAwait(false);
+        var gRes = await lyoDiscordClient.Guilds.UpsertAsync(guildReq, ct).ConfigureAwait(false);
         logger.LogInformation("Guild metadata upsert {GuildId} -> {Result}", gid, gRes.Result);
         try {
-            var settings = await lyoDiscordClient.Guilds.GetSettingsAsync(gid, cancellationToken).ConfigureAwait(false) ?? new DiscordGuildSettings();
+            var settings = await lyoDiscordClient.Guilds.GetSettingsAsync(gid, ct).ConfigureAwait(false) ?? new DiscordGuildSettings();
             settings.NormalizeForRead();
             cache.SetGuildSettings(diffService, notificationPublisher, gid, settings, "guild-sync-metadata");
         }
@@ -195,7 +195,7 @@ public sealed class GuildDatabaseSyncService(
     }
 
     /// <inheritdoc />
-    public async Task SyncChannelAsync(DiscordChannel channel, CancellationToken cancellationToken = default)
+    public async Task SyncChannelAsync(DiscordChannel channel, CancellationToken ct = default)
     {
         if (channel.Guild == null) {
             logger.LogDebug("Skipping channel sync (no guild): {ChannelId}", channel.Id);
@@ -205,12 +205,12 @@ public sealed class GuildDatabaseSyncService(
         var gid = new Snowflake(channel.Guild.Id).ToInt64();
         var cReq = MapChannel(channel, gid);
         logger.LogInformation("Upserting channel {ChannelId} in guild {GuildId}", cReq.Id, gid);
-        var res = await lyoDiscordClient.Channels.UpsertAsync(cReq, cancellationToken).ConfigureAwait(false);
+        var res = await lyoDiscordClient.Channels.UpsertAsync(cReq, ct).ConfigureAwait(false);
         logger.LogInformation("Channel upsert {ChannelId} -> {Result}", cReq.Id, res.Result);
     }
 
     /// <inheritdoc />
-    public async Task SyncGuildMemberAsync(DiscordMember member, CancellationToken cancellationToken = default)
+    public async Task SyncGuildMemberAsync(DiscordMember member, CancellationToken ct = default)
     {
         if (member.Guild == null) {
             logger.LogDebug("Skipping member sync (no guild) for user {UserId}", member.Id);
@@ -221,7 +221,7 @@ public sealed class GuildDatabaseSyncService(
         var uid = new Snowflake(member.Id).ToInt64();
         var userReq = MapUser(member);
         logger.LogInformation("Upserting user {UserId} (member event)", uid);
-        var uRes = await lyoDiscordClient.Users.UpsertAsync(userReq, cancellationToken).ConfigureAwait(false);
+        var uRes = await lyoDiscordClient.Users.UpsertAsync(userReq, ct).ConfigureAwait(false);
         logger.LogInformation("User upsert {UserId} -> {Result}", uid, uRes.Result);
         var memberReq = new DiscordMemberReq {
             UserId = uid,
@@ -236,14 +236,14 @@ public sealed class GuildDatabaseSyncService(
             new ConditionClause("GuildId", ComparisonOperatorEnum.Equals, memberReq.GuildId));
 
         logger.LogInformation("Upserting member ({UserId},{GuildId})", uid, gid);
-        var mRes = await lyoDiscordClient.Members.UpsertAsync(memberReq, cancellationToken).ConfigureAwait(false);
+        var mRes = await lyoDiscordClient.Members.UpsertAsync(memberReq, ct).ConfigureAwait(false);
         logger.LogInformation("Member upsert ({UserId},{GuildId}) -> {Result}", uid, gid, mRes.Result);
     }
 
     /// <inheritdoc />
-    public Task SyncGuildEmojisAsync(DiscordGuild guild, CancellationToken cancellationToken = default) => SyncGuildEmojisCoreAsync(guild, cancellationToken);
+    public Task SyncGuildEmojisAsync(DiscordGuild guild, CancellationToken ct = default) => SyncGuildEmojisCoreAsync(guild, ct);
 
-    private async Task SyncGuildEmojisCoreAsync(DiscordGuild guild, CancellationToken cancellationToken)
+    private async Task SyncGuildEmojisCoreAsync(DiscordGuild guild, CancellationToken ct)
     {
         var gid = new Snowflake(guild.Id).ToInt64();
         IReadOnlyList<DiscordEmoji> emojisFromApi;
@@ -267,7 +267,7 @@ public sealed class GuildDatabaseSyncService(
         }
 
         logger.LogInformation("Bulk upserting {Count} emojis (emoji event) for guild {GuildId}", emojiUpserts.Count, gid);
-        var emBulk = await lyoDiscordClient.Emojis.UpsertBulkAsync(emojiUpserts, cancellationToken).ConfigureAwait(false);
+        var emBulk = await lyoDiscordClient.Emojis.UpsertBulkAsync(emojiUpserts, ct).ConfigureAwait(false);
         logger.LogInformation(
             "Emojis bulk guild {GuildId}: created={Created} updated={Updated} noChange={NoChange} failed={Failed}", gid, emBulk.CreatedCount, emBulk.UpdatedCount,
             emBulk.NoChangeCount, emBulk.FailedCount);

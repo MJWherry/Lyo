@@ -21,7 +21,7 @@ public interface IConfigApiClient : IApiClient
         string? ifNoneMatch = null,
         string? version = null,
         bool headOnly = false,
-        CancellationToken cancellationToken = default);
+        CancellationToken ct = default);
 }
 
 /// <summary>Typed HTTP client for the central Config API (ETag / <c>?version</c> polling).</summary>
@@ -54,7 +54,7 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
         string? ifNoneMatch = null,
         string? version = null,
         bool headOnly = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
             UriHelpers.ThrowIfInvalidAbsoluteUri($"api/config/{appKind}/{appId}");
@@ -70,27 +70,22 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
         if (!string.IsNullOrEmpty(ifNoneMatch))
             request.Headers.TryAddWithoutValidation("If-None-Match", ifNoneMatch);
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-
+        using var response = await HttpClient.SendAsync(request, ct).ConfigureAwait(false);
         var etag = response.Headers.ETag?.ToString();
 
         if (response.StatusCode == HttpStatusCode.NotModified)
-            return new ConfigResolveConditionalResult(ConfigResolveOutcome.NotModified, etag ?? ifNoneMatch, null);
+            return new(ConfigResolveOutcome.NotModified, etag ?? ifNoneMatch, null);
 
         if (!response.IsSuccessStatusCode)
         {
             if (_options.EnsureStatusCode)
                 response.EnsureSuccessStatusCode();
 
-            return new ConfigResolveConditionalResult(
-                ConfigResolveOutcome.Failed,
-                etag,
-                null,
-                new HttpStatusDescriptor((int)response.StatusCode, response.ReasonPhrase ?? string.Empty));
+            return new(ConfigResolveOutcome.Failed, etag, null, new((int)response.StatusCode, response.ReasonPhrase ?? string.Empty));
         }
 
         if (headOnly || response.StatusCode == HttpStatusCode.NoContent)
-            return new ConfigResolveConditionalResult(ConfigResolveOutcome.Ok, etag, null);
+            return new(ConfigResolveOutcome.Ok, etag, null);
 
 #if NETSTANDARD2_0
         ResolvedConfigRecord? resolvedDeserialized;
@@ -99,9 +94,9 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
                 await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize).ConfigureAwait(false);
         }
 #else
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         var resolvedDeserialized =
-            await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize, cancellationToken).ConfigureAwait(false);
+            await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize, ct).ConfigureAwait(false);
 #endif
 
         OperationHelpers.ThrowIfNull(resolvedDeserialized, "Resolved config deserialization returned null.");

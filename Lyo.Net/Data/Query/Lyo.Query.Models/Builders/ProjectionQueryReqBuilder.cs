@@ -113,14 +113,12 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
 
     public ProjectionQueryReqBuilder SetTotalCountMode(QueryTotalCountMode totalCountMode)
     {
-        _query.Options ??= new();
         _query.Options.TotalCountMode = totalCountMode;
         return this;
     }
 
     public ProjectionQueryReqBuilder SetIncludeFilterMode(QueryIncludeFilterMode includeFilterMode)
     {
-        _query.Options ??= new();
         _query.Options.IncludeFilterMode = includeFilterMode;
         return this;
     }
@@ -128,7 +126,6 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     /// <summary>When <c>true</c>, QueryProject zips sibling fields under the same collection into one array of objects. <c>null</c> uses API default (zip).</summary>
     public ProjectionQueryReqBuilder SetZipSiblingCollectionSelections(bool? zipSiblingCollectionSelections)
     {
-        _query.Options ??= new();
         _query.Options.ZipSiblingCollectionSelections = zipSiblingCollectionSelections ?? true;
         return this;
     }

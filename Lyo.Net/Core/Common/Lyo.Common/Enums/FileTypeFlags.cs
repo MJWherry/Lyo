@@ -190,6 +190,44 @@ public enum FileTypeFlags : long
     [Description("WebM audio file (.webm).")]
     Webm = 1L << 40,
 
+    // 📦 Package / distribution
+
+    /// <summary>NuGet package archive (.nupkg).</summary>
+    [Description("NuGet package archive (.nupkg).")]
+    Nupkg = 1L << 41,
+
+    /// <summary>NuGet symbol package archive (.snupkg).</summary>
+    [Description("NuGet symbol package archive (.snupkg).")]
+    Snupkg = 1L << 42,
+
+    /// <summary>Java archive (JAR) (.jar).</summary>
+    [Description("Java archive (JAR) (.jar).")]
+    Jar = 1L << 43,
+
+    /// <summary>Java web application archive (WAR) (.war).</summary>
+    [Description("Java web application archive (WAR) (.war).")]
+    War = 1L << 44,
+
+    /// <summary>Java enterprise archive (EAR) (.ear).</summary>
+    [Description("Java enterprise archive (EAR) (.ear).")]
+    Ear = 1L << 45,
+
+    /// <summary>Android library archive (AAR) (.aar).</summary>
+    [Description("Android library archive (AAR) (.aar).")]
+    Aar = 1L << 46,
+
+    /// <summary>Debian binary package (.deb).</summary>
+    [Description("Debian binary package (.deb).")]
+    Deb = 1L << 47,
+
+    /// <summary>RPM package (.rpm).</summary>
+    [Description("RPM package (.rpm).")]
+    Rpm = 1L << 48,
+
+    /// <summary>Windows Installer package (MSI) (.msi).</summary>
+    [Description("Windows Installer package (MSI) (.msi).")]
+    Msi = 1L << 49,
+
     // Category flags
     Images = Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif | Tiff | Webp,
     Documents = Pdf | Doc | Docx | Xls | Xlsx,
@@ -198,6 +236,8 @@ public enum FileTypeFlags : long
     Encrypted = Enc | Gpg,
     Audio = Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm,
 
+    PackageManager = Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi,
+
     All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif | Tiff | Webp | Zip | Rar | SevenZip |
-        Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm
+        Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm | Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi
 }

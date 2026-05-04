@@ -85,6 +85,11 @@ app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes,
 app.MapDynamicCrudEndpoints<JobContext>(c => c.WithDefaults(d => {
         d.BaseRoute = "api/Job";
         d.Features = ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate;
+        // Match static MapPost create hooks: dynamic CRUD has no per-entity WithCreate unless registered; ensure Guid PK is set when the client omits id.
+        d.BeforeCreate = ctx => {
+            if (ctx.Entity is JobDefinition jd && jd.Id == Guid.Empty)
+                jd.Id = Guid.NewGuid();
+        };
     })
     .IncludeOnly<JobDefinition>());
 

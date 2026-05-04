@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Text.Json.Serialization;
 
 namespace Lyo.Compression.Models;
 

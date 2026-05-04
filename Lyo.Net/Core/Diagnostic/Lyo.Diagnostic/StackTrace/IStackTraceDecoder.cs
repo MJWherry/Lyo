@@ -12,8 +12,8 @@ public interface IStackTraceDecoder
     DecodedStackTrace Decode(Exception exception);
 
     /// <summary>Decodes a raw stack-trace string. Required when <see cref="StackTraceDecoderOptions.PackageMetadataStore" /> is set.</summary>
-    Task<DecodedStackTrace> DecodeAsync(string rawTrace, CancellationToken cancellationToken = default);
+    Task<DecodedStackTrace> DecodeAsync(string rawTrace, CancellationToken ct = default);
 
     /// <summary>Decodes from a live <see cref="Exception" />, including inner exceptions. Required when <see cref="StackTraceDecoderOptions.PackageMetadataStore" /> is set.</summary>
-    Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken cancellationToken = default);
+    Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken ct = default);
 }
