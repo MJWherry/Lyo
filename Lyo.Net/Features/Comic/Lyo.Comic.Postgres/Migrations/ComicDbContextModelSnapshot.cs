@@ -106,7 +106,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("series_id");
 
                     b.Property<string>("Source")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("source");
 
                     b.Property<string>("Title")
@@ -149,11 +150,13 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("description");
 
                     b.Property<string>("ImageRef")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("image_ref");
 
                     b.Property<string>("Name")
@@ -206,7 +209,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("height");
 
                     b.Property<string>("ImageRef")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("image_ref");
 
                     b.Property<int>("PageNumber")
@@ -256,7 +260,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasConversion<string>();
 
                     b.Property<string>("CoverImageRef")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("cover_image_ref");
 
                     b.Property<DateTime>("CreatedTimestamp")
@@ -269,7 +274,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("demographic");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("description");
 
                     b.Property<string>("Language")
@@ -293,7 +299,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("slug");
 
                     b.Property<string>("Source")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("source");
 
                     b.Property<ComicStatus>("Status")
@@ -334,7 +341,8 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("CoverImageRef")
-                        .HasColumnType("text")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("cover_image_ref");
 
                     b.Property<DateTime>("CreatedTimestamp")

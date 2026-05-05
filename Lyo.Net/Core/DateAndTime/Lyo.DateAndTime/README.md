@@ -371,7 +371,6 @@ public string FormatTimeForState(DateTime utcTime, USState state)
 }
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -385,27 +384,8 @@ public string FormatTimeForState(DateTime utcTime, USState state)
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*6*). Nested types and file-scoped namespaces may omit some entries.
-
-- `DateAndTime`
-- `DateOnlyModel`
-- `DateOnlyModelConverter`
-- `HolidayDateRule`
-- `TimeOnlyModel`
-- `TimeOnlyModelConverter`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-Copyright © Lyo
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
 ## Repository
 
 [GitHub Repository](https://github.com/mjwherry/Lyo)
-

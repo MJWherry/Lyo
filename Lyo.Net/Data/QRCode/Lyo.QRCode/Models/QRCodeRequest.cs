@@ -16,5 +16,5 @@ public class QRCodeRequest
     public string? Id { get; set; }
 
     public override string ToString()
-        => $"Id: {Id ?? "(none)"}, Data: {Data?.Substring(0, Math.Min(Data?.Length ?? 0, 50))}{(Data?.Length > 50 ? "..." : "")}, Options: {Options?.ToString() ?? "(default)"}";
+        => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{(Data?.Length > 50 ? "..." : "")}, Options: {Options?.ToString() ?? "(default)"}";
 }

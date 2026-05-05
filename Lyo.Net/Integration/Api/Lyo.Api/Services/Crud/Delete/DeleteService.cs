@@ -18,6 +18,7 @@ using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Delete;
 
+/// <inheritdoc cref="IDeleteService{TContext}" />
 public class DeleteService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

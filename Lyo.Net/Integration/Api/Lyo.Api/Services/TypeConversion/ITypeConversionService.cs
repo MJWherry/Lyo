@@ -6,8 +6,10 @@ namespace Lyo.Api.Services.TypeConversion;
 /// <summary>Extends IValueConversionService with EF Core-specific methods for primary key handling.</summary>
 public interface ITypeConversionService : IValueConversionService
 {
+    /// <summary>EF model order of primary key property names for <typeparamref name="TEntity" />.</summary>
     IReadOnlyList<string> GetPrimaryKeyPropertyNames<TEntity>(DbContext context);
 
+    /// <summary>Key values for a strongly-typed entity instance in EF key order.</summary>
     IReadOnlyList<object?> GetPrimaryKeyValues<TEntity>(TEntity entity, DbContext context);
 
     /// <summary>Primary key values for any tracked or loaded entity instance (uses EF metadata; supports proxies).</summary>

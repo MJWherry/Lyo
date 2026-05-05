@@ -161,7 +161,6 @@ Console.WriteLine($"Generated {batchResult.SuccessCount}/{batchResult.TotalCount
 
 
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -180,41 +179,8 @@ Console.WriteLine($"Generated {batchResult.SuccessCount}/{batchResult.TotalCount
 
 ### Project references
 
-- `Lyo.Codes.ZXing`
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Images`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*21*). Nested types and file-scoped namespaces may omit some entries.
-
-- `BlockedModules`
-- `BuiltInQRCodeService`
-- `ColorType`
-- `Compression`
-- `Constants`
-- `ECCLevel`
-- `EciMode`
-- `IQRCodeService`
-- `IsExternalInit`
-- `Metrics`
-- `PolynumEnumerator`
-- `QRCodeBuilder`
-- `QRCodeErrorCodes`
-- `QRCodeErrorCorrectionLevel`
-- `QRCodeFormat`
-- `QRCodeIconOptions`
-- `QRCodeOptions`
-- `QRCodeRequest`
-- `QRCodeServiceExtensions`
-- `QRCodeServiceOptions`
-- `QRCodeZxingRead`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-Copyright © Lyo
-
+- [`Lyo.Codes.ZXing`](../../Codes/Lyo.Codes.ZXing/README.md)
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Images`](../../Images/Lyo.Images/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

@@ -77,7 +77,7 @@ public sealed class AwsTranslationService : TranslationServiceBase
     protected override void Dispose(bool disposing)
     {
         if (disposing && _ownsTranslateClient)
-            _translateClient?.Dispose();
+            _translateClient.Dispose();
 
         base.Dispose(disposing);
     }
@@ -101,8 +101,8 @@ public sealed class AwsTranslationService : TranslationServiceBase
 
         try {
             // AWS Translate uses ISO 639-1 (2-letter) codes
-            var targetLanguage = request.TargetLanguageCode.Iso6391 ?? request.TargetLanguageCode.Bcp47?.Split('-')[0];
-            var sourceLanguage = request.SourceLanguage?.Iso6391 ?? request.SourceLanguage?.Bcp47?.Split('-')[0];
+            var targetLanguage = request.TargetLanguageCode.Iso6391 ?? request.TargetLanguageCode.Bcp47.Split('-')[0];
+            var sourceLanguage = request.SourceLanguage?.Iso6391 ?? request.SourceLanguage?.Bcp47.Split('-')[0];
             var translateRequest = new TranslateTextRequest { Text = request.Text, SourceLanguageCode = sourceLanguage ?? "auto", TargetLanguageCode = targetLanguage };
             var response = await _translateClient.TranslateTextAsync(translateRequest, ct).ConfigureAwait(false);
             sw.Stop();

@@ -22,6 +22,7 @@ public sealed class HomeItemMovementEntity
     [MaxLength(200)]
     public string? ReferenceNumber { get; set; }
 
+    [MaxLength(8192)]
     public string? Notes { get; set; }
 
     [MaxLength(200)]

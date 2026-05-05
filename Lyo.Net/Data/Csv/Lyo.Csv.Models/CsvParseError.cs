@@ -21,6 +21,7 @@ public class CsvParseError
     /// <summary>Gets or sets the column name where the error occurred (if applicable).</summary>
     public string? ColumnName { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvParseError: RowNumber={RowNumber}, ColumnIndex={ColumnIndex?.ToString() ?? "N/A"}, ColumnName='{ColumnName ?? "N/A"}', RawRecord='{RawRecord ?? "N/A"}', Exception='{Exception.Message}'";
 }

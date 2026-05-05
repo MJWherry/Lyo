@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Lyo.Job.Postgres.Database;
 
 public class JobParallelRestriction
@@ -8,6 +10,7 @@ public class JobParallelRestriction
 
     public Guid OtherJobDefinitionId { get; set; }
 
+    [MaxLength(100)]
     public string? Description { get; set; }
 
     public bool Enabled { get; set; }

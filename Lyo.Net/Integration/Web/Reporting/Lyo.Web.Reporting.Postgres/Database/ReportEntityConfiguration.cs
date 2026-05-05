@@ -12,7 +12,7 @@ public sealed class ReportEntityConfiguration : IEntityTypeConfiguration<ReportE
         builder.Property(e => e.Id).IsRequired().HasColumnName("id");
         builder.Property(e => e.Name).HasMaxLength(500).IsRequired().HasColumnName("name");
         builder.Property(e => e.Description).HasMaxLength(2000).HasColumnName("description");
-        builder.Property(e => e.ReportDataJson).IsRequired().HasColumnName("report_data_json");
+        builder.Property(e => e.ReportDataJson).IsRequired().HasMaxLength(32_768).HasColumnName("report_data_json");
         builder.Property(e => e.ParameterTypeName).HasMaxLength(500).HasColumnName("parameter_type_name");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");

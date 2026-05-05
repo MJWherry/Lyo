@@ -9,12 +9,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Services.Crud;
 
-/// <summary>PostgreSQL: runs set-returning functions via <c>SELECT * FROM schema.func(@a, @b, …)</c>, maps rows with <see cref="ILyoMapper" />, and caches like the legacy MSSQL path.</summary>
+/// <inheritdoc cref="ISprocService" />
+/// <remarks>
+/// PostgreSQL: runs set-returning functions via <c>SELECT * FROM schema.func(@a, @b, …)</c>, maps rows with <see cref="ILyoMapper" />, and caches like the legacy MSSQL path.
+/// </remarks>
 public sealed class PostgresSprocService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,
     ICacheService cache,
-    ILogger<PostgresSprocService<TContext>> logger) : ISprocService<TContext>
+    ILogger<PostgresSprocService<TContext>> logger) : ISprocService
     where TContext : DbContext
 {
     private static readonly Regex SprocNameRegex = new(@"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$", RegexOptions.Compiled | RegexOptions.CultureInvariant);

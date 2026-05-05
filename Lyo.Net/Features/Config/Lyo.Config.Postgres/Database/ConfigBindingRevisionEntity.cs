@@ -12,8 +12,9 @@ public sealed class ConfigBindingRevisionEntity
     /// <summary>1-based, unique per binding.</summary>
     public int Revision { get; set; }
 
-    [Column(TypeName = "jsonb")]
     [Required]
+    [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string ValueJson { get; set; } = "null";
 
     [Required]

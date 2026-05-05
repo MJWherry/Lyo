@@ -67,10 +67,10 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
                     loadedAny = true;
                     _projectionQuery = loaded.QueryRequest;
                     _entityQuery = loaded.EntityQuery ?? FromProjectionSharedFields(_projectionQuery);
-                    _includeAll = loaded.IncludeAll ?? [];
-                    _selectAll = loaded.SelectAll ?? [];
-                    _keysAll = loaded.KeysAll ?? [];
-                    _runConfig = QueryWorkbenchHostNormalization.NormalizeRun(loaded.Run ?? new QueryWorkbenchRunConfiguration());
+                    _includeAll = loaded.IncludeAll;
+                    _selectAll = loaded.SelectAll;
+                    _keysAll = loaded.KeysAll;
+                    _runConfig = QueryWorkbenchHostNormalization.NormalizeRun(loaded.Run);
                     _trackedRunMode = _runConfig.RunMode;
                     _runRestoreKey++;
                 }
@@ -129,30 +129,30 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
     private void OnEntityFormRequestChanged(QueryReq request)
     {
         _entityQuery = request;
-        _includeAll = request.Include?.ToList() ?? [];
+        _includeAll = request.Include.ToList();
         SchedulePersist();
     }
 
     private void OnProjectionFormRequestChanged(ProjectionQueryReq request)
     {
         _projectionQuery = request;
-        _selectAll = request.Select?.ToList() ?? [];
+        _selectAll = request.Select.ToList();
         SchedulePersist();
     }
 
     private void OnRunPanelEntityRequestChanged(QueryReq request)
     {
         _entityQuery = request;
-        _includeAll = request.Include?.ToList() ?? [];
-        _keysAll = request.Keys?.Select(FormatKeySet).ToList() ?? [];
+        _includeAll = request.Include.ToList();
+        _keysAll = request.Keys.Select(FormatKeySet).ToList();
         SchedulePersist();
     }
 
     private void OnRunPanelProjectionRequestChanged(ProjectionQueryReq request)
     {
         _projectionQuery = request;
-        _selectAll = request.Select?.ToList() ?? [];
-        _keysAll = request.Keys?.Select(FormatKeySet).ToList() ?? [];
+        _selectAll = request.Select.ToList();
+        _keysAll = request.Keys.Select(FormatKeySet).ToList();
         SchedulePersist();
     }
 
@@ -211,9 +211,8 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.Amount = source.Amount;
         target.Keys = CloneKeyRows(source.Keys);
         target.WhereClause = source.WhereClause;
-        target.Include = source.Include?.ToList() ?? [];
-        target.SortBy = source.SortBy?.ToList() ?? [];
-        target.Options ??= new();
+        target.Include = source.Include.ToList();
+        target.SortBy = source.SortBy.ToList();
         target.Options.TotalCountMode = source.Options.TotalCountMode;
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
     }
@@ -224,9 +223,8 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
         target.Amount = source.Amount;
         target.Keys = CloneKeyRows(source.Keys);
         target.WhereClause = source.WhereClause;
-        target.Include = source.Include?.ToList() ?? [];
-        target.SortBy = source.SortBy?.ToList() ?? [];
-        target.Options ??= new();
+        target.Include = source.Include.ToList();
+        target.SortBy = source.SortBy.ToList();
         target.Options.TotalCountMode = source.Options.TotalCountMode;
         target.Options.IncludeFilterMode = source.Options.IncludeFilterMode;
     }

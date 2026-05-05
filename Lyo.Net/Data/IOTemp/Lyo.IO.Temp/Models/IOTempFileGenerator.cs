@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.IO.Temp.Models;
 
+/// <inheritdoc />
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempFileGenerator : IIOTempFileGenerator
 {
@@ -35,6 +36,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region Random-bytes files
 
+    /// <inheritdoc />
     public string CreateRandomFile(long sizeBytes, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -57,8 +59,10 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public string CreateRandomFile(FileSizeUnitInfo unit, double amount, string? name = null) => CreateRandomFile(unit.ConvertToBytes(amount), name);
 
+    /// <inheritdoc />
     public IReadOnlyList<string> CreateRandomFiles(int count, long sizeBytes)
     {
         _ctx.ThrowIfDisposed();
@@ -70,8 +74,10 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         return paths;
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<string> CreateRandomFiles(int count, FileSizeUnitInfo unit, double amount) => CreateRandomFiles(count, unit.ConvertToBytes(amount));
 
+    /// <inheritdoc />
     public async Task<string> CreateRandomFileAsync(long sizeBytes, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -93,9 +99,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public Task<string> CreateRandomFileAsync(FileSizeUnitInfo unit, double amount, string? name = null, CancellationToken ct = default)
         => CreateRandomFileAsync(unit.ConvertToBytes(amount), name, ct);
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> CreateRandomFilesAsync(int count, long sizeBytes, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -109,9 +117,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         return paths;
     }
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<string>> CreateRandomFilesAsync(int count, FileSizeUnitInfo unit, double amount, CancellationToken ct = default)
         => CreateRandomFilesAsync(count, unit.ConvertToBytes(amount), ct);
 
+    /// <inheritdoc />
     public IReadOnlyList<string> CreateRandomFiles(int count, long sizeBytes, Func<int, string> nameSelector)
     {
         _ctx.ThrowIfDisposed();
@@ -124,6 +134,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         return paths;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<string>> CreateRandomFilesAsync(int count, long sizeBytes, Func<int, string> nameSelector, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -142,6 +153,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region Compressed archives
 
+    /// <inheritdoc />
     public string CreateZipFile(TempDirectorySpec spec, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -180,6 +192,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public Task<string> CreateZipFileAsync(TempDirectorySpec spec, string? name = null, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
@@ -224,6 +237,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region Structured content files
 
+    /// <inheritdoc />
     public string CreateTextFile(int lines, int charsPerLine, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -249,6 +263,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateTextFileAsync(int lines, int charsPerLine, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -274,6 +289,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public string CreateCsvFile(int rows, int columns, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -299,6 +315,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateCsvFileAsync(int rows, int columns, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -324,6 +341,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public string CreateJsonFile(int depth, int keysPerObject, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -349,6 +367,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateJsonFileAsync(int depth, int keysPerObject, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -378,6 +397,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region Directory simulation
 
+    /// <inheritdoc />
     public string SimulateDirectory(TempDirectorySpec spec, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -400,8 +420,10 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public string SimulateDirectory(int fileCount, long fileSizeBytes, string? name = null) => SimulateDirectory(TempDirectorySpec.Flat(fileCount, fileSizeBytes), name);
 
+    /// <inheritdoc />
     public async Task<string> SimulateDirectoryAsync(TempDirectorySpec spec, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -424,9 +446,11 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public Task<string> SimulateDirectoryAsync(int fileCount, long fileSizeBytes, string? name = null, CancellationToken ct = default)
         => SimulateDirectoryAsync(TempDirectorySpec.Flat(fileCount, fileSizeBytes), name, ct);
 
+    /// <inheritdoc />
     public string CreateDirectoryTree(int depth, int filesPerDirectory, long fileSizeBytes, int dirsPerLevel = 2, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -450,6 +474,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public Task<string> CreateDirectoryTreeAsync(int depth, int filesPerDirectory, long fileSizeBytes, int dirsPerLevel = 2, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -465,6 +490,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region XML content files
 
+    /// <inheritdoc />
     public string CreateXmlFile(int depth, int keysPerObject, string? name = null)
     {
         _ctx.ThrowIfDisposed();
@@ -490,6 +516,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateXmlFileAsync(int depth, int keysPerObject, string? name = null, CancellationToken ct = default)
     {
         _ctx.ThrowIfDisposed();
@@ -519,6 +546,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
 #region Zip extraction
 
+    /// <inheritdoc />
     public string ExtractZipFile(string zipPath, string? targetDirName = null)
     {
         _ctx.ThrowIfDisposed();
@@ -584,6 +612,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         }
     }
 
+    /// <inheritdoc />
     public Task<string> ExtractZipFileAsync(string zipPath, string? targetDirName = null, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();

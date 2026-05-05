@@ -13,7 +13,7 @@ public sealed class HomeCategoryEntityConfiguration : IEntityTypeConfiguration<H
         builder.Property(e => e.ParentCategoryId).HasColumnName("parent_category_id").HasColumnType("uuid");
         builder.Property(e => e.Name).HasMaxLength(300).IsRequired().HasColumnName("name");
         builder.Property(e => e.Slug).HasMaxLength(200).HasColumnName("slug");
-        builder.Property(e => e.Description).HasColumnName("description");
+        builder.Property(e => e.Description).HasMaxLength(8192).HasColumnName("description");
         builder.Property(e => e.SortOrder).HasColumnName("sort_order");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");

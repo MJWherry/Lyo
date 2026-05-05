@@ -2,7 +2,6 @@
 
 PostgreSQL implementation of `Lyo.Config` for storing typed config definitions by entity type and config bindings by `EntityRef`.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -20,26 +19,6 @@ PostgreSQL implementation of `Lyo.Config` for storing typed config definitions b
 
 ### Project references
 
-- `Lyo.Config`
-- `Lyo.Health`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*12*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ConfigBindingEntity`
-- `ConfigBindingEntityConfiguration`
-- `ConfigBindingRevisionEntity`
-- `ConfigBindingRevisionEntityConfiguration`
-- `ConfigDbContext`
-- `ConfigDbContextFactory`
-- `ConfigDefinitionEntity`
-- `ConfigDefinitionEntityConfiguration`
-- `Extensions`
-- `InitialCreate`
-- `PostgresConfigOptions`
-- `PostgresConfigStore`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Config`](../Lyo.Config/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

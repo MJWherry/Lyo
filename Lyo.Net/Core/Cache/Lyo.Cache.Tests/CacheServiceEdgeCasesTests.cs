@@ -167,7 +167,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
 
         // Second call should use cache
         var cached = await service.GetOrSetAsync<TestModels.TestEntity>(
-            key, ct => {
+            key, _ => {
                 callCount++;
                 return Task.FromResult<TestModels.TestEntity>(new() { Id = 2 })!;
             }, typeof(TestModels.TestEntity), token: TestContext.Current.CancellationToken);

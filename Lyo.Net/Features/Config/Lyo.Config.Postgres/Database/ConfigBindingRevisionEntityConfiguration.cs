@@ -11,7 +11,7 @@ public sealed class ConfigBindingRevisionEntityConfiguration : IEntityTypeConfig
         builder.HasKey(e => new { e.BindingId, e.Revision });
         builder.Property(e => e.BindingId).IsRequired().HasColumnName("binding_id").HasColumnType("uuid");
         builder.Property(e => e.Revision).IsRequired().HasColumnName("revision");
-        builder.Property(e => e.ValueJson).HasColumnName("value_json").HasColumnType("jsonb");
+        builder.Property(e => e.ValueJson).HasColumnName("value_json").HasColumnType("jsonb").HasMaxLength(8192).IsRequired();
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.HasOne(e => e.Binding).WithMany().HasForeignKey(e => e.BindingId).OnDelete(DeleteBehavior.Cascade);
     }

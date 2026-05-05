@@ -295,8 +295,8 @@ namespace Lyo.Job.Postgres.Migrations
                     job_run_id = table.Column<Guid>(type: "uuid", nullable: false),
                     level = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
                     message = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    context = table.Column<string>(type: "text", nullable: true),
-                    stack_trace = table.Column<string>(type: "text", nullable: true),
+                    context = table.Column<string>(type: "character varying(16384)", maxLength: 16384, nullable: true),
+                    stack_trace = table.Column<string>(type: "character varying(16384)", maxLength: 16384, nullable: true),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -343,7 +343,7 @@ namespace Lyo.Job.Postgres.Migrations
                     job_run_id = table.Column<Guid>(type: "uuid", nullable: false),
                     key = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     type = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    value = table.Column<string>(type: "text", nullable: true)
+                    value = table.Column<string>(type: "character varying(16384)", maxLength: 16384, nullable: true)
                 },
                 constraints: table =>
                 {

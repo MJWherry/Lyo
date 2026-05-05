@@ -49,7 +49,7 @@ internal static class PipelineBuilder
 
     private static IMetrics GetMetrics(IServiceProvider serviceProvider)
     {
-        var metrics = serviceProvider?.GetService(typeof(IMetrics)) as IMetrics;
+        var metrics = serviceProvider.GetService(typeof(IMetrics)) as IMetrics;
         return metrics ?? NullMetrics.Instance;
     }
 
@@ -63,7 +63,7 @@ internal static class PipelineBuilder
                 metrics.RecordError(Constants.Metrics.Retry, args.Outcome.Exception, tags);
 
             logger?.LogWarning(args.Outcome.Exception, "Resilience: Retry attempt {Attempt} after {Delay}ms", args.AttemptNumber, args.RetryDelay.TotalMilliseconds);
-            return originalOnRetry != null ? originalOnRetry(args) : default;
+            return originalOnRetry?.Invoke(args) ?? default;
         };
     }
 
@@ -74,7 +74,7 @@ internal static class PipelineBuilder
         options.OnTimeout = args => {
             metrics.IncrementCounter(Constants.Metrics.Timeout, tags: tags);
             logger?.LogWarning("Resilience: Operation timed out after {Timeout}ms", args.Timeout.TotalMilliseconds);
-            return originalOnTimeout != null ? originalOnTimeout(args) : default;
+            return originalOnTimeout?.Invoke(args) ?? default;
         };
     }
 
@@ -88,21 +88,21 @@ internal static class PipelineBuilder
                 metrics.RecordError(Constants.Metrics.CircuitBreakerOpened, args.Outcome.Exception, tags);
 
             logger?.LogWarning(args.Outcome.Exception, "Resilience: Circuit breaker opened");
-            return originalOnOpened != null ? originalOnOpened(args) : default;
+            return originalOnOpened?.Invoke(args) ?? default;
         };
 
         var originalOnClosed = options.OnClosed;
         options.OnClosed = args => {
             metrics.IncrementCounter(Constants.Metrics.CircuitBreakerClosed, tags: tags);
             logger?.LogInformation("Resilience: Circuit breaker closed");
-            return originalOnClosed != null ? originalOnClosed(args) : default;
+            return originalOnClosed?.Invoke(args) ?? default;
         };
 
         var originalOnHalfOpened = options.OnHalfOpened;
         options.OnHalfOpened = args => {
             metrics.IncrementCounter(Constants.Metrics.CircuitBreakerHalfOpened, tags: tags);
             logger?.LogInformation("Resilience: Circuit breaker half-opened, testing");
-            return originalOnHalfOpened != null ? originalOnHalfOpened(args) : default;
+            return originalOnHalfOpened?.Invoke(args) ?? default;
         };
     }
 
@@ -122,9 +122,9 @@ internal static class PipelineBuilder
                 .Handle<RetryableResultException>()
         };
 
-        var loggerFactory = serviceProvider?.GetService(typeof(ILoggerFactory)) as ILoggerFactory;
+        var loggerFactory = serviceProvider.GetService(typeof(ILoggerFactory)) as ILoggerFactory;
         var logger = loggerFactory?.CreateLogger($"Lyo.Resilience.{pipelineName}");
-        var metrics = GetMetrics(serviceProvider!);
+        var metrics = GetMetrics(serviceProvider);
         ConfigureRetry(retryOptions, logger, metrics, pipelineName);
         builder.AddRetry(retryOptions);
         var timeoutOptions = new TimeoutStrategyOptions { Timeout = TimeSpan.FromSeconds(30) };

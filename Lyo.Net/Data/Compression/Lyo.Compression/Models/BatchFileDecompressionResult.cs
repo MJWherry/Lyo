@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Compression.Models;
 
+/// <summary>Aggregated outcome of batch file decompress APIs on <see cref="ICompressionService" />.</summary>
 [DebuggerDisplay("{ToString()}")]
 public sealed record BatchFileDecompressionResult(IReadOnlyList<FileDecompressionInfo> SuccessfulFiles, IReadOnlyList<FailedFileOperation> FailedFiles)
 {

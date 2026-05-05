@@ -13,8 +13,10 @@ public sealed class CharacterEntity
     [MaxLength(500)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(8192)]
     public string? Description { get; set; }
 
+    [MaxLength(512)]
     public string? ImageRef { get; set; }
 
     [MaxLength(50)]

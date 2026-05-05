@@ -44,7 +44,6 @@ var mb = Utilities.ConvertFromBytes(sizeBytes, FileSizeUnit.Megabytes);
 var path = Utilities.GetPropertyPath(x => x.Address.Street); // "Address.Street"
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -60,76 +59,4 @@ var path = Utilities.GetPropertyPath(x => x.Address.Street); // "Address.Street"
 
 ### Project references
 
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*64*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AsyncResultExtensions`
-- `AudioFormat`
-- `CardinalDirection`
-- `CollectionExtensions`
-- `CountryCode`
-- `Day`
-- `DayFlags`
-- `DisabilityStatus`
-- `Disposable`
-- `EducationLevel`
-- `Ensure`
-- `ErrorBuilder`
-- `ErrorSeverity`
-- `Ethnicity`
-- `ExceptionExtensions`
-- `Extensions`
-- `FederalFilingStatus`
-- `FileSizeUnit`
-- `FileTypeCategory`
-- `FileTypeFlags`
-- `GenericComparer`
-- `HttpStatusCodeCategory`
-- `ImageFormat`
-- `IsExternalInit`
-- `LanguageCodeInfoJsonConverter`
-- `MaritalStatus`
-- `MimeType`
-- `Month`
-- `MonthFlags`
-- `NamePrefix`
-- `NameSuffix`
-- `NullableLanguageCodeInfoJsonConverter`
-- `Option`
-- `PhoneType`
-- `Race`
-- `RegexPatterns`
-- `Religion`
-- `ResultBuilder`
-- `ResultExtensions`
-- `ResultLoggingExtensions`
-- `ResultVoid`
-- `Sex`
-- `SocialPlatform`
-- `SortDirection`
-- `StringDateTimeConverter`
-- `StringDecimalConverter`
-- `StringDoubleConverter`
-- `StringEnumConverter`
-- `StringIntBoolConverter`
-- `StringIntBoolNullableConverter`
-- `StringIntConverter`
-- `StringIntNullableConverter`
-- `StringLongConverter`
-- `StringLongNullableConverter`
-- `StringValueAttribute`
-- `TaskExtensions`
-- `TaskResult`
-- `Unit`
-- `USState`
-- `Utilities`
-- `ValidationErrorCodes`
-- `ValidationHelpers`
-- `VeteranStatus`
-- `YesNo`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

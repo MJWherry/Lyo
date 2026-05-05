@@ -28,9 +28,9 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     /// <param name="degreeOfParallelism">Degree of parallelism (number of threads). Default is 4 per RFC 9106 recommendation.</param>
     public Argon2KeyDerivationService(int memorySize = 65536, int defaultIterations = 3, int degreeOfParallelism = 4)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(memorySize, 8, int.MaxValue, nameof(memorySize));
-        ArgumentHelpers.ThrowIfNullOrNotInRange(defaultIterations, 1, int.MaxValue, nameof(defaultIterations));
-        ArgumentHelpers.ThrowIfNullOrNotInRange(degreeOfParallelism, 1, int.MaxValue, nameof(degreeOfParallelism));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(memorySize, 8, int.MaxValue);
+        ArgumentHelpers.ThrowIfNullOrNotInRange(defaultIterations, 1, int.MaxValue);
+        ArgumentHelpers.ThrowIfNullOrNotInRange(degreeOfParallelism, 1, int.MaxValue);
         _defaultMemorySize = memorySize;
         _defaultIterations = defaultIterations;
         _defaultDegreeOfParallelism = degreeOfParallelism;

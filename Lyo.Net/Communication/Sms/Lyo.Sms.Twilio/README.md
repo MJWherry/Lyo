@@ -339,13 +339,11 @@ public class SmsNotificationService
         var bulkResult = args.BulkSmsResult;
         Console.WriteLine($"Bulk SMS completed: {bulkResult.SuccessCount}/{bulkResult.TotalCount} successful in {bulkResult.ElapsedTime.TotalSeconds:F2}s");
         
-        if (failureCount > 0)
+        if (bulkResult.FailureCount > 0)
         {
-            Console.WriteLine($"  Failures: {failureCount}");
-            foreach (var result in args.Results.Where(r => !r.IsSuccess))
-            {
-                Console.WriteLine($"    - {result.To}: {result.ErrorMessage}");
-            }
+            Console.WriteLine($"  Failures: {bulkResult.FailureCount}");
+            foreach (var r in bulkResult.FailedResults)
+                Console.WriteLine($"    - {r.Data?.To}: {string.Join("; ", r.Errors?.Select(e => e.Message) ?? [])}");
         }
     }
 }
@@ -515,7 +513,6 @@ If validation fails, an `OptionsValidationException` or `InvalidOperationExcepti
 
 
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -537,23 +534,5 @@ If validation fails, an `OptionsValidationException` or `InvalidOperationExcepti
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Sms`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*7*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `IsExternalInit`
-- `Metrics`
-- `TwilioOptions`
-- `TwilioOptionsValidator`
-- `TwilioSmsService`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Sms`](../Lyo.Sms/README.md)

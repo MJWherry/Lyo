@@ -3,6 +3,17 @@
 A production-ready .NET encryption library providing secure, authenticated encryption with support for multiple
 algorithms, key management, and envelope encryption patterns.
 
+## Documentation map (this folder)
+
+| Document | Scope |
+|----------|--------|
+| **`README.md` (this file)** | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions. |
+| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)** | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
+| **[`Lyo.Keystore/README.md`](Lyo.Keystore/README.md)** | **`Lyo.Keystore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts. |
+| **[`Lyo.Keystore.Aws/README.md`](Lyo.Keystore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation. |
+
+Start here for narrative and threat-modeling context; use the per-project READMEs when you only care about one package’s surface area.
+
 ## 📑 Table of Contents
 
 - [Features](#-features)
@@ -982,15 +993,6 @@ Each operation uses its own cryptographic context (nonce, key material).
 - See XML documentation in code for detailed API documentation
 - See test projects for usage examples
 
-## 🤝 Contributing
-
-This is a production library. Before making changes:
-
-1. Review the security implications
-2. Ensure thread safety
-3. Add comprehensive tests
-4. Update documentation
-
 ## 🔧 Advanced Usage
 
 ### Custom Encoding
@@ -1052,10 +1054,6 @@ await service.DecryptToStreamAsync(encryptedInput, decryptedOutput, keyId: keyId
 - **Memory Efficient**: Only chunks are buffered, not entire files
 - **Header Support**: Two-key encryption includes structured headers with `EncryptionHeader` helper
 
-## 📄 License
-
-Lyo is licensed under the [Apache License, Version 2.0](../../../LICENSE). See the repository root for the full text and copyright line.
-
 ## 🙏 Acknowledgments
 
 Built with security best practices in mind, following:
@@ -1065,7 +1063,6 @@ Built with security best practices in mind, following:
 - RFC 9106 (Argon2)
 - NIST SP 800-57 (RSA key sizes)
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -1085,43 +1082,7 @@ Built with security best practices in mind, following:
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Keystore`
-- `Lyo.Streams`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*representative list*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AesCcmEncryptionService`
-- `AesGcmEncryptionService`
-- `AesGcmHelper`
-- `AesGcmRsaEncryptionService`
-- `AesSivEncryptionService`
-- `ChaCha20Poly1305EncryptionService`
-- `ChaCha20Poly1305Helper`
-- `DecryptionFailedException`
-- `EncryptionAlgorithm`
-- `EncryptionAlgorithmDiscovery`
-- `EncryptionErrorCodes`
-- `EncryptionException`
-- `EncryptionHeader`
-- `EncryptionHeaderVersion`
-- `EncryptionServiceBase`
-- `EncryptionServiceExtensions`
-- `EncryptionServiceOptions`
-- `IEncryptionService`
-- `ISymmetricKeyMaterialSize`
-- `ITwoKeyEncryptionService`
-- `NonceGenerator`
-- `RsaEncryptionService`
-- `RsaKeyLoader`
-- `SecurityUtilities`
-- `StreamFormatVersion`
-- `TwoKeyDekValidation`
-- `TwoKeyEncryptionService`
-- `XChaCha20Poly1305EncryptionService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Keystore`](Lyo.Keystore/README.md)
+- [`Lyo.Streams`](../../Core/Streams/Lyo.Streams/README.md)

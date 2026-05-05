@@ -30,7 +30,7 @@ public sealed class ResilienceHttpHandler : DelegatingHandler
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
         try {
             var pipeline = _pipelineProvider.GetPipeline(_pipelineName);
-            var response = await pipeline.ExecuteAsync(async ct => await base.SendAsync(request, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            var response = await pipeline.ExecuteAsync(async ct2 => await base.SendAsync(request, ct2).ConfigureAwait(false), ct).ConfigureAwait(false);
             _metrics.IncrementCounter(Constants.Metrics.ExecutionSuccess, tags: tags);
             return response;
         }

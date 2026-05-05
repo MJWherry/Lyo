@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <summary>Create-or-update by key with optional separate create/update hooks (single and bulk).</summary>
 public interface IUpsertService<TContext>
     where TContext : DbContext
 {

@@ -103,7 +103,6 @@ await ratingStore.RemoveReactionAsync(ratingRef, EntityRef.ForKey("User", userId
 - **rating.rating_reaction** – `id`, `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `reaction_type`, `created_timestamp`
 - Unique on (for_entity_type, for_entity_id, from_entity_type, from_entity_id, subject)
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -121,25 +120,7 @@ await ratingStore.RemoveReactionAsync(ratingRef, EntityRef.ForKey("User", userId
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Postgres`
-- `Lyo.Rating`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*10*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `InitialCreate`
-- `PostgresRatingOptions`
-- `PostgresRatingStore`
-- `RatingDbContext`
-- `RatingDbContextFactory`
-- `RatingEntity`
-- `RatingEntityConfiguration`
-- `RatingReactionEntity`
-- `RatingReactionEntityConfiguration`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- [`Lyo.Rating`](../Lyo.Rating/README.md)

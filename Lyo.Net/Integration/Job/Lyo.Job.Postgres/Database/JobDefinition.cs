@@ -1,15 +1,24 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Lyo.Job.Postgres.Database;
 
 public class JobDefinition
 {
     public Guid Id { get; set; }
 
+    [Required]
+    [MaxLength(100)]
     public string Name { get; set; } = null!;
 
+    [MaxLength(100)]
     public string? Description { get; set; }
 
+    [Required]
+    [MaxLength(25)]
     public string Type { get; set; } = null!;
 
+    [Required]
+    [MaxLength(7)]
     public string WorkerType { get; set; } = null!;
 
     public bool Enabled { get; set; }

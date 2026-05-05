@@ -14,6 +14,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Compression;
 
+/// <summary>Default <see cref="ICompressionService" /> implementation backed by EasyCompressor adapters, with optional <see cref="Lyo.Metrics.IMetrics" /> emission.</summary>
+/// <remarks>
+/// <para>
+/// The compressor and algorithm are fixed after construction. Safe to resolve as a singleton and call concurrently; batch APIs use parallel workers bounded by
+/// <see cref="CompressionServiceOptions.MaxParallelFileOperations" />.
+/// </para>
+/// </remarks>
 public sealed class CompressionService : ICompressionService
 {
     private const string CompressorName = "CompressionService";
@@ -631,7 +638,7 @@ public sealed class CompressionService : ICompressionService
             // Determine chunk size based on file size
             var chunkSize = StreamChunkSizeHelper.DetermineChunkSize(inputFilePath);
             await AtomicFileOperationAsync(
-                    outputFilePath, async (tempFilePath, ct) => {
+                    outputFilePath, async (tempFilePath, ct2) => {
 #if NETSTANDARD2_0 && !NETSTANDARD2_1
                         using var inputStream = CreateAsyncReadStream(inputFilePath);
                         using var outputStream = CreateAsyncWriteStream(tempFilePath);
@@ -639,7 +646,7 @@ public sealed class CompressionService : ICompressionService
                         await using var inputStream = CreateAsyncReadStream(inputFilePath);
                         await using var outputStream = CreateAsyncWriteStream(tempFilePath);
 #endif
-                        await DecompressAsync(inputStream, outputStream, chunkSize, ct).ConfigureAwait(false);
+                        await DecompressAsync(inputStream, outputStream, chunkSize, ct2).ConfigureAwait(false);
                     }, ct)
                 .ConfigureAwait(false);
 

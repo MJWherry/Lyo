@@ -73,18 +73,18 @@ curl -sSI "http://localhost:5088/api/config/gateway/prod-west?version=A1B2C3D4..
 
 Requires the same auth as the rest of **`/api/config`** when **`ConfigApiSecurity.RequireApiKey`** is true (`X-Api-Key` or `Authorization: Bearer`).
 
-| Method | Path | Notes |
-|--------|------|------|
-| GET | `/definitions` | Lists definitions for **`App`**. |
-| PUT | `/definitions` | Body: `ConfigDefinitionRecord` (`forEntityType` should be **`App`**). |
-| DELETE | `/definitions/{definitionId}` | |
-| PUT | `/bindings` | Body: `ConfigBindingRecord` (`forEntityType` **`App`**, `forEntityId` **`kind:id`** e.g. `gateway:prod-west`). |
-| DELETE | `/bindings/{bindingId}` | |
-| GET | `/bindings/{bindingId}/revisions` | |
-| POST | `/bindings/{bindingId}/revert` | Body: `{ "revision": <int> }` |
-| GET | `/apps/{appKind}/{appId}/bindings` | Convenience list for one app identity. |
-| GET | `/apps/{appKind}/{appId}/bindings/{key}/revisions` | |
-| POST | `/apps/{appKind}/{appId}/bindings/{key}/revert` | Body: `{ "revision": <int> }` |
+| Method | Path                                               | Notes                                                                                                          |
+|--------|----------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| GET    | `/definitions`                                     | Lists definitions for **`App`**.                                                                               |
+| PUT    | `/definitions`                                     | Body: `ConfigDefinitionRecord` (`forEntityType` should be **`App`**).                                          |
+| DELETE | `/definitions/{definitionId}`                      |                                                                                                                |
+| PUT    | `/bindings`                                        | Body: `ConfigBindingRecord` (`forEntityType` **`App`**, `forEntityId` **`kind:id`** e.g. `gateway:prod-west`). |
+| DELETE | `/bindings/{bindingId}`                            |                                                                                                                |
+| GET    | `/bindings/{bindingId}/revisions`                  |                                                                                                                |
+| POST   | `/bindings/{bindingId}/revert`                     | Body: `{ "revision": <int> }`                                                                                  |
+| GET    | `/apps/{appKind}/{appId}/bindings`                 | Convenience list for one app identity.                                                                         |
+| GET    | `/apps/{appKind}/{appId}/bindings/{key}/revisions` |                                                                                                                |
+| POST   | `/apps/{appKind}/{appId}/bindings/{key}/revert`    | Body: `{ "revision": <int> }`                                                                                  |
 
 ## Configuration (`appsettings`)
 

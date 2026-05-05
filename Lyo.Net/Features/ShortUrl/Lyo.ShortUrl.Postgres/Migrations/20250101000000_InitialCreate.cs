@@ -20,7 +20,7 @@ namespace Lyo.ShortUrl.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    long_url = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: false),
+                    long_url = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     custom_alias = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -44,7 +44,7 @@ namespace Lyo.ShortUrl.Postgres.Migrations
                     clicked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ip_address = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
                     user_agent = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    referrer = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true)
+                    referrer = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true)
                 },
                 constraints: table =>
                 {

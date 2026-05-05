@@ -21,8 +21,10 @@ public class CsvColumn
     /// <summary>Gets or sets an optional error message to use when validation fails.</summary>
     public string? ValidationErrorMessage { get; set; }
 
+    /// <summary>Initializes an empty column definition.</summary>
     public CsvColumn() { }
 
+    /// <summary>Initializes a column with name, required flag, and optional validator.</summary>
     public CsvColumn(string name, bool required, Func<string, bool>? validator)
     {
         Name = name;
@@ -30,6 +32,7 @@ public class CsvColumn
         Validator = validator;
     }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvColumn: Name='{Name}', ExpectedType='{ExpectedType?.Name ?? "Any"}', Required={Required}, HasValidator={Validator != null}, ValidationErrorMessage='{ValidationErrorMessage}'";
 }

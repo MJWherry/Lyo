@@ -4,6 +4,7 @@ using Lyo.Compression.Models;
 using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -880,6 +881,31 @@ public class CompressionServiceTests : IDisposable
         var provider = services.BuildServiceProvider();
         var svc = provider.GetRequiredService<ICompressionService>();
         Assert.NotNull(svc);
+    }
+
+    [Fact]
+    public void AddCompressionServiceFromConfiguration_BindsSectionToOptions()
+    {
+        var settings = new Dictionary<string, string?> { ["CompressionService:DefaultAlgorithm"] = nameof(CompressionAlgorithm.GZip) };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings!).Build();
+        var services = new ServiceCollection();
+        services.AddCompressionServiceFromConfiguration(configuration);
+        var provider = services.BuildServiceProvider();
+        var svc = provider.GetRequiredService<ICompressionService>();
+        Assert.Equal(CompressionAlgorithm.GZip, svc.Algorithm);
+    }
+
+    [Fact]
+    public void AddCompressionServiceKeyed_UsesPerKeyAlgorithm()
+    {
+        var services = new ServiceCollection();
+        services.AddCompressionServiceKeyed("a", o => o.DefaultAlgorithm = CompressionAlgorithm.GZip);
+        services.AddCompressionServiceKeyed("b", o => o.DefaultAlgorithm = CompressionAlgorithm.Deflate);
+        var provider = services.BuildServiceProvider();
+        var gzipSvc = provider.GetRequiredKeyedService<ICompressionService>("a");
+        var deflateSvc = provider.GetRequiredKeyedService<ICompressionService>("b");
+        Assert.Equal(CompressionAlgorithm.GZip, gzipSvc.Algorithm);
+        Assert.Equal(CompressionAlgorithm.Deflate, deflateSvc.Algorithm);
     }
 
     [Fact]

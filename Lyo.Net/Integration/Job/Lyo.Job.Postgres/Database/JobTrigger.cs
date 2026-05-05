@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Lyo.Job.Postgres.Database;
 
 public class JobTrigger
@@ -8,12 +10,18 @@ public class JobTrigger
 
     public Guid TriggersJobDefinitionId { get; set; }
 
+    [Required]
+    [MaxLength(25)]
     public string TriggerJobResultKey { get; set; } = null!;
 
+    [Required]
+    [MaxLength(20)]
     public string TriggerComparator { get; set; } = null!;
 
+    [MaxLength(50)]
     public string? TriggerJobResultValue { get; set; }
 
+    [MaxLength(100)]
     public string? Description { get; set; }
 
     public bool Enabled { get; set; }

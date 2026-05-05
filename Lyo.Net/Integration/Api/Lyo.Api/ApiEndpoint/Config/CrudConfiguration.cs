@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
+/// <summary>Hooks, per-endpoint authorization, delete includes, metadata options, and patch property rules for a typed CRUD group (use with <c>WithCrud</c>).</summary>
 public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
     where TDbContext : DbContext where TDbEntity : class
 {

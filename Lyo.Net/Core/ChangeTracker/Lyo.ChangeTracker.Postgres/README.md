@@ -31,7 +31,6 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 - `change_tracker.changes` stores target `EntityRef`, optional actor `EntityRef`, JSON old values, JSON changed values, and timestamps
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -48,23 +47,7 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 ### Project references
 
-- `Lyo.ChangeTracker`
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ChangeEntryEntity`
-- `ChangeEntryEntityConfiguration`
-- `ChangeTrackerDbContext`
-- `ChangeTrackerDbContextFactory`
-- `Extensions`
-- `InitialCreate`
-- `PostgresChangeTracker`
-- `PostgresChangeTrackerOptions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.ChangeTracker`](../Lyo.ChangeTracker/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

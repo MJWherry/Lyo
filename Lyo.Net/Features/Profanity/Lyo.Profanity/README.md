@@ -60,7 +60,6 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 | PreserveBoundary | "bad" → "b*d"               |
 | DetectOnly       | No replacement; only detect |
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -81,24 +80,6 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*10*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `FileProfanityFilterOptions`
-- `FileProfanityFilterService`
-- `IProfanityFilterService`
-- `IsExternalInit`
-- `LanguageWordSourceConfig`
-- `Metrics`
-- `ProfanityFilterOptions`
-- `ProfanityReplacementStrategy`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

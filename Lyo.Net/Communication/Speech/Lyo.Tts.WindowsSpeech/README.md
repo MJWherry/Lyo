@@ -81,7 +81,6 @@ var testResult = await ttsService.TestConnectionAsync();
 - The library uses Windows SAPI which is only available on Windows
 - Audio output format is always WAV when using Windows Speech Synthesis
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -97,20 +96,7 @@ var testResult = await ttsService.TestConnectionAsync();
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Tts`
-- `Lyo.Tts.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*5*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `Metrics`
-- `WindowsSpeechTtsService`
-- `WindowsTtsRequest`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Tts`](../Lyo.Tts/README.md)
+- [`Lyo.Tts.Models`](../Lyo.Tts.Models/README.md)

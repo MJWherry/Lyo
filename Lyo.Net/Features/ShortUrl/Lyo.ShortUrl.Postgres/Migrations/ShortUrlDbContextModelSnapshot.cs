@@ -65,8 +65,8 @@ namespace Lyo.ShortUrl.Postgres.Migrations
 
                     b.Property<string>("LongUrl")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
                         .HasColumnName("long_url");
 
                     b.HasKey("Id");
@@ -110,8 +110,8 @@ namespace Lyo.ShortUrl.Postgres.Migrations
                         .HasColumnName("ip_address");
 
                     b.Property<string>("Referrer")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("referrer");
 
                     b.Property<string>("ShortUrlId")

@@ -34,7 +34,7 @@ public class Pbkdf2KeyDerivationService : IKeyDerivationService
     public byte[] DeriveKey(byte[] password, byte[]? salt = null, int iterations = DefaultIterations, int? keySizeBytes = null)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(password);
-        ArgumentHelpers.ThrowIfNullOrNotInRange(iterations, 600000, int.MaxValue, nameof(iterations));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(iterations, 600000, int.MaxValue);
         var actualKeySize = keySizeBytes ?? DefaultKeySize;
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualKeySize, 16, 64, nameof(keySizeBytes));
         var actualSalt = salt ?? CryptographicRandom.GetBytes(DefaultSaltSize);

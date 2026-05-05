@@ -28,7 +28,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         context.ContactSubmissions.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        Logger?.LogInformation("Contact form submitted: {Id} from {Email}", id, request.Email);
+        Logger.LogInformation("Contact form submitted: {Id} from {Email}", id, request.Email);
         return ContactUsSubmitResult.FromSuccess(id);
     }
 
@@ -40,7 +40,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
             return await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
-            Logger?.LogError(ex, "Contact form database connection test failed");
+            Logger.LogError(ex, "Contact form database connection test failed");
             return false;
         }
     }

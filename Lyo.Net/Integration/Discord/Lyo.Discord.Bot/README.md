@@ -88,7 +88,6 @@ public sealed class MyBot : LyoDiscordBotBase
 
 The database schema itself lives in **Lyo.Discord.Postgres**; this package only drives sync through the API.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -115,47 +114,8 @@ The database schema itself lives in **Lyo.Discord.Postgres**; this package only 
 
 ### Project references
 
-- `Lyo.Cache`
-- `Lyo.Common`
-- `Lyo.Diff`
-- `Lyo.Discord.Client`
-- `Lyo.Notification`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*31*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Cache`
-- `Channel`
-- `Channels`
-- `ConnectedDiscordClientAccessor`
-- `Constants`
-- `DiscordCommandException`
-- `DiscordCommandHelpers`
-- `Extensions`
-- `GuildDatabaseSyncService`
-- `GuildDiscordNotificationService`
-- `GuildSettingsChangedNotification`
-- `GuildSettingsChangedNotificationHandler`
-- `GuildSettingsEmbedBuilder`
-- `GuildSettingsSlashCommands`
-- `GuildSlashSettings`
-- `IGuildDatabaseSyncService`
-- `IGuildDiscordNotificationService`
-- `Info`
-- `LyoDiscordBot`
-- `LyoDiscordBotBase`
-- `LyoDiscordBotOptions`
-- `Role`
-- `Roles`
-- `ServiceCollectionExtensions`
-- `SetAdminRole`
-- `SetCommandChannel`
-- `SetLogChannel`
-- `SetModRole`
-- `Settings`
-- `Show`
-- `SlashCommandErrorResponder`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Diff`](../../../Core/Diff/Lyo.Diff/README.md)
+- [`Lyo.Discord.Client`](../Lyo.Discord.Client/README.md)
+- [`Lyo.Notification`](../../../Core/Notification/Lyo.Notification/README.md)

@@ -337,16 +337,17 @@ public static class QueryCacheTagBuilder
                 return;
 
             if (navigation.IsCollection) {
-                if (raw is IEnumerable enumerable && raw is not string && raw is not byte[]) {
-                    foreach (var el in enumerable) {
-                        var childDict = AsReadOnlyStringDictionary(el);
-                        if (childDict is null)
-                            continue;
+                if (raw is not IEnumerable enumerable || raw is string || raw is byte[])
+                    return;
 
-                        TryAddDictEntityTag(childDict, targetType);
-                        if (!isLast)
-                            WalkProjectionInclude(childDict, targetType, segments, index + 1);
-                    }
+                foreach (var el in enumerable) {
+                    var childDict = AsReadOnlyStringDictionary(el);
+                    if (childDict is null)
+                        continue;
+
+                    TryAddDictEntityTag(childDict, targetType);
+                    if (!isLast)
+                        WalkProjectionInclude(childDict, targetType, segments, index + 1);
                 }
             }
             else {

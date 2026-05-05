@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Services.Crud.Read.Project;
 
-/// <summary>Resolves projection specs, builds projection expressions, and projects entities to selected fields.</summary>
+/// <inheritdoc cref="IProjectionService" />
 public sealed class ProjectionService(IFormatterService? formatterService = null, ILogger<ProjectionService>? logger = null) : IProjectionService
 {
     /// <summary>Bare dotted path used as template without braces</summary>

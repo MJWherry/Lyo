@@ -21,6 +21,7 @@ using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <inheritdoc cref="IUpsertService{TContext}" />
 public class UpsertService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

@@ -186,6 +186,34 @@ public sealed class PostgresPackageMetadataStoreTests(ITestOutputHelper output) 
     }
 
     [Fact]
+    public async Task RegisterManyAsync_Persists_LicenseExpressionSyntaxJson_From_LicenseExpression()
+    {
+        Assert.NotNull(_factory);
+        var store = new PostgresPackageMetadataStore(_factory);
+        var id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var reg = new PackageMetadataRegistration(
+            ["SpdxDemo."],
+            new PackageMetadata(id, PackageEcosystem.NuGet, "SpdxDemo", Version: "1.0",
+                LicenseExpression: "MIT OR Apache-2.0"));
+
+        await store.RegisterManyAsync([reg], TestContext.Current.CancellationToken);
+
+        await using var ctx = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entity = await ctx.Packages.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, TestContext.Current.CancellationToken);
+        Assert.NotNull(entity);
+        Assert.Equal("MIT OR Apache-2.0", entity.LicenseExpression);
+        Assert.NotNull(entity.LicenseExpressionSyntaxJson);
+        Assert.Contains("\"kind\":\"or\"", entity.LicenseExpressionSyntaxJson, StringComparison.Ordinal);
+        Assert.Contains("MIT", entity.LicenseExpressionSyntaxJson, StringComparison.Ordinal);
+        Assert.Contains("Apache-2.0", entity.LicenseExpressionSyntaxJson, StringComparison.Ordinal);
+
+        var meta = await store.TryGetForFrameAsync("", "SpdxDemo.My.Type.M", TestContext.Current.CancellationToken);
+        Assert.NotNull(meta);
+        Assert.Equal("or", meta.LicenseExpressionSyntax!.Kind);
+        Assert.Equal("MIT", meta.LicenseExpressionSyntax.Left!.Identifier);
+    }
+
+    [Fact]
     public async Task RegisterManyAsync_Upserts_Package_And_Prefixes()
     {
         Assert.NotNull(_factory);

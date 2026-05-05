@@ -53,7 +53,7 @@ public class BuilderTests
         Assert.DoesNotContain("errorCode", json);
         var back = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
         Assert.NotNull(back);
-        Assert.Equal(original.Detail, back!.Detail);
+        Assert.Equal(original.Detail, back.Detail);
         Assert.NotEmpty(back.Errors);
         Assert.Single(back.Errors);
         Assert.Equal(Constants.ApiErrorCodes.InvalidSelectField, back.Errors[0].Code);
@@ -75,7 +75,7 @@ public class BuilderTests
         var options = LyoJsonSerializerOptions.Create();
         var back = JsonSerializer.Deserialize<LyoProblemDetails>(json, options);
         Assert.NotNull(back);
-        Assert.True(back!.Errors is null or { Count: 0 });
+        Assert.True(back.Errors is null or { Count: 0 });
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Lyo.Exceptions;
 
 namespace Lyo.Streams;

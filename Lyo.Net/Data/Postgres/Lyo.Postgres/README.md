@@ -15,7 +15,6 @@ with `EnableAutoMigrations = true`, migrations run at **host startup** via `IHos
 
 Ensure your application uses a host (e.g. `Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`).
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -37,15 +36,4 @@ Ensure your application uses a host (e.g. `Host.CreateDefaultBuilder()` or `WebA
 
 ### Project references
 
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*3*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `IPostgresMigrationConfig`
-- `PostgresMigrationHostedService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Lyo.HomeInventory.Postgres.Database;
 
@@ -21,8 +22,10 @@ public sealed class HomeItemEntity
     [MaxLength(500)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(8192)]
     public string? Description { get; set; }
 
+    [MaxLength(8192)]
     public string? Notes { get; set; }
 
     public int Status { get; set; }
@@ -108,6 +111,8 @@ public sealed class HomeItemEntity
     [MaxLength(120)]
     public string? BatchNumber { get; set; }
 
+    [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? CustomAttributesJson { get; set; }
 
     [Required]

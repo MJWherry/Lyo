@@ -25,7 +25,6 @@ var result = await mq.CheckHealthAsync();
 
 Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`—health comes from the service, no separate registration.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -39,14 +38,4 @@ Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend
 
 ### Project references
 
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*2*). Nested types and file-scoped namespaces may omit some entries.
-
-- `HealthResult`
-- `IHealth`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

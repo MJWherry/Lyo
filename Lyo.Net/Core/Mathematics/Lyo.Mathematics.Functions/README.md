@@ -33,7 +33,6 @@ var qr = LinearAlgebraFunctions.QrDecomposition(new double[,]
 
 Use `MathematicsFormulaRegistry.All` when you want a searchable list of the higher-value production formulas exposed by the library.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -47,29 +46,5 @@ Use `MathematicsFormulaRegistry.All` when you want a searchable list of the high
 
 ### Project references
 
-- `Lyo.Mathematics`
-- `Lyo.Scientific`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*16*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AlgebraFunctions`
-- `ArithmeticFunctions`
-- `CalculusFunctions`
-- `ComplexFunctions`
-- `DistributionsFunctions`
-- `FinancialFunctions`
-- `GeometryFunctions`
-- `internal`
-- `InterpolationFunctions`
-- `LinearAlgebraFunctions`
-- `OptimizationFunctions`
-- `PhysicsFunctions`
-- `SignalFunctions`
-- `StatisticsFunctions`
-- `TransformFunctions`
-- `TrigonometryFunctions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Mathematics`](../Lyo.Mathematics/README.md)
+- [`Lyo.Scientific`](../../Scientific/Lyo.Scientific/README.md)

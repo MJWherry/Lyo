@@ -277,7 +277,6 @@ Two-key (envelope) encryption adds overhead but enables key rotation:
 
 For detailed benchmark results, see [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md).
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -293,18 +292,5 @@ For detailed benchmark results, see [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.m
 
 ### Project references
 
-- `Lyo.Encryption`
-- `Lyo.Keystore`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*5*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AesGcmEncryptionBenchmarks`
-- `AlgorithmComparisonBenchmarks`
-- `ChaCha20Poly1305EncryptionBenchmarks`
-- `LargeFileStreamingBenchmarks`
-- `TwoKeyEncryptionBenchmarks`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Encryption`](../Lyo.Encryption/README.md)
+- [`Lyo.Keystore`](../Lyo.Keystore/README.md)

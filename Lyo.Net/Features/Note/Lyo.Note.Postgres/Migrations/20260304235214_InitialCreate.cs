@@ -24,7 +24,7 @@ namespace Lyo.Note.Postgres.Migrations
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     from_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
+                    content = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: false),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

@@ -5,6 +5,20 @@ public sealed class InMemoryPackageMetadataStoreTests
     private static readonly Guid PkgId = Guid.Parse("f47ac10b-58cc-4372-a567-0e02b2c3d479");
 
     [Fact]
+    public async Task Register_Normalizes_LicenseExpressionSyntax_From_LicenseExpression()
+    {
+        var store = new InMemoryPackageMetadataStore();
+        var meta = new PackageMetadata(PkgId, PackageEcosystem.NuGet, "MyPkg", Version: "1.0", LicenseExpression: "MIT OR Apache-2.0");
+        store.Register(["LicDemo."], meta);
+
+        var result = await store.TryGetForFrameAsync("", "LicDemo.Types.T", TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal("or", result.LicenseExpressionSyntax!.Kind);
+        Assert.Equal("MIT", result.LicenseExpressionSyntax.Left!.Identifier);
+        Assert.Equal("Apache-2.0", result.LicenseExpressionSyntax.Right!.Identifier);
+    }
+
+    [Fact]
     public async Task TryGetForFrameAsync_ReturnsMetadata_When_Prefix_Matches()
     {
         var store = new InMemoryPackageMetadataStore();

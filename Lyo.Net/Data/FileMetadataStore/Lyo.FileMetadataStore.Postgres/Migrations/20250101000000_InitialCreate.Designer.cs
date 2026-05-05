@@ -28,9 +28,11 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
 
             modelBuilder.Entity("Lyo.FileMetadataStore.Models.FileMetadataEntity", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<string>("Id")
+                        .IsRequired()
                         .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnName("id")
+                        .HasConversion(new ValueConverter<string, Guid>(v => Guid.Parse(v), v => v.ToString()));
 
                     b.Property<string>("Availability")
                         .HasMaxLength(32)
@@ -152,6 +154,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("tenant_id");
 
                     b.Property<DateTime>("Timestamp")
+                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
 
@@ -175,7 +178,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
             modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.FileAuditEventEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                        .IsRequired()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -207,8 +210,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
-                        .HasColumnName("event_type")
-                        .HasJsonPropertyName("event_type");
+                        .HasColumnName("event_type");
 
                     b.Property<Guid?>("FileId")
                         .HasColumnType("uuid")
@@ -218,8 +220,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
-                        .HasColumnName("outcome")
-                        .HasJsonPropertyName("outcome");
+                        .HasColumnName("outcome");
 
                     b.Property<string>("TenantId")
                         .HasMaxLength(256)
@@ -227,9 +228,9 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("tenant_id");
 
                     b.Property<DateTime>("Timestamp")
+                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp")
-                        .HasJsonPropertyName("timestamp");
+                        .HasColumnName("timestamp");
 
                     b.HasKey("Id");
 
@@ -251,7 +252,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
             modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.FileDataEntity", b =>
                 {
                     b.Property<Guid>("FileId")
-                        .ValueGeneratedOnAdd()
+                        .IsRequired()
                         .HasColumnType("uuid")
                         .HasColumnName("file_id");
 
@@ -272,11 +273,12 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
             modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.MultipartUploadSessionEntity", b =>
                 {
                     b.Property<Guid>("SessionId")
-                        .ValueGeneratedOnAdd()
+                        .IsRequired()
                         .HasColumnType("uuid")
                         .HasColumnName("session_id");
 
                     b.Property<bool>("Compress")
+                        .IsRequired()
                         .HasColumnType("boolean")
                         .HasColumnName("compress");
 
@@ -286,6 +288,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("content_type");
 
                     b.Property<DateTime>("CreatedUtc")
+                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_utc");
 
@@ -294,10 +297,12 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("declared_content_length");
 
                     b.Property<bool>("Encrypt")
+                        .IsRequired()
                         .HasColumnType("boolean")
                         .HasColumnName("encrypt");
 
                     b.Property<DateTime>("ExpiresUtc")
+                        .IsRequired()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_utc");
 
@@ -312,6 +317,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("original_file_name");
 
                     b.Property<int>("PartSizeBytes")
+                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("part_size_bytes");
 
@@ -321,19 +327,23 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnName("path_prefix");
 
                     b.Property<int>("ProviderKind")
+                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("provider_kind");
 
                     b.Property<string>("ProviderState")
                         .IsRequired()
+                        .HasMaxLength(8192)
                         .HasColumnType("text")
                         .HasColumnName("provider_state");
 
                     b.Property<int>("Status")
+                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
                     b.Property<Guid>("TargetFileId")
+                        .IsRequired()
                         .HasColumnType("uuid")
                         .HasColumnName("target_file_id");
 

@@ -12,6 +12,7 @@ public sealed class PageEntity
     [Required]
     public int PageNumber { get; set; }
 
+    [MaxLength(512)]
     public string? ImageRef { get; set; }
 
     public int? Width { get; set; }

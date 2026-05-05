@@ -11,12 +11,18 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Middleware;
 
+/// <summary>
+/// Logs each request (debug) with trace id, user email (when present), path, and query string; logs response status. Catches unhandled exceptions and writes
+/// <see cref="Lyo.Api.Models.Error.LyoProblemDetails" /> as JSON (500). <see cref="Lyo.Exceptions.LFException" /> is surfaced as a warning-level problem.
+/// </summary>
 //todo actually read body and log as debug
 //todo if problem details from some type of validation, inject our own error
 public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> logger, IHostEnvironment environment)
 {
+    /// <summary>Invokes the next middleware, wrapping logging and exception handling.</summary>
     public async Task Invoke(HttpContext context)
     {
+        _ = environment;
         using (LogRequest(context)) {
             var sanitizedQueryString = Utilities.SanitizeUri(context.Request.QueryString.Value);
             logger.LogDebug(

@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
+/// <inheritdoc cref="IQueryHistoryService" />
 public class QueryHistoryService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     QueryOptions queryOptions,
@@ -21,7 +22,7 @@ public class QueryHistoryService<TContext>(
     IWhereClauseService filterService,
     ILogger<QueryHistoryService<TContext>>? logger = null,
     IMetrics? metrics = null)
-    : BaseService<TContext>(contextFactory, mapper, logger, metrics), IQueryHistoryService<TContext>
+    : BaseService<TContext>(contextFactory, mapper, logger, metrics), IQueryHistoryService
     where TContext : DbContext
 {
     public async Task<QueryHistoryResults<HistoryResult<TResult>>> QueryHistory<TDbModel, TResult>(

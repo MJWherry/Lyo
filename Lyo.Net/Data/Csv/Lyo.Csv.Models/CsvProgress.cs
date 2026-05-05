@@ -18,5 +18,6 @@ public class CsvProgress
     /// <summary>Gets or sets the current operation description.</summary>
     public string? Operation { get; set; }
 
+    /// <inheritdoc />
     public override string ToString() => $"CsvProgress: RowsProcessed={RowsProcessed}, TotalRows={TotalRows}, Percentage={Percentage:F2}%, Operation='{Operation ?? "N/A"}'";
 }

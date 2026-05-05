@@ -40,15 +40,15 @@ public class PersonName
             var parts = new List<string>();
             if (Prefix.HasValue) {
                 var prefixDesc = Prefix.Value.GetDescription();
-                if (!string.IsNullOrEmpty(prefixDesc))
-                    parts.Add(prefixDesc!);
+                if (!prefixDesc.IsNullOrEmpty())
+                    parts.Add(prefixDesc);
             }
 
             parts.Add(FullName);
             if (Suffix.HasValue) {
                 var suffixDesc = Suffix.Value.GetDescription();
-                if (!string.IsNullOrEmpty(suffixDesc))
-                    parts.Add(suffixDesc!);
+                if (!suffixDesc.IsNullOrEmpty())
+                    parts.Add(suffixDesc);
             }
 
             return string.Join(" ", parts);

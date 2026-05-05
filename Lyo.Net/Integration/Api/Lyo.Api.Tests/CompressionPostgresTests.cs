@@ -60,7 +60,7 @@ public class CompressionPostgresTests : IDisposable
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
-        Assert.True(result!.IsSuccess);
+        Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
         Assert.Equal("CompressionQueryTarget", result.Items[0].Name);

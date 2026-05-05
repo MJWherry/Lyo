@@ -50,7 +50,6 @@ var connected = await shortUrlService.TestConnectionAsync(ct);
 - `SetCustomAlias(alias)` – Optional custom slug
 - `SetExpirationDate(date)` – Optional expiration
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -69,25 +68,6 @@ var connected = await shortUrlService.TestConnectionAsync(ct);
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*11*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `IShortUrlGenerator`
-- `IShortUrlService`
-- `Metrics`
-- `ShortUrlErrorCodes`
-- `ShortUrlGenerator`
-- `ShortUrlService`
-- `ShortUrlServiceBase`
-- `ShortUrlServiceOptions`
-- `UrlShortenBuilder`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

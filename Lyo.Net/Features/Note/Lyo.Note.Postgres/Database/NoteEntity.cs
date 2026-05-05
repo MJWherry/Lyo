@@ -31,6 +31,7 @@ public sealed class NoteEntity
 
     /// <summary>Gets or sets the note content.</summary>
     [Required]
+    [MaxLength(8192)]
     public string Content { get; set; } = string.Empty;
 
     /// <summary>Gets or sets when the note was created.</summary>

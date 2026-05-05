@@ -498,7 +498,7 @@ public partial class LyoDataGridProjected
             queryBuilder.AddWhere(queryNode);
 
         queryBuilder.AddSelects(SelectFields.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).Distinct().ToArray());
-        if (_dataGrid?.SortDefinitions?.Any() == true) {
+        if (_dataGrid.SortDefinitions?.Any() == true) {
             var sortedDefinitions = _dataGrid.SortDefinitions.Values.OrderBy(s => s.Index).ToList();
             for (var i = 0; i < sortedDefinitions.Count; i++) {
                 var sort = sortedDefinitions[i];

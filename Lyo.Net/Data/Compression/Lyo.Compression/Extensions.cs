@@ -5,30 +5,31 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Compression;
 
+/// <summary>Registers <see cref="CompressionService" /> and <see cref="ICompressionService" /> with Microsoft.Extensions.DependencyInjection.</summary>
 public static class Extensions
 {
-    /// <param name="services">The service collection</param>
+    /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Adds compression service to the service collection with default options.</summary>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>Adds <see cref="CompressionServiceOptions" /> (defaults) and <see cref="ICompressionService" /> as singletons.</summary>
+        /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionService()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddSingleton<CompressionServiceOptions>(_ => new());
+            services.AddSingleton(_ => new CompressionServiceOptions());
             services.AddSingleton<CompressionService>();
             services.AddSingleton<ICompressionService>(provider => provider.GetRequiredService<CompressionService>());
             return services;
         }
 
-        /// <summary>Adds compression service to the service collection.</summary>
-        /// <param name="configure">Action to configure the options</param>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>Adds <see cref="ICompressionService" /> with a singleton <see cref="CompressionServiceOptions" /> configured once via <paramref name="configure" />.</summary>
+        /// <param name="configure">Mutates options once at registration time.</param>
+        /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionService(Action<CompressionServiceOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configure);
-            services.AddSingleton<CompressionServiceOptions>(_ => {
+            services.AddSingleton(_ => {
                 var options = new CompressionServiceOptions();
                 configure(options);
                 return options;
@@ -39,30 +40,33 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds compression service to the service collection using configuration binding.</summary>
-        /// <param name="configuration">The configuration instance</param>
-        /// <param name="configSectionName">The configuration section name (defaults to "CompressionService")</param>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>
+        /// Binds <paramref name="configuration" /><c>.</c><paramref name="configSectionName" /> to a singleton <see cref="CompressionServiceOptions" />, then registers
+        /// <see cref="CompressionService" />.
+        /// </summary>
+        /// <param name="configuration">Application configuration root.</param>
+        /// <param name="configSectionName">Section containing <see cref="CompressionServiceOptions" /> keys (default <c>CompressionService</c>).</param>
+        /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionServiceFromConfiguration(IConfiguration configuration, string configSectionName = "CompressionService")
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            services.AddOptions<CompressionServiceOptions>(configSectionName)
-                .Configure<IConfiguration>((options, config) => {
-                    config.GetSection(configSectionName).Bind(options);
-                })
-                .ValidateOnStart();
+            services.AddSingleton(_ => {
+                var options = new CompressionServiceOptions();
+                configuration.GetSection(configSectionName).Bind(options);
+                return options;
+            });
 
             services.AddSingleton<CompressionService>();
             services.AddSingleton<ICompressionService>(provider => provider.GetRequiredService<CompressionService>());
             return services;
         }
 
-        /// <summary>Adds compression service to the service collection as a keyed service.</summary>
-        /// <param name="keyedServiceName">The key name for the keyed service</param>
-        /// <param name="configure">Optional action to configure the options</param>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>Registers keyed <see cref="CompressionServiceOptions" />, <see cref="CompressionService" />, and <see cref="ICompressionService" /> for multi-tenant or multi-policy scenarios.</summary>
+        /// <param name="keyedServiceName">Non-empty DI key shared across the three registrations.</param>
+        /// <param name="configure">Optional per-key options mutation.</param>
+        /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddCompressionServiceKeyed(string keyedServiceName, Action<CompressionServiceOptions>? configure = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -74,8 +78,16 @@ public static class Extensions
                     return options;
                 });
 
-            services.AddKeyedSingleton<CompressionService>(keyedServiceName);
-            services.AddKeyedSingleton<ICompressionService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
+            services.AddKeyedSingleton<CompressionService>(
+                keyedServiceName,
+                (provider, key) => new CompressionService(
+                    provider.GetService<Microsoft.Extensions.Logging.ILogger<CompressionService>>(),
+                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
+                    provider.GetService<Lyo.Metrics.IMetrics>()));
+
+            services.AddKeyedSingleton<ICompressionService>(
+                keyedServiceName,
+                (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
             return services;
         }
     }

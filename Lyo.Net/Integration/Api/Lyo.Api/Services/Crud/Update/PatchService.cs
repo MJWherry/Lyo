@@ -20,6 +20,7 @@ using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <inheritdoc cref="IPatchService{TContext}" />
 public class PatchService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,
@@ -323,7 +324,7 @@ public class PatchService<TContext>(
                     // Process all matching entities
                     var patchedEntities = new List<TDbModel>();
                     foreach (var entity in entities) {
-                        var patchResult = PatchEntityProperties<TDbModel, TResult>(entity, request);
+                        _ = PatchEntityProperties<TDbModel, TResult>(entity, request);
                         patchedEntities.Add(entity);
                     }
 

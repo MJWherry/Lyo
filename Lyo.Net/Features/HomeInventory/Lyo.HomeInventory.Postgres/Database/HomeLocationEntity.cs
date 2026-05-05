@@ -16,6 +16,7 @@ public sealed class HomeLocationEntity
     [MaxLength(100)]
     public string? Code { get; set; }
 
+    [MaxLength(8192)]
     public string? Description { get; set; }
 
     public bool IsActive { get; set; } = true;

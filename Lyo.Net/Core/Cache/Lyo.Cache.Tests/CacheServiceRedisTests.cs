@@ -147,7 +147,7 @@ public class CacheServiceRedisTests : IAsyncLifetime
         await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Should call factory (cache expired)
-        var result = await _cacheService.GetOrSetAsync<string>(key, ct => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken);
+        var result = await _cacheService.GetOrSetAsync<string>(key, _ => Task.FromResult("new-value")!, token: TestContext.Current.CancellationToken);
         Assert.Equal("new-value", result);
     }
 

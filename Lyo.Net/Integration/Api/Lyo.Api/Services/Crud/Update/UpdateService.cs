@@ -19,6 +19,7 @@ using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <inheritdoc cref="IUpdateService{TContext}" />
 public class UpdateService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

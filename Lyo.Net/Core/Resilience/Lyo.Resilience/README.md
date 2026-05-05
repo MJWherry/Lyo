@@ -225,7 +225,6 @@ When `ILoggerFactory` is registered, the library logs:
 
 Logger category: `Lyo.Resilience.{PipelineName}`
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -246,22 +245,5 @@ Logger category: `Lyo.Resilience.{PipelineName}`
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*9*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `HttpExtensions`
-- `IResilientExecutor`
-- `Metrics`
-- `PipelineNames`
-- `ResilienceHttpHandler`
-- `ResilientExecutor`
-- `RetryableResultException`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)

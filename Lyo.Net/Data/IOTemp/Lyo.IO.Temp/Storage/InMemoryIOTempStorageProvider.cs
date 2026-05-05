@@ -12,20 +12,24 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
 {
     private readonly ConcurrentDictionary<string, Entry> _store = new(StringComparer.Ordinal);
 
+    /// <summary>Initializes an in-memory store with a unique synthetic <see cref="RootPath" />.</summary>
     public InMemoryIOTempStorageProvider()
     {
         RootPath = $"/mem/lyo-{Guid.NewGuid():N}";
         _store[Normalize(RootPath)] = new() { IsDirectory = true };
     }
 
+    /// <inheritdoc />
     public string RootPath { get; }
 
+    /// <inheritdoc />
     public bool DirectoryExists(string path)
     {
         var n = Normalize(path);
         return _store.TryGetValue(n, out var e) && e.IsDirectory;
     }
 
+    /// <inheritdoc />
     public void CreateDirectory(string path)
     {
         var n = Normalize(path);
@@ -43,6 +47,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         }
     }
 
+    /// <inheritdoc />
     public void DeleteDirectory(string path)
     {
         var n = Normalize(path) + "/";
@@ -50,6 +55,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
             _store.TryRemove(key, out var _);
     }
 
+    /// <inheritdoc />
     public IEnumerable<ProviderEntryInfo> EnumerateEntries(string path)
     {
         var n = Normalize(path);
@@ -66,16 +72,19 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         }
     }
 
+    /// <inheritdoc />
     public void EnsureDirectoryAccessible(string path)
     { /* always accessible in-memory */
     }
 
+    /// <inheritdoc />
     public bool FileExists(string path)
     {
         var n = Normalize(path);
         return _store.TryGetValue(n, out var e) && !e.IsDirectory;
     }
 
+    /// <inheritdoc />
     public void TouchFile(string path)
     {
         var n = Normalize(path);
@@ -83,6 +92,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         _store[n] = new() { IsDirectory = false, Content = [] };
     }
 
+    /// <inheritdoc />
     public void WriteAllBytes(string path, byte[] data)
     {
         var n = Normalize(path);
@@ -91,8 +101,10 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         entry.Content = data;
     }
 
+    /// <inheritdoc />
     public void WriteAllText(string path, string text, Encoding encoding) => WriteAllBytes(path, encoding.GetBytes(text));
 
+    /// <inheritdoc />
     public void AppendAllText(string path, string text, Encoding encoding)
     {
         var n = Normalize(path);
@@ -109,6 +121,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
             });
     }
 
+    /// <inheritdoc />
     public void DeleteFile(string path)
     {
         var n = Normalize(path);
@@ -116,6 +129,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
             _store.TryRemove(n, out var _);
     }
 
+    /// <inheritdoc />
     public void MoveFile(string source, string dest)
     {
         var srcN = Normalize(source);
@@ -127,6 +141,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         _store[dstN] = entry;
     }
 
+    /// <inheritdoc />
     public void CopyFile(string source, string dest)
     {
         var srcN = Normalize(source);
@@ -138,6 +153,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         _store[dstN] = new() { IsDirectory = false, Content = entry.Content?.ToArray() };
     }
 
+    /// <inheritdoc />
     public Stream OpenRead(string path)
     {
         var n = Normalize(path);
@@ -147,6 +163,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return new MemoryStream(entry.Content ?? [], false);
     }
 
+    /// <inheritdoc />
     public Stream OpenCreate(string path)
     {
         var n = Normalize(path);
@@ -156,6 +173,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return new CommitOnCloseStream(bytes => entry.Content = bytes);
     }
 
+    /// <inheritdoc />
     public Stream OpenAppend(string path)
     {
         var n = Normalize(path);
@@ -170,18 +188,21 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         });
     }
 
+    /// <inheritdoc />
     public long GetFileLength(string path)
     {
         var n = Normalize(path);
         return _store.TryGetValue(n, out var e) ? e.Content?.Length ?? 0 : 0;
     }
 
+    /// <inheritdoc />
     public DateTimeOffset GetFileCreationTimeUtc(string path)
     {
         var n = Normalize(path);
         return _store.TryGetValue(n, out var e) ? e.CreatedAt : DateTimeOffset.MinValue;
     }
 
+    /// <inheritdoc />
     public Task WriteAllBytesAsync(string path, byte[] data, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -189,6 +210,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task WriteAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -196,6 +218,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task AppendAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -203,6 +226,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public async Task CopyStreamToFileAsync(Stream source, string destPath, CancellationToken ct)
     {
         using var ms = new MemoryStream();
@@ -214,6 +238,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
         WriteAllBytes(destPath, ms.ToArray());
     }
 
+    /// <inheritdoc />
     public Task CopyFileAsync(string source, string dest, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

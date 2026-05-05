@@ -28,8 +28,12 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
 
             modelBuilder.Entity("Lyo.PackageMetadata.Postgres.Database.PackageMetadataEntity", b =>
                 {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
                     b.Property<int>("ArtifactDigestAlgorithm")
-                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("artifact_digest_algorithm");
 
@@ -39,6 +43,7 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                         .HasColumnName("artifact_digest_hex");
 
                     b.Property<string>("AuthorsJson")
+                        .HasMaxLength(4096)
                         .HasColumnType("text")
                         .HasColumnName("authors_json");
 
@@ -47,27 +52,27 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("Description")
+                        .HasMaxLength(4000)
                         .HasColumnType("text")
                         .HasColumnName("description");
 
                     b.Property<int>("Ecosystem")
-                        .IsRequired()
                         .HasColumnType("integer")
                         .HasColumnName("ecosystem");
-
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
 
                     b.Property<string>("LicenseExpression")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("license_expression");
 
+                    b.Property<string>("LicenseExpressionSyntaxJson")
+                        .HasMaxLength(16384)
+                        .HasColumnType("text")
+                        .HasColumnName("license_expression_syntax_json");
+
                     b.Property<string>("LicenseUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("license_url");
 
                     b.Property<string>("Name")
@@ -77,25 +82,27 @@ namespace Lyo.PackageMetadata.Postgres.Migrations
                         .HasColumnName("name");
 
                     b.Property<string>("PackageDetailsUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("package_details_url");
 
                     b.Property<string>("PackageTypesJson")
+                        .HasMaxLength(4096)
                         .HasColumnType("text")
                         .HasColumnName("package_types_json");
 
                     b.Property<string>("ProjectUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("project_url");
 
                     b.Property<string>("RepositoryUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("repository_url");
 
                     b.Property<string>("TagsJson")
+                        .HasMaxLength(4096)
                         .HasColumnType("text")
                         .HasColumnName("tags_json");
 

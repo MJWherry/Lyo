@@ -21,7 +21,6 @@ var life = SolidMechanicsFunctions.FatigueLifeCycles(new SNCurveInput(Pressure.F
 
 Use `ScientificFormulaRegistry.All` when you want to expose a curated set of available production formulas in a UI, workflow, or documentation generator.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -35,21 +34,5 @@ Use `ScientificFormulaRegistry.All` when you want to expose a curated set of ava
 
 ### Project references
 
-- `Lyo.Mathematics`
-- `Lyo.Scientific`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AstronomyFunctions`
-- `ChemistryFunctions`
-- `CompressibleFlowFunctions`
-- `FluidDynamicsFunctions`
-- `internal`
-- `MechanicsFunctions`
-- `SolidMechanicsFunctions`
-- `ThermodynamicsFunctions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md)
+- [`Lyo.Scientific`](../Lyo.Scientific/README.md)

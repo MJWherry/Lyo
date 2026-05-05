@@ -13,7 +13,7 @@ public sealed class ShortUrlEntity
 
     /// <summary>Gets or sets the original/long URL.</summary>
     [Required]
-    [MaxLength(2048)]
+    [MaxLength(1024)]
     public string LongUrl { get; set; } = null!;
 
     /// <summary>Gets or sets the custom alias (if provided).</summary>

@@ -111,7 +111,6 @@ Files are automatically organized by GUID prefixes:
 
 
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -131,30 +130,9 @@ Files are automatically organized by GUID prefixes:
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Compression`
-- `Lyo.Encryption`
-- `Lyo.Exceptions`
-- `Lyo.FileMetadataStore`
-- `Lyo.FileStorage`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*9*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `Metrics`
-- `S3FileStorageBackblazeExtensions`
-- `S3FileStorageOptions`
-- `S3FileStorageS3CompatibleExtensions`
-- `S3FileStorageService`
-- `S3FileStorageServiceBuilder`
-- `S3MultipartUploadService`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
+- [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
+- [`Lyo.FileStorage`](../Lyo.FileStorage/README.md)

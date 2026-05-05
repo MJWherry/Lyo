@@ -14,7 +14,7 @@ public sealed class UrlClickEntityConfiguration : IEntityTypeConfiguration<UrlCl
         builder.Property(e => e.ClickedAt).IsRequired().HasColumnName("clicked_at");
         builder.Property(e => e.IpAddress).HasMaxLength(45).HasColumnName("ip_address");
         builder.Property(e => e.UserAgent).HasMaxLength(500).HasColumnName("user_agent");
-        builder.Property(e => e.Referrer).HasMaxLength(2048).HasColumnName("referrer");
+        builder.Property(e => e.Referrer).HasMaxLength(512).HasColumnName("referrer");
 
         // Indexes for performance
         builder.HasIndex(e => e.ShortUrlId).HasDatabaseName("ix_url_clicks_short_url_id");

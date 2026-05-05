@@ -71,7 +71,6 @@ var count = await favoriteStore.GetCountForEntityAsync(
 - **favorite.favorite** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `created_timestamp`
 - Unique index on `(for_entity_type, for_entity_id, from_entity_type, from_entity_id)` prevents duplicate favorites.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -89,22 +88,7 @@ var count = await favoriteStore.GetCountForEntityAsync(
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Favorite`
-- `Lyo.Health`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `FavoriteDbContext`
-- `FavoriteDbContextFactory`
-- `FavoriteEntity`
-- `FavoriteEntityConfiguration`
-- `InitialCreate`
-- `PostgresFavoriteOptions`
-- `PostgresFavoriteStore`
-
-<!-- LYO_README_SYNC:END -->
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Favorite`](../Lyo.Favorite/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

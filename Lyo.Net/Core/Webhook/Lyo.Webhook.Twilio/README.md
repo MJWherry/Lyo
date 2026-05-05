@@ -37,7 +37,6 @@ app.MapWebhook("/webhooks/twilio/sms")
 
 - **net10.0**
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -51,14 +50,4 @@ app.MapWebhook("/webhooks/twilio/sms")
 
 ### Project references
 
-- `Lyo.Webhook`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*2*). Nested types and file-scoped namespaces may omit some entries.
-
-- `TwilioUrlNormalization`
-- `TwilioWebhookSignatureVerifier`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Webhook`](../Lyo.Webhook/README.md)

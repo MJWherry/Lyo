@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Api.ApiEndpoint.Config;
-using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint;
 
@@ -45,7 +44,7 @@ internal sealed record DynamicMethodCache(
     PropertyInfo UpdateResultErrorProperty);
 
 /// <summary>Metadata for a single entity type used by dynamic CRUD endpoints.</summary>
-internal sealed record EntityEndpointMetadata<TContext>(
+internal sealed record EntityEndpointMetadata(
     Type EntityType,
     Type KeyType,
     string KeyPropertyName,
@@ -53,5 +52,4 @@ internal sealed record EntityEndpointMetadata<TContext>(
     DynamicMethodCache Cache,
     PatchPropertyAuthorization? PatchPropertyAuthorization,
     Delegate? AdaptedPatchBefore,
-    Delegate? AdaptedPatchAfter)
-    where TContext : DbContext;
+    Delegate? AdaptedPatchAfter);

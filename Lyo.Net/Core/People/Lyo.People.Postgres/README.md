@@ -56,7 +56,6 @@ export PEOPLE_CONNECTION_STRING="Host=localhost;Database=lyo_people;Username=pos
 dotnet ef migrations add MigrationName --project Core/People/Lyo.People.Postgres --context PeopleDbContext
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -74,41 +73,6 @@ dotnet ef migrations add MigrationName --project Core/People/Lyo.People.Postgres
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.People.Models`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*27*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AddressEntity`
-- `AddressEntityConfiguration`
-- `ContactAddressEntity`
-- `ContactAddressEntityConfiguration`
-- `ContactEmailAddressEntity`
-- `ContactEmailAddressEntityConfiguration`
-- `ContactPhoneNumberEntity`
-- `ContactPhoneNumberEntityConfiguration`
-- `EmailAddressEntity`
-- `EmailAddressEntityConfiguration`
-- `EmploymentEntity`
-- `EmploymentEntityConfiguration`
-- `Extensions`
-- `IdentificationEntity`
-- `IdentificationEntityConfiguration`
-- `InitialCreate`
-- `PeopleDbContext`
-- `PeopleDbContextFactory`
-- `PersonEntity`
-- `PersonEntityConfiguration`
-- `PersonRelationshipEntity`
-- `PersonRelationshipEntityConfiguration`
-- `PhoneNumberEntity`
-- `PhoneNumberEntityConfiguration`
-- `PostgresPeopleOptions`
-- `SocialMediaProfileEntity`
-- `SocialMediaProfileEntityConfiguration`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.People.Models`](../Lyo.People.Models/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

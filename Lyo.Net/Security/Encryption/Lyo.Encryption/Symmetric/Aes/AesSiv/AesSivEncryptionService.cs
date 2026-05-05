@@ -36,7 +36,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesSiv;
 
-    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[]?)" />
+    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
@@ -147,7 +147,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         return DecryptFromStream(ms, keyId, key);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[]?)" />
+    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[])" />
     public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
 
     protected override byte[] DecryptChunk(byte[] buffer, int offset, int count, string? keyId, byte[]? key)

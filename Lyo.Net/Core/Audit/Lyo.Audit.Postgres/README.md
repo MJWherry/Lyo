@@ -39,7 +39,6 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 - **audit.audit_changes** – `id` (uuid), `timestamp`, `type_assembly_full_name`, `old_values_json` (jsonb), `changed_properties_json` (jsonb)
 - **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `message`, `actor`, `metadata_json` (jsonb)
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -56,25 +55,7 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 ### Project references
 
-- `Lyo.Audit`
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*10*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AuditChangeEntity`
-- `AuditChangeEntityConfiguration`
-- `AuditDbContext`
-- `AuditDbContextFactory`
-- `AuditEventEntity`
-- `AuditEventEntityConfiguration`
-- `Extensions`
-- `InitialCreate`
-- `PostgresAuditOptions`
-- `PostgresAuditRecorder`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Audit`](../Lyo.Audit/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

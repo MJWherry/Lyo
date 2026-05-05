@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Compression.Models;
 
+/// <summary>Aggregated outcome of <see cref="ICompressionService.CompressFiles(System.Collections.Generic.IEnumerable{string})" /> (or overloads).</summary>
 [DebuggerDisplay("{ToString()}")]
 public sealed record BatchFileCompressionResult(IReadOnlyList<FileCompressionInfo> SuccessfulFiles, IReadOnlyList<FailedFileOperation> FailedFiles)
 {

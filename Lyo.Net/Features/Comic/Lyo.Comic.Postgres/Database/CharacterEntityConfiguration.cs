@@ -12,8 +12,8 @@ public sealed class CharacterEntityConfiguration : IEntityTypeConfiguration<Char
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.SeriesId).HasColumnName("series_id").HasColumnType("uuid");
         builder.Property(e => e.Name).IsRequired().HasMaxLength(500).HasColumnName("name");
-        builder.Property(e => e.Description).HasColumnName("description");
-        builder.Property(e => e.ImageRef).HasColumnName("image_ref");
+        builder.Property(e => e.Description).HasMaxLength(8192).HasColumnName("description");
+        builder.Property(e => e.ImageRef).HasMaxLength(512).HasColumnName("image_ref");
         builder.Property(e => e.Role).HasMaxLength(50).HasColumnName("role");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");

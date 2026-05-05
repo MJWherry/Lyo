@@ -51,7 +51,6 @@ var url = await azureFileStorage.GetPreSignedUrlAsync(fileId, TimeSpan.FromHours
 
 `IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -67,23 +66,9 @@ var url = await azureFileStorage.GetPreSignedUrlAsync(fileId, TimeSpan.FromHours
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Compression`
-- `Lyo.Encryption`
-- `Lyo.Exceptions`
-- `Lyo.FileMetadataStore`
-- `Lyo.FileStorage`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*6*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AzureFileStorageOptions`
-- `AzureFileStorageService`
-- `AzureMultipartUploadService`
-- `Constants`
-- `Extensions`
-- `Metrics`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
+- [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
+- [`Lyo.FileStorage`](../Lyo.FileStorage/README.md)

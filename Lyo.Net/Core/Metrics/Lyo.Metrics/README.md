@@ -607,7 +607,6 @@ public class MyBackgroundService : BackgroundService
 }
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -626,32 +625,7 @@ public class MyBackgroundService : BackgroundService
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Mathematics`
-- `Lyo.Mathematics.Functions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*14*). Nested types and file-scoped namespaces may omit some entries.
-
-- `CounterData`
-- `Extensions`
-- `GaugeData`
-- `HistogramData`
-- `IMetrics`
-- `MathExtensions`
-- `MetricData`
-- `MetricsOptions`
-- `MetricsService`
-- `MetricsSnapshot`
-- `MetricsTimer`
-- `MetricType`
-- `NullMetrics`
-- `Timer`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md)
+- [`Lyo.Mathematics.Functions`](../../Mathematics/Lyo.Mathematics.Functions/README.md)

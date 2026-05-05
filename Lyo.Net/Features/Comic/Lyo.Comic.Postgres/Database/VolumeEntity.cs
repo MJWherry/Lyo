@@ -14,6 +14,7 @@ public sealed class VolumeEntity
     [MaxLength(500)]
     public string? Title { get; set; }
 
+    [MaxLength(512)]
     public string? CoverImageRef { get; set; }
 
     public DateOnly? PublishedDate { get; set; }

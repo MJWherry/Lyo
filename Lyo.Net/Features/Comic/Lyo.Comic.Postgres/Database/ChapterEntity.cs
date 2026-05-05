@@ -25,6 +25,7 @@ public sealed class ChapterEntity
 
     public DateOnly? PublishedDate { get; set; }
 
+    [MaxLength(512)]
     public string? Source { get; set; }
 
     [Required]

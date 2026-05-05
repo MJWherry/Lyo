@@ -2,6 +2,10 @@ using System.Diagnostics;
 
 namespace Lyo.Compression.Models;
 
+/// <summary>Timing and size statistics for an in-memory decompress operation.</summary>
+/// <param name="CompressedSize">Input compressed length in bytes.</param>
+/// <param name="DecompressedSize">Output restored length in bytes.</param>
+/// <param name="DecompressionTimeMs">Wall-clock milliseconds spent decompressing.</param>
 [DebuggerDisplay("{ToString()}")]
 public record DecompressionInfo(long CompressedSize, long DecompressedSize, long DecompressionTimeMs)
 {

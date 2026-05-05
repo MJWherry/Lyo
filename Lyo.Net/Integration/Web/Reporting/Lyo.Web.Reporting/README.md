@@ -811,7 +811,6 @@ var report = ReportBuilder<MyOptions>.New()
 6. **Consistent Styling** - Use consistent styling across reports
 7. **Filter Metrics** - Use filtering options to show only relevant metrics
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -827,32 +826,4 @@ var report = ReportBuilder<MyOptions>.New()
 
 ### Project references
 
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*17*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ColumnBuilder`
-- `ContentBlockBuilder`
-- `GridBuilder`
-- `GridColumnBuilder`
-- `GridRowBuilder`
-- `MetricsExtensions`
-- `Report`
-- `ReportBuilder`
-- `ReportColumn`
-- `ReportContentBlock`
-- `ReportContentType`
-- `ReportExamples`
-- `ReportGrid`
-- `ReportGridColumn`
-- `ReportGridRow`
-- `ReportSection`
-- `SectionBuilder`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
+- [`Lyo.Metrics`](../../../../Core/Metrics/Lyo.Metrics/README.md)

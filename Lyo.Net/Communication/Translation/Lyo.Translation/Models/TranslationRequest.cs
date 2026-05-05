@@ -33,11 +33,11 @@ public class TranslationRequest
     {
         var parts = new List<string> {
             $"Text: {Text?.Substring(0, Math.Min(Text?.Length ?? 0, 50))}{(Text?.Length > 50 ? "..." : "")}",
-            $"TargetLanguage: {TargetLanguageCode.Iso6393 ?? TargetLanguageCode.Iso6391 ?? TargetLanguageCode.Bcp47 ?? TargetLanguageCode.Name}"
+            $"TargetLanguage: {TargetLanguageCode.Iso6393 ?? TargetLanguageCode.Iso6391 ?? TargetLanguageCode.Bcp47}"
         };
 
         if (SourceLanguage != null)
-            parts.Add($"SourceLanguage: {SourceLanguage.Iso6393 ?? SourceLanguage.Iso6391 ?? SourceLanguage.Bcp47 ?? SourceLanguage.Name}");
+            parts.Add($"SourceLanguage: {SourceLanguage.Iso6393 ?? SourceLanguage.Iso6391 ?? SourceLanguage.Bcp47}");
 
         return string.Join(" | ", parts);
     }

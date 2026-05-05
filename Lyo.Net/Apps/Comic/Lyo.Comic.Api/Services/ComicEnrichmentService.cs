@@ -299,6 +299,7 @@ public sealed class ComicEnrichmentService
     {
         var combined = new List<TEntity>();
         foreach (var chunk in distinctIds.Chunk(IdInClauseChunkSize)) {
+            ct.ThrowIfCancellationRequested();
             var chunkArr = chunk.ToArray();
             var res = await queryChunk(chunkArr).ConfigureAwait(false);
             if (!TryDrainQuery(res, dimensionLabel, out var rows))

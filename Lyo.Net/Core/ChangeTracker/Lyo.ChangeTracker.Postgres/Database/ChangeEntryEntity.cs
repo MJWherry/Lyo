@@ -33,9 +33,11 @@ public sealed class ChangeEntryEntity
     public string? Message { get; set; }
 
     [Column(TypeName = "jsonb")]
+    [MaxLength(32_768)]
     public string OldValuesJson { get; set; } = "{}";
 
     [Column(TypeName = "jsonb")]
+    [MaxLength(32_768)]
     public string ChangedPropertiesJson { get; set; } = "{}";
 
     [Required]

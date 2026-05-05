@@ -18,6 +18,7 @@ public class ColumnMapping
     /// <summary>Gets or sets a default value to use if the source column is missing or empty.</summary>
     public object? DefaultValue { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"ColumnMapping: SourceColumn='{SourceColumn}', TargetProperty='{TargetProperty}', HasTransformer={Transformer != null}, DefaultValue='{DefaultValue}'";
 }

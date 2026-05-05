@@ -14,8 +14,9 @@ namespace Lyo.Sms.Twilio;
 /// <summary>Extension methods for registering Twilio SMS service with dependency injection.</summary>
 public static class Extensions
 {
+#if NET6_0_OR_GREATER
     private const string TwilioHttpClientName = "lyo-twilio-sms";
-
+#endif
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {

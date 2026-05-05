@@ -20,4 +20,3 @@ Both lookup methods expose a **`namespacePrefix`** argument (**frame namespace**
 Bulk resolution loads **all** `(stack_prefix, package)` rows for one **in-process** longest-prefix sweep (reasonable for bounded catalogs).
 
 - **`PostgresPackageMetadataOptions.PrefixCatalogCaching`** (see **`PostgresPrefixCatalogCachingMode`**) can skip re-querying the database on repeated **`TryGetMany`** (`InvalidateOnRegisterManyOrClear`) or **`Disabled`** when you wrap the store with your own cache. **`PostgresPackageMetadataStore.ClearPrefixCatalogCache()`** drops the in-process snapshot. The cache is **per process**. After **`RegisterManyAsync`** on that instance the snapshot is cleared. Other DB writers won't invalidate automatically — disable in-process caching or clear explicitly when imports finish off-process.
-

@@ -16,7 +16,7 @@ public sealed class HomeItemMovementEntityConfiguration : IEntityTypeConfigurati
         builder.Property(e => e.FromLocationId).HasColumnName("from_location_id").HasColumnType("uuid");
         builder.Property(e => e.ToLocationId).HasColumnName("to_location_id").HasColumnType("uuid");
         builder.Property(e => e.ReferenceNumber).HasMaxLength(200).HasColumnName("reference_number");
-        builder.Property(e => e.Notes).HasColumnName("notes");
+        builder.Property(e => e.Notes).HasMaxLength(8192).HasColumnName("notes");
         builder.Property(e => e.CreatedByEntityType).HasMaxLength(200).HasColumnName("created_by_entity_type");
         builder.Property(e => e.CreatedByEntityId).HasMaxLength(200).HasColumnName("created_by_entity_id");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");

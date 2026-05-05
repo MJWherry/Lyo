@@ -1,5 +1,6 @@
 namespace Lyo.Compression.Models;
 
+/// <summary>Progress snapshot for long-running compression work (bytes processed vs total).</summary>
 public class CompressionProgress
 {
     public long BytesProcessed { get; init; }

@@ -474,7 +474,6 @@ directly.
 - Snapshot errors are caught and reported via the Error event
 - Cancellation tokens allow graceful shutdown of long-running operations
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -490,7 +489,9 @@ directly.
 
 ### Project references
 
-- `Lyo.Metrics`
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+
+<!-- LYO_README_SYNC:BEGIN -->
 
 ## Public API (generated)
 
@@ -506,7 +507,3 @@ Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespace
 - `Utilities`
 
 <!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]

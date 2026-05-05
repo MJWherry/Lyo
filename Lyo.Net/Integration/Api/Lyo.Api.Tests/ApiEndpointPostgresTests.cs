@@ -179,7 +179,8 @@ public class ApiEndpointPostgresTests : IDisposable
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Items!);
+        Assert.NotNull(result.Items);
+        Assert.Single(result.Items);
         var row = result.Items[0];
         Assert.Equal(JsonValueKind.Object, row.ValueKind);
         // Default ZipSiblingCollectionSelections merges jobruns.* + jobruns.createdby into one array under the collection merge key.
@@ -212,7 +213,8 @@ public class ApiEndpointPostgresTests : IDisposable
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Items!);
+        Assert.NotNull(result.Items);
+        Assert.Single(result.Items);
         Assert.Equal(JsonValueKind.Array, result.Items[0].ValueKind);
     }
 
@@ -233,7 +235,8 @@ public class ApiEndpointPostgresTests : IDisposable
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Items!);
+        Assert.NotNull(result.Items);
+        Assert.Single(result.Items);
         var row = result.Items[0];
         Assert.Equal(JsonValueKind.Object, row.ValueKind);
         Assert.False(row.TryGetProperty("*", out var _));
@@ -262,7 +265,8 @@ public class ApiEndpointPostgresTests : IDisposable
         var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Items!);
+        Assert.NotNull(result.Items);
+        Assert.Single(result.Items);
         Assert.Equal(JsonValueKind.Array, result.Items[0].ValueKind);
         var values = result.Items[0].EnumerateArray().Select(i => i.GetString()).ToList();
         Assert.NotEmpty(values);

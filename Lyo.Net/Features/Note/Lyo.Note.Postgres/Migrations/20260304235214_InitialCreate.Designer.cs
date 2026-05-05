@@ -35,7 +35,8 @@ namespace Lyo.Note.Postgres.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("content");
 
                     b.Property<DateTime>("CreatedTimestamp")

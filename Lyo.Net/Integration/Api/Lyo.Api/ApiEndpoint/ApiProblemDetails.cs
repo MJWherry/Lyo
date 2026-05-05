@@ -5,8 +5,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Api.ApiEndpoint;
 
+/// <summary>Builds <see cref="LyoProblemDetails" /> envelopes with RFC 7807 <c>instance</c> and optional <c>keys</c> extension for not-found and error responses.</summary>
 public static class ApiErrorResponseFactory
 {
+    /// <summary>Merges <paramref name="error" /> with request path as <c>instance</c> and optional <c>keys</c> in extensions.</summary>
     public static LyoProblemDetails CreateForError(HttpContext httpContext, LyoProblemDetails? error, IEnumerable<object?>? keys = null)
     {
         var source = error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Request failed.");
@@ -16,6 +18,7 @@ public static class ApiErrorResponseFactory
         return source with { Instance = instance, Extensions = extensions };
     }
 
+    /// <summary>Produces a not-found problem with trace/instance populated from <paramref name="httpContext" />.</summary>
     public static LyoProblemDetails CreateNotFound(HttpContext httpContext, IEnumerable<object?>? keys = null, string? detail = null)
     {
         var instance = httpContext.Request.Path.HasValue ? httpContext.Request.Path.Value : null;

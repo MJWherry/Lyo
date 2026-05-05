@@ -2,11 +2,14 @@ using System.Diagnostics;
 
 namespace Lyo.Api.Services.Crud.Read;
 
+/// <summary>Singleton options bound from configuration: paging limits, export cap, split queries, wildcard projection, and typed cache payloads for query results.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class QueryOptions
 {
+    /// <summary>Default <c>Amount</c> when the client omits page size (subject to <see cref="MaxPageSize" />).</summary>
     public int DefaultPageSize { get; init; } = 100;
 
+    /// <summary>Maximum allowed page size for query and projection requests.</summary>
     public int MaxPageSize { get; init; } = 2000;
 
     /// <summary>Minimum <c>Start</c> offset for query/history/export bodies (inclusive).</summary>
@@ -21,8 +24,10 @@ public sealed class QueryOptions
     /// <summary>Maximum number of rows for export operations. Exports are capped to this value.</summary>
     public int MaxExportSize { get; init; } = 5000;
 
+    /// <summary>When <c>true</c>, EF may split include graphs into multiple SQL commands.</summary>
     public bool EnableSplitQueries { get; init; } = true;
 
+    /// <summary>When <c>true</c>, read queries use no-tracking with identity resolution for consistent graphs.</summary>
     public bool UseNoTrackingWithIdentityResolution { get; init; } = true;
 
     /// <summary>

@@ -62,7 +62,7 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IDeleteService<TContext>, DeleteService<TContext>>();
             services.AddScoped<IUpdateService<TContext>, UpdateService<TContext>>();
             services.AddScoped<IUpsertService<TContext>, UpsertService<TContext>>();
-            services.AddScoped<IQueryHistoryService<TContext>, QueryHistoryService<TContext>>();
+            services.AddScoped<IQueryHistoryService, QueryHistoryService<TContext>>();
             services.AddScoped<ILyoRepository<TContext>, LyoRepository<TContext>>();
             return services;
         }
@@ -79,7 +79,7 @@ public static class ServiceCollectionExtensions
         public IServiceCollection AddPostgresSprocService<TContext>()
             where TContext : DbContext
         {
-            services.AddScoped<ISprocService<TContext>, PostgresSprocService<TContext>>();
+            services.AddScoped<ISprocService, PostgresSprocService<TContext>>();
             return services;
         }
 

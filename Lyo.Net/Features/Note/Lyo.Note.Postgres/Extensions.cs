@@ -45,7 +45,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-            services.AddSingleton<IOptions<PostgresNoteOptions>>(Options.Create(options));
+            services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<NoteDbContext, PostgresNoteOptions>();
             services.AddDbContextFactory<NoteDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresNoteOptions.Schema)));

@@ -543,6 +543,7 @@ namespace Lyo.Discord.Postgres.Migrations
             modelBuilder.Entity("Lyo.Discord.Postgres.Database.DiscordMember", b =>
                 {
                     b.Property<string>("ExtraJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("extra_json");
 

@@ -183,7 +183,7 @@
 
     private Voice? SelectedVoice => AvailableVoices.FirstOrDefault(i => i.VoiceId == _selectedVoiceId);
 
-    private IReadOnlyList<string> SelectedVoiceTags => SelectedVoice?.UseCases?.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? [];
+    private IReadOnlyList<string> SelectedVoiceTags => SelectedVoice?.UseCases.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? [];
 
     protected override async Task OnInitializedAsync()
     {

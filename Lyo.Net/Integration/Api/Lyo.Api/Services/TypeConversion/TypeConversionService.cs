@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.TypeConversion;
 
+/// <inheritdoc cref="ITypeConversionService" />
 public sealed class TypeConversionService(ICacheService cache, CacheOptions cacheOptions) : ITypeConversionService
 {
     public IReadOnlyList<string> GetPrimaryKeyPropertyNames<TEntity>(DbContext context)

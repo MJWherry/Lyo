@@ -61,7 +61,7 @@
                                    Style="min-width: 180px; max-width: min(100%, 280px);"
                                    Value="_saveKeyId"
                                    ValueChanged="OnSaveKeyIdChanged">
-                            @foreach (var keyId in Workbench!.AvailableKeyIds) {
+                            @foreach (var keyId in Workbench.AvailableKeyIds) {
                                 <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
                             }
                         </MudSelect>
@@ -102,10 +102,10 @@
                             <MudItem xs="12" sm="6">
                                 <MudSelect T="string"
                                            Label="Source key id"
-                                           HelperText="@(Workbench!.AvailableKeyIds.Count == 0 ? "No available keys found." : "Required.")"
+                                           HelperText="@(Workbench.AvailableKeyIds.Count == 0 ? "No available keys found." : "Required.")"
                                            Value="_migrationSourceKeyId"
                                            ValueChanged="OnMigrationSourceKeyIdChanged">
-                                    @foreach (var keyId in Workbench!.AvailableKeyIds) {
+                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
                                         <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
                                     }
                                 </MudSelect>

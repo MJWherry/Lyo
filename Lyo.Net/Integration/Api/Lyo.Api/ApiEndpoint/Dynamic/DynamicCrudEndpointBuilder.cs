@@ -74,7 +74,7 @@ public static class DynamicCrudEndpointBuilder
         using var scope = webApp.Services.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TContext>>();
         using var context = factory.CreateDbContext();
-        var registry = new Dictionary<string, EntityEndpointMetadata<TContext>>(StringComparer.OrdinalIgnoreCase);
+        var registry = new Dictionary<string, EntityEndpointMetadata>(StringComparer.OrdinalIgnoreCase);
         var cache = BuildMethodCache<TContext>();
         foreach (var entityType in entityTypes) {
             if (defaults.ExcludedTypes.Contains(entityType))
@@ -102,7 +102,7 @@ public static class DynamicCrudEndpointBuilder
         var jsonOptions = webApp.Services.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? LyoJsonSerializerOptions.Create();
         var metadata = BuildMetadata(registry);
         webApp.MapGet(metadataRoute, () => Results.Json(metadata)).WithTags("Dynamic").Produces<CrudMetadataResponse>();
-        webApp.MapGet($"{entityRoute}/Metadata", ([FromRoute] string entityType, HttpContext httpContext) => HandleGetEntityMetadata<TContext>(registry, entityType, httpContext))
+        webApp.MapGet($"{entityRoute}/Metadata", ([FromRoute] string entityType, HttpContext httpContext) => HandleGetEntityMetadata(registry, entityType, httpContext))
             .WithTags("Dynamic")
             .Produces<EntityTypeMetadata>()
             .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
@@ -339,18 +339,16 @@ public static class DynamicCrudEndpointBuilder
         return webApp;
     }
 
-    private static IResult HandleGetEntityMetadata<TContext>(IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry, string entityType, HttpContext httpContext)
-        where TContext : DbContext
+    private static IResult HandleGetEntityMetadata(IReadOnlyDictionary<string, EntityEndpointMetadata> registry, string entityType, HttpContext httpContext)
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var entityMetadata = ToEntityTypeMetadata(meta);
         return Results.Json(entityMetadata);
     }
 
-    private static EntityTypeMetadata ToEntityTypeMetadata<TContext>(EntityEndpointMetadata<TContext> m)
-        where TContext : DbContext
+    private static EntityTypeMetadata ToEntityTypeMetadata(EntityEndpointMetadata m)
     {
         var properties = m.EntityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead)
@@ -361,8 +359,7 @@ public static class DynamicCrudEndpointBuilder
         return new(m.EntityType.Name, m.KeyPropertyName, m.KeyType.Name, properties);
     }
 
-    private static CrudMetadataResponse BuildMetadata<TContext>(IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry)
-        where TContext : DbContext
+    private static CrudMetadataResponse BuildMetadata(IReadOnlyDictionary<string, EntityEndpointMetadata> registry)
     {
         var entityTypes = registry.Values.Select(m => ToEntityTypeMetadata(m)).ToList();
         return new(entityTypes);
@@ -503,11 +500,10 @@ public static class DynamicCrudEndpointBuilder
             patchResultType.GetProperty("IsSuccess")!, patchResultType.GetProperty("Error")!, updateResultType.GetProperty("Result")!, updateResultType.GetProperty("Error")!);
     }
 
-    private static bool TryGetMetadata<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+    private static bool TryGetMetadata(
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
-        out EntityEndpointMetadata<TContext> meta)
-        where TContext : DbContext
+        out EntityEndpointMetadata meta)
     {
         if (registry.TryGetValue(entityType, out meta!))
             return true;
@@ -534,8 +530,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     /// <summary>Sets the key on UpdateRequest.Data from Keys so Mapster does not overwrite with default (Guid.Empty) and trigger EF key-modification error.</summary>
-    private static void EnsureKeyOnUpdateData<TContext>(object request, EntityEndpointMetadata<TContext> meta)
-        where TContext : DbContext
+    private static void EnsureKeyOnUpdateData(object request, EntityEndpointMetadata meta)
     {
         var keysProp = request.GetType().GetProperty("Keys");
         var keys = keysProp?.GetValue(request) as object[];
@@ -571,8 +566,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     /// <summary>Sets the key on UpsertRequest.NewData from Keys or Query (when ConditionClause on key property), so Mapster does not overwrite with default.</summary>
-    private static void EnsureKeyOnUpsertData<TContext>(object request, EntityEndpointMetadata<TContext> meta)
-        where TContext : DbContext
+    private static void EnsureKeyOnUpsertData(object request, EntityEndpointMetadata meta)
     {
         object? keyValue = null;
         var keysProp = request.GetType().GetProperty("Keys");
@@ -614,7 +608,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleQuery<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         QueryReq queryRequest,
         IQueryService<TContext> queryService,
@@ -623,7 +617,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var task = (Task)meta.Cache.Query.Invoke(queryService, [queryRequest, meta.DefaultOrder, defaultSortDirection, ct])!;
@@ -633,7 +627,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleQueryProjected<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         ProjectionQueryReq queryRequest,
         IQueryService<TContext> queryService,
@@ -642,7 +636,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var task = (Task)meta.Cache.QueryProjected.Invoke(queryService, [queryRequest, meta.DefaultOrder, defaultSortDirection, ct])!;
@@ -652,7 +646,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleGet<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         string id,
         string[] include,
@@ -661,7 +655,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         object key;
@@ -687,7 +681,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleCreate<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         HttpRequest request,
         ICreateService<TContext> createService,
@@ -696,7 +690,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         object? body;
@@ -730,7 +724,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleCreateBulk<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         HttpRequest request,
         ICreateService<TContext> createService,
@@ -739,7 +733,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var listType = typeof(List<>).MakeGenericType(meta.EntityType);
@@ -766,7 +760,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandlePatch<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         PatchRequest patchRequest,
         IPatchService<TContext> patchService,
@@ -774,7 +768,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(meta.PatchPropertyAuthorization, httpContext, meta.EntityType, patchRequest, ct).ConfigureAwait(false);
@@ -796,7 +790,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandlePatchBulk<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         List<PatchRequest> requests,
         IPatchService<TContext> patchService,
@@ -804,14 +798,13 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        if (requests == null || requests.Count == 0) {
+        if (requests.Count == 0)
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(
                     httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "At least one patch request is required", DateTime.UtcNow)), statusCode: 400);
-        }
 
         if (meta.PatchPropertyAuthorization != null) {
             var sanitized = new List<PatchRequest>(requests.Count);
@@ -835,7 +828,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleUpdate<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         JsonNode? body,
         IUpdateService<TContext> updateService,
@@ -850,7 +843,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var updateRequestType = typeof(UpdateRequest<>).MakeGenericType(meta.EntityType);
@@ -884,7 +877,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleUpdateBulk<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         JsonNode? body,
         IUpdateService<TContext> updateService,
@@ -899,7 +892,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var listType = typeof(List<>).MakeGenericType(typeof(UpdateRequest<>).MakeGenericType(meta.EntityType));
@@ -929,7 +922,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleUpsert<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         JsonNode? body,
         IUpsertService<TContext> upsertService,
@@ -944,7 +937,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var upsertRequestType = typeof(UpsertRequest<>).MakeGenericType(meta.EntityType);
@@ -978,7 +971,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleUpsertBulk<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         JsonNode? body,
         IUpsertService<TContext> upsertService,
@@ -993,7 +986,7 @@ public static class DynamicCrudEndpointBuilder
                 statusCode: 400);
         }
 
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         var listType = typeof(List<>).MakeGenericType(typeof(UpsertRequest<>).MakeGenericType(meta.EntityType));
@@ -1023,7 +1016,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleDeleteByRequest<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         DeleteRequest deleteRequest,
         IDeleteService<TContext> deleteService,
@@ -1031,14 +1024,8 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
-
-        if (deleteRequest == null) {
-            return Results.Json(
-                ApiErrorResponseFactory.CreateForError(
-                    httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "Delete request body is required", DateTime.UtcNow)), statusCode: 400);
-        }
 
         var task = (Task)meta.Cache.DeleteByRequestAsync.Invoke(deleteService, [deleteRequest, null, null, null, ct])!;
         await task.ConfigureAwait(false);
@@ -1047,7 +1034,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleDelete<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         string id,
         IDeleteService<TContext> deleteService,
@@ -1055,7 +1042,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         object key;
@@ -1079,7 +1066,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleDeleteBulk<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         string entityType,
         List<DeleteRequest> requests,
         IDeleteService<TContext> deleteService,
@@ -1087,14 +1074,13 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        if (requests == null || requests.Count == 0) {
+        if (requests.Count == 0)
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(
                     httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "At least one delete request is required", DateTime.UtcNow)), statusCode: 400);
-        }
 
         var task = (Task)meta.Cache.DeleteBulkAsync.Invoke(deleteService, [requests, null, null, null, ct])!;
         await task.ConfigureAwait(false);
@@ -1103,7 +1089,7 @@ public static class DynamicCrudEndpointBuilder
     }
 
     private static async Task<IResult> HandleExport<TContext>(
-        IReadOnlyDictionary<string, EntityEndpointMetadata<TContext>> registry,
+        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         DynamicEndpointConfig<TContext> config,
         string entityType,
         ExportRequest request,
@@ -1113,7 +1099,7 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (!TryGetMetadata<TContext>(registry, entityType, out var meta))
+        if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
         if (!config.GetConfig(meta.EntityType).Features.HasFlag(ApiFeatureFlag.Export))

@@ -105,7 +105,7 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     content_type = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
                     provider_kind = table.Column<int>(type: "integer", nullable: false),
-                    provider_state = table.Column<string>(type: "text", nullable: false),
+                    provider_state = table.Column<string>(type: "text", maxLength: 8192, nullable: false),
                     declared_content_length = table.Column<long>(type: "bigint", nullable: true),
                     part_size_bytes = table.Column<int>(type: "integer", nullable: false)
                 },

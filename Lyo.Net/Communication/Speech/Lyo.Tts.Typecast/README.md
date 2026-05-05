@@ -35,7 +35,6 @@ if (result.IsSuccess)
 
 The service can be configured via options or dependency injection.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -55,21 +54,6 @@ The service can be configured via options or dependency injection.
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Tts`
-- `Lyo.Typecast.Client`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*7*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `IsExternalInit`
-- `Metrics`
-- `TypecastOptions`
-- `TypecastTtsAppService`
-- `TypecastTtsService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Tts`](../Lyo.Tts/README.md)
+- [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)

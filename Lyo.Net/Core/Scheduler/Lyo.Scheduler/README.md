@@ -62,7 +62,6 @@ await scheduler.StartAsync();
 | RunInBackground | true    | Run actions fire-and-forget vs await            |
 | ActionTimeout   | 120 min | Max duration for each action; null = no timeout |
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -78,22 +77,8 @@ await scheduler.StartAsync();
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.DateAndTime`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-- `Lyo.Schedule.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*6*). Nested types and file-scoped namespaces may omit some entries.
-
-- `InMemorySchedulerStateStore`
-- `ISchedulerService`
-- `ISchedulerStateStore`
-- `SchedulerExtensions`
-- `SchedulerOptions`
-- `SchedulerService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.DateAndTime`](../../DateAndTime/Lyo.DateAndTime/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Schedule.Models`](../../Schedule/Lyo.Schedule.Models/README.md)

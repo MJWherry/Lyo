@@ -137,7 +137,6 @@ Example `appsettings.json`:
 - `ReleaseAsync()` – Release the permit
 - `Dispose()` / `DisposeAsync()` – Release on dispose
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -156,26 +155,5 @@ Example `appsettings.json`:
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*13*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `IKeyedSemaphoreService`
-- `ILockHandle`
-- `ILockService`
-- `IPermitHandle`
-- `KeyedSemaphoreOptions`
-- `LocalKeyedSemaphoreService`
-- `LocalLockService`
-- `LockOptions`
-- `LockServiceExtensions`
-- `Metrics`
-- `SemaphoreMetrics`
-- `Tags`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)

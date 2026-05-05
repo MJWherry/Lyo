@@ -35,9 +35,9 @@ public sealed class PersonEntityConfiguration : IEntityTypeConfiguration<PersonE
         builder.Property(e => e.CreatedBy).HasMaxLength(500).HasColumnName("created_by");
         builder.Property(e => e.IsActive).HasColumnName("is_active");
         builder.Property(e => e.Notes).HasMaxLength(4000).HasColumnName("notes");
-        builder.Property(e => e.CitizenshipJson).HasColumnName("citizenship_json").HasColumnType("jsonb");
-        builder.Property(e => e.PreferencesJson).HasColumnName("preferences_json").HasColumnType("jsonb");
-        builder.Property(e => e.CustomFieldsJson).HasColumnName("custom_fields_json").HasColumnType("jsonb");
+        builder.Property(e => e.CitizenshipJson).HasColumnName("citizenship_json").HasColumnType("jsonb").HasMaxLength(2048);
+        builder.Property(e => e.PreferencesJson).HasColumnName("preferences_json").HasColumnType("jsonb").HasMaxLength(8192);
+        builder.Property(e => e.CustomFieldsJson).HasColumnName("custom_fields_json").HasColumnType("jsonb").HasMaxLength(8192);
         builder.HasIndex(e => e.FirstName).HasDatabaseName("ix_person_first_name");
         builder.HasIndex(e => e.LastName).HasDatabaseName("ix_person_last_name");
         builder.HasIndex(e => new { e.LastName, e.FirstName }).HasDatabaseName("ix_person_last_name_first_name");

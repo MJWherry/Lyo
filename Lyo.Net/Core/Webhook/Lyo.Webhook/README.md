@@ -63,7 +63,6 @@ and call your `IWebhookSignatureVerifier` directly.
 
 - **Lyo.Webhook.Twilio** — Twilio `X-Twilio-Signature` validation
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -77,27 +76,4 @@ and call your `IWebhookSignatureVerifier` directly.
 
 ### Project references
 
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*15*). Nested types and file-scoped namespaces may omit some entries.
-
-- `HttpRequestWebhookExtensions`
-- `IWebhookSignatureVerifier`
-- `IWebhookVerificationOptions`
-- `VerifiedWebhookEndpointBuilder`
-- `WebhookCrypto`
-- `WebhookEndpointMappingBuilder`
-- `WebhookEndpointRouteBuilderExtensions`
-- `WebhookHandlerContext`
-- `WebhookHeaders`
-- `WebhookInstrumentation`
-- `WebhookMetrics`
-- `WebhookRequestContext`
-- `WebhookVerificationContext`
-- `WebhookVerificationFailureReason`
-- `WebhookVerificationResult`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Metrics`](../../Metrics/Lyo.Metrics/README.md)

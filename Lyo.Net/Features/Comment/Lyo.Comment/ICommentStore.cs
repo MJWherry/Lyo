@@ -27,6 +27,7 @@ public interface ICommentStore
     /// <param name="commentRef">EntityRef for the comment (e.g. EntityRef.ForKey("Comment", commentId.ToString()))</param>
     /// <param name="fromEntity">EntityRef for who is reacting (e.g. the user)</param>
     /// <param name="reactionType">Like or Dislike</param>
+    /// <param name="ct">Cancellation token.</param>
     Task AddReactionAsync(EntityRef commentRef, EntityRef fromEntity, CommentReactionType reactionType, CancellationToken ct = default);
 
     /// <summary>Removes a user's reaction from a comment.</summary>

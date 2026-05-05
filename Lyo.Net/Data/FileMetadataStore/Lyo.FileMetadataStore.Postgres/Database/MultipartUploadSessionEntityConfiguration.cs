@@ -22,7 +22,7 @@ public sealed class MultipartUploadSessionEntityConfiguration : IEntityTypeConfi
         builder.Property(e => e.ContentType).HasMaxLength(255).HasColumnName("content_type");
         builder.Property(e => e.Status).IsRequired().HasColumnName("status");
         builder.Property(e => e.ProviderKind).IsRequired().HasColumnName("provider_kind");
-        builder.Property(e => e.ProviderState).IsRequired().HasColumnType("text").HasColumnName("provider_state");
+        builder.Property(e => e.ProviderState).IsRequired().HasColumnType("text").HasMaxLength(8192).HasColumnName("provider_state");
         builder.Property(e => e.DeclaredContentLength).HasColumnName("declared_content_length");
         builder.Property(e => e.PartSizeBytes).IsRequired().HasColumnName("part_size_bytes");
         builder.HasIndex(e => e.ExpiresUtc).HasDatabaseName("ix_multipart_upload_session_expires_utc");

@@ -14,7 +14,7 @@ public sealed class CommentEntityConfiguration : IEntityTypeConfiguration<Commen
         builder.Property(e => e.ForEntityId).HasMaxLength(200).IsRequired().HasColumnName("for_entity_id");
         builder.Property(e => e.FromEntityType).HasMaxLength(200).IsRequired().HasColumnName("from_entity_type");
         builder.Property(e => e.FromEntityId).HasMaxLength(200).IsRequired().HasColumnName("from_entity_id");
-        builder.Property(e => e.Content).IsRequired().HasColumnName("content");
+        builder.Property(e => e.Content).IsRequired().HasMaxLength(8192).HasColumnName("content");
         builder.Property(e => e.ReplyToCommentId).HasColumnName("reply_to_comment_id").HasColumnType("uuid");
         builder.Property(e => e.LikeCount).HasColumnName("like_count");
         builder.Property(e => e.DislikeCount).HasColumnName("dislike_count");

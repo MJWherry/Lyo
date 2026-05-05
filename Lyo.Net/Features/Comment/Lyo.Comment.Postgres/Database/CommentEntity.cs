@@ -31,6 +31,7 @@ public sealed class CommentEntity
 
     /// <summary>Gets or sets the comment content.</summary>
     [Required]
+    [MaxLength(8192)]
     public string Content { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the id of the comment this is a reply to, or null if top-level.</summary>

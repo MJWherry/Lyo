@@ -1,5 +1,6 @@
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Validation;
+using Lyo.Formatter;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;

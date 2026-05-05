@@ -106,7 +106,7 @@ public class CrudServicePostgresTests
     [Fact]
     public async Task Delete_ByIdentifier_RemovesMatchingEntity()
     {
-        var defId = await _fixture.SeedJobDefinitionAsync("DeleteByIdentifier");
+        await _fixture.SeedJobDefinitionAsync("DeleteByIdentifier");
         using var scope = _fixture.ServiceProvider.CreateScope();
         var deleteService = scope.ServiceProvider.GetRequiredService<IDeleteService<JobContext>>();
         var deleteRequest = new DeleteRequest("Name", "DeleteByIdentifier");

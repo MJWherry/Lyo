@@ -96,7 +96,7 @@ public static class Extensions
     /// <summary>Maps enriched/sub-resource Comic API route groups under the given prefix (default: /api/comic), and the file retrieval endpoints at /files.</summary>
     public static IEndpointRouteBuilder MapComicApi(this IEndpointRouteBuilder app, string prefix = "/api/comic")
     {
-        var group = app.MapGroup(prefix).WithOpenApi();
+        var group = app.MapGroup(prefix);
         group.MapSeriesEndpoints();
         group.MapVolumeEndpoints();
         group.MapChapterEndpoints();

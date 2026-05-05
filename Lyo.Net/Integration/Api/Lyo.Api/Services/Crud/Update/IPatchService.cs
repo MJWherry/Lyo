@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <summary>JSON property-level partial updates (single and bulk).</summary>
 public interface IPatchService<TContext>
     where TContext : DbContext
 {

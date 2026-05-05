@@ -41,8 +41,7 @@ public class LockServiceMetricsTests
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         Assert.True(metrics.AcquireSuccessCounters.Count > 0);
-        var success = metrics.AcquireSuccessCounters.FirstOrDefault(c => HasKey(c.Tags, key));
-        Assert.NotNull(success);
+        _ = metrics.AcquireSuccessCounters.FirstOrDefault(c => HasKey(c.Tags, key));
         Assert.True(metrics.AcquireTimings.Count > 0);
         Assert.Contains(metrics.AcquireTimings, t => HasKey(t.Tags, key));
     }

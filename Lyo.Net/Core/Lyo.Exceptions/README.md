@@ -41,7 +41,6 @@ OperationHelpers.ThrowIfNull(_data, "Data must be specified using WithData()");
 OperationHelpers.ThrowIf(_count == 0, "At least one item is required");
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -56,27 +55,3 @@ OperationHelpers.ThrowIf(_count == 0, "At least one item is required");
 ### Project references
 
 *None.*
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*16*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ArgumentHelpers`
-- `ArgumentOutsideRangeException`
-- `ConflictException`
-- `ExceptionThrower`
-- `FileHelpers`
-- `ForbiddenException`
-- `FormatHelpers`
-- `HttpException`
-- `InvalidFormatException`
-- `NotFoundException`
-- `OperationHelpers`
-- `RateLimitExceededException`
-- `ServiceUnavailableException`
-- `UnauthorizedException`
-- `UriHelpers`
-- `ValidationException`
-
-<!-- LYO_README_SYNC:END -->
-

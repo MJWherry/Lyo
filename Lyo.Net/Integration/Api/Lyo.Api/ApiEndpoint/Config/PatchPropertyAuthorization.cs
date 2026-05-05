@@ -54,7 +54,7 @@ public sealed class PatchPropertyAuthorizationBuilder
         => new() { PolicyAllowedProperties = _map.ToDictionary(static kvp => kvp.Key, static kvp => (IReadOnlySet<string>)kvp.Value, StringComparer.Ordinal) };
 }
 
-/// <summary>Result of applying <see cref="PatchPropertyAuthorization" />.</summary>
+/// <summary>Outcome of applying <see cref="PatchPropertyAuthorization" />: either an allowed (possibly filtered) patch or a forbidden problem.</summary>
 public readonly struct PatchPropertyAuthorizationResult
 {
     private PatchPropertyAuthorizationResult(bool success, PatchRequest? request, LyoProblemDetails? error)
@@ -64,14 +64,19 @@ public readonly struct PatchPropertyAuthorizationResult
         Error = error;
     }
 
+    /// <summary>True when the patch may proceed (possibly with properties removed).</summary>
     public bool Success { get; }
 
+    /// <summary>When <see cref="Success" /> is true, the patch body to apply.</summary>
     public PatchRequest? Request { get; }
 
+    /// <summary>When <see cref="Success" /> is false, the problem returned to the client (typically 403).</summary>
     public LyoProblemDetails? Error { get; }
 
+    /// <summary>Allows the given patch request unchanged.</summary>
     public static PatchPropertyAuthorizationResult Ok(PatchRequest request) => new(true, request, null);
 
+    /// <summary>Rejects the patch with a structured error.</summary>
     public static PatchPropertyAuthorizationResult Forbidden(LyoProblemDetails error) => new(false, null, error);
 }
 

@@ -84,7 +84,7 @@ public static class Utilities
         return await sha256.ComputeHashAsync(stream, ct).ConfigureAwait(false);
 #else
         // .NET Standard 2.0: ComputeHashAsync doesn't exist, use synchronous version
-        await System.Threading.Tasks.Task.Yield();
+        await Task.Yield();
         ct.ThrowIfCancellationRequested();
         return sha256.ComputeHash(stream);
 #endif

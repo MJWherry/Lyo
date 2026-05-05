@@ -3,6 +3,9 @@
 Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling. Ideal for upload processing, report generation,
 or any workflow needing short-lived temp storage.
 
+The public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in the
+repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.
+
 ## Features
 
 - **Session-based** – `IIOTempSession` groups temp files/dirs; cleanup on session dispose
@@ -265,7 +268,6 @@ creation time), async variants of all write operations, and an `EnsureDirectoryA
 | `InitialDelay` | 5 minutes | Delay before the first cleanup run after app startup. |
 | `Interval`     | 1 hour    | How often to run cleanup after the initial run.       |
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -285,37 +287,6 @@ creation time), async variants of all write operations, and an `EnsureDirectoryA
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*22*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `FileSystemIOTempStorageProvider`
-- `IIOTempFileGenerator`
-- `IIOTempService`
-- `IIOTempSession`
-- `IIOTempStorageProvider`
-- `InMemoryIOTempStorageProvider`
-- `IOTempCleanupOptions`
-- `IOTempCleanupWorker`
-- `IOTempFileGenerator`
-- `IOTempOptionsExtensions`
-- `IOTempService`
-- `IOTempServiceOptions`
-- `IOTempServiceStats`
-- `IOTempSession`
-- `IOTempSessionExtensions`
-- `IOTempSessionOptions`
-- `ProviderEntryInfo`
-- `TempDirectorySpec`
-- `TempDirectorySpecBuilder`
-- `TempNamingStrategy`
-- `TempOverflowStrategy`
-- `TempSessionSnapshot`
-
-<!-- LYO_README_SYNC:END -->
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

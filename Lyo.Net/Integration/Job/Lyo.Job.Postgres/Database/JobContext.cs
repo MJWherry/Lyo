@@ -179,11 +179,11 @@ public partial class JobContext : DbContext
             entity.HasIndex(e => e.JobRunId, "ix_job_run_log_job_run_id");
             entity.HasIndex(e => e.Level, "ix_job_run_log_level");
             entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()").HasColumnName("id");
-            entity.Property(e => e.Context).HasColumnName("context");
+            entity.Property(e => e.Context).HasMaxLength(16_384).HasColumnName("context");
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
             entity.Property(e => e.Level).HasMaxLength(13).HasColumnName("level");
             entity.Property(e => e.Message).HasMaxLength(1000).HasColumnName("message");
-            entity.Property(e => e.StackTrace).HasColumnName("stack_trace");
+            entity.Property(e => e.StackTrace).HasMaxLength(16384).HasColumnName("stack_trace");
             entity.Property(e => e.Timestamp).HasColumnType("timestamp with time zone").HasColumnName("timestamp");
             entity.HasOne(d => d.JobRun)
                 .WithMany(p => p.JobRunLogs)
@@ -220,7 +220,7 @@ public partial class JobContext : DbContext
             entity.Property(e => e.JobRunId).HasColumnName("job_run_id");
             entity.Property(e => e.Key).HasMaxLength(50).HasColumnName("key");
             entity.Property(e => e.Type).HasMaxLength(15).HasColumnName("type");
-            entity.Property(e => e.Value).HasColumnName("value");
+            entity.Property(e => e.Value).HasMaxLength(16_384).HasColumnName("value");
             entity.HasOne(d => d.JobRun)
                 .WithMany(p => p.JobRunResults)
                 .HasForeignKey(d => d.JobRunId)

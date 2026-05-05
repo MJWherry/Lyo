@@ -95,9 +95,9 @@ namespace Lyo.People.Postgres.Migrations
                     created_by = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
                     notes = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    citizenship_json = table.Column<string>(type: "jsonb", nullable: true),
-                    preferences_json = table.Column<string>(type: "jsonb", nullable: true),
-                    custom_fields_json = table.Column<string>(type: "jsonb", nullable: true)
+                    citizenship_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 2048),
+                    preferences_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192),
+                    custom_fields_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192)
                 },
                 constraints: table =>
                 {

@@ -40,7 +40,6 @@ The service can be configured via options or dependency injection. AWS credentia
 - Environment variables
 - AWS credentials file
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -60,22 +59,5 @@ The service can be configured via options or dependency injection. AWS credentia
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Tts`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*9*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AwsPollyOptions`
-- `AwsPollyTtsAppService`
-- `AwsPollyTtsRequest`
-- `AwsPollyTtsService`
-- `AwsPollyVoiceId`
-- `Constants`
-- `Extensions`
-- `IsExternalInit`
-- `Metrics`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Tts`](../Lyo.Tts/README.md)

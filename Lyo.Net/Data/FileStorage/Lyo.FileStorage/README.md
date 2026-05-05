@@ -110,7 +110,6 @@ All file storage operations are thread-safe and can be used concurrently from mu
 
 
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -124,59 +123,11 @@ All file storage operations are thread-safe and can be used concurrently from mu
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Compression`
-- `Lyo.Encryption`
-- `Lyo.Exceptions`
-- `Lyo.FileMetadataStore`
-- `Lyo.Health`
-- `Lyo.Metrics`
-- `Lyo.Streams`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*36*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AllowAllFileContentPolicy`
-- `CompletedPart`
-- `CompleteMultipartUploadRequest`
-- `Constants`
-- `DefaultFileContentPolicy`
-- `Extensions`
-- `FileAuditEventArgs`
-- `FileAuditEventType`
-- `FileAuditOutcome`
-- `FileAuditPublication`
-- `FileNotAvailableException`
-- `FileOperationContextAccessor`
-- `FilePolicyRejectedException`
-- `FileSavePolicyContext`
-- `FileScanThreatLevel`
-- `FileStorageErrorCodes`
-- `FileStorageServiceBase`
-- `FileStorageServiceBaseOptions`
-- `IFileAuditEventHandler`
-- `IFileContentPolicy`
-- `IFileMalwareScanner`
-- `IFileOperationContext`
-- `IFileOperationContextAccessor`
-- `IFileStorageService`
-- `IMultipartUploadService`
-- `IMultipartUploadSessionStore`
-- `InMemoryMultipartUploadSessionStore`
-- `LocalFileStorageService`
-- `LocalFileStorageServiceOptions`
-- `LocalMultipartUploadService`
-- `Metrics`
-- `MultipartBeginRequest`
-- `MultipartSessionStatus`
-- `MultipartUploadProviderKind`
-- `NullFileMalwareScanner`
-- `NullFileOperationContextAccessor`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
+- [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Streams`](../../../Core/Streams/Lyo.Streams/README.md)

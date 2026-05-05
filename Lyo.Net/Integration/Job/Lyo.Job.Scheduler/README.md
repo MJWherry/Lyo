@@ -41,7 +41,6 @@ await scheduler.StartAsync();
 2. **Schedule check** – Evaluates each definition’s schedules via `DateAndTime.IsPastDue` (with MonthFlags) and creates job runs when due.
 3. **Job run completion** – Subscribes to `job.run.complete`; on message, fetches the run, updates last-run state, and processes triggers when criteria match.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -58,23 +57,12 @@ await scheduler.StartAsync();
 
 ### Project references
 
-- `Lyo.Api.Client`
-- `Lyo.Api.Models`
-- `Lyo.Common`
-- `Lyo.DateAndTime`
-- `Lyo.Formatter`
-- `Lyo.Job.Models`
-- `Lyo.MessageQueue`
-- `Lyo.MessageQueue.RabbitMq`
-- `Lyo.Query.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*3*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `JobScheduler`
-- `JobSchedulerOptions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
+- [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.DateAndTime`](../../../Core/DateAndTime/Lyo.DateAndTime/README.md)
+- [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)
+- [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
+- [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)
+- [`Lyo.MessageQueue.RabbitMq`](../../../Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/README.md)
+- [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md)

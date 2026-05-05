@@ -7,7 +7,7 @@ A production-ready SMS library for .NET with extensible architecture for multipl
 - ✅ **Clean API** - Fluent builder pattern for constructing messages
 - ✅ **Phone Number Validation** - Automatic validation and normalization to E.164 format
 - ✅ **Bulk Messaging** - Efficient bulk SMS sending with rate limiting and BulkSmsBuilder
-- ✅ **Error Handling** - Comprehensive error handling with retry logic for transient failures
+- ✅ **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README “Resilience”).
 - ✅ **Custom Exceptions** - InvalidFormatException and ArgumentOutsideRangeException for better error messages
 - ✅ **Logging** - Built-in logging support via Microsoft.Extensions.Logging
 - ✅ **Dependency Injection** - Full support for .NET dependency injection
@@ -39,6 +39,8 @@ Register the provider-specific service using the provider's extension methods. E
 registration methods.
 
 ### 3. Use the Service
+
+The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces **`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
 
 ```csharp
 public class MyService
@@ -319,10 +321,10 @@ The library supports multiple phone number formats and automatically normalizes 
 
 ## Error Handling
 
-The library includes comprehensive error handling with custom exception types:
+The stack surfaces structured **`Result`** errors and validates inputs early (builders / normalization). Providers may attach error codes on specialized result types.
 
-- **Retry Logic**: Automatic retry with exponential backoff for transient errors
-- **Error Codes**: Provider-specific error codes included in results
+- **No built-in retries**: callers or HTTP layers should implement policy if needed
+- **Error codes**: Provider-specific codes appear on derived result types (e.g. Twilio)
 - **Exception Details**: Full exception information available in results
 - **Logging**: All operations are logged for debugging
 - **Custom Exceptions**:
@@ -447,41 +449,33 @@ public class MyProviderOptions : SmsServiceOptions
 }
 ```
 
-2. Create a service class inheriting from `SmsServiceBase`:
+2. Implement **`SmsServiceBase<TResult>`**. Override **`SendCoreAsync`** (the actual provider call after **`SmsRequest`** is built), **`GetMessageByIdAsync`**, **`GetMessagesAsync`**, **`TestConnectionCoreAsync`**, and **`CreateFailure`**. Everything else on **`ISmsService`** (**`SendSmsAsync`**, **`SendBulkAsync`**, events, concurrency throttling, metrics hooks) stays in the base.
 
 ```csharp
-public class MyProviderSmsService : SmsServiceBase
+public class MyProviderSmsService : SmsServiceBase<Result<SmsRequest>>
 {
-    private readonly MyProviderOptions _options;
-    
-    public MyProviderSmsService(MyProviderOptions options, ILogger<MyProviderSmsService> logger, IMetrics? metrics = null)
+    public MyProviderSmsService(MyProviderOptions options, ILogger<MyProviderSmsService>? logger = null, IMetrics? metrics = null)
         : base(options, logger, metrics)
     {
-        _options = options;
     }
-    
-    // Only need to implement these 4 methods:
-    public override Task<SmsResult> SendSmsAsync(SmsMessage message, CancellationToken ct = default)
-    {
-        // Provider-specific send implementation
-    }
-    
-    public override Task<SmsResult> GetMessageByIdAsync(string messageId, CancellationToken ct = default)
-    {
-        // Provider-specific get by ID implementation
-    }
-    
-    public override Task<IEnumerable<SmsResult>> GetMessagesAsync(SmsMessageQueryFilter filter, CancellationToken ct = default)
-    {
-        // Provider-specific query implementation
-    }
-    
-    public override Task<bool> TestConnectionAsync(CancellationToken ct = default)
-    {
-        // Provider-specific connection test
-    }
+
+    protected override Task<Result<SmsRequest>> SendCoreAsync(SmsRequest request, CancellationToken ct)
+        => Task.FromResult(Result<SmsRequest>.Failure("Not implemented", "sms.myprovider"));
+
+    public override Task<Result<SmsRequest>> GetMessageByIdAsync(string messageId, CancellationToken ct = default)
+        => Task.FromResult(Result<SmsRequest>.Failure("Not implemented", "sms.myprovider"));
+
+    public override Task<SmsMessageQueryResults<Result<SmsRequest>>> GetMessagesAsync(SmsMessageQueryFilter filter, CancellationToken ct = default)
+        => Task.FromResult(new SmsMessageQueryResults<Result<SmsRequest>>([], filter.PageSize, false));
+
+    protected override Task<bool> TestConnectionCoreAsync(CancellationToken ct = default) => Task.FromResult(false);
+
+    protected override Result<SmsRequest> CreateFailure(Exception exception, string code, SmsRequest? request = null)
+        => Result<SmsRequest>.Failure(exception, code);
 }
 ```
+
+Richer **`TResult`** types (Twilio **`TwilioSmsResult`**) substitute **`SmsServiceBase<TwilioSmsResult>`** — see [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md).
 
 3. Create extension methods for dependency injection:
 
@@ -510,7 +504,6 @@ All bulk SMS operations, rate limiting, and common functionality are automatical
 
 
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -527,26 +520,7 @@ All bulk SMS operations, rate limiting, and common functionality are automatical
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-- `Lyo.Sms.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `BulkSmsBuilder`
-- `Constants`
-- `IsExternalInit`
-- `ISmsService`
-- `Metrics`
-- `SmsErrorCodes`
-- `SmsMessageBuilder`
-- `SmsServiceBase`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Sms.Models`](../Lyo.Sms.Models/README.md)

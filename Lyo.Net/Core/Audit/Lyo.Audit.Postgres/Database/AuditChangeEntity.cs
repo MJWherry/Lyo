@@ -21,10 +21,12 @@ public sealed class AuditChangeEntity
 
     /// <summary>Gets or sets the old values as JSON (property name -> old value).</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(32_768)]
     public string OldValuesJson { get; set; } = "{}";
 
     /// <summary>Gets or sets the changed properties as JSON (property name -> new value).</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(32_768)]
     public string ChangedPropertiesJson { get; set; } = "{}";
 
     /// <summary>Gets or sets the timestamp when this record was created.</summary>

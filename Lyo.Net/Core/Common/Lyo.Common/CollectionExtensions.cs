@@ -24,6 +24,7 @@ public static class CollectionExtensions
     extension<T>(T[] array)
     {
         /// <summary>Returns the array unchanged.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the array is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public T[] AsArrayOrToArray()
         {
             ArgumentHelpers.ThrowIfNull(array);
@@ -31,6 +32,7 @@ public static class CollectionExtensions
         }
 
         /// <summary>Returns the array as <see cref="IReadOnlyList{T}"/> (same instance, no copy).</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the array is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IReadOnlyList<T> AsReadOnlyList()
         {
             ArgumentHelpers.ThrowIfNull(array);
@@ -38,6 +40,7 @@ public static class CollectionExtensions
         }
 
         /// <summary>Returns the array as <see cref="IReadOnlyCollection{T}"/> (same instance, no copy).</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the array is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IReadOnlyCollection<T> AsReadOnlyCollectionOrToList()
         {
             ArgumentHelpers.ThrowIfNull(array);
@@ -45,6 +48,7 @@ public static class CollectionExtensions
         }
 
         /// <summary>Copies elements into a new <see cref="List{T}"/>.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the array is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public List<T> AsListOrToList()
         {
             ArgumentHelpers.ThrowIfNull(array);
@@ -52,6 +56,7 @@ public static class CollectionExtensions
         }
 
         /// <summary>Returns the array as <see cref="ICollection{T}"/> (same instance, no copy).</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the array is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public ICollection<T> AsCollectionOrToList()
         {
             ArgumentHelpers.ThrowIfNull(array);
@@ -62,21 +67,26 @@ public static class CollectionExtensions
     extension<T>(IEnumerable<T>? source)
     {
         /// <summary>Returns an <see cref="IReadOnlyList{T}"/> without copying elements when the sequence is already a read-only list, or wraps an <see cref="IList{T}"/> via <see cref="ReadOnlyCollection{T}"/>; otherwise materializes via <see cref="Enumerable.ToList{TSource}"/>.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IReadOnlyList<T> AsReadOnlyList() => ReadOnlyListOrWrappedOrCopied(source);
 
         /// <summary>Returns an <see cref="IReadOnlyCollection{T}"/> without copying elements when the sequence already exposes one, or wraps an <see cref="IList{T}"/> via <see cref="ReadOnlyCollection{T}"/>; otherwise materializes via <see cref="Enumerable.ToList{TSource}"/>.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IReadOnlyCollection<T> AsReadOnlyCollectionOrToList() => ReadOnlyCollectionOrWrappedOrCopied(source);
 
         /// <summary>Returns the same instance if it is already a <see cref="List{T}"/>; otherwise materializes via <see cref="Enumerable.ToList{TSource}"/>.</summary>
         /// <remarks>Other <see cref="IList{T}"/> implementations (e.g. arrays) are copied because this method returns a <see cref="List{T}"/>.</remarks>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public List<T> AsListOrToList() =>
             ExistingOrMaterializedList(source, static s => s as List<T>);
 
         /// <summary>Returns an <see cref="ICollection{T}"/> without copying when the sequence already exposes one; otherwise materializes via <see cref="Enumerable.ToList{TSource}"/>.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public ICollection<T> AsCollectionOrToList() =>
             ExistingOrMaterializedList(source, static s => s as ICollection<T>);
 
         /// <summary>Returns the same <typeparamref name="T"/> array instance when appropriate; otherwise materializes via <see cref="Enumerable.ToArray{TSource}"/>.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public T[] AsArrayOrToArray() => ExistingArrayOrToArray(source);
     }
 
@@ -84,6 +94,7 @@ public static class CollectionExtensions
     {
 #if NETSTANDARD2_0
         /// <summary>Returns distinct elements by a key selector. Polyfill for .NET Standard 2.0.</summary>
+        /// <exception cref="ArgumentNullException">Thrown when the sequence or <paramref name="keySelector"/> is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector)
         {
             ArgumentHelpers.ThrowIfNull(source);

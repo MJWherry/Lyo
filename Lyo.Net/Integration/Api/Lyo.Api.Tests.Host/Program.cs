@@ -75,10 +75,7 @@ app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes,
         ctx => ctx.Entity.Description = (ctx.Entity.Description ?? "") + " [beforePatchBulk]", ctx => ctx.Entity.Description = (ctx.Entity.Description ?? "") + " [afterPatchBulk]")
     .WithUpsert(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
     .WithUpsertBulk(beforeCreate: ctx => ctx.Entity.Id = Guid.NewGuid())
-    .WithDelete(
-        ctx => { /* beforeDelete - entity about to be deleted */
-        }, ctx => { /* afterDelete - entity already deleted */
-        })
+    .WithDelete()
     .WithDeleteBulk(ctx => { }, ctx => { })
     .Build();
 

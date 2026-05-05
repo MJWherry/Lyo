@@ -10,7 +10,7 @@ public sealed class ShortUrlEntityConfiguration : IEntityTypeConfiguration<Short
         builder.ToTable("short_urls");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasMaxLength(100).IsRequired().HasColumnName("id");
-        builder.Property(e => e.LongUrl).HasMaxLength(2048).IsRequired().HasColumnName("long_url");
+        builder.Property(e => e.LongUrl).HasMaxLength(1024).IsRequired().HasColumnName("long_url");
         builder.Property(e => e.CustomAlias).HasMaxLength(100).HasColumnName("custom_alias");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");

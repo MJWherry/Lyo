@@ -22,8 +22,8 @@ namespace Lyo.Audit.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     type_assembly_full_name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    old_values_json = table.Column<string>(type: "jsonb", nullable: false),
-                    changed_properties_json = table.Column<string>(type: "jsonb", nullable: false),
+                    old_values_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
+                    changed_properties_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -42,7 +42,7 @@ namespace Lyo.Audit.Postgres.Migrations
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     message = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     actor = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    metadata_json = table.Column<string>(type: "jsonb", nullable: true),
+                    metadata_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

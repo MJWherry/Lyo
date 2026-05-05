@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Delete;
 
+/// <summary>Delete by primary key, by <see cref="DeleteRequest" /> (keys or where clause), and bulk delete.</summary>
 public interface IDeleteService<TContext>
     where TContext : DbContext
 {

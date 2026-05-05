@@ -6,6 +6,7 @@ namespace Lyo.Csv.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record CsvRowDifference(int RowNumber, DifferenceType Type, string? ColumnName = null, string? Value1 = null, string? Value2 = null)
 {
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvRowDifference: RowNumber={RowNumber}, Type={Type}, ColumnName='{ColumnName ?? "N/A"}', Value1='{Value1 ?? "N/A"}', Value2='{Value2 ?? "N/A"}'";
 }

@@ -36,18 +36,19 @@ public class FileProfanityFilterOptions : ProfanityFilterOptions
     /// <summary>Gets the word source config for the specified language, or the default WordsFilePath/WordsUrl if not found in WordsByLanguage.</summary>
     internal (string Path, string Url) GetWordSourceForLanguage(LanguageCodeInfo language)
     {
-        if (WordsByLanguage is { Count: > 0 }) {
-            bool HasSource(LanguageWordSourceConfig c) => !string.IsNullOrWhiteSpace(c.WordsFilePath) || !string.IsNullOrWhiteSpace(c.WordsUrl);
+        if (WordsByLanguage is not { Count: > 0 })
+            return (WordsFilePath, WordsUrl);
 
-            if (WordsByLanguage.TryGetValue(language.Bcp47, out var config) && HasSource(config))
-                return (config.WordsFilePath ?? string.Empty, config.WordsUrl ?? string.Empty);
+        bool HasSource(LanguageWordSourceConfig c) => !string.IsNullOrWhiteSpace(c.WordsFilePath) || !string.IsNullOrWhiteSpace(c.WordsUrl);
 
-            if (!string.IsNullOrWhiteSpace(language.Iso6391) && WordsByLanguage!.TryGetValue(language.Iso6391!, out config) && HasSource(config))
-                return (config.WordsFilePath ?? string.Empty, config.WordsUrl ?? string.Empty);
+        if (WordsByLanguage.TryGetValue(language.Bcp47, out var config) && HasSource(config))
+            return (config.WordsFilePath, config.WordsUrl);
 
-            if (!string.IsNullOrWhiteSpace(language.Iso6393) && WordsByLanguage!.TryGetValue(language.Iso6393!, out config) && HasSource(config))
-                return (config.WordsFilePath ?? string.Empty, config.WordsUrl ?? string.Empty);
-        }
+        if (!string.IsNullOrWhiteSpace(language.Iso6391) && WordsByLanguage!.TryGetValue(language.Iso6391!, out config) && HasSource(config))
+            return (config.WordsFilePath, config.WordsUrl);
+
+        if (!string.IsNullOrWhiteSpace(language.Iso6393) && WordsByLanguage!.TryGetValue(language.Iso6393!, out config) && HasSource(config))
+            return (config.WordsFilePath, config.WordsUrl);
 
         return (WordsFilePath, WordsUrl);
     }

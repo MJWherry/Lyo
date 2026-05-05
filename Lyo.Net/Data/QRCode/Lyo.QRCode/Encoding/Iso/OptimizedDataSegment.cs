@@ -1,3 +1,4 @@
+// ReSharper disable InconsistentNaming
 #pragma warning disable IDE0018 // Inline variable declaration -- false positive
 
 namespace Lyo.QRCode.Encoding.Iso;
@@ -179,8 +180,6 @@ internal sealed partial class QrIsoEncoder
             var numericThreshold = GetBreakpoint(version, 6, 8, 9);
             var alphaThreshold = GetBreakpoint(version, 11, 15, 16);
             while (pos < text.Length) {
-                var c = text[pos];
-
                 // Rule b.3: If a sequence of at least [6,8,9] Numeric characters occurs before more data from the exclusive subset of the Byte character set, switch to Numeric mode
                 var numericCount = CountConsecutive(text, pos, IsNumeric);
                 if (numericCount >= numericThreshold) {

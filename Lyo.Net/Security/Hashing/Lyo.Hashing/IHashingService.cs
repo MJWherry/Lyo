@@ -4,6 +4,13 @@ using Lyo.Hashing.Files;
 namespace Lyo.Hashing;
 
 /// <summary>Injectable façade over digesting, hex formatting, hashing streams, sparse fingerprints, and HMAC helpers.</summary>
+/// <remarks>
+/// <para>
+/// Prefer <see cref="Hasher" /> / <see cref="HexEncoding" /> for static call sites; inject this interface when hashing policy (hex casing, fingerprint defaults) should be
+/// centralized or test-doubled. <see cref="HashingService.Shared" /> is the default singleton used when <c>AddLyoHashing()</c> is called without configuration.
+/// </para>
+/// <para>MD5 and sparse fingerprints are not suitable for security-sensitive integrity; see package README.</para>
+/// </remarks>
 public interface IHashingService
 {
     /// <summary>Hash a contiguous buffer (SHA-2 or MD5 per <paramref name="algorithm" />).</summary>

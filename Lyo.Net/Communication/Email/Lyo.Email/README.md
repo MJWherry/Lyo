@@ -591,7 +591,6 @@ requested, processing stops and partial results are returned.
 - `TestConnectionAsync` throws `OperationCanceledException` if cancelled
 - Bulk operations check cancellation between emails and stop early if cancelled
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -609,33 +608,10 @@ requested, processing stops and partial results are returned.
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Email.Models`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*9*). Nested types and file-scoped namespaces may omit some entries.
-
-- `BulkEmailRequestBuilder`
-- `Constants`
-- `EmailRequestBuilder`
-- `EmailService`
-- `Extensions`
-- `IEmailService`
-- `IsExternalInit`
-- `Metrics`
-- `ZipFileBuilder`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
-
----
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Email.Models`](../Lyo.Email.Models/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 **Production Ready:** This library has been reviewed for production use and includes:
 
 - ✅ Thread-safe operations
@@ -646,4 +622,3 @@ Top-level `public` types in `*.cs` (*9*). Nested types and file-scoped namespace
 - ✅ Logging and metrics support
 - ✅ Cancellation token support
 - ✅ Event notifications for monitoring
-

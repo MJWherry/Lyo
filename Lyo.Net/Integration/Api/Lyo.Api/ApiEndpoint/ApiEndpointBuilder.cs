@@ -24,6 +24,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Api.ApiEndpoint;
 
+/// <summary>
+/// Fluent registration of typed CRUD minimal endpoints for one entity: query, projection, get, create/update/patch/delete/upsert (single and bulk), export, metadata, and optional
+/// query history. Call <see cref="Build" /> after configuring operations. Authorization defaults and per-operation overrides are applied here.
+/// </summary>
 public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey>(WebApplication app, string baseRoute, string groupName)
     where TDbContext : DbContext where TDbEntity : class
 {
@@ -933,7 +937,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/QueryHistory", async (
                     [FromBody] HistoryQuery query,
-                    [FromServices] IQueryHistoryService<TDbContext> service,
+                    [FromServices] IQueryHistoryService service,
                     HttpContext httpContext,
                     CancellationToken ct = default) => {
                     var result = await service.QueryHistory<TDbEntity, TResponse>(

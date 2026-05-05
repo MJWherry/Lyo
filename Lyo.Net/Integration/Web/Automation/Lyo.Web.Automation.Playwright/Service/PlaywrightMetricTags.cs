@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Web.Automation.Playwright.Browser;
 
 namespace Lyo.Web.Automation.Playwright.Service;
@@ -8,8 +9,8 @@ internal static class PlaywrightMetricTags
     {
         var list = new List<(string, string)> { ("operation", operation), ("session_id", browser.SessionIdLabel), ("implementation", "playwright") };
         var host = TryHostFromUrl(browser.TryGetCurrentUrl());
-        if (!string.IsNullOrEmpty(host))
-            list.Add(("url_host", host!));
+        if (!host.IsNullOrEmpty())
+            list.Add(("url_host", host));
 
         if (extra != null)
             list.AddRange(extra);

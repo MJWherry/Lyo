@@ -25,6 +25,7 @@ internal static class PackageMetadataMapping
             e.RepositoryUrl,
             e.LicenseUrl,
             e.LicenseExpression,
+            ResolveLicenseExpressionSyntax(e),
             e.PackageDetailsUrl,
             DeserializeStringList(e.TagsJson),
             e.CreatedAt,
@@ -51,7 +52,35 @@ internal static class PackageMetadataMapping
         e.RepositoryUrl = m.RepositoryUrl;
         e.LicenseUrl = m.LicenseUrl;
         e.LicenseExpression = m.LicenseExpression;
+        e.LicenseExpressionSyntaxJson = SerializeSyntax(PackageLicenseExpression.TryParseSyntax(m.LicenseExpression));
         e.PackageDetailsUrl = m.PackageDetailsUrl;
+    }
+
+    private static SpdxLicenseExpressionSyntax? ResolveLicenseExpressionSyntax(PackageMetadataEntity e)
+    {
+        var fromJson = DeserializeSyntax(e.LicenseExpressionSyntaxJson);
+        if (fromJson is not null)
+            return fromJson;
+        return PackageLicenseExpression.TryParseSyntax(e.LicenseExpression);
+    }
+
+    private static SpdxLicenseExpressionSyntax? DeserializeSyntax(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+        try {
+            return JsonSerializer.Deserialize<SpdxLicenseExpressionSyntax>(json, JsonOptions);
+        }
+        catch {
+            return null;
+        }
+    }
+
+    private static string? SerializeSyntax(SpdxLicenseExpressionSyntax? syntax)
+    {
+        if (syntax is null)
+            return null;
+        return JsonSerializer.Serialize(syntax, JsonOptions);
     }
 
     private static IReadOnlyList<string>? DeserializeStringList(string? json)

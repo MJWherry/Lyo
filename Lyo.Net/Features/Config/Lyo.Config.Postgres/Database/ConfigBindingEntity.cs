@@ -28,7 +28,7 @@ public sealed class ConfigBindingEntity
 
     /// <summary>CLR type name for JSON values (same form as <see cref="ConfigDefinitionEntity.ForValueType" />); denormalized from the definition.</summary>
     [Required]
-    [MaxLength(2048)]
+    [MaxLength(1024)]
     public string ValueType { get; set; } = string.Empty;
 
     [Required]

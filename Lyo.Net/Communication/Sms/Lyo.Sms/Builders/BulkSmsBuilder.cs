@@ -24,7 +24,7 @@ public sealed class BulkSmsBuilder
     /// <exception cref="ArgumentOutsideRangeException">Thrown when maxLimit is outside the range [1, int.MaxValue].</exception>
     public BulkSmsBuilder SetMaxLimit(int maxLimit)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(maxLimit, 1, int.MaxValue, nameof(maxLimit));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(maxLimit, 1, int.MaxValue);
         _maxLimit = maxLimit;
         return this;
     }

@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 
 namespace Lyo.IO.Temp;
 
+/// <summary>Default <see cref="IIOTempService" /> implementation using <see cref="IIOTempStorageProvider" /> for all I/O.</summary>
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempService : IIOTempService
 {
@@ -30,6 +31,12 @@ public sealed class IOTempService : IIOTempService
     private readonly IIOTempStorageProvider _storage;
     private bool _disposed;
 
+    /// <summary>Initializes a new service instance, creates the shared root if configured, and allocates a unique <see cref="ServiceDirectory" />.</summary>
+    /// <param name="options">Service and default session behaviour; defaults apply when null.</param>
+    /// <param name="logger">Optional logger for operations and failures.</param>
+    /// <param name="metrics">Recorded when <see cref="IOTempServiceOptions.EnableMetrics" /> is true and this reference is non-null.</param>
+    /// <param name="loggerFactory">Optional factory used to create per-session loggers.</param>
+    /// <param name="storageProvider">Storage backend; defaults to <see cref="FileSystemIOTempStorageProvider" /> rooted at <see cref="IOTempServiceOptions.RootDirectory" />.</param>
     public IOTempService(
         IOTempServiceOptions? options = null,
         ILogger<IOTempService>? logger = null,
@@ -48,12 +55,15 @@ public sealed class IOTempService : IIOTempService
         ServiceDirectory = CreateServiceDirectory();
     }
 
+    /// <inheritdoc />
     public string ServiceDirectory { get; }
 
+    /// <inheritdoc />
     public int ActiveSessionCount => _activeSessions.Count;
 
 #region Sessions
 
+    /// <inheritdoc />
     public IIOTempSession CreateSession(IOTempSessionOptions? options = null)
     {
         ThrowIfDisposed();
@@ -77,6 +87,7 @@ public sealed class IOTempService : IIOTempService
         }
     }
 
+    /// <inheritdoc />
     public IIOTempSession GetOrCreateSession(string key, IOTempSessionOptions? options = null)
     {
         ThrowIfDisposed();
@@ -94,6 +105,7 @@ public sealed class IOTempService : IIOTempService
         }
     }
 
+    /// <inheritdoc />
     public void ReleaseSession(string key)
     {
         ThrowIfDisposed();
@@ -101,6 +113,7 @@ public sealed class IOTempService : IIOTempService
             session.Dispose();
     }
 
+    /// <inheritdoc />
     public IOTempServiceStats GetStats()
     {
         ThrowIfDisposed();
@@ -112,6 +125,7 @@ public sealed class IOTempService : IIOTempService
 
 #region One-offs
 
+    /// <inheritdoc />
     public string CreateFile(string? name = null)
     {
         ThrowIfDisposed();
@@ -121,6 +135,7 @@ public sealed class IOTempService : IIOTempService
         return path;
     }
 
+    /// <inheritdoc />
     public string CreateFile(ReadOnlyMemory<byte> data, string? name = null)
     {
         ThrowIfDisposed();
@@ -130,6 +145,7 @@ public sealed class IOTempService : IIOTempService
         return path;
     }
 
+    /// <inheritdoc />
     public string CreateFile(Stream data, string? name = null)
     {
         ThrowIfDisposed();
@@ -142,6 +158,7 @@ public sealed class IOTempService : IIOTempService
         return path;
     }
 
+    /// <inheritdoc />
     public string CreateDirectory(string? name = null)
     {
         ThrowIfDisposed();
@@ -155,10 +172,13 @@ public sealed class IOTempService : IIOTempService
 
 #region Cleanup
 
+    /// <inheritdoc />
     public void Cleanup() => Cleanup(_options.FileLifetime ?? TimeSpan.Zero);
 
+    /// <inheritdoc />
     public Task CleanupAsync(CancellationToken ct = default) => CleanupAsync(_options.FileLifetime ?? TimeSpan.Zero, ct);
 
+    /// <inheritdoc />
     public Task CleanupAsync(TimeSpan olderThan, CancellationToken ct = default) => Task.Run(() => Cleanup(olderThan, ct), ct);
 
     private void Cleanup(TimeSpan olderThan, CancellationToken ct = default)
@@ -375,6 +395,10 @@ public sealed class IOTempService : IIOTempService
 
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(IOTempService));
 
+    /// <summary>
+    /// Marks the service disposed, clears the active-session table, and deletes <see cref="ServiceDirectory" /> with retries on transient I/O errors. Exceptions during delete are
+    /// logged; keyed session entries may still reference disposed sessions until removed.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)

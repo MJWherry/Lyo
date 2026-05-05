@@ -82,7 +82,7 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     {
         ct.ThrowIfCancellationRequested();
         var t = await locator.InnerTextAsync().ConfigureAwait(false);
-        return t ?? string.Empty;
+        return t;
     }
 
     /// <inheritdoc />

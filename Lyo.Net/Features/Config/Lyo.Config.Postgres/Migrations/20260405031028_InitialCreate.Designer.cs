@@ -65,8 +65,8 @@ namespace Lyo.Config.Postgres.Migrations
 
                     b.Property<string>("ValueType")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
                         .HasColumnName("value_type");
 
                     b.HasKey("Id");
@@ -97,6 +97,7 @@ namespace Lyo.Config.Postgres.Migrations
 
                     b.Property<string>("ValueJson")
                         .IsRequired()
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("value_json");
 
@@ -117,6 +118,7 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("DefaultValueJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("default_value_json");
 
@@ -147,8 +149,8 @@ namespace Lyo.Config.Postgres.Migrations
 
                     b.Property<string>("ForValueType")
                         .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
                         .HasColumnName("for_value_type");
 
                     b.HasKey("Id");

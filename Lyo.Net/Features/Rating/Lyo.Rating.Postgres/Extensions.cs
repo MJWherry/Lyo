@@ -45,7 +45,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-            services.AddSingleton<IOptions<PostgresRatingOptions>>(Options.Create(options));
+            services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<RatingDbContext, PostgresRatingOptions>();
             services.AddDbContextFactory<RatingDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresRatingOptions.Schema)));

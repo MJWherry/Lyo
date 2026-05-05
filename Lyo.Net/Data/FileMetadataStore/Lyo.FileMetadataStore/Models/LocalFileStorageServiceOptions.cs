@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Lyo.FileMetadataStore.Models;
 
 public sealed class LocalFileStorageServiceOptions

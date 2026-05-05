@@ -15,8 +15,8 @@ public sealed class HomeItemEntityConfiguration : IEntityTypeConfiguration<HomeI
         builder.Property(e => e.CategoryId).HasColumnName("category_id").HasColumnType("uuid");
         builder.Property(e => e.ParentItemId).HasColumnName("parent_item_id").HasColumnType("uuid");
         builder.Property(e => e.Name).HasMaxLength(500).IsRequired().HasColumnName("name");
-        builder.Property(e => e.Description).HasColumnName("description");
-        builder.Property(e => e.Notes).HasColumnName("notes");
+        builder.Property(e => e.Description).HasMaxLength(8192).HasColumnName("description");
+        builder.Property(e => e.Notes).HasMaxLength(8192).HasColumnName("notes");
         builder.Property(e => e.Status).HasColumnName("status");
         builder.Property(e => e.Condition).HasColumnName("condition");
         builder.Property(e => e.Sku).HasMaxLength(120).HasColumnName("sku");
@@ -48,7 +48,7 @@ public sealed class HomeItemEntityConfiguration : IEntityTypeConfiguration<HomeI
         builder.Property(e => e.CountryOfOrigin).HasMaxLength(2).HasColumnName("country_of_origin");
         builder.Property(e => e.LotNumber).HasMaxLength(120).HasColumnName("lot_number");
         builder.Property(e => e.BatchNumber).HasMaxLength(120).HasColumnName("batch_number");
-        builder.Property(e => e.CustomAttributesJson).HasColumnType("jsonb").HasColumnName("custom_attributes_json");
+        builder.Property(e => e.CustomAttributesJson).HasColumnType("jsonb").HasMaxLength(8192).HasColumnName("custom_attributes_json");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasOne(e => e.Category).WithMany(e => e.Items).HasForeignKey(e => e.CategoryId).OnDelete(DeleteBehavior.Restrict);

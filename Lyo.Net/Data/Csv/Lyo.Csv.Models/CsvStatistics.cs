@@ -34,6 +34,7 @@ public class CsvStatistics
     /// <summary>Gets or sets sample data from the first few rows (for preview).</summary>
     public List<Dictionary<string, string>> SampleRows { get; set; } = new();
 
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvStatistics: RowCount={RowCount}, ColumnCount={ColumnCount}, FileSizeBytes={FileSizeBytes}, DetectedEncoding={DetectedEncoding.WebName}, DetectedDelimiter='{DetectedDelimiter?.ToString() ?? "N/A"}', HasHeaderRow={HasHeaderRow}, HeadersCount={Headers.Count}, InferredColumnTypesCount={InferredColumnTypes.Count}, SampleRowsCount={SampleRows.Count}";
 }

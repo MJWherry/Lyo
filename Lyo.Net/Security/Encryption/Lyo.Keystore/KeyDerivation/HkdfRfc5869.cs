@@ -28,7 +28,7 @@ internal static class HkdfRfc5869
             var data = new byte[dataLen];
             Buffer.BlockCopy(t, 0, data, 0, t.Length);
             Buffer.BlockCopy(info, 0, data, t.Length, info.Length);
-            data[data.Length - 1] = (byte)i;
+            data[^1] = (byte)i;
             t = hmac.ComputeHash(data);
             var copy = Math.Min(HashLen, length - offset);
             Buffer.BlockCopy(t, 0, okm, offset, copy);

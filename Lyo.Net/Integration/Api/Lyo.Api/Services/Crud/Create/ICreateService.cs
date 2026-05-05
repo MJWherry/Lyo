@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Create;
 
+/// <summary>Persists new entities from request DTOs (single and bulk) with optional before/after hooks.</summary>
 public interface ICreateService<TContext>
     where TContext : DbContext
 {

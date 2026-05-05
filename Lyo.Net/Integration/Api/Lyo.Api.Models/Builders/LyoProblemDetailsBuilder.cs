@@ -1,4 +1,5 @@
 using Lyo.Api.Models.Error;
+using Lyo.Common;
 using Lyo.Exceptions;
 
 namespace Lyo.Api.Models.Builders;
@@ -143,8 +144,8 @@ public sealed class LyoProblemDetailsBuilder
 
     public LyoProblemDetailsBuilder AddErrors(IEnumerable<ApiError> errors)
     {
-        ArgumentHelpers.ThrowIfNullReturn(errors);
-        foreach (var i in errors)
+        var errorList = errors.AsReadOnlyList();
+        foreach (var i in errorList)
             _errors.Add(i);
 
         return this;

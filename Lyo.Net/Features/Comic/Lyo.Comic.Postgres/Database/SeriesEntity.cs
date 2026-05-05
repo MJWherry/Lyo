@@ -20,6 +20,7 @@ public sealed class SeriesEntity
 
     public ComicStatus Status { get; set; }
 
+    [MaxLength(8192)]
     public string? Description { get; set; }
 
     [MaxLength(10)]
@@ -36,8 +37,10 @@ public sealed class SeriesEntity
     [MaxLength(500)]
     public string? Publisher { get; set; }
 
+    [MaxLength(512)]
     public string? Source { get; set; }
 
+    [MaxLength(512)]
     public string? CoverImageRef { get; set; }
 
     [MaxLength(50)]

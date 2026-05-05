@@ -32,8 +32,8 @@ public sealed class ResilientExecutor : IResilientExecutor
         try {
             var pipeline = _pipelineProvider.GetPipeline(pipelineName);
             await pipeline.ExecuteAsync(
-                    async ct => {
-                        await action(ct).ConfigureAwait(false);
+                    async ct2 => {
+                        await action(ct2).ConfigureAwait(false);
                     }, ct)
                 .ConfigureAwait(false);
 
@@ -57,7 +57,7 @@ public sealed class ResilientExecutor : IResilientExecutor
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
         try {
             var pipeline = _pipelineProvider.GetPipeline(pipelineName);
-            var result = await pipeline.ExecuteAsync(async ct => await action(ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            var result = await pipeline.ExecuteAsync(async ct2 => await action(ct2).ConfigureAwait(false), ct).ConfigureAwait(false);
             _metrics.IncrementCounter(Constants.Metrics.ExecutionSuccess, tags: tags);
             return result;
         }
@@ -82,12 +82,9 @@ public sealed class ResilientExecutor : IResilientExecutor
         try {
             var pipeline = _pipelineProvider.GetPipeline(pipelineName);
             var result = await pipeline.ExecuteAsync(
-                    async ct => {
-                        var value = await action(ct).ConfigureAwait(false);
-                        if (!isSuccess(value))
-                            throw new RetryableResultException();
-
-                        return value;
+                    async ct2 => {
+                        var value = await action(ct2).ConfigureAwait(false);
+                        return !isSuccess(value) ? throw new RetryableResultException() : value;
                     }, ct)
                 .ConfigureAwait(false);
 

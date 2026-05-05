@@ -24,7 +24,7 @@ namespace Lyo.Comment.Postgres.Migrations
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     from_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
+                    content = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: false),
                     reply_to_comment_id = table.Column<Guid>(type: "uuid", nullable: true),
                     like_count = table.Column<int>(type: "integer", nullable: false),
                     dislike_count = table.Column<int>(type: "integer", nullable: false),

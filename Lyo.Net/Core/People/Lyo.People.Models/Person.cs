@@ -131,31 +131,31 @@ public class Person
 
     // Helper methods for addresses
     /// <summary>Gets the primary address for the person</summary>
-    public ContactAddress? GetPrimaryAddress() => Addresses?.FirstOrDefault(a => a.IsPrimary && a.IsCurrent);
+    public ContactAddress? GetPrimaryAddress() => Addresses.FirstOrDefault(a => a.IsPrimary && a.IsCurrent);
 
     /// <summary>Gets the address of the specified type</summary>
-    public ContactAddress? GetAddressByType(ContactAddressType type) => Addresses?.FirstOrDefault(a => a.Type == type && a.IsCurrent);
+    public ContactAddress? GetAddressByType(ContactAddressType type) => Addresses.FirstOrDefault(a => a.Type == type && a.IsCurrent);
 
     /// <summary>Gets all current (non-ended) addresses</summary>
-    public IEnumerable<ContactAddress> GetCurrentAddresses() => Addresses?.Where(a => a.IsCurrent) ?? Enumerable.Empty<ContactAddress>();
+    public IEnumerable<ContactAddress> GetCurrentAddresses() => Addresses.Where(a => a.IsCurrent);
 
     // Helper methods for phone numbers
     /// <summary>Gets the primary phone number for the person</summary>
-    public ContactPhoneNumber? GetPrimaryPhoneNumber() => PhoneNumbers?.FirstOrDefault(p => p.IsPrimary && p.IsCurrent);
+    public ContactPhoneNumber? GetPrimaryPhoneNumber() => PhoneNumbers.FirstOrDefault(p => p.IsPrimary && p.IsCurrent);
 
     /// <summary>Gets the phone number of the specified type</summary>
-    public ContactPhoneNumber? GetPhoneNumberByType(ContactPhoneType type) => PhoneNumbers?.FirstOrDefault(p => p.Type == type && p.IsCurrent);
+    public ContactPhoneNumber? GetPhoneNumberByType(ContactPhoneType type) => PhoneNumbers.FirstOrDefault(p => p.Type == type && p.IsCurrent);
 
     /// <summary>Gets all current phone numbers</summary>
-    public IEnumerable<ContactPhoneNumber> GetCurrentPhoneNumbers() => PhoneNumbers?.Where(p => p.IsCurrent) ?? Enumerable.Empty<ContactPhoneNumber>();
+    public IEnumerable<ContactPhoneNumber> GetCurrentPhoneNumbers() => PhoneNumbers.Where(p => p.IsCurrent);
 
     // Helper methods for email addresses
     /// <summary>Gets the primary email address for the person</summary>
-    public ContactEmailAddress? GetPrimaryEmailAddress() => EmailAddresses?.FirstOrDefault(e => e.IsPrimary && e.IsCurrent);
+    public ContactEmailAddress? GetPrimaryEmailAddress() => EmailAddresses.FirstOrDefault(e => e.IsPrimary && e.IsCurrent);
 
     /// <summary>Gets the email address of the specified type</summary>
-    public ContactEmailAddress? GetEmailAddressByType(ContactEmailType type) => EmailAddresses?.FirstOrDefault(e => e.Type == type && e.IsCurrent);
+    public ContactEmailAddress? GetEmailAddressByType(ContactEmailType type) => EmailAddresses.FirstOrDefault(e => e.Type == type && e.IsCurrent);
 
     /// <summary>Gets all current email addresses</summary>
-    public IEnumerable<ContactEmailAddress> GetCurrentEmailAddresses() => EmailAddresses?.Where(e => e.IsCurrent) ?? Enumerable.Empty<ContactEmailAddress>();
+    public IEnumerable<ContactEmailAddress> GetCurrentEmailAddresses() => EmailAddresses.Where(e => e.IsCurrent);
 }

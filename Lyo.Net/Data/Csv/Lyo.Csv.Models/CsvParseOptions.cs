@@ -18,6 +18,7 @@ public class CsvParseOptions
     /// <summary>Gets or sets the maximum number of rows to parse. If null, all rows are parsed.</summary>
     public int? MaxRows { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvParseOptions: ContinueOnError={ContinueOnError}, HasOnError={OnError != null}, HasRowFilter={RowFilter != null}, MaxRows={MaxRows?.ToString() ?? "All"}";
 }

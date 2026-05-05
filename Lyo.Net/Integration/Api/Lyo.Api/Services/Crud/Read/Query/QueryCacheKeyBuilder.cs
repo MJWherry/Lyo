@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Cache;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;

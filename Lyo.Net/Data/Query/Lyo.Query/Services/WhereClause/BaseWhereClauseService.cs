@@ -689,55 +689,58 @@ public class BaseWhereClauseService : IWhereClauseService
             foreach (var g in groups) {
                 var field = g.Key;
                 var nodes = g.ToList();
-                if (nodes.Count > 1) {
-                    var meta = GetPropertyPathMetadataCached<TEntity>(field);
-                    nodes = CombineContainsNodesToRegex(nodes, meta.FinalType);
-                    if (meta.CollectionPropertyIndex != null && !meta.IsCountPath) {
-                        var collectionIndex = meta.CollectionPropertyIndex.Value;
-                        var elementType = meta.CollectionElementType!;
-                        Expression collectionExpr = parameter;
-                        for (var i = 0; i <= collectionIndex; i++)
-                            collectionExpr = Expression.Property(collectionExpr, meta.Properties[i]);
+                if (nodes.Count <= 1)
+                    continue;
 
-                        var elementParam = Expression.Parameter(elementType, "e");
-                        Expression elementPropExpr = elementParam;
-                        for (var j = collectionIndex + 1; j < meta.Properties.Count; j++)
-                            elementPropExpr = Expression.Property(elementPropExpr, meta.Properties[j]);
+                var meta = GetPropertyPathMetadataCached<TEntity>(field);
+                nodes = CombineContainsNodesToRegex(nodes, meta.FinalType);
+                if (meta.CollectionPropertyIndex != null && !meta.IsCountPath) {
+                    var collectionIndex = meta.CollectionPropertyIndex.Value;
+                    var elementType = meta.CollectionElementType!;
+                    Expression collectionExpr = parameter;
+                    for (var i = 0; i <= collectionIndex; i++)
+                        collectionExpr = Expression.Property(collectionExpr, meta.Properties[i]);
 
-                        Expression? innerOr = null;
-                        foreach (var cond in nodes) {
-                            var (parsedSingle, parsedMultiple) = ParseFilterValue(cond.Value, cond.Comparison, meta.FinalType);
-                            if (cond.Comparison is ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex && parsedSingle is string ps && IsTrivialRegex(ps)) {
-                                innerOr = Expression.Constant(true);
-                                break;
-                            }
+                    var elementParam = Expression.Parameter(elementType, "e");
+                    Expression elementPropExpr = elementParam;
+                    for (var j = collectionIndex + 1; j < meta.Properties.Count; j++)
+                        elementPropExpr = Expression.Property(elementPropExpr, meta.Properties[j]);
 
-                            var valueExpr = GetValueExpression(parsedSingle, meta.FinalType, elementPropExpr);
-                            var compExpr = BuildComparisonExpressionCached(cond.Comparison, meta.FinalType, elementPropExpr, valueExpr, parsedMultiple, elementParam);
-                            innerOr = innerOr == null ? compExpr : Expression.OrElse(innerOr, compExpr);
+                    Expression? innerOr = null;
+                    foreach (var cond in nodes) {
+                        var (parsedSingle, parsedMultiple) = ParseFilterValue(cond.Value, cond.Comparison, meta.FinalType);
+                        if (cond.Comparison is ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex && parsedSingle is string ps && IsTrivialRegex(ps)) {
+                            innerOr = Expression.Constant(true);
+                            break;
                         }
 
-                        if (innerOr != null) {
-                            var anyMethod = typeof(Enumerable).GetMethods().First(m => m.Name == "Any" && m.GetParameters().Length == 2).MakeGenericMethod(elementType);
-                            var predicate = Expression.Lambda(innerOr, elementParam);
-                            expressions.Add(Expression.Call(anyMethod, collectionExpr, predicate));
-                            foreach (var rem in g)
-                                remaining.Remove(rem);
-                        }
+                        var valueExpr = GetValueExpression(parsedSingle, meta.FinalType, elementPropExpr);
+                        var compExpr = BuildComparisonExpressionCached(cond.Comparison, meta.FinalType, elementPropExpr, valueExpr, parsedMultiple, elementParam);
+                        innerOr = innerOr == null ? compExpr : Expression.OrElse(innerOr, compExpr);
                     }
-                    else if (nodes.Count != g.Count()) {
-                        Expression? groupedOr = null;
-                        foreach (var cond in nodes) {
-                            var expr = BuildConditionExpression<TEntity>(cond, parameter, includeSubClauses);
-                            groupedOr = groupedOr == null ? expr : Expression.OrElse(groupedOr, expr);
-                        }
 
-                        if (groupedOr != null) {
-                            expressions.Add(groupedOr);
-                            foreach (var rem in g)
-                                remaining.Remove(rem);
-                        }
+                    if (innerOr == null)
+                        continue;
+
+                    var anyMethod = typeof(Enumerable).GetMethods().First(m => m.Name == "Any" && m.GetParameters().Length == 2).MakeGenericMethod(elementType);
+                    var predicate = Expression.Lambda(innerOr, elementParam);
+                    expressions.Add(Expression.Call(anyMethod, collectionExpr, predicate));
+                    foreach (var rem in g)
+                        remaining.Remove(rem);
+                }
+                else if (nodes.Count != g.Count()) {
+                    Expression? groupedOr = null;
+                    foreach (var cond in nodes) {
+                        var expr = BuildConditionExpression<TEntity>(cond, parameter, includeSubClauses);
+                        groupedOr = groupedOr == null ? expr : Expression.OrElse(groupedOr, expr);
                     }
+
+                    if (groupedOr == null)
+                        continue;
+
+                    expressions.Add(groupedOr);
+                    foreach (var rem in g)
+                        remaining.Remove(rem);
                 }
             }
 

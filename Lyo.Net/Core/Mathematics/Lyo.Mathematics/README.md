@@ -27,11 +27,10 @@ if (vector.TryNormalize(out var normalized))
 
 ## Related projects
 
-- `Lyo.Mathematics.Functions`: F# implementations for formulas and algorithms.
+- [`Lyo.Mathematics.Functions`](../Lyo.Mathematics.Functions/README.md): F# implementations for formulas and algorithms.
 - `Lyo.Mathematics.Examples`: runnable usage samples.
 - `Lyo.Mathematics.Benchmarks`: lightweight performance harness.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -45,19 +44,5 @@ if (vector.TryNormalize(out var normalized))
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*6*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AngleUnit`
-- `LengthUnit`
-- `MassUnit`
-- `MathematicsFormulaRegistry`
-- `MathematicsWorkflowExtensions`
-- `TimeUnit`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

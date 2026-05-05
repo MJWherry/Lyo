@@ -60,7 +60,6 @@ services.AddPostgresJobManagement(new PostgresJobOptions
 app.BuildJobGroup();
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -78,36 +77,9 @@ app.BuildJobGroup();
 
 ### Project references
 
-- `Lyo.Api`
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Job.Models`
-- `Lyo.MessageQueue.RabbitMq`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*19*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `InitialCreate`
-- `JobContext`
-- `JobContextFactory`
-- `JobDefinition`
-- `JobFileUpload`
-- `JobParallelRestriction`
-- `JobParameter`
-- `JobRun`
-- `JobRunLog`
-- `JobRunParameter`
-- `JobRunResult`
-- `JobSchedule`
-- `JobScheduleDatabaseExtensions`
-- `JobScheduleParameter`
-- `JobService`
-- `JobTrigger`
-- `JobTriggerParameter`
-- `PostgresJobOptions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Api`](../../Api/Lyo.Api/README.md)
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
+- [`Lyo.MessageQueue.RabbitMq`](../../../Communication/MessageQueue/Lyo.MessageQueue.RabbitMq/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

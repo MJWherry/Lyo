@@ -35,6 +35,7 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
 
                     b.Property<string>("ChangedPropertiesJson")
                         .IsRequired()
+                        .HasMaxLength(32768)
                         .HasColumnType("jsonb")
                         .HasColumnName("changed_properties_json");
 
@@ -71,6 +72,7 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
 
                     b.Property<string>("OldValuesJson")
                         .IsRequired()
+                        .HasMaxLength(32768)
                         .HasColumnType("jsonb")
                         .HasColumnName("old_values_json");
 

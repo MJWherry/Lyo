@@ -12,7 +12,7 @@ public static class SecureKeyGenerator
     /// <returns>A securely generated random key</returns>
     public static byte[] GenerateKey(int sizeInBytes = 32)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 16, 64, nameof(sizeInBytes));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 16, 64);
         return CryptographicRandom.GetBytes(sizeInBytes);
     }
 
@@ -22,7 +22,7 @@ public static class SecureKeyGenerator
     /// <returns>A securely generated random key string</returns>
     public static string GenerateKeyString(int length = 32, bool includeSpecialChars = true)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(length, 16, int.MaxValue, nameof(length));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(length, 16, int.MaxValue);
         const string alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         const string special = "!@#$%^&*()_+-=[]{}|;:,.<>?";
         var chars = includeSpecialChars ? alphanumeric + special : alphanumeric;
@@ -51,7 +51,7 @@ public static class SecureKeyGenerator
     /// <returns>A securely generated random nonce</returns>
     public static byte[] GenerateNonce(int sizeInBytes = 12)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 8, int.MaxValue, nameof(sizeInBytes));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(sizeInBytes, 8, int.MaxValue);
         return CryptographicRandom.GetBytes(sizeInBytes);
     }
 }

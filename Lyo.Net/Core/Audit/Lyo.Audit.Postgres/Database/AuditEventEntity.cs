@@ -29,6 +29,7 @@ public sealed class AuditEventEntity
 
     /// <summary>Gets or sets the optional metadata as JSON.</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? MetadataJson { get; set; }
 
     /// <summary>Gets or sets the timestamp when this record was created.</summary>

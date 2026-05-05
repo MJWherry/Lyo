@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <Description>A production-ready .NET encryption library providing secure, authenticated encryption with support for multiple algorithms (AES-GCM, ChaCha20Poly1305, RSA), key management, and envelope encryption patterns.</Description>
         <PackageTags>encryption security aes-gcm chacha20poly1305 rsa cryptography keystore</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -28,6 +29,10 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>

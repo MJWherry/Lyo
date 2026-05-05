@@ -7,11 +7,14 @@ using System.Diagnostics;
 
 namespace Lyo.Exceptions;
 
-/// <summary>Helper methods for argument validation that throw ArgumentException, ArgumentNullException, or ArgumentOutsideRangeException.</summary>
+/// <summary>Helper methods for argument validation that throw <see cref="ArgumentException"/>, <see cref="ArgumentNullException"/>, <see cref="ArgumentOutsideRangeException"/>, <see cref="InvalidFormatException"/>, or <see cref="FileNotFoundException"/>.</summary>
 /// <remarks>
-/// Optional name parameters follow the same pattern as <see cref="ArgumentNullException.ThrowIfNull(object?, string?)" />: when you omit them at the call site, the compiler
+/// <para>Optional name parameters follow the same pattern as <see cref="ArgumentNullException.ThrowIfNull" />: when you omit them at the call site, the compiler
 /// supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c>
-/// explicitly when you want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
+/// explicitly when you want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).</para>
+/// <para><b>Exceptions:</b> null object references use <see cref="ArgumentNullException"/>; failed string or logical constraints on non-null arguments use <see cref="ArgumentException"/>;
+/// out-of-range numeric or length checks use <see cref="ArgumentOutsideRangeException"/>. Methods that call other helpers document the combined set. On .NET Standard 2.0 only,
+/// <see cref="ThrowIfNullOrWhiteSpace"/> throws <see cref="ArgumentNullException"/> for a null string; on other targets, null uses <see cref="ArgumentException"/> (BCL behavior).</para>
 /// </remarks>
 public static class ArgumentHelpers
 {
@@ -59,6 +62,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws an ArgumentNullException if the argument is null; otherwise returns the argument. Use for constructor base() chaining.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/>.</remarks>
     /// <param name="argument">The argument to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>
     /// <returns>The argument when not null.</returns>
@@ -78,7 +82,8 @@ public static class ArgumentHelpers
     /// <summary>Throws an ArgumentException if the string is null, empty, or consists only of white-space characters.</summary>
     /// <param name="argument">The string to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>
-    /// <exception cref="ArgumentException">Thrown when argument is null, empty, or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when argument is null (.NET Standard 2.0 only; see class remarks).</exception>
+    /// <exception cref="ArgumentException">Thrown when argument is null (non–.NET Standard 2.0), empty, or consists only of white-space characters; or when empty or whitespace-only (.NET Standard 2.0).</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
@@ -97,6 +102,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws an ArgumentException if the string is null or empty (but allows whitespace).</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/> before checking length.</remarks>
     /// <param name="argument">The string to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>
     /// <exception cref="ArgumentNullException">Thrown when argument is null.</exception>
@@ -116,6 +122,7 @@ public static class ArgumentHelpers
     /// <param name="condition">The condition to check. If true, an ArgumentException is thrown.</param>
     /// <param name="message">The error message.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: no parameter name unless you pass <c>nameof(...)</c> explicitly.</param>
+    /// <exception cref="ArgumentException">Thrown when condition is true.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
@@ -145,6 +152,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws an ArgumentOutsideRangeException if the value is null or not within the specified range.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/>; if not null, applies the inclusive range check implemented by the <c>ThrowIfNotInRange</c> overload for <typeparamref name="T"/>.</remarks>
     /// <param name="value">The value to check.</param>
     /// <param name="min">Inclusive minimum; use <c>default</c> to skip the minimum check.</param>
     /// <param name="max">Inclusive maximum; use <c>default</c> to skip the maximum check.</param>
@@ -191,6 +199,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws an ArgumentOutsideRangeException if the nullable DateTime value is null or not within the specified range.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/>; if not null, delegates to <see cref="ThrowIfNotInRange(System.DateTime,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.String)"/>.</remarks>
     /// <param name="value">The nullable DateTime value to check.</param>
     /// <param name="min">The minimum allowed DateTime value (inclusive).</param>
     /// <param name="max">The maximum allowed DateTime value (inclusive).</param>
@@ -236,6 +245,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws an ArgumentOutsideRangeException if the nullable TimeSpan value is null or not within the specified range.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/>; if not null, delegates to <see cref="ThrowIfNotInRange(System.TimeSpan,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan},System.String,System.String)"/>.</remarks>
     /// <param name="value">The nullable TimeSpan value to check.</param>
     /// <param name="min">The minimum allowed TimeSpan value (inclusive).</param>
     /// <param name="max">The maximum allowed TimeSpan value (inclusive).</param>
@@ -259,6 +269,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws NotInRangeException if the array length is null or not within the specified range.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/>; if not null, delegates to <see cref="ThrowIfNotInRange(System.Int64,System.Nullable{System.Int64},System.Nullable{System.Int64},System.String,System.String)"/> for <see cref="Array.LongLength"/>.</remarks>
     /// <param name="array">The array to check. If null, throws ArgumentNullException.</param>
     /// <param name="minLength">The minimum allowed length (inclusive). Default is 0.</param>
     /// <param name="maxLength">The maximum allowed length (inclusive).</param>
@@ -276,6 +287,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws NotInRangeException if the array length is not within the specified range. Assumes array is not null.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNotInRange(System.Int64,System.Nullable{System.Int64},System.Nullable{System.Int64},System.String,System.String)"/> using <see cref="Array.LongLength"/>.</remarks>
     /// <param name="array">The array to check. Must not be null.</param>
     /// <param name="minLength">The minimum allowed length (inclusive). Default is 0.</param>
     /// <param name="maxLength">The maximum allowed length (inclusive).</param>
@@ -292,9 +304,9 @@ public static class ArgumentHelpers
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <param name="collection">The collection to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="collection" />.</param>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/> for a null reference, then checks for an empty sequence. For single-use enumerables (e.g. LINQ without ToList), prefer passing ICollection or IReadOnlyCollection to avoid consuming the first element.</remarks>
     /// <exception cref="ArgumentNullException">Thrown when collection is null.</exception>
     /// <exception cref="ArgumentException">Thrown when collection is empty.</exception>
-    /// <remarks>For single-use enumerables (e.g. LINQ without ToList), prefer passing ICollection or IReadOnlyCollection to avoid consuming the first element.</remarks>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
@@ -319,6 +331,7 @@ public static class ArgumentHelpers
     /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
     /// <param name="collection">The collection to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="collection" />.</param>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/> for a null reference, then checks <see cref="ICollection{T}.Count"/>.</remarks>
     /// <exception cref="ArgumentNullException">Thrown when collection is null.</exception>
     /// <exception cref="ArgumentException">Thrown when collection is empty.</exception>
 #if NET6_0_OR_GREATER
@@ -334,17 +347,18 @@ public static class ArgumentHelpers
 
     /// <summary>Throws an ArgumentException if the value is zero.</summary>
     /// <param name="value">The value to check.</param>
+    /// <param name="message">Optional custom error message.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>
     /// <exception cref="ArgumentException">Thrown when value is zero.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfZero<T>(T value, [CallerArgumentExpression("value")] string? paramName = null)
+    public static void ThrowIfZero<T>(T value, string? message = null, [CallerArgumentExpression("value")] string? paramName = null)
         where T : IComparable, IConvertible
     {
         if (value.CompareTo(default(T)!) == 0)
-            ThrowArgumentException($"Value cannot be zero.  Actual value: {value}.", paramName);
+            ThrowArgumentException(message ?? $"Value cannot be zero.  Actual value: {value}.", paramName);
     }
 
     /// <summary>Throws an ArgumentOutsideRangeException if the value is negative.</summary>
@@ -369,6 +383,7 @@ public static class ArgumentHelpers
     /// <summary>Throws an ArgumentOutsideRangeException if the value is negative or zero.</summary>
     /// <param name="value">The value to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>
+    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when value is negative or zero.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -533,9 +548,12 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws a FileNotFoundException if the file does not exist.</summary>
+    /// <remarks>Validates <paramref name="filePath"/> with <see cref="UriHelpers.ThrowIfInvalidUri"/> before checking the file system.</remarks>
     /// <param name="filePath">The file path to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="filePath" />.</param>
-    /// <exception cref="ArgumentNullException">Thrown when filePath is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when filePath is null (.NET Standard 2.0 only; see <see cref="ThrowIfNullOrWhiteSpace"/> and class remarks).</exception>
+    /// <exception cref="ArgumentException">Thrown when filePath is null, empty, or whitespace per <see cref="UriHelpers.ThrowIfInvalidUri"/> (see class remarks for .NET Standard 2.0 null behavior).</exception>
+    /// <exception cref="InvalidFormatException">Thrown when filePath is not a valid URI of kind <see cref="UriKind.Relative"/>.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the file does not exist.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -549,6 +567,7 @@ public static class ArgumentHelpers
     }
 
     /// <summary>Throws a FileNotFoundException if the file does not exist.</summary>
+    /// <remarks>Delegates to <see cref="ThrowIfNull"/> before checking <see cref="FileSystemInfo.Exists"/>.</remarks>
     /// <param name="fileInfo">The FileInfo to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="fileInfo" />.</param>
     /// <exception cref="ArgumentNullException">Thrown when fileInfo is null.</exception>

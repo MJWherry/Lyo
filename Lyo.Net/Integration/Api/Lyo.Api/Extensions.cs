@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Api;
 
+/// <summary>Cross-cutting helpers for API hosts: problem details from exceptions, uploaded-file hashing, and JSON/type reflection utilities used by validation and patch binding.</summary>
 public static class Extensions
 {
     private static readonly HashSet<TypeCode> NumericTypeCodes = new() {
@@ -26,6 +27,10 @@ public static class Extensions
         TypeCode.Decimal
     };
 
+    /// <summary>Builds <see cref="LyoProblemDetails" /> from an exception, including trace/span identifiers when <see cref="Activity.Current" /> is set.</summary>
+    /// <param name="ex">The exception to surface (stack trace is attached as API error detail).</param>
+    /// <param name="message">Optional user-facing message; defaults to <see cref="Exception.Message" />.</param>
+    /// <param name="errorCode">Stable API error code (defaults to the unknown-error code in <see cref="Lyo.Api.Models.Constants.ApiErrorCodes" />).</param>
     public static LyoProblemDetails ApiErrorFromException(Exception ex, string? message = null, string errorCode = Constants.ApiErrorCodes.Unknown)
         => LyoProblemDetailsBuilder.CreateWithTrace(Activity.Current?.TraceId.ToString(), Activity.Current?.SpanId.ToString())
             .WithErrorCode(errorCode)
@@ -33,6 +38,10 @@ public static class Extensions
             .AddApiError(errorCode, message ?? ex.Message, ex.StackTrace)
             .Build();
 
+    /// <summary>Computes the SHA-256 hash of an uploaded form file.</summary>
+    /// <param name="file">The form file whose content is hashed.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The 32-byte SHA-256 digest.</returns>
     public static async Task<byte[]> HashAsync(this IFormFile file, CancellationToken ct = default)
     {
         using var sha256 = SHA256.Create();

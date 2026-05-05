@@ -5,8 +5,10 @@ using Lyo.Common.Enums;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
-public interface IQueryHistoryService<in TContext>
+/// <summary>Temporal-style history query over entities that expose start/end timestamps (used by QueryHistory endpoints).</summary>
+public interface IQueryHistoryService
 {
+    /// <summary>Filters and projects history rows using <paramref name="startTimeSelector" /> and <paramref name="endTimeSelector" />.</summary>
     Task<QueryHistoryResults<HistoryResult<TResult>>> QueryHistory<TDbModel, TResult>(
         HistoryQuery query,
         Expression<Func<TDbModel, object?>> defaultOrder,

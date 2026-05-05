@@ -54,7 +54,9 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     public static FileSizeUnitInfo FromAbbreviation(string? abbreviation) 
         => abbreviation.IsNullOrEmpty() 
             ? Unknown 
-            : _byAbbreviation.TryGetValue(abbreviation!.Trim(), out var unit) ? unit : Unknown;
+            : _byAbbreviation.TryGetValue(abbreviation.Trim(), out var unit) 
+                ? unit 
+                : Unknown;
 
     /// <summary>Finds a file size unit by FileSizeUnit enum.</summary>
     /// <param name="fileSizeUnit">The FileSizeUnit enum value.</param>

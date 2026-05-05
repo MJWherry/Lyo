@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Query.Services.PropertyComparison;
 using Lyo.Query.Services.ValueConversion;
 using Lyo.Query.Services.WhereClause;
@@ -12,9 +13,11 @@ public static class Extensions
     /// Registers IValueConversionService, IPropertyComparisonService, and IWhereClauseService with their default implementations. Requires CacheService and CacheOptions to be
     /// registered (e.g. via AddFusionCache or AddLocalCache).
     /// </summary>
+    /// <param name="services">The service collection.</param>
     /// <param name="registerValueConversion">When true (default), registers ValueConversionService. Set to false when using Lyo.Api's TypeConversionService as IValueConversionService.</param>
     public static IServiceCollection AddLyoQueryServices(this IServiceCollection services, bool registerValueConversion = true)
     {
+        ArgumentHelpers.ThrowIfNull(services);
         if (registerValueConversion)
             services.AddSingleton<IValueConversionService, ValueConversionService>();
 

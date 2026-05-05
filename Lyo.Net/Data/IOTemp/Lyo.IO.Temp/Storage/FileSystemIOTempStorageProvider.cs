@@ -7,24 +7,30 @@ namespace Lyo.IO.Temp.Storage;
 // ReSharper disable once InconsistentNaming
 public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 {
+    /// <summary>Initializes a provider rooted at <paramref name="rootPath" />.</summary>
     public FileSystemIOTempStorageProvider(string rootPath)
     {
         ArgumentHelpers.ThrowIfNull(rootPath);
         RootPath = rootPath;
     }
 
+    /// <inheritdoc />
     public string RootPath { get; }
 
+    /// <inheritdoc />
     public bool DirectoryExists(string path) => Directory.Exists(path);
 
+    /// <inheritdoc />
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
 
+    /// <inheritdoc />
     public void DeleteDirectory(string path)
     {
         if (Directory.Exists(path))
             Directory.Delete(path, true);
     }
 
+    /// <inheritdoc />
     public IEnumerable<ProviderEntryInfo> EnumerateEntries(string path)
     {
         var root = new DirectoryInfo(path);
@@ -38,6 +44,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
             yield return new(file.FullName, false, file.Length, new(file.CreationTimeUtc, TimeSpan.Zero));
     }
 
+    /// <inheritdoc />
     public void EnsureDirectoryAccessible(string path)
     {
         ExceptionThrower.ThrowIfDirectoryNotAccessible(path);
@@ -52,21 +59,28 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
         }
     }
 
+    /// <inheritdoc />
     public bool FileExists(string path) => File.Exists(path);
 
+    /// <inheritdoc />
     public void TouchFile(string path)
     {
         using var _ = File.Create(path);
     }
 
+    /// <inheritdoc />
     public void WriteAllBytes(string path, byte[] data) => File.WriteAllBytes(path, data);
 
+    /// <inheritdoc />
     public void WriteAllText(string path, string text, Encoding encoding) => File.WriteAllText(path, text, encoding);
 
+    /// <inheritdoc />
     public void AppendAllText(string path, string text, Encoding encoding) => File.AppendAllText(path, text, encoding);
 
+    /// <inheritdoc />
     public void DeleteFile(string path) => File.Delete(path);
 
+    /// <inheritdoc />
     public void MoveFile(string source, string dest)
     {
         try {
@@ -78,18 +92,25 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
         }
     }
 
+    /// <inheritdoc />
     public void CopyFile(string source, string dest) => File.Copy(source, dest);
 
+    /// <inheritdoc />
     public Stream OpenRead(string path) => new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.SequentialScan);
 
+    /// <inheritdoc />
     public Stream OpenCreate(string path) => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.None);
 
+    /// <inheritdoc />
     public Stream OpenAppend(string path) => new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.None, 4096, FileOptions.None);
 
+    /// <inheritdoc />
     public long GetFileLength(string path) => new FileInfo(path).Length;
 
+    /// <inheritdoc />
     public DateTimeOffset GetFileCreationTimeUtc(string path) => new(new FileInfo(path).CreationTimeUtc, TimeSpan.Zero);
 
+    /// <inheritdoc />
     public Task WriteAllBytesAsync(string path, byte[] data, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -103,6 +124,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #endif
     }
 
+    /// <inheritdoc />
     public Task WriteAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -116,6 +138,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #endif
     }
 
+    /// <inheritdoc />
     public Task AppendAllTextAsync(string path, string text, Encoding encoding, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -129,6 +152,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #endif
     }
 
+    /// <inheritdoc />
     public async Task CopyStreamToFileAsync(Stream source, string destPath, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -140,6 +164,7 @@ public sealed class FileSystemIOTempStorageProvider : IIOTempStorageProvider
 #endif
     }
 
+    /// <inheritdoc />
     public async Task CopyFileAsync(string source, string dest, CancellationToken ct)
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER

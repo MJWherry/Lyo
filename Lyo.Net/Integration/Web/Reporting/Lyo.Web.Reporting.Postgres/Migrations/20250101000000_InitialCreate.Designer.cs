@@ -54,7 +54,8 @@ namespace Lyo.Web.Reporting.Postgres.Migrations
 
                     b.Property<string>("ReportDataJson")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(32768)
+                        .HasColumnType("character varying(32768)");
 
                     b.Property<DateTime>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone");

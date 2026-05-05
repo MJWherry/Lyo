@@ -1,12 +1,19 @@
 namespace Lyo.IO.Temp.Models;
 
+/// <summary>
+/// A scoped workspace under a root directory: tracks created files and directories, enforces limits, and deletes its <see cref="SessionDirectory" /> tree when disposed.
+/// </summary>
+/// <remarks>UTF-8 text operations use UTF-8 without a BOM.</remarks>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempSession : IAsyncDisposable, IDisposable
 {
+    /// <summary>Absolute path to this session's root directory.</summary>
     string SessionDirectory { get; }
 
+    /// <summary>Full paths of files tracked by this session (created or imported through the session API).</summary>
     IReadOnlyList<string> Files { get; }
 
+    /// <summary>Full paths of directories tracked by this session (excluding the session root unless explicitly added).</summary>
     IReadOnlyList<string> Directories { get; }
 
     /// <summary>Generates random files and simulated directory trees within this session.</summary>
@@ -34,6 +41,7 @@ public interface IIOTempSession : IAsyncDisposable, IDisposable
     /// Enumerates all files on disk under <see cref="SessionDirectory" />, including those not tracked (e.g. written by external code). Supports optional glob
     /// <paramref name="pattern" />.
     /// </summary>
+    /// <param name="pattern">Optional file-name pattern; <c>*</c> matches all, otherwise simple <c>*</c> substring segments are supported.</param>
     IEnumerable<string> EnumerateFiles(string? pattern = null);
 
     /// <summary>Enumerates all directories on disk under <see cref="SessionDirectory" />.</summary>
@@ -93,26 +101,38 @@ public interface IIOTempSession : IAsyncDisposable, IDisposable
     /// </summary>
     bool DeleteDirectory(string path);
 
+    /// <summary>Builds a path under <see cref="SessionDirectory" /> without creating a file.</summary>
+    /// <param name="name">Optional relative path; a generated name is used if null or whitespace.</param>
+    /// <returns>Absolute path within the session.</returns>
     string GetFilePath(string? name = null);
 
+    /// <summary>Creates an empty tracked file at the resolved path (see <see cref="GetFilePath" /> naming rules).</summary>
     string TouchFile(string? name = null);
 
+    /// <summary>Creates a new UTF-8 text file with generated name and tracks it.</summary>
     string CreateFile(string text);
 
+    /// <summary>Creates a new file with the given bytes and optional relative name.</summary>
     string CreateFile(ReadOnlyMemory<byte> data, string? name = null);
 
+    /// <summary>Creates a new file by copying a readable stream into the session.</summary>
     string CreateFile(Stream data, string? name = null);
 
-    // Async files
+    /// <summary>Creates a new UTF-8 text file with a generated name.</summary>
     Task<string> CreateFileAsync(string text, CancellationToken ct = default);
 
+    /// <summary>Creates a new file from bytes asynchronously.</summary>
     Task<string> CreateFileAsync(ReadOnlyMemory<byte> data, string? name = null, CancellationToken ct = default);
 
+    /// <summary>Creates a new file from a stream asynchronously.</summary>
     Task<string> CreateFileAsync(Stream data, string? name = null, CancellationToken ct = default);
 
+    /// <summary>Builds a directory path under <see cref="SessionDirectory" /> without creating the directory.</summary>
     string GetDirectoryPath(string? name = null);
 
+    /// <summary>Creates a tracked subdirectory and returns its full path.</summary>
     string CreateDirectory(string? name = null);
 
+    /// <summary>Creates a tracked subdirectory asynchronously (currently completes synchronously on the default implementation).</summary>
     Task<string> CreateDirectoryAsync(string? name = null, CancellationToken ct = default);
 }

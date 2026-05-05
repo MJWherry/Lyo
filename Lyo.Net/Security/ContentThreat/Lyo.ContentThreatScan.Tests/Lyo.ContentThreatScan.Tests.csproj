@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[18,)"/>
+        <PackageReference Include="xunit.v3" Version="3.2.2"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\Lyo.ContentThreatScan.Intel\Lyo.ContentThreatScan.Intel.csproj"/>
+        <ProjectReference Include="..\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
+    </ItemGroup>
+
+</Project>

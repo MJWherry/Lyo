@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 
 namespace Lyo.IO.Temp.Models;
 
+/// <summary>Default <see cref="IIOTempSession" /> implementation.</summary>
 // ReSharper disable once InconsistentNaming
 [DebuggerDisplay("{DebugDisplay,nq}")]
 public sealed class IOTempSession : IIOTempSession
@@ -37,6 +38,12 @@ public sealed class IOTempSession : IIOTempSession
 
     private string DebugDisplay => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
 
+    /// <summary>Creates a session under <see cref="IOTempSessionOptions.RootDirectory" />, creating the session directory on disk.</summary>
+    /// <param name="options">Layout, limits, and naming; defaults when null.</param>
+    /// <param name="logger">Optional logger.</param>
+    /// <param name="metrics">Honoured when <see cref="IOTempSessionOptions.EnableMetrics" /> is true.</param>
+    /// <param name="onDispose">Optional callback invoked with <see cref="SessionDirectory" /> after disposal attempts (e.g. service unregistration).</param>
+    /// <param name="storageProvider">Storage implementation; defaults to file system under the session root's logical root.</param>
     public IOTempSession(
         IOTempSessionOptions? options = null,
         ILogger<IOTempSession>? logger = null,
@@ -56,20 +63,27 @@ public sealed class IOTempSession : IIOTempSession
         _metrics.IncrementCounter(Constants.Metrics.SessionCreated);
     }
 
+    /// <inheritdoc />
     public string SessionDirectory { get; }
 
+    /// <inheritdoc />
     public IReadOnlyList<string> Files => _files;
 
+    /// <inheritdoc />
     public IReadOnlyList<string> Directories => _directories;
 
+    /// <inheritdoc />
     public IIOTempFileGenerator Generator { get; }
 
+    /// <inheritdoc />
     public event Action<string>? FileCreated;
 
+    /// <inheritdoc />
     public event Action<string>? DirectoryCreated;
 
 #region Sub-sessions
 
+    /// <inheritdoc />
     public IIOTempSession CreateSubSession()
     {
         ThrowIfDisposed();
@@ -100,8 +114,10 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Inspection
 
+    /// <inheritdoc />
     public long GetTotalBytesUsed() => Interlocked.Read(ref _totalBytesUsed);
 
+    /// <inheritdoc />
     public TempSessionSnapshot GetSnapshot()
     {
         ThrowIfDisposed();
@@ -112,6 +128,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Discovery
 
+    /// <inheritdoc />
     public IEnumerable<string> EnumerateFiles(string? pattern = null)
     {
         ThrowIfDisposed();
@@ -119,6 +136,7 @@ public sealed class IOTempSession : IIOTempSession
         return EnumerateAllFiles(SessionDirectory).Where(f => pattern == null || MatchesGlob(Path.GetFileName(f), pattern));
     }
 
+    /// <inheritdoc />
     public IEnumerable<string> EnumerateDirectories()
     {
         ThrowIfDisposed();
@@ -180,6 +198,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Delete operations
 
+    /// <inheritdoc />
     public bool DeleteFile(string path)
     {
         ThrowIfDisposed();
@@ -210,6 +229,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public bool DeleteDirectory(string path)
     {
         ThrowIfDisposed();
@@ -258,6 +278,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Move operations
 
+    /// <inheritdoc />
     public string MoveFrom(string sourcePath)
     {
         ThrowIfDisposed();
@@ -284,6 +305,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public Task<string> MoveFromAsync(string sourcePath, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -330,6 +352,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Write (overwrite) operations
 
+    /// <inheritdoc />
     public string WriteFile(string path, string text)
     {
         ThrowIfDisposed();
@@ -360,6 +383,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string WriteFile(string path, ReadOnlyMemory<byte> data)
     {
         ThrowIfDisposed();
@@ -388,6 +412,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> WriteFileAsync(string path, string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -418,6 +443,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> WriteFileAsync(string path, ReadOnlyMemory<byte> data, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -450,6 +476,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Session mutation
 
+    /// <inheritdoc />
     public void Clear()
     {
         ThrowIfDisposed();
@@ -481,6 +508,7 @@ public sealed class IOTempSession : IIOTempSession
         Interlocked.Exchange(ref _totalBytesUsed, 0);
     }
 
+    /// <inheritdoc />
     public string CopyFrom(string sourcePath)
     {
         ThrowIfDisposed();
@@ -507,6 +535,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CopyFromAsync(string sourcePath, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -533,6 +562,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string AppendToFile(string path, ReadOnlyMemory<byte> data)
     {
         ThrowIfDisposed();
@@ -563,6 +593,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string AppendToFile(string path, string text)
     {
         ThrowIfDisposed();
@@ -593,6 +624,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> AppendToFileAsync(string path, ReadOnlyMemory<byte> data, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -621,6 +653,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> AppendToFileAsync(string path, string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -766,12 +799,14 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Files
 
+    /// <inheritdoc />
     public string GetFilePath(string? name = null)
     {
         ThrowIfDisposed();
         return ResolvePath(name, false);
     }
 
+    /// <inheritdoc />
     public string TouchFile(string? name = null)
     {
         ThrowIfDisposed();
@@ -793,6 +828,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string CreateFile(string text)
     {
         ThrowIfDisposed();
@@ -818,6 +854,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string CreateFile(ReadOnlyMemory<byte> data, string? name = null)
     {
         ThrowIfDisposed();
@@ -841,6 +878,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string CreateFile(Stream data, string? name = null)
     {
         ThrowIfDisposed();
@@ -867,6 +905,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateFileAsync(string text, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -892,6 +931,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateFileAsync(ReadOnlyMemory<byte> data, string? name = null, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -915,6 +955,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public async Task<string> CreateFileAsync(Stream data, string? name = null, CancellationToken ct = default)
     {
         ThrowIfDisposed();
@@ -940,6 +981,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public string GetDirectoryPath(string? name = null)
     {
         ThrowIfDisposed();
@@ -950,6 +992,7 @@ public sealed class IOTempSession : IIOTempSession
 
 #region Directories
 
+    /// <inheritdoc />
     public string CreateDirectory(string? name = null)
     {
         ThrowIfDisposed();
@@ -971,12 +1014,17 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <inheritdoc />
     public Task<string> CreateDirectoryAsync(string? name = null, CancellationToken ct = default) => Task.FromResult(CreateDirectory(name));
 
 #endregion
 
 #region Disposal
 
+    /// <summary>
+    /// Deletes <see cref="SessionDirectory" /> with retries on transient I/O errors, records metrics, and invokes <c>onDispose</c> from construction. Exceptions during delete are
+    /// logged; the session is still considered disposed.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
@@ -1002,6 +1050,7 @@ public sealed class IOTempSession : IIOTempSession
         }
     }
 
+    /// <summary>Equivalent to <see cref="Dispose" />; returns a completed value task.</summary>
     public ValueTask DisposeAsync()
     {
         Dispose();

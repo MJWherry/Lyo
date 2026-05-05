@@ -22,7 +22,7 @@ namespace Lyo.Web.Reporting.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     description = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    report_data_json = table.Column<string>(type: "text", nullable: false),
+                    report_data_json = table.Column<string>(type: "character varying(32768)", maxLength: 32768, nullable: false),
                     parameter_type_name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

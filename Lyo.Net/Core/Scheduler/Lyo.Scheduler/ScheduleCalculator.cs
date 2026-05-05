@@ -144,7 +144,7 @@ public static class ScheduleCalculator
             return null;
 
         // Try 6-field (with seconds) first, fall back to standard 5-field.
-        CronExpression? expr = null;
+        CronExpression? expr;
         try {
             expr = CronExpression.Parse(schedule.CronExpression!, CronFormat.IncludeSeconds);
         }
@@ -218,7 +218,7 @@ public static class ScheduleCalculator
 #if NET6_0_OR_GREATER
         return t.AddMinutes(minutes);
 #else
-        return (TimeOnly)t.AddMinutes(minutes);
+        return t.AddMinutes(minutes);
 #endif
     }
 }

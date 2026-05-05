@@ -48,7 +48,7 @@ public sealed class QueryCacheTagBuilderTests
     public void BuildSingleEntityGetCacheKey_BaseMatchesEntityInstanceTag()
     {
         var t = typeof(QueryCacheTagBuilderTests);
-        object?[] pk = [42];
+        object[] pk = [42];
         Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk), QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk));
     }
 
@@ -56,7 +56,7 @@ public sealed class QueryCacheTagBuilderTests
     public void BuildSingleEntityGetCacheKey_RawSuffix()
     {
         var t = typeof(QueryCacheTagBuilderTests);
-        object?[] pk = [7];
+        object[] pk = [7];
         Assert.Equal(QueryCacheTagBuilder.EntityInstanceTag(t, pk) + ":raw", QueryCacheKeyBuilder.BuildSingleEntityGetCacheKey(t, pk, null, true));
     }
 

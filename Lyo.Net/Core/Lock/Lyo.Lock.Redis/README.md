@@ -87,7 +87,6 @@ Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `K
 2. **Release**: Lua script verifies token and deletes only if it matches (prevents releasing another holder's lock)
 3. **Waiters**: When `UsePubSubForAcquireWait` is true, waiters subscribe to a per-key channel and are notified immediately when the lock is released
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -107,16 +106,5 @@ Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `K
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Lock`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*3*). Nested types and file-scoped namespaces may omit some entries.
-
-- `RedisLockOptions`
-- `RedisLockService`
-- `RedisLockServiceExtensions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Lock`](../Lyo.Lock/README.md)

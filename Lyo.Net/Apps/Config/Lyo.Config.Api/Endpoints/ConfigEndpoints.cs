@@ -22,37 +22,32 @@ internal static class ConfigEndpoints
         private RouteGroupBuilder MapPublicEndpoints()
         {
             group.MapMethods(
-                    "/{appKind}/{appId}",
-                    [HttpMethods.Get, HttpMethods.Head],
-                    async Task<IResult> (
-                        HttpContext http,
-                        string appKind,
-                        string appId,
-                        IConfigStore store,
-                        IOptions<ConfigApiHostingOptions> hostOptions,
-                        CancellationToken ct) => {
-                        if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                            return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
+                "/{appKind}/{appId}", [HttpMethods.Get, HttpMethods.Head], async Task<IResult> (
+                    HttpContext http,
+                    string appKind,
+                    string appId,
+                    IConfigStore store,
+                    IOptions<ConfigApiHostingOptions> hostOptions,
+                    CancellationToken ct) => {
+                    if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
+                        return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
 
-                        return await FinishResolve(http, refs, HttpMethods.IsHead(http.Request.Method), store, hostOptions.Value, ct).ConfigureAwait(false);
-                    })
-                .WithOpenApi();
+                    return await FinishResolve(http, refs, HttpMethods.IsHead(http.Request.Method), store, hostOptions.Value, ct).ConfigureAwait(false);
+                });
 
             group.MapPost(
-                    "/{appKind}/{appId}",
-                    async Task<IResult> (
-                        HttpContext http,
-                        string appKind,
-                        string appId,
-                        IConfigStore store,
-                        IOptions<ConfigApiHostingOptions> hostOptions,
-                        CancellationToken ct) => {
-                        if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                            return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
+                "/{appKind}/{appId}", async Task<IResult> (
+                    HttpContext http,
+                    string appKind,
+                    string appId,
+                    IConfigStore store,
+                    IOptions<ConfigApiHostingOptions> hostOptions,
+                    CancellationToken ct) => {
+                    if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
+                        return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
 
-                        return await FinishResolve(http, refs, headOnly: false, store, hostOptions.Value, ct).ConfigureAwait(false);
-                    })
-                .WithOpenApi();
+                    return await FinishResolve(http, refs, headOnly: false, store, hostOptions.Value, ct).ConfigureAwait(false);
+                });
 
             return group;
         }
@@ -62,161 +57,129 @@ internal static class ConfigEndpoints
             var manage = group.MapGroup("/manage");
 
             manage.MapGet(
-                    "/definitions",
-                    async Task<Ok<IReadOnlyList<ConfigDefinitionRecord>>> (IConfigStore store, CancellationToken ct) => {
-                        var defs = await store.GetDefinitionsAsync(AppConfigEntity.AppEntityType, ct).ConfigureAwait(false);
-                        return TypedResults.Ok(defs);
-                    })
-                .WithOpenApi();
+                "/definitions", async Task<Ok<IReadOnlyList<ConfigDefinitionRecord>>> (IConfigStore store, CancellationToken ct) => {
+                    var defs = await store.GetDefinitionsAsync(AppConfigEntity.AppEntityType, ct).ConfigureAwait(false);
+                    return TypedResults.Ok(defs);
+                });
 
             manage.MapPut(
-                    "/definitions",
-                    async Task<Results<NoContent, ValidationProblem>> (HttpContext _, ConfigDefinitionRecord body, IConfigStore store, CancellationToken ct) =>
-                    {
-                        try {
-                            body.Validate();
-                        }
-                        catch (Exception ex)
-                            when (ex is InvalidOperationException or ArgumentException or ArgumentNullException or FormatException)
-                        {
-                            return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["body"] = [ex.Message] });
-                        }
+                "/definitions", async Task<Results<NoContent, ValidationProblem>> (HttpContext _, ConfigDefinitionRecord body, IConfigStore store, CancellationToken ct) => {
+                    try {
+                        body.Validate();
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or ArgumentNullException or FormatException) {
+                        return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["body"] = [ex.Message] });
+                    }
 
-                        await store.SaveDefinitionAsync(body, ct).ConfigureAwait(false);
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    await store.SaveDefinitionAsync(body, ct).ConfigureAwait(false);
+                    return TypedResults.NoContent();
+                });
 
             manage.MapDelete(
-                    "/definitions/{definitionId:guid}",
-                    async Task<Results<NoContent, NotFound>> (Guid definitionId, IConfigStore store, CancellationToken ct) => {
-                        var existing = await store.GetDefinitionByIdAsync(definitionId, ct).ConfigureAwait(false);
-                        if (existing is null)
-                            return TypedResults.NotFound();
+                "/definitions/{definitionId:guid}", async Task<Results<NoContent, NotFound>> (Guid definitionId, IConfigStore store, CancellationToken ct) => {
+                    var existing = await store.GetDefinitionByIdAsync(definitionId, ct).ConfigureAwait(false);
+                    if (existing is null)
+                        return TypedResults.NotFound();
 
-                        await store.DeleteDefinitionAsync(definitionId, ct).ConfigureAwait(false);
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    await store.DeleteDefinitionAsync(definitionId, ct).ConfigureAwait(false);
+                    return TypedResults.NoContent();
+                });
 
             manage.MapPut(
-                    "/bindings",
-                    async Task<Results<NoContent, ProblemHttpResult>> (ConfigBindingRecord binding, IConfigStore store, CancellationToken ct) => {
-                        try {
-                            await store.SaveBindingAsync(binding, ct).ConfigureAwait(false);
-                        }
-                        catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(detail: ex.Message, title: "Binding rejected", statusCode: StatusCodes.Status409Conflict);
-                        }
+                "/bindings", async Task<Results<NoContent, ProblemHttpResult>> (ConfigBindingRecord binding, IConfigStore store, CancellationToken ct) => {
+                    try {
+                        await store.SaveBindingAsync(binding, ct).ConfigureAwait(false);
+                    }
+                    catch (InvalidOperationException ex) {
+                        return TypedResults.Problem(detail: ex.Message, title: "Binding rejected", statusCode: StatusCodes.Status409Conflict);
+                    }
 
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    return TypedResults.NoContent();
+                });
 
             manage.MapDelete(
-                    "/bindings/{bindingId:guid}",
-                    async Task<Results<NoContent, NotFound, ProblemHttpResult>> (Guid bindingId, IConfigStore store, CancellationToken ct) => {
-                        var existing = await store.GetBindingByIdAsync(bindingId, ct).ConfigureAwait(false);
-                        if (existing is null)
-                            return TypedResults.NotFound();
+                "/bindings/{bindingId:guid}", async Task<Results<NoContent, NotFound, ProblemHttpResult>> (Guid bindingId, IConfigStore store, CancellationToken ct) => {
+                    var existing = await store.GetBindingByIdAsync(bindingId, ct).ConfigureAwait(false);
+                    if (existing is null)
+                        return TypedResults.NotFound();
 
-                        try {
-                            await store.DeleteBindingAsync(bindingId, ct).ConfigureAwait(false);
-                        }
-                        catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(detail: ex.Message, title: "Delete rejected", statusCode: StatusCodes.Status409Conflict);
-                        }
+                    try {
+                        await store.DeleteBindingAsync(bindingId, ct).ConfigureAwait(false);
+                    }
+                    catch (InvalidOperationException ex) {
+                        return TypedResults.Problem(detail: ex.Message, title: "Delete rejected", statusCode: StatusCodes.Status409Conflict);
+                    }
 
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    return TypedResults.NoContent();
+                });
 
             manage.MapGet(
-                    "/bindings/{bindingId:guid}/revisions",
-                    async Task<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>> (Guid bindingId, IConfigStore store, CancellationToken ct) =>
-                        TypedResults.Ok(await store.GetBindingRevisionsAsync(bindingId, ct).ConfigureAwait(false)))
-                .WithOpenApi();
+                "/bindings/{bindingId:guid}/revisions",
+                async Task<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>> (Guid bindingId, IConfigStore store, CancellationToken ct)
+                    => TypedResults.Ok(await store.GetBindingRevisionsAsync(bindingId, ct).ConfigureAwait(false)));
 
             manage.MapPost(
-                    "/bindings/{bindingId:guid}/revert",
-                    async Task<Results<NoContent, ProblemHttpResult>> (
-                        Guid bindingId,
-                        RevertRevisionDto body,
-                        IConfigStore store,
-                        CancellationToken ct) =>
-                    {
-                        try {
-                            await store.RevertBindingToRevisionAsync(bindingId, body.Revision, ct).ConfigureAwait(false);
-                        }
-                        catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(detail: ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
-                        }
+                "/bindings/{bindingId:guid}/revert",
+                async Task<Results<NoContent, ProblemHttpResult>> (Guid bindingId, RevertRevisionDto body, IConfigStore store, CancellationToken ct) => {
+                    try {
+                        await store.RevertBindingToRevisionAsync(bindingId, body.Revision, ct).ConfigureAwait(false);
+                    }
+                    catch (InvalidOperationException ex) {
+                        return TypedResults.Problem(detail: ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
+                    }
 
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    return TypedResults.NoContent();
+                });
 
             manage.MapGet(
-                    "/apps/{appKind}/{appId}/bindings",
-                    async Task<Results<Ok<IReadOnlyList<ConfigBindingRecord>>, BadRequest<string>>> (
-                        string appKind,
-                        string appId,
-                        IConfigStore store,
-                        CancellationToken ct) => {
-                        if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                            return TypedResults.BadRequest(msg);
+                "/apps/{appKind}/{appId}/bindings",
+                async Task<Results<Ok<IReadOnlyList<ConfigBindingRecord>>, BadRequest<string>>> (string appKind, string appId, IConfigStore store, CancellationToken ct) => {
+                    if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
+                        return TypedResults.BadRequest(msg);
 
-                        var list = await store.GetBindingsAsync(refs, ct).ConfigureAwait(false);
-                        return TypedResults.Ok(list);
-                    })
-                .WithOpenApi();
+                    var list = await store.GetBindingsAsync(refs, ct).ConfigureAwait(false);
+                    return TypedResults.Ok(list);
+                });
 
             manage.MapGet(
-                    "/apps/{appKind}/{appId}/bindings/{key}/revisions",
-                    async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, BadRequest<string>>> (
-                        string appKind,
-                        string appId,
-                        string key,
-                        IConfigStore store,
-                        CancellationToken ct) => {
-                        if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                            return TypedResults.BadRequest(msg);
+                "/apps/{appKind}/{appId}/bindings/{key}/revisions", async Task<Results<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>, BadRequest<string>>> (
+                    string appKind,
+                    string appId,
+                    string key,
+                    IConfigStore store,
+                    CancellationToken ct) => {
+                    if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
+                        return TypedResults.BadRequest(msg);
 
-                        if (string.IsNullOrWhiteSpace(key))
-                            return TypedResults.BadRequest("Key segment is required.");
+                    if (string.IsNullOrWhiteSpace(key))
+                        return TypedResults.BadRequest("Key segment is required.");
 
-                        return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), ct).ConfigureAwait(false));
-                    })
-                .WithOpenApi();
+                    return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), ct).ConfigureAwait(false));
+                });
 
             manage.MapPost(
-                    "/apps/{appKind}/{appId}/bindings/{key}/revert",
-                    async Task<Results<NoContent, BadRequest<string>, ProblemHttpResult>> (
-                        string appKind,
-                        string appId,
-                        string key,
-                        RevertRevisionDto body,
-                        IConfigStore store,
-                        CancellationToken ct) =>
-                    {
-                        if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
-                            return TypedResults.BadRequest(msg);
+                "/apps/{appKind}/{appId}/bindings/{key}/revert", async Task<Results<NoContent, BadRequest<string>, ProblemHttpResult>> (
+                    string appKind,
+                    string appId,
+                    string key,
+                    RevertRevisionDto body,
+                    IConfigStore store,
+                    CancellationToken ct) => {
+                    if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
+                        return TypedResults.BadRequest(msg);
 
-                        if (string.IsNullOrWhiteSpace(key))
-                            return TypedResults.BadRequest("Key segment is required.");
+                    if (string.IsNullOrWhiteSpace(key))
+                        return TypedResults.BadRequest("Key segment is required.");
 
-                        try {
-                            await store
-                                .RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, ct)
-                                .ConfigureAwait(false);
-                        }
-                        catch (InvalidOperationException ex) {
-                            return TypedResults.Problem(detail: ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
-                        }
+                    try {
+                        await store.RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, ct).ConfigureAwait(false);
+                    }
+                    catch (InvalidOperationException ex) {
+                        return TypedResults.Problem(detail: ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
+                    }
 
-                        return TypedResults.NoContent();
-                    })
-                .WithOpenApi();
+                    return TypedResults.NoContent();
+                });
 
             return manage;
         }

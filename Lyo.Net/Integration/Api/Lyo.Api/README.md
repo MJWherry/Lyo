@@ -3,6 +3,12 @@
 Core API library for building RESTful minimal APIs with Entity Framework Core. Provides a fluent `ApiEndpointBuilder` to generate CRUD endpoints with caching, **`ILyoMapper`**
 -based DTO mapping, validation, and per-endpoint authorization.
 
+The public registration surface is **`ServiceCollectionExtensions`** (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Endpoint mapping uses **`ApiEndpointBuilder`**
+with **`ApiEndpointBuilderExtensions`** (`CreateBuilder`, `CreateReadOnlyBuilder`), or **`DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints`** for a single dynamic `{entityType}` route
+tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s README). With XML documentation generation enabled for the solution (`GenerateDocumentationFile` in
+`Directory.Build.props`), IntelliSense surfaces the same summaries as this README for documented APIs; CRUD service implementations use `<inheritdoc />` where they mirror the
+`I*Service` interfaces.
+
 ## Features
 
 ### Endpoint Builders
@@ -836,7 +842,6 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 | UseParallelProcessing  | true    | Use parallel processing |
 | Timeout                | 5 min   | Bulk timeout            |
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -859,96 +864,11 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 ### Project references
 
-- `Lyo.Api.Models`
-- `Lyo.Cache`
-- `Lyo.Csv`
-- `Lyo.Diff`
-- `Lyo.Formatter`
-- `Lyo.Metrics`
-- `Lyo.Query`
-- `Lyo.Xlsx`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*75*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ApiEndpointBuilder`
-- `ApiEndpointBuilderExtensions`
-- `ApiErrorResponseFactory`
-- `ApiFeatureFlag`
-- `BaseService`
-- `BulkOperationOptions`
-- `CreateConfigBuilder`
-- `CreateEndpointConfigBuilder`
-- `CreateService`
-- `CrudConfigurationBuilder`
-- `DeleteConfigBuilder`
-- `DeleteEndpointConfigBuilder`
-- `DeleteService`
-- `DynamicCrudEndpointBuilder`
-- `DynamicEndpointConfig`
-- `DynamicEndpointConfigBuilder`
-- `DynamicEndpointDefaults`
-- `DynamicEndpointMapper`
-- `DynamicEndpointOptions`
-- `EntityEndpointConfig`
-- `EntityEndpointConfigBuilder`
-- `EntityLoaderService`
-- `ExportConfigBuilder`
-- `ExportEndpointConfigBuilder`
-- `ExportService`
-- `Extensions`
-- `GetEndpointConfigBuilder`
-- `ICreateService`
-- `IDeleteService`
-- `IEntityLoaderService`
-- `IExportService`
-- `ILyoMapper`
-- `ILyoRepository`
-- `Info`
-- `IPatchService`
-- `IProjectionService`
-- `IQueryHistoryService`
-- `IQueryPagingHelper`
-- `IQueryPathExecutor`
-- `IQueryService`
-- `IsExternalInit`
-- `ISprocService`
-- `ITypeConversionService`
-- `IUpdateService`
-- `IUpsertService`
-- `Job`
-- `LoggingMiddleware`
-- `LyoRepository`
-- `MetadataEndpointConfigBuilder`
-- `PatchConfigBuilder`
-- `PatchEndpointConfigBuilder`
-- `PatchPropertyAuthorizationApplier`
-- `PatchPropertyAuthorizationBuilder`
-- `PatchPropertyAuthorizationResult`
-- `PatchService`
-- `PostgresSprocService`
-- `ProjectionService`
-- `QueryCacheKeyBuilder`
-- `QueryCacheInvalidation`
-- `QueryCacheTagBuilder`
-- `QueryEndpointConfigBuilder`
-- `QueryHistoryEndpointConfigBuilder`
-- `QueryHistoryService`
-- `QueryKeyExpressionBuilder`
-- `QueryOptions`
-- `QueryPagingHelper`
-- `QueryPathExecutor`
-- `QueryService`
-- `ServiceCollectionExtensions`
-- `StoredProcedures`
-- `TypeConversionService`
-- `UpdateConfigBuilder`
-- `UpdateEndpointConfigBuilder`
-- `UpdateService`
-- `UpsertConfigBuilder`
-- `UpsertEndpointConfigBuilder`
-- `UpsertService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Api.Models`](../Lyo.Api.Models/README.md)
+- [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)
+- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md)
+- [`Lyo.Diff`](../../../Core/Diff/Lyo.Diff/README.md)
+- [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Query`](../../../Data/Query/Lyo.Query/README.md)
+- [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md)

@@ -5,7 +5,12 @@ namespace Lyo.PackageMetadata;
 /// <summary>Thread-safe in-memory <see cref="IPackageMetadataStore" /> keyed by namespace prefixes (longest match wins). Use for tests or seed data.</summary>
 public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
 {
+#if  NET9_0_OR_GREATER
+     private readonly Lock _gate = new();
+#else
     private readonly object _gate = new();
+#endif
+   
     private readonly List<(string Prefix, PackageMetadata Meta)> _entries = [];
 
     /// <summary>Registers prefixes for one package. Prefixes are normalised to end with <c>.</c> when missing.</summary>
@@ -41,6 +46,10 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     private void AddPrefixes(IReadOnlyList<string> namespacePrefixes, PackageMetadata package)
     {
         _entries.RemoveAll(t => t.Meta.Id == package.Id);
+
+            package = package with {
+                LicenseExpressionSyntax = PackageLicenseExpression.TryParseSyntax(package.LicenseExpression)
+            };
 
         foreach (var raw in namespacePrefixes) {
             if (string.IsNullOrWhiteSpace(raw))

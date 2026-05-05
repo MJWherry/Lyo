@@ -27,8 +27,8 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                     from_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     change_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     message = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    old_values_json = table.Column<string>(type: "jsonb", nullable: false),
-                    changed_properties_json = table.Column<string>(type: "jsonb", nullable: false),
+                    old_values_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
+                    changed_properties_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

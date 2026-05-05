@@ -14,7 +14,7 @@ public sealed class AuditEventEntityConfiguration : IEntityTypeConfiguration<Aud
         builder.Property(e => e.Timestamp).IsRequired().HasColumnName("timestamp");
         builder.Property(e => e.Message).HasMaxLength(4000).HasColumnName("message");
         builder.Property(e => e.Actor).HasMaxLength(500).HasColumnName("actor");
-        builder.Property(e => e.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb");
+        builder.Property(e => e.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb").HasMaxLength(8192);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => e.Timestamp).HasDatabaseName("ix_audit_events_timestamp");

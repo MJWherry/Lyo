@@ -7,17 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Common\Lyo.Common\Lyo.Common.csproj"/>
-        <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Common\Lyo.Common\Lyo.Common.csproj" />
+        <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj" />
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3"/>
+        <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Lyo.PackageMetadata.Postgres"/>
+        <InternalsVisibleTo Include="Lyo.PackageMetadata.Postgres" />
     </ItemGroup>
 
 </Project>

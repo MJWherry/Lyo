@@ -28,7 +28,7 @@ public sealed class UrlClickEntity
     public string? UserAgent { get; set; }
 
     /// <summary>Gets or sets the referrer URL (optional).</summary>
-    [MaxLength(2048)]
+    [MaxLength(512)]
     public string? Referrer { get; set; }
 
     /// <summary>Gets or sets the navigation property to the short URL.</summary>

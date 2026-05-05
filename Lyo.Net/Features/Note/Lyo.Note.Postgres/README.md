@@ -65,7 +65,6 @@ await noteStore.SaveAsync(new NoteRecord {
 
 - **note.note** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `content`, `created_timestamp`, `updated_timestamp`
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -83,23 +82,7 @@ await noteStore.SaveAsync(new NoteRecord {
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Note`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `InitialCreate`
-- `NoteDbContext`
-- `NoteDbContextFactory`
-- `NoteEntity`
-- `NoteEntityConfiguration`
-- `PostgresNoteOptions`
-- `PostgresNoteStore`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Note`](../Lyo.Note/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

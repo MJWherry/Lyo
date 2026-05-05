@@ -50,7 +50,7 @@ public static class PrivacyPolicies
     private static void AddLoggingCore(RedactionPolicyBuilder builder)
         => builder.AddNationalIdRule(NationalIdPacks.UnitedStatesSsn)
             .AddRule(new EmailRedactionRule())
-            .AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits, 4))
+            .AddRule(new PhoneRedactionRule(PhoneMaskMode.LastDigits))
             .AddRule(new PaymentCardRedactionRule())
             .AddRule(new UrlRedactionRule())
             .AddRule(new IpAddressRedactionRule(IpRedactionMode.TruncateLastSegment));

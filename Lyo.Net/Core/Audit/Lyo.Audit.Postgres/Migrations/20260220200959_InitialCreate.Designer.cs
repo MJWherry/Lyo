@@ -31,11 +31,13 @@ namespace Lyo.Audit.Postgres.Migrations
 
                     b.Property<string>("ChangedPropertiesJson")
                         .IsRequired()
+                        .HasMaxLength(32768)
                         .HasColumnType("jsonb")
                         .HasColumnName("changed_properties_json");
 
                     b.Property<string>("OldValuesJson")
                         .IsRequired()
+                        .HasMaxLength(32768)
                         .HasColumnType("jsonb")
                         .HasColumnName("old_values_json");
 
@@ -91,6 +93,7 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnName("message");
 
                     b.Property<string>("MetadataJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata_json");
 

@@ -17,8 +17,8 @@ public sealed class ChangeEntryEntityConfiguration : IEntityTypeConfiguration<Ch
         builder.Property(e => e.FromEntityId).HasMaxLength(500).HasColumnName("from_entity_id");
         builder.Property(e => e.ChangeType).HasMaxLength(200).HasColumnName("change_type");
         builder.Property(e => e.Message).HasMaxLength(4000).HasColumnName("message");
-        builder.Property(e => e.OldValuesJson).IsRequired().HasColumnName("old_values_json").HasColumnType("jsonb");
-        builder.Property(e => e.ChangedPropertiesJson).IsRequired().HasColumnName("changed_properties_json").HasColumnType("jsonb");
+        builder.Property(e => e.OldValuesJson).IsRequired().HasColumnName("old_values_json").HasColumnType("jsonb").HasMaxLength(32_768);
+        builder.Property(e => e.ChangedPropertiesJson).IsRequired().HasColumnName("changed_properties_json").HasColumnType("jsonb").HasMaxLength(32_768);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => e.Timestamp).HasDatabaseName("ix_changes_timestamp");

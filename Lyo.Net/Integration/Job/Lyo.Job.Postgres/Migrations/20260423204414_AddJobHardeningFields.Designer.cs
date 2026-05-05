@@ -417,7 +417,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("Context")
-                        .HasColumnType("text")
+                        .HasMaxLength(16384)
+                        .HasColumnType("character varying(16384)")
                         .HasColumnName("context");
 
                     b.Property<Guid>("JobRunId")
@@ -437,7 +438,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("message");
 
                     b.Property<string>("StackTrace")
-                        .HasColumnType("text")
+                        .HasMaxLength(16384)
+                        .HasColumnType("character varying(16384)")
                         .HasColumnName("stack_trace");
 
                     b.Property<DateTime>("Timestamp")
@@ -527,7 +529,8 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("type");
 
                     b.Property<string>("Value")
-                        .HasColumnType("text")
+                        .HasMaxLength(16384)
+                        .HasColumnType("character varying(16384)")
                         .HasColumnName("value");
 
                     b.HasKey("Id")

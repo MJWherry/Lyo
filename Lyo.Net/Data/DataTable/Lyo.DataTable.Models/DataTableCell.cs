@@ -63,5 +63,5 @@ public static class DataTableCell
     public static IDataTableCell Empty => DataTableCell<string>.Empty;
 
     /// <summary>Creates a string cell with no formatting.</summary>
-    public static IDataTableCell FromValue(string value) => DataTableCell<string>.FromValue(value ?? "");
+    public static IDataTableCell FromValue(string? value) => DataTableCell<string>.FromValue(value ?? "");
 }

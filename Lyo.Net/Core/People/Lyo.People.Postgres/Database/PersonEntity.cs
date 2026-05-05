@@ -86,14 +86,17 @@ public class PersonEntity
 
     /// <summary>Citizenship countries as JSON array of country codes.</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(2048)]
     public string? CitizenshipJson { get; set; }
 
     /// <summary>Person preferences as JSON.</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? PreferencesJson { get; set; }
 
     /// <summary>Custom fields as JSON object.</summary>
     [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? CustomFieldsJson { get; set; }
 
     // Navigation properties

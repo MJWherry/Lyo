@@ -30,7 +30,6 @@ await changeTracker.RecordChangeAsync(change);
 var history = await changeTracker.GetForEntityAsync(orderRef);
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -46,15 +45,5 @@ var history = await changeTracker.GetForEntityAsync(orderRef);
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*2*). Nested types and file-scoped namespaces may omit some entries.
-
-- `IChangeTracker`
-- `NullChangeTracker`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Csv;
 
+/// <summary>Registers <see cref="CsvService"/> and related CSV abstractions with <see cref="IServiceCollection"/>.</summary>
 public static class Extensions
 {
     /// <param name="services">The service collection</param>

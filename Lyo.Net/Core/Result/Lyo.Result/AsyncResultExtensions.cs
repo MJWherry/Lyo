@@ -127,7 +127,7 @@ public static class AsyncResultExtensions
     /// </summary>
     public static async Task<Result<T>> FirstSuccess<T>(params Task<Result<T>>[] tasks)
     {
-        if (tasks == null || tasks.Length == 0)
+        if (tasks.Length == 0)
             return Result<T>.Failure("NO_TASKS", "No tasks provided");
 
         var results = await Task.WhenAll(tasks).ConfigureAwait(false);

@@ -23,7 +23,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                     parent_category_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    description = table.Column<string>(type: "text", nullable: true),
+                    description = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: true),
                     sort_order = table.Column<int>(type: "integer", nullable: false),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -49,7 +49,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                     parent_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    description = table.Column<string>(type: "text", nullable: true),
+                    description = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -77,8 +77,8 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                     category_id = table.Column<Guid>(type: "uuid", nullable: true),
                     parent_item_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    description = table.Column<string>(type: "text", nullable: true),
-                    notes = table.Column<string>(type: "text", nullable: true),
+                    description = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: true),
+                    notes = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
                     condition = table.Column<int>(type: "integer", nullable: false),
                     sku = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
@@ -110,7 +110,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                     country_of_origin = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
                     lot_number = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
                     batch_number = table.Column<string>(type: "character varying(120)", maxLength: 120, nullable: true),
-                    custom_attributes_json = table.Column<string>(type: "jsonb", nullable: true),
+                    custom_attributes_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -145,7 +145,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                     from_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     to_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     reference_number = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    notes = table.Column<string>(type: "text", nullable: true),
+                    notes = table.Column<string>(type: "character varying(8192)", maxLength: 8192, nullable: true),
                     created_by_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     created_by_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

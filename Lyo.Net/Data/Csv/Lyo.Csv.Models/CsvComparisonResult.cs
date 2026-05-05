@@ -24,6 +24,7 @@ public class CsvComparisonResult
     /// <summary>Gets or sets the number of columns in the second file.</summary>
     public int ColumnCount2 { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"CsvComparisonResult: AreIdentical={AreIdentical}, DifferencesCount={Differences.Count}, RowCount1={RowCount1}, RowCount2={RowCount2}, ColumnCount1={ColumnCount1}, ColumnCount2={ColumnCount2}";
 }

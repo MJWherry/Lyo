@@ -53,10 +53,10 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "hit-test-key";
 
         // First call - cache miss (will set the value)
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
 
         // Second call - cache hit
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken);
         Assert.True(metrics.HitCounters.Count > 0, "Should have recorded at least one hit");
         var hit = metrics.HitCounters.FirstOrDefault(h => h.Tags != null && h.Tags.ContainsKey(Constants.Metrics.Tags.Key) && h.Tags[Constants.Metrics.Tags.Key]
             .Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -72,7 +72,7 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "miss-test-key";
 
         // First call - cache miss
-        await service.GetOrSetAsync<string>(key, ct => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
         Assert.True(metrics.MissCounters.Count > 0, "Should have recorded at least one miss");
         var miss = metrics.MissCounters.FirstOrDefault(m
             => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key].Equals(key, StringComparison.OrdinalIgnoreCase));

@@ -28,6 +28,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         _logger = logger;
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxFileAsDictionary(System.String)' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxFileAsDictionary(string xlsxFilePath)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
@@ -36,6 +37,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return ParseXlsxStreamAsDictionary(inputStream);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxStreamAsDictionary(System.IO.Stream)' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxStreamAsDictionary(Stream xlsxStream)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -46,10 +48,11 @@ internal sealed class XlsxImporter : IXlsxImporter
         if (dataSet.Tables.Count == 0)
             return new Dictionary<int, IReadOnlyDictionary<int, string>>();
 
-        var table = dataSet.Tables[0]!;
+        var table = dataSet.Tables[0];
         return ConvertDataTableToDictionary(table);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxFileAsDataTable(System.String,System.Nullable{System.Boolean})' />
     public Result<DataTable.Models.DataTable> ParseXlsxFileAsDataTable(string xlsxFilePath, bool? useHeaderRow = null)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
@@ -58,6 +61,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return ParseXlsxStreamAsDataTable(inputStream, useHeaderRow);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxStreamAsDataTable(System.IO.Stream,System.Nullable{System.Boolean})' />
     public Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTable(Stream xlsxStream, bool? useHeaderRow = null)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -72,6 +76,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         }
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxBytesAsDataTable(System.Byte[],System.Nullable{System.Boolean})' />
     public Result<DataTable.Models.DataTable> ParseXlsxBytesAsDataTable(byte[] xlsxBytes, bool? useHeaderRow = null)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
@@ -79,6 +84,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return ParseXlsxStreamAsDataTable(ms, useHeaderRow);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxBytesAsDictionary(System.Byte[])' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxBytesAsDictionary(byte[] xlsxBytes)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
@@ -191,6 +197,7 @@ internal sealed class XlsxImporter : IXlsxImporter
     }
 
 #if !NETSTANDARD2_0
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxFileAsDictionaryAsync(System.String,System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
@@ -199,6 +206,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return await ParseXlsxStreamAsDictionaryAsync(inputStream, ct).ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxStreamAsDictionaryAsync(System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxStreamAsDictionaryAsync(Stream xlsxStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -215,7 +223,7 @@ internal sealed class XlsxImporter : IXlsxImporter
                         if (dataSet.Tables.Count == 0)
                             return new Dictionary<int, IReadOnlyDictionary<int, string>>();
 
-                        var table = dataSet.Tables[0]!;
+                        var table = dataSet.Tables[0];
                         return ConvertDataTableToDictionary(table);
                     }, ct)
                 .ConfigureAwait(false);
@@ -230,6 +238,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         }
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxFileAsDataTableAsync(System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, bool? useHeaderRow = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(xlsxFilePath);
@@ -238,6 +247,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return await ParseXlsxStreamAsDataTableAsync(inputStream, useHeaderRow, ct).ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxStreamAsDataTableAsync(System.IO.Stream,System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, bool? useHeaderRow = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -265,6 +275,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         }
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxBytesAsDataTableAsync(System.Byte[],System.Nullable{System.Boolean},System.Threading.CancellationToken)' />
     public async Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);
@@ -272,6 +283,7 @@ internal sealed class XlsxImporter : IXlsxImporter
         return await ParseXlsxStreamAsDataTableAsync(ms, useHeaderRow, ct).ConfigureAwait(false);
     }
 
+    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxImporter.ParseXlsxBytesAsDictionaryAsync(System.Byte[],System.Threading.CancellationToken)' />
     public async Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xlsxBytes);

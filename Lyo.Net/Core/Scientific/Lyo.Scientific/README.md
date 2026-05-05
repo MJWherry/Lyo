@@ -24,10 +24,9 @@ var valueInSi = UnitConversion.Convert(1.0, pressureUnit, pressureUnit);
 
 ## Related projects
 
-- `Lyo.Scientific.Functions`: F# implementations for scientific formulas.
-- `Lyo.Mathematics`: shared quantities and typed numerical models.
+- [`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md): F# implementations for scientific formulas.
+- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md): shared quantities and typed numerical models.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -41,32 +40,6 @@ var valueInSi = UnitConversion.Convert(1.0, pressureUnit, pressureUnit);
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Mathematics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*18*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AstronomyReferenceValues`
-- `BeamSectionCatalog`
-- `DerivedUnits`
-- `ElementAtomicMasses`
-- `EngineeringMaterials`
-- `Exoplanets`
-- `Isotopes`
-- `NaturalSatellites`
-- `PeriodicTable`
-- `PlanetaryBodies`
-- `PlanetaryBodyKind`
-- `ScientificConstants`
-- `ScientificFormulaRegistry`
-- `ScientificUnitPrefixes`
-- `ScientificWorkflowExtensions`
-- `SmallBodies`
-- `StellarBodies`
-- `UnitConversion`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md)

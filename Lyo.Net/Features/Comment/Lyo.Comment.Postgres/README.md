@@ -79,7 +79,6 @@ await commentStore.RemoveReactionAsync(commentRef, userRef);
 - **comment.comment_reaction** – `id` (uuid), `for_entity_type`, `for_entity_id` (comment id), `from_entity_type`, `from_entity_id` (reactor), `reaction_type` (0=Like, 1=Dislike),
   `created_timestamp`. Unique on (for_entity_type, for_entity_id, from_entity_type, from_entity_id)
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -97,25 +96,7 @@ await commentStore.RemoveReactionAsync(commentRef, userRef);
 
 ### Project references
 
-- `Lyo.Comment`
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*10*). Nested types and file-scoped namespaces may omit some entries.
-
-- `CommentDbContext`
-- `CommentDbContextFactory`
-- `CommentEntity`
-- `CommentEntityConfiguration`
-- `CommentReactionEntity`
-- `CommentReactionEntityConfiguration`
-- `Extensions`
-- `InitialCreate`
-- `PostgresCommentOptions`
-- `PostgresCommentStore`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Comment`](../Lyo.Comment/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

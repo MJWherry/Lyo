@@ -72,7 +72,6 @@ Example `appsettings.json`:
 - `Phone` (optional) – Phone number
 - `Company` (optional) – Company name
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -93,18 +92,5 @@ Example `appsettings.json`:
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*5*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ContactUsErrorCodes`
-- `ContactUsServiceBase`
-- `ContactUsServiceOptions`
-- `Extensions`
-- `IContactUsService`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)

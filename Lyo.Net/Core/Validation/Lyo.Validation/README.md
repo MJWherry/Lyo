@@ -29,10 +29,9 @@ var result = validator.Validate(new CreateUserRequest { Name = "Matt", Email = "
 
 ## Related projects
 
-- `Lyo.Common`: shared `Result`, `Error`, and metadata contracts.
-- `Lyo.Exceptions`: guard helpers and error utilities used by validation rules.
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md): shared `Result`, `Error`, and metadata contracts.
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md): guard helpers and error utilities used by validation rules.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -48,32 +47,5 @@ var result = validator.Validate(new CreateUserRequest { Name = "Matt", Email = "
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*19*). Nested types and file-scoped namespaces may omit some entries.
-
-- `AttributeValidationExtensions`
-- `AttributeValidator`
-- `EmailAttribute`
-- `IValidationRule`
-- `IValidator`
-- `LengthAttribute`
-- `NotEmptyAttribute`
-- `NotWhiteSpaceAttribute`
-- `PhoneAttribute`
-- `PropertyValidatorBuilder`
-- `RangeAttribute`
-- `RegexAttribute`
-- `RequiredAttribute`
-- `UriAttribute`
-- `ValidationAttributeBase`
-- `ValidationMetadataKeys`
-- `ValidationRule`
-- `Validator`
-- `ValidatorBuilder`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

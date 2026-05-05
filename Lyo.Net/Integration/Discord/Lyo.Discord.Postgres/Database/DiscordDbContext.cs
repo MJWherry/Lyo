@@ -204,7 +204,7 @@ public class DiscordDbContext : DbContext
             e.Property(x => x.GuildId).HasColumnName("guild_id");
             e.Property(x => x.JoinedAtUtc).HasColumnType("timestamp with time zone").HasColumnName("joined_at_utc");
             e.Property(x => x.Nickname).HasMaxLength(32).HasColumnName("nickname");
-            e.Property(x => x.ExtraJson).HasColumnName("extra_json").HasColumnType("jsonb");
+            e.Property(x => x.ExtraJson).HasColumnName("extra_json").HasColumnType("jsonb").HasMaxLength(8192);
             e.HasOne<DiscordUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_discord_member_user");
             e.HasOne<DiscordGuild>().WithMany().HasForeignKey(x => x.GuildId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_discord_member_guild");
             e.HasIndex(x => x.GuildId).HasDatabaseName("ix_discord_member_guild_id");

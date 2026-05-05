@@ -19,7 +19,7 @@ public static class Extensions
     /// <summary>Maps centralized config routes grouped under <paramref name="prefix" />.</summary>
     public static RouteGroupBuilder MapConfigApiEndpoints(this WebApplication app, string prefix = "/api/config")
     {
-        var group = app.MapGroup(prefix).WithOpenApi();
+        var group = app.MapGroup(prefix);
         group.MapLyoConfiguredEndpoints();
         return group;
     }

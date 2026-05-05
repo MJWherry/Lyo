@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Api.Services.Crud;
 
+/// <summary>Shared dependencies and helpers for CRUD services: context factory, mapper, logging scopes, and API-shaped errors.</summary>
 public abstract class BaseService<TContext>(IDbContextFactory<TContext> contextFactory, ILyoMapper mapper, ILogger? logger, IMetrics? metrics = null)
     where TContext : DbContext
 {

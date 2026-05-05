@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Compression.Models;
 
+/// <summary>Outcome of <see cref="ICompressionService.Decompress(System.Collections.Generic.Dictionary{string, byte[]})" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BatchDecompressionResult(IReadOnlyList<DecompressionFileInfo> SuccessfulFiles, IReadOnlyList<FailedFileOperation> FailedFiles)
 {

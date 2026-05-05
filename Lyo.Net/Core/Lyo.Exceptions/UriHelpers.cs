@@ -207,7 +207,7 @@ public static class UriHelpers
         return string.IsNullOrEmpty(trimPath) ? baseStr : $"{baseStr}/{trimPath}";
     }
 
-    /// <summary>Appends a query string to a URI, adding ? or & as appropriate.</summary>
+    /// <summary>Appends a query string to a URI, adding ? or &amp; as appropriate.</summary>
     /// <param name="uri">The base URI.</param>
     /// <param name="queryString">The query string to append (without leading ?).</param>
     /// <returns>The URI with the query string appended.</returns>

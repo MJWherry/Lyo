@@ -105,7 +105,6 @@ using (metrics.StartTimer("operation.duration"))
 }
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -123,15 +122,5 @@ using (metrics.StartTimer("operation.duration"))
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*2*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `OpenTelemetryMetrics`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../Lyo.Metrics/README.md)

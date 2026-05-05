@@ -122,10 +122,11 @@ public class DirectoryTests : IDisposable
         var directoryName = Path.GetFileName(_tempSession.GetDirectoryPath());
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryCreated += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Created, e.ChangeType);
-            Assert.Null(e.OldPath);
-            Assert.EndsWith(directoryName, e.NewPath);
-            Assert.True(e.IsDirectory);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, _, _, _, _) = e;
+            Assert.Equal(ChangeTypeEnum.Created, changeTypeEnum);
+            Assert.Null(oldPath);
+            Assert.EndsWith(directoryName, newPath);
+            Assert.True(isDirectory);
             fired = true;
         };
 
@@ -140,12 +141,13 @@ public class DirectoryTests : IDisposable
         var directoryName = Path.GetFileName(_tempSession.GetDirectoryPath());
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryChanged += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Changed, e.ChangeType);
-            Assert.EndsWith(_tempSession.SessionDirectory, e.OldPath);
-            Assert.EndsWith(_tempSession.SessionDirectory, e.NewPath);
-            Assert.True(e.IsDirectory);
-            Assert.Equal(0, e.OldDirectoryCount);
-            Assert.Equal(1, e.NewDirCount);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, _, oldDirectoryCount, _, newDirCount) = e;
+            Assert.Equal(ChangeTypeEnum.Changed, changeTypeEnum);
+            Assert.EndsWith(_tempSession.SessionDirectory, oldPath);
+            Assert.EndsWith(_tempSession.SessionDirectory, newPath);
+            Assert.True(isDirectory);
+            Assert.Equal(0, oldDirectoryCount);
+            Assert.Equal(1, newDirCount);
             fired = true;
         };
 
@@ -159,12 +161,13 @@ public class DirectoryTests : IDisposable
         var fired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryChanged += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Changed, e.ChangeType);
-            Assert.EndsWith(_tempSession.SessionDirectory, e.OldPath);
-            Assert.EndsWith(_tempSession.SessionDirectory, e.NewPath);
-            Assert.True(e.IsDirectory);
-            Assert.Equal(0, e.OldFileCount);
-            Assert.Equal(1, e.NewFileCount);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, oldFileCount, _, newFileCount, _) = e;
+            Assert.Equal(ChangeTypeEnum.Changed, changeTypeEnum);
+            Assert.EndsWith(_tempSession.SessionDirectory, oldPath);
+            Assert.EndsWith(_tempSession.SessionDirectory, newPath);
+            Assert.True(isDirectory);
+            Assert.Equal(0, oldFileCount);
+            Assert.Equal(1, newFileCount);
             fired = true;
         };
 
@@ -180,10 +183,11 @@ public class DirectoryTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryDeleted += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Deleted, e.ChangeType);
-            Assert.EndsWith(directoryName, e.OldPath);
-            Assert.Null(e.NewPath);
-            Assert.True(e.IsDirectory);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, _, _, _, _) = e;
+            Assert.Equal(ChangeTypeEnum.Deleted, changeTypeEnum);
+            Assert.EndsWith(directoryName, oldPath);
+            Assert.Null(newPath);
+            Assert.True(isDirectory);
             fired = true;
         };
 
@@ -200,10 +204,11 @@ public class DirectoryTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, directoryName));
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryRenamed += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Renamed, e.ChangeType);
-            Assert.EndsWith(directoryName, e.OldPath);
-            Assert.EndsWith(newFileName, e.NewPath);
-            Assert.True(e.IsDirectory);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, _, _, _, _) = e;
+            Assert.Equal(ChangeTypeEnum.Renamed, changeTypeEnum);
+            Assert.EndsWith(directoryName, oldPath);
+            Assert.EndsWith(newFileName, newPath);
+            Assert.True(isDirectory);
             fired = true;
         };
 
@@ -242,10 +247,11 @@ public class DirectoryTests : IDisposable
         var directoryPrefix = Path.GetFileName(_tempSession.GetDirectoryPath());
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.DirectoryCreated += (_, e) => {
-            Assert.Equal(ChangeTypeEnum.Created, e.ChangeType);
-            Assert.Null(e.OldPath);
-            Assert.Contains($"{directoryPrefix}_", e.NewPath);
-            Assert.True(e.IsDirectory);
+            var (oldPath, newPath, changeTypeEnum, isDirectory, _, _, _, _) = e;
+            Assert.Equal(ChangeTypeEnum.Created, changeTypeEnum);
+            Assert.Null(oldPath);
+            Assert.Contains($"{directoryPrefix}_", newPath);
+            Assert.True(isDirectory);
             fired++;
         };
 

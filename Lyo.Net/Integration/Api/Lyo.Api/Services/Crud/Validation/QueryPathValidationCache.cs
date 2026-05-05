@@ -58,7 +58,7 @@ public sealed class QueryPathValidationCache
         }
 
         if (SharedEntityMetadataCache.TryNormalizeFieldPath(typeof(TDbModel), field, out normalized, out errorMessage)) {
-            _selectNormalize[key] = (true, normalized!, null);
+            _selectNormalize[key] = (true, normalized, null);
             return true;
         }
 

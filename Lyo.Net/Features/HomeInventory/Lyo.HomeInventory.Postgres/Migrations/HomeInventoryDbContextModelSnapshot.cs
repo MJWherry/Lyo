@@ -35,7 +35,8 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("description");
 
                     b.Property<string>("Name")
@@ -125,11 +126,13 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnName("currency");
 
                     b.Property<string>("CustomAttributesJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("custom_attributes_json");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("description");
 
                     b.Property<string>("Ean")
@@ -191,7 +194,8 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnName("name");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("notes");
 
                     b.Property<string>("OwnerEntityId")
@@ -316,7 +320,8 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnName("created_timestamp");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("description");
 
                     b.Property<bool>("IsActive")
@@ -382,7 +387,8 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnName("movement_type");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text")
+                        .HasMaxLength(8192)
+                        .HasColumnType("character varying(8192)")
                         .HasColumnName("notes");
 
                     b.Property<decimal>("Quantity")

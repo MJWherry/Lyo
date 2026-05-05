@@ -13,6 +13,7 @@ using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Create;
 
+/// <inheritdoc cref="ICreateService{TContext}" />
 public class CreateService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

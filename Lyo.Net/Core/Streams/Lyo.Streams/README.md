@@ -37,7 +37,6 @@ var progress = new Progress<long>(bytes => Console.WriteLine($"Copied {bytes} by
 await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -53,19 +52,4 @@ await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 
 ### Project references
 
-- `Lyo.Exceptions`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*7*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ConcatenatedStream`
-- `CountingStream`
-- `ProgressStream`
-- `StreamChunkSizeHelper`
-- `StreamChunkSizeOptions`
-- `StreamExtensions`
-- `TeeStream`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

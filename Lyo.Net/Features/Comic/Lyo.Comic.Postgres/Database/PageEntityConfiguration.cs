@@ -12,7 +12,7 @@ public sealed class PageEntityConfiguration : IEntityTypeConfiguration<PageEntit
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.ChapterId).HasColumnName("chapter_id").HasColumnType("uuid");
         builder.Property(e => e.PageNumber).IsRequired().HasColumnName("page_number");
-        builder.Property(e => e.ImageRef).HasColumnName("image_ref");
+        builder.Property(e => e.ImageRef).HasMaxLength(512).HasColumnName("image_ref");
         builder.Property(e => e.Width).HasColumnName("width");
         builder.Property(e => e.Height).HasColumnName("height");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");

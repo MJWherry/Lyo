@@ -97,7 +97,7 @@ public class CacheServiceExtensionsTests
         var redisDescriptor = services.FirstOrDefault(s => s.ServiceType == typeof(IConnectionMultiplexer));
         Assert.NotNull(cacheDescriptor);
         Assert.NotNull(redisDescriptor);
-        Assert.Equal(ServiceLifetime.Singleton, redisDescriptor!.Lifetime);
+        Assert.Equal(ServiceLifetime.Singleton, redisDescriptor.Lifetime);
     }
 
     [Fact]

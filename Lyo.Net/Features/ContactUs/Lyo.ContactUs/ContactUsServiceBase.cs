@@ -1,6 +1,7 @@
 using Lyo.ContactUs.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using static Lyo.ContactUs.ContactUsErrorCodes;
 
 namespace Lyo.ContactUs;
@@ -9,7 +10,7 @@ namespace Lyo.ContactUs;
 public abstract class ContactUsServiceBase : IContactUsService
 {
     /// <summary>Gets the logger instance.</summary>
-    protected ILogger? Logger { get; }
+    protected ILogger Logger { get; }
 
     /// <summary>Gets the service options.</summary>
     protected ContactUsServiceOptions Options { get; }
@@ -18,7 +19,7 @@ public abstract class ContactUsServiceBase : IContactUsService
     protected ContactUsServiceBase(ContactUsServiceOptions options, ILogger? logger = null)
     {
         Options = ArgumentHelpers.ThrowIfNullReturn(options);
-        Logger = logger;
+        Logger = logger ?? NullLogger.Instance;
     }
 
     /// <inheritdoc />
@@ -36,7 +37,7 @@ public abstract class ContactUsServiceBase : IContactUsService
             return ContactUsSubmitResult.FromError("Operation was cancelled", OperationCancelled);
         }
         catch (Exception ex) {
-            Logger?.LogError(ex, "Failed to submit contact form from {Email}", request?.Email);
+            Logger.LogError(ex, "Failed to submit contact form from {Email}", request.Email);
             return ContactUsSubmitResult.FromException(ex, SubmitFailed);
         }
     }

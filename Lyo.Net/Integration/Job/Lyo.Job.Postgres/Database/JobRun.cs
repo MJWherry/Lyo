@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Postgres.Database;
@@ -16,6 +17,8 @@ public class JobRun
 
     public Guid? ReRanFromJobRunId { get; set; }
 
+    [Required]
+    [MaxLength(50)]
     public string CreatedBy { get; set; } = null!;
 
     public JobState State { get; set; }

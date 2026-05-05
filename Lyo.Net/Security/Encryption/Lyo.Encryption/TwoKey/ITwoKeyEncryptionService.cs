@@ -8,6 +8,13 @@ namespace Lyo.Encryption.TwoKey;
 /// Two-key encryption service that uses a Key Encryption Key (KEK) to encrypt Data Encryption Keys (DEK). This enables envelope encryption where each encryption operation
 /// uses a unique DEK that is encrypted with the KEK.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Implementations such as <see cref="TwoKeyEncryptionService{TKeyEncryptionService, TDataEncryptionService}" /> compose two <see cref="IEncryptionService" /> instances (KEK and DEK
+/// roles). Use <c>keyId</c> / <c>kek</c> parameters consistently with the single-key service: keystore-backed workflows pass identifiers; tests or sealed systems may pass raw KEK
+/// bytes.
+/// </para>
+/// </remarks>
 public interface ITwoKeyEncryptionService
 {
     string FileExtension { get; }

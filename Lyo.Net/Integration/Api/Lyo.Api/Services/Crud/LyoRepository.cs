@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud;
 
+/// <inheritdoc cref="ILyoRepository{TContext}" />
 public class LyoRepository<TContext>(
     IQueryService<TContext> query,
     ICreateService<TContext> create,

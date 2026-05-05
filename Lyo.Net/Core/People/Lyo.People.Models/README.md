@@ -78,7 +78,6 @@ var mobilePhone = person.GetMobilePhone();
 var hasValidEmail = person.HasValidEmail();
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -92,34 +91,6 @@ var hasValidEmail = person.HasValidEmail();
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.DateAndTime`
-- `Lyo.Geolocation.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*20*). Nested types and file-scoped namespaces may omit some entries.
-
-- `CommunicationPreferences`
-- `ContactEmailAddress`
-- `ContactEmailType`
-- `ContactPhoneNumber`
-- `ContactPhoneType`
-- `EmailAddress`
-- `Employment`
-- `EmploymentType`
-- `Identification`
-- `IdentificationType`
-- `NameFormat`
-- `Person`
-- `PersonExtensions`
-- `PersonName`
-- `PersonPreferences`
-- `PersonRelationship`
-- `PhoneNumber`
-- `PrivacyPreferences`
-- `RelationshipType`
-- `SocialMediaProfile`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.DateAndTime`](../../DateAndTime/Lyo.DateAndTime/README.md)
+- [`Lyo.Geolocation.Models`](../../Geolocation/Lyo.Geolocation.Models/README.md)

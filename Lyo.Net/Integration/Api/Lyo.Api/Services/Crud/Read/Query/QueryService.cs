@@ -23,6 +23,7 @@ using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Api.Services.Crud.Read.Query;
 
+/// <inheritdoc cref="IQueryService{TContext}" />
 public class QueryService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

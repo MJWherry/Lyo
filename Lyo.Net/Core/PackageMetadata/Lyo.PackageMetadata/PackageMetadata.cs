@@ -9,6 +9,8 @@ namespace Lyo.PackageMetadata;
 /// <param name="Version">Published version string when known (ecosystem-specific format).</param>
 /// <param name="ArtifactDigestAlgorithm">Hash algorithm for <see cref="ArtifactDigestHex" />; <see cref="ArtifactDigestAlgorithm.None" /> when no digest is stored.</param>
 /// <param name="ArtifactDigestHex">Lowercase hex digest of canonical primary artifact bytes (length: 40 for SHA-1, 64 for SHA-256, 128 for SHA-512), or <see langword="null" />.</param>
+/// <param name="LicenseExpression">When known, an SPDX 2.x license expression: <c>AND</c>, <c>OR</c>, parentheses, <c>WITH</c>. Canonical license field.</param>
+/// <param name="LicenseExpressionSyntax">Parsed tree of <see cref="LicenseExpression" /> (surjective with the string when parsing succeeds). Derived when persisting or loading; not an independent legal source—use <see cref="LicenseExpression" /> as written.</param>
 /// <param name="CreatedAt">When this metadata row was first stored (UTC). Populated by Postgres store; optional elsewhere.</param>
 /// <param name="UpdatedAt">When this metadata row was last updated (UTC). Populated by Postgres store; optional elsewhere.</param>
 public sealed record PackageMetadata(
@@ -26,6 +28,7 @@ public sealed record PackageMetadata(
     string? RepositoryUrl = null,
     string? LicenseUrl = null,
     string? LicenseExpression = null,
+    SpdxLicenseExpressionSyntax? LicenseExpressionSyntax = null,
     string? PackageDetailsUrl = null,
     IReadOnlyList<string>? Tags = null,
     DateTime? CreatedAt = null,

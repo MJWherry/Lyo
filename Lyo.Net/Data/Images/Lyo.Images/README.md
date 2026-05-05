@@ -66,7 +66,6 @@ This library has been designed for production use and includes:
 - ✅ Cancellation token support
 - ✅ Extensible architecture
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -87,46 +86,6 @@ This library has been designed for production use and includes:
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*28*). Nested types and file-scoped namespaces may omit some entries.
-
-- `CompressOperation`
-- `Constants`
-- `ConvertFormatOperation`
-- `CropOperation`
-- `ExifUserCommentDecoder`
-- `Extensions`
-- `IImageService`
-- `ImageCenterOverlayOptions`
-- `ImageErrorCodes`
-- `ImageOperation`
-- `ImageProcessRequest`
-- `ImageServiceBase`
-- `ImageServiceOptions`
-- `ImageSharpImageService`
-- `IsExternalInit`
-- `ISpriteSheetExportService`
-- `Metrics`
-- `ResizeMode`
-- `ResizeOperation`
-- `RotateOperation`
-- `SpriteGridPadMode`
-- `SpriteSheetCalculation`
-- `SpriteSheetCalculator`
-- `SpriteSheetExportService`
-- `SpriteSheetOptions`
-- `WatermarkOperation`
-- `WatermarkOptions`
-- `WatermarkPosition`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-[Your License Here]
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

@@ -50,7 +50,6 @@ var timeZone = await service.GetTimeZoneAsync(new GeoCoordinate(37.4220, -122.08
 The implementation uses direct HTTP calls to Google Maps REST APIs, which is the standard approach. The `Geo.Google` NuGet package is included as a dependency and can be used for
 additional Google Maps functionality if needed.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -67,16 +66,6 @@ additional Google Maps functionality if needed.
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Geolocation`
-- `Lyo.Geolocation.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*2*). Nested types and file-scoped namespaces may omit some entries.
-
-- `GoogleGeolocationService`
-- `GoogleOptions`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.Geolocation`](../Lyo.Geolocation/README.md)
+- [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md)

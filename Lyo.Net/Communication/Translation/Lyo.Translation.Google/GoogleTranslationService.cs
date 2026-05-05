@@ -36,7 +36,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
     {
         _options = options;
         _httpClient = httpClient ?? new HttpClient();
-        _baseUrl = string.IsNullOrWhiteSpace(_options.ApiEndpoint) ? "https://translation.googleapis.com/language/translate/v2" : options.ApiEndpoint.TrimEnd('/');
+        _baseUrl = _options.ApiEndpoint.IsNullOrEmpty() ? "https://translation.googleapis.com/language/translate/v2" : options.ApiEndpoint.TrimEnd('/');
 
         // Override base metric names with Google Translate-specific ones
         MetricNames[nameof(Translation.Constants.Metrics.TranslateDuration)] = Constants.Metrics.TranslateDuration;
@@ -56,7 +56,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
     /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
     protected override void Dispose(bool disposing)
     {
-        if (disposing && _httpClient != null)
+        if (disposing)
             _httpClient.Dispose();
 
         base.Dispose(disposing);
@@ -81,14 +81,14 @@ public sealed class GoogleTranslationService : TranslationServiceBase
 
         try {
             // Google Translate uses ISO 639-1 (2-letter) codes
-            var targetLanguage = request.TargetLanguageCode.Iso6391 ?? request.TargetLanguageCode.Bcp47?.Split('-')[0];
-            var sourceLanguage = request.SourceLanguage?.Iso6391 ?? request.SourceLanguage?.Bcp47?.Split('-')[0];
+            var targetLanguage = request.TargetLanguageCode.Iso6391 ?? request.TargetLanguageCode.Bcp47.Split('-')[0];
+            var sourceLanguage = request.SourceLanguage?.Iso6391 ?? request.SourceLanguage?.Bcp47.Split('-')[0];
             var apiKey = _options.ApiKey;
             OperationHelpers.ThrowIfNullOrWhiteSpace(apiKey, "Google Translate API key is required. Set ApiKey in GoogleTranslationOptions.");
             var url = $"{_baseUrl}?key={Uri.EscapeDataString(apiKey)}";
             var requestBody = new { q = request.Text, target = targetLanguage, source = sourceLanguage };
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var content = new StringContent(json, Encoding.UTF8, FileTypeInfo.Json.MimeType);
             var response = await _httpClient.PostAsync(url, content, ct).ConfigureAwait(false);
             sw.Stop();
 #if NETSTANDARD2_0
@@ -110,7 +110,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
 
             var translation = result.Data.Translations[0];
             var detectedLanguage = LanguageCodeInfo.Unknown;
-            if (!string.IsNullOrWhiteSpace(translation.DetectedSourceLanguage))
+            if (!translation.DetectedSourceLanguage.IsNullOrWhitespace())
                 detectedLanguage = translation.DetectedSourceLanguage.FromISO639_1();
 
             Logger.LogDebug(
@@ -178,9 +178,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
             sw.Stop();
             Logger.LogError(ex, "Error detecting language with Google Translate");
             Metrics.IncrementCounter(MetricNames[nameof(Translation.Constants.Metrics.DetectLanguageFailure)]);
-            if (ex != null)
-                Metrics.RecordError(MetricNames[nameof(Translation.Constants.Metrics.DetectLanguageDuration)], ex);
-
+            Metrics.RecordError(MetricNames[nameof(Translation.Constants.Metrics.DetectLanguageDuration)], ex);
             return LanguageCodeInfo.Unknown;
         }
     }

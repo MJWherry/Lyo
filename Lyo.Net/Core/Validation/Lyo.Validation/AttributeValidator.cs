@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Reflection;
+using Lyo.Common;
 using Lyo.Result;
 using Lyo.Validation.Attributes;
 using DataAnnotationsValidationAttribute = System.ComponentModel.DataAnnotations.ValidationAttribute;
@@ -106,7 +107,7 @@ public sealed class AttributeValidator<T> : IValidator<T>
         var memberNames = validationResult.MemberNames.Where(static name => !string.IsNullOrWhiteSpace(name)).Distinct().ToArray();
         if (memberNames.Length == 0) {
             var resolvedFallbackPropertyName = fallbackPropertyName;
-            if (!string.IsNullOrWhiteSpace(resolvedFallbackPropertyName)) {
+            if (!resolvedFallbackPropertyName.IsNullOrEmpty()) {
                 var propertyName = resolvedFallbackPropertyName;
                 errors.Add(ValidatorBuilder<T>.CreatePropertyError(propertyName, attemptedValue, errorCode, validationResult.ErrorMessage ?? $"{propertyName} is invalid"));
                 return;
@@ -119,7 +120,7 @@ public sealed class AttributeValidator<T> : IValidator<T>
         foreach (var memberName in memberNames)
             errors.Add(ValidatorBuilder<T>.CreatePropertyError(memberName, attemptedValue, errorCode, validationResult.ErrorMessage ?? $"{memberName} is invalid"));
 
-        if (string.IsNullOrWhiteSpace(fallbackPropertyName) || memberNames.Contains(fallbackPropertyName, StringComparer.Ordinal))
+        if (fallbackPropertyName.IsNullOrEmpty() || memberNames.Contains(fallbackPropertyName, StringComparer.Ordinal))
             return;
 
         errors.Add(
@@ -142,17 +143,11 @@ public sealed class AttributeValidator<T> : IValidator<T>
             var _ => ValidationErrorCodes.ValidationFailed
         };
 
-    private sealed class PropertyValidationInfo
+    private sealed class PropertyValidationInfo(Func<T, object?> getter, IReadOnlyList<Func<T, object?, IReadOnlyList<Error>>> validators)
     {
-        public Func<T, object?> Getter { get; }
+        public Func<T, object?> Getter { get; } = getter;
 
-        public IReadOnlyList<Func<T, object?, IReadOnlyList<Error>>> Validators { get; }
-
-        public PropertyValidationInfo(Func<T, object?> getter, IReadOnlyList<Func<T, object?, IReadOnlyList<Error>>> validators)
-        {
-            Getter = getter;
-            Validators = validators;
-        }
+        public IReadOnlyList<Func<T, object?, IReadOnlyList<Error>>> Validators { get; } = validators;
     }
 }
 

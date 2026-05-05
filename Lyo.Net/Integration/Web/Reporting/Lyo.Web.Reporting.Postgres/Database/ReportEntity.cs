@@ -20,6 +20,7 @@ public sealed class ReportEntity
 
     /// <summary>Gets or sets the serialized report data as JSON.</summary>
     [Required]
+    [MaxLength(32_768)]
     public string ReportDataJson { get; set; } = null!;
 
     /// <summary>Gets or sets the type name of the report parameters (for deserialization).</summary>

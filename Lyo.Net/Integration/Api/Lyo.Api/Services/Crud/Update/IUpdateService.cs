@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud.Update;
 
+/// <summary>Full replace updates from <c>UpdateRequest&lt;TRequest&gt;</c> bodies (single and bulk).</summary>
 public interface IUpdateService<TContext>
     where TContext : DbContext
 {

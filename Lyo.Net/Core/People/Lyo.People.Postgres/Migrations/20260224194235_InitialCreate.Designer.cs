@@ -462,6 +462,7 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("CitizenshipJson")
+                        .HasMaxLength(2048)
                         .HasColumnType("jsonb")
                         .HasColumnName("citizenship_json");
 
@@ -486,6 +487,7 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnName("current_job_title");
 
                     b.Property<string>("CustomFieldsJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("custom_fields_json");
 
@@ -564,6 +566,7 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnName("place_of_birth_address_id");
 
                     b.Property<string>("PreferencesJson")
+                        .HasMaxLength(8192)
                         .HasColumnType("jsonb")
                         .HasColumnName("preferences_json");
 

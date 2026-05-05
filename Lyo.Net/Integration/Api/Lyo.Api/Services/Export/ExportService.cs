@@ -22,10 +22,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Services.Export;
 
-/// <summary>
-/// Exports query results to CSV, XLSX, or JSON format. When columns contain SmartFormat templates (e.g. "{FirstName} {LastName}"), they are converted to ComputedFields on
-/// the query and resolved through the ProjectionService pipeline.
-/// </summary>
+/// <inheritdoc cref="IExportService{TContext}" />
+/// <remarks>
+/// When columns contain SmartFormat templates (e.g. "{FirstName} {LastName}"), they are converted to ComputedFields on the query and resolved through the ProjectionService pipeline.
+/// </remarks>
 public class ExportService<TContext>(
     IQueryService<TContext> queryService,
     ICsvService csvService,
@@ -97,7 +97,7 @@ public class ExportService<TContext>(
             }
 
             if (query.Select.Count > 0 || query.ComputedFields.Count > 0) {
-                var projectedResult = await queryService.QueryProjected<TDbEntity>(query, defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
+                var projectedResult = await queryService.QueryProjected(query, defaultOrder, defaultSortDirection, ct).ConfigureAwait(false);
                 if (!projectedResult.IsSuccess) {
                     _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
                     var err = projectedResult.Error ?? LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "Export query failed.");

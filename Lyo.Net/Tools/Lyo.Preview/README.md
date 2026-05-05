@@ -32,7 +32,6 @@ await Preview.FileAsync("/path/to/file.pdf");
 await Preview.Async(bytes, FileTypeInfo.Png);
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -48,19 +47,7 @@ await Preview.Async(bytes, FileTypeInfo.Png);
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Csv.Models`
-- `Lyo.Exceptions`
-- `Lyo.Xlsx.Models`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*4*). Nested types and file-scoped namespaces may omit some entries.
-
-- `BrowserPreview`
-- `Extensions`
-- `IPreviewService`
-- `Preview`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Csv.Models`](../../Data/Csv/Lyo.Csv.Models/README.md)
+- [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Xlsx.Models`](../../Data/Xlsx/Lyo.Xlsx.Models/README.md)

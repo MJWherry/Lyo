@@ -45,7 +45,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         ArgumentHelpers.ThrowIfNull(item);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(item.Name, nameof(item.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (item.Id != default) {
+        if (item.Id != Guid.Empty) {
             var existing = await context.Items.FindAsync([item.Id], ct).ConfigureAwait(false);
             if (existing != null) {
                 CopyToEntity(item, existing);
@@ -56,7 +56,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
 
         var entity = new HomeItemEntity();
         CopyToEntity(item, entity);
-        entity.Id = item.Id == default ? Guid.NewGuid() : item.Id;
+        entity.Id = item.Id == Guid.Empty ? Guid.NewGuid() : item.Id;
         if (entity.CreatedTimestamp == default)
             entity.CreatedTimestamp = DateTime.UtcNow;
 
@@ -100,7 +100,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         ArgumentHelpers.ThrowIfNull(category);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(category.Name, nameof(category.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (category.Id != default) {
+        if (category.Id != Guid.Empty) {
             var existing = await context.Categories.FindAsync([category.Id], ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.ParentCategoryId = category.ParentCategoryId;
@@ -114,7 +114,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         var entity = new HomeCategoryEntity {
-            Id = category.Id == default ? Guid.NewGuid() : category.Id,
+            Id = category.Id == Guid.Empty ? Guid.NewGuid() : category.Id,
             ParentCategoryId = category.ParentCategoryId,
             Name = category.Name,
             Slug = category.Slug,
@@ -162,7 +162,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         ArgumentHelpers.ThrowIfNull(location);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(location.Name, nameof(location.Name));
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (location.Id != default) {
+        if (location.Id != Guid.Empty) {
             var existing = await context.Locations.FindAsync([location.Id], ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.ParentLocationId = location.ParentLocationId;
@@ -176,7 +176,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         var entity = new HomeLocationEntity {
-            Id = location.Id == default ? Guid.NewGuid() : location.Id,
+            Id = location.Id == Guid.Empty ? Guid.NewGuid() : location.Id,
             ParentLocationId = location.ParentLocationId,
             Name = location.Name,
             Code = location.Code,
@@ -305,10 +305,10 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         }
 
         var magnitude = Math.Abs(quantityDelta);
-        if (quantityDelta >= 0)
-            context.Movements.Add(CreateMovementEntity(itemId, movementType, magnitude, null, locationId, referenceNumber, notes, createdBy));
-        else
-            context.Movements.Add(CreateMovementEntity(itemId, movementType, magnitude, locationId, null, referenceNumber, notes, createdBy));
+        context.Movements.Add(
+            quantityDelta >= 0
+                ? CreateMovementEntity(itemId, movementType, magnitude, null, locationId, referenceNumber, notes, createdBy)
+                : CreateMovementEntity(itemId, movementType, magnitude, locationId, null, referenceNumber, notes, createdBy));
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
@@ -330,7 +330,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         await using var tx = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var fromRow = await context.Stocks.FindAsync([itemId, fromLocationId], ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(fromRow, "No stock row at the source location.");
-        var sourceRow = fromRow!;
+        var sourceRow = fromRow;
         OperationHelpers.ThrowIf(sourceRow.QuantityOnHand < quantity, "Insufficient quantity at the source location.");
         sourceRow.QuantityOnHand -= quantity;
         sourceRow.UpdatedTimestamp = DateTime.UtcNow;

@@ -18,7 +18,7 @@ public sealed class ConfigDefinitionEntity
     public string Key { get; set; } = string.Empty;
 
     [Required]
-    [MaxLength(2048)]
+    [MaxLength(1024)]
     public string ForValueType { get; set; } = string.Empty;
 
     [MaxLength(4000)]
@@ -27,6 +27,7 @@ public sealed class ConfigDefinitionEntity
     public bool IsRequired { get; set; }
 
     [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? DefaultValueJson { get; set; }
 
     [Required]

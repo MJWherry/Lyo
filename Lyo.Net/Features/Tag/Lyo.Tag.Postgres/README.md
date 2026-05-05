@@ -77,7 +77,6 @@ await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -95,23 +94,7 @@ await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId)
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Health`
-- `Lyo.Postgres`
-- `Lyo.Tag`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `InitialCreate`
-- `PostgresTagOptions`
-- `PostgresTagStore`
-- `TagDbContext`
-- `TagDbContextFactory`
-- `TagEntity`
-- `TagEntityConfiguration`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
+- [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+- [`Lyo.Tag`](../Lyo.Tag/README.md)

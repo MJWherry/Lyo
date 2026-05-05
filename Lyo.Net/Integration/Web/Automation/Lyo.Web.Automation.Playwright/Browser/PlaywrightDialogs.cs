@@ -18,25 +18,24 @@ public sealed class PlaywrightDialogs
     public IDisposable AutoAcceptAll()
     {
         var page = _browser.GetRequiredPage();
-
-        void Handler(object? _, IDialog d) => _ = d.AcceptAsync();
-
         page.Dialog += Handler;
         return new ActionDisposable(() => page.Dialog -= Handler);
+
+        void Handler(object? _, IDialog d) => _ = d.AcceptAsync();
     }
 
     /// <summary>Registers a one-shot handler that accepts the next dialog, then unsubscribes.</summary>
     public void AcceptNext()
     {
         var page = _browser.GetRequiredPage();
+        page.Dialog += Handler;
+        return;
 
         void Handler(object? _, IDialog d)
         {
             page.Dialog -= Handler;
             _ = d.AcceptAsync();
         }
-
-        page.Dialog += Handler;
     }
 
     /// <summary>Waits for the next dialog and returns its message (blocks until a dialog is shown).</summary>

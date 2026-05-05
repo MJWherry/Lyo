@@ -24,8 +24,8 @@ public class DeleteRequestBuilder
     {
         ArgumentHelpers.ThrowIfNull(keys);
         foreach (var k in keys) {
-            ArgumentHelpers.ThrowIf(k == null || k.Length == 0, "Each key must contain at least one value", nameof(keys));
-            _keys.Add(k!);
+            ArgumentHelpers.ThrowIfNullOrEmpty(k, "Each key must contain at least one value");
+            _keys.Add(k);
         }
 
         return this;

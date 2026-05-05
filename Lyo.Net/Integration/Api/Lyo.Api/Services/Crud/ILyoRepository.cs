@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.Services.Crud;
 
+/// <summary>Facade exposing all CRUD/query services for a <typeparamref name="TContext" /> (optional convenience for callers).</summary>
 public interface ILyoRepository<TContext>
     where TContext : DbContext
 {

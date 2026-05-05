@@ -8,7 +8,11 @@ using System.Diagnostics;
 
 namespace Lyo.Exceptions;
 
-/// <summary>Helper methods for operation validation that throw InvalidOperationException and related runtime exceptions.</summary>
+/// <summary>Helper methods for operation validation that throw <see cref="InvalidOperationException"/>, <see cref="ObjectDisposedException"/>, <see cref="OperationCanceledException"/>, or <see cref="NotSupportedException"/>.</summary>
+/// <remarks>
+/// Unlike <see cref="ArgumentHelpers"/>, this type signals invalid runtime state with <see cref="InvalidOperationException"/> (including null references for most checks here).
+/// Methods document every exception they throw, including those produced by other overloads in this class that they call.
+/// </remarks>
 public static class OperationHelpers
 {
     [DoesNotReturn]
@@ -95,7 +99,8 @@ public static class OperationHelpers
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <param name="collection">The collection to check.</param>
     /// <param name="paramName">The parameter name to include in the error message, when provided.</param>
-    /// <exception cref="InvalidOperationException">Thrown when collection is null or empty.</exception>
+    /// <remarks>Calls <see cref="ThrowIfNull"/> when the collection reference is null, then checks for an empty sequence.</remarks>
+    /// <exception cref="InvalidOperationException">Thrown when collection is null (via <see cref="ThrowIfNull"/>) or empty.</exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif

@@ -16,12 +16,13 @@
         <ProjectReference Include="..\..\..\Core\Streams\Lyo.Streams\Lyo.Streams.csproj"/>
         <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\..\Security\ContentThreat\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
         <ProjectReference Include="..\..\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.1"/>
         <PackageReference Include="System.Text.Json" Version="[10,)"/>
     </ItemGroup>
 

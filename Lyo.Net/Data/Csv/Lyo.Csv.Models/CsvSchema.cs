@@ -15,5 +15,6 @@ public class CsvSchema
     /// <summary>Gets or sets a value indicating whether to allow extra columns not defined in the schema.</summary>
     public bool AllowExtraColumns { get; set; } = true;
 
+    /// <inheritdoc />
     public override string ToString() => $"CsvSchema: ColumnsCount={Columns.Count}, RequireAllColumns={RequireAllColumns}, AllowExtraColumns={AllowExtraColumns}";
 }

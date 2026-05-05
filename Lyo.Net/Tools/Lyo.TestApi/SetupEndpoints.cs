@@ -101,7 +101,7 @@ public static class SetupEndpoints
                         int? start,
                         int? amount,
                         string? containsFilter,
-                        ISprocService<PeopleDbContext> sproc,
+                        ISprocService sproc,
                         CancellationToken ct) => {
                         var parameters = new Dictionary<string, object?> {
                             ["p_schema_name"] = schema,

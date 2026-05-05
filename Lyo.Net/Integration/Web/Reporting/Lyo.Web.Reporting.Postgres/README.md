@@ -148,7 +148,6 @@ bool DeleteReportAsync(
     CancellationToken ct = default)
 ```
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -165,21 +164,6 @@ bool DeleteReportAsync(
 
 ### Project references
 
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-- `Lyo.Postgres`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*7*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Extensions`
-- `InitialCreate`
-- `PostgresReportingOptions`
-- `ReportEntity`
-- `ReportEntityConfiguration`
-- `ReportingDbContext`
-- `ReportingDbContextFactory`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Exceptions`](../../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Postgres`](../../../../Data/Postgres/Lyo.Postgres/README.md)

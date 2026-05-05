@@ -99,8 +99,7 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
         _builder.AddPropertyRule(
             _selector, _propertyName, (_, value) => {
                 var text = value as string;
-                Uri? parsed;
-                if (string.IsNullOrWhiteSpace(text) || !System.Uri.TryCreate(text, kind, out parsed))
+                if (string.IsNullOrWhiteSpace(text) || !System.Uri.TryCreate(text, kind, out var _))
                     return [CreateError(value, errorCode, errorMessage ?? $"{_propertyName} must be a valid URI")];
 
                 return [];

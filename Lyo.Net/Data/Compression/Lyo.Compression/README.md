@@ -3,6 +3,10 @@
 A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple
 algorithms, batch operations, and atomic file operations.
 
+The primary contract is **`ICompressionService`** (**`CompressionService`** is the default implementation). With **XML documentation** enabled in the repo
+(`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the API
+summaries below; this README stays the long-form guide (examples, security, configuration tables).
+
 ## 📑 Table of Contents
 
 - [Features](#-features)
@@ -93,7 +97,7 @@ using System.IO.Compression;
 
 var options = new CompressionServiceOptions
 {
-    Algorithm = CompressionAlgorithm.Brotli,
+    DefaultAlgorithm = CompressionAlgorithm.Brotli,
     DefaultCompressionLevel = CompressionLevel.Optimal,
     MaxInputSize = 100L * 1024 * 1024 * 1024, // 100 GB limit
     MaxParallelFileOperations = 8,
@@ -290,6 +294,7 @@ else
 
 ```csharp
 using Lyo.Compression;
+using Lyo.Compression.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 // Register with default options
@@ -298,14 +303,19 @@ services.AddCompressionService();
 // Register with custom options
 services.AddCompressionService(options =>
 {
-    options.Algorithm = CompressionAlgorithm.Brotli;
+    options.DefaultAlgorithm = CompressionAlgorithm.Brotli;
     options.DefaultCompressionLevel = CompressionLevel.Optimal;
     options.MaxInputSize = 10L * 1024 * 1024 * 1024; // 10 GB
     options.MaxParallelFileOperations = 8;
 });
 
-// Register from configuration
-services.AddCompressionService(configuration, "CompressionOptions");
+// Register from configuration (binds section to singleton CompressionServiceOptions)
+using Microsoft.Extensions.Configuration;
+services.AddCompressionServiceFromConfiguration(configuration, configSectionName: CompressionServiceOptions.SectionName);
+// Default section name is "CompressionService" if you omit the second argument.
+
+// Keyed registration — separate options + service instance per key (multi-tenant, pipelines)
+services.AddCompressionServiceKeyed("tenant-a", o => o.DefaultAlgorithm = CompressionAlgorithm.GZip);
 
 // Use in controllers/services
 public class MyController
@@ -333,7 +343,7 @@ public class MyController
 public class CompressionServiceOptions
 {
     // Compression algorithm (default: Brotli for .NET 6+, GZip for .NET Standard 2.0)
-    public CompressionAlgorithm Algorithm { get; set; }
+    public CompressionAlgorithm DefaultAlgorithm { get; set; }
     
     // Compression level (default: Optimal)
     public CompressionLevel DefaultCompressionLevel { get; set; }
@@ -359,7 +369,7 @@ public class CompressionServiceOptions
 ```json
 {
   "CompressionOptions": {
-    "Algorithm": "Brotli",
+    "DefaultAlgorithm": "Brotli",
     "DefaultCompressionLevel": "Optimal",
     "MaxParallelFileOperations": 8,
     "DefaultEncoding": "utf-8",
@@ -628,7 +638,7 @@ The service automatically adds the correct file extension based on the algorithm
 ```csharp
 var service = new CompressionService(options: new CompressionServiceOptions 
 { 
-    Algorithm = CompressionAlgorithm.Brotli 
+    DefaultAlgorithm = CompressionAlgorithm.Brotli 
 });
 
 var outputFile = service.CompressFile("document.txt");
@@ -708,7 +718,6 @@ The library throws specific exceptions for different error conditions:
 - ✅ Configurable limits and options
 - ✅ Responsive cancellation support in batch operations
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -732,14 +741,15 @@ The library throws specific exceptions for different error conditions:
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`  |
 | `Microsoft.Extensions.Options`                          | `[10,)`  |
 | `SharpZipLib`                                           | `1.4.2`  |
-| `System.Text.Json`                                      | `[10,)`  |
+| `System.Text.Json`                                      | `[10,)`  | *netstandard2.0 only* |
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Metrics`
-- `Lyo.Streams`
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+- [`Lyo.Streams`](../../../Core/Streams/Lyo.Streams/README.md)
 
 ## Public API (generated)
 
@@ -756,6 +766,4 @@ Top-level `public` types in `*.cs` (*11*). Nested types and file-scoped namespac
 - `ICompressionService`
 - `IsExternalInit`
 - `Metrics`
-
-<!-- LYO_README_SYNC:END -->
 

@@ -16,6 +16,7 @@ public sealed class HomeCategoryEntity
     [MaxLength(200)]
     public string? Slug { get; set; }
 
+    [MaxLength(8192)]
     public string? Description { get; set; }
 
     public int SortOrder { get; set; }

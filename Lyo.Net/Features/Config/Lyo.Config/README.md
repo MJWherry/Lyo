@@ -77,7 +77,6 @@ at deploy time.
 - **`IConfigStore`** — full API surface.
 - **`Lyo.Config.Postgres`** — EF Core schema (`config` schema), **`PostgresConfigStore`**, migrations.
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -93,20 +92,4 @@ at deploy time.
 
 ### Project references
 
-- `Lyo.Common`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ConfigBindingRecord`
-- `ConfigBindingRevisionRecord`
-- `ConfigDefinitionRecord`
-- `ConfigJsonSerializerOptions`
-- `ConfigValue`
-- `IConfigStore`
-- `ResolvedConfigItemRecord`
-- `ResolvedConfigRecord`
-
-<!-- LYO_README_SYNC:END -->
-
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)

@@ -40,6 +40,7 @@ public static class Extensions
         }
 
         /// <summary>Adds ImageSharp image service to the service collection using configuration binding.</summary>
+        /// <param name="configuration">The configuration root.</param>
         /// <param name="configSectionName">The configuration section name (defaults to "ImageService"). The section will be bound from IConfiguration if available.</param>
         /// <returns>The service collection for chaining.</returns>
         /// <remarks>

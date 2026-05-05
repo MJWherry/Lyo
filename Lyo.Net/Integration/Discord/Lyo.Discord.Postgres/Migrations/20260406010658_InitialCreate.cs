@@ -140,7 +140,7 @@ namespace Lyo.Discord.Postgres.Migrations
                     guild_id = table.Column<long>(type: "bigint", nullable: false),
                     joined_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     nickname = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
-                    extra_json = table.Column<string>(type: "jsonb", nullable: true)
+                    extra_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192)
                 },
                 constraints: table =>
                 {

@@ -22,10 +22,10 @@ namespace Lyo.Config.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     key = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    for_value_type = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: false),
+                    for_value_type = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     description = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     is_required = table.Column<bool>(type: "boolean", nullable: false),
-                    default_value_json = table.Column<string>(type: "jsonb", nullable: true),
+                    default_value_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -44,7 +44,7 @@ namespace Lyo.Config.Postgres.Migrations
                     key = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    value_type = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: false),
+                    value_type = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -80,7 +80,7 @@ namespace Lyo.Config.Postgres.Migrations
                 {
                     binding_id = table.Column<Guid>(type: "uuid", nullable: false),
                     revision = table.Column<int>(type: "integer", nullable: false),
-                    value_json = table.Column<string>(type: "jsonb", nullable: false),
+                    value_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 8192),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>

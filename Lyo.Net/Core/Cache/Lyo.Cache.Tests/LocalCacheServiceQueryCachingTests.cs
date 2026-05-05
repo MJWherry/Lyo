@@ -77,7 +77,7 @@ public sealed class LocalCacheServiceQueryCachingTests : IDisposable
     {
         const string key = "query:widget:q1";
         await _cache.GetOrSetAsync<string>(
-            key, async ct => {
+            key, async _ => {
                 await Task.Yield();
                 return ("payload", ["queries", "entity:widget", "entity:widget:w1"]);
             }, ["queryproject"], TestContext.Current.CancellationToken);

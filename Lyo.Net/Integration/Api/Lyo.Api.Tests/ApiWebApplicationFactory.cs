@@ -13,7 +13,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
     public ApiWebApplicationFactory(string connectionString) => _connectionString = connectionString;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
-        => builder.ConfigureAppConfiguration((context, config) => {
+        => builder.ConfigureAppConfiguration((_, config) => {
             config.AddInMemoryCollection(new Dictionary<string, string?> { ["PostgresJob:ConnectionString"] = _connectionString, ["PostgresJob:EnableAutoMigrations"] = "false" });
         });
 

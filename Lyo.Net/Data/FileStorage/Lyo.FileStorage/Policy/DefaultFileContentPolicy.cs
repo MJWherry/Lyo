@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 
@@ -21,7 +22,7 @@ public sealed class DefaultFileContentPolicy : IFileContentPolicy
         if (_options.AllowedContentTypes is not { Count: > 0 } allowed)
             return Task.CompletedTask;
 
-        if (string.IsNullOrWhiteSpace(context.ContentType))
+        if (context.ContentType.IsNullOrWhitespace())
             throw new FilePolicyRejectedException("Content-Type is required for this storage configuration.");
 
         var ctNorm = context.ContentType.Trim();

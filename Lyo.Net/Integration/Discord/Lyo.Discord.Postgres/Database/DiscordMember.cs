@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Lyo.Discord.Postgres.Database;
@@ -11,8 +12,10 @@ public class DiscordMember
 
     public DateTime? JoinedAtUtc { get; set; }
 
+    [MaxLength(32)]
     public string? Nickname { get; set; }
 
     [Column(TypeName = "jsonb")]
+    [MaxLength(8192)]
     public string? ExtraJson { get; set; }
 }

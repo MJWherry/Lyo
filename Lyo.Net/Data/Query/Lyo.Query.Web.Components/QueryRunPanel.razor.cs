@@ -109,7 +109,7 @@ public partial class QueryRunPanel : IAsyncDisposable
     private string GetRequestUri()
     {
         var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-        var route = (Run.Route ?? "").Trim();
+        var route = Run.Route.Trim();
         if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(route))
             return "(not configured)";
 
@@ -127,7 +127,7 @@ public partial class QueryRunPanel : IAsyncDisposable
         try {
             var stopwatch = Stopwatch.StartNew();
             var baseUrl = string.IsNullOrWhiteSpace(Run.SelectedHost) ? "" : QueryWorkbenchHostNormalization.NormalizeBaseUrl(Run.SelectedHost).TrimEnd('/');
-            var route = (Run.Route ?? "").Trim();
+            var route = Run.Route.Trim();
             if (string.IsNullOrEmpty(baseUrl) || string.IsNullOrEmpty(route)) {
                 _error = "Add an API host and route (expand “API targets” below, or configure the gateway workbench defaults).";
                 _loading = false;
@@ -145,7 +145,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             var responseJson = await response.Content.ReadAsStringAsync();
             stopwatch.Stop();
             _lastResponseElapsedMs = stopwatch.ElapsedMilliseconds;
-            _lastResponseSizeBytes = Encoding.UTF8.GetByteCount(responseJson ?? "");
+            _lastResponseSizeBytes = Encoding.UTF8.GetByteCount(responseJson);
             if (!response.IsSuccessStatusCode) {
                 _error = $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}";
                 if (!string.IsNullOrWhiteSpace(responseJson) && responseJson.TrimStart().StartsWith('{')) {
@@ -418,7 +418,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             if (string.IsNullOrWhiteSpace(host))
                 continue;
 
-            var parts = (row.EndpointsCsv ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(static s => s.Length > 0).ToList();
+            var parts = row.EndpointsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Where(static s => s.Length > 0).ToList();
             if (parts.Count == 0)
                 continue;
 

@@ -83,7 +83,6 @@ var thumbnailBytes = await imageService.GenerateThumbnailAsync(
 - .NET 10.0 or later
 - SkiaSharp 2.88.x or later
 
-<!-- LYO_README_SYNC:BEGIN -->
 
 ## Dependencies
 
@@ -105,22 +104,7 @@ var thumbnailBytes = await imageService.GenerateThumbnailAsync(
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Images`
-- `Lyo.Metrics`
-
-## Public API (generated)
-
-Top-level `public` types in `*.cs` (*4*). Nested types and file-scoped namespaces may omit some entries.
-
-- `Constants`
-- `Extensions`
-- `Metrics`
-- `SkiaImageService`
-
-<!-- LYO_README_SYNC:END -->
-
-## License
-
-Copyright © Lyo
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Images`](../Lyo.Images/README.md)
+- [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

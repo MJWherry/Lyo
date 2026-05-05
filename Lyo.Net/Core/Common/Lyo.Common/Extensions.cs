@@ -7,6 +7,9 @@ using System.Runtime.CompilerServices;
 using Lyo.Common.Attributes;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+#if !NET6_0_OR_GREATER
+using System.Text;
+#endif
 
 #pragma warning disable CS8603 // Possible null reference return.
 
@@ -14,6 +17,16 @@ namespace Lyo.Common;
 
 public static class Extensions
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void MoveToStart(this Stream source, bool throwOnUnSeekable = false)
+    {
+        source.Position = source switch {
+            { CanSeek: true, Position: > 0 } => 0,
+            { CanSeek: false, Position: > 0 } when throwOnUnSeekable => throw new InvalidOperationException(""),
+            _ => source.Position
+        };
+    }
+    
     extension([NotNullWhen(false)] string? value)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -38,7 +51,7 @@ public static class Extensions
 
         var ellipses = ".".Repeat(Math.Max(0, ellipsesLength));
         var startLen = start.HasValue ? Math.Min(start.Value, s.Length) : 0;
-        var startPart = startLen > 0 ? s.Substring(0, startLen) : string.Empty;
+        var startPart = startLen > 0 ? s[..startLen] : string.Empty;
         if (!end.HasValue || end.Value >= s.Length)
             return startLen >= s.Length ? s : $"{startPart}{ellipses}";
 
@@ -46,7 +59,7 @@ public static class Extensions
         if (endIdx <= startLen)
             return $"{startPart}{ellipses}";
 
-        var endPart = s.Substring(endIdx);
+        var endPart = s[endIdx..];
         return $"{startPart}{ellipses}{endPart}";
     }
 

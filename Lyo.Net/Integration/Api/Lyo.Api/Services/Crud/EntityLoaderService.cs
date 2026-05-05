@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Lyo.Api.Services.Crud;
 
+/// <inheritdoc cref="IEntityLoaderService" />
 public class EntityLoaderService : IEntityLoaderService
 {
     public async Task LoadIncludes<TContext, TDbModel>(TContext context, TDbModel entity, IEnumerable<string>? includes, CancellationToken ct = default)
@@ -49,7 +50,7 @@ public class EntityLoaderService : IEntityLoaderService
             var currentType = entityType;
             var segments = include.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             foreach (var segment in segments) {
-                var nav = currentType?.GetNavigations().FirstOrDefault(n => string.Equals(n.Name, segment, StringComparison.OrdinalIgnoreCase));
+                var nav = currentType.GetNavigations().FirstOrDefault(n => string.Equals(n.Name, segment, StringComparison.OrdinalIgnoreCase));
                 if (nav == null)
                     break;
 
