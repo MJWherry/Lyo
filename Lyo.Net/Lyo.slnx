@@ -26,6 +26,7 @@
     <Folder Name="/Core/">
         <Project Path="Core/Lyo.Exceptions/Lyo.Exceptions.csproj" />
         <Project Path="Core/Lyo.Testing/Lyo.Testing.csproj" />
+        <Project Path="Core/Lyo.Testing.Containers/Lyo.Testing.Containers.csproj" />
     </Folder>
     <Folder Name="/Core/Mathematics/">
         <Project Path="Core/Mathematics/Lyo.Mathematics/Lyo.Mathematics.csproj" />

@@ -1,39 +1,14 @@
 using Lyo.Sms.Twilio.Postgres.Database;
-using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
 
 namespace Lyo.Sms.Twilio.Postgres.Tests;
 
-public class TwilioPostgresExtensionsTests : IAsyncLifetime
+public class TwilioPostgresExtensionsTests
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
-    private IServiceProvider? _serviceProvider;
+    private readonly TwilioPostgresFixture _fixture;
 
-    public TwilioPostgresExtensionsTests(ITestOutputHelper output) => _output = output;
-
-    public async ValueTask InitializeAsync()
-    {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        var services = new ServiceCollection();
-        services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
-            b.SetMinimumLevel(LogLevel.Debug);
-        });
-
-        services.AddTwilioSmsDbContextFactory(new PostgresTwilioSmsOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
-        _serviceProvider = services.BuildServiceProvider();
-        using var scope = _serviceProvider.CreateScope();
-        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
-        await using var context = await factory.CreateDbContextAsync();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
-    }
-
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
+    public TwilioPostgresExtensionsTests(TwilioPostgresFixture fixture) => _fixture = fixture;
 
     [Fact]
     public void AddTwilioSmsDbContext_WithNullServices_ThrowsArgumentNullException()
@@ -77,8 +52,7 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_CanConnectAndQuerySchema()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
@@ -87,8 +61,7 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pending);
@@ -97,8 +70,7 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_CanInsertAndRetrieveTwilioSmsLog()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
         var entity = new TwilioSmsLogEntity {
             Id = "SM1234567890abcdef1234567890abcdef",
             To = "+15551234567",
@@ -126,8 +98,7 @@ public class TwilioPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_CanStoreFailedSmsLog()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<TwilioSmsDbContext>>();
         var entity = new TwilioSmsLogEntity {
             Id = "SMfailed1234567890abcdef12345678",
             To = "+15559999999",

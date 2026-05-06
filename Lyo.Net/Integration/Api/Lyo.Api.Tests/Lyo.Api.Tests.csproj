@@ -17,6 +17,7 @@
         <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\..\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.Api.Tests.Host\Lyo.Api.Tests.Host.csproj"/>
@@ -25,7 +26,6 @@
     <ItemGroup>
         <PackageReference Include="Mapster" Version="[10,)"/>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="[10,)"/>
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0"/>
     </ItemGroup>
 
     <ItemGroup>

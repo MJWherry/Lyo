@@ -1,41 +1,15 @@
 using Lyo.People.Postgres.Database;
-using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
 
 namespace Lyo.People.Postgres.Tests;
 
-public class PeoplePostgresExtensionsTests : IAsyncLifetime
+public class PeoplePostgresExtensionsTests
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
-    private IServiceProvider? _serviceProvider;
+    private readonly PeoplePostgresFixture _fixture;
 
-    public PeoplePostgresExtensionsTests(ITestOutputHelper output) => _output = output;
-
-    public async ValueTask InitializeAsync()
-    {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        var services = new ServiceCollection();
-        services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
-            b.SetMinimumLevel(LogLevel.Debug);
-        });
-
-        services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
-        _serviceProvider = services.BuildServiceProvider();
-        using (var scope = _serviceProvider.CreateScope()) {
-            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
-            await using var context = factory.CreateDbContext();
-            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
-        }
-    }
-
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
+    public PeoplePostgresExtensionsTests(PeoplePostgresFixture fixture) => _fixture = fixture;
 
     [Fact]
     public void AddPeopleDbContext_WithNullServices_ThrowsArgumentNullException()
@@ -103,8 +77,7 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_CanConnectAndQuerySchema()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
         await using var context = factory.CreateDbContext();
         var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
@@ -113,8 +86,7 @@ public class PeoplePostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<PeopleDbContext>>();
         await using var context = factory.CreateDbContext();
         var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pending);

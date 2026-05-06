@@ -37,7 +37,7 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
             throw new JsonException("Cannot parse DateTime from null or empty string.");
 
         foreach (var format in _formats) {
-            if (str!.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
                 return dt;
         }
 

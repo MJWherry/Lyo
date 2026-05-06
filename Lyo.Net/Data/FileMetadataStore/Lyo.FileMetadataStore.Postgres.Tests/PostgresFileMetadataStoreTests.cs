@@ -1,40 +1,16 @@
 using Lyo.Encryption;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
-using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
 
 namespace Lyo.FileMetadataStore.Postgres.Tests;
 
-public class PostgresFileMetadataStoreTests : IAsyncLifetime
+public class PostgresFileMetadataStoreTests
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
-    private IServiceProvider? _serviceProvider;
+    private readonly FileMetadataPostgresFixture _fixture;
 
-    public PostgresFileMetadataStoreTests(ITestOutputHelper output) => _output = output;
-
-    public async ValueTask InitializeAsync()
-    {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        var services = new ServiceCollection();
-        services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
-            b.SetMinimumLevel(LogLevel.Debug);
-        });
-
-        services.AddDbContext<FileMetadataStoreDbContext>(opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "filestore")));
-        _serviceProvider = services.BuildServiceProvider();
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
-    }
-
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
+    public PostgresFileMetadataStoreTests(FileMetadataPostgresFixture fixture) => _fixture = fixture;
 
     private static FileStoreResult CreateMetadata(Guid id, byte[] hash, string? keyId = null, string? keyVersion = null)
         => new(
@@ -44,8 +20,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task SaveMetadataAsync_AndGetMetadataAsync_PersistsAndRetrieves()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 1, 2, 3, 4, 5 };
@@ -62,8 +38,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task GetMetadataAsync_WhenNotFound_ThrowsFileNotFoundException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var ex = await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
@@ -73,8 +49,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task SaveMetadataAsync_WithNullMetadata_ThrowsArgumentNullException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         await Assert.ThrowsAsync<ArgumentNullException>(() => store.SaveMetadataAsync(fileId, null!, TestContext.Current.CancellationToken));
@@ -83,8 +59,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task DeleteMetadataAsync_WhenExists_ReturnsTrue()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var metadata = CreateMetadata(fileId, [1, 2, 3]);
@@ -97,8 +73,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task DeleteMetadataAsync_WhenNotExists_ReturnsFalse()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
@@ -108,8 +84,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task SaveMetadataAsync_UpdateExisting_Overwrites()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var metadata1 = CreateMetadata(fileId, [1, 2, 3]);
@@ -124,8 +100,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByHashAsync_WhenFound_ReturnsMetadata()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 10, 20, 30, 40, 50 };
@@ -140,8 +116,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByHashAsync_WhenNotFound_ReturnsNull()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var hash = "cba`_"u8.ToArray();
         var result = await store.FindByHashAsync(hash, TestContext.Current.CancellationToken);
@@ -151,8 +127,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByHashAsync_WithNullHash_ThrowsArgumentNullException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByHashAsync(null!, TestContext.Current.CancellationToken));
     }
@@ -160,8 +136,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByHashAsync_WithEmptyHash_ThrowsArgumentException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         await Assert.ThrowsAsync<ArgumentException>(() => store.FindByHashAsync([], TestContext.Current.CancellationToken));
     }
@@ -169,8 +145,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByKeyIdAndVersionAsync_WhenFound_ReturnsMatchingFiles()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var keyId = "key-123";
         var version = "v1";
@@ -187,8 +163,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByKeyIdAndVersionAsync_WithNullKeyVersion_ReturnsAllVersionsForKey()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var keyId = "key-multi";
         var file1 = CreateMetadata(Guid.NewGuid(), [1], keyId, "v1");
@@ -202,8 +178,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByKeyIdAndVersionAsync_WithNullKeyId_ThrowsArgumentNullException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         await Assert.ThrowsAsync<ArgumentNullException>(() => store.FindByKeyIdAndVersionAsync(null!, null, TestContext.Current.CancellationToken));
     }
@@ -211,8 +187,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByKeyIdAndVersionAsync_WithEmptyKeyId_ThrowsArgumentException()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         await Assert.ThrowsAsync<ArgumentException>(() => store.FindByKeyIdAndVersionAsync("", null, TestContext.Current.CancellationToken));
     }
@@ -220,8 +196,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByKeyIdAndVersionAsync_WhenNoMatches_ReturnsEmpty()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var results = (await store.FindByKeyIdAndVersionAsync("nonexistent-key", null, TestContext.Current.CancellationToken)).ToList();
         Assert.Empty(results);
@@ -230,8 +206,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public void Dispose_CanBeCalledMultipleTimes_DoesNotThrow()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
         var store = new PostgresFileMetadataStore(context);
         store.Dispose();
@@ -241,8 +217,8 @@ public class PostgresFileMetadataStoreTests : IAsyncLifetime
     [Fact]
     public async Task FindByHashAsync_WithDifferentLengthHash_ReturnsNull()
     {
-        Assert.NotNull(_serviceProvider);
-        using var scope = _serviceProvider.CreateScope();
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
         var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
         var fileId = Guid.NewGuid();
         var hash = new byte[] { 1, 2, 3, 4, 5 };

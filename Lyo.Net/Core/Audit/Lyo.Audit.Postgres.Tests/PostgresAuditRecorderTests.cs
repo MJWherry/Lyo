@@ -1,62 +1,36 @@
 using Lyo.Audit.Postgres.Database;
-using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
 
 namespace Lyo.Audit.Postgres.Tests;
 
-public class PostgresAuditRecorderTests : IAsyncLifetime
+public class PostgresAuditRecorderTests : IAsyncDisposable
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
-    private IAuditRecorder? _recorder;
-    private IServiceProvider? _serviceProvider;
+    private readonly AuditPostgresFixture _fixture;
 
-    public PostgresAuditRecorderTests(ITestOutputHelper output) => _output = output;
-
-    public async ValueTask InitializeAsync()
-    {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        var services = new ServiceCollection();
-        services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
-            b.SetMinimumLevel(LogLevel.Debug);
-        });
-
-        services.AddDbContextFactory<AuditDbContext>(opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
-        _serviceProvider = services.BuildServiceProvider();
-        using (var scope = _serviceProvider.CreateScope()) {
-            var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-            await using var context = await factory.CreateDbContextAsync();
-            await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
-        }
-
-        var recorderFactory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        _recorder = new PostgresAuditRecorder(recorderFactory);
-    }
+    public PostgresAuditRecorderTests(AuditPostgresFixture fixture) => _fixture = fixture;
 
     public async ValueTask DisposeAsync()
     {
-        if (_serviceProvider is IDisposable d)
-            d.Dispose();
-
-        await _container.DisposeAsync();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            TRUNCATE TABLE audit.audit_changes RESTART IDENTITY CASCADE;
+            TRUNCATE TABLE audit.audit_events RESTART IDENTITY CASCADE;
+            """,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task RecordChange_PersistsToDatabase()
     {
-        Assert.NotNull(_recorder);
-        Assert.NotNull(_serviceProvider);
         var change = new AuditChange(
             "TestApp.Models.Order, TestApp", new Dictionary<string, object?> { ["Name"] = "Old Order", ["Status"] = "Draft" },
             new Dictionary<string, object?> { ["Name"] = "Updated Order", ["Status"] = "Submitted" });
 
-        await _recorder.RecordChangeAsync(change, TestContext.Current.CancellationToken);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await _fixture.Recorder.RecordChangeAsync(change, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(entities);
@@ -69,15 +43,13 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
     [Fact]
     public async Task RecordEvent_PersistsToDatabase()
     {
-        Assert.NotNull(_recorder);
-        Assert.NotNull(_serviceProvider);
         var evt = new AuditEvent(
             "UserLogin", "User signed in successfully", "user-123", new Dictionary<string, object?> { ["IpAddress"] = "192.168.1.1", ["UserAgent"] = "TestBot/1.0" }) {
             Timestamp = DateTime.UtcNow.AddHours(-1)
         };
 
-        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await _fixture.Recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(entities);
@@ -92,11 +64,9 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
     [Fact]
     public async Task RecordEvent_WithNullMetadata_StoresNullJson()
     {
-        Assert.NotNull(_recorder);
-        Assert.NotNull(_serviceProvider);
         var evt = new AuditEvent("SimpleEvent", "No metadata");
-        await _recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await _fixture.Recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entity = await context.AuditEvents.FirstOrDefaultAsync(e => e.EventType == "SimpleEvent", TestContext.Current.CancellationToken);
         Assert.NotNull(entity);
@@ -106,15 +76,13 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
     [Fact]
     public async Task RecordChanges_Bulk_PersistsAllToDatabase()
     {
-        Assert.NotNull(_recorder);
-        Assert.NotNull(_serviceProvider);
         var changes = new[] {
             new AuditChange("App.A", new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 }),
             new AuditChange("App.B", new Dictionary<string, object?> { ["y"] = "a" }, new Dictionary<string, object?> { ["y"] = "b" })
         };
 
-        await _recorder.RecordChangesAsync(changes, TestContext.Current.CancellationToken);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await _fixture.Recorder.RecordChangesAsync(changes, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);
@@ -125,11 +93,9 @@ public class PostgresAuditRecorderTests : IAsyncLifetime
     [Fact]
     public async Task RecordEvents_Bulk_PersistsAllToDatabase()
     {
-        Assert.NotNull(_recorder);
-        Assert.NotNull(_serviceProvider);
         var events = new[] { new AuditEvent("BulkEvent1", "First"), new AuditEvent("BulkEvent2", "Second", "actor-1") };
-        await _recorder.RecordEventsAsync(events, TestContext.Current.CancellationToken);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await _fixture.Recorder.RecordEventsAsync(events, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);

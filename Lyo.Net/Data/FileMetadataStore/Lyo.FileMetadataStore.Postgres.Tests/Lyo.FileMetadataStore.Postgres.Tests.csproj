@@ -12,12 +12,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.10.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[9,)"/>
     </ItemGroup>
 
 </Project>

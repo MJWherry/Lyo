@@ -1,40 +1,14 @@
 using Lyo.Endato.Postgres.Database;
-using Lyo.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Testcontainers.PostgreSql;
-
 namespace Lyo.Endato.Postgres.Tests;
 
-public class EndatoPostgresExtensionsTests : IAsyncLifetime
+public class EndatoPostgresExtensionsTests
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
-    private readonly ITestOutputHelper _output;
-    private IServiceProvider? _serviceProvider;
+    private readonly EndatoPostgresFixture _fixture;
 
-    public EndatoPostgresExtensionsTests(ITestOutputHelper output) => _output = output;
-
-    public async ValueTask InitializeAsync()
-    {
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        var services = new ServiceCollection();
-        services.AddLogging(b => {
-            b.AddProvider(new XunitLoggerProvider(_output));
-            b.SetMinimumLevel(LogLevel.Debug);
-        });
-
-        services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
-        _serviceProvider = services.BuildServiceProvider();
-        using var scope = _serviceProvider.CreateScope();
-        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
-        await using var context = await factory.CreateDbContextAsync();
-        await context.Database.MigrateAsync(TestContext.Current.CancellationToken);
-    }
-
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
+    public EndatoPostgresExtensionsTests(EndatoPostgresFixture fixture) => _fixture = fixture;
 
     [Fact]
     public void AddEndatoDbContext_WithNullServices_ThrowsArgumentNullException()
@@ -87,8 +61,7 @@ public class EndatoPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_CanConnectAndQuerySchema()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
         await using var context = factory.CreateDbContext();
         var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
         Assert.True(canConnect);
@@ -97,8 +70,7 @@ public class EndatoPostgresExtensionsTests : IAsyncLifetime
     [Fact]
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
-        Assert.NotNull(_serviceProvider);
-        var factory = _serviceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EndatoDbContext>>();
         await using var context = factory.CreateDbContext();
         var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
         Assert.Empty(pending);

@@ -5,15 +5,15 @@ using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
+using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
-using Testcontainers.PostgreSql;
 
 namespace Lyo.Api.Tests.Fixtures;
 
 /// <summary>Shared fixture for PostgreSQL-backed API tests. Starts a Testcontainers Postgres instance and exposes the app host service provider.</summary>
 public sealed class ApiPostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16-alpine").Build();
+    private readonly PostgresTestContainer _postgres = new();
 
     public string ConnectionString { get; private set; } = null!;
 
@@ -23,8 +23,8 @@ public sealed class ApiPostgresFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _container.StartAsync();
-        ConnectionString = _container.GetConnectionString();
+        await _postgres.StartAsync(TestContext.Current.CancellationToken);
+        ConnectionString = _postgres.ConnectionString;
         Factory = new(ConnectionString);
         using var scope = CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
@@ -35,7 +35,7 @@ public sealed class ApiPostgresFixture : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         await Factory.DisposeAsync();
-        await _container.DisposeAsync();
+        await _postgres.DisposeAsync();
     }
 
     public HttpClient CreateClient() => Factory.CreateClient();

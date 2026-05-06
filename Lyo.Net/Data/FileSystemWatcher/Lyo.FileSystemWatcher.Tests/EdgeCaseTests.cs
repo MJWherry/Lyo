@@ -1,3 +1,5 @@
+using Lyo.Common.Enums;
+using Lyo.Common.Records;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
@@ -125,7 +127,7 @@ public class EdgeCaseTests : IDisposable
         await Task.Delay(500, TestContext.Current.CancellationToken);
 
         // Create a larger file (1MB) AFTER watcher is initialized
-        CreateFileOfSize(largeFilePath, 1024 * 1024);
+        CreateFileOfSize(largeFilePath, FileSizeUnitInfo.Megabyte.ConvertToBytes(1));
 
         // Wait longer for large file hashing to complete
         await PollAssert.ThatAsync(() => createdFired, TimeSpan.FromSeconds(30));
