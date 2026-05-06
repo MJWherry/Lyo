@@ -1,0 +1,226 @@
+@using Microsoft.JSInterop
+@namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Access link — @FileId:D</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Dates and times are combined as UTC. Each download or presigned-read request consumes the link per your policy (max downloads, validity, window).
+            </MudText>
+
+            @if (_error != null) {
+                <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+            }
+
+            @if (_response == null) {
+                <MudExpansionPanels Elevation="0">
+                    <MudExpansionPanel Text="Validity (UTC)">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="6">
+                                <MudDatePicker Label="Not before date" @bind-Date="_notBeforeDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTimePicker Label="Not before time" @bind-Time="_notBeforeTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudDatePicker Label="Expires date" @bind-Date="_expiresDate" Clearable="true" Variant="Variant.Outlined" DateFormat="yyyy-MM-dd"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTimePicker Label="Expires time" @bind-Time="_expiresTime" Clearable="true" Variant="Variant.Outlined" AmPm="false"/>
+                            </MudItem>
+                        </MudGrid>
+                    </MudExpansionPanel>
+                    <MudExpansionPanel Text="Access window (UTC)">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="6">
+                                <MudDatePicker Label="Window start date" @bind-Date="_windowStartDate" Clearable="true" Variant="Variant.Outlined"
+                                               DateFormat="yyyy-MM-dd"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTimePicker Label="Window start time" @bind-Time="_windowStartTime" Clearable="true" Variant="Variant.Outlined"
+                                               AmPm="false"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudDatePicker Label="Window end date" @bind-Date="_windowEndDate" Clearable="true" Variant="Variant.Outlined"
+                                               DateFormat="yyyy-MM-dd"/>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTimePicker Label="Window end time" @bind-Time="_windowEndTime" Clearable="true" Variant="Variant.Outlined"
+                                               AmPm="false"/>
+                            </MudItem>
+                        </MudGrid>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+
+                <MudNumericField T="int?"
+                                 @bind-Value="_maxDownloads"
+                                 Label="Max downloads"
+                                 Clearable="true"
+                                 Variant="Variant.Outlined"
+                                 Margin="Margin.Dense"
+                                 HelperText="Optional; leave empty for unlimited"/>
+
+                <MudTextField T="string"
+                              @bind-Value="_tenantId"
+                              Label="Tenant id"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              HelperText="Optional"/>
+            }
+            else {
+                <MudAlert Severity="Severity.Success" Dense="true">Link created.</MudAlert>
+                <MudText Typo="Typo.body2"><strong>Link id</strong> @_response.LinkId:D</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mt-2">Download (full URL)</MudText>
+                @if (!string.IsNullOrEmpty(_downloadAbsoluteUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
+                        <MudTextField Value="@_downloadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
+                                      Style="min-width:min(100%,560px);"/>
+                        <MudTooltip Text="Copy">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_downloadAbsoluteUrl!))" aria-label="Copy download URL"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Open">
+                            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" OnClick="@(() => OpenTabAsync(_downloadAbsoluteUrl!))" aria-label="Open download URL"/>
+                        </MudTooltip>
+                    </MudStack>
+                }
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@_response.DownloadUrl</MudChip>
+                </MudStack>
+
+                <MudText Typo="Typo.subtitle2" Class="mt-3">Presigned read (full URL)</MudText>
+                @if (!string.IsNullOrEmpty(_presignedReadAbsoluteUrl)) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
+                        <MudTextField Value="@_presignedReadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
+                                      Style="min-width:min(100%,560px);"/>
+                        <MudTooltip Text="Copy">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_presignedReadAbsoluteUrl!))" aria-label="Copy presign URL"/>
+                        </MudTooltip>
+                    </MudStack>
+                }
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@_response.PresignedReadUrl</MudChip>
+                </MudStack>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        @if (_response == null) {
+            <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateAsync" Disabled="@_busy">Create</MudButton>
+        }
+        else {
+            <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Close</MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public FileStorageWorkbench Workbench { get; set; } = default!;
+
+    [Parameter]
+    public Guid FileId { get; set; }
+
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = default!;
+
+    private DateTime? _notBeforeDate;
+    private TimeSpan? _notBeforeTime;
+    private DateTime? _expiresDate;
+    private TimeSpan? _expiresTime;
+    private DateTime? _windowStartDate;
+    private TimeSpan? _windowStartTime;
+    private DateTime? _windowEndDate;
+    private TimeSpan? _windowEndTime;
+    private int? _maxDownloads;
+    private string? _tenantId;
+
+    private bool _busy;
+    private string? _error;
+    private FileStorageWorkbenchAccessLinkResponse? _response;
+    private string? _downloadAbsoluteUrl;
+    private string? _presignedReadAbsoluteUrl;
+
+    private void Close() => MudDialog.Close();
+
+    private static DateTime? CombineUtc(DateTime? date, TimeSpan? time)
+    {
+        if (!date.HasValue)
+            return null;
+        var t = time ?? TimeSpan.Zero;
+        return DateTime.SpecifyKind(date.Value.Date.Add(t), DateTimeKind.Utc);
+    }
+
+    private async Task CopyToClipboardAsync(string text)
+    {
+        try {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            Workbench.SetStatus("Copied to clipboard.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Workbench.SetStatus($"Copy failed: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task OpenTabAsync(string url)
+    {
+        try {
+            await JsRuntime.InvokeVoidAsync("open", url, "_blank");
+        }
+        catch (Exception ex) {
+            Workbench.SetStatus($"Open failed: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        _error = null;
+        var notBefore = CombineUtc(_notBeforeDate, _notBeforeTime);
+        var expires = CombineUtc(_expiresDate, _expiresTime);
+        var winStart = CombineUtc(_windowStartDate, _windowStartTime);
+        var winEnd = CombineUtc(_windowEndDate, _windowEndTime);
+        if (notBefore.HasValue && expires.HasValue && notBefore > expires) {
+            _error = "Not before must be earlier than or equal to expires at.";
+            return;
+        }
+        if (winStart.HasValue && winEnd.HasValue && winStart > winEnd) {
+            _error = "Window start must be earlier than or equal to window end.";
+            return;
+        }
+        if (_maxDownloads is <= 0) {
+            _error = "Max downloads must be greater than zero when set.";
+            return;
+        }
+
+        var uri = $"{Workbench.FileStorageApiRoutePrefix.TrimEnd('/')}/files/{FileId:D}/access-links";
+        var body = new FileStorageWorkbenchCreateAccessLinkRequest(notBefore, expires, winStart, winEnd, _maxDownloads,
+            string.IsNullOrWhiteSpace(_tenantId) ? null : _tenantId.Trim());
+        _busy = true;
+        try {
+            _response = await Workbench.ApiClient.PostAsAsync<FileStorageWorkbenchCreateAccessLinkRequest, FileStorageWorkbenchAccessLinkResponse>(uri, body,
+                before: req => {
+                    if (!string.IsNullOrWhiteSpace(_tenantId))
+                        req.Headers.TryAddWithoutValidation("X-Tenant-Id", _tenantId.Trim());
+                });
+            _downloadAbsoluteUrl = Workbench.GetApiAbsoluteUrl(_response.DownloadUrl);
+            _presignedReadAbsoluteUrl = Workbench.GetApiAbsoluteUrl(_response.PresignedReadUrl);
+            Workbench.SetStatus($"Created access link {_response.LinkId:D}.", Severity.Success);
+        }
+        catch (Exception ex) {
+            _error = ex.Message;
+            Workbench.SetStatus($"Access link failed: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+}

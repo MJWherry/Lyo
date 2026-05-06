@@ -114,6 +114,31 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     table.PrimaryKey("PK_multipart_upload_session", x => x.session_id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "file_download_access_links",
+                schema: "filestore",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    file_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    token_hash = table.Column<byte[]>(type: "bytea", nullable: false),
+                    created_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    not_before_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    expires_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    window_start_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    window_end_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    max_downloads = table.Column<int>(type: "integer", nullable: true),
+                    download_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    last_consumed_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    is_revoked = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    revoked_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    tenant_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_file_download_access_links", x => x.id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_file_metadata_original_file_name",
                 schema: "filestore",
@@ -170,6 +195,37 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                 column: "timestamp");
 
             migrationBuilder.CreateIndex(
+                name: "ix_file_download_access_links_expires_at_utc",
+                schema: "filestore",
+                table: "file_download_access_links",
+                column: "expires_at_utc");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_file_download_access_links_file_id",
+                schema: "filestore",
+                table: "file_download_access_links",
+                column: "file_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_file_download_access_links_revoked_expires",
+                schema: "filestore",
+                table: "file_download_access_links",
+                columns: new[] { "is_revoked", "expires_at_utc" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_file_download_access_links_tenant_id",
+                schema: "filestore",
+                table: "file_download_access_links",
+                column: "tenant_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_file_download_access_links_token_hash",
+                schema: "filestore",
+                table: "file_download_access_links",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_multipart_upload_session_expires_utc",
                 schema: "filestore",
                 table: "multipart_upload_session",
@@ -185,6 +241,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "file_download_access_links",
+                schema: "filestore");
+
             migrationBuilder.DropTable(
                 name: "file_audit_events",
                 schema: "filestore");

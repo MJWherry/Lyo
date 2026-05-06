@@ -10,5 +10,7 @@ public enum FileAuditEventType
     PresignedRead = 5,
     MultipartBegin = 6,
     MultipartComplete = 7,
-    MultipartAbort = 8
+    MultipartAbort = 8,
+    AccessLinkAllowed = 9,
+    AccessLinkDenied = 10
 }

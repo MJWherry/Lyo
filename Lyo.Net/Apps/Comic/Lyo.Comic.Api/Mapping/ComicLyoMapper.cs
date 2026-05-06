@@ -97,7 +97,8 @@ public sealed class ComicLyoMapper : ILyoMapper
             Language = r.Language,
             PageCount = r.PageCount,
             PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
-            Source = r.Source
+            Source = r.Source,
+            CoverImageRef = r.CoverImageRef
         };
 
     private static PageEntity ReqToNew(ComicPageReq r)
@@ -164,6 +165,7 @@ public sealed class ComicLyoMapper : ILyoMapper
             PageCount = e.PageCount,
             PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
             Source = e.Source,
+            CoverImageRef = e.CoverImageRef,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };
@@ -231,6 +233,7 @@ public sealed class ComicLyoMapper : ILyoMapper
         e.PageCount = r.PageCount;
         e.PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null;
         e.Source = r.Source;
+        e.CoverImageRef = r.CoverImageRef;
     }
 
     private static void Apply(ComicPageReq r, PageEntity e)

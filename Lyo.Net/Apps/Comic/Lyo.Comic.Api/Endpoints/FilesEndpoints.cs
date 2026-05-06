@@ -1,4 +1,7 @@
+using Lyo.Comic;
 using Lyo.Comic.Api.Models.Response;
+using Lyo.Comic.Api;
+using Lyo.Comic.Api.Storage;
 using Lyo.FileStorage;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,13 +54,73 @@ public static class FilesEndpoints
 
     private static async Task<IResult> UploadFile(
         IFormFile file,
+        Guid? seriesId,
+        Guid? volumeId,
+        Guid? chapterId,
+        IComicStore comicStore,
         [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage,
         [FromKeyedServices(FileStorageKey)] ComicFileUploadOptions uploadOptions,
         CancellationToken ct = default)
     {
+        var prefixResult = await ResolveUploadPathPrefixAsync(comicStore, seriesId, volumeId, chapterId, ct);
+        if (prefixResult.Error is { } err)
+            return err;
+
         await using var stream = file.OpenReadStream();
-        var result = await fileStorage.SaveFromStreamAsync(stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, ct: ct);
+        var result = await fileStorage.SaveFromStreamAsync(
+            stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, prefixResult.PathPrefix, ct: ct);
         return Results.Ok(new { result.Id });
+    }
+
+    private static bool HasScope(Guid? id) => id is { } g && g != Guid.Empty;
+
+    private static async Task<(string? PathPrefix, IResult? Error)> ResolveUploadPathPrefixAsync(
+        IComicStore comicStore,
+        Guid? seriesId,
+        Guid? volumeId,
+        Guid? chapterId,
+        CancellationToken ct)
+    {
+        if (!HasScope(seriesId) && !HasScope(volumeId) && !HasScope(chapterId))
+            return (null, null);
+
+        if (HasScope(chapterId)) {
+            var chapter = await comicStore.GetChapterByIdAsync(chapterId!.Value, ct);
+            if (chapter is null)
+                return (null, Results.NotFound());
+
+            if (HasScope(seriesId) && chapter.SeriesId != seriesId!.Value)
+                return (null, Results.BadRequest("seriesId does not match the chapter's series."));
+
+            if (HasScope(volumeId)) {
+                var expectedVolume = chapter.VolumeId ?? Guid.Empty;
+                if (expectedVolume != volumeId!.Value)
+                    return (null, Results.BadRequest("volumeId does not match the chapter's volume."));
+            }
+
+            return (ComicFileStoragePath.BuildPathPrefix(chapter), null);
+        }
+
+        if (HasScope(volumeId)) {
+            var volume = await comicStore.GetVolumeByIdAsync(volumeId!.Value, ct);
+            if (volume is null)
+                return (null, Results.NotFound());
+
+            if (HasScope(seriesId) && volume.SeriesId != seriesId!.Value)
+                return (null, Results.BadRequest("seriesId does not match the volume's series."));
+
+            return (ComicFileStoragePath.BuildVolumePrefix(volume.SeriesId, volume.Id), null);
+        }
+
+        if (HasScope(seriesId)) {
+            var series = await comicStore.GetSeriesByIdAsync(seriesId!.Value, ct);
+            if (series is null)
+                return (null, Results.NotFound());
+
+            return (ComicFileStoragePath.BuildSeriesPrefix(series.Id), null);
+        }
+
+        return (null, Results.BadRequest("Invalid upload scope query parameters."));
     }
 
     private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)

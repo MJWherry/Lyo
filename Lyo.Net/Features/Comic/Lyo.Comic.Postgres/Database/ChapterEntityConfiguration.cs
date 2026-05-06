@@ -18,6 +18,7 @@ public sealed class ChapterEntityConfiguration : IEntityTypeConfiguration<Chapte
         builder.Property(e => e.PageCount).HasColumnName("page_count");
         builder.Property(e => e.PublishedDate).HasColumnName("published_date");
         builder.Property(e => e.Source).HasMaxLength(512).HasColumnName("source");
+        builder.Property(e => e.CoverImageRef).HasMaxLength(512).HasColumnName("cover_image_ref");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => e.SeriesId).HasDatabaseName("ix_comic_chapter_series");

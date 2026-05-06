@@ -266,6 +266,92 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     b.ToTable("file_data", "filestore");
                 });
 
+            modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.FileDownloadAccessLinkEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_utc");
+
+                    b.Property<int>("DownloadCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("download_count");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<Guid>("FileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("file_id");
+
+                    b.Property<bool>("IsRevoked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_revoked");
+
+                    b.Property<DateTime?>("LastConsumedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_consumed_utc");
+
+                    b.Property<int?>("MaxDownloads")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_downloads");
+
+                    b.Property<DateTime?>("NotBeforeUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("not_before_utc");
+
+                    b.Property<DateTime?>("RevokedUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_utc");
+
+                    b.Property<string>("TenantId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("bytea")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTime?>("WindowEndUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("window_end_utc");
+
+                    b.Property<DateTime?>("WindowStartUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("window_start_utc");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAtUtc")
+                        .HasDatabaseName("ix_file_download_access_links_expires_at_utc");
+
+                    b.HasIndex("FileId")
+                        .HasDatabaseName("ix_file_download_access_links_file_id");
+
+                    b.HasIndex("IsRevoked", "ExpiresAtUtc")
+                        .HasDatabaseName("ix_file_download_access_links_revoked_expires");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_file_download_access_links_tenant_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_file_download_access_links_token_hash");
+
+                    b.ToTable("file_download_access_links", "filestore");
+                });
+
             modelBuilder.Entity("Lyo.FileMetadataStore.Postgres.Database.MultipartUploadSessionEntity", b =>
                 {
                     b.Property<Guid>("SessionId")

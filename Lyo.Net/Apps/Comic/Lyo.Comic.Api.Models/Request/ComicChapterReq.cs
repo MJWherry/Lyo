@@ -26,4 +26,7 @@ public sealed class ComicChapterReq
 
     /// <summary>Gets or sets an opaque reference to the source this chapter was ingested from.</summary>
     public string? Source { get; set; }
+
+    /// <summary>Gets or sets an opaque reference to the chapter cover image (e.g. file storage id).</summary>
+    public string? CoverImageRef { get; set; }
 }

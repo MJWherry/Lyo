@@ -50,7 +50,7 @@ The keyed **`IKeyStore`** / **`LocalKeyStore`** / encryption services isolate co
 ## HTTP surface (overview)
 
 - **`/api/comic/...`** — **`MapSeriesEndpoints`**, **`MapVolumeEndpoints`**, **`MapChapterEndpoints`** provide enriched GET/list flows; CRUD/query paths from **`BuildComicApiEndpoints`** follow **`{prefix}/series`**, **`.../volumes`**, **`.../chapters`**, **`.../pages`**, **`.../characters`**.
-- **`/files`** — **`GET /{id}`** (bytes + content type), **`POST /batch`** (base64 payloads per id), **`POST /upload`** (**`IFormFile`**, antiforgery disabled for API uploads), **`DELETE /{id}`**.
+- **`/files`** — **`GET /{id}`** (bytes + content type), **`POST /batch`** (base64 payloads per id), **`POST /upload`** (**`IFormFile`**, optional query **`seriesId`**, **`volumeId`**, **`chapterId`** — omit **`Guid.Empty`** / omit params you do not use). Scope selects the path prefix: **`chapterId`** (full prefix **`{seriesId}/{volumeId-or-nil}/{chapterId}`**), else **`volumeId`** (**`{seriesId}/{volumeId}`**), else **`seriesId`** (**`{seriesId}`**). Optional ids are validated against loaded entities. Omit all three → default local file-storage shard layout. **`DELETE /{id}`**.
 
 ## Enrichment (`ComicEnrichmentService`)
 

@@ -223,5 +223,14 @@ public static class Extensions
             services.AddScoped<IMultipartUploadSessionStore>(sp => sp.GetRequiredService<PostgresMultipartUploadSessionStore>());
             return services;
         }
+
+        /// <summary>Registers <see cref="PostgresFileDownloadAccessService" /> as <see cref="IFileDownloadAccessService" />.</summary>
+        public IServiceCollection AddPostgresFileDownloadAccessService()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddScoped<PostgresFileDownloadAccessService>();
+            services.AddScoped<IFileDownloadAccessService>(sp => sp.GetRequiredService<PostgresFileDownloadAccessService>());
+            return services;
+        }
     }
 }

@@ -28,6 +28,9 @@ public sealed class ChapterEntity
     [MaxLength(512)]
     public string? Source { get; set; }
 
+    [MaxLength(512)]
+    public string? CoverImageRef { get; set; }
+
     [Required]
     public DateTime CreatedTimestamp { get; set; }
 

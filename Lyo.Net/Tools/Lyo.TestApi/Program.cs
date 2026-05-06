@@ -20,6 +20,8 @@ using Lyo.Formatter;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Keystore.Aws;
+using Lyo.Lock;
+using Lyo.Lock.Redis;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.People.Postgres;
 using Lyo.People.Postgres.Database;
@@ -111,6 +113,13 @@ builder.Services.AddPostgresFileMetadataStoreKeyed(Constants.FileStorageWorkbenc
         options.EnableAutoMigrations = bool.TryParse(section["EnableAutoMigrations"], out var enableAutoMigrations) ? enableAutoMigrations : true;
     })
     .Build();
+builder.Services.AddPostgresFileDownloadAccessService();
+
+var redisConnectionString = builder.Configuration.GetSection("Redis")["ConnectionString"] ?? builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    builder.Services.AddRedisLock(redisConnectionString);
+else
+    builder.Services.AddLocalLock();
 
 builder.Services.AddS3FileStorageServiceKeyed(Constants.FileStorageWorkbench.ServiceKey)
     .UseFileMetadataStore(Constants.FileStorageWorkbench.MetadataKey)

@@ -139,6 +139,7 @@ public sealed class ComicEnrichmentService
             PageCount = chapter.PageCount,
             PublishedDate = chapter.PublishedDate,
             Source = chapter.Source,
+            CoverImageRef = chapter.CoverImageRef,
             CreatedTimestamp = chapter.CreatedTimestamp,
             UpdatedTimestamp = chapter.UpdatedTimestamp,
             Tags = (await tagsTask).Select(t => t.Name).ToList(),

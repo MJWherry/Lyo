@@ -1,4 +1,5 @@
 using Lyo.FileMetadataStore.Postgres.Database;
+using Lyo.Lock;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,8 @@ public sealed class FileMetadataPostgresFixture : PostgresContainerFixtureBase
         });
 
         services.AddDbContext<FileMetadataStoreDbContext>(opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "filestore")));
+        services.AddLocalLock();
+        services.AddPostgresFileDownloadAccessService();
         ServiceProvider = services.BuildServiceProvider();
         using var scope = ServiceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();

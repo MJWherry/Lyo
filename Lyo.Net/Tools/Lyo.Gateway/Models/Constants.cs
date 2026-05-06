@@ -12,6 +12,9 @@ public static class Constants
 
     public static class FileStorageWorkbench
     {
+        /// <summary>REST prefix for file workbench endpoints on the Test API (save, access links, metadata search, etc.).</summary>
+        public const string ApiRoutePrefix = "Workbench/FileStorage";
+
         /// <summary>Base route for file metadata Query/QueryProject (same path as Test API <c>Workbench/FileStorage/FileMetadata</c>).</summary>
         public const string FileMetadataRoute = "Workbench/FileStorage/FileMetadata";
 

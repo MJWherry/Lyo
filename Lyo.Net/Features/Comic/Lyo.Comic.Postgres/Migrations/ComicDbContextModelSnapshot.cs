@@ -83,6 +83,11 @@ namespace Lyo.Comic.Postgres.Migrations
                         .HasColumnType("numeric(8,2)")
                         .HasColumnName("chapter_number");
 
+                    b.Property<string>("CoverImageRef")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("cover_image_ref");
+
                     b.Property<DateTime>("CreatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");

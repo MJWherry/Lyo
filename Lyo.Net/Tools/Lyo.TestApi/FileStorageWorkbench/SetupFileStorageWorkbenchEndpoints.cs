@@ -1,6 +1,7 @@
 using Lyo.Cache;
 using Lyo.Common.Records;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
 using Lyo.FileStorage.Multipart;
@@ -21,6 +22,8 @@ public static class SetupFileStorageWorkbenchEndpoints
     private static IKeyStore GetKeyStore(IServiceProvider services) => services.GetRequiredKeyedService<IKeyStore>(Constants.FileStorageWorkbench.ServiceKey);
 
     private static IKeyInventoryStore? GetKeyInventoryStore(IServiceProvider services) => GetKeyStore(services) as IKeyInventoryStore;
+
+    private static IFileDownloadAccessService GetDownloadAccessService(IServiceProvider services) => services.GetRequiredService<IFileDownloadAccessService>();
 
     /// <summary>Shared by <c>Workbench/FileStorage/files/save-stream</c> and <see cref="Constants.DirectFileUpload.FilePath" />.</summary>
     private static async Task<IResult> SaveStreamFromFormAsync(
@@ -68,6 +71,35 @@ public static class SetupFileStorageWorkbenchEndpoints
 
                     await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
                     return Results.Ok(result);
+                });
+
+            group.MapPost(
+                "files/{fileId:guid}/access-links", async (
+                    Guid fileId,
+                    [FromBody] CreateDownloadAccessLinkRequest request,
+                    HttpContext http,
+                    IServiceProvider services,
+                    CancellationToken ct) => {
+                    var accessService = GetDownloadAccessService(services);
+                    var tenantId = request.TenantId ?? http.Request.Headers["X-Tenant-Id"].FirstOrDefault();
+                    var result = await accessService.CreateLinkAsync(
+                        new(
+                            fileId,
+                            request.NotBeforeUtc,
+                            request.ExpiresAtUtc,
+                            request.WindowStartUtc,
+                            request.WindowEndUtc,
+                            request.MaxDownloads,
+                            tenantId), ct);
+
+                    return Results.Ok(
+                        new DownloadAccessLinkResponse(
+                            result.LinkId,
+                            result.Token,
+                            $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/download",
+                            $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/presigned-read",
+                            result.CreatedUtc,
+                            result.ExpiresAtUtc));
                 });
 
             group.MapPost(
@@ -173,6 +205,51 @@ public static class SetupFileStorageWorkbenchEndpoints
                         http.Response.ContentLength = metadata.OriginalFileSize;
 
                     return Results.Stream(stream, FileTypeInfo.Unknown.MimeType, fileName, enableRangeProcessing: true);
+                });
+
+            group.MapGet(
+                "files/access/{token}/download", async (HttpContext http, string token, IServiceProvider services, CancellationToken ct) => {
+                    var accessService = GetDownloadAccessService(services);
+                    var access = await accessService.ValidateAndConsumeDownloadAsync(
+                        token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
+                    if (!access.IsAllowed || access.FileId == null)
+                        return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
+
+                    var fileStorage = GetFileStorage(services);
+                    var fileId = access.FileId.Value;
+                    var metadata = await fileStorage.GetMetadataAsync(fileId, ct);
+                    var fileName = metadata.OriginalFileName ?? metadata.SourceFileName;
+                    if (!metadata.IsEncrypted && !metadata.IsCompressed) {
+                        try {
+                            var url = await fileStorage.GetPreSignedReadUrlAsync(fileId, pathPrefix: metadata.PathPrefix, ct: ct);
+                            return Results.Redirect(url);
+                        }
+                        catch (NotSupportedException) { }
+                    }
+
+                    var stream = await fileStorage.GetFileStreamAsync(fileId, ct);
+                    if (stream == null)
+                        return Results.NotFound();
+
+                    if (metadata.OriginalFileSize > 0)
+                        http.Response.ContentLength = metadata.OriginalFileSize;
+
+                    return Results.Stream(stream, FileTypeInfo.Unknown.MimeType, fileName, enableRangeProcessing: true);
+                });
+
+            group.MapGet(
+                "files/access/{token}/presigned-read", async (string token, double? expiresHours, IServiceProvider services, HttpContext http, CancellationToken ct) => {
+                    var accessService = GetDownloadAccessService(services);
+                    var access = await accessService.ValidateAndConsumeDownloadAsync(
+                        token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
+                    if (!access.IsAllowed || access.FileId == null)
+                        return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
+
+                    var fileStorage = GetFileStorage(services);
+                    var metadata = await fileStorage.GetMetadataAsync(access.FileId.Value, ct);
+                    var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
+                    var url = await fileStorage.GetPreSignedReadUrlAsync(access.FileId.Value, expiration, metadata.PathPrefix, ct);
+                    return Results.Ok(new PresignedReadResponse(url));
                 });
 
             group.MapDelete(
@@ -376,6 +453,19 @@ public static class SetupFileStorageWorkbenchEndpoints
             return app;
         }
     }
+
+    private static int MapFailureStatusCode(FileDownloadAccessConsumeFailureReason? reason)
+        => reason switch {
+            FileDownloadAccessConsumeFailureReason.InvalidToken => StatusCodes.Status400BadRequest,
+            FileDownloadAccessConsumeFailureReason.LockUnavailable => StatusCodes.Status429TooManyRequests,
+            FileDownloadAccessConsumeFailureReason.NotFound => StatusCodes.Status404NotFound,
+            FileDownloadAccessConsumeFailureReason.Revoked => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.NotYetValid => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.Expired => StatusCodes.Status410Gone,
+            FileDownloadAccessConsumeFailureReason.OutsideWindow => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.MaxDownloadsReached => StatusCodes.Status429TooManyRequests,
+            _ => StatusCodes.Status403Forbidden
+        };
 }
 
 public sealed record SaveFileRequest(
@@ -390,6 +480,22 @@ public sealed record SaveFileRequest(
     string? TenantId = null);
 
 public sealed record PresignedReadResponse(string Url);
+
+public sealed record CreateDownloadAccessLinkRequest(
+    DateTime? NotBeforeUtc = null,
+    DateTime? ExpiresAtUtc = null,
+    DateTime? WindowStartUtc = null,
+    DateTime? WindowEndUtc = null,
+    int? MaxDownloads = null,
+    string? TenantId = null);
+
+public sealed record DownloadAccessLinkResponse(
+    Guid LinkId,
+    string Token,
+    string DownloadUrl,
+    string PresignedReadUrl,
+    DateTime CreatedUtc,
+    DateTime? ExpiresAtUtc);
 
 public sealed record BeginMultipartWorkbenchRequest(
     int PartSizeBytes = 8 * 1024 * 1024,

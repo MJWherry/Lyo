@@ -129,6 +129,7 @@ namespace Lyo.Comic.Postgres.Migrations
                     page_count = table.Column<int>(type: "integer", nullable: true),
                     published_date = table.Column<DateOnly>(type: "date", nullable: true),
                     source = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
+                    cover_image_ref = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

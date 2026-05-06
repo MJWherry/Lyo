@@ -220,6 +220,20 @@ public partial class FileStoreFilesTab : ComponentBase
         return Task.CompletedTask;
     }
 
+    private async Task OpenAccessLinkDialogFromRowAsync(object? row)
+    {
+        if (!FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var fileId)) {
+            Workbench.SetStatus("Could not read file id from the grid row.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<FileStoreAccessLinkDialog> {
+            { d => d.Workbench, Workbench }, { d => d.FileId, fileId }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        await Workbench.DialogService.ShowAsync<FileStoreAccessLinkDialog>("Create access link", parameters, options);
+    }
+
     private async Task ViewFileMetadataFromRowAsync(object? row)
     {
         var storage = Workbench.FileStorage;

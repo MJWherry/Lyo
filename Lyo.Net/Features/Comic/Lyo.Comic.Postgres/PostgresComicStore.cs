@@ -176,6 +176,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
                 existing.PageCount = chapter.PageCount;
                 existing.PublishedDate = chapter.PublishedDate.HasValue ? DateOnly.FromDateTime(chapter.PublishedDate.Value) : null;
                 existing.Source = chapter.Source;
+                existing.CoverImageRef = chapter.CoverImageRef;
                 await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
                 return;
             }
@@ -396,6 +397,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             PageCount = r.PageCount,
             PublishedDate = r.PublishedDate.HasValue ? DateOnly.FromDateTime(r.PublishedDate.Value) : null,
             Source = r.Source,
+            CoverImageRef = r.CoverImageRef,
             CreatedTimestamp = r.CreatedTimestamp == default ? DateTime.UtcNow : r.CreatedTimestamp
         };
 
@@ -452,6 +454,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
             PageCount = e.PageCount,
             PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
             Source = e.Source,
+            CoverImageRef = e.CoverImageRef,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };

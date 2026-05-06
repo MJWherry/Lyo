@@ -25,8 +25,24 @@ public sealed class ComicApiClient(HttpClient httpClient, ComicApiClientOptions 
         return result;
     }
 
-    public async Task<FileStoreResult?> UploadFileAsync(Stream data, string fileName, CancellationToken ct = default)
-        => await PostFileAsAsync<FileStoreResult>("files/upload", data, fileName, ct: ct);
+    public async Task<FileStoreResult?> UploadFileAsync(
+        Stream data,
+        string fileName,
+        Guid? seriesId = null,
+        Guid? volumeId = null,
+        Guid? chapterId = null,
+        CancellationToken ct = default)
+    {
+        var parts = new List<string>(3);
+        if (seriesId is { } sId && sId != Guid.Empty)
+            parts.Add($"seriesId={sId:D}");
+        if (volumeId is { } vId && vId != Guid.Empty)
+            parts.Add($"volumeId={vId:D}");
+        if (chapterId is { } cId && cId != Guid.Empty)
+            parts.Add($"chapterId={cId:D}");
+        var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
+        return await PostFileAsAsync<FileStoreResult>($"files/upload{query}", data, fileName, ct: ct);
+    }
 
     public async Task<bool> DeleteFileAsync(Guid id, CancellationToken ct = default)
     {

@@ -13,6 +13,8 @@ public class FileMetadataStoreDbContext : DbContext
 
     public DbSet<MultipartUploadSessionEntity> MultipartUploadSessions { get; set; } = null!;
 
+    public DbSet<FileDownloadAccessLinkEntity> FileDownloadAccessLinks { get; set; } = null!;
+
     public FileMetadataStoreDbContext(DbContextOptions<FileMetadataStoreDbContext> options)
         : base(options) { }
 
@@ -23,5 +25,6 @@ public class FileMetadataStoreDbContext : DbContext
         modelBuilder.ApplyConfiguration(new FileDataEntityConfiguration());
         modelBuilder.ApplyConfiguration(new FileAuditEventEntityConfiguration());
         modelBuilder.ApplyConfiguration(new MultipartUploadSessionEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new FileDownloadAccessLinkEntityConfiguration());
     }
 }

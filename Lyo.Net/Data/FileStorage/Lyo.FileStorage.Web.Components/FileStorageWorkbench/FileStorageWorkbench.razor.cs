@@ -42,6 +42,10 @@ public partial class FileStorageWorkbench : ComponentBase
     [Parameter]
     public string FileMetadataQueryRoute { get; set; } = "Workbench/FileStorage/FileMetadata";
 
+    /// <summary>REST prefix for Workbench/FileStorage endpoints on the Test API host (matches <see cref="FileStorageWorkbenchOptions.ApiRoutePrefix" />).</summary>
+    [Parameter]
+    public string FileStorageApiRoutePrefix { get; set; } = "Workbench/FileStorage";
+
     /// <summary>App-relative path for the host download proxy (e.g. gateway route segment before file id).</summary>
     [Parameter]
     public string ProxyDownloadPath { get; set; } = "filestorage-download";
@@ -74,6 +78,21 @@ public partial class FileStorageWorkbench : ComponentBase
     public string DescribeKeyStoreResolution() => Resolver.DescribeKeyStoreResolution();
 
     public void SetStatus(string message, Severity severity) => Snackbar.Add(message, severity);
+
+    /// <summary>Resolves an API-relative path (e.g. <c>Workbench/FileStorage/files/...</c>) against the configured <see cref="IApiClient" /> base URL.</summary>
+    /// <returns>Absolute URL when the client has <see cref="HttpClient.BaseAddress" /> set; otherwise <see langword="null" />.</returns>
+    public string? GetApiAbsoluteUrl(string apiRelativePath)
+    {
+        if (string.IsNullOrWhiteSpace(apiRelativePath))
+            return null;
+
+        var baseUri = ApiClient.GetClient().BaseAddress;
+        if (baseUri == null)
+            return null;
+
+        var trimmed = apiRelativePath.TrimStart('/');
+        return new Uri(baseUri, trimmed).AbsoluteUri;
+    }
 
     public IReadOnlyList<string> GetKnownVersionsForKey(string? keyId)
     {
