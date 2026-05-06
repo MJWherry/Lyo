@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
@@ -413,10 +414,7 @@ public sealed class PdfTextExtractor : ITextExtractor
                 result.AddRange(sectionLines);
             }
 
-            if (firstPageFound < 0)
-                return null;
-
-            return new PdfSection(startSection.Trim(), firstPageFound, lastPageFound, result);
+            return firstPageFound < 0 ? null : new(startSection.Trim(), firstPageFound, lastPageFound, result);
         }
 
         public Task<PdfSection?> GetSectionAsync(
@@ -560,7 +558,7 @@ public sealed class PdfTextExtractor : ITextExtractor
                         var words = new List<PdfWord>(filteredPageWords);
                         foreach (var ann in pdfPage.GetAnnotations()) {
                             var text = GetAnnotationText(ann);
-                            if (string.IsNullOrWhiteSpace(text))
+                            if (text.IsNullOrEmpty())
                                 continue;
 
                             var rect = ann.Rectangle;
@@ -569,7 +567,7 @@ public sealed class PdfTextExtractor : ITextExtractor
                                 continue;
 
                             var format = GetAnnotationFormat(ann);
-                            words.Add(new(text!.Trim(), annBox, format));
+                            words.Add(new(text.Trim(), annBox, format));
                         }
 
                         var tolerance = yTolerance ?? _options.DefaultYTolerance;
@@ -1007,16 +1005,16 @@ public sealed class PdfTextExtractor : ITextExtractor
         private static string? GetCheckboxLabel(DictionaryToken dict)
         {
             var tu = GetTokenString(dict, "TU");
-            if (!string.IsNullOrWhiteSpace(tu))
-                return tu!.Trim();
+            if (!tu.IsNullOrWhitespace())
+                return tu.Trim();
 
             var t = GetTokenString(dict, "T");
-            if (string.IsNullOrWhiteSpace(t))
+            if (t.IsNullOrWhitespace())
                 return null;
 
             // Strip internal field names like "c1_1[0]", "f1_08[0]" from the start
-            var stripped = Regex.Replace(t!.Trim(), @"^[\w\-]+\s*\[\d+\]\s*", "", RegexOptions.IgnoreCase);
-            return string.IsNullOrWhiteSpace(stripped) ? null : stripped.Trim();
+            var stripped = Regex.Replace(t.Trim(), @"^[\w\-]+\s*\[\d+\]\s*", "", RegexOptions.IgnoreCase);
+            return stripped.IsNullOrWhitespace() ? null : stripped.Trim();
         }
 
         /// <summary>Gets string from dict key: StringToken, HexToken, or NameToken.</summary>
@@ -1096,16 +1094,16 @@ public sealed class PdfTextExtractor : ITextExtractor
                 return [];
 
             var startIdx = 0;
-            if (!string.IsNullOrWhiteSpace(startText)) {
-                var normalizedStart = startText!.Trim();
+            if (!startText.IsNullOrWhitespace()) {
+                var normalizedStart = startText.Trim();
                 startIdx = lines.FindIndex(l => l.Text.Trim().StartsWith(normalizedStart, StringComparison.OrdinalIgnoreCase));
                 if (startIdx < 0)
                     return [];
             }
 
             var endIdx = lines.Count;
-            if (!string.IsNullOrWhiteSpace(endText)) {
-                var normalizedEnd = endText!.Trim();
+            if (!endText.IsNullOrWhitespace()) {
+                var normalizedEnd = endText.Trim();
                 var found = lines.FindIndex(startIdx + 1, l => l.Text.Trim().IndexOf(normalizedEnd, StringComparison.OrdinalIgnoreCase) >= 0);
                 if (found >= 0)
                     endIdx = found;

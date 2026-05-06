@@ -21,21 +21,25 @@ public class ErrorHandlingTests : IDisposable
     public void Dispose() => _tempSession.Dispose();
 
     [Fact]
-    public void Error_Event_IsFired_OnException()
+    public async Task Error_Event_IsFired_OnException()
     {
         var errorFired = false;
         Exception? caughtException = null;
-        var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
+        var fileName = Path.GetFileName(_tempSession.GetFilePath());
+        using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
+        watcher.FileCreated += (_, _) => throw new InvalidOperationException("Test exception");
         watcher.Error += (_, ex) => {
             errorFired = true;
             caughtException = ex;
         };
 
-        // Dispose watcher to trigger potential errors
-        watcher.Dispose();
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
-        // Error event should be available even if no errors occur
-        Assert.NotNull(watcher);
+        Assert.True(errorFired);
+        Assert.NotNull(caughtException);
+        Assert.IsType<InvalidOperationException>(caughtException);
+        Assert.Equal("Test exception", caughtException.Message);
     }
 
     [Fact]

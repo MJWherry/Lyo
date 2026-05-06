@@ -1,4 +1,4 @@
-namespace Lyo.ContentThreatScan;
+namespace Lyo.ContentThreatScan.Abstractions;
 
 /// <summary>Collects heuristic SQL/script-pattern contributions from a capped UTF-8 sample.</summary>
 public interface IContentThreatScanner

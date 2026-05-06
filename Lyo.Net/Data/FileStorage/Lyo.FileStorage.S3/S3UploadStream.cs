@@ -40,7 +40,7 @@ internal sealed class S3UploadStream : Stream
         if (disposing) {
             // Synchronous dispose - just dispose the inner stream
             // Upload should happen via DisposeAsync
-            _innerStream?.Dispose();
+            _innerStream.Dispose();
         }
 
         base.Dispose(disposing);

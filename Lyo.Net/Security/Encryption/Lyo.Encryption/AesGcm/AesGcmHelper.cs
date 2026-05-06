@@ -35,7 +35,7 @@ public static class AesGcmHelper
         return (ciphertext, tag);
 #else
         var cipher = new GcmBlockCipher(new AesEngine());
-        cipher.Init(true, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+        cipher.Init(true, new AeadParameters(new(key), 128, nonce, null));
         var outBuf = new byte[cipher.GetOutputSize(plaintext.Length)];
         var tlen = 0;
         if (plaintext.Length > 0) {
@@ -44,6 +44,7 @@ public static class AesGcmHelper
             tlen = cipher.ProcessBytes(pb, 0, pb.Length, outBuf, 0);
         }
 
+        // ReSharper disable once RedundantAssignment
         tlen += cipher.DoFinal(outBuf, tlen);
 
         var ciphertext = new byte[plaintext.Length];
@@ -69,7 +70,7 @@ public static class AesGcmHelper
             Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
             Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
             var cipher = new GcmBlockCipher(new AesEngine());
-            cipher.Init(false, new AeadParameters(new KeyParameter(key), 128, nonce, null));
+            cipher.Init(false, new AeadParameters(new(key), 128, nonce, null));
             var outBuf = new byte[cipher.GetOutputSize(combined.Length)];
             var len = cipher.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
             len += cipher.DoFinal(outBuf, len);

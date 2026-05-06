@@ -26,7 +26,6 @@ public sealed class ResilientExecutor : IResilientExecutor
     /// <inheritdoc />
     public async Task ExecuteAsync(string pipelineName, Func<CancellationToken, Task> action, CancellationToken ct = default)
     {
-        pipelineName ??= PipelineNames.Basic;
         var tags = new[] { (Constants.Metrics.PipelineTag, pipelineName) };
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
         try {
@@ -52,7 +51,6 @@ public sealed class ResilientExecutor : IResilientExecutor
     /// <inheritdoc />
     public async Task<T> ExecuteAsync<T>(string pipelineName, Func<CancellationToken, Task<T>> action, CancellationToken ct = default)
     {
-        pipelineName ??= PipelineNames.Basic;
         var tags = new[] { (Constants.Metrics.PipelineTag, pipelineName) };
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
         try {
@@ -76,7 +74,6 @@ public sealed class ResilientExecutor : IResilientExecutor
     public async Task<T> ExecuteAsync<T>(string pipelineName, Func<CancellationToken, Task<T>> action, Func<T, bool> isSuccess, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(isSuccess);
-        pipelineName ??= PipelineNames.Basic;
         var tags = new[] { (Constants.Metrics.PipelineTag, pipelineName) };
         using var timer = _metrics.StartTimer(Constants.Metrics.ExecutionDuration, tags);
         try {

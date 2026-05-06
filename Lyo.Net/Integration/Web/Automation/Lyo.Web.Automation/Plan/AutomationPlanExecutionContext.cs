@@ -16,16 +16,21 @@ public sealed class AutomationPlanBindings
 
     public IReadOnlyDictionary<string, IReadOnlyList<string>> StringLists { get; }
 
+    /// <summary>Shared context entries that custom steps can write and later steps can consume.</summary>
+    public IReadOnlyDictionary<string, object?> ContextItems { get; }
+
     public AutomationPlanBindings(
         IReadOnlyDictionary<string, IWebAutomationElement> elements,
         IReadOnlyDictionary<string, IReadOnlyList<IWebAutomationElement>> elementLists,
         IReadOnlyDictionary<string, string> strings,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> stringLists)
+        IReadOnlyDictionary<string, IReadOnlyList<string>> stringLists,
+        IReadOnlyDictionary<string, object?> contextItems)
     {
         Elements = elements;
         ElementLists = elementLists;
         Strings = strings;
         StringLists = stringLists;
+        ContextItems = contextItems;
     }
 
     public bool TryGetElement(string refName, out IWebAutomationElement? element)
@@ -72,9 +77,12 @@ public sealed class AutomationPlanBindings
         return false;
     }
 
+    public bool TryGetContextValue(string key, out object? value)
+        => ContextItems.TryGetValue(key, out value);
+
     /// <inheritdoc />
     public override string ToString()
-        => $"AutomationPlanBindings elements={Elements.Count}, elementLists={ElementLists.Count}, strings={Strings.Count}, stringLists={StringLists.Count}";
+        => $"AutomationPlanBindings elements={Elements.Count}, elementLists={ElementLists.Count}, strings={Strings.Count}, stringLists={StringLists.Count}, contextItems={ContextItems.Count}";
 }
 
 /// <summary>Immutable snapshot immediately after a single plan step finished. <see cref="CompletedStepIndex" /> is zero-based: <c>0</c> = after <c>plan.Steps[0]</c>, etc.</summary>
@@ -98,6 +106,8 @@ public sealed class AutomationPlanStepFrame
 
     public IReadOnlyDictionary<string, IReadOnlyList<string>> StringLists => Bindings.StringLists;
 
+    public IReadOnlyDictionary<string, object?> ContextItems => Bindings.ContextItems;
+
     public AutomationPlanStepFrame(int completedStepIndex, AutomationStepDefinition step, AutomationPlanBindings bindings)
     {
         CompletedStepIndex = completedStepIndex;
@@ -110,6 +120,8 @@ public sealed class AutomationPlanStepFrame
     public bool TryGetElement(string refName, out IWebAutomationElement? element) => Bindings.TryGetElement(refName, out element);
 
     public bool TryGetStringList(string variableName, out IReadOnlyList<string>? list) => Bindings.TryGetStringList(variableName, out list);
+
+    public bool TryGetContextValue(string key, out object? value) => Bindings.TryGetContextValue(key, out value);
 
     /// <inheritdoc />
     public override string ToString() => $"AutomationPlanStepFrame after step index {CompletedStepIndex}: {Step}";
@@ -170,7 +182,7 @@ public sealed class AutomationPlanExecutionContext
     public override string ToString() => $"AutomationPlanExecutionContext steps={StepCount}";
 }
 
-/// <summary>Outcome of <see cref="AutomationPlanRunner.RunWithResultAsync" />: final extracted data plus execution context.</summary>
+/// <summary>Outcome of <see cref="IAutomationPlanRunner.RunWithResultAsync" />: final extracted data plus execution context.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanRunResult
 {

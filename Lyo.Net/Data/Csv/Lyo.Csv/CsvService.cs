@@ -246,6 +246,7 @@ public sealed class CsvService : ICsvService
         => _logger.LogWarning(
             "Bad data found Row={BadCsvRow} Column={BadCsvColumn} RawValue='{BadCsvRawValue}'", args.Context.Parser?.Row, args.Context.Reader?.CurrentIndex, args.RawRecord);
 
+    // ReSharper disable once UnusedParameter.Local
     private async Task<byte[]> FetchBytesFromUrlAsync(string url, CancellationToken ct)
     {
         UriHelpers.GetValidWebUri(url);

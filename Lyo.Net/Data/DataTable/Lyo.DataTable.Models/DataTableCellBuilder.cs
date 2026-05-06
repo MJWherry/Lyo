@@ -169,7 +169,7 @@ public sealed class DataTableCellBuilder
     /// <summary>Builds the DataTableCell.</summary>
     public DataTableCell<T> Build<T>()
         => new(
-            (T?)(object?)_value, _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment,
+            (T?)_value, _fontSize, _fontName, _fontBold, _fontItalic, _fontUnderline, _fontStrikethrough, _fontColor, _backgroundColor, _horizontalAlignment,
             _verticalAlignment, _numberFormat, _textRotation, _wrapText, _borderTop, _borderBottom, _borderLeft, _borderRight, _borderColor);
 
     /// <summary>Builds the DataTableCell as IDataTableCell. For value types this boxes to DataTableCell&lt;object?&gt;.</summary>

@@ -75,7 +75,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-            services.AddSingleton<IOptions<PostgresShortUrlOptions>>(Options.Create(options));
+            services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<ShortUrlDbContext, PostgresShortUrlOptions>();
             services.AddDbContextFactory<ShortUrlDbContext>(dbOptions => dbOptions.UseNpgsql(
                 options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresShortUrlOptions.Schema)));

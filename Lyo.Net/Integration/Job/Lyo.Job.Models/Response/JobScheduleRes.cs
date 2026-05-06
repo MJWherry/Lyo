@@ -4,8 +4,8 @@ using TimeOnly = System.TimeOnly;
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
 using System.Diagnostics;
-using Lyo.Common;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Response;

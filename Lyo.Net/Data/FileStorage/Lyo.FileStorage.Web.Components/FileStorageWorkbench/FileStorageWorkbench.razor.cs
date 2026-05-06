@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components;
+namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 
 public partial class FileStorageWorkbench : ComponentBase
 {

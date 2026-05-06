@@ -14,7 +14,7 @@ public sealed class ContentThreatAssessment
         HeuristicScore = heuristicScore;
         ExternalScore = externalScore;
         IntelConfirmedMalicious = intelConfirmedMalicious;
-        Contributions = contributions ?? Array.Empty<ContentThreatContribution>();
+        Contributions = contributions;
     }
 
     /// <summary>Score used against suspect/thresholds after applying <see cref="ContentThreatAssessmentOptions"/> cap.</summary>
@@ -31,7 +31,6 @@ public sealed class ContentThreatAssessment
     /// <summary>Build totals from flattened contributions assuming heuristic vs external partitioning by category.</summary>
     public static ContentThreatAssessment FromContributions(IReadOnlyList<ContentThreatContribution> contributions, bool intelConfirmedMalicious, decimal dispositionScoreCap)
     {
-        contributions ??= Array.Empty<ContentThreatContribution>();
         decimal h = 0m, e = 0m;
         foreach (var c in contributions) {
             if (c.Category is ContentThreatCategory.Reputation or ContentThreatCategory.AntiMalwareEngine)

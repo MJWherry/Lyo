@@ -34,7 +34,6 @@ public sealed record ProjectedQueryRes<T>(
     bool? HasMore,
     int QueryScore,
     LyoProblemDetails? Error,
-    /// <summary>CLR entity type names touched by this projection (root + navigations from <c>Select</c> paths and computed-field templates).</summary>
     IReadOnlyList<string>? EntityTypes = null)
 {
     public ProjectedQueryRes<T> WithEntityTypes(IReadOnlyList<string>? entityTypes) => this with { EntityTypes = entityTypes };

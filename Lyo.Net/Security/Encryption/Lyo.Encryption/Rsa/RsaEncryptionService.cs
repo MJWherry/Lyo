@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Exceptions;
@@ -73,7 +73,6 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
     public ValueTask DisposeAsync()
     {
         Dispose(true);
-        GC.SuppressFinalize(this);
         return default;
     }
 
@@ -81,7 +80,6 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
     public void Dispose()
     {
         Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
@@ -232,9 +230,10 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
 
     private void Dispose(bool disposing)
     {
-        if (!_disposed && disposing) {
-            _rsa?.Dispose();
-            _disposed = true;
-        }
+        if (_disposed || !disposing)
+            return;
+
+        _rsa.Dispose();
+        _disposed = true;
     }
 }

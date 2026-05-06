@@ -7,12 +7,15 @@ namespace Lyo.Common;
 /// <summary>Extension methods for collections.</summary>
 public static class CollectionExtensions
 {
-    extension<T>(IEnumerable<T>? source)
-    {
-        /// <summary>Returns true if the enumerable is null or contains no elements.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNullOrEmpty() => source == null || !source.Any();
-    }
+    // Note: Do not add IsNullOrEmpty on IEnumerable<T> — string implements IEnumerable<char>, so it would
+    // win/be ambiguous vs extension(string?).IsNullOrEmpty (semantics differ: empty string vs no chars).
+    // Use array IsNullOrEmpty for T[], or inline source == null || !source.Any() for general sequences.
+    //extension<T>(IEnumerable<T>? source)
+    //{
+    //    /// <summary>Returns true if the enumerable is null or contains no elements.</summary>
+    //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //    public bool IsNullOrEmpty() => source == null || !source.Any();
+    //}
 
     extension<T>(T[]? array)
     {
@@ -94,6 +97,8 @@ public static class CollectionExtensions
     {
 #if NETSTANDARD2_0
         /// <summary>Returns distinct elements by a key selector. Polyfill for .NET Standard 2.0.</summary>
+        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector"/>.</typeparam>
+        /// <param name="keySelector">A function to extract the comparison key from each element.</param>
         /// <exception cref="ArgumentNullException">Thrown when the sequence or <paramref name="keySelector"/> is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull"/>.</exception>
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector)
         {
@@ -107,13 +112,36 @@ public static class CollectionExtensions
         }
 #else
         /// <summary>Returns distinct elements by a key selector.</summary>
+        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector"/>.</typeparam>
+        /// <param name="keySelector">A function to extract the comparison key from each element.</param>
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector) => Enumerable.DistinctBy(source, keySelector);
 
         /// <inheritdoc cref="Enumerable.DistinctBy{TSource, TKey}(IEnumerable{TSource}, Func{TSource, TKey}, IEqualityComparer{TKey}?)"/>
+        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector"/>.</typeparam>
+        /// <param name="keySelector">A function to extract the comparison key from each element.</param>
+        /// <param name="comparer">An <see cref="IEqualityComparer{T}"/> to compare keys.</param>
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector, IEqualityComparer<TKey>? comparer)
             => Enumerable.DistinctBy(source, keySelector, comparer);
 #endif
     }
+
+#if NETSTANDARD2_0
+    // Single receiver type: Dictionary (and others) implement both IDictionary<,> and IReadOnlyDictionary<,> on netstandard2.0,
+    // so duplicating the extension for both caused ambiguous invocation.
+    extension<TKey, TValue>(IReadOnlyDictionary<TKey, TValue> source)
+        where TKey : notnull
+    {
+        /// <summary>Gets the value associated with the specified key, or the default value for <typeparamref name="TValue"/> when the key is not found.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue? GetValueOrDefault(TKey key) =>
+            source.TryGetValue(key, out var value) ? value : default;
+
+        /// <summary>Gets the value associated with the specified key, or <paramref name="defaultValue"/> when the key is not found.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue? GetValueOrDefault(TKey key, TValue? defaultValue) =>
+            source.TryGetValue(key, out var value) ? value : defaultValue;
+    }
+#endif
 
     /// <summary>Resolves <see cref="IReadOnlyList{T}"/> from a sequence, wrapping <see cref="IList{T}"/> with <see cref="ReadOnlyCollection{T}"/> when needed.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

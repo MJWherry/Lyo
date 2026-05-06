@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Lyo.Common;
+using Lyo.Common.Extensions;
+using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -38,7 +40,8 @@ public sealed class RabbitMqService : IRabbitMqService
         IConnectionFactory connectionFactory,
         HttpClient? httpClient = null,
         ILogger<RabbitMqService>? logger = null,
-        IMetrics? metrics = null)
+        IMetrics? metrics = null, 
+        JsonSerializerOptions? serializerOptions = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNull(connectionFactory);
@@ -46,7 +49,7 @@ public sealed class RabbitMqService : IRabbitMqService
         _connectionFactory = connectionFactory;
         _logger = logger ?? NullLogger<RabbitMqService>.Instance;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
-        _serializerOptions = new() { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+        _serializerOptions = serializerOptions ?? LyoJsonSerializerOptions.Create();
         _httpClient = httpClient ?? new HttpClient();
         _httpClient.BaseAddress ??= new($"{_options.AdminUrl}/api/");
         _httpClient.DefaultRequestHeaders.Authorization ??= new("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_options.Username}:{_options.Password}")));
@@ -168,9 +171,10 @@ public sealed class RabbitMqService : IRabbitMqService
             _logger.LogWarning("Cannot create exchange {ExchangeName}: not connected", exchangeName);
             return false;
         }
-
+        
+        arguments ??= new Dictionary<string, object>(0);
         try {
-            await _publishChannel!.ExchangeDeclareAsync(exchangeName, exchangeType, durable, autoDelete, arguments, cancellationToken: ct).ConfigureAwait(false);
+            await _publishChannel!.ExchangeDeclareAsync(exchangeName, exchangeType, durable, autoDelete, arguments!, cancellationToken: ct).ConfigureAwait(false);
             _logger.LogInformation(
                 "Created exchange {ExchangeName} ({ExchangeType}, Durable: {Durable}, AutoDelete: {AutoDelete})", exchangeName, exchangeType, durable, autoDelete);
 
@@ -222,11 +226,12 @@ public sealed class RabbitMqService : IRabbitMqService
             _logger.LogWarning("Cannot create queue {QueueName}: not connected", queueName);
             return false;
         }
-
+        
+        arguments ??= new Dictionary<string, object>(0);
         using var timer = _metrics.StartTimer(Constants.Metrics.QueueOperationDuration, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
         var sw = Stopwatch.StartNew();
         try {
-            var result = await _publishChannel!.QueueDeclareAsync(queueName, durable, exclusive, autoDelete, arguments, cancellationToken: ct).ConfigureAwait(false);
+            var result = await _publishChannel!.QueueDeclareAsync(queueName, durable, exclusive, autoDelete, arguments!, cancellationToken: ct).ConfigureAwait(false);
 
             // Initialize processing semaphore for this queue if processing limit is set
             if (_options.ProcessingLimit > 0 && !_processingSemaphores.ContainsKey(queueName)) {
@@ -236,11 +241,11 @@ public sealed class RabbitMqService : IRabbitMqService
 
             sw.Stop();
             _logger.LogInformation("Created queue {QueueName} (Durable: {Durable}, Exclusive: {Exclusive}, AutoDelete: {AutoDelete})", queueName, durable, exclusive, autoDelete);
-            if (_options.EnableMetrics) {
-                _metrics.IncrementCounter(Constants.Metrics.QueueCreated, 1, [(Constants.Metrics.Tags.Queue, queueName)]);
-                _metrics.RecordHistogram(
-                    Constants.Metrics.QueueOperationDurationMs, sw.ElapsedMilliseconds, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
-            }
+            if (!_options.EnableMetrics)
+                return true;
+
+            _metrics.IncrementCounter(Constants.Metrics.QueueCreated, 1, [(Constants.Metrics.Tags.Queue, queueName)]);
+            _metrics.RecordHistogram(Constants.Metrics.QueueOperationDurationMs, sw.ElapsedMilliseconds, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
 
             return true;
         }
@@ -524,7 +529,7 @@ public sealed class RabbitMqService : IRabbitMqService
         };
 
         using var response = await _httpClient.PostAsync(
-                $"queues/{vhost}/{Uri.EscapeDataString(queueName)}/get", new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"), ct)
+                $"queues/{vhost}/{Uri.EscapeDataString(queueName)}/get", new StringContent(JsonSerializer.Serialize(request, _serializerOptions), Encoding.UTF8, FileTypeInfo.Json.MimeType), ct)
             .ConfigureAwait(false);
 
         response.EnsureSuccessStatusCode();
@@ -579,7 +584,7 @@ public sealed class RabbitMqService : IRabbitMqService
                 _processingSemaphores[queueName] = new(_options.ProcessingLimit, _options.ProcessingLimit);
 
             var consumer = new AsyncEventingBasicConsumer(subscriptionChannel);
-            consumer.ReceivedAsync += async (sender, args) => await HandleMessageAsync(queueName, args, onMessage, subscriptionChannel, ct).ConfigureAwait(false);
+            consumer.ReceivedAsync += async (_, args) => await HandleMessageAsync(queueName, args, onMessage, subscriptionChannel, ct).ConfigureAwait(false);
             var consumerTag = await subscriptionChannel.BasicConsumeAsync(queueName, false, consumer, ct).ConfigureAwait(false);
             _consumers[queueName] = (consumer, consumerTag, subscriptionChannel);
             _logger.LogInformation("Subscribed to queue {QueueName} with consumer tag {ConsumerTag} on dedicated channel", queueName, consumerTag);

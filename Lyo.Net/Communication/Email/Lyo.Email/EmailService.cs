@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
@@ -285,7 +285,7 @@ public sealed class EmailService : IEmailService
             _metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.BulkSendSuccess)], 0);
             _metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.BulkSendFailure)], 0);
             _metrics.RecordGauge(_metricNames[nameof(Constants.Metrics.BulkSendLastDurationMs)], sw.ElapsedMilliseconds);
-            OnBulkEmailCompleted(r, sw.Elapsed);
+            OnBulkEmailCompleted(r);
             return r;
         }
 
@@ -405,7 +405,7 @@ public sealed class EmailService : IEmailService
         _metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.BulkSendSuccess)], successCount);
         _metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.BulkSendFailure)], failureCount);
         _metrics.RecordGauge(_metricNames[nameof(Constants.Metrics.BulkSendLastDurationMs)], sw.ElapsedMilliseconds);
-        OnBulkEmailCompleted(resultsList, sw.Elapsed);
+        OnBulkEmailCompleted(resultsList);
         return resultsList;
     }
 
@@ -612,8 +612,7 @@ public sealed class EmailService : IEmailService
 
     /// <summary>Raises the BulkEmailSent event.</summary>
     /// <param name="results">The list of email send results.</param>
-    /// <param name="elapsedTime">The total elapsed time for the bulk operation.</param>
-    private void OnBulkEmailCompleted(IReadOnlyList<Result<EmailRequest>> results, TimeSpan elapsedTime)
+    private void OnBulkEmailCompleted(IReadOnlyList<Result<EmailRequest>> results)
         => BulkEmailSent?.Invoke(this, new(BulkResult<EmailRequest>.FromResults(results)));
 
     /// <summary>Raises the ConnectionTested event.</summary>

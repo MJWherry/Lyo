@@ -121,7 +121,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         Assert.NotNull(_jobService);
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
         var publishCountBefore = _fakePublisher.Published.Count;
-        var result = await _jobService.CreateJobRun(runReq);
+        var result = await _jobService.CreateJobRun(runReq, TestContext.Current.CancellationToken);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
         Assert.Equal(JobState.Queued, result.Data!.State);
@@ -155,7 +155,7 @@ public class JobServiceIntegrationTests : IAsyncLifetime
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var runReq = new JobRunReq(_jobDefinitionId, "test-user", false);
-        var result = await jobService.CreateJobRun(runReq);
+        var result = await jobService.CreateJobRun(runReq, TestContext.Current.CancellationToken);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }

@@ -29,10 +29,11 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     /// <inheritdoc />
     public void Dispose()
     {
-        if (!_disposed) {
-            _dbContext?.Dispose();
-            _disposed = true;
-        }
+        if (_disposed)
+            return;
+
+        _dbContext.Dispose();
+        _disposed = true;
     }
 
     /// <inheritdoc />
@@ -88,11 +89,8 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         ArgumentHelpers.ThrowIfNullOrEmpty(hash);
         _logger.LogDebug("Searching for metadata by hash");
 
-        // EF Core doesn't support direct byte array comparison efficiently,
-        // so we need to load entities and compare in memory
-        // For better performance, consider using a hash index or computed column
-        var entities = await _dbContext.FileMetadata.Where(e => e.OriginalFileHash != null && e.OriginalFileHash.Length == hash.Length).ToListAsync(ct).ConfigureAwait(false);
-        var entity = entities.FirstOrDefault(e => ByteArraysEqual(e.OriginalFileHash, hash));
+        // Let PostgreSQL evaluate bytea equality so the database can use the hash index.
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.OriginalFileHash == hash, ct).ConfigureAwait(false);
         if (entity == null) {
             _logger.LogDebug("No metadata found for hash");
             return null;
@@ -138,19 +136,4 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         }
     }
 
-    private static bool ByteArraysEqual(byte[] a, byte[] b)
-    {
-        if (a == null || b == null)
-            return a == b;
-
-        if (a.Length != b.Length)
-            return false;
-
-        for (var i = 0; i < a.Length; i++) {
-            if (a[i] != b[i])
-                return false;
-        }
-
-        return true;
-    }
 }

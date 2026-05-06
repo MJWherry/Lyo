@@ -12,7 +12,6 @@ using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.TestApi.FileStorageWorkbench;
 using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
-using Lyo.Web.Components.UniqueValueSelector;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lyo.TestApi;

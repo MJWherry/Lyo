@@ -3,7 +3,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Keystore.KeyDerivation;
 
-/// <summary>PBKDF2 with HMAC-SHA256 (RFC 2898) for targets without <see cref="Rfc2898DeriveBytes(byte[], byte[], int, HashAlgorithmName)" />.</summary>
+/// <summary>PBKDF2 with HMAC-SHA256 (RFC 2898).</summary>
 internal static class Pbkdf2Sha256
 {
     public static byte[] DeriveBytes(byte[] password, byte[] salt, int iterations, int dkLen)

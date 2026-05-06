@@ -720,7 +720,7 @@ public class CompressionServiceTests : IDisposable
             });
 
         var largeContent = new string('Z', 2000); // 2 KB
-        var largeTempFile = _tempSession.CreateFile(largeContent);
+        var largeTempFile = await _tempSession.CreateFileAsync(largeContent, TestContext.Current.CancellationToken);
         var outputFile = largeTempFile + service.FileExtension;
         try {
             await service.CompressFileAsync(largeTempFile, outputFile, TestContext.Current.CancellationToken);
@@ -887,7 +887,7 @@ public class CompressionServiceTests : IDisposable
     public void AddCompressionServiceFromConfiguration_BindsSectionToOptions()
     {
         var settings = new Dictionary<string, string?> { ["CompressionService:DefaultAlgorithm"] = nameof(CompressionAlgorithm.GZip) };
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings!).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         var services = new ServiceCollection();
         services.AddCompressionServiceFromConfiguration(configuration);
         var provider = services.BuildServiceProvider();

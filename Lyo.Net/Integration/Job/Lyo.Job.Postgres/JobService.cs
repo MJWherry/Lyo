@@ -78,10 +78,10 @@ public class JobService(
                             j.Id = LyoGuid.CreateCombPostgres();
                     }, ctx => {
                         ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load();
-                    })
+                    }, ct: ct)
                 .ConfigureAwait(false);
         }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505" } pgEx && pgEx.ConstraintName == "ix_job_run_schedule_slot_unique") {
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: "23505", ConstraintName: "ix_job_run_schedule_slot_unique" } pgEx) {
             // Another scheduler instance already created a run for this (schedule, slot) pair — idempotent.
             logger.LogInformation(
                 "Duplicate job run for schedule {ScheduleId} slot {Slot:u} suppressed (constraint {Constraint})", request.JobScheduleId, request.ScheduledSlotUtc,
@@ -94,7 +94,7 @@ public class JobService(
             return result;
 
         var notified = await TryPublishAsync(
-                () => eventPublisher.PublishRunCreatedAsync(result.Data!.Id, result.Data!.JobDefinition!.WorkerType), "Failed to publish run {RunId} created", result.Data!.Id)
+                () => eventPublisher.PublishRunCreatedAsync(result.Data!.Id, result.Data!.JobDefinition!.WorkerType, ct), "Failed to publish run {RunId} created", result.Data!.Id)
             .ConfigureAwait(false);
 
         return !notified
@@ -311,9 +311,8 @@ public class JobService(
             return null;
 
         var errors = new List<string>();
-        var runParamsByKey =
-            request.JobRunParameters?.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase) ??
-            new Dictionary<string, List<JobRunParameterReq>>();
+        var runParamsByKey = request.JobRunParameters.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
         foreach (var defParam in defParams) {
             runParamsByKey.TryGetValue(defParam.Key, out var provided);

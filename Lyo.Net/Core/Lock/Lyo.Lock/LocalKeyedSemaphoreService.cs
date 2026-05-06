@@ -1,11 +1,14 @@
 using Lyo.Exceptions;
+using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Lock;
 
-/// <summary>In-memory keyed semaphore implementation using SemaphoreSlim per key. Suitable for single-process scenarios.</summary>
+/// <summary>
+/// In-memory counting semaphore per key: up to <c>maxConcurrency</c> concurrent permit holders per key within the process.
+/// </summary>
 public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 {
     private readonly Dictionary<string, SemaphoreEntry> _entries = [];
@@ -14,6 +17,9 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
     private readonly IMetrics _metrics;
     private readonly KeyedSemaphoreOptions _options;
 
+    /// <param name="logger">Optional logger for acquire failures and release anomalies.</param>
+    /// <param name="options">Timeouts, key normalization, metrics toggles.</param>
+    /// <param name="metrics">When <see cref="KeyedSemaphoreOptions.EnableMetrics"/> is true and this is non-null, timings and counters are emitted.</param>
     public LocalKeyedSemaphoreService(ILogger<LocalKeyedSemaphoreService>? logger = null, KeyedSemaphoreOptions? options = null, IMetrics? metrics = null)
     {
         _logger = logger ?? NullLogger<LocalKeyedSemaphoreService>.Instance;
@@ -21,6 +27,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
     }
 
+    /// <inheritdoc />
     public async ValueTask<IPermitHandle?> AcquireAsync(string key, int maxConcurrency, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
@@ -51,6 +58,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
         }
     }
 
+    /// <inheritdoc />
     public async Task ExecuteAsync(string key, int maxConcurrency, Func<CancellationToken, Task> action, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(action);
@@ -68,6 +76,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
         }
     }
 
+    /// <inheritdoc />
     public async Task<T> ExecuteAsync<T>(string key, int maxConcurrency, Func<CancellationToken, Task<T>> action, TimeSpan? timeout = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(action);
@@ -100,70 +109,12 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
         }
     }
 
-    private void ReleaseEntryReference(string normalizedKey, SemaphoreEntry entry)
+    internal void ReleaseEntryReference(string normalizedKey, SemaphoreEntry entry)
     {
         lock (_entriesGate) {
             entry.RefCount--;
             if (entry.RefCount == 0 && _entries.TryGetValue(normalizedKey, out var current) && ReferenceEquals(current, entry))
                 _entries.Remove(normalizedKey);
         }
-    }
-
-    private sealed class SemaphoreEntry
-    {
-        public int MaxConcurrency { get; }
-
-        public int RefCount { get; set; }
-
-        public SemaphoreSlim Semaphore { get; }
-
-        public SemaphoreEntry(int maxConcurrency)
-        {
-            MaxConcurrency = maxConcurrency;
-            Semaphore = new(maxConcurrency, maxConcurrency);
-        }
-    }
-
-    private sealed class LocalPermitHandle : IPermitHandle
-    {
-        private readonly SemaphoreEntry _entry;
-        private readonly string _key;
-        private readonly string _keyForMetrics;
-        private readonly ILogger _logger;
-        private readonly IMetrics _metrics;
-        private readonly LocalKeyedSemaphoreService _owner;
-        private int _released;
-
-        public LocalPermitHandle(LocalKeyedSemaphoreService owner, SemaphoreEntry entry, string key, ILogger logger, IMetrics metrics, string keyForMetrics)
-        {
-            _owner = owner;
-            _entry = entry;
-            _key = key;
-            _logger = logger;
-            _metrics = metrics;
-            _keyForMetrics = keyForMetrics;
-        }
-
-        public ValueTask ReleaseAsync()
-        {
-            if (Interlocked.Exchange(ref _released, 1) != 0)
-                return default;
-
-            using (_metrics.StartTimer(Constants.SemaphoreMetrics.ReleaseDuration, [(Constants.SemaphoreMetrics.Tags.Key, _keyForMetrics)])) {
-                try {
-                    _entry.Semaphore.Release();
-                }
-                catch (SemaphoreFullException ex) {
-                    _logger.LogWarning(ex, "Semaphore permit for key {SemaphoreKey} was already released", _key);
-                }
-            }
-
-            _owner.ReleaseEntryReference(_key, _entry);
-            return default;
-        }
-
-        public void Dispose() => ReleaseAsync().AsTask().GetAwaiter().GetResult();
-
-        public async ValueTask DisposeAsync() => await ReleaseAsync().ConfigureAwait(false);
     }
 }

@@ -1,11 +1,14 @@
 namespace Lyo.Lock.Redis;
 
-/// <summary>Options for RedisLockService. Extends base LockOptions with Redis-specific settings.</summary>
+/// <summary>Extends <see cref="LockOptions"/> with Redis acquire strategy (poll interval vs pub/sub wakeups).</summary>
 public class RedisLockOptions : LockOptions
 {
-    /// <summary>Interval between retries when waiting to acquire a distributed lock. Only used when UsePubSubForAcquireWait is false.</summary>
+    /// <summary>Delay between acquisition attempts when <see cref="UsePubSubForAcquireWait"/> is <see langword="false"/>.</summary>
     public TimeSpan AcquirePollInterval { get; set; } = TimeSpan.FromMilliseconds(10);
 
-    /// <summary>When true, uses Redis pub/sub to wake waiters immediately when a lock is released instead of polling. Reduces latency under contention.</summary>
+    /// <summary>
+    /// When <see langword="true"/>, competing acquirers subscribe to a per-key channel and retry immediately when the holder publishes on release.
+    /// When <see langword="false"/>, acquirers only poll at <see cref="AcquirePollInterval"/>.
+    /// </summary>
     public bool UsePubSubForAcquireWait { get; set; } = true;
 }

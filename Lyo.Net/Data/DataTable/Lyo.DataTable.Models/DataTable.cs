@@ -35,12 +35,12 @@ public sealed class DataTable
         }
         set {
             if (row == -1) {
-                _headers[col] = value ?? DataTableCell.Empty;
+                _headers[col] = value;
                 return;
             }
 
             if (row == -2) {
-                _footer[col] = value ?? DataTableCell.Empty;
+                _footer[col] = value;
                 return;
             }
 
@@ -58,7 +58,7 @@ public sealed class DataTable
     /// <summary>Sets the header at the given column index.</summary>
     public DataTable SetHeader(int col, IDataTableCell cell)
     {
-        _headers[col] = cell ?? DataTableCell.Empty;
+        _headers[col] = cell;
         return this;
     }
 
@@ -68,7 +68,7 @@ public sealed class DataTable
     /// <summary>Sets the footer at the given column index.</summary>
     public DataTable SetFooter(int col, IDataTableCell cell)
     {
-        _footer[col] = cell ?? DataTableCell.Empty;
+        _footer[col] = cell;
         return this;
     }
 

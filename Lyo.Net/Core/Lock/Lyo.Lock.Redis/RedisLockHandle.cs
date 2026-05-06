@@ -1,9 +1,11 @@
+using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace Lyo.Lock.Redis;
 
+/// <summary>Holds the Redis lock token and deletes the key via Lua on release, then publishes to wake pub/sub waiters.</summary>
 internal sealed class RedisLockHandle : ILockHandle
 {
     private const string ReleaseScript = @"

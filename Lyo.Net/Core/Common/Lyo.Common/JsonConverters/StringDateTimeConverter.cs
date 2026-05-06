@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Common.JsonConverters;
 
@@ -22,28 +23,28 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
             throw new JsonException("Cannot parse DateTime from null or empty string.");
 
         foreach (var format in _formats) {
-            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (str!.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
                 return dt;
         }
 
-        if (DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback))
-            return fallback;
+        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback) 
+            ? fallback 
+            : throw new JsonException($"Could not parse DateTime: '{str}'");
 
-        throw new JsonException($"Could not parse DateTime: '{str}'");
 #else
         var str = reader.GetString();
         if (str.IsNullOrEmpty())
             throw new JsonException("Cannot parse DateTime from null or empty string.");
 
         foreach (var format in _formats) {
-            if (str.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+            if (str!.Length == GetFormatLength(format) && DateTime.TryParseExact(str, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
                 return dt;
         }
 
-        if (DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback))
-            return fallback;
+        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback) 
+            ? fallback 
+            : throw new JsonException($"Could not parse DateTime: '{str}'");
 
-        throw new JsonException($"Could not parse DateTime: '{str}'");
 #endif
     }
 

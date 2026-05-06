@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,15 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Lock;
 
-/// <summary>Extension methods for configuring lock services with dependency injection.</summary>
+/// <summary>
+/// Registers <see cref="LocalLockService"/> and <see cref="LocalKeyedSemaphoreService"/> as singletons with optional options binding.
+/// </summary>
 public static class LockServiceExtensions
 {
-    /// <param name="services">The service collection</param>
+    /// <param name="services">Application service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Adds LocalLockService (in-memory, per-process locking).</summary>
-        /// <param name="configureOptions">Optional action to configure LockOptions</param>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>Registers <see cref="ILockService"/> as <see cref="LocalLockService"/> (singleton).</summary>
+        /// <param name="configureOptions">Optional post-configuration after defaults.</param>
+        /// <returns>The service collection for chaining.</returns>
         public IServiceCollection AddLocalLock(Action<LockOptions>? configureOptions = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -31,7 +34,9 @@ public static class LockServiceExtensions
             return services;
         }
 
-        /// <summary>Adds LocalLockService with configuration from IConfiguration.</summary>
+        /// <summary>Binds <see cref="LockOptions"/> from <c>LockOptions</c> (see <see cref="LockOptions.SectionName"/>) then registers <see cref="LocalLockService"/>.</summary>
+        /// <param name="configuration">Configuration root or section parent.</param>
+        /// <param name="configureOptions">Optional additional changes after bind.</param>
         public IServiceCollection AddLocalLockFromConfiguration(IConfiguration configuration, Action<LockOptions>? configureOptions = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -53,9 +58,8 @@ public static class LockServiceExtensions
             return services;
         }
 
-        /// <summary>Adds LocalKeyedSemaphoreService (in-memory, per-process bounded concurrency).</summary>
-        /// <param name="configureOptions">Optional action to configure KeyedSemaphoreOptions</param>
-        /// <returns>The service collection for chaining</returns>
+        /// <summary>Registers <see cref="IKeyedSemaphoreService"/> as <see cref="LocalKeyedSemaphoreService"/> (singleton).</summary>
+        /// <param name="configureOptions">Optional post-configuration.</param>
         public IServiceCollection AddLocalKeyedSemaphore(Action<KeyedSemaphoreOptions>? configureOptions = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -72,7 +76,9 @@ public static class LockServiceExtensions
             return services;
         }
 
-        /// <summary>Adds LocalKeyedSemaphoreService with configuration from IConfiguration.</summary>
+        /// <summary>Binds <see cref="KeyedSemaphoreOptions"/> from <see cref="KeyedSemaphoreOptions.SectionName"/> then registers <see cref="LocalKeyedSemaphoreService"/>.</summary>
+        /// <param name="configuration">Configuration root or section parent.</param>
+        /// <param name="configureOptions">Optional additional changes after bind.</param>
         public IServiceCollection AddLocalKeyedSemaphoreFromConfiguration(IConfiguration configuration, Action<KeyedSemaphoreOptions>? configureOptions = null)
         {
             ArgumentHelpers.ThrowIfNull(services);

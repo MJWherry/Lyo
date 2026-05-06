@@ -1,6 +1,4 @@
-using System.Security.Claims;
 using Lyo.Common.Enums;
-using Lyo.Exceptions;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
 
@@ -8,54 +6,6 @@ namespace Lyo.Web.Components;
 
 internal static class Extensions
 {
-    public static BlazorUserInfo ToUserInfo(this ClaimsPrincipal principal)
-    {
-        var userId = principal.FindFirst("azure_oid")?.Value;
-        var name = principal.FindFirst(ClaimTypes.Name)?.Value;
-        var tokenId = principal.FindFirst("azure_token_id")?.Value;
-        var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-        var exp = principal.FindFirst("exp")?.Value;
-        //var claims = principal.Claims.ToDictionary(c => c.Type, c => c.Value);
-        return new() {
-            TokenId = tokenId,
-            UserId = userId,
-            Name = name,
-            Email = email,
-            SignedInAt = DateTime.UtcNow,
-            LastActivity = DateTime.UtcNow,
-            //Claims = claims
-            JwtExpiration = DateTimeOffset.FromUnixTimeSeconds(long.Parse(exp)).UtcDateTime,
-            CurrentPage = string.Empty
-        };
-    }
-
-    public static string GetTokenId(this ClaimsPrincipal principal)
-    {
-        var tokenId = principal.FindFirst("azure_token_id")?.Value;
-        OperationHelpers.ThrowIfNull(tokenId, "No user identifier found in claims");
-        return tokenId!;
-    }
-
-    //public static Color GetStateColor(JobState state)
-    //    => state switch
-    //    {
-    //        JobState.Unknown => Color.Default,
-    //        JobState.Queued => Color.Warning,
-    //        JobState.Running => Color.Info,
-    //        JobState.Finished => Color.Success,
-    //        JobState.Cancelled => Color.Secondary,
-    //        _ => Color.Default
-    //    };
-    //
-    //public static Color GetResultColor(JobRunResult result) 
-    //    => result switch
-    //    {
-    //        JobRunResult.Success => Color.Success,
-    //        JobRunResult.PartialSuccess => Color.Error,
-    //        JobRunResult.SuccessWithWarnings => Color.Warning,
-    //        JobRunResult.Failure => Color.Error,
-    //        _ => Color.Default
-    //    };
 
     public static Color GetStatusColor(string status)
         => status switch {

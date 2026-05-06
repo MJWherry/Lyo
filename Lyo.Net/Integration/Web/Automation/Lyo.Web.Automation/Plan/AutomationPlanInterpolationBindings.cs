@@ -15,6 +15,8 @@ public sealed class AutomationPlanInterpolationBindings
 
     public IReadOnlyDictionary<string, IWebAutomationElement> Elements { get; init; } = null!;
 
+    public IReadOnlyDictionary<string, object?> ContextItems { get; init; } = null!;
+
     /// <summary>When set, resolves <c>page.url</c> and <c>page.title</c>.</summary>
     public IWebAutomationBrowser? Browser { get; init; }
 }

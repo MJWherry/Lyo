@@ -8,14 +8,15 @@ namespace Lyo.Common;
 public static class LyoJsonSerializerOptions
 {
     /// <summary>Creates a new options instance (safe for DI or further mutation).</summary>
-    public static JsonSerializerOptions Create()
-    {
-        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) {
-            ReferenceHandler = ReferenceHandler.IgnoreCycles
+    public static JsonSerializerOptions Create() 
+        => new() {
+            PropertyNamingPolicy =  JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
         };
-        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
-        return options;
-    }
 
     /// <summary>Creates options then applies <paramref name="configure"/>.</summary>
     public static JsonSerializerOptions Create(Action<JsonSerializerOptions> configure)

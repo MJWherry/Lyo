@@ -1,4 +1,5 @@
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Identifiers;
 
 namespace Lyo.HomeInventory;

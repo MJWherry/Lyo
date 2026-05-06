@@ -29,8 +29,15 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(DownloadUrlsToDirectoryAutomationStep), "downloadUrlsToDirectory")]
 [JsonDerivedType(typeof(StoreLiteralAutomationStep), "storeLiteral")]
 [JsonDerivedType(typeof(StoreTemplateAutomationStep), "storeTemplate")]
+[JsonDerivedType(typeof(StoreStringListFromTemplateAutomationStep), "storeStringListFromTemplate")]
 [JsonDerivedType(typeof(StorePageUrlAutomationStep), "storePageUrl")]
 [JsonDerivedType(typeof(StorePageTitleAutomationStep), "storePageTitle")]
+[JsonDerivedType(typeof(HttpRequestAutomationStep), "httpRequest")]
+[JsonDerivedType(typeof(DownloadFileAutomationStep), "downloadFile")]
+[JsonDerivedType(typeof(ExtractSourcesAutomationStep), "extractSources")]
+[JsonDerivedType(typeof(UpsertJsonRecordsAutomationStep), "upsertJsonRecords")]
+[JsonDerivedType(typeof(UploadDirectoryToFileStorageAutomationStep), "uploadDirectoryToFileStorage")]
+[JsonDerivedType(typeof(InvokeDiMethodAutomationStep), "invokeDiMethod")]
 public abstract record AutomationStepDefinition(string? Name = null)
 {
     /// <summary>Stable id for this step (set by <see cref="Lyo.Web.Automation.Plan.AutomationPlanBuilder.Build" /> when omitted).</summary>
@@ -224,8 +231,8 @@ public sealed record WriteStringListToFileAutomationStep(string VariableName, st
 }
 
 /// <summary>
-/// Downloads each URL in a string-list variable into <see cref="TargetDirectory" /> (requires <see cref="Lyo.Web.Automation.Plan.AutomationPlanRuntimeOptions.HttpClient" />
-/// ). When <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable
+/// Downloads each URL in a string-list variable into <see cref="TargetDirectory" /> (requires runner HTTP dependency registration). When
+/// <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable
 /// value is used.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
@@ -264,6 +271,21 @@ public sealed record StoreTemplateAutomationStep(string VariableName, string Tem
     public override string ToString() => FormatStepDebugLine($"storeTemplate var:{VariableName} ← {AutomationDisplayText.Ellipsis(Template, 64)}");
 }
 
+/// <summary>Maps each item in a source string-list variable through a template and stores the result list.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record StoreStringListFromTemplateAutomationStep(
+    string SourceVariableName,
+    string VariableName,
+    string ItemTemplate,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine(
+            $"storeStringListFromTemplate src:{SourceVariableName} -> var:{VariableName} template={AutomationDisplayText.Ellipsis(ItemTemplate, 64)}");
+}
+
 /// <summary>Stores the current document URL in <see cref="VariableName" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record StorePageUrlAutomationStep(string VariableName, string? Name = null)
@@ -280,4 +302,97 @@ public sealed record StorePageTitleAutomationStep(string VariableName, string? N
 {
     /// <inheritdoc />
     public override string ToString() => FormatStepDebugLine($"storePageTitle var:{VariableName}");
+}
+
+/// <summary>Sends an HTTP request using runtime <c>HttpClient</c>, with optional templated headers and body.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record HttpRequestAutomationStep(
+    string Method,
+    string Url,
+    Dictionary<string, string>? Headers = null,
+    string? BodyTemplate = null,
+    string? ResponseBodyVariableName = null,
+    string? StatusCodeVariableName = null,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine($"httpRequest {Method} {AutomationDisplayText.Ellipsis(Url, 96)}");
+}
+
+/// <summary>Downloads a single HTTP(S) file URL to disk using runtime <c>HttpClient</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record DownloadFileAutomationStep(
+    string Url,
+    string TargetFilePath,
+    string? SavedFilePathVariableName = null,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine($"downloadFile {AutomationDisplayText.Ellipsis(Url, 64)} -> {AutomationDisplayText.Ellipsis(TargetFilePath, 64)}");
+}
+
+/// <summary>Extracts source/link values from attributes on an element list into a string-list variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record ExtractSourcesAutomationStep(
+    string ElementsListRefName,
+    string VariableName,
+    IReadOnlyList<string>? AttributeNames = null,
+    bool ResolveRelativeUrls = true,
+    bool Deduplicate = true,
+    bool SplitCommaSeparatedValues = true,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine(
+            $"extractSources from={ElementsListRefName} -> var:{VariableName} attrs={(AttributeNames == null ? "(default)" : string.Join(",", AttributeNames))} resolveRelative={ResolveRelativeUrls} dedupe={Deduplicate} splitCsv={SplitCommaSeparatedValues}");
+}
+
+/// <summary>Upserts JSON records through the configured runtime data sink abstraction.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record UpsertJsonRecordsAutomationStep(
+    string RecordsJsonVariableName,
+    string TargetName,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine($"upsertJsonRecords var:{RecordsJsonVariableName} -> target:{TargetName}");
+}
+
+/// <summary>Uploads all files from a local directory through the configured runtime file storage abstraction.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record UploadDirectoryToFileStorageAutomationStep(
+    string SourceDirectory,
+    string DestinationPrefix,
+    string? StoredFileListVariableName = null,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine(
+            $"uploadDirectoryToFileStorage {AutomationDisplayText.Ellipsis(SourceDirectory, 48)} -> {AutomationDisplayText.Ellipsis(DestinationPrefix, 48)}");
+}
+
+/// <summary>Invokes a DI-resolved service method for advanced scrape logic that may mutate shared run context.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record InvokeDiMethodAutomationStep(
+    string ServiceType,
+    string MethodName,
+    Dictionary<string, string>? Arguments = null,
+    bool ThrowOnMissingMethod = true,
+    string? ResultVariableName = null,
+    string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => FormatStepDebugLine($"invokeDiMethod service={AutomationDisplayText.Ellipsis(ServiceType, 64)} method={MethodName}");
 }

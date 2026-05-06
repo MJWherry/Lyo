@@ -170,7 +170,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private async Task<bool> OnDefinitionUpdatedAsync(byte[] body)
     {
-        Guid? definitionId = null;
+        Guid? definitionId;
         try {
             definitionId = JsonSerializer.Deserialize<Guid>(body);
         }
@@ -211,7 +211,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private async Task<bool> OnJobRunCompleteAsync(byte[] body)
     {
-        Guid? jobRunId = null;
+        Guid? jobRunId;
         try {
             jobRunId = JsonSerializer.Deserialize<Guid>(body);
         }
@@ -235,7 +235,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         _logger.LogInformation("Updating job definitions");
         var query = new QueryReqBuilder().AddIncludes(JobDefinitionIncludes).Build();
         var results = await _apiClient.PostAsAsync<QueryReq, QueryRes<JobDefinitionRes>>(BuildUri(Constants.Rest.Job.DefinitionsQuery), query, null, ct).ConfigureAwait(false);
-        if (results?.Items == null || !results.IsSuccess) {
+        if (results.Items == null || !results.IsSuccess) {
             _logger.LogWarning("No definitions loaded or query failed");
             return;
         }
@@ -343,7 +343,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             BuildUri(Constants.Rest.Job.RunsQuery), new QueryReqBuilder().AddIncludes(JobRunIncludes).AddWhere(failFilter).AddSort("CreatedTimestamp").First().Build(), null, ct);
 
         await Task.WhenAll(lastRunTask, lastSuccessTask, lastFailedTask).ConfigureAwait(false);
-        return new(definition, lastRunTask.Result?.Items?.FirstOrDefault(), lastSuccessTask.Result?.Items?.FirstOrDefault(), lastFailedTask.Result?.Items?.FirstOrDefault());
+        return new(definition, lastRunTask.Result.Items?.FirstOrDefault(), lastSuccessTask.Result.Items?.FirstOrDefault(), lastFailedTask.Result?.Items?.FirstOrDefault());
     }
 
     private async Task ProcessScheduledJobDefinitionAsync(JobDefinitionRes definition, JobScheduleRes schedule, DateTime scheduledSlot, CancellationToken ct)

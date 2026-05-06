@@ -3,6 +3,7 @@ using Amazon;
 using Amazon.Translate;
 using Amazon.Translate.Model;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.Metrics;

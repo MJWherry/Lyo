@@ -35,6 +35,7 @@ public static class ChaCha20Poly1305Helper
             tlen = chacha.ProcessBytes(pb, 0, pb.Length, outBuf, 0);
         }
 
+        // ReSharper disable once RedundantAssignment
         tlen += chacha.DoFinal(outBuf, tlen);
 
         var ciphertext = new byte[plaintext.Length];

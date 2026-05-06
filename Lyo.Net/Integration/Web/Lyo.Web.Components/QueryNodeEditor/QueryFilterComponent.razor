@@ -1,3 +1,4 @@
+@using Lyo.Common.Extensions
 @using Lyo.Query.Models.Enums
 @using Lyo.Web.Components.Models
 @using Lyo.Web.Components.UniqueValueSelector
@@ -34,7 +35,7 @@
                    Class="mud-select-small">
             @if (_currentProperty != null) {
                 @foreach (var comparator in Extensions.GetAvailableComparisonOperators(_currentProperty.Type)) {
-                    <MudSelectItem Value="@comparator">@Common.Extensions.GetDescription(comparator)</MudSelectItem>
+                    <MudSelectItem Value="@comparator">@comparator.GetDescription()</MudSelectItem>
                 }
             }
         </MudSelect>

@@ -5,6 +5,9 @@ using ClosedXML.Graphics;
 using Lyo.Exceptions;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.Logging;
+#if NETSTANDARD2_0
+using Lyo.Common;
+#endif
 
 namespace Lyo.Xlsx;
 
@@ -199,7 +202,7 @@ internal sealed class XlsxExporter : IXlsxExporter
         if (useHeaderRow && orderedRows.Count > 0) {
             var firstRow = orderedRows[0].Value;
             for (var c = 0; c < maxCol; c++)
-                worksheet.Cell(1, c + 1).Value = firstRow.TryGetValue(c, out var v) ? v ?? "" : "";
+                worksheet.Cell(1, c + 1).Value = firstRow.GetValueOrDefault(c, "");
 
             worksheet.Row(1).Style.Font.Bold = true;
             orderedRows = orderedRows.Skip(1).ToList();
@@ -214,7 +217,7 @@ internal sealed class XlsxExporter : IXlsxExporter
         var rowNum = 2;
         foreach (var kv in orderedRows) {
             for (var c = 0; c < maxCol; c++)
-                worksheet.Cell(rowNum, c + 1).Value = kv.Value.TryGetValue(c, out var v) ? v ?? "" : "";
+                worksheet.Cell(rowNum, c + 1).Value = kv.Value.GetValueOrDefault(c, "");
 
             rowNum++;
         }

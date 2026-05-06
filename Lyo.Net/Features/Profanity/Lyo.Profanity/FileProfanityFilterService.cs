@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Metrics;
 using Lyo.Profanity.Models;
@@ -440,13 +441,13 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
 
     private static void AddEntriesFromContent(string content, Dictionary<string, ProfanityEntry> combined, FileProfanityFilterOptions options)
     {
-        var trimmed = content?.Trim();
+        var trimmed = content.Trim();
         if (string.IsNullOrEmpty(trimmed))
             return;
 
         // Try structured JSON array: [{ "id": "...", "match": "...", ... }, ...]
         try {
-            using var doc = JsonDocument.Parse(trimmed!);
+            using var doc = JsonDocument.Parse(trimmed);
             var root = doc.RootElement;
             if (root.ValueKind == JsonValueKind.Array) {
                 foreach (var el in root.EnumerateArray()) {
@@ -455,13 +456,13 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
 
                     var id = el.TryGetProperty("id", out var idProp) ? idProp.GetString()?.Trim() : null;
                     var match = el.TryGetProperty("match", out var matchProp) ? matchProp.GetString()?.Trim() : null;
-                    if (string.IsNullOrEmpty(id))
+                    if (id.IsNullOrEmpty())
                         id = match;
 
-                    if (string.IsNullOrEmpty(match))
+                    if (match.IsNullOrEmpty())
                         continue;
 
-                    var idOrMatch = (id ?? match)!;
+                    var idOrMatch = id ?? match;
                     if (options.ExcludedWords.Contains(idOrMatch))
                         continue;
 
@@ -475,7 +476,7 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
                         : [];
 
                     var isLiteral = el.TryGetProperty("literal", out var litProp) && litProp.GetBoolean();
-                    combined[idOrMatch] = new(idOrMatch, match!, tags, severity, exceptions, isLiteral);
+                    combined[idOrMatch] = new(idOrMatch, match, tags, severity, exceptions, isLiteral);
                 }
 
                 return;
@@ -486,10 +487,10 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
 
         // Try plain JSON array of strings: ["word1", "word2", ...]
         try {
-            var words = JsonSerializer.Deserialize<string[]>(trimmed!);
+            var words = JsonSerializer.Deserialize<string[]>(trimmed);
             if (words != null) {
                 foreach (var word in words) {
-                    var w = word.Trim() ?? string.Empty;
+                    var w = word.Trim();
                     if (string.IsNullOrEmpty(w) || options.ExcludedWords.Contains(w))
                         continue;
 
@@ -502,7 +503,7 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
         catch (JsonException) { }
 
         // Plain newline-separated list
-        foreach (var line in trimmed!.Split('\n', '\r')) {
+        foreach (var line in trimmed.Split('\n', '\r')) {
             var w = line.Trim();
             if (string.IsNullOrEmpty(w) || options.ExcludedWords.Contains(w))
                 continue;
@@ -645,7 +646,7 @@ public sealed class FileProfanityFilterService : IProfanityFilterService
         }
 
         if (str == ProfanityReplacementStrategy.ReplaceWithWord) {
-            var rw = word ?? string.Empty;
+            var rw = word;
             var sb = new StringBuilder(input.Length);
             var pos = 0;
             foreach (var m in matches.OrderBy(x => x.Index)) {

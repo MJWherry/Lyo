@@ -81,12 +81,7 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
             }
             catch (Exception ex) {
                 _log.LogError(ex, "Unhandled error during Config API polling; retrying.");
-                try {
-                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) {
-                    throw;
-                }
+                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken).ConfigureAwait(false);
             }
         }
     }

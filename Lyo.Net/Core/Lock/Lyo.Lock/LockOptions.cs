@@ -1,8 +1,9 @@
 namespace Lyo.Lock;
 
-/// <summary>Options for lock service behavior.</summary>
+/// <summary>Configuration for <see cref="LocalLockService"/> and base settings shared with Redis-backed locks.</summary>
 public class LockOptions
 {
+    /// <summary>Configuration section key used by <see cref="LockServiceExtensions"/> bind helpers.</summary>
     public const string SectionName = "LockOptions";
 
     /// <summary>Default timeout when waiting to acquire a lock.</summary>

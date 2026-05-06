@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.Formatter;
+using Lyo.Web.Automation.Abstractions;
 
 namespace Lyo.Web.Automation.Plan;
 
@@ -7,9 +8,6 @@ namespace Lyo.Web.Automation.Plan;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanRuntimeOptions
 {
-    /// <summary>When set, <see cref="Lyo.Web.Automation.Models.DownloadUrlsToDirectoryAutomationStep" /> can fetch each URL and write under the target directory.</summary>
-    public HttpClient? HttpClient { get; init; }
-
     /// <summary>Optional prefix for generated file names during download (default <c>download</c>).</summary>
     public string DownloadFileNamePrefix { get; init; } = "download";
 
@@ -37,9 +35,12 @@ public sealed class AutomationPlanRuntimeOptions
     /// </summary>
     public IFormatterService? Formatter { get; init; }
 
+    /// <summary>Optional base URL used when resolving relative links extracted from pages.</summary>
+    public Uri? LinkResolutionBaseUri { get; init; }
+
     /// <inheritdoc />
     public override string ToString()
-        => $"HttpClient={(HttpClient != null ? "set" : "null")}, downloadPrefix={DownloadFileNamePrefix}, planTimeout={PlanTimeout}, defaultStepTimeout={DefaultStepTimeout}, hooks={(Hooks != null ? "set" : "null")}, instrumentation={(Instrumentation != null ? "set" : "null")}, planRunDirectory={(PlanRunDirectory != null ? "set" : "null")}, formatter={(Formatter != null ? "set" : "null")}";
+        => $"downloadPrefix={DownloadFileNamePrefix}, planTimeout={PlanTimeout}, defaultStepTimeout={DefaultStepTimeout}, hooks={(Hooks != null ? "set" : "null")}, instrumentation={(Instrumentation != null ? "set" : "null")}, planRunDirectory={(PlanRunDirectory != null ? "set" : "null")}, formatter={(Formatter != null ? "set" : "null")}, linkBase={(LinkResolutionBaseUri != null ? LinkResolutionBaseUri.ToString() : "null")}";
 }
 
 /// <summary>

@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Pdf.Models;
 
 namespace Lyo.Pdf.Internal;

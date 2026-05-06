@@ -80,10 +80,10 @@ public static class Extensions
 
             services.AddKeyedSingleton<CompressionService>(
                 keyedServiceName,
-                (provider, key) => new CompressionService(
+                (provider, key) => new(
                     provider.GetService<Microsoft.Extensions.Logging.ILogger<CompressionService>>(),
                     provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
-                    provider.GetService<Lyo.Metrics.IMetrics>()));
+                    provider.GetService<Metrics.IMetrics>()));
 
             services.AddKeyedSingleton<ICompressionService>(
                 keyedServiceName,

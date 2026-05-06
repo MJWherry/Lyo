@@ -367,7 +367,7 @@ public sealed class IOTempService : IIOTempService
         var fullBase = Path.GetFullPath(baseDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         var fullCandidate = Path.GetFullPath(candidatePath);
         var comparison = GetPathComparison();
-        OperationHelpers.ThrowIf(!fullCandidate.StartsWith(fullBase, comparison), $"Path escapes the service directory: {candidatePath}");
+        OperationHelpers.ThrowIf(!fullCandidate.StartsWith(fullBase, comparison), $"Path escapes the service directory: {candidatePath} paramName {paramName}");
         return fullCandidate;
     }
 

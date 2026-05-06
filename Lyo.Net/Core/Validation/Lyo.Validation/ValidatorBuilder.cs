@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Result;
 using Lyo.Result.Enums;

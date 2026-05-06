@@ -151,7 +151,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                 }
 
                 var len = new FileInfo(tempPath).Length;
-                FileAvailability? availabilityOverride = null;
+                FileAvailability? availabilityOverride;
                 await using (var scanStream = File.OpenRead(tempPath)) {
                     var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
                     availabilityOverride = scan.ThreatLevel switch {
@@ -279,7 +279,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             keyParts.Add(_options.KeyPrefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\'));
 
         if (!string.IsNullOrWhiteSpace(pathPrefix))
-            keyParts.Add(pathPrefix!.Trim().Trim('/'));
+            keyParts.Add(pathPrefix.Trim().Trim('/'));
 
         keyParts.Add(".multipart");
         keyParts.Add(sessionId.ToString("N"));

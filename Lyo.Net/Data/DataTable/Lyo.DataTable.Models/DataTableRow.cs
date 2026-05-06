@@ -14,13 +14,13 @@ public sealed class DataTableRow
     /// <summary>Gets or sets the cell at the given column.</summary>
     public IDataTableCell this[int col] {
         get => _cells.TryGetValue(col, out var c) ? c : DataTableCell.Empty;
-        set => _cells[col] = value ?? DataTableCell.Empty;
+        set => _cells[col] = value;
     }
 
     /// <summary>Sets the cell at the given column.</summary>
     public DataTableRow SetCell(int col, IDataTableCell cell)
     {
-        _cells[col] = cell ?? DataTableCell.Empty;
+        _cells[col] = cell;
         return this;
     }
 

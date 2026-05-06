@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Lyo.Web.Components.DataGrid;
 
-namespace Lyo.FileStorage.Web.Components;
+namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 
 /// <summary>Helpers for reading file ids from projected query rows (dynamic JSON / Guid).</summary>
 public static class FileStorageGridRowHelper

@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Keystore.KeyDerivation;
 

@@ -4,12 +4,13 @@
 
 | Project                         | Role                                                                                        |
 |---------------------------------|---------------------------------------------------------------------------------------------|
-| `Lyo.Web.Automation`            | Plan types, `AutomationPlanBuilder`, `AutomationPlanRunner`, interpolation, hooks / metrics |
+| `Lyo.Web.Automation`            | Plan types, `AutomationPlanBuilder`, `IAutomationPlanRunner`, interpolation, hooks / metrics |
 | `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                               |
 | `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                               |
 
 Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on elements, extract text or attributes into **string variables**,
-write files, download URL lists, and store literals or page metadata. String values can be combined with **`{{variableName}}`** placeholders resolved at run time.
+write files, download URL lists/single files, call HTTP APIs, extract image source URLs, upload local directories through file storage, upsert JSON payloads through a data sink, and store literals or page metadata. String values can be combined with
+**`{{variableName}}`** placeholders resolved at run time.
 
 ---
 
@@ -77,7 +78,7 @@ Avoid stray `{…}` in templates except for placeholders—anything between `{` 
 
 ### Execution results
 
-**`AutomationPlanRunner.RunWithResultAsync`** returns **`AutomationPlanRunResult`**:
+**`IAutomationPlanRunner.RunWithResultAsync`** returns **`AutomationPlanRunResult`**:
 
 - **`Snapshot`**: Final **`Strings`** and **`StringLists`** only (no element handles) — convenient for logging or APIs.
 - **`Context`**: Full picture:
@@ -95,7 +96,6 @@ Frame index **`i`** is state **after** `plan.Steps[i]` completed (zero-based).
 
 | Property                     | Use                                                                                                                                                                                                                                                                                                                               |
 |------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`HttpClient`**             | Required for **`downloadUrlsToDirectory`** (each URL is fetched and saved under the target directory).                                                                                                                                                                                                                            |
 | **`DownloadFileNamePrefix`** | Default file name prefix when a step does not set one (runner default is `download`).                                                                                                                                                                                                                                             |
 | **`PlanTimeout`**            | Optional ceiling for the **entire** run (combined with the run `CancellationToken`).                                                                                                                                                                                                                                              |
 | **`DefaultStepTimeout`**     | Optional default per-step limit; a step can override with **`AutomationStepDefinition.StepTimeout`**.                                                                                                                                                                                                                             |
@@ -103,6 +103,7 @@ Frame index **`i`** is state **after** `plan.Steps[i]` completed (zero-based).
 | **`Instrumentation`**        | Optional **`IAutomationPlanInstrumentation`** for metrics / tracing (run and step lifecycle).                                                                                                                                                                                                                                     |
 | **`PlanRunDirectory`**       | Optional **`AutomationPlanRunDirectoryOptions`**: per-run folder under **`RootDirectory`** (see layout below). Set **`WriteRunLogFile`**, **`WriteSnapshots`**, and **`WriteVariables`** to **`false`** to reserve only the directory (or disable each category independently). When **`null`**, no run-scoped files are written. |
 | **`Formatter`**              | Optional **`Lyo.Formatter.IFormatterService`**: validates step templates with SmartFormat before placeholders are resolved. Use single-brace placeholders (e.g. `{page.url}`) or legacy `{{page.url}}` (normalized to single braces). Register **`FormatterService`** from DI if you use this.                                    |
+| **`LinkResolutionBaseUri`**  | Optional base URL used to resolve relative links extracted from pages (for example image `src`/`srcset` values).                                                                                                                                                                                                                |
 
 ### Plan run directory layout
 
@@ -276,18 +277,20 @@ finished step (**`AutomationPlanStepOutcomeRecord`**: duration, outcome, optiona
 
 ## Running a plan
 
-1. Obtain an **`IWebAutomationSession`** from your app’s Selenium or Playwright service.
-2. Call **`await session.StartBrowserAsync(ct)`** (the runner also calls this, but your host may start earlier).
-3. **`await AutomationPlanRunner.RunAsync(session, plan, logger, ct)`** — or **`RunWithResultAsync`** with optional **`AutomationPlanRuntimeOptions`**.
+1. Register the runner in DI: **`services.AddWebAutomationPlanRunner()`** (and your own sink/storage implementations when needed).
+2. Resolve **`IAutomationPlanRunner`** plus an **`IWebAutomationSession`** from your host.
+3. Call **`await runner.RunAsync(session, plan, logger, ct)`** — or **`RunWithResultAsync`** with optional **`AutomationPlanRuntimeOptions`**.
 
 ```csharp
 using Lyo.Web.Automation.Plan;
 
-await AutomationPlanRunner.RunWithResultAsync(
+services.AddWebAutomationPlanRunner();
+
+var runner = provider.GetRequiredService<IAutomationPlanRunner>();
+await runner.RunWithResultAsync(
     session,
     plan,
     new AutomationPlanRuntimeOptions {
-        HttpClient = httpClient,
         PlanRunDirectory = new AutomationPlanRunDirectoryOptions {
             RootDirectory = @"C:\data\automation-runs",
             // SnapshotBeforeEachStep = true,
@@ -316,10 +319,17 @@ await AutomationPlanRunner.RunWithResultAsync(
 | `ExtractElementsListData` | `extractElementsListData`                                 | Per element → string list var                                                                          |
 | `StoreLiteral`            | `storeLiteral`                                            | Value may contain `{{vars}}`                                                                           |
 | `StoreTemplate`           | `storeTemplate`                                           | Template → string var                                                                                  |
+| `StoreStringListFromTemplate` | `storeStringListFromTemplate`                          | Map source list items through an item template                                                         |
 | `StorePageUrl`            | `storePageUrl`                                            |                                                                                                        |
 | `StorePageTitle`          | `storePageTitle`                                          |                                                                                                        |
 | `WriteStringListToFile`   | `writeStringListToFile`                                   | UTF-8; path may use `{{vars}}`                                                                         |
-| `DownloadUrlsToDirectory` | `downloadUrlsToDirectory`                                 | Needs `HttpClient`; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index) |
+| `DownloadUrlsToDirectory` | `downloadUrlsToDirectory`                                 | Uses runner HTTP dependency; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index) |
+| `HttpRequest`             | `httpRequest`                                             | Uses runner HTTP dependency; supports templated URL/headers/body and response capture                          |
+| `DownloadFile`            | `downloadFile`                                            | Uses runner HTTP dependency; downloads one URL to one file                                                      |
+| `ExtractSources`          | `extractSources`                                          | Extracts source/link attributes into list variable (configure attrs for video/CSV/etc.)               |
+| `UpsertJsonRecords`       | `upsertJsonRecords`                                       | Uses runner data sink dependency; upserts JSON payload from a string variable                                          |
+| `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage`                       | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs                  |
+| `InvokeDiMethod`          | `invokeDiMethod`                                          | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
 
 **`ElementAction`** JSON uses nested **`type`**: `click`, `inputText`, `sendKeys`, `clear`, `submit`, `selectByText`, `selectByValue`, `selectByIndex`.
 
@@ -426,13 +436,13 @@ var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 var plan = JsonSerializer.Deserialize<AutomationPlan>(json, options)
     ?? throw new InvalidOperationException("Invalid plan JSON.");
 
-await AutomationPlanRunner.RunAsync(session, plan, logger, ct);
+await runner.RunAsync(session, plan, logger, ct);
 ```
 
 ### 5. Reading results (`RunWithResultAsync`)
 
 ```csharp
-var result = await AutomationPlanRunner.RunWithResultAsync(
+var result = await runner.RunWithResultAsync(
     session, plan, runtime: null, logger, ct);
 
 // String tables only (no element refs)
@@ -453,8 +463,7 @@ if (result.Context.TryGetStringListAtCompletedStep(3, "hrefs", out var hrefsAtSt
 
 ### 6. Downloads from a URL list (with optional step snapshot)
 
-After a step fills a **string list** variable (for example `srcs`), **`downloadUrlsToDirectory`** saves each URL to **`targetDirectory`** (requires *
-*`AutomationPlanRuntimeOptions.HttpClient`**). By default the runner uses the **final** value of that variable. If a **later** step overwrites or clears it, set *
+After a step fills a **string list** variable (for example `srcs`), **`downloadUrlsToDirectory`** saves each URL to **`targetDirectory`** (runner must have an HTTP dependency configured). By default the runner uses the **final** value of that variable. If a **later** step overwrites or clears it, set *
 *`urlListFromCompletedStepIndex`** to the **zero-based completed step index** whose bindings should be used (the snapshot **after** that step finished).
 
 In this mini-plan, steps are indices `0` = navigate, `1` = find elements, `2` = extract list → variable `srcs`. To download using `srcs` exactly as it was after the extract step,
@@ -471,6 +480,80 @@ var plan = AutomationPlanBuilder
         targetDirectory: "/tmp/gallery",
         fileNamePrefix: "img",
         urlListFromCompletedStepIndex: 2)
+    .Build();
+```
+
+### 7. Scrape fields, bind DTO JSON, and call an API
+
+```csharp
+var plan = AutomationPlanBuilder
+    .New("Scrape and submit DTO")
+    .Navigate("https://example.com/product/42")
+    .FindElement("titleEl", ElementLocator.CssSelector("h1.product-title"))
+    .ExtractElementData("titleEl", "productTitle", ElementDataExtractKind.Text)
+    .StoreLiteral("productId", "42")
+    .StoreTemplate("upsertProductDtoJson", "{\"productId\":\"{strings.productId}\",\"title\":\"{strings.productTitle}\"}")
+    .HttpRequest(
+        method: "POST",
+        url: "https://api.myapp.local/products/upsert",
+        headers: new Dictionary<string, string> { ["Content-Type"] = "application/json" },
+        bodyTemplate: "{strings.upsertProductDtoJson}",
+        responseBodyVariableName: "apiResponseBody",
+        statusCodeVariableName: "apiStatusCode")
+    .Build();
+```
+
+### 8. Scrape file links, download, then upload to storage
+
+```csharp
+var plan = AutomationPlanBuilder
+    .New("Download and upload assets")
+    .Navigate("https://example.com/gallery/abc")
+    .FindElements("downloadAnchors", new ElementLocatorChain(ElementLocator.CssSelector("a.download-link")))
+    .ExtractElementsListData("downloadAnchors", "downloadUrls", ElementDataExtractKind.Attribute, attributeName: "href")
+    .DownloadUrlsToDirectory("downloadUrls", "/tmp/gallery", "asset")
+    .UploadDirectoryToFileStorage("/tmp/gallery", "gallery-assets/{page.title}", "uploadedFileUrls")
+    .Build();
+```
+
+You can also target non-image sources by specifying attributes explicitly (for example video links or CSV URLs):
+
+```csharp
+var plan = AutomationPlanBuilder
+    .New("Extract CSV links")
+    .Navigate("https://example.com/exports")
+    .FindElements("exportAnchors", new ElementLocatorChain(ElementLocator.CssSelector("a.export-link")))
+    .ExtractSources(
+        elementsListRefName: "exportAnchors",
+        variableName: "csvUrls",
+        attributeNames: new[] { "href" },
+        splitCommaSeparatedValues: false)
+    .DownloadUrlsToDirectory("csvUrls", "/tmp/exports", "csv")
+    .Build();
+```
+
+### 9. Invoke DI scraper method and reuse context
+
+```csharp
+// DI registration in your host
+services.AddScoped<MangaFireScraper>();
+
+public sealed class MangaFireScraper(IApiClient apiClient)
+{
+    public async Task Scrape(AutomationPlanStepContext stepContext, CancellationToken ct)
+    {
+        // write context for later built-in steps
+        stepContext.ContextItems["auth.cookie"] = "session=abc";
+        await Task.CompletedTask;
+    }
+}
+
+var plan = AutomationPlanBuilder
+    .New("DI scrape hook")
+    .InvokeDiMethod(
+        serviceType: "MyApp.Scrapers.MangaFireScraper, MyApp",
+        methodName: "Scrape")
+    .StoreTemplate("cookieHeader", "{context.auth.cookie}")
     .Build();
 ```
 

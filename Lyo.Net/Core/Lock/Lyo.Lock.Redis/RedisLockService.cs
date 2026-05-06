@@ -1,4 +1,6 @@
 using Lyo.Exceptions;
+using Lyo.Lock;
+using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -6,7 +8,14 @@ using StackExchange.Redis;
 
 namespace Lyo.Lock.Redis;
 
-/// <summary>Redis-based distributed lock using SET NX + Lua release. Shares the same Redis (IConnectionMultiplexer) as Lyo.Cache.Fusion when both are configured.</summary>
+/// <summary>
+/// Distributed exclusive lock via Redis: acquire uses <c>SET key token NX PX ttl</c>; release uses a Lua script so only the token owner deletes the key.
+/// Optionally waits using pub/sub on a companion notify channel to reduce polling latency.
+/// </summary>
+/// <remarks>
+/// Register through <see cref="RedisLockServiceExtensions"/> with an existing <see cref="IConnectionMultiplexer"/> or a connection string.
+/// Choose <see cref="RedisLockOptions.DefaultLockDuration"/> large enough for typical critical sections; if work runs longer than TTL, another instance may acquire—design accordingly.
+/// </remarks>
 public sealed class RedisLockService : ILockService
 {
     private const string NotifyChannelPrefix = "lock:notify:";
@@ -17,6 +26,10 @@ public sealed class RedisLockService : ILockService
     private readonly RedisLockOptions _options;
     private readonly ISubscriber _subscriber;
 
+    /// <param name="redis">Shared multiplexer (same as caching stack when applicable).</param>
+    /// <param name="logger">Optional diagnostics.</param>
+    /// <param name="options">Timeouts, key prefix, pub/sub vs poll, TTL defaults.</param>
+    /// <param name="metrics">Emitted when <see cref="LockOptions.EnableMetrics"/> is true.</param>
     public RedisLockService(IConnectionMultiplexer redis, ILogger<RedisLockService>? logger = null, RedisLockOptions? options = null, IMetrics? metrics = null)
     {
         ArgumentHelpers.ThrowIfNull(redis);

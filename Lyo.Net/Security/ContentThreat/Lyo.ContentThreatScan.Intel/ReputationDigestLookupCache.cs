@@ -1,22 +1,8 @@
-using Lyo.ContentThreatScan;
-
 namespace Lyo.ContentThreatScan.Intel;
 
 /// <summary>Simple TTL-backed digest cache keyed by lowercase hex SHA256.</summary>
 public sealed class ReputationDigestLookupCache
 {
-    private sealed class Holder
-    {
-        public Holder(ExternalReputationEnvelope envelope, DateTime expiryUtc)
-        {
-            Envelope = envelope;
-            ExpiryUtc = expiryUtc;
-        }
-
-        public ExternalReputationEnvelope Envelope { get; }
-        public DateTime ExpiryUtc { get; }
-    }
-
     private readonly Dictionary<string, Holder> _map = new(StringComparer.Ordinal);
     private readonly object _gate = new();
     private readonly int _cap;
@@ -55,7 +41,7 @@ public sealed class ReputationDigestLookupCache
         }
     }
 
-    void EvictStaleOrRandom(DateTime utcNow)
+    private void EvictStaleOrRandom(DateTime utcNow)
     {
         var staleKeys = _map.Where(kv => kv.Value.ExpiryUtc <= utcNow).Select(kv => kv.Key).ToList();
         foreach (var key in staleKeys)

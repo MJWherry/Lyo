@@ -21,6 +21,12 @@ public class AutomationPlanStepContext
     public AutomationStepDefinition Step { get; init; } = null!;
 
     public IWebAutomationSession Session { get; init; } = null!;
+
+    /// <summary>Mutable shared context for the current run. Writes here are visible to later steps.</summary>
+    public IDictionary<string, object?> ContextItems { get; init; } = null!;
+
+    /// <summary>Current run bindings snapshot. Re-built by runner before custom method invocation.</summary>
+    public AutomationPlanExecutionContext ExecutionContext { get; set; } = null!;
 }
 
 /// <summary>Context when a step throws before being handled.</summary>

@@ -125,7 +125,7 @@ public class XlsxService : IXlsxService
         using var reader = ExcelReaderFactory.CreateReader(inputStream);
         var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => _excelDataTableConfiguration });
         OperationHelpers.ThrowIf(dataSet.Tables.Count == 0, "The XLSX file contains no worksheets.");
-        var table = dataSet.Tables[0]!;
+        var table = dataSet.Tables[0];
         using var writer = new StreamWriter(outputStream, encoding ?? Encoding.UTF8, 1024, true);
         WriteDataTableToCsv(table, writer);
         writer.Flush();
@@ -389,10 +389,10 @@ public class XlsxService : IXlsxService
         using var reader = ExcelReaderFactory.CreateReader(inputStream);
         var dataSet = reader.AsDataSet(new() { ConfigureDataTable = _ => _excelDataTableConfiguration });
         OperationHelpers.ThrowIf(dataSet.Tables.Count == 0, "The XLSX file contains no worksheets.");
-        var table = dataSet.Tables[0]!;
+        var table = dataSet.Tables[0];
         await using var writer = new StreamWriter(outputStream, encoding, 1024, true);
         await WriteDataTableToCsvAsync(table, writer, ct).ConfigureAwait(false);
-        await writer.FlushAsync().ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxService.ConvertXlsxToCsvAsync(System.Byte[],System.String,System.Text.Encoding,System.Threading.CancellationToken)' />

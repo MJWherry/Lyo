@@ -159,7 +159,7 @@ public class BuiltInQRCodeService : IQRCodeService
         }
 
         sw.Stop();
-        var successCount = results.Count(r => r.IsSuccess && r.Data is QRCodeResult { IsSuccess: true });
+        var successCount = results.Count(r => r is { IsSuccess: true, Data.IsSuccess: true });
         var failureCount = results.Count - successCount;
         _logger.LogDebug("Generated {Count} QR codes in batch: {SuccessCount} successful, {FailureCount} failed", requestList.Count, successCount, failureCount);
         return BulkResult<QRCodeRequest, QRCodeResult>.FromResults(results);

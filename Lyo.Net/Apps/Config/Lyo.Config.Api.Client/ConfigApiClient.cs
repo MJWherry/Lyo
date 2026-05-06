@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Common;
 using Lyo.Config.Api.Models;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -62,7 +62,7 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
         if (!AppConfigEntity.TryCreate(appKind, appId, out _, out var errMsg))
             throw new ArgumentException(errMsg ?? "Invalid app route segments.");
 
-        var trimmedVersion = (version ?? string.Empty).Trim();
+        var trimmedVersion = version.OrDefault().Trim();
         var qp = trimmedVersion.Length == 0 ? string.Empty : $"?version={Uri.EscapeDataString(trimmedVersion)}";
         var uri = $"api/config/{Uri.EscapeDataString(appKind.Trim())}/{Uri.EscapeDataString(appId.Trim())}{qp}";
         using var request = new HttpRequestMessage(headOnly ? HttpMethod.Head : HttpMethod.Get, uri);

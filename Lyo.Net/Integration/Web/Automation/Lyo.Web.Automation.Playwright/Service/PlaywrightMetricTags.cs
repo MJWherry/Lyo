@@ -1,4 +1,4 @@
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Web.Automation.Playwright.Browser;
 
 namespace Lyo.Web.Automation.Playwright.Service;

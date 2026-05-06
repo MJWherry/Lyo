@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Job.Models.Request;

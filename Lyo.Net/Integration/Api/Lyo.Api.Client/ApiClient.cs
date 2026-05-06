@@ -552,6 +552,7 @@ public class ApiClient : IApiClient
         return result;
     }
 
+    // ReSharper disable once UnusedParameter.Local
     private static async Task<byte[]> ReadResponseBytesAsync(HttpResponseMessage response, CancellationToken ct)
     {
 #if NET9_0_OR_GREATER
@@ -561,6 +562,7 @@ public class ApiClient : IApiClient
 #endif
     }
 
+    // ReSharper disable once UnusedParameter.Local
     private static async Task<string> ReadResponseStringAsync(HttpResponseMessage response, CancellationToken ct)
     {
 #if NET9_0_OR_GREATER

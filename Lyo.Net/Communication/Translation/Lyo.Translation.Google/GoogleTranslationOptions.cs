@@ -25,7 +25,7 @@ public sealed class GoogleTranslationOptions : TranslationServiceOptions
     public string? ServiceAccountJsonPath { get; set; }
 
     /// <summary>Gets or sets the Google Cloud Translate API endpoint (optional, defaults to Google's public endpoint).</summary>
-    public string? ApiEndpoint { get; set; }
+    public string ApiEndpoint { get; set; } = "https://translation.googleapis.com/language/translate/v2";
 
     /// <summary>Returns a string representation of the options (privacy-safe, does not include credentials).</summary>
     /// <returns>A string containing the ProjectId if available.</returns>

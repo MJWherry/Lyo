@@ -166,10 +166,12 @@ public sealed class HashingStream : Stream
     public byte[] GetHash()
     {
         if (_hashFinalized)
+            // ReSharper disable once RedundantSuppressNullableWarningExpression
             return _hashAlgorithm.Hash!;
 
         _hashAlgorithm.TransformFinalBlock([], 0, 0);
         _hashFinalized = true;
+        // ReSharper disable once RedundantSuppressNullableWarningExpression
         return _hashAlgorithm.Hash!;
     }
 

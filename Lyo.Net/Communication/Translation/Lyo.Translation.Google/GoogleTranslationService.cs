@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.Metrics;
@@ -36,7 +36,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
     {
         _options = options;
         _httpClient = httpClient ?? new HttpClient();
-        _baseUrl = _options.ApiEndpoint.IsNullOrEmpty() ? "https://translation.googleapis.com/language/translate/v2" : options.ApiEndpoint.TrimEnd('/');
+        _baseUrl = options.ApiEndpoint.TrimEnd('/');
 
         // Override base metric names with Google Translate-specific ones
         MetricNames[nameof(Translation.Constants.Metrics.TranslateDuration)] = Constants.Metrics.TranslateDuration;
@@ -200,37 +200,39 @@ public sealed class GoogleTranslationService : TranslationServiceBase
         }
     }
 
-    private class GoogleTranslateResponse
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleTranslateResponse(GoogleTranslateData? Data)
     {
-        public GoogleTranslateData? Data { get; set; }
+        public override string ToString() => Data?.ToString() ?? "";
     }
 
-    private class GoogleTranslateData
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleTranslateData(IReadOnlyList<GoogleTranslation> Translations)
     {
-        public List<GoogleTranslation>? Translations { get; set; }
+        public override string ToString() => $"Translations: {Translations.Count}";
     }
 
-    private class GoogleTranslation
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleTranslation(string TranslatedText, string? DetectedSourceLanguage)
     {
-        public string TranslatedText { get; } = string.Empty;
-
-        public string? DetectedSourceLanguage { get; set; }
+        public override string ToString() => $"{(DetectedSourceLanguage.IsNullOrEmpty() ? "" : $"Detected {DetectedSourceLanguage}, ")}{TranslatedText}";
     }
 
-    private class GoogleDetectLanguageResponse
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleDetectLanguageResponse(GoogleDetectLanguageData? Data)
     {
-        public GoogleDetectLanguageData? Data { get; set; }
+        public override string ToString() => Data?.ToString() ?? "";
     }
 
-    private class GoogleDetectLanguageData
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleDetectLanguageData(IReadOnlyList<IReadOnlyList<GoogleDetection>> Detections)
     {
-        public List<List<GoogleDetection>>? Detections { get; set; }
+        public override string ToString() => $"Detections: {Detections.Count}";
     }
 
-    private class GoogleDetection
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal sealed record GoogleDetection(string Language, double Confidence)
     {
-        public string Language { get; } = string.Empty;
-
-        public double Confidence { get; set; }
+        public override string ToString() => $"{Language}: {Confidence}";
     }
 }

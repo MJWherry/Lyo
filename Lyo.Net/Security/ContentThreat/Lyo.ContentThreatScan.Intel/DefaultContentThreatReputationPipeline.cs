@@ -2,42 +2,28 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using Lyo.ContentThreatScan;
+using Lyo.ContentThreatScan.Abstractions;
+using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.ContentThreatScan.Intel;
 
-internal sealed record ProviderAccumulator(
-    List<ContentThreatContribution> Contributions,
-    bool IntelConfirmedMalicious)
-{
-    public static ProviderAccumulator Merge(ProviderAccumulator a, ProviderAccumulator b)
-    {
-        var list = new List<ContentThreatContribution>(a.Contributions.Count + b.Contributions.Count);
-        list.AddRange(a.Contributions);
-        list.AddRange(b.Contributions);
-        return new(list, a.IntelConfirmedMalicious || b.IntelConfirmedMalicious);
-    }
-
-    public ExternalReputationEnvelope Finish() =>
-        new(Contributions, IntelConfirmedMalicious);
-}
-
 public sealed class DefaultContentThreatReputationPipeline : IContentThreatReputationPipeline
 {
-    readonly HttpClient _http;
-    readonly ReputationPipelineOptions _opts;
-    readonly ILogger _log;
-    readonly ReputationDigestLookupCache _cache;
+    private readonly HttpClient _http;
+    private readonly ReputationPipelineOptions _opts;
+    private readonly ILogger _log;
+    private readonly ReputationDigestLookupCache _cache;
 
-    public DefaultContentThreatReputationPipeline(
-        HttpClient httpClient,
+    public DefaultContentThreatReputationPipeline(HttpClient httpClient,
         ReputationPipelineOptions options,
         ILogger<DefaultContentThreatReputationPipeline>? logger = null)
     {
-        _http = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _opts = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentHelpers.ThrowIfNull(httpClient);
+        ArgumentHelpers.ThrowIfNull(options);
+        _http = httpClient;
+        _opts = options;
         _log = logger ?? NullLogger<DefaultContentThreatReputationPipeline>.Instance;
         _cache = new(Math.Max(options.DigestCacheMaximumEntries, 8));
         _http.Timeout = Timeout.InfiniteTimeSpan;
@@ -85,10 +71,10 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         return envelope;
     }
 
-    static ProviderAccumulator EmptyAcc() =>
-        new(new List<ContentThreatContribution>(), IntelConfirmedMalicious: false);
+    private static ProviderAccumulator EmptyAcc() =>
+        new([], IntelConfirmedMalicious: false);
 
-    async Task<ProviderAccumulator> SafeProbe(
+    private async Task<ProviderAccumulator> SafeProbe(
         string name,
         CancellationToken userCt,
         CancellationToken linkedCt,
@@ -109,26 +95,25 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         }
     }
 
-    ExternalReputationFailureDisposition FailMode(string name) =>
+    private ExternalReputationFailureDisposition FailMode(string name) =>
         name switch {
             "vt" => _opts.VirusTotalFailureDisposition,
             "bazaar" => _opts.MalwareBazaarFailureDisposition,
             _ => _opts.Clamd.FailureDisposition
         };
 
-    ProviderAccumulator FailureAcc(string ruleId, ExternalReputationFailureDisposition mode) =>
+    private ProviderAccumulator FailureAcc(string ruleId, ExternalReputationFailureDisposition mode) =>
         mode switch {
             ExternalReputationFailureDisposition.TreatAsSuspect => new(
-                new List<ContentThreatContribution> { new(ruleId, ContentThreatCategory.Reputation, Math.Max(_opts.ProviderFailureSuspectBump, 0m)) },
+                [new(ruleId, ContentThreatCategory.Reputation, Math.Max(_opts.ProviderFailureSuspectBump, 0m))],
                 IntelConfirmedMalicious: false),
             ExternalReputationFailureDisposition.ImmediateThreatBump => new(
-                new List<ContentThreatContribution>
-                    { new(ruleId + ".threat", ContentThreatCategory.Reputation, Math.Max(_opts.ProviderFailureThreatBump, 0m)) },
+                [new(ruleId + ".threat", ContentThreatCategory.Reputation, Math.Max(_opts.ProviderFailureThreatBump, 0m))],
                 IntelConfirmedMalicious: false),
             _ => EmptyAcc()
         };
 
-    async Task<ProviderAccumulator> ProbeMb(string shaHex, CancellationToken ct)
+    private async Task<ProviderAccumulator> ProbeMb(string shaHex, CancellationToken ct)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, _opts.MalwareBazaarEndpoint);
         req.Headers.TryAddWithoutValidation("Auth-Key", _opts.MalwareBazaarAuthKey!.Trim());
@@ -138,7 +123,7 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
                 Encoding.UTF8,
                 "application/x-www-form-urlencoded");
 
-        using HttpResponseMessage resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
         var txt = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var json = JsonDocument.Parse(txt);
         var root = json.RootElement;
@@ -169,13 +154,13 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         return new(list, IntelConfirmedMalicious: true);
     }
 
-    async Task<ProviderAccumulator> ProbeVt(string shaHex, CancellationToken ct)
+    private async Task<ProviderAccumulator> ProbeVt(string shaHex, CancellationToken ct)
     {
         var url = new Uri(_opts.VirusTotalApiRoot, $"files/{shaHex.ToLowerInvariant()}");
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.TryAddWithoutValidation("x-apikey", _opts.VirusTotalApiKey!.Trim());
-
-        using HttpResponseMessage resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
+        
+        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
         if (resp.StatusCode == HttpStatusCode.NotFound)
             return EmptyAcc();
 
@@ -193,7 +178,7 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
                 ? malCount
                 : 0;
 
-        decimal points = malicious * Math.Max(_opts.VirusTotalPointsPerMaliciousEngine, 0m);
+        var points = malicious * Math.Max(_opts.VirusTotalPointsPerMaliciousEngine, 0m);
         List<ContentThreatContribution> contrib = new();
         if (points > 0m)
             contrib.Add(new("reputation.vt", ContentThreatCategory.Reputation, Math.Min(points, 120m)));
@@ -203,16 +188,15 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         return new(contrib, confirm);
     }
 
-    static JsonElement TryAttrs(JsonElement root)
+    private static JsonElement TryAttrs(JsonElement root)
     {
-        if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object ||
-            !data.TryGetProperty("attributes", out var attrs))
+        if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object || !data.TryGetProperty("attributes", out var attrs))
             return default;
 
         return attrs.ValueKind == JsonValueKind.Object ? attrs : default;
     }
 
-    async Task<ProviderAccumulator> ProbeClam(ReadOnlyMemory<byte> sample, CancellationToken ct)
+    private async Task<ProviderAccumulator> ProbeClam(ReadOnlyMemory<byte> sample, CancellationToken ct)
     {
         using TcpClient tcp = new();
 #if NET5_0_OR_GREATER
@@ -221,11 +205,10 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         await tcp.ConnectAsync(_opts.Clamd.Host, _opts.Clamd.Port).ConfigureAwait(false);
 #endif
 
-        NetworkStream ns = tcp.GetStream();
+        var ns = tcp.GetStream();
         ns.ReadTimeout = Math.Max(_opts.Clamd.TcpConnectTimeoutMilliseconds, 3000);
         ns.WriteTimeout = Math.Max(_opts.Clamd.TcpConnectTimeoutMilliseconds, 3000);
-
-        byte[] preamble = Encoding.ASCII.GetBytes("zINSTREAM\0");
+        var preamble = "zINSTREAM\0"u8.ToArray();
 
 #if NETSTANDARD2_0
         await ns.WriteAsync(preamble, 0, preamble.Length, ct).ConfigureAwait(false);
@@ -249,22 +232,15 @@ public sealed class DefaultContentThreatReputationPipeline : IContentThreatReput
         }
 
         await SendClamChunk(ns, [], ct).ConfigureAwait(false);
+        var ascii = await ReadLineAscii(ns, ct).ConfigureAwait(false);
+        var msg = ascii.Length == 0 ? "" : Encoding.ASCII.GetString(ascii).Trim();
+        if (!msg.StartsWith("FOUND", StringComparison.OrdinalIgnoreCase))
+            return EmptyAcc();
 
-        byte[] ascii = await ReadLineAscii(ns, ct).ConfigureAwait(false);
-        string msg = ascii.Length == 0 ? "" : Encoding.ASCII.GetString(ascii).Trim();
+        var detail = msg.Length <= 260 ? msg : msg[..260] + "...";
+        List<ContentThreatContribution> contrib = [new("clamd.detected", ContentThreatCategory.AntiMalwareEngine, Math.Max(_opts.Clamd.EngineDetectionPoints, 0m), detail)];
+        return new(contrib, _opts.Clamd.EngineDetectionMarksIntelConfirmed);
 
-        if (msg.StartsWith("FOUND", StringComparison.OrdinalIgnoreCase)) {
-            string detail =
-                msg.Length <= 260 ? msg : msg.Substring(0, 260) + "...";
-            List<ContentThreatContribution> contrib =
-                new()
-                {
-                    new("clamd.detected", ContentThreatCategory.AntiMalwareEngine, Math.Max(_opts.Clamd.EngineDetectionPoints, 0m), detail)
-                };
-            return new(contrib, _opts.Clamd.EngineDetectionMarksIntelConfirmed);
-        }
-
-        return EmptyAcc();
     }
 
     static async Task SendClamChunk(NetworkStream ns, byte[] payload, CancellationToken ct)

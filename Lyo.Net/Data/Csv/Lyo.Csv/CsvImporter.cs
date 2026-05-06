@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;

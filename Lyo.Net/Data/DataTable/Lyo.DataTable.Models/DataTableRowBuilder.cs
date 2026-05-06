@@ -37,14 +37,14 @@ public sealed class DataTableRowBuilder
     /// <summary>Adds a cell with a string value. FormatWhen does not apply. Use SetCell&lt;T&gt; for typed values when FormatWhen is configured.</summary>
     public DataTableRowBuilder AddCell(int col, string value)
     {
-        _cells[col] = DataTableCell.FromValue(value ?? "");
+        _cells[col] = DataTableCell.FromValue(value);
         return this;
     }
 
     /// <summary>Adds a cell at the given column.</summary>
     public DataTableRowBuilder AddCell(int col, IDataTableCell cell)
     {
-        _cells[col] = cell ?? DataTableCell.Empty;
+        _cells[col] = cell;
         return this;
     }
 
@@ -59,7 +59,7 @@ public sealed class DataTableRowBuilder
     public DataTableRowBuilder AddCells(params string[] values)
     {
         for (var i = 0; i < values.Length; i++)
-            _cells[i] = DataTableCell.FromValue(values[i] ?? "");
+            _cells[i] = DataTableCell.FromValue(values[i]);
 
         return this;
     }
@@ -68,7 +68,7 @@ public sealed class DataTableRowBuilder
     public DataTableRowBuilder AddCells(params IDataTableCell[] cells)
     {
         for (var i = 0; i < cells.Length; i++)
-            _cells[i] = cells[i] ?? DataTableCell.Empty;
+            _cells[i] = cells[i];
 
         return this;
     }

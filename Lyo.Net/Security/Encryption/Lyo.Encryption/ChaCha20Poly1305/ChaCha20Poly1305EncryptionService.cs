@@ -64,7 +64,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
         try {
-            var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, actualKey, nonce);
+            var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(plaintext, actualKey!, nonce);
             using var ms = new MemoryStream();
             using var bw = new BinaryWriter(ms);
             bw.Write(Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
@@ -121,7 +121,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
         try {
-            var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(bytes, actualKey, nonce);
+            var (ciphertext, tag) = ChaCha20Poly1305Helper.Encrypt(bytes, actualKey!, nonce);
             using var ms = new MemoryStream();
             using var bw = new BinaryWriter(ms);
 
@@ -243,7 +243,7 @@ public class ChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetr
         }
 
         try {
-            return ChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey, nonce);
+            return ChaCha20Poly1305Helper.Decrypt(ciphertext, tag, actualKey!, nonce);
         }
 #if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {

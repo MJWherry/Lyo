@@ -98,10 +98,10 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>
         // 2. Mark as Running.
         var include = string.Join("&include=", RunIncludes);
         var startedRun = await _apiClient.PostAsAsync<JobRunRes>($"{_apiBaseUrl}/{Constants.Rest.Job.RunStarted(runId)}?include={include}", ct: ct).ConfigureAwait(false);
-        if (startedRun is null) {
-            Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
-            return ResultVoid.Failure("Failed to start run", "StartFailed");
-        }
+        //if (startedRun is null) {
+        //    Logger.LogWarning("Failed to mark run {RunId} as started — it may have been cancelled or already processed", runId);
+        //    return ResultVoid.Failure("Failed to start run", "StartFailed");
+        //}
 
         // 3. Create per-run linked CancellationTokenSource so cancellation signals can stop ExecuteAsync.
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(ct);

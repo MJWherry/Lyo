@@ -1,8 +1,7 @@
-using Lyo.Web.Components.RichTextEditor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace Lyo.Web.Components;
+namespace Lyo.Web.Components.RichTextEditor;
 
 public partial class LyoRichTextEditor : IAsyncDisposable
 {

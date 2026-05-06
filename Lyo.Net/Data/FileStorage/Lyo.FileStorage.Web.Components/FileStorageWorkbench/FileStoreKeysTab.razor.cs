@@ -1,14 +1,14 @@
 using System.Globalization;
 using System.Text.Json;
 using Lyo.Common.Enums;
-using Lyo.Hashing;
 using Lyo.FileStorage.Web.Components.Services;
+using Lyo.Hashing;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
-namespace Lyo.FileStorage.Web.Components;
+namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 
 public partial class FileStoreKeysTab : ComponentBase
 {

@@ -107,14 +107,14 @@ public sealed class PostgresFileMetadataStoreBuilder
         // Register the keyed metadata store
         if (!_services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(_keyName) && s.ServiceType == typeof(IFileMetadataStore))) {
             _services.AddKeyedScoped<PostgresFileMetadataStore>(
-                _keyName, (provider, serviceKey) => {
+                _keyName, (provider, _) => {
                     var factory = provider.GetRequiredService<IDbContextFactory<FileMetadataStoreDbContext>>();
                     var dbContext = factory.CreateDbContext();
                     var loggerFactory = provider.GetService<ILoggerFactory>();
                     return new(dbContext, loggerFactory);
                 });
 
-            _services.AddKeyedScoped<IFileMetadataStore>(_keyName, (provider, serviceKey) => provider.GetRequiredKeyedService<PostgresFileMetadataStore>(_keyName));
+            _services.AddKeyedScoped<IFileMetadataStore>(_keyName, (provider, _) => provider.GetRequiredKeyedService<PostgresFileMetadataStore>(_keyName));
         }
 
         if (!_services.Any(s => s.ServiceType == typeof(IMultipartUploadSessionStore)))

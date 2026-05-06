@@ -27,7 +27,6 @@ public class SubdirectoryTests : IDisposable
         var subDir = Path.Combine(_tempSession.SessionDirectory, "subdir");
         Directory.CreateDirectory(subDir);
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
-        var filePath = Path.Combine(subDir, fileName);
         var eventFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
         watcher.FileCreated += (_, e) => {
@@ -70,7 +69,6 @@ public class SubdirectoryTests : IDisposable
         var subDir2 = Path.Combine(subDir1, "subdir2");
         Directory.CreateDirectory(subDir2);
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
-        var filePath = Path.Combine(subDir2, fileName);
         var eventFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
         watcher.FileCreated += (_, e) => {

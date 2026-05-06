@@ -140,7 +140,7 @@ public static class AsyncResultExtensions
     }
 
     /// <summary>Runs all tasks in parallel and returns the first successful result (enumerable overload).</summary>
-    public static async Task<Result<T>> FirstSuccess<T>(IEnumerable<Task<Result<T>>> tasks) => await FirstSuccess(tasks?.ToArray() ?? []).ConfigureAwait(false);
+    public static async Task<Result<T>> FirstSuccess<T>(IEnumerable<Task<Result<T>>> tasks) => await FirstSuccess(tasks.ToArray()).ConfigureAwait(false);
 
     /// <summary>Executes an async side-effect on a task result without changing it (success or failure).</summary>
     public static async Task<Result<T>> TapAsync<T>(this Task<Result<T>> task, Func<T, Task> action, CancellationToken ct = default)

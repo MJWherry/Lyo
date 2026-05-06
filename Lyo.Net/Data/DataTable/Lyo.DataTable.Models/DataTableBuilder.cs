@@ -20,7 +20,7 @@ public sealed class DataTableBuilder
     /// <summary>Adds a header at the given column.</summary>
     public DataTableBuilder AddHeader(int col, string value)
     {
-        _table.SetHeader(col, DataTableCell.FromValue(value ?? ""));
+        _table.SetHeader(col, DataTableCell.FromValue(value));
         return this;
     }
 
@@ -42,7 +42,7 @@ public sealed class DataTableBuilder
     public DataTableBuilder AddHeaders(params string[] values)
     {
         for (var i = 0; i < values.Length; i++)
-            _table.SetHeader(i, DataTableCell.FromValue(values[i] ?? ""));
+            _table.SetHeader(i, DataTableCell.FromValue(values[i]));
 
         return this;
     }
@@ -79,7 +79,7 @@ public sealed class DataTableBuilder
     /// <summary>Adds a footer at the given column.</summary>
     public DataTableBuilder AddFooter(int col, string value)
     {
-        _table.SetFooter(col, DataTableCell.FromValue(value ?? ""));
+        _table.SetFooter(col, DataTableCell.FromValue(value));
         return this;
     }
 
@@ -101,7 +101,7 @@ public sealed class DataTableBuilder
     public DataTableBuilder AddFooters(params string[] values)
     {
         for (var i = 0; i < values.Length; i++)
-            _table.SetFooter(i, DataTableCell.FromValue(values[i] ?? ""));
+            _table.SetFooter(i, DataTableCell.FromValue(values[i]));
 
         return this;
     }

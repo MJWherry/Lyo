@@ -113,7 +113,7 @@ public static class Utilities
                 try {
                     var fingerprintBytes = SparseFileFingerprinter.FingerprintAsync(file, fileSize.Value, ct).GetAwaiter().GetResult();
                     if (fingerprintBytes != null && fingerprintBytes.Length > 0) {
-                        fingerprint = HexEncoding.ToHexString(fingerprintBytes, TextLetterCase.Upper);
+                        fingerprint = HexEncoding.ToHexString(fingerprintBytes);
                     }
                 }
                 catch { /* Ignore fingerprint failures */

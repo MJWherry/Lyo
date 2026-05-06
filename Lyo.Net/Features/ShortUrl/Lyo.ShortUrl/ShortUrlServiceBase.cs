@@ -48,7 +48,7 @@ public class ShortUrlServiceBase : IShortUrlService
             Logger.LogDebug("Converted HTTP URL to HTTPS: {Url}", longUrl);
         }
 
-        ArgumentHelpers.ThrowIf(expirationDate.HasValue && expirationDate!.Value <= DateTime.UtcNow, "Expiration date must be in the future.", nameof(expirationDate));
+        ArgumentHelpers.ThrowIf(expirationDate.HasValue && expirationDate.Value <= DateTime.UtcNow, "Expiration date must be in the future.", nameof(expirationDate));
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.ShortenDuration)]);
         var sw = Stopwatch.StartNew();
         ct.ThrowIfCancellationRequested();

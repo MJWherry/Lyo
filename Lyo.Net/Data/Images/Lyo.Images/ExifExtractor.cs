@@ -15,7 +15,7 @@ internal static class ExifExtractor
     public static (ImageExifInfo? ExifInfo, Dictionary<string, string>? ExifData) Extract(Image image)
     {
         try {
-            var exif = image.Metadata?.ExifProfile;
+            var exif = image.Metadata.ExifProfile;
             if (exif == null)
                 return (null, null);
 
@@ -161,7 +161,7 @@ internal static class ExifExtractor
 
     private static Dictionary<string, string>? BuildRawExifData(ExifProfile exif)
     {
-        if (exif.Values == null || exif.Values.Count == 0)
+        if (exif.Values.Count == 0)
             return null;
 
         var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Lyo.Result.Enums;
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 namespace Lyo.Result;
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
+using Lyo.Hashing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -93,6 +94,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
     /// <inheritdoc />
     public async Task<FileStoreResult?> FindByHashAsync(byte[] hash, CancellationToken ct = default)
     {
+        ArgumentHelpers.ThrowIfNullOrEmpty(hash);
         _logger.LogDebug("Searching for metadata by hash");
 
         // For JSON file-based storage, we need to scan all metadata files
@@ -112,10 +114,11 @@ public class LocalFileMetadataStore : IFileMetadataStore
                     var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
 #endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
-                    if (metadata != null && ByteArraysEqual(metadata.OriginalFileHash, hash)) {
-                        _logger.LogDebug("Found metadata by hash for file {FileId}", metadata.Id);
-                        return metadata;
-                    }
+                    if (metadata?.OriginalFileHash is not { Length: > 0 } storedHash || !HashingService.Shared.FixedTimeEquals(storedHash.AsSpan(), hash.AsSpan()))
+                        continue;
+
+                    _logger.LogDebug("Found metadata by hash for file {FileId}", metadata.Id);
+                    return metadata;
                 }
                 catch (Exception ex) {
                     _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
@@ -175,21 +178,5 @@ public class LocalFileMetadataStore : IFileMetadataStore
         var subDir = Path.Combine(idString.Substring(0, 2), idString.Substring(2, 2));
         var fileName = fileId.ToString("N") + MetadataExtension;
         return Path.Combine(_rootDirectoryPath, subDir, fileName);
-    }
-
-    private static bool ByteArraysEqual(byte[] a, byte[] b)
-    {
-        if (a == null || b == null)
-            return a == b;
-
-        if (a.Length != b.Length)
-            return false;
-
-        for (var i = 0; i < a.Length; i++) {
-            if (a[i] != b[i])
-                return false;
-        }
-
-        return true;
     }
 }

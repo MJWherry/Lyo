@@ -1,5 +1,6 @@
-using System.Text;
+using Lyo.Common.Enums;
 using Lyo.Exceptions;
+using Lyo.Hashing;
 
 namespace Lyo.ContentThreatScan;
 
@@ -10,12 +11,9 @@ public static class ContentThreatBuffering
     public static async Task<byte[]> ReadLimitedAsync(Stream stream, int maxBytes, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(stream);
-
-        if (maxBytes < 0)
-            throw new ArgumentOutOfRangeException(nameof(maxBytes));
-
+        ArgumentHelpers.ThrowIfNotInRange(maxBytes, 0, int.MaxValue);
         if (maxBytes == 0)
-            return Array.Empty<byte>();
+            return [];
 
         var capacity = Math.Min(maxBytes, 8192);
         using var ms = new MemoryStream(capacity);
@@ -45,29 +43,8 @@ public static class ContentThreatBuffering
         return ms.ToArray();
     }
 
-#if NET5_0_OR_GREATER
-    public static byte[] ComputeSha256(ReadOnlySpan<byte> data) => global::System.Security.Cryptography.SHA256.HashData(data);
+    public static byte[] ComputeSha256(ReadOnlySpan<byte> data) => Hasher.ComputeSha256(data);
 
-    public static string Sha256DigestToHexLower(ReadOnlySpan<byte> digest32) => Convert.ToHexString(digest32).ToLowerInvariant();
-#else
-    public static byte[] ComputeSha256(ReadOnlySpan<byte> data)
-    {
-        var leased = data.ToArray();
-        using var sha256 = global::System.Security.Cryptography.SHA256.Create();
-        return sha256.ComputeHash(leased);
-    }
-
-    public static string Sha256DigestToHexLower(ReadOnlySpan<byte> digest32)
-    {
-        var arr = digest32.ToArray();
-        const string hexChars = "0123456789abcdef";
-        var sb = new StringBuilder(arr.Length * 2);
-        foreach (var b in arr) {
-            sb.Append(hexChars[b >> 4]);
-            sb.Append(hexChars[b & 0xf]);
-        }
-
-        return sb.ToString();
-    }
-#endif
+    public static string Sha256DigestToHexLower(ReadOnlySpan<byte> digest32) =>
+        HexEncoding.ToHexString(digest32, TextLetterCase.Lower);
 }

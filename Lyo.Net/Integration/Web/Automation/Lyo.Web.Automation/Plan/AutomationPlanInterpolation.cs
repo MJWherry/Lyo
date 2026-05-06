@@ -105,6 +105,14 @@ public static class AutomationPlanInterpolation
             return string.Join(Environment.NewLine, list!);
         }
 
+        if (head.Equals("context", StringComparison.OrdinalIgnoreCase) || head.Equals("ctx", StringComparison.OrdinalIgnoreCase)) {
+            OperationHelpers.ThrowIf(parts.Length < 2, $"Invalid context placeholder '{{{s}}}'.");
+            var key = string.Join(".", parts.Skip(1));
+            var foundCtx = b.ContextItems.TryGetValue(key, out var value);
+            OperationHelpers.ThrowIf(!foundCtx, $"Unknown context key '{key}'.");
+            return value?.ToString() ?? string.Empty;
+        }
+
         if (head.Equals("page", StringComparison.OrdinalIgnoreCase)) {
             OperationHelpers.ThrowIfNull(b.Browser, "page.url / page.title require an active browser in the interpolation bindings.");
             OperationHelpers.ThrowIf(parts.Length != 2, $"Invalid page placeholder '{{{s}}}'.");

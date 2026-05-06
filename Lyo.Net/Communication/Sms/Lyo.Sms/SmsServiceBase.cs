@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;

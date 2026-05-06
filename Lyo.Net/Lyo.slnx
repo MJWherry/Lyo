@@ -360,6 +360,7 @@
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Selenium/Lyo.Web.Automation.Selenium.csproj" />
         <File Path="Integration\Web\Automation\README.md" />
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Playwright/Lyo.Web.Automation.Playwright.csproj" />
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Tests/Lyo.Web.Automation.Tests.csproj" />
     </Folder>
     <Folder Name="/Integration/Espn/">
         <Project Path="Integration/Espn/Lyo.Espn.Fantasy.Football/Lyo.Espn.Fantasy.Football.csproj" />

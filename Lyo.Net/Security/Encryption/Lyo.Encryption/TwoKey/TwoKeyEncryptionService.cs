@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 using System.Text;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Encryption.Exceptions;
 using Lyo.Encryption.Security;

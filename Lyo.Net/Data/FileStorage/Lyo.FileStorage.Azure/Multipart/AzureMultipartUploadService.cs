@@ -240,7 +240,7 @@ public sealed class AzureMultipartUploadService : IMultipartUploadService
             parts.Add(_options.BlobPrefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\'));
 
         if (!string.IsNullOrWhiteSpace(pathPrefix))
-            parts.Add(pathPrefix!.Trim().Trim('/'));
+            parts.Add(pathPrefix.Trim().Trim('/'));
 
         parts.Add(".multipart");
         parts.Add(sessionId.ToString("N"));

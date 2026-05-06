@@ -42,7 +42,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
     /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesGcm;
 
-    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[]?)" />
+    /// <inheritdoc cref="IEncryptionService.Encrypt(ReadOnlySpan{byte}, string?, byte[])" />
     public override byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
@@ -69,7 +69,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
         try {
-            var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, actualKey, nonce);
+            var (ciphertext, tag) = AesGcmHelper.Encrypt(plaintext, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
         }
         finally {
@@ -131,7 +131,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             nonce = NonceGenerator.GenerateNonce(KeyStore!, keyId, keyVersion);
 
         try {
-            var (ciphertext, tag) = AesGcmHelper.Encrypt(bytes, actualKey, nonce);
+            var (ciphertext, tag) = AesGcmHelper.Encrypt(bytes, actualKey!, nonce);
             return BuildEncryptedFormat(ciphertext, tag, nonce, keyId, keyVersion, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1);
         }
         finally {
@@ -149,7 +149,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         return DecryptFromStream(ms, keyId, key);
     }
 
-    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[]?)" />
+    /// <inheritdoc cref="IEncryptionService.Decrypt(byte[], int, int, string?, byte[])" />
     public override byte[] Decrypt(byte[] buffer, int offset, int count, string? keyId = null, byte[]? key = null) => DecryptChunk(buffer, offset, count, keyId, key);
 
     /// <inheritdoc />
@@ -228,7 +228,7 @@ public class AesGcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
             AesGcmHelper.ValidateKeyLength(key, RequiredKeyBytes);
 
         try {
-            return AesGcmHelper.Decrypt(ciphertext, tag, actualKey, nonce);
+            return AesGcmHelper.Decrypt(ciphertext, tag, actualKey!, nonce);
         }
 #if NET10_0_OR_GREATER
         catch (AuthenticationTagMismatchException ex) {

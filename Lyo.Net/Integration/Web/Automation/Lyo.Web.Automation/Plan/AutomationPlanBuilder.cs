@@ -179,6 +179,16 @@ public sealed class AutomationPlanBuilder
         return this;
     }
 
+    /// <summary>Maps every item in a source string-list variable through a template and stores the resulting list.</summary>
+    public AutomationPlanBuilder StoreStringListFromTemplate(string sourceVariableName, string variableName, string itemTemplate, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceVariableName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(variableName);
+        ArgumentHelpers.ThrowIfNull(itemTemplate);
+        _steps.Add(new StoreStringListFromTemplateAutomationStep(sourceVariableName, variableName, itemTemplate, stepName));
+        return this;
+    }
+
     /// <summary>Stores the current page URL in a string variable.</summary>
     public AutomationPlanBuilder StorePageUrl(string variableName, string? stepName = null)
     {
@@ -204,7 +214,7 @@ public sealed class AutomationPlanBuilder
         return this;
     }
 
-    /// <summary>Downloads each URL in a string-list variable (requires <see cref="AutomationPlanRuntimeOptions.HttpClient" /> at run time).</summary>
+    /// <summary>Downloads each URL in a string-list variable (requires runner HTTP dependency registration).</summary>
     /// <param name="urlListFromCompletedStepIndex">When set, use the list as it was after this zero-based step; when null, use the variable’s final value.</param>
     public AutomationPlanBuilder DownloadUrlsToDirectory(
         string urlListVariableName,
@@ -216,6 +226,92 @@ public sealed class AutomationPlanBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(urlListVariableName);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetDirectory);
         _steps.Add(new DownloadUrlsToDirectoryAutomationStep(urlListVariableName, targetDirectory, fileNamePrefix, stepName, urlListFromCompletedStepIndex));
+        return this;
+    }
+
+    /// <summary>Sends an HTTP request with optional templated headers/body and stores response metadata in string variables.</summary>
+    public AutomationPlanBuilder HttpRequest(
+        string method,
+        string url,
+        Dictionary<string, string>? headers = null,
+        string? bodyTemplate = null,
+        string? responseBodyVariableName = null,
+        string? statusCodeVariableName = null,
+        string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(method);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
+        _steps.Add(new HttpRequestAutomationStep(method, url, headers, bodyTemplate, responseBodyVariableName, statusCodeVariableName, stepName));
+        return this;
+    }
+
+    /// <summary>Downloads a single HTTP(S) URL to a specific file path.</summary>
+    public AutomationPlanBuilder DownloadFile(string url, string targetFilePath, string? savedFilePathVariableName = null, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetFilePath);
+        _steps.Add(new DownloadFileAutomationStep(url, targetFilePath, savedFilePathVariableName, stepName));
+        return this;
+    }
+
+    /// <summary>Extracts source/link values from configured attributes on a previously-found element list.</summary>
+    public AutomationPlanBuilder ExtractSources(
+        string elementsListRefName,
+        string variableName,
+        IReadOnlyList<string>? attributeNames = null,
+        bool resolveRelativeUrls = true,
+        bool deduplicate = true,
+        bool splitCommaSeparatedValues = true,
+        string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(elementsListRefName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(variableName);
+        _steps.Add(
+            new ExtractSourcesAutomationStep(
+                elementsListRefName,
+                variableName,
+                attributeNames,
+                resolveRelativeUrls,
+                deduplicate,
+                splitCommaSeparatedValues,
+                stepName));
+        return this;
+    }
+
+    /// <summary>Upserts a JSON payload string through the configured runtime data sink.</summary>
+    public AutomationPlanBuilder UpsertJsonRecords(string recordsJsonVariableName, string targetName, string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(recordsJsonVariableName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetName);
+        _steps.Add(new UpsertJsonRecordsAutomationStep(recordsJsonVariableName, targetName, stepName));
+        return this;
+    }
+
+    /// <summary>Uploads all files from a directory through the configured runtime file storage service.</summary>
+    public AutomationPlanBuilder UploadDirectoryToFileStorage(
+        string sourceDirectory,
+        string destinationPrefix,
+        string? storedFileListVariableName = null,
+        string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceDirectory);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(destinationPrefix);
+        _steps.Add(new UploadDirectoryToFileStorageAutomationStep(sourceDirectory, destinationPrefix, storedFileListVariableName, stepName));
+        return this;
+    }
+
+    /// <summary>Invokes a DI-resolved service method for advanced scrape/intercept logic.</summary>
+    public AutomationPlanBuilder InvokeDiMethod(
+        string serviceType,
+        string methodName,
+        Dictionary<string, string>? arguments = null,
+        bool throwOnMissingMethod = true,
+        string? resultVariableName = null,
+        string? stepName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(serviceType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(methodName);
+        _steps.Add(new InvokeDiMethodAutomationStep(serviceType, methodName, arguments, throwOnMissingMethod, resultVariableName, stepName));
         return this;
     }
 }

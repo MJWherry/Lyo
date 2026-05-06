@@ -57,7 +57,7 @@ public sealed class UrlShortenBuilder
     /// <exception cref="ArgumentException">Thrown when expiration date is in the past.</exception>
     public UrlShortenBuilder SetExpirationDate(DateTime? expirationDate)
     {
-        ArgumentHelpers.ThrowIf(expirationDate.HasValue && expirationDate!.Value <= DateTime.UtcNow, "Expiration date must be in the future.", nameof(expirationDate));
+        ArgumentHelpers.ThrowIf(expirationDate.HasValue && expirationDate.Value <= DateTime.UtcNow, "Expiration date must be in the future.", nameof(expirationDate));
         _expirationDate = expirationDate;
         return this;
     }

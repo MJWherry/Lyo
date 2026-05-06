@@ -5,6 +5,7 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Builders;
@@ -591,7 +592,7 @@ public partial class LyoDataGridProjected
     private string GetFilterDisplayText(ConditionClause condition)
     {
         var displayName = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field)?.DisplayName ?? condition.Field;
-        var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
+        var comparatorText = condition.Comparison.GetDescription();
         var valueText = ChipLabelHelper.FormatFilterValue(condition.Value);
         return $"{displayName} {comparatorText} {valueText}";
     }
@@ -599,7 +600,7 @@ public partial class LyoDataGridProjected
     private string GetFilterDisplayDetailText(ConditionClause condition)
     {
         var displayName = FilterPropertyDefinitions.FirstOrDefault(p => p.PropertyName == condition.Field)?.DisplayName ?? condition.Field;
-        var comparatorText = CommonExtensions.GetDescription(condition.Comparison);
+        var comparatorText = condition.Comparison.GetDescription();
         var valueText = ChipLabelHelper.FormatFilterValue(condition.Value, false);
         return $"{displayName} {comparatorText} {valueText}";
     }
@@ -684,7 +685,7 @@ public partial class LyoDataGridProjected
 
     private async Task BulkExport(FileTypeFlags flag)
     {
-        ArgumentHelpers.ThrowIf(!CommonExtensions.IsSingleFlag(flag), "Only a single export type allowed.", nameof(flag));
+        ArgumentHelpers.ThrowIf(!flag.IsSingleFlag(), "Only a single export type allowed.", nameof(flag));
         if (!string.IsNullOrEmpty(Route)) {
             await BulkExportViaApi(flag);
             return;

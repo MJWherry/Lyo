@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Lyo.Ffmpeg.Models;
 
@@ -24,7 +23,6 @@ public sealed class FfmpegCommand
     }
 
     /// <summary>Gets the full command string (executable + arguments) for display or shell execution.</summary>
-    [return: NotNullIfNotNull(nameof(ExecutablePath))]
     public string GetFullCommand() => $"{ExecutablePath} {Arguments}";
 
     public override string ToString() => GetFullCommand();

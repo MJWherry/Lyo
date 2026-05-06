@@ -46,7 +46,7 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         }
 
         var baseline = Encoding.UTF8.GetBytes(expected);
-        var credentialBytes = credential!;
+        var credentialBytes = credential;
         var matches = baseline.Length == credentialBytes.Length && CryptographicOperations.FixedTimeEquals(baseline, credentialBytes);
         CryptographicOperations.ZeroMemory(credentialBytes);
 
@@ -75,8 +75,7 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         }
 
         if (!AuthenticationHeaderValue.TryParse(auth, out var parsed) ||
-            parsed is null ||
-            !string.Equals(parsed.Scheme.Trim(), "Bearer", StringComparison.OrdinalIgnoreCase)) {
+           !string.Equals(parsed.Scheme.Trim(), "Bearer", StringComparison.OrdinalIgnoreCase)) {
             credential = null;
             return false;
         }

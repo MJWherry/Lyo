@@ -14,7 +14,7 @@ internal static class SkiaExifExtractor
     {
         try {
             var directories = ImageMetadataReader.ReadMetadata(stream);
-            if (directories == null || directories.Count == 0)
+            if (directories.Count == 0)
                 return (null, null);
 
             var ifd0 = directories.OfType<ExifIfd0Directory>().FirstOrDefault();

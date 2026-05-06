@@ -4,6 +4,9 @@ using CsvHelper.Configuration;
 using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
+#if NETSTANDARD2_0
+using Lyo.Common;
+#endif
 
 namespace Lyo.Csv;
 
@@ -238,7 +241,7 @@ internal sealed class CsvExporter : ICsvExporter
         var firstRow = orderedRows[0].Value;
         if (hasHeaderRow && orderedRows.Count > 0) {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(firstRow.TryGetValue(c, out var hv) ? hv ?? "" : ""));
+                writer.Write((c > 0 ? "," : "") + EscapeCsv(firstRow.GetValueOrDefault(c, "")));
 
             writer.WriteLine();
             orderedRows = orderedRows.Skip(1).ToList();
@@ -252,7 +255,7 @@ internal sealed class CsvExporter : ICsvExporter
 
         foreach (var kv in orderedRows) {
             for (var c = 0; c < maxCol; c++)
-                writer.Write((c > 0 ? "," : "") + EscapeCsv(kv.Value.TryGetValue(c, out var rv) ? rv ?? "" : ""));
+                writer.Write((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, "")));
 
             writer.WriteLine();
         }
@@ -308,7 +311,7 @@ internal sealed class CsvExporter : ICsvExporter
         _logger.LogDebug("Exporting {ExportType} to csv stream", typeof(T).FullName);
         await using var writer = new StreamWriter(csvStream, Config.Encoding, 1024, true);
         await ExportToCsvAsync(data, writer, ct).ConfigureAwait(false);
-        await writer.FlushAsync().ConfigureAwait(false);
+        await writer.FlushAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvExporter.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.TextWriter,System.Threading.CancellationToken)' />
@@ -458,7 +461,7 @@ internal sealed class CsvExporter : ICsvExporter
         var firstRow = orderedRows[0].Value;
         if (hasHeaderRow && orderedRows.Count > 0) {
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(firstRow.TryGetValue(c, out var hv) ? hv ?? "" : "")).ConfigureAwait(false);
+                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(firstRow.GetValueOrDefault(c, ""))).ConfigureAwait(false);
 
             await writer.WriteLineAsync().ConfigureAwait(false);
             orderedRows = orderedRows.Skip(1).ToList();
@@ -473,7 +476,7 @@ internal sealed class CsvExporter : ICsvExporter
         foreach (var kv in orderedRows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++)
-                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(kv.Value.TryGetValue(c, out var rv) ? rv ?? "" : "")).ConfigureAwait(false);
+                await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(kv.Value.GetValueOrDefault(c, ""))).ConfigureAwait(false);
 
             await writer.WriteLineAsync().ConfigureAwait(false);
         }
@@ -492,7 +495,7 @@ internal sealed class CsvExporter : ICsvExporter
         foreach (var row in dataTable.Rows) {
             ct.ThrowIfCancellationRequested();
             for (var c = 0; c < maxCol; c++) {
-                var cell = row.Cells.TryGetValue(c, out var cellVal) ? cellVal : null;
+                var cell = row.Cells!.GetValueOrDefault(c, null);
                 await writer.WriteAsync((c > 0 ? "," : "") + EscapeCsv(cell?.DisplayValue ?? "")).ConfigureAwait(false);
             }
 

@@ -257,7 +257,7 @@ public class CacheServiceMetricsTests : IDisposable
         // Actually, let's simulate by disabling cache after setup, but that won't work
         // Instead, let's test with a factory that throws
         try {
-            await service.GetOrSetAsync<string>(key, ct => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken);
+            await service.GetOrSetAsync<string>(key, _ => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException) {
             // Expected

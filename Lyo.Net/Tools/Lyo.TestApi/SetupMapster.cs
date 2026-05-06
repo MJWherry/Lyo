@@ -12,7 +12,6 @@ using Lyo.People.Postgres.Database;
 using Lyo.Query.Models.Common;
 using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
-using Lyo.Web.Components.UniqueValueSelector;
 using Mapster;
 using MapsterMapper;
 

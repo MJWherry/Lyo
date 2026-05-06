@@ -62,6 +62,9 @@ dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_property = false:suggestion
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:suggestion
+dotnet_diagnostic.IDE0150.severity = none
+resharper_convert_type_check_pattern_to_null_check_highlighting = none
+resharper_convert_type_check_to_null_check_highlighting = none
 
 # ReSharper properties
 resharper_align_multiline_binary_expressions_chain = false
@@ -148,6 +151,11 @@ resharper_suggest_var_or_type_simple_types_highlighting = hint
 resharper_web_config_module_not_resolved_highlighting = warning
 resharper_web_config_type_not_resolved_highlighting = warning
 resharper_web_config_wrong_module_highlighting = warning
+# DI helpers often return IServiceCollection for fluent chaining; callers may register in place without using the return.
+resharper_unused_method_return_value_local_highlighting = none
+# Record positional parameters (e.g. human-readable Description) are intentionally not read everywhere; Equals/ToString still use them.
+resharper_not_accessed_positional_property_global_highlighting = none
+resharper_not_accessed_positional_property_local_highlighting = none
 
 [{*.bash,*.sh,*.zsh}]
 indent_style = space

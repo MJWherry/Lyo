@@ -1947,9 +1947,9 @@ public class LocalFileStorageServiceTests : IDisposable
         var result256 = await serviceSha256.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         var result384 = await serviceSha384.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         var resultMd5 = await serviceMd5.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
-        Assert.Equal(32, result256.OriginalFileHash!.Length);
-        Assert.Equal(48, result384.OriginalFileHash!.Length);
-        Assert.Equal(16, resultMd5.OriginalFileHash!.Length);
+        Assert.Equal(32, result256.OriginalFileHash.Length);
+        Assert.Equal(48, result384.OriginalFileHash.Length);
+        Assert.Equal(16, resultMd5.OriginalFileHash.Length);
         Assert.NotEqual(result256.OriginalFileHash, result384.OriginalFileHash);
         Assert.NotEqual(result256.OriginalFileHash, resultMd5.OriginalFileHash);
     }
@@ -1992,7 +1992,7 @@ public class LocalFileStorageServiceTests : IDisposable
         var testData = "Default algorithm test"u8.ToArray();
         var result = await service.SaveFileAsync(testData, "test.txt", ct: TestContext.Current.CancellationToken);
         Assert.Equal(HashAlgorithm.Sha256, result.HashAlgorithm);
-        Assert.Equal(32, result.OriginalFileHash!.Length);
+        Assert.Equal(32, result.OriginalFileHash.Length);
     }
 
     [Fact]
@@ -2011,7 +2011,7 @@ public class LocalFileStorageServiceTests : IDisposable
     private string GetSubPath(Guid fileId, string extension)
     {
         var idString = fileId.ToString("N");
-        var subDir = Path.Combine(idString.Substring(0, 2), idString.Substring(2, 2));
+        var subDir = Path.Combine(idString[..2], idString.Substring(2, 2));
         var fileName = fileId.ToString("N") + extension;
         return Path.Combine(subDir, fileName);
     }

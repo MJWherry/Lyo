@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Lyo.Common.Extensions;
+using Lyo.ContentThreatScan.Abstractions;
 using Lyo.Exceptions;
 
 namespace Lyo.ContentThreatScan;
@@ -9,22 +11,17 @@ namespace Lyo.ContentThreatScan;
 /// <summary>Regex-weighted heuristic engine with per-category spend caps.</summary>
 public sealed class DefaultContentThreatScanner : IContentThreatScanner
 {
-    private sealed class RuleDefinition
+    private sealed class RuleDefinition(string ruleId, string patternProbe, ContentThreatCategory category, decimal points, string regexPattern)
     {
-        public RuleDefinition(string ruleId, string patternProbe, ContentThreatCategory category, decimal points, string regexPattern)
-        {
-            RuleId = ruleId;
-            PatternProbe = patternProbe;
-            Category = category;
-            Points = points;
-            RegexPattern = regexPattern;
-        }
+        public string RuleId { get; } = ruleId;
 
-        public string RuleId { get; }
-        public string PatternProbe { get; }
-        public ContentThreatCategory Category { get; }
-        public decimal Points { get; }
-        public string RegexPattern { get; }
+        public string PatternProbe { get; } = patternProbe;
+
+        public ContentThreatCategory Category { get; } = category;
+
+        public decimal Points { get; } = points;
+
+        public string RegexPattern { get; } = regexPattern;
     }
 
     private readonly ContentThreatHeuristicOptions _heuristic;
@@ -75,9 +72,9 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
                 if (!rx.IsMatch(textScan))
                     continue;
 
-                decimal cap = CategoryCap(rule.Category);
-                decimal spent = SpendFor(rule.Category, spentSql, spentScript, spentOther);
-                decimal room = cap - spent;
+                var cap = CategoryCap(rule.Category);
+                var spent = SpendFor(rule.Category, spentSql, spentScript, spentOther);
+                var room = cap - spent;
                 if (room <= 0m)
                     continue;
 
@@ -89,7 +86,7 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
                 hits.Add(new(rule.RuleId, rule.Category, applied, $"{(rule.PatternProbe.Length == 0 ? "regex" : "substr")}:{rule.PatternProbe}"));
             }
             catch (RegexMatchTimeoutException) {
-                continue;
+               
             }
         }
 
@@ -136,7 +133,7 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
         }
     }
 
-    static bool LooksBinary(byte[] data, ContentThreatHeuristicOptions options)
+    private static bool LooksBinary(byte[] data, ContentThreatHeuristicOptions options)
     {
         if (data.Length == 0)
             return false;
@@ -174,7 +171,7 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
         return bad / (double)Math.Max(decoded.Length, 1);
     }
 
-    static string ProbeTextForPatterns(ReadOnlySpan<byte> data)
+    private static string ProbeTextForPatterns(ReadOnlySpan<byte> data)
     {
         try {
             var s = Encoding.UTF8.GetString(data.ToArray());
@@ -186,7 +183,7 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
         }
     }
 
-    static bool LooksTextEligible(ContentThreatHeuristicOptions heur, ContentThreatScanContext ctx)
+    private static bool LooksTextEligible(ContentThreatHeuristicOptions heur, ContentThreatScanContext ctx)
     {
         if (!string.IsNullOrWhiteSpace(ctx.ContentType)) {
             var trimmedCt = ctx.ContentType!.Trim();
@@ -215,12 +212,12 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
         return (semi >= 0 ? trimmedContentType[..semi] : trimmedContentType).Trim().ToLowerInvariant();
     }
 
-    static string ExtensionDots(string? fileName)
+    private static string ExtensionDots(string? fileName)
     {
-        if (string.IsNullOrWhiteSpace(fileName))
+        if (fileName.IsNullOrWhitespace())
             return string.Empty;
 
-        fileName = global::System.IO.Path.GetFileName(fileName!.Trim());
+        fileName = Path.GetFileName(fileName.Trim());
         var dot = fileName.LastIndexOf('.');
         if (dot <= 0 || dot == fileName.Length - 1)
             return string.Empty;
@@ -230,10 +227,8 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
         return ext;
     }
 
-    static RuleDefinition[] BuildDefinitions() =>
-        new[]
-        {
-            Rule("sql.union_select", "union", ContentThreatCategory.SqlInjection, 35m, @"\bunion\s+select\b"),
+    private static RuleDefinition[] BuildDefinitions() => [
+        Rule("sql.union_select", "union", ContentThreatCategory.SqlInjection, 35m, @"\bunion\s+select\b"),
             Rule("sql.drop_table", "drop", ContentThreatCategory.SqlInjection, 40m, @";\s*drop\s+table\b"),
             Rule("sql.delete_from", ";delete", ContentThreatCategory.SqlInjection, 38m, @";\s*delete\s+from\b"),
             Rule("sql.or_tautology", "'", ContentThreatCategory.SqlInjection, 18m, @"'[^']*'\s*(or|=)\s*(1\s*=\s*1|'1')"),
@@ -258,8 +253,8 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
 
             Rule("script.base64_exe", "", ContentThreatCategory.Other, 18m,
                 @"frombase64string\s*\(")
-        };
+    ];
 
-    static RuleDefinition Rule(string id, string probe, ContentThreatCategory cat, decimal pts, string rx) =>
+    private static RuleDefinition Rule(string id, string probe, ContentThreatCategory cat, decimal pts, string rx) =>
         new(id, probe, cat, pts, rx);
 }

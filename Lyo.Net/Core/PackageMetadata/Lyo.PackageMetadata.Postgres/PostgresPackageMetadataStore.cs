@@ -122,13 +122,7 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
             .ConfigureAwait(false);
 
         var orderedModels = new List<(string Prefix, PackageMetadata Metadata)>(rows.Count);
-        foreach (var row in rows) {
-            if (row.Package is null)
-                continue;
-
-            orderedModels.Add((row.NormalizedPrefix, row.Package.ToModel()));
-        }
-
+        orderedModels.AddRange(rows.Select(row => (row.NormalizedPrefix, row.Package.ToModel())));
         return orderedModels;
     }
 

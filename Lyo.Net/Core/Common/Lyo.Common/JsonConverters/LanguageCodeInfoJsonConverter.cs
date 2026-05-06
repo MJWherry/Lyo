@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 
 namespace Lyo.Common.JsonConverters;

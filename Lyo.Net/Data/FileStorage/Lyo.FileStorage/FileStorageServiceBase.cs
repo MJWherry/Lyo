@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipelines;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Compression;
 using Lyo.Compression.Models;

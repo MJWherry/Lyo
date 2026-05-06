@@ -92,5 +92,8 @@ app.MapDynamicCrudEndpoints<JobContext>(c => c.WithDefaults(d => {
 
 app.Run();
 
-/// <summary>Entry point type for WebApplicationFactory.</summary>
-public partial class Program;
+namespace Lyo.Api.Tests.Host
+{
+    /// <summary>Entry point type for WebApplicationFactory.</summary>
+    public partial class Program;
+}

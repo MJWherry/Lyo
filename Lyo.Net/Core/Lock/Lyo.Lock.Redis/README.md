@@ -1,28 +1,27 @@
 # Lyo.Lock.Redis
 
-Redis-based distributed lock implementation for Lyo.Lock. Uses StackExchange.Redis for multi-instance coordination across processes and servers.
+Distributed implementation of `ILockService` using **Redis** and [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Use this when multiple app instances must exclude each other on the same logical key.
+
+**Keyed semaphores** (`IKeyedSemaphoreService`) are not implemented here; they remain in-process in [`Lyo.Lock`](../Lyo.Lock/README.md).
 
 ## Features
 
-- **Distributed locking** – Coordinate across multiple app instances via Redis
-- **SET NX + Lua release** – Standard Redis lock pattern with token-based release
-- **Pub/sub optimization** – Uses Redis pub/sub to wake waiters immediately when a lock is released (reduces latency vs polling)
-- **Auto-expiry** – Locks auto-release if the process crashes (configurable duration)
-- **Shares Redis connection** – Can use the same `IConnectionMultiplexer` as Lyo.Cache.Fusion
+- **Cross-process / cross-host** mutual exclusion on string keys.
+- **Acquire** — `SET key token NX PX ttl` (unique token per holder).
+- **Release** — Lua script deletes the key only if the value still matches the token (avoids deleting another instance’s lock after expiry or misuse).
+- **Waiting** — optional **pub/sub** wakeups on release (`UsePubSubForAcquireWait`) to avoid sleeping on a fixed poll interval; fallback polling uses `AcquirePollInterval`.
+- **TTL** — `DefaultLockDuration` / per-call `lockDuration` so crashed processes do not hold keys forever.
+- **Shared multiplexer** — use the same `IConnectionMultiplexer` as caching or other Redis consumers.
 
-## Quick Start
+## Quick start
 
-### With Existing Redis Connection
+### Existing `IConnectionMultiplexer`
 
 ```csharp
 using Lyo.Lock.Redis;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 
-// If IConnectionMultiplexer is already registered (e.g. via Lyo.Cache.Fusion)
-services.AddRedisLock();
-
-// Or with options
+// IConnectionMultiplexer must already be registered (e.g. shared cache setup)
 services.AddRedisLock(options =>
 {
     options.DefaultAcquireTimeout = TimeSpan.FromSeconds(30);
@@ -31,25 +30,34 @@ services.AddRedisLock(options =>
 });
 ```
 
-### With Connection String
+### Connection string
+
+Registers `IConnectionMultiplexer` with `TryAddSingleton` if missing, then the lock service:
 
 ```csharp
-services.AddRedisLock("localhost:6379");
-
-// Or with options
 services.AddRedisLock("localhost:6379", options =>
 {
     options.AcquirePollInterval = TimeSpan.FromMilliseconds(10);
 });
 ```
 
-### From Configuration
+### Configuration
+
+Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`):
 
 ```csharp
-services.AddRedisLock(configuration);
+services.AddRedisLockFromConfiguration(configuration);
 ```
 
-Expects `Redis` section with `ConnectionString` and optional `LockOptions` section:
+Custom Redis section name:
+
+```csharp
+services.AddRedisLockFromConfiguration(configuration, redisSectionName: "RedisCluster");
+```
+
+Throws `InvalidOperationException` if no connection string can be resolved.
+
+Example `appsettings.json`:
 
 ```json
 {
@@ -71,38 +79,44 @@ Expects `Redis` section with `ConnectionString` and optional `LockOptions` secti
 
 ## Configuration
 
-### RedisLockOptions (extends LockOptions)
+### `RedisLockOptions` (extends `LockOptions`)
 
-| Property                  | Default | Description                                                                          |
-|---------------------------|---------|--------------------------------------------------------------------------------------|
-| `AcquirePollInterval`     | 10ms    | Interval between retries when polling (only when `UsePubSubForAcquireWait` is false) |
-| `UsePubSubForAcquireWait` | `true`  | Use Redis pub/sub to wake waiters on release instead of polling                      |
-| `SkipKeyNormalization`    | `false` | Skip `ToLowerInvariant()` on keys                                                    |
+| Property | Default | Description |
+|----------|---------|-------------|
+| `AcquirePollInterval` | 10 ms | Delay between retries when `UsePubSubForAcquireWait` is `false`. |
+| `UsePubSubForAcquireWait` | `true` | Subscribe to a per-key notify channel while waiting; publisher runs on successful Lua delete in `ReleaseAsync`. |
 
-Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `KeyPrefix`, `EnableMetrics`.
+Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `KeyPrefix`, `EnableMetrics`, `SkipKeyNormalization`.
 
-## How It Works
+## How it works
 
-1. **Acquire**: `SET key token NX PX duration` – sets the lock with a unique token and expiry
-2. **Release**: Lua script verifies token and deletes only if it matches (prevents releasing another holder's lock)
-3. **Waiters**: When `UsePubSubForAcquireWait` is true, waiters subscribe to a per-key channel and are notified immediately when the lock is released
+1. **Redis key** — `KeyPrefix` + normalized logical key (unless normalization is skipped).
+2. **Acquire loop** — try `SET` with `NX` and expiry; on failure, either wait on pub/sub with bounded deadline or `Task.Delay(AcquirePollInterval)`.
+3. **Notify channel** — separate Redis channel derived from the same prefix and key so waiters can retry promptly after a legitimate release.
+4. **Release** — Lua compares stored token to holder’s token; if equal, `DEL` and publish to the notify channel.
 
+## Operational notes
+
+- **TTL vs work duration** — if your critical section can run longer than `lockDuration`, the key may expire and another instance can acquire. Size `DefaultLockDuration` / per-call `lockDuration` above worst-case runtime, or shorten the guarded work.
+- **Clocks** — acquire timeout uses `DateTime.UtcNow` on the client for deadline calculation; Redis handles key TTL independently.
+- **Fairness** — Redis locks are not strictly FIFO; under contention, which waiter wins is nondeterministic.
+- **Metrics** — same names as `Lyo.Lock.Constants.Metrics` when `EnableMetrics` is true (see [`Lyo.Lock` README](../Lyo.Lock/README.md#metrics-constants)).
 
 ## Dependencies
 
 *(Synchronized from `Lyo.Lock.Redis.csproj`.)*
 
-**Target framework:** `netstandard2.0;net10.0`
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
 ### NuGet packages
 
-| Package                                           | Version     |
-|---------------------------------------------------|-------------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`     |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`     |
-| `Microsoft.Extensions.DependencyInjection`        | `[10,)`     |
-| `Microsoft.Extensions.Logging.Abstractions`       | `[10.0.1,)` |
-| `StackExchange.Redis`                             | `[2.12,)`   |
+| Package | Version |
+|---------|---------|
+| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.DependencyInjection` | `[10,)` |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
+| `StackExchange.Redis` | `[2.12,)` |
 
 ### Project references
 

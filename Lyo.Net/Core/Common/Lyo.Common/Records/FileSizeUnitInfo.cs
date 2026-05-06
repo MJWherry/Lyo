@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 
 namespace Lyo.Common.Records;
 
@@ -24,7 +25,7 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     // Static registry with fast lookups
     private static readonly Dictionary<string, FileSizeUnitInfo> _byAbbreviation = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<FileSizeUnit, FileSizeUnitInfo> _byFileSizeUnit = new();
-    private static readonly List<FileSizeUnitInfo> _allUnits = new();
+    private static readonly List<FileSizeUnitInfo> _allUnits = [];
 
     /// <summary>Gets all registered file size units.</summary>
     public static IReadOnlyList<FileSizeUnitInfo> All => _allUnits;
@@ -51,17 +52,13 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     /// <summary>Finds a file size unit by its abbreviation.</summary>
     /// <param name="abbreviation">The unit abbreviation (e.g., "KB", "MB", "GB").</param>
     /// <returns>The file size unit info, or Unknown if not found.</returns>
-    public static FileSizeUnitInfo FromAbbreviation(string? abbreviation) 
-        => abbreviation.IsNullOrEmpty() 
-            ? Unknown 
-            : _byAbbreviation.TryGetValue(abbreviation.Trim(), out var unit) 
-                ? unit 
-                : Unknown;
+    public static FileSizeUnitInfo FromAbbreviation(string? abbreviation)
+        => abbreviation.IsNullOrEmpty() ? Unknown : _byAbbreviation.GetValueOrDefault(abbreviation.Trim(), Unknown)!;
 
     /// <summary>Finds a file size unit by FileSizeUnit enum.</summary>
     /// <param name="fileSizeUnit">The FileSizeUnit enum value.</param>
     /// <returns>The file size unit info, or Unknown if not found.</returns>
-    public static FileSizeUnitInfo FromFileSizeUnit(FileSizeUnit fileSizeUnit) => _byFileSizeUnit.TryGetValue(fileSizeUnit, out var unit) ? unit : Unknown;
+    public static FileSizeUnitInfo FromFileSizeUnit(FileSizeUnit fileSizeUnit) => _byFileSizeUnit.GetValueOrDefault(fileSizeUnit, Unknown)!;
 
     /// <summary>Converts bytes to the unit's value.</summary>
     /// <param name="bytes">The number of bytes.</param>
@@ -71,13 +68,10 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     /// <summary>Gets the largest unit whose converted value from bytes is at least 1 (or Byte for 0/negative input).</summary>
     /// <param name="bytes">The number of bytes.</param>
     /// <returns>The best fit file size unit.</returns>
-    public static FileSizeUnitInfo GetBestFitUnit(long bytes)
-    {
-        if (bytes <= 0)
-            return Byte;
-
-        return _allUnits.OrderBy(u => u.BytesMultiplier).LastOrDefault(u => bytes >= u.BytesMultiplier) ?? Byte;
-    }
+    public static FileSizeUnitInfo GetBestFitUnit(long bytes) 
+        => bytes <= 0 
+            ? Byte 
+            : _allUnits.OrderBy(u => u.BytesMultiplier).LastOrDefault(u => bytes >= u.BytesMultiplier) ?? Byte;
 
     /// <summary>Formats bytes using the best fit unit abbreviation (e.g., "1.82mb").</summary>
     /// <param name="bytes">The number of bytes.</param>

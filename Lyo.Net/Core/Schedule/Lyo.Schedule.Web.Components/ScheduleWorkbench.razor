@@ -382,7 +382,7 @@
             var builder = ScheduleDefinition.Create().WithDescription(string.IsNullOrWhiteSpace(_description) ? null! : _description).Enabled(_enabled);
             switch (_type) {
                 case ScheduleType.Cron:
-                    builder.SetCron(_cronExpression?.Trim() ?? string.Empty);
+                    builder.SetCron(_cronExpression.Trim());
                     break;
                 case ScheduleType.SetTimes:
                     var timeValues = _timesList.ToList();

@@ -1,12 +1,19 @@
 using System.Collections.Concurrent;
 using Lyo.Exceptions;
+using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Lock;
 
-/// <summary>In-memory lock implementation using SemaphoreSlim per key. Suitable for single-process scenarios.</summary>
+/// <summary>
+/// In-memory exclusive lock: one holder per key within the current process. Uses a <see cref="SemaphoreSlim"/> per normalized key.
+/// </summary>
+/// <remarks>
+/// Not suitable for coordination across machines or processes; use a distributed <see cref="ILockService"/> for that.
+/// <see cref="LockOptions.DefaultLockDuration"/> is ignored (no TTL).
+/// </remarks>
 public sealed class LocalLockService : ILockService
 {
     private readonly ConcurrentDictionary<string, SemaphoreEntry> _locks = new();
@@ -14,6 +21,9 @@ public sealed class LocalLockService : ILockService
     private readonly IMetrics _metrics;
     private readonly LockOptions _options;
 
+    /// <param name="logger">Optional logger for acquire failures and release anomalies.</param>
+    /// <param name="options">Timeouts, key normalization, metrics toggles.</param>
+    /// <param name="metrics">When <see cref="LockOptions.EnableMetrics"/> is true and this is non-null, timings and counters are emitted.</param>
     public LocalLockService(ILogger<LocalLockService>? logger = null, LockOptions? options = null, IMetrics? metrics = null)
     {
         _logger = logger ?? NullLogger<LocalLockService>.Instance;
@@ -32,9 +42,7 @@ public sealed class LocalLockService : ILockService
         using (_metrics.StartTimer(Constants.Metrics.AcquireDuration, tags)) {
             var acquired = await entry.Semaphore.WaitAsync(effectiveTimeout, ct).ConfigureAwait(false);
             if (acquired) {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
                 Interlocked.Increment(ref entry.RefCount);
-#endif
                 _metrics.IncrementCounter(Constants.Metrics.AcquireSuccess, 1, tags);
                 return new LocalLockHandle(_locks, entry, normalizedKey, _logger, _metrics, key);
             }
@@ -87,59 +95,5 @@ public sealed class LocalLockService : ILockService
                 await handle.ReleaseAsync().ConfigureAwait(false);
             }
         }
-    }
-
-    private sealed class SemaphoreEntry
-    {
-        public readonly SemaphoreSlim Semaphore = new(1, 1);
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-        public int RefCount;
-#endif
-    }
-
-    private sealed class LocalLockHandle : ILockHandle
-    {
-        private readonly SemaphoreEntry _entry;
-        private readonly string _key;
-        private readonly string _keyForMetrics;
-        private readonly ConcurrentDictionary<string, SemaphoreEntry> _locks;
-        private readonly ILogger _logger;
-        private readonly IMetrics _metrics;
-        private int _released;
-
-        public LocalLockHandle(ConcurrentDictionary<string, SemaphoreEntry> locks, SemaphoreEntry entry, string key, ILogger logger, IMetrics metrics, string keyForMetrics)
-        {
-            _locks = locks;
-            _entry = entry;
-            _key = key;
-            _logger = logger;
-            _metrics = metrics;
-            _keyForMetrics = keyForMetrics;
-        }
-
-        public ValueTask ReleaseAsync()
-        {
-            if (Interlocked.Exchange(ref _released, 1) != 0)
-                return default;
-
-            using (_metrics.StartTimer(Constants.Metrics.ReleaseDuration, [(Constants.Metrics.Tags.Key, _keyForMetrics)])) {
-                try {
-                    _entry.Semaphore.Release();
-                }
-                catch (SemaphoreFullException ex) {
-                    _logger.LogWarning(ex, "Lock for key {LockKey} was already released", _key);
-                }
-            }
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-            if (Interlocked.Decrement(ref _entry.RefCount) == 0)
-                _locks.TryRemove(new(_key, _entry));
-#endif
-            return default;
-        }
-
-        public void Dispose() => ReleaseAsync().AsTask().GetAwaiter().GetResult();
-
-        public async ValueTask DisposeAsync() => await ReleaseAsync().ConfigureAwait(false);
     }
 }

@@ -3,6 +3,7 @@ using Lyo.Common.Records;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
+// ReSharper disable AccessToModifiedClosure
 
 namespace Lyo.FileSystemWatcher.Tests;
 

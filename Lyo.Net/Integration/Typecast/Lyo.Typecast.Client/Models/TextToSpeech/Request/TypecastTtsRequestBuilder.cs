@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 

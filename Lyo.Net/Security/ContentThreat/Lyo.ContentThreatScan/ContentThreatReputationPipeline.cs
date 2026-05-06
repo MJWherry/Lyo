@@ -1,10 +1,6 @@
-namespace Lyo.ContentThreatScan;
+using Lyo.ContentThreatScan.Abstractions;
 
-/// <summary>Optional external caches emitting reputation-weighted contributions.</summary>
-public interface IContentThreatReputationPipeline
-{
-    Task<ExternalReputationEnvelope> InspectAsync(ContentThreatReputationRequest request, ContentThreatScanContext context, CancellationToken ct = default);
-}
+namespace Lyo.ContentThreatScan;
 
 /// <summary>Default no-op pipeline.</summary>
 public sealed class NullContentThreatReputationPipeline : IContentThreatReputationPipeline

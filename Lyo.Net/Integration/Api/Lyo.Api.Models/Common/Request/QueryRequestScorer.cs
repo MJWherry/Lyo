@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text.RegularExpressions;
 using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -31,7 +32,7 @@ public static class QueryRequestScorer
         var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) =
             AnalyzeWhereClause(request.WhereClause);
 
-        var whereClauseScore = ScoreWhereClause(nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
+        var whereClauseScore = ScoreWhereClause(nodeCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
         var total = pagingScore + keysScore + sortScore + includeScore + selectScore + computedFieldsScore + totalCountModeScore + whereClauseScore;
         return new(
             total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0,
@@ -54,7 +55,7 @@ public static class QueryRequestScorer
         var (nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore) =
             AnalyzeWhereClause(request.WhereClause);
 
-        var whereClauseScore = ScoreWhereClause(nodeCount, conditionCount, groupClauseCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
+        var whereClauseScore = ScoreWhereClause(nodeCount, maxDepth, subClauseCount, maxSubClauseDepth, maxGroupBranchingFactor, comparisonScore);
         var total = pagingScore + keysScore + sortScore + includeScore + selectScore + computedFieldsScore + totalCountModeScore + whereClauseScore;
         return new(
             total, pagingScore, keysScore, sortScore, includeScore + selectScore, computedFieldsScore, totalCountModeScore, whereClauseScore, request.Start ?? 0,
@@ -84,7 +85,7 @@ public static class QueryRequestScorer
             return 0;
 
         var keyRows = keys.Count;
-        var keyValues = keys.Sum(k => k?.Length ?? 0);
+        var keyValues = keys.Sum(k => k.Length);
         return Math.Min(20, keyRows * 2 + keyValues);
     }
 
@@ -179,8 +180,6 @@ public static class QueryRequestScorer
 
     private static int ScoreWhereClause(
         int nodeCount,
-        int conditionCount,
-        int groupClauseCount,
         int maxDepth,
         int subClauseCount,
         int maxSubClauseDepth,
@@ -221,15 +220,9 @@ public static class QueryRequestScorer
         acc.MaxDepth = Math.Max(acc.MaxDepth, depth);
         if (node is GroupClause logical) {
             acc.GroupClauseCount++;
-            acc.MaxGroupBranchingFactor = Math.Max(acc.MaxGroupBranchingFactor, logical.Children?.Count ?? 0);
-            if (logical.Children is not null) {
-                foreach (var child in logical.Children) {
-                    if (child is null)
-                        continue;
-
-                    AnalyzeWhereClauseRecursive(child, depth + 1, subQueryDepth, acc, visited);
-                }
-            }
+            acc.MaxGroupBranchingFactor = Math.Max(acc.MaxGroupBranchingFactor, logical.Children.Count);
+            foreach (var child in logical.Children)
+                AnalyzeWhereClauseRecursive(child, depth + 1, subQueryDepth, acc, visited);
 
             if (logical.SubClause is null)
                 return;

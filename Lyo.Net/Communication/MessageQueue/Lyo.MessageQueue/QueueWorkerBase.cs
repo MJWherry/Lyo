@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Lyo.Common;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;

@@ -1,3 +1,4 @@
+using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,7 @@ public class LockServiceBothImplementationsTests : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         await _redisContainer.StartAsync();
-        _redis = ConnectionMultiplexer.Connect(_redisContainer.GetConnectionString());
+        _redis = await ConnectionMultiplexer.ConnectAsync(_redisContainer.GetConnectionString());
     }
 
     public async ValueTask DisposeAsync()

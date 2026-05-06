@@ -28,7 +28,7 @@ public sealed class BulkEmailRequestBuilder
     /// <exception cref="ArgumentOutsideRangeException">Thrown when maxLimit is outside the range [1, int.MaxValue].</exception>
     public BulkEmailRequestBuilder SetMaxLimit(int maxLimit)
     {
-        ArgumentHelpers.ThrowIfNullOrNotInRange(maxLimit, 1, int.MaxValue, nameof(maxLimit));
+        ArgumentHelpers.ThrowIfNullOrNotInRange(maxLimit, 1, int.MaxValue);
         _maxLimit = maxLimit;
         return this;
     }

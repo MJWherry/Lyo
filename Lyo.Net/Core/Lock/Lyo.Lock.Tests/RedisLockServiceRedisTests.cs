@@ -1,3 +1,4 @@
+using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
