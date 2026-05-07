@@ -1,5 +1,6 @@
 using Lyo.Common;
 using Lyo.Common.Enums;
+using Lyo.Common.Extensions;
 using Lyo.Geolocation.Models.Coordinates;
 
 namespace Lyo.Geolocation.Models.Addresses;

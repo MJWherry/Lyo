@@ -57,6 +57,10 @@ public static class Constants
 
         public const string ComicsRead = "comics/read";
 
+        public const string ComicsSeries = "comics/series";
+
+        public const string ComicsVolume = "comics/volume";
+
         public const string IdGenerator = "id-generator";
     }
 }

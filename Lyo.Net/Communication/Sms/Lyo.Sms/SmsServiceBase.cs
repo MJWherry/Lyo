@@ -222,7 +222,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
         var resultsList = results.ToList();
         var successCount = resultsList.Count(r => r.IsSuccess);
         Logger.LogInformation("Bulk send completed: {Success}/{Total} successful in {Elapsed}ms", successCount, builderList.Count, sw.ElapsedMilliseconds);
-        OnBulkSent(resultsList, sw.Elapsed);
+        OnBulkSent(resultsList);
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.BulkSendTotal)], builderList.Count);
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.BulkSendSuccess)], successCount);
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.BulkSendFailure)], builderList.Count - successCount);
@@ -279,7 +279,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
         Logger.LogInformation(
             "Bulk SMS send completed: {Success}/{Total} successful in {Elapsed}ms", resultsList.Count(r => r.IsSuccess), messageList.Count, sw.ElapsedMilliseconds);
 
-        OnBulkSent(resultsList, sw.Elapsed);
+        OnBulkSent(resultsList);
         var successCount = resultsList.Count(r => r.IsSuccess);
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.BulkSendTotal)], messageList.Count);
         Metrics.IncrementCounter(MetricNames[nameof(Constants.Metrics.BulkSendSuccess)], successCount);
@@ -356,7 +356,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
     private void OnBulkSending(IReadOnlyList<SmsRequest> messages) => BulkSending?.Invoke(this, new(messages));
 
     /// <summary>Raises the BulkSent event.</summary>
-    private void OnBulkSent(IReadOnlyList<TResult> results, TimeSpan elapsedTime) => BulkSent?.Invoke(this, new(BulkResult<SmsRequest>.FromResults(results)));
+    private void OnBulkSent(IReadOnlyList<TResult> results) => BulkSent?.Invoke(this, new(BulkResult<SmsRequest>.FromResults(results)));
 
     /// <summary>Releases the unmanaged resources used by the SmsServiceBase and optionally releases the managed resources.</summary>
     /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>

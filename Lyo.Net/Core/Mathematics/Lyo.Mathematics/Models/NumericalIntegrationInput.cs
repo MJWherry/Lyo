@@ -3,15 +3,30 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record NumericalIntegrationInput(Func<double, double> Function, double Start, double End, int Steps)
+public sealed record NumericalIntegrationInput
 {
-    public Func<double, double> Function { get; } = Function ?? throw new ArgumentNullException(nameof(Function));
 
-    public double Start { get; } = MathValueGuards.Finite(Start, nameof(Start));
+    public NumericalIntegrationInput(Func<double, double> function, double start, double end, int steps)
 
-    public double End { get; } = MathValueGuards.Finite(End, nameof(End));
+    {
 
-    public int Steps { get; } = Steps <= 0 ? throw new ArgumentOutOfRangeException(nameof(Steps)) : Steps;
+        function = function ?? throw new ArgumentNullException(nameof(function));
 
+        start = MathValueGuards.Finite(start, nameof(start));
+
+        end = MathValueGuards.Finite(end, nameof(end));
+
+        steps = steps <= 0 ? throw new ArgumentOutOfRangeException(nameof(steps)) : steps;
+        Function = function;
+        Start = start;
+        End = end;
+        Steps = steps;
+}
+
+
+    public Func<double, double> Function { get;  }
+    public double Start { get;  }
+    public double End { get;  }
+    public int Steps { get;  }
     public override string ToString() => $"Function={MathematicsDisplayFormat.DelegateType(Function)}, Start={Start}, End={End}, Steps={Steps}";
 }

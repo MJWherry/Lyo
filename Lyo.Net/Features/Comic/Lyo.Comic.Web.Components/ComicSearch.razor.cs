@@ -19,7 +19,7 @@ public partial class ComicSearch
 
     private string? _titleContains;
 
-    private ComicBrowseGridDensity _gridDensity = ComicBrowseGridDensity.Small;
+    private ComicBrowseViewMode _viewMode = ComicBrowseViewMode.GridSmall;
 
     /// <summary>
     /// Executes a search against your data source. Receives a <see cref="ComicSeriesQuery" /> built from the current filter state and a <see cref="CancellationToken" />; must
@@ -40,13 +40,13 @@ public partial class ComicSearch
     [Parameter]
     public Func<ComicSeries, string?>? ResolveCoverUrlFunc { get; set; }
 
-    /// <summary>Raised when the user clicks "Read" on a card. Provides the selected series.</summary>
+    /// <summary>Raised when the user jumps into the reader (cover, Read button, or list read icon).</summary>
     [Parameter]
     public EventCallback<ComicSeries> OnSeriesRead { get; set; }
 
-    /// <summary>Raised when the user clicks "Details" on a card. Provides the selected series.</summary>
+    /// <summary>Raised when the user opens the series browse page (card body, Details, or list row).</summary>
     [Parameter]
-    public EventCallback<ComicSeries> OnSeriesDetails { get; set; }
+    public EventCallback<ComicSeries> OnSeriesBrowse { get; set; }
 
     /// <summary>Page size for search results. Defaults to 20.</summary>
     [Parameter]
@@ -54,14 +54,7 @@ public partial class ComicSearch
 
     private IReadOnlyList<LyoSelectOption<string>> TagItems => AvailableTags.Select(t => new LyoSelectOption<string>(t, t)).ToList();
 
-    private string ResultsGridClass
-        => _gridDensity switch {
-            ComicBrowseGridDensity.Large => "comic-search__grid comic-search__grid--large",
-            ComicBrowseGridDensity.Small => "comic-search__grid comic-search__grid--small",
-            _ => "comic-search__grid comic-search__grid--small"
-        };
-
-    private void SetGridDensity(ComicBrowseGridDensity density) => _gridDensity = density;
+    private void SetViewMode(ComicBrowseViewMode mode) => _viewMode = mode;
 
     private string? ResolveCoverUrl(ComicSeries series) => ResolveCoverUrlFunc?.Invoke(series);
 
@@ -115,7 +108,7 @@ public partial class ComicSearch
         }
     }
 
-    private async Task OnReadAsync(ComicSeries series) => await OnSeriesRead.InvokeAsync(series);
+    private Task OnReadAsync(ComicSeries series) => OnSeriesRead.InvokeAsync(series);
 
-    private async Task OnDetailsAsync(ComicSeries series) => await OnSeriesDetails.InvokeAsync(series);
+    private Task OnBrowseAsync(ComicSeries series) => OnSeriesBrowse.InvokeAsync(series);
 }

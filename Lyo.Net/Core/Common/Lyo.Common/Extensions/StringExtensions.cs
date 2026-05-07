@@ -1,27 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Lyo.Exceptions;
 #if !NET6_0_OR_GREATER
 using System.Text;
 #endif
+
 namespace Lyo.Common.Extensions;
 
-/// <summary>Extension methods for <see cref="Stream"/> and string/Guid helpers (position reset, null coalescing, truncation, membership, repetition).</summary>
-public static class StreamStringExtensions
+/// <summary>Extension methods for strings and GUID string formatting helpers.</summary>
+public static class StringExtensions
 {
-    /// <summary>Sets the stream position to the beginning when the stream is seekable and not already at the start.</summary>
-    /// <param name="source">The stream to rewind.</param>
-    /// <param name="throwOnUnSeekable">If <see langword="true"/> and the stream is not seekable but its position is past zero, throws <see cref="InvalidOperationException"/>.</param>
-    /// <exception cref="InvalidOperationException">The stream cannot seek, its position is greater than zero, and <paramref name="throwOnUnSeekable"/> is <see langword="true"/>.</exception>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void MoveToStart(this Stream source, bool throwOnUnSeekable = false)
-    {
-        source.Position = source switch {
-            { CanSeek: true, Position: > 0 } => 0,
-            { CanSeek: false, Position: > 0 } when throwOnUnSeekable => throw new InvalidOperationException(""),
-            _ => source.Position
-        };
-    }
-
     extension([NotNullWhen(false)] string? value)
     {
         /// <summary>Determines whether the string is null or <see cref="string.Empty"/>.</summary>
@@ -35,18 +23,17 @@ public static class StreamStringExtensions
         public bool IsNullOrWhitespace() => string.IsNullOrWhiteSpace(value);
     }
 
-    /// <param name="value">The string to test.</param>
     extension(string? value)
     {
         /// <summary>Returns the default value if the string is null or empty.</summary>
-        /// <param name="defaultValue">The value to return when <paramref name="value"/> is null or empty.</param>
-        /// <returns><paramref name="defaultValue"/> when the string is null or empty; otherwise <paramref name="value"/>.</returns>
+        /// <param name="defaultValue">The value to return when the string is null or empty.</param>
+        /// <returns><paramref name="defaultValue"/> when the string is null or empty; otherwise the original value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrDefault(string defaultValue = "") => value.IsNullOrEmpty() ? defaultValue : value;
 
         /// <summary>Returns the default value if the string is null, empty, or consists only of whitespace.</summary>
-        /// <param name="defaultValue">The value to return when <paramref name="value"/> is null, empty, or whitespace.</param>
-        /// <returns><paramref name="defaultValue"/> when the string is null, empty, or whitespace; otherwise <paramref name="value"/>.</returns>
+        /// <param name="defaultValue">The value to return when the string is null, empty, or whitespace.</param>
+        /// <returns><paramref name="defaultValue"/> when the string is null, empty, or whitespace; otherwise the original value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrDefaultIfWhiteSpace(string defaultValue = "") => value.IsNullOrWhitespace() ? defaultValue : value;
     }
@@ -86,6 +73,21 @@ public static class StreamStringExtensions
     /// <param name="ellipsesLength">Number of <c>'.'</c> characters between segments; see <see cref="Truncated(string, int?, int?, int)"/>.</param>
     public static string Truncated(this in Guid? guid, in int? start = 4, in int? end = null, in int ellipsesLength = 3)
         => (guid ?? Guid.Empty).Truncated(start, end, ellipsesLength);
+
+    /// <summary>Truncates <paramref name="s"/> to at most <paramref name="maxLength"/> characters, appending an ellipsis when shortened.</summary>
+    /// <param name="s">The source string.</param>
+    /// <param name="maxLength">Maximum length of the returned string (including the ellipsis suffix).</param>
+    /// <returns>The original string when it fits; otherwise a prefix plus an ellipsis. When <paramref name="maxLength"/> is divisible by 3, the suffix is three ASCII periods (<c>...</c>), matching <see cref="Truncated(string, int?, int?, int)"/>; otherwise the Unicode ellipsis character (<c>…</c>) is used.</returns>
+    public static string Ellipsis(this string s, int maxLength)
+    {
+        ArgumentHelpers.ThrowIfLessThan(0, maxLength);
+        if (s.Length <= maxLength)
+            return s;
+
+        var suffix = maxLength % 3 == 0 ? "..." : "…";
+        var prefixLen = Math.Max(0, maxLength - suffix.Length);
+        return s[..prefixLen].TrimEnd() + suffix;
+    }
 
     /// <summary>Determines whether this string equals any element of <paramref name="values"/> using the specified comparison.</summary>
     /// <param name="value">The string to find.</param>

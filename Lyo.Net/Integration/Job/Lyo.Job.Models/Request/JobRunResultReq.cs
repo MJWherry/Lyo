@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Request;
@@ -28,7 +29,7 @@ public sealed class JobRunResultReq
         : this(key, JobParameterType.Long, value) { }
 
     public JobRunResultReq(string key, DateTime value, string? format = null)
-        : this(key, JobParameterType.DateTime, string.IsNullOrEmpty(format) ? value.ToString() : value.ToString(format)) { }
+        : this(key, JobParameterType.DateTime, string.IsNullOrEmpty(format) ? value.ToString(CultureInfo.CurrentCulture) : value.ToString(format)) { }
 
     public JobRunResultReq(string key, Enum value)
         : this(key, JobParameterType.String, value.ToString()) { }

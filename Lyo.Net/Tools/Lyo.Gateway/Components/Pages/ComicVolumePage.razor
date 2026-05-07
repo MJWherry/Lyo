@@ -1,0 +1,209 @@
+@using System.Globalization
+@using Lyo.Comic
+@using Lyo.Comic.Api.Models.Response
+@using Lyo.Comic.Enums
+@using Lyo.Comic.Web.Components
+@using Constants = Constants
+@inherits AuthorizedPage
+@inject IComicApiClient ComicApi
+@inject NavigationManager Navigator
+@attribute [Route("/" + Constants.Page.ComicsVolume + "/{VolumeId:guid}")]
+
+@if (_loadFailed) {
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+        <MudAlert Severity="Severity.Warning" Class="mb-4">Volume not found.</MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="@($"/{Constants.Page.Comics}")">
+            Back to comics
+        </MudButton>
+    </MudContainer>
+}
+else if (!_ready || _volume is null || _series is null) {
+    <MudProgressLinear Indeterminate="true"/>
+}
+else {
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6 comic-series-page">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           title="Back to series"
+                           OnClick="BackToSeriesAsync"/>
+            <MudText Typo="Typo.h5">@VolumeHeading()</MudText>
+        </MudStack>
+
+        <MudPaper Class="pa-4 mb-4 comic-series-page__hero" Elevation="1">
+            <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Start">
+                <div class="comic-series-page__hero-cover">
+                    @if (!string.IsNullOrWhiteSpace(_coverUrl)) {
+                        <img src="@_coverUrl" alt="" class="comic-series-page__hero-img"/>
+                    }
+                    else {
+                        <div class="comic-series-page__hero-placeholder">
+                            <MudIcon Icon="@Icons.Material.Filled.MenuBook" Style="font-size: 4rem; opacity: 0.35;"/>
+                        </div>
+                    }
+                </div>
+                <MudStack Spacing="1" Class="flex-grow-1" Style="min-width:0;">
+                    <MudText Typo="Typo.subtitle1">@_series.Title</MudText>
+                    @if (_volume.PublishedDate.HasValue) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_volume.PublishedDate.Value.ToString("d", CultureInfo.CurrentCulture)</MudText>
+                    }
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Justify="Justify.FlexEnd"
+                  Spacing="2"
+                  Class="mb-3 flex-wrap">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">View</MudText>
+            <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridLarge)"
+                           Variant="@(_viewMode == ComicBrowseViewMode.GridLarge ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">Grid L</MudButton>
+                <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridSmall)"
+                           Variant="@(_viewMode == ComicBrowseViewMode.GridSmall ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">Grid S</MudButton>
+                <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListNoImage)"
+                           Variant="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">List</MudButton>
+                <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListLine)"
+                           Variant="@(_viewMode == ComicBrowseViewMode.ListLine ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">Lines</MudButton>
+            </MudButtonGroup>
+        </MudStack>
+
+        <MudText Typo="Typo.h6" Class="mb-2">Chapters</MudText>
+        <ComicBrowseResults ViewMode="_viewMode">
+            @foreach (var ch in _chapters) {
+                <ComicBrowseCard Title="@ChapterTitle(ch)"
+                                 Subtitle="@ch.Language"
+                                 Description="@ch.Title"
+                                 CoverImageUrl="@ComicCoverUrls.Resolve(ch.CoverImageRef)"
+                                 TypeBadge="@TypeBadge"
+                                 LanguageLine="@ch.Language"
+                                 PageCount="@ch.PageCount"
+                                 Tags="@EmptyTags"
+                                 ViewMode="_viewMode"
+                                 ShowReadActions="false"
+                                 OnCoverClick="@(() => GoReaderAsync(ch.Id))"
+                                 OnPrimaryClick="@(() => GoReaderAsync(ch.Id))"/>
+            }
+        </ComicBrowseResults>
+    </MudContainer>
+}
+
+@code {
+
+    [Parameter]
+    public Guid VolumeId { get; set; }
+
+    protected override string PageName { get; set; } = "Volume";
+
+    private const string ComicApiPrefix = "api/comic";
+
+    private ComicVolumeRes? _volume;
+    private ComicSeries? _series;
+    private IReadOnlyList<ComicChapter> _chapters = [];
+    private bool _loadFailed;
+    private bool _ready;
+    private string? _coverUrl;
+    private ComicBrowseViewMode _viewMode = ComicBrowseViewMode.GridSmall;
+
+    private static readonly IReadOnlyList<string> EmptyTags = [];
+
+    private Task BackToSeriesAsync()
+    {
+        if (_volume is not null)
+            Navigator.NavigateTo($"/{Constants.Page.ComicsSeries}/{_volume.SeriesId}");
+
+        return Task.CompletedTask;
+    }
+
+    private string? TypeBadge
+        => _series is { ComicType: var t } && t != ComicType.Unknown ? t.ToString() : null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (VolumeId == Guid.Empty)
+            return;
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _ready = false;
+        _loadFailed = false;
+        _volume = null;
+        _series = null;
+
+        var vol = await ComicApi.GetAsAsync<ComicVolumeRes>($"{ComicApiPrefix}/volumes/{VolumeId}");
+        if (vol is null) {
+            _loadFailed = true;
+            return;
+        }
+
+        var seriesRes = await ComicApi.GetAsAsync<ComicSeriesRes>($"{ComicApiPrefix}/series/{vol.SeriesId}");
+        if (seriesRes is null) {
+            _loadFailed = true;
+            return;
+        }
+
+        var chapters = await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/volumes/{VolumeId}/chapters") ?? [];
+
+        _volume = vol;
+        _series = ToSeries(seriesRes);
+        _coverUrl = ComicCoverUrls.Resolve(vol.CoverImageRef);
+        _chapters = chapters.OrderBy(c => c.ChapterNumber).ToList();
+        PageName = VolumeHeading();
+        _ready = true;
+    }
+
+    private string VolumeHeading()
+    {
+        if (_volume is null)
+            return "Volume";
+
+        if (_volume.VolumeNumber.HasValue)
+            return $"Vol. {_volume.VolumeNumber:G}" + (string.IsNullOrWhiteSpace(_volume.Title) ? "" : $" — {_volume.Title}");
+
+        return string.IsNullOrWhiteSpace(_volume.Title) ? "Volume" : _volume.Title;
+    }
+
+    private static string ChapterTitle(ComicChapter ch)
+        => $"Ch. {ch.ChapterNumber:G}" + (string.IsNullOrWhiteSpace(ch.Title) ? "" : $" — {ch.Title}");
+
+    private Task GoReaderAsync(Guid chapterId)
+    {
+        if (_volume is null)
+            return Task.CompletedTask;
+
+        var qs = $"chapter={Uri.EscapeDataString(chapterId.ToString())}&page=1";
+        Navigator.NavigateTo($"/{Constants.Page.ComicsRead}/{_volume.SeriesId}?{qs}");
+        return Task.CompletedTask;
+    }
+
+    private static ComicSeries ToSeries(ComicSeriesRes r)
+        => new() {
+            Id = r.Id,
+            Title = r.Title,
+            Slug = r.Slug,
+            ComicType = r.ComicType,
+            Status = r.Status,
+            Description = r.Description,
+            Language = r.Language,
+            PublishedYear = r.PublishedYear,
+            Author = r.Author,
+            Artist = r.Artist,
+            Publisher = r.Publisher,
+            Source = r.Source,
+            CoverImageRef = r.CoverImageRef,
+            Demographic = r.Demographic,
+            CreatedTimestamp = r.CreatedTimestamp,
+            UpdatedTimestamp = r.UpdatedTimestamp,
+            AlternateTitles = r.AlternateTitles.Select(a =>
+                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
+        };
+
+}

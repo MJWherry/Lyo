@@ -55,6 +55,8 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
+using Lyo.Web.Automation.Playwright;
+using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Reporting.Postgres;
 using Lyo.Web.WebRenderer;
@@ -76,6 +78,7 @@ var host = Host.CreateDefaultBuilder(args)
 
         //services.AddPostgresComicStoreFromConfiguration(context.Configuration);
         services.AddSeleniumBrowserService();
+        services.AddPlaywrightBrowserService();
         services.AddIOTempService(); //temp file management
         services.AddPreviewService(); //preview HTML, images, etc. in browser
         services.AddLyoMetrics(); //metrics
@@ -199,7 +202,11 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
-
+var pw = sp.GetService<IPlaywrightBrowserService>();
+var pws = pw.CreateSession();
+await pws.StartBrowserAsync();
+await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");
+Console.ReadLine();
 //var spp = sp.GetService<ISeleniumBrowserService>();
 //var tr = spp.CreateSession();
 // await tr.StartBrowserAsync();

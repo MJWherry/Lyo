@@ -4,43 +4,121 @@ using Lyo.Mathematics.Quantities;
 namespace Lyo.Scientific.Astronomy;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record OrbitalElements(
-    Length SemiMajorAxis,
-    double Eccentricity,
-    Angle Inclination,
-    Angle LongitudeOfAscendingNode,
-    Angle ArgumentOfPeriapsis,
-    Angle MeanAnomalyAtEpoch,
-    DateTime EpochUtc)
+public sealed record OrbitalElements
 {
-    public double Eccentricity { get; init; } = Eccentricity is < 0d or >= 1d ? throw new ArgumentOutOfRangeException(nameof(Eccentricity)) : Eccentricity;
 
+    public OrbitalElements(
+    Length semiMajorAxis,
+    double eccentricity,
+    Angle inclination,
+    Angle longitudeOfAscendingNode,
+    Angle argumentOfPeriapsis,
+    Angle meanAnomalyAtEpoch,
+    DateTime epochUtc)
+
+    {
+
+        eccentricity = eccentricity is < 0d or >= 1d ? throw new ArgumentOutOfRangeException(nameof(eccentricity)) : eccentricity;
+
+        Eccentricity = eccentricity;
+        SemiMajorAxis = semiMajorAxis;
+        Inclination = inclination;
+        LongitudeOfAscendingNode = longitudeOfAscendingNode;
+        ArgumentOfPeriapsis = argumentOfPeriapsis;
+        MeanAnomalyAtEpoch = meanAnomalyAtEpoch;
+        EpochUtc = epochUtc;
+}
+
+
+    public double Eccentricity { get;  init; }
+
+    public Length SemiMajorAxis { get; init; }
+    public Angle Inclination { get; init; }
+    public Angle LongitudeOfAscendingNode { get; init; }
+    public Angle ArgumentOfPeriapsis { get; init; }
+    public Angle MeanAnomalyAtEpoch { get; init; }
+    public DateTime EpochUtc { get; init; }
     public override string ToString()
         => $"a={SemiMajorAxis}, e={Eccentricity}, i={Inclination}, Ω={LongitudeOfAscendingNode}, ω={ArgumentOfPeriapsis}, M0={MeanAnomalyAtEpoch}, epoch={EpochUtc:u}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record Exoplanet(string Name, Star HostStar, OrbitalElements OrbitalElements, Mass? Mass = null, Length? Radius = null, bool PotentiallyHabitable = false)
+public sealed record Exoplanet
 {
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
 
+    public Exoplanet(string name, Star hostStar, OrbitalElements orbitalElements, Mass? mass = null, Length? radius = null, bool potentiallyHabitable = false)
+
+    {
+
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+
+        Name = name;
+        HostStar = hostStar;
+        OrbitalElements = orbitalElements;
+        Mass = mass;
+        Radius = radius;
+        PotentiallyHabitable = potentiallyHabitable;
+}
+
+
+    public string Name { get;  init; }
+
+    public Star HostStar { get; init; }
+    public OrbitalElements OrbitalElements { get; init; }
+    public Mass? Mass { get; init; }
+    public Length? Radius { get; init; }
+    public bool PotentiallyHabitable { get; init; }
     public override string ToString()
         => $"{Name}, host={HostStar.Name}, habitable={PotentiallyHabitable}, M={ScientificModelDisplay.NullProp(Mass, static m => m.ToString())}, R={ScientificModelDisplay.NullProp(Radius, static r => r.ToString())}, orbit={OrbitalElements}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record Asteroid(string Name, OrbitalElements OrbitalElements, Length MeanRadius, double AbsoluteMagnitude)
+public sealed record Asteroid
 {
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
 
+    public Asteroid(string name, OrbitalElements orbitalElements, Length meanRadius, double absoluteMagnitude)
+
+    {
+
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+
+        Name = name;
+        OrbitalElements = orbitalElements;
+        MeanRadius = meanRadius;
+        AbsoluteMagnitude = absoluteMagnitude;
+}
+
+
+    public string Name { get;  init; }
+
+    public OrbitalElements OrbitalElements { get; init; }
+    public Length MeanRadius { get; init; }
+    public double AbsoluteMagnitude { get; init; }
     public override string ToString() => $"{Name}, R={MeanRadius}, H={AbsoluteMagnitude}, orbit={OrbitalElements}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record Comet(string Name, OrbitalElements OrbitalElements, TimeInterval OrbitalPeriod, double AbsoluteMagnitude)
+public sealed record Comet
 {
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
 
+    public Comet(string name, OrbitalElements orbitalElements, TimeInterval orbitalPeriod, double absoluteMagnitude)
+
+    {
+
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+
+        Name = name;
+        OrbitalElements = orbitalElements;
+        OrbitalPeriod = orbitalPeriod;
+        AbsoluteMagnitude = absoluteMagnitude;
+}
+
+
+    public string Name { get;  init; }
+
+    public OrbitalElements OrbitalElements { get; init; }
+    public TimeInterval OrbitalPeriod { get; init; }
+    public double AbsoluteMagnitude { get; init; }
     public override string ToString() => $"{Name}, P={OrbitalPeriod}, H={AbsoluteMagnitude}, orbit={OrbitalElements}";
 }
 

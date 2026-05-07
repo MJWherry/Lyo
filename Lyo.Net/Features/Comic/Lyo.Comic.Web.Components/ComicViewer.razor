@@ -44,12 +44,21 @@
 
     @* ── Top overlay bar ─────────────────────────────────────────── *@
     <div class="comic-viewer__top-bar @(_overlayVisible ? "comic-viewer__overlay--visible" : "comic-viewer__overlay--hidden")">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="w-100 px-2">
+        <div class="comic-viewer__top-inner px-2">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
                            Color="Color.Inherit"
                            Size="Size.Medium"
                            OnClick="CloseAsync"
                            title="Close viewer"/>
+
+            <div class="comic-viewer__series-meta">
+                @if (Series.ComicType != ComicType.Unknown) {
+                    <span class="comic-viewer__type-pill">@Series.ComicType.ToString()</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Series.Language)) {
+                    <span class="comic-viewer__lang-pill">@Series.Language.ToUpperInvariant()</span>
+                }
+            </div>
 
             @* Chapter selector ─────────────────────────────────────── *@
             @if (Chapters.Count > 0) {
@@ -59,15 +68,20 @@
                            ToStringFunc="ChapterToString"
                            Variant="Variant.Outlined"
                            Margin="Margin.Dense"
-                           Class="comic-viewer__chapter-select"
-                           AnchorOrigin="Origin.BottomRight"
-                           TransformOrigin="Origin.TopRight">
+                           Class="comic-viewer__chapter-select comic-viewer__chapter-select--grow"
+                           AnchorOrigin="Origin.BottomCenter"
+                           TransformOrigin="Origin.TopCenter">
                     @foreach (var chapter in Chapters) {
                         <MudSelectItem T="ComicChapter" Value="chapter">@ChapterToString(chapter)</MudSelectItem>
                     }
                 </MudSelect>
             }
-        </MudStack>
+
+            <div class="comic-viewer__page-meta" title="Pages in chapter">
+                <MudIcon Icon="@Icons.Material.Filled.Layers" Class="comic-viewer__page-meta-icon"/>
+                <span class="comic-viewer__page-meta-num">@EffectiveTotalPages</span>
+            </div>
+        </div>
     </div>
 
     @* ── Bottom overlay bar ──────────────────────────────────────── *@

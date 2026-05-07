@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Selenium.Browser;
@@ -58,7 +59,7 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
-        var sectionName = string.IsNullOrWhiteSpace(configSectionName) ? SeleniumBrowserOptions.SectionName : configSectionName!;
+        var sectionName = configSectionName.IsNullOrWhitespace() ? SeleniumBrowserOptions.SectionName : configSectionName;
         services.AddSingleton(_ => {
             var o = new SeleniumBrowserOptions();
             configuration.GetSection(sectionName).Bind(o);

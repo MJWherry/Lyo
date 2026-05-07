@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text.RegularExpressions;
 using Lyo.Exceptions;
 using Lyo.Formatter;

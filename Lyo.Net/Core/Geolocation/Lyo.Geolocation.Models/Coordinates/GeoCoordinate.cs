@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Enums;
 
@@ -132,14 +133,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
 
     public override bool Equals(object? obj) => obj is GeoCoordinate other && Equals(other);
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Latitude.GetHashCode();
-            hashCode = (hashCode * 397) ^ Longitude.GetHashCode();
-            return hashCode;
-        }
-    }
+    public override int GetHashCode() => HashCodeHelpers.Combine(Latitude, Longitude);
 
     public override string ToString() => $"{Latitude}, {Longitude}";
 

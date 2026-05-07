@@ -4,12 +4,22 @@ using Lyo.Mathematics.Quantities;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct ComplexNumber(double real, double imaginary)
+public readonly record struct ComplexNumber
 {
-    public double Real { get; } = MathValueGuards.Finite(real, nameof(real));
 
-    public double Imaginary { get; } = MathValueGuards.Finite(imaginary, nameof(imaginary));
+    public ComplexNumber(double real, double imaginary)
 
+    {
+
+        Real = MathValueGuards.Finite(real, nameof(real));
+
+        Imaginary = MathValueGuards.Finite(imaginary, nameof(imaginary));
+
+    }
+
+
+    public double Real { get;  }
+    public double Imaginary { get;  }
     public double Magnitude => Math.Sqrt(Real * Real + Imaginary * Imaginary);
 
     public double PhaseRadians => Math.Atan2(Imaginary, Real);

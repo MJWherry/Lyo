@@ -3,15 +3,30 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct LoanPaymentInput(double Principal, double AnnualInterestRate, int PaymentsPerYear, double Years)
+public readonly record struct LoanPaymentInput
 {
-    public double Principal { get; } = MathValueGuards.NonNegativeFinite(Principal, nameof(Principal));
 
-    public double AnnualInterestRate { get; } = MathValueGuards.Finite(AnnualInterestRate, nameof(AnnualInterestRate));
+    public LoanPaymentInput(double principal, double annualInterestRate, int paymentsPerYear, double years)
 
-    public int PaymentsPerYear { get; } = PaymentsPerYear <= 0 ? throw new ArgumentOutOfRangeException(nameof(PaymentsPerYear)) : PaymentsPerYear;
+    {
 
-    public double Years { get; } = MathValueGuards.NonNegativeFinite(Years, nameof(Years));
+        principal = MathValueGuards.NonNegativeFinite(principal, nameof(principal));
 
+        annualInterestRate = MathValueGuards.Finite(annualInterestRate, nameof(annualInterestRate));
+
+        paymentsPerYear = paymentsPerYear <= 0 ? throw new ArgumentOutOfRangeException(nameof(paymentsPerYear)) : paymentsPerYear;
+
+        years = MathValueGuards.NonNegativeFinite(years, nameof(years));
+        Principal = principal;
+        AnnualInterestRate = annualInterestRate;
+        PaymentsPerYear = paymentsPerYear;
+        Years = years;
+}
+
+
+    public double Principal { get;  }
+    public double AnnualInterestRate { get;  }
+    public int PaymentsPerYear { get;  }
+    public double Years { get;  }
     public override string ToString() => $"Principal={Principal}, AnnualInterestRate={AnnualInterestRate}, PaymentsPerYear={PaymentsPerYear}, Years={Years}";
 }

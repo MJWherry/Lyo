@@ -1,15 +1,10 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.Common.JsonConverters;
 using Lyo.Common.Records;
 using Lyo.Tts.Models;
-#if NETSTANDARD2_0
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#pragma warning disable CS8604 // Possible null reference argument.
-#endif
 
 namespace Lyo.Tts.AwsPolly;
 
@@ -79,7 +74,7 @@ public class AwsPollyTtsRequest : TtsRequest
     /// <summary>Parses audio format string to AudioFormat enum.</summary>
     private static AudioFormat? ParseAudioFormat(string? format)
     {
-        if (string.IsNullOrWhiteSpace(format))
+        if (format.IsNullOrWhitespace())
             return null;
 
         var normalized = format.ToLowerInvariant().Trim();

@@ -8,8 +8,6 @@ namespace Lyo.Endato.Client;
 
 public class EndatoClient : ApiClient
 {
-    private readonly ILoggerFactory _loggerFactory;
-
     private readonly EndatoClientOptions _options;
 
     public readonly EnrichmentManager Enrichment;
@@ -25,7 +23,6 @@ public class EndatoClient : ApiClient
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));
         _options = options;
-        _loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
         HttpClient.DefaultRequestHeaders.Add("galaxy-ap-password", options.ApPassword);
         HttpClient.DefaultRequestHeaders.Add("galaxy-ap-name", options.ApName);
         Persons = new(this);

@@ -3,11 +3,22 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct UniformDistributionParameters(double Minimum, double Maximum)
+public readonly record struct UniformDistributionParameters
 {
-    public double Minimum { get; } = MathValueGuards.Finite(Minimum, nameof(Minimum));
 
-    public double Maximum { get; } = MathValueGuards.Finite(Maximum, nameof(Maximum)) <= Minimum ? throw new ArgumentOutOfRangeException(nameof(Maximum)) : Maximum;
+    public UniformDistributionParameters(double minimum, double maximum)
 
+    {
+
+        minimum = MathValueGuards.Finite(minimum, nameof(minimum));
+
+        maximum = MathValueGuards.Finite(maximum, nameof(maximum)) <= minimum ? throw new ArgumentOutOfRangeException(nameof(maximum)) : maximum;
+        Minimum = minimum;
+        Maximum = maximum;
+}
+
+
+    public double Minimum { get;  }
+    public double Maximum { get;  }
     public override string ToString() => $"Minimum={Minimum}, Maximum={Maximum}";
 }

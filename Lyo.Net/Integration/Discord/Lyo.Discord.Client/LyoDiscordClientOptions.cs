@@ -9,5 +9,5 @@ public class LyoDiscordClientOptions : ApiClientOptions
     public new const string SectionName = "LyoDiscordClient";
 
     /// <summary>Initializes defaults when the section is absent or does not set <see cref="ApiClientOptions.BaseUrl" />.</summary>
-    public LyoDiscordClientOptions() => BaseUrl = "http://localhost:5092/";
+    public LyoDiscordClientOptions() => BaseUrl = "http://localhost:5251/";
 }

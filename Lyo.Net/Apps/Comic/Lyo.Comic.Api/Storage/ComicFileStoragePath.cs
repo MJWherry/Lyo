@@ -1,5 +1,3 @@
-using Lyo.Comic;
-
 namespace Lyo.Comic.Api.Storage;
 
 /// <summary>Builds file-storage <see cref="Lyo.FileMetadataStore.Models.FileStoreResult.PathPrefix" /> segments for comic binaries.</summary>

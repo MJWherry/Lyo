@@ -178,7 +178,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     {
         var state = JsonSerializer.Deserialize<LocalProviderState>(session.ProviderStateJson);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(state?.StagingDirectory, nameof(session.ProviderStateJson));
-        return state!.StagingDirectory;
+        return state.StagingDirectory;
     }
 
     private static void TryDeleteDir(string dir)

@@ -3,11 +3,20 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record CashFlowSeriesInput(double[] CashFlows, double DiscountRate)
+public sealed record CashFlowSeriesInput
 {
-    public double[] CashFlows { get; } = CashFlows ?? throw new ArgumentNullException(nameof(CashFlows));
 
-    public double DiscountRate { get; } = MathValueGuards.Finite(DiscountRate, nameof(DiscountRate));
+    public CashFlowSeriesInput(double[] cashFlows, double discountRate)
 
+    {
+        cashFlows = cashFlows ?? throw new ArgumentNullException(nameof(cashFlows));
+        discountRate = MathValueGuards.Finite(discountRate, nameof(discountRate));
+        CashFlows = cashFlows;
+        DiscountRate = discountRate;
+}
+
+
+    public double[] CashFlows { get;  }
+    public double DiscountRate { get;  }
     public override string ToString() => $"CashFlows={MathematicsDisplayFormat.DoubleArray(CashFlows)}, DiscountRate={DiscountRate}";
 }

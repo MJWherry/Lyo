@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Common;
@@ -68,13 +69,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 
     public override int GetHashCode()
     {
-        unchecked {
-            var hash = 17;
-            hash = hash * 31 + Field.GetHashCode();
-            hash = hash * 31 + Comparison.GetHashCode();
-            hash = hash * 31 + ValueHash(Value);
-            return hash;
-        }
+        return HashCodeHelpers.Combine(Field, Comparison, ValueHash(Value));
     }
 
     private static bool ValueEquals(object? a, object? b)

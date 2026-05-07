@@ -85,29 +85,40 @@
                   Justify="Justify.FlexEnd"
                   Spacing="2"
                   Class="comic-search__view-toolbar mb-3 flex-wrap">
-            <MudText Typo="Typo.caption" Color="Color.Secondary">View size</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">View</MudText>
             <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
-                <MudButton OnClick="@(() => SetGridDensity(ComicBrowseGridDensity.Large))"
-                           Variant="@(_gridDensity == ComicBrowseGridDensity.Large ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_gridDensity == ComicBrowseGridDensity.Large ? Color.Primary : Color.Default)">
-                    Large
+                <MudButton OnClick="@(() => SetViewMode(ComicBrowseViewMode.GridLarge))"
+                           Variant="@(_viewMode == ComicBrowseViewMode.GridLarge ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">
+                    Grid L
                 </MudButton>
-                <MudButton OnClick="@(() => SetGridDensity(ComicBrowseGridDensity.Small))"
-                           Variant="@(_gridDensity == ComicBrowseGridDensity.Small ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_gridDensity == ComicBrowseGridDensity.Small ? Color.Primary : Color.Default)">
-                    Small
+                <MudButton OnClick="@(() => SetViewMode(ComicBrowseViewMode.GridSmall))"
+                           Variant="@(_viewMode == ComicBrowseViewMode.GridSmall ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">
+                    Grid S
+                </MudButton>
+                <MudButton OnClick="@(() => SetViewMode(ComicBrowseViewMode.ListNoImage))"
+                           Variant="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">
+                    List
+                </MudButton>
+                <MudButton OnClick="@(() => SetViewMode(ComicBrowseViewMode.ListLine))"
+                           Variant="@(_viewMode == ComicBrowseViewMode.ListLine ? Variant.Filled : Variant.Outlined)"
+                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">
+                    Lines
                 </MudButton>
             </MudButtonGroup>
         </MudStack>
 
-        <div class="@ResultsGridClass">
+        <ComicBrowseResults ViewMode="_viewMode">
             @foreach (var series in _results) {
                 <ComicCard Series="series"
                            CoverImageUrl="@ResolveCoverUrl(series)"
+                           ViewMode="_viewMode"
                            OnRead="OnReadAsync"
-                           OnDetails="OnDetailsAsync"/>
+                           OnOpenSeries="OnBrowseAsync"/>
             }
-        </div>
+        </ComicBrowseResults>
 
         @if (_hasMore) {
             <div class="d-flex justify-center mt-4">

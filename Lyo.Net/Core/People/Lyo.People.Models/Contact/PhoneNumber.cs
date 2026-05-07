@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Common.Enums;
 
 namespace Lyo.People.Models.Contact;
@@ -45,14 +46,7 @@ public class PhoneNumber : IEquatable<PhoneNumber>
     public override bool Equals(object? obj) => obj is PhoneNumber other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Number.GetHashCode();
-            hashCode = (hashCode * 397) ^ (CountryCode?.GetHashCode() ?? 0);
-            return hashCode;
-        }
-    }
+    public override int GetHashCode() => HashCodeHelpers.Combine(Number, CountryCode);
 
     /// <summary>Equality operator</summary>
     public static bool operator ==(PhoneNumber? left, PhoneNumber? right) => Equals(left, right);

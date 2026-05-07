@@ -3,9 +3,18 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct ExponentialDistributionParameters(double Rate)
+public readonly record struct ExponentialDistributionParameters
 {
-    public double Rate { get; } = MathValueGuards.PositiveFinite(Rate, nameof(Rate));
 
+    public ExponentialDistributionParameters(double rate)
+
+    {
+
+        rate = MathValueGuards.PositiveFinite(rate, nameof(rate));
+        Rate = rate;
+}
+
+
+    public double Rate { get;  }
     public override string ToString() => $"Rate={Rate}";
 }

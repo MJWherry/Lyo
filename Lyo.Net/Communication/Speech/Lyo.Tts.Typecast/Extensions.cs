@@ -46,6 +46,7 @@ public static class Extensions
         }
 
         /// <summary>Adds Typecast TTS service to the service collection using configuration binding.</summary>
+        /// <param name="configuration">The configuration instance.</param>
         /// <param name="configSectionName">The configuration section name (defaults to "TypecastOptions").</param>
         /// <returns>The service collection for chaining.</returns>
         /// <remarks>

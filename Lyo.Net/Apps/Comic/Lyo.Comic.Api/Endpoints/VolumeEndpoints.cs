@@ -19,6 +19,9 @@ public static class VolumeEndpoints
         // Enriched reads — builder handles Query (POST /Query) and plain CRUD
         group.MapGet("/{id:guid}", GetVolumeById);
 
+        // Chapters in volume
+        group.MapGet("/{id:guid}/chapters", GetChaptersForVolume);
+
         // Cross-domain sub-resources
         group.MapGet("/{id:guid}/tags", GetTags);
         group.MapPost("/{id:guid}/tags", AddTag);
@@ -39,6 +42,13 @@ public static class VolumeEndpoints
             return Results.NotFound();
 
         return Results.Ok(await enricher.EnrichVolumeAsync(volume, ct: ct));
+    }
+
+    private static async Task<IResult> GetChaptersForVolume(Guid id, IComicStore store, ComicEnrichmentService enricher, string? language = null, CancellationToken ct = default)
+    {
+        var chapters = await store.GetChaptersByVolumeAsync(id, language, ct);
+        var enriched = await enricher.EnrichChapterListAsync(chapters, ct: ct);
+        return Results.Ok(enriched);
     }
 
     private static async Task<IResult> GetTags(Guid id, ITagStore tagStore, CancellationToken ct = default)

@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct TimeInterval(double seconds)
+public readonly record struct TimeInterval
 {
-    public double Seconds { get; } = MathValueGuards.NonNegativeFinite(seconds, nameof(seconds));
 
+    public TimeInterval(double seconds)
+
+    {
+
+        Seconds = MathValueGuards.NonNegativeFinite(seconds, nameof(seconds));
+
+    }
+
+
+    public double Seconds { get;  }
     public double Minutes => Seconds / 60d;
 
     public double Hours => Seconds / 3600d;

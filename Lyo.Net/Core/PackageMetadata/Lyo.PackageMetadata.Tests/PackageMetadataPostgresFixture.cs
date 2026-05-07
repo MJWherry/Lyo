@@ -1,4 +1,4 @@
-using Lyo.PackageMetadata;
+
 using Lyo.PackageMetadata.Postgres;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Testing.Containers;

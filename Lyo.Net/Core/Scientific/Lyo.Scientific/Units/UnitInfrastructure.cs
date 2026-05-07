@@ -20,23 +20,49 @@ public readonly record struct QuantityDimension(
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record DerivedUnitDefinition(string Name, string Symbol, QuantityDimension Dimension, double ToSiFactor)
+public sealed record DerivedUnitDefinition
 {
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
 
-    public string Symbol { get; init; } = string.IsNullOrWhiteSpace(Symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Symbol)) : Symbol;
+    public DerivedUnitDefinition(string name, string symbol, QuantityDimension dimension, double toSiFactor)
 
-    public double ToSiFactor { get; init; } = ToSiFactor <= 0d ? throw new ArgumentOutOfRangeException(nameof(ToSiFactor)) : ToSiFactor;
+    {
 
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+        symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
+        toSiFactor = toSiFactor <= 0d ? throw new ArgumentOutOfRangeException(nameof(toSiFactor)) : toSiFactor;
+
+        Name = name;
+        Symbol = symbol;
+        ToSiFactor = toSiFactor;
+        Dimension = dimension;
+}
+
+
+    public string Name { get;  init; }
+    public string Symbol { get;  init; }
+    public double ToSiFactor { get;  init; }
+
+    public QuantityDimension Dimension { get; init; }
     public override string ToString() => $"{Symbol} ({Name}), SI×{ToSiFactor}, {Dimension}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct DimensionedValue(double ValueSi, QuantityDimension Dimension)
+public readonly record struct DimensionedValue
 {
-    public double ValueSi { get; } = double.IsNaN(ValueSi) || double.IsInfinity(ValueSi) ? throw new ArgumentOutOfRangeException(nameof(ValueSi)) : ValueSi;
 
-    public QuantityDimension Dimension { get; } = Dimension;
+    public DimensionedValue(double valueSi, QuantityDimension dimension)
+
+    {
+
+        valueSi = double.IsNaN(valueSi) || double.IsInfinity(valueSi) ? throw new ArgumentOutOfRangeException(nameof(valueSi)) : valueSi;
+        ValueSi = valueSi;
+        Dimension = dimension;
+
+    }
+
+
+    public double ValueSi { get;  }
+    public QuantityDimension Dimension { get; }
 
     public override string ToString() => $"{ValueSi} (SI), {Dimension}";
 }

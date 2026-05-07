@@ -3,11 +3,22 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct NegativeBinomialDistributionParameters(int TargetSuccesses, double SuccessProbability)
+public readonly record struct NegativeBinomialDistributionParameters
 {
-    public int TargetSuccesses { get; } = TargetSuccesses <= 0 ? throw new ArgumentOutOfRangeException(nameof(TargetSuccesses)) : TargetSuccesses;
 
-    public double SuccessProbability { get; } = SuccessProbability is <= 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(SuccessProbability)) : SuccessProbability;
+    public NegativeBinomialDistributionParameters(int targetSuccesses, double successProbability)
 
+    {
+
+        targetSuccesses = targetSuccesses <= 0 ? throw new ArgumentOutOfRangeException(nameof(targetSuccesses)) : targetSuccesses;
+
+        successProbability = successProbability is <= 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(successProbability)) : successProbability;
+        TargetSuccesses = targetSuccesses;
+        SuccessProbability = successProbability;
+}
+
+
+    public int TargetSuccesses { get;  }
+    public double SuccessProbability { get;  }
     public override string ToString() => $"TargetSuccesses={TargetSuccesses}, SuccessProbability={SuccessProbability}";
 }

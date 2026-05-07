@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
-using Lyo.Web.Automation.Models.Enums;
 using Lyo.Web.Automation.Plan;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,7 +30,7 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         var plan = JsonSerializer.Deserialize<AutomationPlan>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(plan);
         Assert.Collection(
-            plan!.Steps,
+            plan.Steps,
             step => Assert.IsType<HttpRequestAutomationStep>(step),
             step => Assert.IsType<DownloadFileAutomationStep>(step),
             step => Assert.IsType<ExtractSourcesAutomationStep>(step),
@@ -55,7 +54,7 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
             .HttpRequest(
                 method: "POST",
                 url: "https://api.local/products",
-                headers: new Dictionary<string, string> { ["Content-Type"] = "application/json" },
+                headers: new() { ["Content-Type"] = "application/json" },
                 bodyTemplate: "{\"id\":\"{strings.productId}\"}",
                 responseBodyVariableName: "responseJson",
                 statusCodeVariableName: "statusCode")

@@ -1,17 +1,13 @@
 using Lyo.Api;
 using Lyo.Api.Mapping;
-using Lyo.Api.Services.Crud.Create;
 using Lyo.Cache;
-using Lyo.Common.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
-using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Mapster;
 using MapsterMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Constants = Lyo.Job.Models.Constants;

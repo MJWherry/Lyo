@@ -3,17 +3,34 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record AdaptiveIntegrationInput(Func<double, double> Function, double Start, double End, double Tolerance, int MaxDepth)
+public sealed record AdaptiveIntegrationInput
 {
-    public Func<double, double> Function { get; } = Function ?? throw new ArgumentNullException(nameof(Function));
 
-    public double Start { get; } = MathValueGuards.Finite(Start, nameof(Start));
+    public AdaptiveIntegrationInput(Func<double, double> function, double start, double end, double tolerance, int maxDepth)
 
-    public double End { get; } = MathValueGuards.Finite(End, nameof(End));
+    {
 
-    public double Tolerance { get; } = MathValueGuards.PositiveFinite(Tolerance, nameof(Tolerance));
+        function = function ?? throw new ArgumentNullException(nameof(function));
 
-    public int MaxDepth { get; } = MaxDepth <= 0 ? throw new ArgumentOutOfRangeException(nameof(MaxDepth)) : MaxDepth;
+        start = MathValueGuards.Finite(start, nameof(start));
 
+        end = MathValueGuards.Finite(end, nameof(end));
+
+        tolerance = MathValueGuards.PositiveFinite(tolerance, nameof(tolerance));
+
+        maxDepth = maxDepth <= 0 ? throw new ArgumentOutOfRangeException(nameof(maxDepth)) : maxDepth;
+        Function = function;
+        Start = start;
+        End = end;
+        Tolerance = tolerance;
+        MaxDepth = maxDepth;
+}
+
+
+    public Func<double, double> Function { get;  }
+    public double Start { get;  }
+    public double End { get;  }
+    public double Tolerance { get;  }
+    public int MaxDepth { get;  }
     public override string ToString() => $"Function={MathematicsDisplayFormat.DelegateType(Function)}, Start={Start}, End={End}, Tolerance={Tolerance}, MaxDepth={MaxDepth}";
 }

@@ -26,6 +26,9 @@ public static class SeriesEndpoints
         // Chapters by series
         group.MapGet("/{id:guid}/chapters", GetChapters);
 
+        // Volumes by series
+        group.MapGet("/{id:guid}/volumes", GetVolumes);
+
         // Cross-domain sub-resources
         group.MapGet("/tags", GetAllTags);
         group.MapGet("/{id:guid}/tags", GetTags);
@@ -83,6 +86,13 @@ public static class SeriesEndpoints
     {
         var chapters = await store.GetChaptersBySeriesAsync(id, language, ct);
         return Results.Ok(chapters);
+    }
+
+    private static async Task<IResult> GetVolumes(Guid id, IComicStore store, ComicEnrichmentService enricher, CancellationToken ct = default)
+    {
+        var volumes = await store.GetVolumesBySeriesAsync(id, ct);
+        var enriched = await enricher.EnrichVolumeListAsync(volumes, ct: ct);
+        return Results.Ok(enriched);
     }
 
     private static async Task<IResult> GetAllTags(ITagStore tagStore, CancellationToken ct = default)

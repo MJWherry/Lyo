@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct Pressure(double pascals)
+public readonly record struct Pressure
 {
-    public double Pascals { get; } = MathValueGuards.NonNegativeFinite(pascals, nameof(pascals));
 
+    public Pressure(double pascals)
+
+    {
+
+        Pascals = MathValueGuards.NonNegativeFinite(pascals, nameof(pascals));
+
+    }
+
+
+    public double Pascals { get;  }
     public double Kilopascals => Pascals / 1000d;
 
     public double Atmospheres => Pascals / 101_325d;

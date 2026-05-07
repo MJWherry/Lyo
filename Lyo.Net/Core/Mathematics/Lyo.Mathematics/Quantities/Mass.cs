@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct Mass(double kilograms)
+public readonly record struct Mass
 {
-    public double Kilograms { get; } = MathValueGuards.NonNegativeFinite(kilograms, nameof(kilograms));
 
+    public Mass(double kilograms)
+
+    {
+
+        Kilograms = MathValueGuards.NonNegativeFinite(kilograms, nameof(kilograms));
+
+    }
+
+
+    public double Kilograms { get;  }
     public double Grams => Kilograms * 1000d;
 
     public double Pounds => Kilograms * 2.2046226218487757d;

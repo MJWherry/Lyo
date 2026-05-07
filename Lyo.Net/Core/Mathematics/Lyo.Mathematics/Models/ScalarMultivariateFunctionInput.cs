@@ -3,13 +3,26 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ScalarMultivariateFunctionInput(Func<double[], double> Function, double[] Point, double StepSize)
+public sealed record ScalarMultivariateFunctionInput
 {
-    public Func<double[], double> Function { get; } = Function ?? throw new ArgumentNullException(nameof(Function));
 
-    public double[] Point { get; } = Point ?? throw new ArgumentNullException(nameof(Point));
+    public ScalarMultivariateFunctionInput(Func<double[], double> function, double[] point, double stepSize)
 
-    public double StepSize { get; } = MathValueGuards.PositiveFinite(StepSize, nameof(StepSize));
+    {
 
+        function = function ?? throw new ArgumentNullException(nameof(function));
+
+        point = point ?? throw new ArgumentNullException(nameof(point));
+
+        stepSize = MathValueGuards.PositiveFinite(stepSize, nameof(stepSize));
+        Function = function;
+        Point = point;
+        StepSize = stepSize;
+}
+
+
+    public Func<double[], double> Function { get;  }
+    public double[] Point { get;  }
+    public double StepSize { get;  }
     public override string ToString() => $"Function={MathematicsDisplayFormat.DelegateType(Function)}, Point={MathematicsDisplayFormat.DoubleArray(Point)}, StepSize={StepSize}";
 }

@@ -5,7 +5,6 @@ using Lyo.Cache;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
-using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Testing.Containers;
 using Mapster;
@@ -13,7 +12,6 @@ using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common;
 using Lyo.Common.Records;
 
 namespace Lyo.Job.Postgres.Tests;
@@ -77,7 +75,7 @@ public sealed class JobPostgresFixture : PostgresContainerFixtureBase
                 ctx.Entity.Id = Guid.NewGuid();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
-            });
+            }, ct: cancellationToken);
 
         Assert.True(result.IsSuccess);
         JobDefinitionId = result.Data!.Id;

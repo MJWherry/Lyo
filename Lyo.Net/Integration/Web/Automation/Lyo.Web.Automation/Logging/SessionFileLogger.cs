@@ -2,20 +2,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Logging;
 
-internal sealed class SessionFileLogger : ILogger
+internal sealed class SessionFileLogger(string category, StreamWriter writer, object gate) : ILogger
 {
-    private readonly string _category;
-    private readonly object _gate;
-    private readonly StreamWriter _writer;
-
-    public SessionFileLogger(string category, StreamWriter writer, object gate)
-    {
-        _category = category;
-        _writer = writer;
-        _gate = gate;
-    }
-
-    public IDisposable? BeginScope<TState>(TState state)
+    public IDisposable BeginScope<TState>(TState state)
         where TState : notnull
         => NullScope.Instance;
 
@@ -40,10 +29,10 @@ internal sealed class SessionFileLogger : ILogger
             var _ => logLevel.ToString()
         };
 
-        lock (_gate) {
-            _writer.WriteLine($"{DateTime.UtcNow:O} [{levelShort}] {_category}: {message}");
+        lock (gate) {
+            writer.WriteLine($"{DateTime.UtcNow:O} [{levelShort}] {category}: {message}");
             if (exception != null)
-                _writer.WriteLine($"  Exception: {exception}");
+                writer.WriteLine($"  Exception: {exception}");
         }
     }
 

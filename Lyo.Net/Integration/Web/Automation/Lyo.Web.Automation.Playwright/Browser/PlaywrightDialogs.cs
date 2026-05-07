@@ -21,7 +21,7 @@ public sealed class PlaywrightDialogs
         page.Dialog += Handler;
         return new ActionDisposable(() => page.Dialog -= Handler);
 
-        void Handler(object? _, IDialog d) => _ = d.AcceptAsync();
+        void Handler(object? o, IDialog d) => o = d.AcceptAsync();
     }
 
     /// <summary>Registers a one-shot handler that accepts the next dialog, then unsubscribes.</summary>

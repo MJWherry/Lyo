@@ -359,8 +359,10 @@
     <Folder Name="/Integration/Web/Automation/">
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation/Lyo.Web.Automation.csproj" />
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Selenium/Lyo.Web.Automation.Selenium.csproj" />
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Selenium.Tests/Lyo.Web.Automation.Selenium.Tests.csproj" />
         <File Path="Integration\Web\Automation\README.md" />
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Playwright/Lyo.Web.Automation.Playwright.csproj" />
+        <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Playwright.Tests/Lyo.Web.Automation.Playwright.Tests.csproj" />
         <Project Path="Integration/Web/Automation/Lyo.Web.Automation.Tests/Lyo.Web.Automation.Tests.csproj" />
     </Folder>
     <Folder Name="/Integration/Espn/">

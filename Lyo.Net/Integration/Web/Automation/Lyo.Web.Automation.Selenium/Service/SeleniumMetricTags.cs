@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Web.Automation.Selenium.Browser;
 
 namespace Lyo.Web.Automation.Selenium.Service;
@@ -8,8 +9,8 @@ internal static class SeleniumMetricTags
     {
         var list = new List<(string, string)> { ("operation", operation), ("session_id", scraper.SessionIdLabel), ("implementation", "selenium") };
         var host = TryHostFromUrl(scraper.TryGetCurrentUrl());
-        if (!string.IsNullOrEmpty(host))
-            list.Add(("url_host", host!));
+        if (!host.IsNullOrEmpty())
+            list.Add(("url_host", host));
 
         if (extra != null)
             list.AddRange(extra);

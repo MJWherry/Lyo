@@ -141,7 +141,7 @@ public sealed class EmailService : IEmailService
                 var _ => $"An error occurred while sending the email: {ex.Message}"
             };
 
-            var failureResult = EmailResult.FromException(ex, emailRequest, EmailErrorCodes.SendFailed);
+            var failureResult = EmailResult.FromError(userFriendlyMessage, emailRequest, ex);
             OnEmailSent(failureResult);
             return failureResult;
         }
@@ -523,10 +523,10 @@ public sealed class EmailService : IEmailService
         var bodyBuilder = new BodyBuilder();
 
         // Set From address
-        if (!request.FromAddress.IsNullOrWhitespace())
-            message.From.Add(new MailboxAddress(request.FromName ?? request.FromAddress, request.FromAddress));
-        else
-            message.From.Add(new MailboxAddress(_emailServiceOptions.DefaultFromName, _emailServiceOptions.DefaultFromAddress));
+        message.From.Add(
+            !request.FromAddress.IsNullOrWhitespace()
+                ? new MailboxAddress(request.FromName ?? request.FromAddress, request.FromAddress)
+                : new MailboxAddress(_emailServiceOptions.DefaultFromName, _emailServiceOptions.DefaultFromAddress));
 
         // Set To addresses
         if (request.ToAddresses != null) {
@@ -580,18 +580,23 @@ public sealed class EmailService : IEmailService
 
         // Extract attachments - we only get filenames from MimeMessage; metadata (FileStorageId, etc.) comes from builder when available
         IReadOnlyList<EmailAttachment>? attachments = null;
-        if (message.Body is Multipart multipart) {
-            var list = new List<EmailAttachment>();
-            foreach (var part in multipart) {
-                if (part is MimePart mimePart && mimePart.IsAttachment) {
-                    var fileName = mimePart.FileName ?? "attachment";
-                    list.Add(new(fileName, []));
-                }
-            }
-
-            if (list.Count > 0)
-                attachments = list;
+        if (message.Body is not Multipart multipart) {
+            return new(
+                fromAddress, fromName, toAddresses.Count > 0 ? toAddresses : null, ccAddresses.Count > 0 ? ccAddresses : null, bccAddresses.Count > 0 ? bccAddresses : null,
+                message.Subject, attachments);
         }
+
+        var list = new List<EmailAttachment>();
+        foreach (var part in multipart) {
+            if (part is not MimePart mimePart || !mimePart.IsAttachment)
+                continue;
+
+            var fileName = mimePart.FileName ?? "attachment";
+            list.Add(new(fileName, []));
+        }
+
+        if (list.Count > 0)
+            attachments = list;
 
         return new(
             fromAddress, fromName, toAddresses.Count > 0 ? toAddresses : null, ccAddresses.Count > 0 ? ccAddresses : null, bccAddresses.Count > 0 ? bccAddresses : null,

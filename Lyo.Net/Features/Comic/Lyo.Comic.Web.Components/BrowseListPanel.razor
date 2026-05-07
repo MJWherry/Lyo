@@ -1,0 +1,60 @@
+@namespace Lyo.Comic.Web.Components
+
+@if (IsNoImage) {
+    <MudPaper Class="comic-browse-card comic-browse-card--list-no-image pa-3 mb-2" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Start" Justify="Justify.SpaceBetween" Spacing="2" Class="w-100">
+            <div class="comic-browse-card__list-hit flex-grow-1" role="button" tabindex="0" @onclick="PrimaryClicked">
+                <MudStack Spacing="1" AlignItems="AlignItems.Stretch" Class="comic-browse-card__list-stack-inner">
+                    <MudText Typo="Typo.subtitle1" Class="text-truncate">@Title</MudText>
+                    @if (!string.IsNullOrWhiteSpace(Subtitle)) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@Subtitle</MudText>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(DisplayDescription)) {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="comic-browse-card__desc mt-1">@DisplayDescription</MudText>
+                    }
+                    <MudStack Row="true" Spacing="1" Class="mt-1" Wrap="Wrap.Wrap">
+                        @if (!string.IsNullOrWhiteSpace(TypeBadge)) {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@TypeBadge</MudChip>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(LanguageLine)) {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@LanguageLine.ToUpperInvariant()</MudChip>
+                        }
+                        @if (PageCount is int pc2 && pc2 > 0) {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@pc2 pages</MudChip>
+                        }
+                    </MudStack>
+                </MudStack>
+            </div>
+            @if (ShowReadActions) {
+                <MudIconButton Icon="@Icons.Material.Filled.MenuBook"
+                               Color="Color.Primary"
+                               title="Read"
+                               OnClick="@ReadClicked"/>
+            }
+        </MudStack>
+    </MudPaper>
+}
+@if (!IsNoImage) {
+    <MudPaper Class="comic-browse-card comic-browse-card--list-line pa-2 mb-1" Elevation="0">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Justify="Justify.SpaceBetween" Class="w-100">
+            <div class="comic-browse-card__list-hit comic-browse-card__list-line-title flex-grow-1" role="button" tabindex="0" @onclick="PrimaryClicked">
+                <MudText Typo="Typo.body2" Class="text-truncate comic-browse-card__list-line-text">@Title</MudText>
+            </div>
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                @if (!string.IsNullOrWhiteSpace(LanguageLine)) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@LanguageLine.ToUpperInvariant()</MudText>
+                }
+                @if (PageCount is int pc3 && pc3 > 0) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@pc3 pg</MudText>
+                }
+                @if (ShowReadActions) {
+                    <MudIconButton Icon="@Icons.Material.Filled.MenuBook"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   title="Read"
+                                   OnClick="@ReadClicked"/>
+                }
+            </MudStack>
+        </MudStack>
+    </MudPaper>
+}

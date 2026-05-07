@@ -356,11 +356,11 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         runReq.ScheduledSlotUtc = scheduledSlot;
         _logger.LogDebug("Creating job run: {Request}", runReq);
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq, null, ct).ConfigureAwait(false);
-        if (created?.IsSuccess == true && created.Data != null) {
+        if (created.IsSuccess && created.Data != null) {
             _logger.LogInformation("Created job run {JobRunId}", created.Data.Id);
             _jobs = new(_jobs) { [definition.Id] = jobInfo with { LastRun = created.Data } };
         }
-        else if (created?.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
+        else if (created.Error?.Errors?.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
             // Another scheduler instance already created a run for this slot — idempotent, not an error
             _logger.LogDebug("Job run for slot {Slot:u} already exists (created by another instance)", scheduledSlot);
         else
@@ -428,10 +428,10 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
 
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), retryReq).ConfigureAwait(false);
-        if (created?.IsSuccess == true)
+        if (created.IsSuccess)
             _logger.LogInformation("Created retry job run {JobRunId} (attempt {Attempt})", created.Data!.Id, nextAttempt);
         else
-            _logger.LogWarning("Failed to create retry job run for definition {Name}: {Error}", jobInfo.Definition.Name, created?.Error);
+            _logger.LogWarning("Failed to create retry job run for definition {Name}: {Error}", jobInfo.Definition.Name, created.Error);
     }
 
     private async Task TripCircuitBreakerAsync(Guid definitionId)
@@ -471,7 +471,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
             var runReq = BuildRunRequest(triggeringDef.Id, null, trigger, triggeredByRun);
             var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.Runs), runReq).ConfigureAwait(false);
-            if (created?.IsSuccess == true)
+            if (created.IsSuccess)
                 _logger.LogInformation("Created triggered job run {JobRunId}", created.Data!.Id);
             else
                 _logger.LogWarning("Failed to create triggered job run");

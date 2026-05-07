@@ -1,3 +1,4 @@
+using Lyo.Common;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Coordinates;
 
@@ -95,14 +96,7 @@ public class BoundingBox : IEquatable<BoundingBox>
 
     public override bool Equals(object? obj) => obj is BoundingBox other && Equals(other);
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Southwest?.GetHashCode() ?? 0;
-            hashCode = (hashCode * 397) ^ (Northeast?.GetHashCode() ?? 0);
-            return hashCode;
-        }
-    }
+    public override int GetHashCode() => HashCodeHelpers.Combine(Southwest, Northeast);
 
     public static bool operator ==(BoundingBox? left, BoundingBox? right) => Equals(left, right);
 

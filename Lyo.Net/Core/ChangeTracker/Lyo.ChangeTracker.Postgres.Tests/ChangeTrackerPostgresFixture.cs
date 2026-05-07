@@ -1,4 +1,3 @@
-using Lyo.ChangeTracker;
 using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;

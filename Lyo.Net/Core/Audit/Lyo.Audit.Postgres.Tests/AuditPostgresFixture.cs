@@ -1,4 +1,3 @@
-using Lyo.Audit;
 using Lyo.Audit.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;

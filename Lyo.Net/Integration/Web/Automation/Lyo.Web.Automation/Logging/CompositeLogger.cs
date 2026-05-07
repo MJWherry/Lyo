@@ -14,7 +14,7 @@ public sealed class CompositeLogger<T> : ILogger<T>
         _secondary = secondary;
     }
 
-    public IDisposable? BeginScope<TState>(TState state)
+    public IDisposable BeginScope<TState>(TState state)
         where TState : notnull
         => new CompositeScope(_primary.BeginScope(state), _secondary.BeginScope(state));
 

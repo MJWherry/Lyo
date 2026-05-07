@@ -4,12 +4,24 @@ using Lyo.Exceptions;
 namespace Lyo.Scientific.Chemistry;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ChemicalReactionComponent(string Formula, double Moles = 1d)
+public sealed record ChemicalReactionComponent
 {
-    public string Formula { get; init; } = string.IsNullOrWhiteSpace(Formula) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Formula)) : Formula;
 
-    public double Moles { get; init; } = Moles <= 0d ? throw new ArgumentOutOfRangeException(nameof(Moles)) : Moles;
+    public ChemicalReactionComponent(string formula, double moles = 1d)
 
+    {
+
+        formula = string.IsNullOrWhiteSpace(formula) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(formula)) : formula;
+        moles = moles <= 0d ? throw new ArgumentOutOfRangeException(nameof(moles)) : moles;
+
+        Formula = formula;
+        Moles = moles;
+
+    }
+
+
+    public string Formula { get;  init; }
+    public double Moles { get;  init; }
     public override string ToString() => $"{Moles:0.###} mol {Formula}";
 }
 
@@ -24,12 +36,24 @@ public sealed record ChemicalReaction(IReadOnlyList<ChemicalReactionComponent> R
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record BalancedReactionComponent(string Formula, int Coefficient)
+public sealed record BalancedReactionComponent
 {
-    public string Formula { get; init; } = string.IsNullOrWhiteSpace(Formula) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Formula)) : Formula;
 
-    public int Coefficient { get; init; } = Coefficient <= 0 ? throw new ArgumentOutOfRangeException(nameof(Coefficient)) : Coefficient;
+    public BalancedReactionComponent(string formula, int coefficient)
 
+    {
+
+        formula = string.IsNullOrWhiteSpace(formula) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(formula)) : formula;
+        coefficient = coefficient <= 0 ? throw new ArgumentOutOfRangeException(nameof(coefficient)) : coefficient;
+
+        Formula = formula;
+        Coefficient = coefficient;
+
+    }
+
+
+    public string Formula { get;  init; }
+    public int Coefficient { get;  init; }
     public override string ToString() => ScientificModelDisplay.BalancedFormula(this);
 }
 

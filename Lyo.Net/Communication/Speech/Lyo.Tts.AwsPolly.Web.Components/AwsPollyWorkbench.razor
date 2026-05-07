@@ -20,7 +20,7 @@
                         <MudGrid>
                             <MudItem xs="12" md="4">
                                 <MudSelect T="AwsPollyVoiceId" Label="Voice" @bind-Value="_selectedVoiceId">
-                                    @foreach (var voice in AvailableVoices) {
+                                    @foreach (var voice in _availableVoices) {
                                         <MudSelectItem Value="@voice">@voice</MudSelectItem>
                                     }
                                 </MudSelect>
@@ -110,7 +110,7 @@
 @code {
     private const string AutoLanguage = "__default__";
     private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
-    private readonly IReadOnlyList<AwsPollyVoiceId> AvailableVoices = Enum.GetValues<AwsPollyVoiceId>().Where(i => i != AwsPollyVoiceId.Unknown).ToArray();
+    private readonly IReadOnlyList<AwsPollyVoiceId> _availableVoices = Enum.GetValues<AwsPollyVoiceId>().Where(i => i != AwsPollyVoiceId.Unknown).ToArray();
     private bool _busy;
     private AudioFormat _audioFormat = AudioFormat.Mp3;
     private byte[]? _audioBytes;

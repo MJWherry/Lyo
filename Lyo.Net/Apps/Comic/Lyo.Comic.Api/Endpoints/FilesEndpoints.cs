@@ -1,6 +1,4 @@
-using Lyo.Comic;
 using Lyo.Comic.Api.Models.Response;
-using Lyo.Comic.Api;
 using Lyo.Comic.Api.Storage;
 using Lyo.FileStorage;
 using Microsoft.AspNetCore.Mvc;

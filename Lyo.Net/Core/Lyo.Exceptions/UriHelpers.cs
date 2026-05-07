@@ -223,7 +223,7 @@ public static class UriHelpers
             return uri;
 
         var trimmed = uri.TrimEnd('?', '&');
-        var hasQuery = trimmed.IndexOf('?') >= 0;
+        var hasQuery = trimmed.Contains('?');
         return $"{trimmed}{(hasQuery ? "&" : "?")}{queryString!.TrimStart('?', '&')}";
     }
 

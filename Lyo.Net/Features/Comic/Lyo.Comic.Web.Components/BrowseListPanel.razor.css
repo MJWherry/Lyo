@@ -1,0 +1,52 @@
+/* List / line layouts rendered by BrowseListPanel (scoped here; markup is not in ComicBrowseCard). */
+
+.comic-browse-card--list-no-image,
+.comic-browse-card--list-line {
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.comic-browse-card--list-no-image:hover,
+.comic-browse-card--list-line:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-color-scheme: light) {
+    .comic-browse-card--list-no-image:hover,
+    .comic-browse-card--list-line:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+}
+
+.comic-browse-card__desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.45;
+}
+
+.comic-browse-card__list-hit {
+    min-width: 0;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+}
+
+.comic-browse-card__list-line-title {
+    min-width: 0;
+}
+
+.comic-browse-card__list-line-text {
+    width: 100%;
+    text-align: start;
+}
+
+.comic-browse-card__list-stack-inner {
+    width: 100%;
+    text-align: start;
+}
+
+.comic-browse-card__list-hit:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}

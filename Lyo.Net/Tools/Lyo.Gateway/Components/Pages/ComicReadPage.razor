@@ -22,7 +22,7 @@ else if (!_viewerReady || _series is null) {
 }
 else {
     <ComicViewer Series="_series"
-                 CoverImageUrl="@ResolveCoverUrl(_series)"
+                 CoverImageUrl="@ResolvePlaceholderCover()"
                  Chapters="_chapters"
                  CurrentChapter="_currentChapter"
                  CurrentPage="_currentPage"
@@ -55,6 +55,9 @@ else {
 
     private readonly Dictionary<int, string?> _pageImageCache = [];
 
+    private Guid? _volumePlaceholderForId;
+    private string? _volumePlaceholderUrl;
+
     private const string ComicApiPrefix = "api/comic";
 
     protected override async Task OnParametersSetAsync()
@@ -68,6 +71,8 @@ else {
         _viewerReady = false;
         _loadFailed = false;
         _series = null;
+        _volumePlaceholderForId = null;
+        _volumePlaceholderUrl = null;
         PageName = "Reading";
 
         await LoadSeriesViewerAsync(SeriesId);
@@ -112,9 +117,39 @@ else {
         if (chapter is not null)
             await CacheChapterPagesAsync(chapter);
 
+        await RefreshVolumePlaceholderAsync(chapter);
+
         _loadedSeriesId = seriesId;
         _viewerReady = true;
         ReplaceReadUrl(seriesId);
+    }
+
+    private async Task RefreshVolumePlaceholderAsync(ComicChapter? chapter)
+    {
+        if (chapter?.VolumeId is not Guid vid) {
+            _volumePlaceholderForId = null;
+            _volumePlaceholderUrl = null;
+            return;
+        }
+
+        if (_volumePlaceholderForId == vid)
+            return;
+
+        var vol = await ComicApi.GetAsAsync<ComicVolumeRes>($"{ComicApiPrefix}/volumes/{vid}");
+        _volumePlaceholderForId = vid;
+        _volumePlaceholderUrl = ComicCoverUrls.Resolve(vol?.CoverImageRef);
+    }
+
+    private string? ResolvePlaceholderCover()
+    {
+        var chapterCover = ComicCoverUrls.Resolve(_currentChapter?.CoverImageRef);
+        if (!string.IsNullOrWhiteSpace(chapterCover))
+            return chapterCover;
+
+        if (!string.IsNullOrWhiteSpace(_volumePlaceholderUrl))
+            return _volumePlaceholderUrl;
+
+        return _series is null ? null : ComicCoverUrls.Resolve(_series.CoverImageRef);
     }
 
     private bool TryParseReadQuery(IReadOnlyList<ComicChapter> chapters, out Guid chapterId, out int page)
@@ -184,6 +219,7 @@ else {
         _currentPage = 1;
         _totalPages = chapter.PageCount ?? 0;
         await CacheChapterPagesAsync(chapter);
+        await RefreshVolumePlaceholderAsync(chapter);
         if (_viewer is not null)
             await _viewer.ReloadPageAsync(1);
 
@@ -196,6 +232,7 @@ else {
         _totalPages = chapter.PageCount ?? 0;
         _currentPage = _totalPages > 0 ? _totalPages : 1;
         await CacheChapterPagesAsync(chapter);
+        await RefreshVolumePlaceholderAsync(chapter);
         if (_viewer is not null)
             await _viewer.ReloadPageAsync(_currentPage);
 
@@ -215,14 +252,6 @@ else {
     {
         Navigator.NavigateTo($"/{Constants.Page.Comics}");
         return Task.CompletedTask;
-    }
-
-    private static string? ResolveCoverUrl(ComicSeries s)
-    {
-        if (s.CoverImageRef != null && Guid.TryParse(s.CoverImageRef, out var id))
-            return $"/comic-files/{id}";
-
-        return s.CoverImageRef;
     }
 
     private static ComicSeries ToSeries(ComicSeriesRes r)

@@ -12,7 +12,7 @@
                  ResolveCoverUrlFunc="ResolveCoverUrl"
                  AvailableTags="_availableTags"
                  OnSeriesRead="OpenReaderAsync"
-                 OnSeriesDetails="ShowDetailsAsync"/>
+                 OnSeriesBrowse="BrowseSeriesAsync"/>
 </MudContainer>
 
 @code {
@@ -32,13 +32,7 @@
         return results?.Select(ToSeries).ToList() ?? [];
     }
 
-    private static string? ResolveCoverUrl(ComicSeries series)
-    {
-        if (series.CoverImageRef != null && Guid.TryParse(series.CoverImageRef, out var id))
-            return $"/comic-files/{id}";
-
-        return series.CoverImageRef;
-    }
+    private static string? ResolveCoverUrl(ComicSeries series) => ComicCoverUrls.Resolve(series.CoverImageRef);
 
     private Task OpenReaderAsync(ComicSeries series)
     {
@@ -46,8 +40,11 @@
         return Task.CompletedTask;
     }
 
-    private Task ShowDetailsAsync(ComicSeries series) =>
-        Task.CompletedTask;
+    private Task BrowseSeriesAsync(ComicSeries series)
+    {
+        Navigator.NavigateTo($"/{Constants.Page.ComicsSeries}/{series.Id}");
+        return Task.CompletedTask;
+    }
 
     private static ComicSeries ToSeries(ComicSeriesRes r)
         => new() {

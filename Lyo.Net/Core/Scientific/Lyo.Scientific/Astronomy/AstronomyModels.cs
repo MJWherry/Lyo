@@ -10,22 +10,50 @@ public enum PlanetaryBodyKind
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record PlanetaryBody(
-    string Name,
-    PlanetaryBodyKind Kind,
-    Mass Mass,
-    Length MeanRadius,
-    Length SemiMajorAxis,
-    TimeInterval SiderealOrbit,
-    TimeInterval SiderealRotation,
-    Temperature MeanSurfaceTemperature,
-    int NaturalSatelliteCount,
-    bool HasRingSystem)
+public sealed record PlanetaryBody
 {
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
 
-    public int NaturalSatelliteCount { get; init; } = NaturalSatelliteCount < 0 ? throw new ArgumentOutOfRangeException(nameof(NaturalSatelliteCount)) : NaturalSatelliteCount;
+    public PlanetaryBody(
+    string name,
+    PlanetaryBodyKind kind,
+    Mass mass,
+    Length meanRadius,
+    Length semiMajorAxis,
+    TimeInterval siderealOrbit,
+    TimeInterval siderealRotation,
+    Temperature meanSurfaceTemperature,
+    int naturalSatelliteCount,
+    bool hasRingSystem)
 
+    {
+
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+        naturalSatelliteCount = naturalSatelliteCount < 0 ? throw new ArgumentOutOfRangeException(nameof(naturalSatelliteCount)) : naturalSatelliteCount;
+
+        Name = name;
+        NaturalSatelliteCount = naturalSatelliteCount;
+        Kind = kind;
+        Mass = mass;
+        MeanRadius = meanRadius;
+        SemiMajorAxis = semiMajorAxis;
+        SiderealOrbit = siderealOrbit;
+        SiderealRotation = siderealRotation;
+        MeanSurfaceTemperature = meanSurfaceTemperature;
+        HasRingSystem = hasRingSystem;
+}
+
+
+    public string Name { get;  init; }
+    public int NaturalSatelliteCount { get;  init; }
+
+    public PlanetaryBodyKind Kind { get; init; }
+    public Mass Mass { get; init; }
+    public Length MeanRadius { get; init; }
+    public Length SemiMajorAxis { get; init; }
+    public TimeInterval SiderealOrbit { get; init; }
+    public TimeInterval SiderealRotation { get; init; }
+    public Temperature MeanSurfaceTemperature { get; init; }
+    public bool HasRingSystem { get; init; }
     public override string ToString() => $"{Name} ({Kind}), moons={NaturalSatelliteCount}, rings={HasRingSystem}, M={Mass}, R={MeanRadius}";
 }
 

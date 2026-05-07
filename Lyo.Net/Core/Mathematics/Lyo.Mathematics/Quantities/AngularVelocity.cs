@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct AngularVelocity(double radiansPerSecond)
+public readonly record struct AngularVelocity
 {
-    public double RadiansPerSecond { get; } = MathValueGuards.Finite(radiansPerSecond, nameof(radiansPerSecond));
 
+    public AngularVelocity(double radiansPerSecond)
+
+    {
+
+        RadiansPerSecond = MathValueGuards.Finite(radiansPerSecond, nameof(radiansPerSecond));
+
+    }
+
+
+    public double RadiansPerSecond { get;  }
     public static AngularVelocity FromRadiansPerSecond(double radiansPerSecond) => new(radiansPerSecond);
 
     public override string ToString() => $"{RadiansPerSecond:0.###} rad/s";

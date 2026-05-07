@@ -3,11 +3,22 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record WeightedValuesInput(double[] Values, double[] Weights)
+public sealed record WeightedValuesInput
 {
-    public double[] Values { get; } = Values ?? throw new ArgumentNullException(nameof(Values));
 
-    public double[] Weights { get; } = Weights ?? throw new ArgumentNullException(nameof(Weights));
+    public WeightedValuesInput(double[] values, double[] weights)
 
+    {
+
+        values = values ?? throw new ArgumentNullException(nameof(values));
+
+        weights = weights ?? throw new ArgumentNullException(nameof(weights));
+        Values = values;
+        Weights = weights;
+}
+
+
+    public double[] Values { get;  }
+    public double[] Weights { get;  }
     public override string ToString() => $"Values={MathematicsDisplayFormat.DoubleArray(Values)}, Weights={MathematicsDisplayFormat.DoubleArray(Weights)}";
 }

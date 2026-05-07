@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Web Automation Test Page</title>
+</head>
+<body>
+  <main id="app">
+    <h1 id="headline">Web Automation Test Page</h1>
+    <label for="nameInput">Name</label>
+    <input id="nameInput" type="text" value="" />
+    <p id="nameEcho"></p>
+    <button id="incrementBtn" type="button">Increment</button>
+    <p id="counterText">0</p>
+    <a id="nextPageLink" href="/next">Next</a>
+  </main>
+  <script>
+    (() => {
+      const button = document.getElementById('incrementBtn');
+      const counter = document.getElementById('counterText');
+      const input = document.getElementById('nameInput');
+      const echo = document.getElementById('nameEcho');
+      button.addEventListener('click', () => {
+        const value = Number(counter.textContent || '0') + 1;
+        counter.textContent = String(value);
+      });
+      input.addEventListener('input', () => {
+        echo.textContent = input.value;
+      });
+    })();
+  </script>
+</body>
+</html>

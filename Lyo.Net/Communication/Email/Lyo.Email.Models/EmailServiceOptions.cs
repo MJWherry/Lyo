@@ -50,7 +50,7 @@ public sealed class EmailServiceOptions
 /// <summary>Validator for EmailServiceOptions to ensure required properties are set.</summary>
 public sealed class EmailServiceOptionsValidator : IValidateOptions<EmailServiceOptions>
 {
-    public ValidateOptionsResult Validate(string? name, EmailServiceOptions options)
+    public ValidateOptionsResult Validate(string? name, EmailServiceOptions? options)
     {
         if (options == null)
             return ValidateOptionsResult.Fail("EmailServiceOptions cannot be null.");
@@ -58,7 +58,7 @@ public sealed class EmailServiceOptionsValidator : IValidateOptions<EmailService
         if (string.IsNullOrWhiteSpace(options.Host))
             return ValidateOptionsResult.Fail("EmailServiceOptions.Host is required.");
 
-        if (options.Port <= 0 || options.Port > 65535)
+        if (options.Port is <= 0 or > 65535)
             return ValidateOptionsResult.Fail("EmailServiceOptions.Port must be between 1 and 65535.");
 
         if (string.IsNullOrWhiteSpace(options.DefaultFromAddress))

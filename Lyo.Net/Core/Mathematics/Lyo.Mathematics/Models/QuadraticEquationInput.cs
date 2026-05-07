@@ -3,13 +3,26 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Models;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct QuadraticEquationInput(double A, double B, double C)
+public readonly record struct QuadraticEquationInput
 {
-    public double A { get; } = MathValueGuards.Finite(A, nameof(A));
 
-    public double B { get; } = MathValueGuards.Finite(B, nameof(B));
+    public QuadraticEquationInput(double a, double b, double c)
 
-    public double C { get; } = MathValueGuards.Finite(C, nameof(C));
+    {
 
+        a = MathValueGuards.Finite(a, nameof(a));
+
+        b = MathValueGuards.Finite(b, nameof(b));
+
+        c = MathValueGuards.Finite(c, nameof(c));
+        A = a;
+        B = b;
+        C = c;
+}
+
+
+    public double A { get;  }
+    public double B { get;  }
+    public double C { get;  }
     public override string ToString() => $"A={A}, B={B}, C={C}";
 }

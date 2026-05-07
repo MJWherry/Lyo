@@ -1,0 +1,109 @@
+@namespace Lyo.Comic.Web.Components
+
+@if (IsGrid) {
+    <MudCard Class="comic-browse-card h-100" Elevation="2">
+        <div class="comic-browse-card__cover-wrap" role="button" @onclick="TapCoverAsync" @onclick:stopPropagation="true">
+            @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
+                <img src="@CoverImageUrl" alt="" class="comic-browse-card__cover"/>
+            }
+            else {
+                <div class="comic-browse-card__cover-placeholder">
+                    <MudIcon Icon="@Icons.Material.Filled.AutoStories" Size="Size.Large" Color="Color.Default"/>
+                </div>
+            }
+
+            @if (Status.HasValue) {
+                <div class="comic-browse-card__status-badge @StatusBadgeClass">
+                    @Status.Value.ToString()
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(TypeBadge)) {
+                <div class="comic-browse-card__type-stack">
+                    <div class="comic-browse-card__type-badge">@TypeBadge</div>
+                    @if (!string.IsNullOrWhiteSpace(LanguageLine)) {
+                        <div class="comic-browse-card__lang-under-type">@LanguageLine.ToUpperInvariant()</div>
+                    }
+                </div>
+            }
+            else if (!string.IsNullOrWhiteSpace(LanguageLine)) {
+                <div class="comic-browse-card__lang-only">@LanguageLine.ToUpperInvariant()</div>
+            }
+
+            @if (PageCount is int pc && pc > 0) {
+                <div class="comic-browse-card__pages-badge" title="Pages">
+                    <MudIcon Icon="@Icons.Material.Filled.Layers" Size="Size.Small" Class="comic-browse-card__pages-icon"/>
+                    <span>@pc</span>
+                </div>
+            }
+        </div>
+
+        <div class="comic-browse-card__body-click" role="button" @onclick="TapBodyAsync">
+            <MudCardContent Class="pa-3">
+                <MudText Typo="Typo.subtitle1" Class="comic-browse-card__title">@Title</MudText>
+
+                @if (!string.IsNullOrWhiteSpace(Subtitle)) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">@Subtitle</MudText>
+                }
+
+                <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
+                    @if (!string.IsNullOrWhiteSpace(Demographic)) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@Demographic</MudChip>
+                    }
+                    @if (PublishedYear.HasValue) {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">@PublishedYear</MudChip>
+                    }
+                </MudStack>
+
+                @if (HasAnyDisplayTags) {
+                    <MudStack Row="true" Spacing="1" Class="mt-2" Wrap="Wrap.Wrap">
+                        @foreach (var tag in VisibleTagChips) {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text">@tag</MudChip>
+                        }
+                        @if (OverflowTagCount > 0) {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Text">+@OverflowTagCount more</MudChip>
+                        }
+                    </MudStack>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(DisplayDescription)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="comic-browse-card__desc mt-2">@DisplayDescription</MudText>
+                }
+            </MudCardContent>
+
+            @if (ShowReadActions) {
+                <MudCardActions Class="pa-3 pt-0">
+                    <div @onclick:stopPropagation="true" style="display: contents;">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.MenuBook"
+                                   OnClick="TapReadAsync"
+                                   Class="mr-2">
+                            Read
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.Info"
+                                   OnClick="TapDetailsAsync">
+                            Details
+                        </MudButton>
+                    </div>
+                </MudCardActions>
+            }
+        </div>
+    </MudCard>
+}
+@if (!IsGrid) {
+    <BrowseListPanel Mode="ViewMode"
+                     Title="@Title"
+                     Subtitle="@Subtitle"
+                     DisplayDescription="@DisplayDescription"
+                     TypeBadge="@TypeBadge"
+                     LanguageLine="@LanguageLine"
+                     PageCount="@PageCount"
+                     ShowReadActions="ShowReadActions"
+                     PrimaryClicked="TapBodyAsync"
+                     ReadClicked="TapReadAsync"/>
+}

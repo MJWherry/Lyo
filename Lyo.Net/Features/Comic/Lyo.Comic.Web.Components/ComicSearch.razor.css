@@ -1,40 +1,6 @@
-/* Comic browse grid: breakpoints align with MudBlazor md (960px).
-   Large = 1 col mobile, 4 col desktop | Small = 2 col mobile, 8 col desktop. */
+/* Outer shell for the search page only; browse grid/list layout lives in ComicBrowseResults.razor.css */
 
 .comic-search {
     width: 100%;
     overflow-x: hidden;
-}
-
-.comic-search__grid {
-    display: grid;
-    gap: 12px;
-    width: 100%;
-    min-width: 0;
-}
-
-/* ── Large: 1 per row (<960px), 4 per row (≥960px) ───────────────── */
-
-.comic-search__grid--large {
-    grid-template-columns: minmax(0, 1fr);
-}
-
-@media (min-width: 960px) {
-    .comic-search__grid--large {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        padding-left: clamp(16px, 3vw, 40px);
-        padding-right: clamp(16px, 3vw, 40px);
-    }
-}
-
-/* ── Small: 2 per row (<960px), 8 per row (≥960px) ────────────────── */
-
-.comic-search__grid--small {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (min-width: 960px) {
-    .comic-search__grid--small {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-    }
 }

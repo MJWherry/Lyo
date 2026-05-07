@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Common;
@@ -113,13 +114,12 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
 
     public override int GetHashCode()
     {
-        unchecked {
-            var hash = (int)Operator;
-            foreach (var child in Children)
-                hash = hash * 31 + StructuralHashCode(child);
+        var values = new object?[Children.Count + 1];
+        values[0] = Operator;
+        for (var i = 0; i < Children.Count; i++)
+            values[i + 1] = StructuralHashCode(Children[i]);
 
-            return hash;
-        }
+        return HashCodeHelpers.Combine(values);
     }
 
     private static bool StructuralEquals(WhereClause? a, WhereClause? b)

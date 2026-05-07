@@ -42,7 +42,6 @@ public sealed class SchedulerService : ISchedulerService, IDisposable
         _cts?.Cancel();
         _cts?.Dispose();
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />

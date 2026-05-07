@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
-using Lyo.Common;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Abstractions;
@@ -486,8 +485,8 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
             result = TryGetTaskResult(task);
         }
 
-        if (!string.IsNullOrWhiteSpace(step.ResultVariableName) && result != null)
-            state.Strings[step.ResultVariableName] = result is string s ? s : JsonSerializer.Serialize(result);
+        if (!step.ResultVariableName.IsNullOrWhitespace() && result != null)
+            state.Strings[step.ResultVariableName] = result as string ?? JsonSerializer.Serialize(result);
     }
 
     private static Type ResolveType(string serviceType)
@@ -819,7 +818,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         response.EnsureSuccessStatusCode();
         using var fs = File.Create(outputPath);
         await response.Content.CopyToAsync(fs).ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(step.SavedFilePathVariableName))
+        if (!step.SavedFilePathVariableName.IsNullOrWhitespace())
             state.Strings[step.SavedFilePathVariableName] = outputPath;
     }
 
@@ -845,7 +844,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                 if (string.IsNullOrWhiteSpace(attribute))
                     continue;
                 var raw = await element.GetAttributeAsync(attribute, ct).ConfigureAwait(false);
-                if (!step.SplitCommaSeparatedValues || string.IsNullOrWhiteSpace(raw) || !raw.Contains(',')) {
+                if (!step.SplitCommaSeparatedValues || raw.IsNullOrWhitespace() || !raw.Contains(',')) {
                     await AppendSourceValueAsync(state, runtime, urls, dedupe, baseUri, step.ResolveRelativeUrls, raw).ConfigureAwait(false);
                 }
                 else {
@@ -869,7 +868,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         bool resolveRelativeUrls,
         string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw))
+        if (raw.IsNullOrWhitespace())
             return;
         var trimmed = raw.Trim();
         if (resolveRelativeUrls && Uri.TryCreate(trimmed, UriKind.Relative, out var relative) && baseUri != null)
@@ -915,7 +914,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         var sourceDirectory = Path.GetFullPath(await ExpandPlanTemplateAsync(step.SourceDirectory, bindings, runtime, ct).ConfigureAwait(false));
         var destinationPrefix = await ExpandPlanTemplateAsync(step.DestinationPrefix, bindings, runtime, ct).ConfigureAwait(false);
         var uploaded = await _fileStorage.UploadDirectoryAsync(sourceDirectory, destinationPrefix, ct).ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(step.StoredFileListVariableName))
+        if (!step.StoredFileListVariableName.IsNullOrWhitespace())
             state.StringLists[step.StoredFileListVariableName] = uploaded.ToList();
     }
 

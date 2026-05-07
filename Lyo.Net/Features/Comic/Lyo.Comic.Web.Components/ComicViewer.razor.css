@@ -147,8 +147,70 @@
     top: 0;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 100%);
     padding: 8px 4px 32px;
+}
+
+.comic-viewer__top-inner {
     display: flex;
     align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.comic-viewer__series-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+    flex-shrink: 0;
+    max-width: 120px;
+}
+
+.comic-viewer__type-pill {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+.comic-viewer__lang-pill {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.comic-viewer__page-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.comic-viewer__page-meta-icon {
+    font-size: 1rem !important;
+    opacity: 0.95;
+}
+
+.comic-viewer__page-meta-num {
+    min-width: 1.25em;
 }
 
 .comic-viewer__bottom-bar {
@@ -182,9 +244,14 @@
 /* ── Text / control tweaks inside overlays ───────────────────────── */
 
 .comic-viewer__chapter-select {
-    min-width: 140px;
-    max-width: 200px;
+    min-width: 120px;
+    max-width: min(420px, 45vw);
     color: #fff;
+}
+
+.comic-viewer__chapter-select--grow {
+    flex: 1 1 140px;
+    min-width: 140px;
 }
 
 /* MudSlider track colour inside the dark bar */

@@ -1065,7 +1065,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
     }
 
     /// <summary>Creates the metric names dictionary. Override in derived classes to customize metric names.</summary>
-    protected virtual Dictionary<string, string> CreateMetricNamesDictionary()
+    protected Dictionary<string, string> CreateMetricNamesDictionary()
         => new() {
             { nameof(Constants.Metrics.SaveDuration), Constants.Metrics.SaveDuration },
             { nameof(Constants.Metrics.SaveSuccess), Constants.Metrics.SaveSuccess },

@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct Length(double meters)
+public readonly record struct Length
 {
-    public double Meters { get; } = MathValueGuards.NonNegativeFinite(meters, nameof(meters));
 
+    public Length(double meters)
+
+    {
+
+        Meters = MathValueGuards.NonNegativeFinite(meters, nameof(meters));
+
+    }
+
+
+    public double Meters { get;  }
     public double Centimeters => Meters * 100d;
 
     public double Kilometers => Meters / 1000d;

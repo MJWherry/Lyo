@@ -30,7 +30,7 @@ internal static class ConfigEndpoints
                     IOptions<ConfigApiHostingOptions> hostOptions,
                     CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
+                        return TypedResults.BadRequest(errMsg);
 
                     return await FinishResolve(http, refs, HttpMethods.IsHead(http.Request.Method), store, hostOptions.Value, ct).ConfigureAwait(false);
                 });
@@ -44,7 +44,7 @@ internal static class ConfigEndpoints
                     IOptions<ConfigApiHostingOptions> hostOptions,
                     CancellationToken ct) => {
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var errMsg))
-                        return TypedResults.BadRequest(errMsg ?? "Invalid app identifier.");
+                        return TypedResults.BadRequest(errMsg);
 
                     return await FinishResolve(http, refs, headOnly: false, store, hostOptions.Value, ct).ConfigureAwait(false);
                 });

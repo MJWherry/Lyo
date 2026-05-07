@@ -89,5 +89,5 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         return credential.Length != 0;
     }
 
-    private static string? TrimHeaderSecret(StringValues supplied) => supplied.ToString().Trim();
+    private static string TrimHeaderSecret(StringValues supplied) => supplied.ToString().Trim();
 }

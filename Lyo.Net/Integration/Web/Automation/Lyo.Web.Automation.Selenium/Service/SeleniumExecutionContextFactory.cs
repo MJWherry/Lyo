@@ -10,7 +10,7 @@ internal static class SeleniumExecutionContextFactory
         var sessionDir = Path.Combine(serviceRoot, $"session-{sessionId:N}");
         Directory.CreateDirectory(sessionDir);
 
-        string OrSub(string? explicitPath, string defaultSegment) => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath! : Path.Combine(sessionDir, defaultSegment);
+        string OrSub(string? explicitPath, string defaultSegment) => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath : Path.Combine(sessionDir, defaultSegment);
 
         var browser = OrSub(options.BrowserUserDataDirectory, "browser-profile");
         var artifacts = OrSub(options.ArtifactsDirectory, "artifacts");

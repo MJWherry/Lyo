@@ -4,12 +4,22 @@ using Lyo.Exceptions;
 namespace Lyo.Mathematics.Vectors;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct Vector2D(double x, double y)
+public readonly record struct Vector2D
 {
-    public double X { get; } = MathValueGuards.Finite(x, nameof(x));
 
-    public double Y { get; } = MathValueGuards.Finite(y, nameof(y));
+    public Vector2D(double x, double y)
 
+    {
+
+        X = MathValueGuards.Finite(x, nameof(x));
+
+        Y = MathValueGuards.Finite(y, nameof(y));
+
+    }
+
+
+    public double X { get;  }
+    public double Y { get;  }
     public double Magnitude => Math.Sqrt(X * X + Y * Y);
 
     public Vector2D Normalize()

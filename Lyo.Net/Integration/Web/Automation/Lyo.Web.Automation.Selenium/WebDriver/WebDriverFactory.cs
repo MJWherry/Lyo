@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Service;
@@ -45,8 +46,8 @@ public static class WebDriverFactory
     {
         var o = BuildChromeOptions(options, context);
         var service = ChromeDriverService.CreateDefaultService();
-        if (!string.IsNullOrWhiteSpace(context?.ArtifactsDirectory)) {
-            var ad = context!.ArtifactsDirectory!;
+        if (!context?.ArtifactsDirectory.IsNullOrWhitespace() ?? false) {
+            var ad = context.ArtifactsDirectory;
             Directory.CreateDirectory(ad);
             service.LogPath = Path.Combine(ad, "chromedriver.log");
         }
@@ -60,8 +61,8 @@ public static class WebDriverFactory
     {
         var o = BuildEdgeOptions(options, context);
         var service = EdgeDriverService.CreateDefaultService();
-        if (!string.IsNullOrWhiteSpace(context?.ArtifactsDirectory)) {
-            var ad = context!.ArtifactsDirectory!;
+        if (!context?.ArtifactsDirectory.IsNullOrWhitespace() ?? false) {
+            var ad = context.ArtifactsDirectory!;
             Directory.CreateDirectory(ad);
             service.LogPath = Path.Combine(ad, "msedgedriver.log");
         }
@@ -84,11 +85,12 @@ public static class WebDriverFactory
     {
         var o = BuildFirefoxOptions(options, context);
         var service = FirefoxDriverService.CreateDefaultService();
-        if (!string.IsNullOrWhiteSpace(context?.ArtifactsDirectory)) {
-            var ad = context!.ArtifactsDirectory!;
-            Directory.CreateDirectory(ad);
-            service.LogPath = Path.Combine(ad, "geckodriver.log");
-        }
+        if (context?.ArtifactsDirectory.IsNullOrWhitespace() ?? true)
+            return new(service, o);
+
+        var ad = context.ArtifactsDirectory!;
+        Directory.CreateDirectory(ad);
+        service.LogPath = Path.Combine(ad, "geckodriver.log");
 
         return new(service, o);
     }
@@ -102,8 +104,8 @@ public static class WebDriverFactory
         if (options.Headless)
             o.AddArgument(WebDriverArgumentFormatter.Format("--headless", "new"));
 
-        if (!string.IsNullOrWhiteSpace(context?.BrowserUserDataDirectory)) {
-            var ud = context!.BrowserUserDataDirectory!;
+        if (!context?.BrowserUserDataDirectory.IsNullOrWhitespace() ?? false) {
+            var ud = context.BrowserUserDataDirectory!;
             o.AddArgument(WebDriverArgumentFormatter.Format("--user-data-dir", ud));
             Directory.CreateDirectory(ud);
         }
@@ -131,8 +133,8 @@ public static class WebDriverFactory
         if (options.Headless)
             o.AddArgument(WebDriverArgumentFormatter.Format("--headless", "new"));
 
-        if (!string.IsNullOrWhiteSpace(context?.BrowserUserDataDirectory)) {
-            var ud = context!.BrowserUserDataDirectory!;
+        if (!context?.BrowserUserDataDirectory.IsNullOrWhitespace() ?? false) {
+            var ud = context.BrowserUserDataDirectory;
             o.AddArgument(WebDriverArgumentFormatter.Format("--user-data-dir", ud));
             Directory.CreateDirectory(ud);
         }
@@ -156,14 +158,14 @@ public static class WebDriverFactory
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--width", options.BrowserWindowWidth.ToString()));
         o.AddArgument(WebDriverArgumentFormatter.Format("--height", options.BrowserWindowHeight.ToString()));
-        if (!string.IsNullOrWhiteSpace(context?.BrowserUserDataDirectory)) {
-            var ud = context!.BrowserUserDataDirectory!;
+        if (!context?.BrowserUserDataDirectory.IsNullOrWhitespace() ?? false) {
+            var ud = context.BrowserUserDataDirectory;
             Directory.CreateDirectory(ud);
             o.Profile = new(ud);
         }
 
-        if (!string.IsNullOrWhiteSpace(context?.DownloadDirectory)) {
-            var dd = context!.DownloadDirectory!;
+        if (!context?.DownloadDirectory.IsNullOrWhitespace() ?? false) {
+            var dd = context.DownloadDirectory;
             Directory.CreateDirectory(dd);
             o.SetPreference("browser.download.folderList", 2);
             o.SetPreference("browser.download.dir", dd);
@@ -180,10 +182,10 @@ public static class WebDriverFactory
 
     private static void ApplyDownloadDirectoryChromium(ChromiumOptions o, SeleniumExecutionContext? context)
     {
-        if (string.IsNullOrWhiteSpace(context?.DownloadDirectory))
+        if (context?.DownloadDirectory.IsNullOrWhitespace() ?? true)
             return;
 
-        var dir = context!.DownloadDirectory!;
+        var dir = context.DownloadDirectory;
         Directory.CreateDirectory(dir);
         o.AddUserProfilePreference("download.default_directory", dir);
         o.AddUserProfilePreference("download.prompt_for_download", false);

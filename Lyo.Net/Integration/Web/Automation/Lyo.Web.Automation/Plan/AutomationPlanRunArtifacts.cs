@@ -8,7 +8,7 @@ namespace Lyo.Web.Automation.Plan;
 /// <summary>Per-run files under <see cref="AutomationPlanRunDirectoryOptions.RootDirectory" /> (log transcript, PNGs, variable JSON).</summary>
 internal sealed class AutomationPlanRunArtifacts : IDisposable
 {
-    private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
     private readonly object _logGate = new();
     private readonly StreamWriter? _logWriter;
 
@@ -90,7 +90,7 @@ internal sealed class AutomationPlanRunArtifacts : IDisposable
             var json = JsonSerializer.Serialize(
                 new VariableDumpDto(
                     runId, stepIndex, phase, strings.ToDictionary(static x => x.Key, static x => x.Value, StringComparer.Ordinal),
-                    stringLists.ToDictionary(static kvp => kvp.Key, static kvp => kvp.Value is List<string> l ? l : kvp.Value.ToList(), StringComparer.Ordinal)), s_jsonOptions);
+                    stringLists.ToDictionary(static kvp => kvp.Key, static kvp => kvp.Value is List<string> l ? l : kvp.Value.ToList(), StringComparer.Ordinal)), SerializerOptions);
 
             using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous)) {
                 using (var w = new StreamWriter(fs, new UTF8Encoding(false)))

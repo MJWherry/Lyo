@@ -120,7 +120,7 @@ public static class Utilities
                 }
 
                 var needsHash = false;
-                if (oldTree != null && fileSize.HasValue) {
+                if (oldTree != null) {
                     if (sizeLookup.Contains(fileSize.Value))
                         needsHash = true;
                     else if (fingerprint != null && fingerprintLookup.TryGetValue(fingerprint, out var sizes) && sizes.Contains(fileSize.Value))

@@ -1318,10 +1318,8 @@ public class QueryServicePostgresTests
     {
         var suffix = Guid.NewGuid().ToString("N")[..8];
         var names = new[] { $"SubOrder_C_{suffix}", $"SubOrder_A_{suffix}", $"SubOrder_B_{suffix}" };
-        var ids = new List<Guid>();
         foreach (var name in names) {
             var id = await _fixture.SeedJobDefinitionAsync(name);
-            ids.Add(id);
             await _fixture.SeedJobRunAsync(id, $"order-{suffix}");
         }
 

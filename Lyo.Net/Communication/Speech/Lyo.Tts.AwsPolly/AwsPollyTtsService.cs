@@ -75,7 +75,7 @@ public sealed class AwsPollyTtsService : TtsServiceBase<AwsPollyTtsRequest>
     protected override void Dispose(bool disposing)
     {
         if (disposing && _ownsPollyClient)
-            _pollyClient?.Dispose();
+            _pollyClient.Dispose();
 
         base.Dispose(disposing);
     }

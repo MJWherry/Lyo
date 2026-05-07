@@ -23,4 +23,10 @@
         <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="TestAssets\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
 </Project>

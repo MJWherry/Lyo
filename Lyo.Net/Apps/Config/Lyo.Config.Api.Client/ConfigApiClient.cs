@@ -60,7 +60,7 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
             UriHelpers.ThrowIfInvalidAbsoluteUri($"api/config/{appKind}/{appId}");
 
         if (!AppConfigEntity.TryCreate(appKind, appId, out _, out var errMsg))
-            throw new ArgumentException(errMsg ?? "Invalid app route segments.");
+            throw new ArgumentException(errMsg);
 
         var trimmedVersion = version.OrDefault().Trim();
         var qp = trimmedVersion.Length == 0 ? string.Empty : $"?version={Uri.EscapeDataString(trimmedVersion)}";
@@ -137,7 +137,7 @@ public static class ConfigApiHttpClientRegistration
                     return handler;
 
                 var methods = DecompressionMethods.None;
-                foreach (var enc in options.AcceptEncodings ?? []) {
+                foreach (var enc in options.AcceptEncodings) {
                     if (string.Equals(enc, "gzip", StringComparison.OrdinalIgnoreCase))
                         methods |= DecompressionMethods.GZip;
                     else if (string.Equals(enc, "deflate", StringComparison.OrdinalIgnoreCase))

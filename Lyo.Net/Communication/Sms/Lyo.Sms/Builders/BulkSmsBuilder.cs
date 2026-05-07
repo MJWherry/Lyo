@@ -103,7 +103,6 @@ public sealed class BulkSmsBuilder
         if (_messages.Count == 0)
             OperationHelpers.ThrowIf(true, "Cannot add attachment: No messages have been added yet. Call Add() first.");
 
-        var lastMessage = _messages[^1];
         return AddAttachmentToMessage(_messages.Count - 1, url);
     }
 

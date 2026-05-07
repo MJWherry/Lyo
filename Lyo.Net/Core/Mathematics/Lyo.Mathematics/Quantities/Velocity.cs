@@ -3,10 +3,19 @@ using System.Diagnostics;
 namespace Lyo.Mathematics.Quantities;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct Velocity(double metersPerSecond)
+public readonly record struct Velocity
 {
-    public double MetersPerSecond { get; } = MathValueGuards.Finite(metersPerSecond, nameof(metersPerSecond));
 
+    public Velocity(double metersPerSecond)
+
+    {
+
+        MetersPerSecond = MathValueGuards.Finite(metersPerSecond, nameof(metersPerSecond));
+
+    }
+
+
+    public double MetersPerSecond { get;  }
     public double KilometersPerHour => MetersPerSecond * 3.6d;
 
     public double MilesPerHour => MetersPerSecond * 2.2369362920544d;

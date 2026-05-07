@@ -3,16 +3,30 @@ using System.Diagnostics;
 namespace Lyo.Scientific.Chemistry;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record ChemicalElement(int AtomicNumber, string Symbol, string Name, double? AtomicMass = null)
+public sealed record ChemicalElement
 {
-    public int AtomicNumber { get; init; } = AtomicNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(AtomicNumber)) : AtomicNumber;
 
-    public string Symbol { get; init; } = string.IsNullOrWhiteSpace(Symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Symbol)) : Symbol;
+    public ChemicalElement(int atomicNumber, string symbol, string name, double? atomicMass = null)
 
-    public string Name { get; init; } = string.IsNullOrWhiteSpace(Name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(Name)) : Name;
+    {
 
-    public double? AtomicMass { get; init; } = AtomicMass is not null && AtomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(AtomicMass)) : AtomicMass;
+        atomicNumber = atomicNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(atomicNumber)) : atomicNumber;
+        symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+        atomicMass = atomicMass is not null && atomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(atomicMass)) : atomicMass;
 
+        AtomicNumber = atomicNumber;
+        Symbol = symbol;
+        Name = name;
+        AtomicMass = atomicMass;
+
+    }
+
+
+    public int AtomicNumber { get;  init; }
+    public string Symbol { get;  init; }
+    public string Name { get;  init; }
+    public double? AtomicMass { get;  init; }
     public override string ToString() => AtomicMass is { } m ? $"{AtomicNumber} {Symbol} ({Name}), mass≈{m}" : $"{AtomicNumber} {Symbol} ({Name})";
 }
 
