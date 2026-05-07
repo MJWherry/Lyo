@@ -10,6 +10,34 @@ namespace Lyo.Ffmpeg;
 /// <summary>Extension methods for registering FFmpeg services with dependency injection.</summary>
 public static class Extensions
 {
+    private static void RegisterServices(IServiceCollection services)
+    {
+        services.AddScoped<FfmpegAudioPlayer>(provider => {
+            var options = provider.GetRequiredService<FfmpegOptions>();
+            var logger = provider.GetService<ILogger<FfmpegAudioPlayer>>();
+            var metrics = provider.GetService<IMetrics>();
+            return new(options, logger, metrics);
+        });
+
+        services.AddScoped<IAudioPlayer>(provider => provider.GetRequiredService<FfmpegAudioPlayer>());
+        services.AddScoped<FfmpegAudioProber>(provider => {
+            var options = provider.GetRequiredService<FfmpegOptions>();
+            var logger = provider.GetService<ILogger<FfmpegAudioProber>>();
+            var metrics = provider.GetService<IMetrics>();
+            return new(options, logger, metrics);
+        });
+
+        services.AddScoped<IAudioProber>(provider => provider.GetRequiredService<FfmpegAudioProber>());
+        services.AddScoped<FfmpegAudioConverter>(provider => {
+            var options = provider.GetRequiredService<FfmpegOptions>();
+            var logger = provider.GetService<ILogger<FfmpegAudioConverter>>();
+            var metrics = provider.GetService<IMetrics>();
+            return new(options, logger, metrics);
+        });
+
+        services.AddScoped<IAudioConverter>(provider => provider.GetRequiredService<FfmpegAudioConverter>());
+    }
+
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
     {
@@ -45,9 +73,7 @@ public static class Extensions
         /// <param name="configuration">The configuration instance</param>
         /// <param name="configSectionName">The configuration section name (defaults to "FfmpegOptions")</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddFfmpegServicesFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = FfmpegOptions.SectionName)
+        public IServiceCollection AddFfmpegServicesFromConfiguration(IConfiguration configuration, string configSectionName = FfmpegOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,33 +90,5 @@ public static class Extensions
             RegisterServices(services);
             return services;
         }
-    }
-
-    private static void RegisterServices(IServiceCollection services)
-    {
-        services.AddScoped<FfmpegAudioPlayer>(provider => {
-            var options = provider.GetRequiredService<FfmpegOptions>();
-            var logger = provider.GetService<ILogger<FfmpegAudioPlayer>>();
-            var metrics = provider.GetService<IMetrics>();
-            return new(options, logger, metrics);
-        });
-
-        services.AddScoped<IAudioPlayer>(provider => provider.GetRequiredService<FfmpegAudioPlayer>());
-        services.AddScoped<FfmpegAudioProber>(provider => {
-            var options = provider.GetRequiredService<FfmpegOptions>();
-            var logger = provider.GetService<ILogger<FfmpegAudioProber>>();
-            var metrics = provider.GetService<IMetrics>();
-            return new(options, logger, metrics);
-        });
-
-        services.AddScoped<IAudioProber>(provider => provider.GetRequiredService<FfmpegAudioProber>());
-        services.AddScoped<FfmpegAudioConverter>(provider => {
-            var options = provider.GetRequiredService<FfmpegOptions>();
-            var logger = provider.GetService<ILogger<FfmpegAudioConverter>>();
-            var metrics = provider.GetService<IMetrics>();
-            return new(options, logger, metrics);
-        });
-
-        services.AddScoped<IAudioConverter>(provider => provider.GetRequiredService<FfmpegAudioConverter>());
     }
 }

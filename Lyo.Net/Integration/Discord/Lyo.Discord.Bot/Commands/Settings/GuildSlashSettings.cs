@@ -1,4 +1,5 @@
 // ReSharper disable MemberHidesStaticFromOuterClass
+
 namespace Lyo.Discord.Bot.Commands.Settings;
 
 /// <summary>Centralized slash command and option names/descriptions for guild settings (<c>/settings</c> tree). Use with DSharpPlus attributes (compile-time string constants).</summary>

@@ -1,9 +1,6 @@
 namespace Lyo.Pdf.Models;
 
-/// <summary>
-/// PdfSharp-backed mutable PDF. Dispose to release the editor; not thread-safe.
-/// Page indices use zero-based numbering.
-/// </summary>
+/// <summary>PdfSharp-backed mutable PDF. Dispose to release the editor; not thread-safe. Page indices use zero-based numbering.</summary>
 public interface IPdfWriter : IDisposable
 {
     int PageCount { get; }

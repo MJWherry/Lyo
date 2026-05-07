@@ -52,9 +52,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresShortUrlOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddShortUrlDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresShortUrlOptions.SectionName)
+        public IServiceCollection AddShortUrlDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresShortUrlOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

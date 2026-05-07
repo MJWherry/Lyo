@@ -91,8 +91,5 @@ public class FileTypeInfoRegistryTests
     }
 
     [Fact]
-    public void FileTypeInfo_DebianPackage_FromMimeType_Alias_Resolves()
-    {
-        Assert.Same(FileTypeInfo.DebianPackage, FileTypeInfo.FromMimeType("application/x-debian-package"));
-    }
+    public void FileTypeInfo_DebianPackage_FromMimeType_Alias_Resolves() => Assert.Same(FileTypeInfo.DebianPackage, FileTypeInfo.FromMimeType("application/x-debian-package"));
 }

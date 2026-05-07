@@ -60,9 +60,7 @@ public static class Extensions
         /// <param name="configuration">The configuration instance</param>
         /// <param name="configSectionName">The configuration section name (defaults to "PdfServiceOptions")</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddPdfServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PdfServiceOptions.SectionName)
+        public IServiceCollection AddPdfServiceFromConfiguration(IConfiguration configuration, string configSectionName = PdfServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

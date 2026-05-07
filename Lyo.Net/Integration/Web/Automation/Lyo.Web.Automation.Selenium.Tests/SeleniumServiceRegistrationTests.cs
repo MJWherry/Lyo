@@ -11,9 +11,7 @@ public sealed class SeleniumServiceRegistrationTests
         var services = new ServiceCollection();
         services.AddSeleniumBrowserService(options => options.Headless = true);
         using var provider = services.BuildServiceProvider();
-
         var service = provider.GetService<ISeleniumBrowserService>();
-
         Assert.NotNull(service);
     }
 }

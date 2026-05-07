@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.People.Postgres.Tests.PeoplePostgresFixture))]
+using Lyo.People.Postgres.Tests;
+
+[assembly: AssemblyFixture(typeof(PeoplePostgresFixture))]

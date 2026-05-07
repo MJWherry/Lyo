@@ -42,10 +42,12 @@
 
 @code {
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string BaseRoute { get; set; } = "Job";
 
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";

@@ -1,15 +1,20 @@
 # Lyo.Web.Automation
 
-**Serializable automation plans** and a shared **runner** for **Selenium** and **Playwright** via `IWebAutomationSession` / `IWebAutomationBrowser`. The browser façade composes **`IWebAutomationNavigator`** (navigate / reload), **`IWebAutomationPage`** (find elements, source, URL/title, viewport PNG, **`SetViewportSizeAsync`**), **`IWebAutomationTabs`** (list/switch/open/close tabs via opaque keys), cookies, and optional extra headers—the same instance exposes **`Navigator`**, **`CurrentPage`**, and **`Tabs`** for narrower dependencies.
+**Serializable automation plans** and a shared **runner** for **Selenium** and **Playwright** via `IWebAutomationSession` / `IWebAutomationBrowser`. The browser façade composes *
+*`IWebAutomationNavigator`** (navigate / reload), **`IWebAutomationPage`** (find elements, source, URL/title, viewport PNG, **`SetViewportSizeAsync`**), **`IWebAutomationTabs`** (
+list/switch/open/close tabs via opaque keys), cookies, and optional extra headers—the same instance exposes **`Navigator`**, **`CurrentPage`**, and **`Tabs`** for narrower
+dependencies.
 
-| Project                         | Role                                                                                        |
-|---------------------------------|---------------------------------------------------------------------------------------------|
+| Project                         | Role                                                                                         |
+|---------------------------------|----------------------------------------------------------------------------------------------|
 | `Lyo.Web.Automation`            | Plan types, `AutomationPlanBuilder`, `IAutomationPlanRunner`, interpolation, hooks / metrics |
-| `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                               |
-| `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                               |
+| `Lyo.Web.Automation.Selenium`   | Selenium-backed session and `SeleniumBrowser`                                                |
+| `Lyo.Web.Automation.Playwright` | Playwright-backed session and browser adapter                                                |
 
-Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on elements, extract text or attributes into **string variables**,
-write files, download URL lists/single files, call HTTP APIs, extract image source URLs, upload local directories through file storage, upsert JSON payloads through a data sink, and store literals or page metadata. String values can be combined with
+Plans are **ordered lists of steps** (`AutomationPlan`). Steps can navigate, reload, **resize viewport/window**, **switch/open/close tabs**, find elements (single or lists), act on
+elements, extract text or attributes into **string variables**,
+write files, download URL lists/single files, call HTTP APIs, extract image source URLs, upload local directories through file storage, upsert JSON payloads through a data sink,
+and store literals or page metadata. String values can be combined with
 **`{{variableName}}`** placeholders resolved at run time.
 
 ---
@@ -25,7 +30,8 @@ write files, download URL lists/single files, call HTTP APIs, extract image sour
 Build in code with **`AutomationPlanBuilder`** (assigns a time-ordered **`StepId`** on every step when you did not set one). Deserialize with **`System.Text.Json`** (or anything
 else) in your host — the library does not ship a serializer.
 
-**Viewport / tab JSON discriminators** (polymorphic `type`): **`setViewportSize`** (`width`, `height`), **`switchTabByIndex`** (`tabIndex`), **`switchTabByKey`** (`tabKey`), **`openNewTab`** (`url`, `tabKeyVariableName`), **`closeCurrentTab`**.
+**Viewport / tab JSON discriminators** (polymorphic `type`): **`setViewportSize`** (`width`, `height`), **`switchTabByIndex`** (`tabIndex`), **`switchTabByKey`** (`tabKey`), *
+*`openNewTab`** (`url`, `tabKeyVariableName`), **`closeCurrentTab`**.
 
 ### Locators and chains
 
@@ -38,11 +44,15 @@ Single-segment chains are equivalent to a simple find; multi-segment steps use c
 ### Browser façade (`IWebAutomationBrowser`)
 
 - **`Navigator`** (`IWebAutomationNavigator`): `NavigateAsync`, `ReloadAsync`.
-- **`CurrentPage`** (`IWebAutomationPage`): `PollForElementAsync` / `GetElementAsync`, `GetPageSourceAsync`, `GetCurrentUrlAsync`, `GetTitleAsync`, `TakeViewportSnapshotPngAsync`, **`SetViewportSizeAsync`**, etc. Applies to the **active tab/window** and **current iframe stack** (after frame navigation). Distinct from Playwright's native `IPage`. Selenium **`SetViewportSizeAsync`** adjusts the OS window size, not necessarily the CSS layout viewport.
-- **`Tabs`** (`IWebAutomationTabs`): `ListTabsAsync`, `SwitchToTabAsync` (by index or opaque **`TabKey`**), `OpenNewTabAsync`, `CloseCurrentTabAsync`, `SetTabDisplayNameAsync`. Tab keys are **opaque** (Selenium window handle vs Playwright page id).
+- **`CurrentPage`** (`IWebAutomationPage`): `PollForElementAsync` / `GetElementAsync`, `GetPageSourceAsync`, `GetCurrentUrlAsync`, `GetTitleAsync`, `TakeViewportSnapshotPngAsync`,
+  **`SetViewportSizeAsync`**, etc. Applies to the **active tab/window** and **current iframe stack** (after frame navigation). Distinct from Playwright's native `IPage`. Selenium *
+  *`SetViewportSizeAsync`** adjusts the OS window size, not necessarily the CSS layout viewport.
+- **`Tabs`** (`IWebAutomationTabs`): `ListTabsAsync`, `SwitchToTabAsync` (by index or opaque **`TabKey`**), `OpenNewTabAsync`, `CloseCurrentTabAsync`, `SetTabDisplayNameAsync`. Tab
+  keys are **opaque** (Selenium window handle vs Playwright page id).
 - **`CookieJar`** / **`ExtraHeaders`**: optional engine capabilities as today.
 
-**Typed sessions** (`ISeleniumBrowserSession` / `IPlaywrightBrowserSession`) still expose engine-native **`Tabs`** pointing at **`SeleniumBrowser.NativeTabs`** (`TabManager`) or **`PlaywrightBrowser.NativeTabs`** (`PlaywrightTabManager`) for advanced operations (predicate switches, window vs tab, etc.).
+**Typed sessions** (`ISeleniumBrowserSession` / `IPlaywrightBrowserSession`) still expose engine-native **`Tabs`** pointing at **`SeleniumBrowser.NativeTabs`** (`TabManager`) or *
+*`PlaywrightBrowser.NativeTabs`** (`PlaywrightTabManager`) for advanced operations (predicate switches, window vs tab, etc.).
 
 You can still call navigation and page methods directly on `IWebAutomationBrowser`; it inherits the narrower interfaces.
 
@@ -103,7 +113,7 @@ Frame index **`i`** is state **after** `plan.Steps[i]` completed (zero-based).
 | **`Instrumentation`**        | Optional **`IAutomationPlanInstrumentation`** for metrics / tracing (run and step lifecycle).                                                                                                                                                                                                                                     |
 | **`PlanRunDirectory`**       | Optional **`AutomationPlanRunDirectoryOptions`**: per-run folder under **`RootDirectory`** (see layout below). Set **`WriteRunLogFile`**, **`WriteSnapshots`**, and **`WriteVariables`** to **`false`** to reserve only the directory (or disable each category independently). When **`null`**, no run-scoped files are written. |
 | **`Formatter`**              | Optional **`Lyo.Formatter.IFormatterService`**: validates step templates with SmartFormat before placeholders are resolved. Use single-brace placeholders (e.g. `{page.url}`) or legacy `{{page.url}}` (normalized to single braces). Register **`FormatterService`** from DI if you use this.                                    |
-| **`LinkResolutionBaseUri`**  | Optional base URL used to resolve relative links extracted from pages (for example image `src`/`srcset` values).                                                                                                                                                                                                                |
+| **`LinkResolutionBaseUri`**  | Optional base URL used to resolve relative links extracted from pages (for example image `src`/`srcset` values).                                                                                                                                                                                                                  |
 
 ### Plan run directory layout
 
@@ -187,7 +197,9 @@ await session.Browser.TrySetExtraHeadersAsync(
 
 ### Navigation with request observation
 
-**`NavigateAsync(url, onRequest, ct)`** overload on **`IWebAutomationNavigator`** calls `onRequest` with the URL of each outgoing network request observed before, during, and after the page load. Return `true` from the callback to signal that the caller found what it needed (stops observation). For Chromium-based Selenium sessions, performance logging must be enabled.
+**`NavigateAsync(url, onRequest, ct)`** overload on **`IWebAutomationNavigator`** calls `onRequest` with the URL of each outgoing network request observed before, during, and after
+the page load. Return `true` from the callback to signal that the caller found what it needed (stops observation). For Chromium-based Selenium sessions, performance logging must be
+enabled.
 
 ```csharp
 string? apiUrl = null;
@@ -202,10 +214,10 @@ await session.Browser.NavigateAsync(
 
 ### Page source and snapshots
 
-| Member                                                         | Returns                                  |
-|----------------------------------------------------------------|------------------------------------------|
-| `IWebAutomationPage.GetPageSourceAsync(ct)` (also on browser)  | Full HTML source of the current document |
-| `IWebAutomationPage.TakeViewportSnapshotPngAsync(ct)`          | Visible viewport as a PNG byte array     |
+| Member                                                        | Returns                                  |
+|---------------------------------------------------------------|------------------------------------------|
+| `IWebAutomationPage.GetPageSourceAsync(ct)` (also on browser) | Full HTML source of the current document |
+| `IWebAutomationPage.TakeViewportSnapshotPngAsync(ct)`         | Visible viewport as a PNG byte array     |
 | `IWebAutomationElement.TakeSnapshotPngAsync(ct)`              | Element bounding box as a PNG byte array |
 
 These are also used internally by the runner when `WriteSnapshots` is enabled.
@@ -305,31 +317,31 @@ await runner.RunWithResultAsync(
 
 ## Step reference (builder ↔ JSON `type`)
 
-| Builder method            | JSON `type`                                               | Notes                                                                                                  |
-|---------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `Navigate`                | `navigate`                                                | URL supports `{{vars}}`                                                                                |
-| `Reload`                  | `reload`                                                  | Full document reload                                                                                   |
-| `Delay`                   | `delay`                                                   | Milliseconds                                                                                           |
-| `FindElement`             | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref**                                                                                 |
-| `FindElements`            | `findElementsChain`                                       | Stores **element list ref**                                                                            |
-| `ElementAction`           | `elementAction`                                           | Click, input, select, …                                                                                |
-| `FindAndAct`              | `findAndAct`                                              | Single locator                                                                                         |
-| `FindAndActChain`         | `findAndActChain`                                         | Chain                                                                                                  |
-| `ExtractElementData`      | `extractElementData`                                      | Text or attribute → string var                                                                         |
-| `ExtractElementsListData` | `extractElementsListData`                                 | Per element → string list var                                                                          |
-| `StoreLiteral`            | `storeLiteral`                                            | Value may contain `{{vars}}`                                                                           |
-| `StoreTemplate`           | `storeTemplate`                                           | Template → string var                                                                                  |
-| `StoreStringListFromTemplate` | `storeStringListFromTemplate`                          | Map source list items through an item template                                                         |
-| `StorePageUrl`            | `storePageUrl`                                            |                                                                                                        |
-| `StorePageTitle`          | `storePageTitle`                                          |                                                                                                        |
-| `WriteStringListToFile`   | `writeStringListToFile`                                   | UTF-8; path may use `{{vars}}`                                                                         |
-| `DownloadUrlsToDirectory` | `downloadUrlsToDirectory`                                 | Uses runner HTTP dependency; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index) |
-| `HttpRequest`             | `httpRequest`                                             | Uses runner HTTP dependency; supports templated URL/headers/body and response capture                          |
-| `DownloadFile`            | `downloadFile`                                            | Uses runner HTTP dependency; downloads one URL to one file                                                      |
-| `ExtractSources`          | `extractSources`                                          | Extracts source/link attributes into list variable (configure attrs for video/CSV/etc.)               |
-| `UpsertJsonRecords`       | `upsertJsonRecords`                                       | Uses runner data sink dependency; upserts JSON payload from a string variable                                          |
-| `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage`                       | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs                  |
-| `InvokeDiMethod`          | `invokeDiMethod`                                          | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
+| Builder method                 | JSON `type`                                               | Notes                                                                                                                    |
+|--------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `Navigate`                     | `navigate`                                                | URL supports `{{vars}}`                                                                                                  |
+| `Reload`                       | `reload`                                                  | Full document reload                                                                                                     |
+| `Delay`                        | `delay`                                                   | Milliseconds                                                                                                             |
+| `FindElement`                  | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref**                                                                                                   |
+| `FindElements`                 | `findElementsChain`                                       | Stores **element list ref**                                                                                              |
+| `ElementAction`                | `elementAction`                                           | Click, input, select, …                                                                                                  |
+| `FindAndAct`                   | `findAndAct`                                              | Single locator                                                                                                           |
+| `FindAndActChain`              | `findAndActChain`                                         | Chain                                                                                                                    |
+| `ExtractElementData`           | `extractElementData`                                      | Text or attribute → string var                                                                                           |
+| `ExtractElementsListData`      | `extractElementsListData`                                 | Per element → string list var                                                                                            |
+| `StoreLiteral`                 | `storeLiteral`                                            | Value may contain `{{vars}}`                                                                                             |
+| `StoreTemplate`                | `storeTemplate`                                           | Template → string var                                                                                                    |
+| `StoreStringListFromTemplate`  | `storeStringListFromTemplate`                             | Map source list items through an item template                                                                           |
+| `StorePageUrl`                 | `storePageUrl`                                            |                                                                                                                          |
+| `StorePageTitle`               | `storePageTitle`                                          |                                                                                                                          |
+| `WriteStringListToFile`        | `writeStringListToFile`                                   | UTF-8; path may use `{{vars}}`                                                                                           |
+| `DownloadUrlsToDirectory`      | `downloadUrlsToDirectory`                                 | Uses runner HTTP dependency; optional **`urlListFromCompletedStepIndex`** (zero-based **completed** step index)          |
+| `HttpRequest`                  | `httpRequest`                                             | Uses runner HTTP dependency; supports templated URL/headers/body and response capture                                    |
+| `DownloadFile`                 | `downloadFile`                                            | Uses runner HTTP dependency; downloads one URL to one file                                                               |
+| `ExtractSources`               | `extractSources`                                          | Extracts source/link attributes into list variable (configure attrs for video/CSV/etc.)                                  |
+| `UpsertJsonRecords`            | `upsertJsonRecords`                                       | Uses runner data sink dependency; upserts JSON payload from a string variable                                            |
+| `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage`                            | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs                    |
+| `InvokeDiMethod`               | `invokeDiMethod`                                          | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
 
 **`ElementAction`** JSON uses nested **`type`**: `click`, `inputText`, `sendKeys`, `clear`, `submit`, `selectByText`, `selectByValue`, `selectByIndex`.
 
@@ -463,7 +475,8 @@ if (result.Context.TryGetStringListAtCompletedStep(3, "hrefs", out var hrefsAtSt
 
 ### 6. Downloads from a URL list (with optional step snapshot)
 
-After a step fills a **string list** variable (for example `srcs`), **`downloadUrlsToDirectory`** saves each URL to **`targetDirectory`** (runner must have an HTTP dependency configured). By default the runner uses the **final** value of that variable. If a **later** step overwrites or clears it, set *
+After a step fills a **string list** variable (for example `srcs`), **`downloadUrlsToDirectory`** saves each URL to **`targetDirectory`** (runner must have an HTTP dependency
+configured). By default the runner uses the **final** value of that variable. If a **later** step overwrites or clears it, set *
 *`urlListFromCompletedStepIndex`** to the **zero-based completed step index** whose bindings should be used (the snapshot **after** that step finished).
 
 In this mini-plan, steps are indices `0` = navigate, `1` = find elements, `2` = extract list → variable `srcs`. To download using `srcs` exactly as it was after the extract step,

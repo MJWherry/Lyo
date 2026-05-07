@@ -61,18 +61,15 @@ public partial class ComicBrowseCard
     [Parameter]
     public EventCallback OnDetails { get; set; }
 
-    private bool IsGrid
-        => ViewMode is ComicBrowseViewMode.GridLarge or ComicBrowseViewMode.GridSmall;
+    private bool IsGrid => ViewMode is ComicBrowseViewMode.GridLarge or ComicBrowseViewMode.GridSmall;
 
     private string? DisplayDescription => Description?.Truncated(null, 200);
 
     private bool HasAnyDisplayTags => Tags.Any(static t => !string.IsNullOrWhiteSpace(t));
 
-    private IEnumerable<string> VisibleTagChips
-        => Tags.Where(static t => !string.IsNullOrWhiteSpace(t)).Take(MaxVisibleTags);
+    private IEnumerable<string> VisibleTagChips => Tags.Where(static t => !string.IsNullOrWhiteSpace(t)).Take(MaxVisibleTags);
 
-    private int OverflowTagCount
-    {
+    private int OverflowTagCount {
         get {
             var n = 0;
             foreach (var t in Tags) {

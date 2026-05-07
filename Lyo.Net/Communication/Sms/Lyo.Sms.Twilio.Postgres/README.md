@@ -1,6 +1,7 @@
 # Lyo.Sms.Twilio.Postgres
 
-EF Core PostgreSQL persistence tailored for **Twilio-outbound (+ metadata)** traces: **`TwilioSmsDbContext`** and **`TwilioSmsLogEntity`**. Complements [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md); it never calls Twilio by itself.
+EF Core PostgreSQL persistence tailored for **Twilio-outbound (+ metadata)** traces: **`TwilioSmsDbContext`** and **`TwilioSmsLogEntity`**. Complements [
+`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md); it never calls Twilio by itself.
 
 ---
 
@@ -18,10 +19,10 @@ Timestamps **`DateCreated`** / **`DateSent`** / **`DateUpdated`** mirror provide
 
 ## Configuration: **`PostgresTwilioSmsOptions`**
 
-| Constant | Value |
-|-----------|--------|
-| **`SectionName`** | `"PostgresTwilioSms"` |
-| **`Schema`** | `"sms"` (shared schema name with [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md)—**different DbContext/table set**, same PG schema budget) |
+| Constant          | Value                                                                                                                                          |
+|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`SectionName`** | `"PostgresTwilioSms"`                                                                                                                          |
+| **`Schema`**      | `"sms"` (shared schema name with [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md)—**different DbContext/table set**, same PG schema budget) |
 
 **`EnableAutoMigrations`** follows [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) conventions.
 
@@ -32,7 +33,8 @@ Timestamps **`DateCreated`** / **`DateSent`** / **`DateUpdated`** mirror provide
 Same pattern as the provider-neutral Postgres package:
 
 - **`AddTwilioSmsDbContext(string connectionString)`** — factory + scoped **`TwilioSmsDbContext`**.
-- **`AddTwilioSmsDbContextFactory(PostgresTwilioSmsOptions)`** — singleton options + **`AddDbContextFactory`** + **`UseNpgsql`** with **`sms.__EFMigrationsHistory`** history table (schema **`sms`**).
+- **`AddTwilioSmsDbContextFactory(PostgresTwilioSmsOptions)`** — singleton options + **`AddDbContextFactory`** + **`UseNpgsql`** with **`sms.__EFMigrationsHistory`** history
+  table (schema **`sms`**).
 - **`AddTwilioSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresTwilioSmsOptions.SectionName)`** — binds config then registers factory.
 - **`AddTwilioSmsDbContext`** (`Action<DbContextOptionsBuilder>`) — direct **`AddDbContext`**.
 

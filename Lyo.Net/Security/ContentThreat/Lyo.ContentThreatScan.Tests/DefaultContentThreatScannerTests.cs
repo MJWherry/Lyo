@@ -20,9 +20,7 @@ public sealed class DefaultContentThreatScannerTests
         DefaultContentThreatScanner sut = new(opts);
         var hostile = "{\"payload\":\" UNION SELECT username FROM accounts\"}"u8.ToArray();
         var hits = await sut.CollectHeuristicContributionsAsync(hostile, new("evil.json", "application/json"), TestContext.Current.CancellationToken);
-        Assert.Contains(hits,
-            contribution =>
-                string.Equals(contribution.RuleId, "sql.union_select", StringComparison.Ordinal));
+        Assert.Contains(hits, contribution => string.Equals(contribution.RuleId, "sql.union_select", StringComparison.Ordinal));
         Assert.True(hits.Sum(point => point.Points) >= 35m);
     }
 
@@ -32,7 +30,7 @@ public sealed class DefaultContentThreatScannerTests
         ContentThreatHeuristicOptions opts = new() { SkipIfLikelyBinary = true, TreatNullOctetAsBinary = true };
         DefaultContentThreatScanner sut = new(opts);
         var buffer = "{a,,,,,,,,\0}"u8.ToArray();
-        var hits = await sut.CollectHeuristicContributionsAsync(buffer, new("sample.json", contentType: "application/json"), TestContext.Current.CancellationToken);
+        var hits = await sut.CollectHeuristicContributionsAsync(buffer, new("sample.json", "application/json"), TestContext.Current.CancellationToken);
         Assert.Empty(hits);
     }
 }

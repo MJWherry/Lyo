@@ -14,23 +14,21 @@ public sealed record StackTraceDecoderOptions
     public IReadOnlyList<string> UserCodePrefixes { get; init; } = [];
 
     /// <summary>
-    /// Additional namespace prefixes to treat as system / third-party frames. Use for NuGet and vendor SDKs you do not own
-    /// (or load from application config / database). Apart from the decoder’s small fixed BCL / Microsoft list, nothing else is
-    /// hard-coded.
+    /// Additional namespace prefixes to treat as system / third-party frames. Use for NuGet and vendor SDKs you do not own (or load from application config / database). Apart
+    /// from the decoder’s small fixed BCL / Microsoft list, nothing else is hard-coded.
     /// </summary>
     public IReadOnlyList<string> ExtraSystemPrefixes { get; init; } = [];
 
     /// <summary>
-    /// Optional store that resolves NuGet-style package metadata for frames. When set, use <see cref="IStackTraceDecoder.DecodeAsync" /> so lookups can run asynchronously
-    /// (sync <see cref="IStackTraceDecoder.Decode" /> throws).
+    /// Optional store that resolves NuGet-style package metadata for frames. When set, use <see cref="IStackTraceDecoder.DecodeAsync" /> so lookups can run asynchronously (sync
+    /// <see cref="IStackTraceDecoder.Decode" /> throws).
     /// </summary>
     public IPackageMetadataStore? PackageMetadataStore { get; init; }
 
     /// <summary>
-    /// When <see langword="true" />, only frames whose method signature starts with a <see cref="UserCodePrefixes" /> entry are
-    /// classified as <see cref="FrameCategory.UserCode" />. Everything else that is not test or known system code is treated as
-    /// <see cref="FrameCategory.SystemOrThirdParty" />. When <see langword="false" /> (default), unknown namespaces are still
-    /// treated as user code so decode works out-of-the-box without configuration.
+    /// When <see langword="true" />, only frames whose method signature starts with a <see cref="UserCodePrefixes" /> entry are classified as
+    /// <see cref="FrameCategory.UserCode" />. Everything else that is not test or known system code is treated as <see cref="FrameCategory.SystemOrThirdParty" />. When
+    /// <see langword="false" /> (default), unknown namespaces are still treated as user code so decode works out-of-the-box without configuration.
     /// </summary>
     public bool RestrictUserCodeToListedPrefixes { get; init; } = false;
 
@@ -41,15 +39,12 @@ public sealed record StackTraceDecoderOptions
     public bool StripAsyncNoise { get; init; } = false;
 
     /// <summary>
-    /// Minimum total frames in a repeating stack segment before it is flagged as recursive. The repeat may be a single method
-    /// (direct recursion) or a cycle of frames (mutual recursion). Defaults to 3.
+    /// Minimum total frames in a repeating stack segment before it is flagged as recursive. The repeat may be a single method (direct recursion) or a cycle of frames (mutual
+    /// recursion). Defaults to 3.
     /// </summary>
     public int RecursionThreshold { get; init; } = 3;
 
-    /// <summary>
-    /// Largest cycle length (in frames) to try when detecting mutual recursion. Keeps decoding cheap on long stacks. Defaults
-    /// to 12.
-    /// </summary>
+    /// <summary>Largest cycle length (in frames) to try when detecting mutual recursion. Keeps decoding cheap on long stacks. Defaults to 12.</summary>
     public int MaxRecursionCycleLength { get; init; } = 12;
 
     /// <summary>Default singleton with no customisation.</summary>

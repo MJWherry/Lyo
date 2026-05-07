@@ -68,6 +68,7 @@
 </MudPaper>
 
 @code {
+
     [Parameter]
     public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;
 
@@ -79,15 +80,9 @@
 
     private string _policyJsonPaste = string.Empty;
 
-    protected override void OnInitialized()
-    {
-        SetPolicy(PrivacyPolicies.FromPreset(string.IsNullOrWhiteSpace(InitialPreset) ? PrivacyPresetNames.Logging : InitialPreset));
-    }
+    protected override void OnInitialized() => SetPolicy(PrivacyPolicies.FromPreset(string.IsNullOrWhiteSpace(InitialPreset) ? PrivacyPresetNames.Logging : InitialPreset));
 
-    private void SetPolicy(RedactionPolicy policy)
-    {
-        _policy = policy;
-    }
+    private void SetPolicy(RedactionPolicy policy) => _policy = policy;
 
     private Task OnPresetFromToolbarAsync(RedactionPolicy policy)
     {

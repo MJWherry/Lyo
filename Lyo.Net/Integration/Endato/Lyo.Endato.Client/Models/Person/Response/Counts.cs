@@ -25,5 +25,5 @@ public sealed record Counts(
 {
     public override string ToString()
         => $"Counts: SearchResults={SearchResults}, Overflow={SearchResultsOverflow}, Expected={ExpectedCount}, " +
-           $"Names={Names}, Addresses={Addresses}, Phones={PhoneNumbers}, Emails={EmailAddresses}, Associates={Associates}";
+            $"Names={Names}, Addresses={Addresses}, Phones={PhoneNumbers}, Emails={EmailAddresses}, Associates={Associates}";
 }

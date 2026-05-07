@@ -14,7 +14,10 @@ public static class DiagnosticsPackageExtensions
     /// Registers the full diagnostics package as singletons:
     /// <list type="bullet">
     /// <item><see cref="IStackTraceDecoder" /> / <see cref="StackTraceDecoder" /></item> <item><see cref="IExceptionClassifier" /> / <see cref="ExceptionClassifier" /></item>
-    /// <item><see cref="IDiagnosticContextBuilder" /> / <see cref="DiagnosticContextBuilder" /> (use <see cref="IDiagnosticContextBuilder.BuildAsync(System.Exception, System.Threading.CancellationToken)" /> when <see cref="StackTraceDecoderOptions.PackageMetadataStore" /> is set)</item>
+    /// <item>
+    /// <see cref="IDiagnosticContextBuilder" /> / <see cref="DiagnosticContextBuilder" /> (use
+    /// <see cref="IDiagnosticContextBuilder.BuildAsync(System.Exception, System.Threading.CancellationToken)" /> when <see cref="StackTraceDecoderOptions.PackageMetadataStore" /> is set)
+    /// </item>
     /// <item><see cref="IStructuredLogEnricher" /> / <see cref="StructuredLogEnricher" /></item> <item><see cref="ITraceSanitiser" /> / <see cref="TraceSanitiser" /></item>
     /// </list>
     /// </summary>

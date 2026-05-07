@@ -7,7 +7,8 @@ A production-ready SMS library for .NET with extensible architecture for multipl
 - ✅ **Clean API** - Fluent builder pattern for constructing messages
 - ✅ **Phone Number Validation** - Automatic validation and normalization to E.164 format
 - ✅ **Bulk Messaging** - Efficient bulk SMS sending with rate limiting and BulkSmsBuilder
-- ✅ **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README “Resilience”).
+- ✅ **Error handling** — Failures surface as `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`); add retries/timeouts yourself (see provider packages, e.g. Twilio README
+  “Resilience”).
 - ✅ **Custom Exceptions** - InvalidFormatException and ArgumentOutsideRangeException for better error messages
 - ✅ **Logging** - Built-in logging support via Microsoft.Extensions.Logging
 - ✅ **Dependency Injection** - Full support for .NET dependency injection
@@ -40,7 +41,8 @@ registration methods.
 
 ### 3. Use the Service
 
-The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces **`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
+The contract is `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. **`ISmsService`** is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio surfaces *
+*`TwilioSmsResult`** as **`TResult`** when you want provider-specific fields.
 
 ```csharp
 public class MyService
@@ -449,7 +451,9 @@ public class MyProviderOptions : SmsServiceOptions
 }
 ```
 
-2. Implement **`SmsServiceBase<TResult>`**. Override **`SendCoreAsync`** (the actual provider call after **`SmsRequest`** is built), **`GetMessageByIdAsync`**, **`GetMessagesAsync`**, **`TestConnectionCoreAsync`**, and **`CreateFailure`**. Everything else on **`ISmsService`** (**`SendSmsAsync`**, **`SendBulkAsync`**, events, concurrency throttling, metrics hooks) stays in the base.
+2. Implement **`SmsServiceBase<TResult>`**. Override **`SendCoreAsync`** (the actual provider call after **`SmsRequest`** is built), **`GetMessageByIdAsync`**, **`GetMessagesAsync`
+   **, **`TestConnectionCoreAsync`**, and **`CreateFailure`**. Everything else on **`ISmsService`** (**`SendSmsAsync`**, **`SendBulkAsync`**, events, concurrency throttling,
+   metrics hooks) stays in the base.
 
 ```csharp
 public class MyProviderSmsService : SmsServiceBase<Result<SmsRequest>>
@@ -500,10 +504,6 @@ public static class Extensions
 ```
 
 All bulk SMS operations, rate limiting, and common functionality are automatically provided by the base class!
-
-
-
-
 
 ## Dependencies
 

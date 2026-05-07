@@ -83,7 +83,6 @@ var thumbnailBytes = await imageService.GenerateThumbnailAsync(
 - .NET 10.0 or later
 - SkiaSharp 2.88.x or later
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Images.Skia.csproj`.)*

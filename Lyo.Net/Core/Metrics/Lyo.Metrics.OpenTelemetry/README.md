@@ -105,7 +105,6 @@ using (metrics.StartTimer("operation.duration"))
 }
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Metrics.OpenTelemetry.csproj`.)*

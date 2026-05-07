@@ -40,11 +40,7 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
                 var error = apiErrorBuilder.Build();
                 context.Response.StatusCode = 500;
                 var json = JsonSerializer.Serialize(
-                    error,
-                    new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                        WriteIndented = true
-                    });
+                    error, new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = true });
 
                 await context.Response.WriteAsync(json);
                 logger.LogWarning(error.ToString());
@@ -58,11 +54,7 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
                 var error = apiErrorBuilder.Build();
                 context.Response.StatusCode = 500;
                 var json = JsonSerializer.Serialize(
-                    error,
-                    new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                        WriteIndented = true
-                    });
+                    error, new JsonSerializerOptions(LyoJsonSerializerOptions.Create()) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = true });
 
                 await context.Response.WriteAsync(json);
                 logger.LogError(ex, "Unmanaged exception caught");

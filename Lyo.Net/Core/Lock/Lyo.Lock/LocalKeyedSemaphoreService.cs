@@ -6,9 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Lock;
 
-/// <summary>
-/// In-memory counting semaphore per key: up to <c>maxConcurrency</c> concurrent permit holders per key within the process.
-/// </summary>
+/// <summary>In-memory counting semaphore per key: up to <c>maxConcurrency</c> concurrent permit holders per key within the process.</summary>
 public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 {
     private readonly Dictionary<string, SemaphoreEntry> _entries = [];
@@ -19,7 +17,7 @@ public sealed class LocalKeyedSemaphoreService : IKeyedSemaphoreService
 
     /// <param name="logger">Optional logger for acquire failures and release anomalies.</param>
     /// <param name="options">Timeouts, key normalization, metrics toggles.</param>
-    /// <param name="metrics">When <see cref="KeyedSemaphoreOptions.EnableMetrics"/> is true and this is non-null, timings and counters are emitted.</param>
+    /// <param name="metrics">When <see cref="KeyedSemaphoreOptions.EnableMetrics" /> is true and this is non-null, timings and counters are emitted.</param>
     public LocalKeyedSemaphoreService(ILogger<LocalKeyedSemaphoreService>? logger = null, KeyedSemaphoreOptions? options = null, IMetrics? metrics = null)
     {
         _logger = logger ?? NullLogger<LocalKeyedSemaphoreService>.Instance;

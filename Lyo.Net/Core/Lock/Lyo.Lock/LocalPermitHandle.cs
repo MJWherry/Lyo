@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Lock;
 
-/// <summary>Releases one permit on <see cref="SemaphoreEntry.Semaphore"/> and drops the keyed entry when ref-count reaches zero.</summary>
+/// <summary>Releases one permit on <see cref="SemaphoreEntry.Semaphore" /> and drops the keyed entry when ref-count reaches zero.</summary>
 internal sealed class LocalPermitHandle(LocalKeyedSemaphoreService owner, SemaphoreEntry entry, string key, ILogger logger, IMetrics metrics, string keyForMetrics) : IPermitHandle
 {
     private int _released;

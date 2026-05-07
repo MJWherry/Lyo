@@ -51,6 +51,19 @@ public static class SetupFileStorageWorkbenchEndpoints
     /// <summary>API QueryProject results for file metadata are cached; invalidate after any mutating file operation so grids see new rows.</summary>
     private static Task InvalidateFileMetadataQueryCacheAsync(ICacheService cache) => cache.InvalidateQueryCacheAsync<FileMetadataEntity>();
 
+    private static int MapFailureStatusCode(FileDownloadAccessConsumeFailureReason? reason)
+        => reason switch {
+            FileDownloadAccessConsumeFailureReason.InvalidToken => StatusCodes.Status400BadRequest,
+            FileDownloadAccessConsumeFailureReason.LockUnavailable => StatusCodes.Status429TooManyRequests,
+            FileDownloadAccessConsumeFailureReason.NotFound => StatusCodes.Status404NotFound,
+            FileDownloadAccessConsumeFailureReason.Revoked => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.NotYetValid => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.Expired => StatusCodes.Status410Gone,
+            FileDownloadAccessConsumeFailureReason.OutsideWindow => StatusCodes.Status403Forbidden,
+            FileDownloadAccessConsumeFailureReason.MaxDownloadsReached => StatusCodes.Status429TooManyRequests,
+            var _ => StatusCodes.Status403Forbidden
+        };
+
     extension(WebApplication app)
     {
         public WebApplication BuildFileStorageWorkbenchGroup()
@@ -83,23 +96,12 @@ public static class SetupFileStorageWorkbenchEndpoints
                     var accessService = GetDownloadAccessService(services);
                     var tenantId = request.TenantId ?? http.Request.Headers["X-Tenant-Id"].FirstOrDefault();
                     var result = await accessService.CreateLinkAsync(
-                        new(
-                            fileId,
-                            request.NotBeforeUtc,
-                            request.ExpiresAtUtc,
-                            request.WindowStartUtc,
-                            request.WindowEndUtc,
-                            request.MaxDownloads,
-                            tenantId), ct);
+                        new(fileId, request.NotBeforeUtc, request.ExpiresAtUtc, request.WindowStartUtc, request.WindowEndUtc, request.MaxDownloads, tenantId), ct);
 
                     return Results.Ok(
                         new DownloadAccessLinkResponse(
-                            result.LinkId,
-                            result.Token,
-                            $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/download",
-                            $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/presigned-read",
-                            result.CreatedUtc,
-                            result.ExpiresAtUtc));
+                            result.LinkId, result.Token, $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/download",
+                            $"{Constants.FileStorageWorkbench.Route}/files/access/{result.Token}/presigned-read", result.CreatedUtc, result.ExpiresAtUtc));
                 });
 
             group.MapPost(
@@ -210,8 +212,7 @@ public static class SetupFileStorageWorkbenchEndpoints
             group.MapGet(
                 "files/access/{token}/download", async (HttpContext http, string token, IServiceProvider services, CancellationToken ct) => {
                     var accessService = GetDownloadAccessService(services);
-                    var access = await accessService.ValidateAndConsumeDownloadAsync(
-                        token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
+                    var access = await accessService.ValidateAndConsumeDownloadAsync(token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
                     if (!access.IsAllowed || access.FileId == null)
                         return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
 
@@ -240,8 +241,7 @@ public static class SetupFileStorageWorkbenchEndpoints
             group.MapGet(
                 "files/access/{token}/presigned-read", async (string token, double? expiresHours, IServiceProvider services, HttpContext http, CancellationToken ct) => {
                     var accessService = GetDownloadAccessService(services);
-                    var access = await accessService.ValidateAndConsumeDownloadAsync(
-                        token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
+                    var access = await accessService.ValidateAndConsumeDownloadAsync(token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
                     if (!access.IsAllowed || access.FileId == null)
                         return Results.StatusCode(MapFailureStatusCode(access.FailureReason));
 
@@ -453,19 +453,6 @@ public static class SetupFileStorageWorkbenchEndpoints
             return app;
         }
     }
-
-    private static int MapFailureStatusCode(FileDownloadAccessConsumeFailureReason? reason)
-        => reason switch {
-            FileDownloadAccessConsumeFailureReason.InvalidToken => StatusCodes.Status400BadRequest,
-            FileDownloadAccessConsumeFailureReason.LockUnavailable => StatusCodes.Status429TooManyRequests,
-            FileDownloadAccessConsumeFailureReason.NotFound => StatusCodes.Status404NotFound,
-            FileDownloadAccessConsumeFailureReason.Revoked => StatusCodes.Status403Forbidden,
-            FileDownloadAccessConsumeFailureReason.NotYetValid => StatusCodes.Status403Forbidden,
-            FileDownloadAccessConsumeFailureReason.Expired => StatusCodes.Status410Gone,
-            FileDownloadAccessConsumeFailureReason.OutsideWindow => StatusCodes.Status403Forbidden,
-            FileDownloadAccessConsumeFailureReason.MaxDownloadsReached => StatusCodes.Status429TooManyRequests,
-            _ => StatusCodes.Status403Forbidden
-        };
 }
 
 public sealed record SaveFileRequest(
@@ -489,13 +476,7 @@ public sealed record CreateDownloadAccessLinkRequest(
     int? MaxDownloads = null,
     string? TenantId = null);
 
-public sealed record DownloadAccessLinkResponse(
-    Guid LinkId,
-    string Token,
-    string DownloadUrl,
-    string PresignedReadUrl,
-    DateTime CreatedUtc,
-    DateTime? ExpiresAtUtc);
+public sealed record DownloadAccessLinkResponse(Guid LinkId, string Token, string DownloadUrl, string PresignedReadUrl, DateTime CreatedUtc, DateTime? ExpiresAtUtc);
 
 public sealed record BeginMultipartWorkbenchRequest(
     int PartSizeBytes = 8 * 1024 * 1024,

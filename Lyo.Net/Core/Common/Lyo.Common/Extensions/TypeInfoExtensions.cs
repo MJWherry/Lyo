@@ -5,8 +5,8 @@ using Lyo.Common.Records;
 namespace Lyo.Common.Extensions;
 
 /// <summary>
-/// Extension methods that map paths, MIME strings, HTTP codes, units, and geographic inputs to
-/// Lyo metadata records (<see cref="FileTypeInfo"/>, <see cref="HttpStatusCodeInfo"/>, <see cref="GeographicInfo"/>, and related types).
+/// Extension methods that map paths, MIME strings, HTTP codes, units, and geographic inputs to Lyo metadata records (<see cref="FileTypeInfo" />,
+/// <see cref="HttpStatusCodeInfo" />, <see cref="GeographicInfo" />, and related types).
 /// </summary>
 public static class TypeInfoExtensions
 {

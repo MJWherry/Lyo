@@ -52,9 +52,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresReportingOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddReportingDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresReportingOptions.SectionName)
+        public IServiceCollection AddReportingDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresReportingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

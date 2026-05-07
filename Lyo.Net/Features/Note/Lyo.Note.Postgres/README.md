@@ -65,7 +65,6 @@ await noteStore.SaveAsync(new NoteRecord {
 
 - **note.note** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `content`, `created_timestamp`, `updated_timestamp`
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Note.Postgres.csproj`.)*

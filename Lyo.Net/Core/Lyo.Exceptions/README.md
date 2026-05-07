@@ -41,7 +41,6 @@ OperationHelpers.ThrowIfNull(_data, "Data must be specified using WithData()");
 OperationHelpers.ThrowIf(_count == 0, "At least one item is required");
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Exceptions.csproj`.)*

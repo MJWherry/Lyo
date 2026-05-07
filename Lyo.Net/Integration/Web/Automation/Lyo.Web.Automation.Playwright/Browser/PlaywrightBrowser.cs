@@ -15,6 +15,7 @@ namespace Lyo.Web.Automation.Playwright.Browser;
 public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsyncDisposable
 {
     private readonly Dictionary<string, string> _metricNames;
+    private PlaywrightBrowserTabs? _automationTabs;
     private IBrowser? _browser;
     private PlaywrightCookieJar? _cookieJar;
     private PlaywrightDialogs? _dialogs;
@@ -22,12 +23,11 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     private PlaywrightFrameNavigator? _frames;
     private PlaywrightHeaderStore? _headerStore;
     private PlaywrightKeyboard? _keyboard;
+
+    private PlaywrightTabManager? _nativeTabs;
     private bool _ownsPlaywrightStack;
 
     private IPlaywright? _playwright;
-
-    private PlaywrightTabManager? _nativeTabs;
-    private PlaywrightBrowserTabs? _automationTabs;
 
     /// <summary>Correlation id when created from <see cref="IPlaywrightBrowserService.CreateSession" />; otherwise <see cref="Guid.Empty" />.</summary>
     public Guid SessionId => ExecutionContext?.SessionId ?? Guid.Empty;
@@ -52,9 +52,6 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
 
     /// <summary>Playwright-native page/tab management (advanced APIs). Prefer portable <see cref="Tabs" /> for cross-engine plans.</summary>
     public PlaywrightTabManager NativeTabs => _nativeTabs ??= new(this, Logger);
-
-    /// <inheritdoc />
-    public IWebAutomationTabs Tabs => _automationTabs ??= new PlaywrightBrowserTabs(this);
 
     /// <summary>Nested iframe navigation.</summary>
     public PlaywrightFrameNavigator Frames => _frames ??= new(this);
@@ -178,6 +175,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         ExecutionContext?.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => _automationTabs ??= new(this);
 
     /// <inheritdoc />
     public IBrowserCookies? CookieJar => Context != null ? _cookieJar ??= new(this) : null;

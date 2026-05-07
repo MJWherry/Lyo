@@ -43,9 +43,7 @@ public sealed class TraceSanitiser : ITraceSanitiser
     private SanitisedStackTrace SanitiseInternal(DecodedStackTrace trace)
     {
         var frames = trace.AllFrames.Where(FrameIsAllowed).Select(SanitiseFrame).ToList();
-        var crashSite = trace.LikelyCrashSite is { } cs && FrameIsAllowed(cs)
-            ? (SanitiseLocationSummary(cs) ?? SanitiseCrashSiteWithoutLocation(cs))
-            : null;
+        var crashSite = trace.LikelyCrashSite is { } cs && FrameIsAllowed(cs) ? SanitiseLocationSummary(cs) ?? SanitiseCrashSiteWithoutLocation(cs) : null;
         var message = _options.IncludeExceptionMessage ? SanitiseText(trace.ExceptionMessage) : null;
         var inners = trace.InnerExceptions.Select(SanitiseInternal).ToList();
         return new(message, frames, crashSite, trace.CrashSiteConfidence, trace.Fingerprint, trace.UserNamespaces, trace.HasRecursion, inners);

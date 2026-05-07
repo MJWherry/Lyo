@@ -5,13 +5,16 @@ namespace Lyo.Common.Extensions;
 /// <summary>Extension methods for parsing strings into scalar types.</summary>
 public static class ScalarExtensions
 {
-    /// <summary>Parses a string into <typeparamref name="T"/> using invariant culture by default, with special handling for enums and nullable value types.</summary>
-    /// <typeparam name="T">The target type; supports <see cref="string"/>, numeric primitives, <see cref="bool"/>, <see cref="Guid"/>, <see cref="DateTime"/>, <see cref="TimeSpan"/>, enums, and other types via <see cref="Convert.ChangeType(object?, Type, IFormatProvider?)"/>.</typeparam>
-    /// <param name="value">The string to parse; <see langword="null"/> yields <see langword="default"/>.</param>
-    /// <param name="format">Optional format string applied when the parsed value implements <see cref="IFormattable"/> (round-trip formatting then conversion).</param>
-    /// <param name="formatProvider">Culture/provider for parsing; defaults to <see cref="CultureInfo.InvariantCulture"/> when <see langword="null"/>.</param>
-    /// <returns>The converted value, or <see langword="default"/> when parsing fails or <paramref name="value"/> is <see langword="null"/>.</returns>
-    /// <remarks>Failures (including unsupported types or conversion errors) return <see langword="default"/> rather than throwing.</remarks>
+    /// <summary>Parses a string into <typeparamref name="T" /> using invariant culture by default, with special handling for enums and nullable value types.</summary>
+    /// <typeparam name="T">
+    /// The target type; supports <see cref="string" />, numeric primitives, <see cref="bool" />, <see cref="Guid" />, <see cref="DateTime" />, <see cref="TimeSpan" />
+    /// , enums, and other types via <see cref="Convert.ChangeType(object?, Type, IFormatProvider?)" />.
+    /// </typeparam>
+    /// <param name="value">The string to parse; <see langword="null" /> yields <see langword="default" />.</param>
+    /// <param name="format">Optional format string applied when the parsed value implements <see cref="IFormattable" /> (round-trip formatting then conversion).</param>
+    /// <param name="formatProvider">Culture/provider for parsing; defaults to <see cref="CultureInfo.InvariantCulture" /> when <see langword="null" />.</param>
+    /// <returns>The converted value, or <see langword="default" /> when parsing fails or <paramref name="value" /> is <see langword="null" />.</returns>
+    /// <remarks>Failures (including unsupported types or conversion errors) return <see langword="default" /> rather than throwing.</remarks>
     public static T? ToScalar<T>(this string? value, string? format = null, IFormatProvider? formatProvider = null)
     {
         if (value is null)

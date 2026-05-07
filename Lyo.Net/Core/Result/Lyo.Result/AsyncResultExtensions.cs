@@ -36,8 +36,7 @@ public static class AsyncResultExtensions
     }
 
     /// <summary>Chains an async operation that accepts a CancellationToken. Executes only on success.</summary>
-    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(
-        this Result<TIn> result, Func<TIn, CancellationToken, Task<Result<TOut>>> next, CancellationToken ct = default)
+    public static async Task<Result<TOut>> ThenAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, CancellationToken, Task<Result<TOut>>> next, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         return !result.IsSuccess ? Result<TOut>.Failure(result.Errors ?? [], result.Timestamp, result.Metadata) : await next(result.Data!, ct).ConfigureAwait(false);
@@ -101,26 +100,6 @@ public static class AsyncResultExtensions
     /// <summary>Awaits all tasks in parallel (enumerable overload).</summary>
     public static async Task<Result<IReadOnlyList<T>>> WhenAll<T>(IEnumerable<Task<Result<T>>> tasks) => await WhenAll(tasks.ToArray()).ConfigureAwait(false);
 
-    extension<T1>(Task<Result<T1>> task1)
-    {
-        /// <summary>Combines two async results into a tuple. Both must succeed.</summary>
-        public async Task<Result<(T1, T2)>> CombineAsync<T2>(Task<Result<T2>> task2)
-        {
-            var r1 = await task1.ConfigureAwait(false);
-            var r2 = await task2.ConfigureAwait(false);
-            return r1.Combine(r2);
-        }
-
-        /// <summary>Combines three async results into a tuple. All must succeed.</summary>
-        public async Task<Result<(T1, T2, T3)>> CombineAsync<T2, T3>(Task<Result<T2>> task2, Task<Result<T3>> task3)
-        {
-            var r1 = await task1.ConfigureAwait(false);
-            var r2 = await task2.ConfigureAwait(false);
-            var r3 = await task3.ConfigureAwait(false);
-            return r1.Combine(r2, r3);
-        }
-    }
-
     /// <summary>
     /// Runs all tasks in parallel and returns the first successful result. If none succeed, returns all collected errors. Renamed from the previously misnamed <c>WhenAny</c>
     /// which ran all tasks via <c>Task.WhenAll</c>.
@@ -155,5 +134,25 @@ public static class AsyncResultExtensions
         ct.ThrowIfCancellationRequested();
         var result = await task.ConfigureAwait(false);
         return await result.MapAsync(mapper).ConfigureAwait(false);
+    }
+
+    extension<T1>(Task<Result<T1>> task1)
+    {
+        /// <summary>Combines two async results into a tuple. Both must succeed.</summary>
+        public async Task<Result<(T1, T2)>> CombineAsync<T2>(Task<Result<T2>> task2)
+        {
+            var r1 = await task1.ConfigureAwait(false);
+            var r2 = await task2.ConfigureAwait(false);
+            return r1.Combine(r2);
+        }
+
+        /// <summary>Combines three async results into a tuple. All must succeed.</summary>
+        public async Task<Result<(T1, T2, T3)>> CombineAsync<T2, T3>(Task<Result<T2>> task2, Task<Result<T3>> task3)
+        {
+            var r1 = await task1.ConfigureAwait(false);
+            var r2 = await task2.ConfigureAwait(false);
+            var r3 = await task3.ConfigureAwait(false);
+            return r1.Combine(r2, r3);
+        }
     }
 }

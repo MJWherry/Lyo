@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL config DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddConfigDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresConfigOptions.SectionName)
+        public IServiceCollection AddConfigDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresConfigOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL config store registration using configuration binding.</summary>
-        public IServiceCollection AddPostgresConfigStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresConfigOptions.SectionName)
+        public IServiceCollection AddPostgresConfigStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresConfigOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

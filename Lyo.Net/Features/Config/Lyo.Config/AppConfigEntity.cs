@@ -3,13 +3,10 @@ using Lyo.Common.Identifiers;
 
 namespace Lyo.Config;
 
-/// <summary>
-/// Maps URL segments under <c>/api/config/{appKind}/{appId}</c> to <see cref="EntityRef"/> with
-/// <see cref="AppEntityType"/> and compound id <c>{kind}:{id}</c>.
-/// </summary>
+/// <summary>Maps URL segments under <c>/api/config/{appKind}/{appId}</c> to <see cref="EntityRef" /> with <see cref="AppEntityType" /> and compound id <c>{kind}:{id}</c>.</summary>
 public static class AppConfigEntity
 {
-    /// <summary>Stored <see cref="EntityRef.EntityType"/> for definitions/bindings serviced by Config API routes.</summary>
+    /// <summary>Stored <see cref="EntityRef.EntityType" /> for definitions/bindings serviced by Config API routes.</summary>
     public const string AppEntityType = "App";
 
     /// <summary>Builds the config-store entity reference from URL segments.</summary>
@@ -22,21 +19,16 @@ public static class AppConfigEntity
     }
 
     /// <summary>Validates and maps route segments without throwing.</summary>
-    public static bool TryCreate(
-        string appKind,
-        string appId,
-        out EntityRef entityRef,
-        [NotNullWhen(false)] out string? errorMessage)
+    public static bool TryCreate(string appKind, string appId, out EntityRef entityRef, [NotNullWhen(false)] out string? errorMessage)
     {
         entityRef = default;
         errorMessage = null;
-
         try {
             var kindNorm = NormalizeSegment(Uri.UnescapeDataString(appKind.Trim()), nameof(appKind));
             var rawId = appId.Trim();
             var decoded = Uri.UnescapeDataString(rawId);
             var idNorm = NormalizeSegment(decoded, nameof(appId));
-            entityRef = new EntityRef(AppEntityType, $"{kindNorm}:{idNorm}");
+            entityRef = new(AppEntityType, $"{kindNorm}:{idNorm}");
             return true;
         }
         catch (ArgumentException ex) {
@@ -60,12 +52,10 @@ public static class AppConfigEntity
         if (value.Length is < 1 or > 128)
             throw new ArgumentException("Length must be 1–128.", paramName);
 
-        foreach (var c in value.AsSpan())
-        {
-            var okLower = (c >= 'a' && c <= 'z');
-            var okDigit = (c >= '0' && c <= '9');
+        foreach (var c in value.AsSpan()) {
+            var okLower = c >= 'a' && c <= 'z';
+            var okDigit = c >= '0' && c <= '9';
             var ok = okLower || okDigit || c is '-' or '_' or '.';
-
             if (!ok)
                 throw new ArgumentException("Only lowercase letters, digits, '-', '_', and '.' allowed.", paramName);
         }

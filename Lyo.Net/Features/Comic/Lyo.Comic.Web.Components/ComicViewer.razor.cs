@@ -97,14 +97,9 @@ public partial class ComicViewer : IAsyncDisposable
     private int EffectiveTotalPages => TotalPages > 0 ? TotalPages : CurrentChapter?.PageCount ?? 1;
 
     /// <summary>Image shown in the page area: resolved page URL, or cover while the page is still loading.</summary>
-    private string? PageAreaImageSrc
-        => !string.IsNullOrWhiteSpace(_currentImageUrl)
-            ? _currentImageUrl
-            : ShowCoverWhileLoading ? CoverImageUrl
-            : null;
+    private string? PageAreaImageSrc => !string.IsNullOrWhiteSpace(_currentImageUrl) ? _currentImageUrl : ShowCoverWhileLoading ? CoverImageUrl : null;
 
-    private bool ShowCoverWhileLoading
-        => _loadingPage && string.IsNullOrWhiteSpace(_currentImageUrl) && !string.IsNullOrWhiteSpace(CoverImageUrl);
+    private bool ShowCoverWhileLoading => _loadingPage && string.IsNullOrWhiteSpace(_currentImageUrl) && !string.IsNullOrWhiteSpace(CoverImageUrl);
 
     private bool UseCoverPlaceholderStyle => ShowCoverWhileLoading;
 
@@ -119,9 +114,10 @@ public partial class ComicViewer : IAsyncDisposable
             if (CurrentChapter is null)
                 return -1;
 
-            for (var i = 0; i < Chapters.Count; i++)
+            for (var i = 0; i < Chapters.Count; i++) {
                 if (Chapters[i].Id == CurrentChapter.Id)
                     return i;
+            }
 
             return -1;
         }
@@ -246,9 +242,7 @@ public partial class ComicViewer : IAsyncDisposable
 
         var sameChapterAsLastFetch = _lastFetchedChapterId == CurrentChapter.Id;
         var prevPageWithinChapter = sameChapterAsLastFetch ? _lastFetchedPage : -1;
-        var wideNeighborPrefetch =
-            prevPageWithinChapter > 0 && sameChapterAsLastFetch && Math.Abs(page - prevPageWithinChapter) > 2;
-
+        var wideNeighborPrefetch = prevPageWithinChapter > 0 && sameChapterAsLastFetch && Math.Abs(page - prevPageWithinChapter) > 2;
         if (page == _jsShownPage) {
             _jsShownPage = -1;
             _pendingDisplayPage = -1;
@@ -271,7 +265,6 @@ public partial class ComicViewer : IAsyncDisposable
             _prefetchCache.Remove(page);
             _loadingPage = false;
             _pendingDisplayPage = -1;
-
             _lastFetchedChapterId = CurrentChapter.Id;
             _lastFetchedPage = page;
             StateHasChanged();
@@ -312,7 +305,7 @@ public partial class ComicViewer : IAsyncDisposable
         if (_jsModule is null || string.IsNullOrWhiteSpace(CoverImageUrl))
             return Task.CompletedTask;
 
-        return _jsModule.InvokeVoidAsync("prefetchImages", new[] { CoverImageUrl }).AsTask();
+        return _jsModule.InvokeVoidAsync("prefetchImages", CoverImageUrl).AsTask();
     }
 
     /// <summary>
@@ -337,7 +330,6 @@ public partial class ComicViewer : IAsyncDisposable
 
         var radius = wideNeighborRing ? NeighborPrefetchRadiusAfterJump : NeighborPrefetchRadius;
         var ordered = BuildOrderedPrefetchTargets(currentPage, radius);
-
         foreach (var p in ordered) {
             if (_prefetchCache.ContainsKey(p))
                 continue;
@@ -350,9 +342,7 @@ public partial class ComicViewer : IAsyncDisposable
                 _prefetchCache[p] = url;
                 await _jsModule.InvokeVoidAsync("setPageUrl", _viewerId, p, url);
             }
-            catch {
-                continue;
-            }
+            catch { }
         }
     }
 

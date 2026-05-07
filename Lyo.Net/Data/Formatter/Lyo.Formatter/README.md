@@ -1,6 +1,7 @@
 # Lyo.Formatter
 
-**SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting. Designed for **validation + formatting** pipelines (for example **`IFormatterService`** with **`Lyo.Api`** computed fields and **`Lyo.Web.Automation`** step templates).
+**SmartFormat.NET**-backed templating for user-defined strings: named placeholders, lists, pluralization, and culture-aware formatting. Designed for **validation + formatting**
+pipelines (for example **`IFormatterService`** with **`Lyo.Api`** computed fields and **`Lyo.Web.Automation`** step templates).
 
 ## When to use this package
 
@@ -19,16 +20,17 @@ services.AddFormatterService();
 // Or: services.AddFormatterService(sp => /* custom SmartFormatter */);
 ```
 
-Register **`FormatterService`** as singleton and expose **`IFormatterService`**. Prefer the overload with a factory when you need extra SmartFormat extensions or custom **`SmartSettings`**.
+Register **`FormatterService`** as singleton and expose **`IFormatterService`**. Prefer the overload with a factory when you need extra SmartFormat extensions or custom *
+*`SmartSettings`**.
 
 ## Core types
 
-| Type | Role |
-|------|------|
-| **`IFormatterService`** | Format, validate, inspect placeholders, wrap templates as **`ITemplate`**. |
-| **`FormatterService`** | Default implementation: **`FormatErrorAction.MaintainTokens`** so missing data leaves `{tokens}` in output (enables unresolved-placeholder detection). Case-insensitive placeholder matching. |
-| **`ITemplate`** | Parse-once style workflow: **`WithContext`**, **`AddContext`**, **`TryValidateContext`**, then **`Format()`**. |
-| **`IContextBuilder`** | Fluent dictionary builder passed to **`Format(template, configure)`**. |
+| Type                    | Role                                                                                                                                                                                          |
+|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`IFormatterService`** | Format, validate, inspect placeholders, wrap templates as **`ITemplate`**.                                                                                                                    |
+| **`FormatterService`**  | Default implementation: **`FormatErrorAction.MaintainTokens`** so missing data leaves `{tokens}` in output (enables unresolved-placeholder detection). Case-insensitive placeholder matching. |
+| **`ITemplate`**         | Parse-once style workflow: **`WithContext`**, **`AddContext`**, **`TryValidateContext`**, then **`Format()`**.                                                                                |
+| **`IContextBuilder`**   | Fluent dictionary builder passed to **`Format(template, configure)`**.                                                                                                                        |
 
 ## Formatting overloads
 
@@ -66,9 +68,11 @@ Use **`AddContext`** on the template to layer **`IContextBuilder`** steps withou
 
 ## SmartFormat behavior
 
-This library does **not** fork SmartFormat; it configures a **`SmartFormatter`** instance. Refer to the [SmartFormat documentation](https://github.com/axuno/SmartFormat/wiki) for list formatting, plural rules, and built-in extensions.
+This library does **not** fork SmartFormat; it configures a **`SmartFormatter`** instance. Refer to the [SmartFormat documentation](https://github.com/axuno/SmartFormat/wiki) for
+list formatting, plural rules, and built-in extensions.
 
-**Automation note:** **`Lyo.Web.Automation`** documents that step templates use **single-brace** placeholders (`{page.url}`); legacy `{{page.url}}` is normalized there. This service accepts standard SmartFormat templates as-is.
+**Automation note:** **`Lyo.Web.Automation`** documents that step templates use **single-brace** placeholders (`{page.url}`); legacy `{{page.url}}` is normalized there. This
+service accepts standard SmartFormat templates as-is.
 
 ## Integration points
 
@@ -77,7 +81,9 @@ This library does **not** fork SmartFormat; it configures a **`SmartFormatter`**
 
 ## Thread safety
 
-**`FormatterService`** is safe for concurrent reads if you do not mutate **`SmartFormatter`** or **`Culture`** from multiple threads without synchronization. Typical ASP.NET Core registration as a singleton treats **`Culture`** as ambient per request by setting it at the start of a request (or avoid mutating **`Culture`** on the shared instance and pass culture-aware data in context instead).
+**`FormatterService`** is safe for concurrent reads if you do not mutate **`SmartFormatter`** or **`Culture`** from multiple threads without synchronization. Typical ASP.NET Core
+registration as a singleton treats **`Culture`** as ambient per request by setting it at the start of a request (or avoid mutating **`Culture`** on the shared instance and pass
+culture-aware data in context instead).
 
 ## Related projects
 
@@ -96,10 +102,10 @@ This library does **not** fork SmartFormat; it configures a **`SmartFormatter`**
 
 ### NuGet packages
 
-| Package | Version |
-|---------|---------|
-| `SmartFormat.NET` | `[3.6,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
+| Package                                                 | Version  |
+|---------------------------------------------------------|----------|
+| `SmartFormat.NET`                                       | `[3.6,)` |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |
 
 ### Project references
 

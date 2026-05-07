@@ -58,6 +58,7 @@ else {
 }
 
 @code {
+
     [Parameter]
     public RedactionPolicy? Policy { get; set; }
 
@@ -85,11 +86,7 @@ else {
         }
 
         var name = PolicyNameLabel ?? Policy.Name;
-        var options = new JsonRedactorOptions {
-            PolicyName = name,
-            ApplyTextRulesToAllStringValues = _applyTextToStrings
-        };
-
+        var options = new JsonRedactorOptions { PolicyName = name, ApplyTextRulesToAllStringValues = _applyTextToStrings };
         ITextRedactor? textRedactor = _applyTextToStrings ? new TextRedactor(Policy) : null;
         var redactor = new JsonRedactor(options, textRedactor);
         _result = redactor.RedactJson(_input);

@@ -3,6 +3,17 @@ namespace Lyo.ContentThreatScan;
 /// <summary>Dense scan outcome: totals are derived from additive contributions plus a score cap.</summary>
 public sealed class ContentThreatAssessment
 {
+    /// <summary>Score used against suspect/thresholds after applying <see cref="ContentThreatAssessmentOptions" /> cap.</summary>
+    public decimal DispositionScore { get; }
+
+    public decimal HeuristicScore { get; }
+
+    public decimal ExternalScore { get; }
+
+    public bool IntelConfirmedMalicious { get; }
+
+    public IReadOnlyList<ContentThreatContribution> Contributions { get; }
+
     public ContentThreatAssessment(
         decimal dispositionScore,
         decimal heuristicScore,
@@ -16,17 +27,6 @@ public sealed class ContentThreatAssessment
         IntelConfirmedMalicious = intelConfirmedMalicious;
         Contributions = contributions;
     }
-
-    /// <summary>Score used against suspect/thresholds after applying <see cref="ContentThreatAssessmentOptions"/> cap.</summary>
-    public decimal DispositionScore { get; }
-
-    public decimal HeuristicScore { get; }
-
-    public decimal ExternalScore { get; }
-
-    public bool IntelConfirmedMalicious { get; }
-
-    public IReadOnlyList<ContentThreatContribution> Contributions { get; }
 
     /// <summary>Build totals from flattened contributions assuming heuristic vs external partitioning by category.</summary>
     public static ContentThreatAssessment FromContributions(IReadOnlyList<ContentThreatContribution> contributions, bool intelConfirmedMalicious, decimal dispositionScoreCap)
@@ -49,6 +49,7 @@ public sealed class ContentThreatAssessment
         var arr = new ContentThreatContribution[list.Count];
         for (var i = 0; i < arr.Length; i++)
             arr[i] = list[i];
+
         Array.Sort(arr, CompareByCategoryThenRule);
         return arr;
     }

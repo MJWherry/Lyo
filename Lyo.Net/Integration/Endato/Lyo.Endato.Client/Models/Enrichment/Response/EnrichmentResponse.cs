@@ -19,6 +19,5 @@ public sealed record EnrichmentResponse(
 {
     public override string ToString()
         => $"EnrichmentResponse: Person={(Person == null ? "null" : "present")}, IdentityScore={IdentityScore}, " +
-           $"RequestId={RequestId}, Type='{RequestType}', TimeMs={TotalRequestExecutionTimeMs}, " +
-           $"RequestTime={RequestTime:O}, Error={IsError}";
+            $"RequestId={RequestId}, Type='{RequestType}', TimeMs={TotalRequestExecutionTimeMs}, " + $"RequestTime={RequestTime:O}, Error={IsError}";
 }

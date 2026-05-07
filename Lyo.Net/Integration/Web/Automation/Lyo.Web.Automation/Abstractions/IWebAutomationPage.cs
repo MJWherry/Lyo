@@ -3,8 +3,8 @@ using Lyo.Web.Automation.Models;
 namespace Lyo.Web.Automation.Abstractions;
 
 /// <summary>
-/// Engine-neutral document surface for automation: element resolution, source, URL/title, and viewport capture. Operations apply to the <strong>current browsing context</strong>
-/// (active tab/window and current iframe stack after frame navigation). Not Playwright's <c>IPage</c>.
+/// Engine-neutral document surface for automation: element resolution, source, URL/title, and viewport capture. Operations apply to the
+/// <strong>current browsing context</strong> (active tab/window and current iframe stack after frame navigation). Not Playwright's <c>IPage</c>.
 /// </summary>
 public interface IWebAutomationPage
 {

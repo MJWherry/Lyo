@@ -474,7 +474,6 @@ directly.
 - Snapshot errors are caught and reported via the Error event
 - Cancellation tokens allow graceful shutdown of long-running operations
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.FileSystemWatcher.csproj`.)*

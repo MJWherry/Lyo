@@ -277,7 +277,6 @@ Two-key (envelope) encryption adds overhead but enables key rotation:
 
 For detailed benchmark results, see [BENCHMARK_SUMMARY.md](./BENCHMARK_SUMMARY.md).
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Encryption.Benchmarks.csproj`.)*

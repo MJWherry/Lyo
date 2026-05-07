@@ -3,8 +3,8 @@ using Lyo.Web.Automation.Plan;
 namespace Lyo.Web.Automation.Abstractions;
 
 /// <summary>
-/// Full browser façade used by <see cref="AutomationPlanRunner" />: composes <see cref="IWebAutomationNavigator" />, <see cref="IWebAutomationPage" />, cookies, and optional extra
-/// headers.
+/// Full browser façade used by <see cref="AutomationPlanRunner" />: composes <see cref="IWebAutomationNavigator" />, <see cref="IWebAutomationPage" />, cookies, and optional
+/// extra headers.
 /// </summary>
 public interface IWebAutomationBrowser : IWebAutomationNavigator, IWebAutomationPage
 {
@@ -18,7 +18,8 @@ public interface IWebAutomationBrowser : IWebAutomationNavigator, IWebAutomation
     IWebAutomationNavigator Navigator { get; }
 
     /// <summary>
-    /// Document-scoped automation for the active tab/window and frame stack (same object as the browser). Distinct from Playwright's native page (<c>Microsoft.Playwright.IPage</c>).
+    /// Document-scoped automation for the active tab/window and frame stack (same object as the browser). Distinct from Playwright's native page (
+    /// <c>Microsoft.Playwright.IPage</c>).
     /// </summary>
     IWebAutomationPage CurrentPage { get; }
 

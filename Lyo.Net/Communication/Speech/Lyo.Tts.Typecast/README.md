@@ -35,7 +35,6 @@ if (result.IsSuccess)
 
 The service can be configured via options or dependency injection.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Tts.Typecast.csproj`.)*

@@ -18,5 +18,5 @@ public sealed record AssociateSummary(
 {
     public override string ToString()
         => $"AssociateSummary: TahoeId={TahoeId}, Name='{Prefix} {FirstName} {MiddleName} {LastName} {Suffix}', " +
-           $"Score={Score}, Private={IsPrivate}, OptOut={IsOptedOut}, Deceased={IsDeceased}, Dob='{Dob}'";
+            $"Score={Score}, Private={IsPrivate}, OptOut={IsOptedOut}, Deceased={IsDeceased}, Dob='{Dob}'";
 }

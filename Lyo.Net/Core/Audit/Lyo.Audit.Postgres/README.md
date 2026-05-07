@@ -39,7 +39,6 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 - **audit.audit_changes** – `id` (uuid), `timestamp`, `type_assembly_full_name`, `old_values_json` (jsonb), `changed_properties_json` (jsonb)
 - **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `message`, `actor`, `metadata_json` (jsonb)
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Audit.Postgres.csproj`.)*

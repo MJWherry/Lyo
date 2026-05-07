@@ -235,7 +235,6 @@ public enum FileTypeFlags : long
     Compressed = Zip | Rar | SevenZip | Tar | Gz | Bz2 | Xz,
     Encrypted = Enc | Gpg,
     Audio = Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm,
-
     PackageManager = Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi,
 
     All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif | Tiff | Webp | Zip | Rar | SevenZip |

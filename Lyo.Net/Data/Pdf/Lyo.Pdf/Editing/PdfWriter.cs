@@ -12,8 +12,7 @@ public sealed class PdfWriter : IPdfWriter
     private SharpPdfDoc _pdf;
     private int _disposed;
 
-    internal PdfWriter(SharpPdfDoc pdfDocument)
-        => _pdf = pdfDocument ?? throw new ArgumentNullException(nameof(pdfDocument));
+    internal PdfWriter(SharpPdfDoc pdfDocument) => _pdf = pdfDocument ?? throw new ArgumentNullException(nameof(pdfDocument));
 
     /// <summary>Underlying PdfSharp document.</summary>
     public SharpPdfDoc PdfSharp => EnsureOpen();
@@ -30,7 +29,6 @@ public sealed class PdfWriter : IPdfWriter
     {
         var doc = EnsureOpen();
         OperationHelpers.ThrowIf(pdfBytes.IsEmpty, $"{nameof(pdfBytes)} must not be empty.");
-
         using var inputStream = new MemoryStream(pdfBytes.ToArray(), false);
         using var sourceDocument = SharpPdfReaderIO.Open(inputStream, PdfDocumentOpenMode.Import);
         for (var pageIndex = 0; pageIndex < sourceDocument.PageCount; pageIndex++)
@@ -77,9 +75,7 @@ public sealed class PdfWriter : IPdfWriter
         var doc = EnsureOpen();
         var n = doc.PageCount;
         OperationHelpers.ThrowIf(newOrderFromOldIndices.Count != n, $"{nameof(newOrderFromOldIndices)} length must equal current page count ({n}).");
-
         ThrowUnlessValidPermutationIndices(newOrderFromOldIndices, n);
-
         if (Enumerable.Range(0, n).Zip(newOrderFromOldIndices, (a, b) => a == b).All(eq => eq))
             return;
 
@@ -176,7 +172,7 @@ public sealed class PdfWriter : IPdfWriter
         _pdf = next;
     }
 
-    /// <summary>Reorder or filter pages: <paramref name="pageIndexesToTakeInOrder"/> index into old document.</summary>
+    /// <summary>Reorder or filter pages: <paramref name="pageIndexesToTakeInOrder" /> index into old document.</summary>
     private void ReplacePages(SharpPdfDoc current, IReadOnlyList<int> pageIndexesToTakeInOrder)
     {
         using var blob = new MemoryStream();
@@ -197,8 +193,7 @@ public sealed class PdfWriter : IPdfWriter
             OperationHelpers.ThrowIf(i < 0 || i >= pageCount, $"{nameof(order)} indices must fall in [0,{pageCount}).");
 
         var set = new HashSet<int>();
-        foreach (var i in order) {
+        foreach (var i in order)
             OperationHelpers.ThrowIf(!set.Add(i), $"{nameof(order)} must list each index exactly once.");
-        }
     }
 }

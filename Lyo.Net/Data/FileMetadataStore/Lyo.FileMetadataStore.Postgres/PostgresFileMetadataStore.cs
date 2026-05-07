@@ -135,5 +135,4 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
             return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
         }
     }
-
 }

@@ -10,14 +10,13 @@ public enum ContentThreatDisposition
     Threat = 2
 }
 
-/// <summary>Configurable mapping from numerical score onto <see cref="ContentThreatDisposition"/>.</summary>
+/// <summary>Configurable mapping from numerical score onto <see cref="ContentThreatDisposition" />.</summary>
 public static class ContentThreatDispositionMapper
 {
     public static ContentThreatDisposition Resolve(ContentThreatAssessment assessment, ContentThreatAssessmentOptions options)
     {
         ArgumentHelpers.ThrowIfNull(assessment);
         ArgumentHelpers.ThrowIfNull(options);
-
         if (options.ForceThreatOnConfirmedIntel && assessment.IntelConfirmedMalicious)
             return ContentThreatDisposition.Threat;
 

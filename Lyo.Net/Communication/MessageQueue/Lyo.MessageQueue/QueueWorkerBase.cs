@@ -81,7 +81,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
 
     /// <summary>Gets a value indicating whether the worker is currently running.</summary>
     public bool IsRunning { get; private set; }
-    
+
     /// <summary>Milliseconds to wait during <see cref="StopAsync" /> for in-flight messages to complete before giving up. Defaults to 30 000 ms (30 seconds).</summary>
     protected virtual int DrainTimeoutMs => 30_000;
 

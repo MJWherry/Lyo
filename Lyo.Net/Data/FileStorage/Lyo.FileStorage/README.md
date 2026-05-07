@@ -107,10 +107,6 @@ All file storage operations are thread-safe and can be used concurrently from mu
 
 `IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`.
 
-
-
-
-
 ## Dependencies
 
 *(Synchronized from `Lyo.FileStorage.csproj`.)*

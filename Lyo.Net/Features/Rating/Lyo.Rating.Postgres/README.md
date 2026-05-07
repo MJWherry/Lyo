@@ -103,7 +103,6 @@ await ratingStore.RemoveReactionAsync(ratingRef, EntityRef.ForKey("User", userId
 - **rating.rating_reaction** – `id`, `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `reaction_type`, `created_timestamp`
 - Unique on (for_entity_type, for_entity_id, from_entity_type, from_entity_id, subject)
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Rating.Postgres.csproj`.)*

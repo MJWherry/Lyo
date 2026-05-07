@@ -2,7 +2,8 @@
 
 **Status:** *Placeholder package.*
 
-The `.csproj` description explicitly marks this NuGet-compatible split as reserving the ID for a future **`SqliteFileMetadataStore`** implementation—but **today there are no SQLite sources** referenced (project compiles essentially empty besides assembly metadata targets).
+The `.csproj` description explicitly marks this NuGet-compatible split as reserving the ID for a future **`SqliteFileMetadataStore`** implementation—but **today there are no SQLite
+sources** referenced (project compiles essentially empty besides assembly metadata targets).
 
 Why keep the package?
 

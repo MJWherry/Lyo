@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL rating DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddRatingDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresRatingOptions.SectionName)
+        public IServiceCollection AddRatingDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresRatingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL rating store using configuration binding.</summary>
-        public IServiceCollection AddPostgresRatingStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresRatingOptions.SectionName)
+        public IServiceCollection AddPostgresRatingStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresRatingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

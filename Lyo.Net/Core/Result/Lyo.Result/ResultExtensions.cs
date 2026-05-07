@@ -5,49 +5,6 @@ namespace Lyo.Result;
 /// <summary>Extension methods and aggregation for Result types.</summary>
 public static class ResultExtensions
 {
-    extension<T>(IEnumerable<Result<T>>? results)
-    {
-        /// <summary>Combines multiple results. All must succeed for the combined result to succeed.</summary>
-        public Result<IReadOnlyList<T>> Combine()
-        {
-            if (results == null)
-                return Result<IReadOnlyList<T>>.Failure("NULL_INPUT", "Results collection cannot be null");
-
-            var list = results.ToList();
-            if (list.Count == 0)
-                return Result<IReadOnlyList<T>>.Success([]);
-
-            var successes = new List<T>();
-            var allErrors = new List<Error>();
-            foreach (var r in list) {
-                if (r.IsSuccess && r.Data != null)
-                    successes.Add(r.Data);
-                else if (r.Errors != null)
-                    allErrors.AddRange(r.Errors);
-            }
-
-            return allErrors.Count > 0 ? Result<IReadOnlyList<T>>.Failure(allErrors) : Result<IReadOnlyList<T>>.Success(successes);
-        }
-
-        /// <summary>Returns the first successful result, or a combined failure if all failed.</summary>
-        public Result<T> FirstSuccess()
-        {
-            if (results == null)
-                return Result<T>.Failure("NULL_INPUT", "Results collection cannot be null");
-
-            var allErrors = new List<Error>();
-            foreach (var r in results) {
-                if (r.IsSuccess)
-                    return r;
-
-                if (r.Errors != null)
-                    allErrors.AddRange(r.Errors);
-            }
-
-            return Result<T>.Failure(allErrors);
-        }
-    }
-
     /// <summary>Converts a Result&lt;T&gt; to a Result&lt;TRequest, TResult&gt; by adding a request object.</summary>
     public static Result<TRequest, TResult> WithRequest<TRequest, TResult>(this Result<TResult> result, TRequest request)
         => result.IsSuccess
@@ -95,6 +52,49 @@ public static class ResultExtensions
     /// <summary>Transforms the errors of a failed result using the provided mapper, leaving a successful result unchanged.</summary>
     public static Result<T> MapError<T>(this Result<T> result, Func<IReadOnlyList<Error>, IReadOnlyList<Error>> mapper)
         => result.IsSuccess ? result : Result<T>.Failure(mapper(result.Errors ?? []), result.Timestamp, result.Metadata);
+
+    extension<T>(IEnumerable<Result<T>>? results)
+    {
+        /// <summary>Combines multiple results. All must succeed for the combined result to succeed.</summary>
+        public Result<IReadOnlyList<T>> Combine()
+        {
+            if (results == null)
+                return Result<IReadOnlyList<T>>.Failure("NULL_INPUT", "Results collection cannot be null");
+
+            var list = results.ToList();
+            if (list.Count == 0)
+                return Result<IReadOnlyList<T>>.Success([]);
+
+            var successes = new List<T>();
+            var allErrors = new List<Error>();
+            foreach (var r in list) {
+                if (r.IsSuccess && r.Data != null)
+                    successes.Add(r.Data);
+                else if (r.Errors != null)
+                    allErrors.AddRange(r.Errors);
+            }
+
+            return allErrors.Count > 0 ? Result<IReadOnlyList<T>>.Failure(allErrors) : Result<IReadOnlyList<T>>.Success(successes);
+        }
+
+        /// <summary>Returns the first successful result, or a combined failure if all failed.</summary>
+        public Result<T> FirstSuccess()
+        {
+            if (results == null)
+                return Result<T>.Failure("NULL_INPUT", "Results collection cannot be null");
+
+            var allErrors = new List<Error>();
+            foreach (var r in results) {
+                if (r.IsSuccess)
+                    return r;
+
+                if (r.Errors != null)
+                    allErrors.AddRange(r.Errors);
+            }
+
+            return Result<T>.Failure(allErrors);
+        }
+    }
 
     extension<TIn>(Result<TIn> result)
     {

@@ -1,13 +1,16 @@
 # Lyo.Encryption
 
-Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and **AES-GCM +
-RSA** hybrids, and **envelope / two-key** flows (**`ITwoKeyEncryptionService`**) composed from **`IEncryptionService`** implementations. Keys can be supplied inline or resolved from
+Production-oriented **authenticated encryption** for .NET: symmetric AEAD (**AES-GCM**, **ChaCha20-Poly1305**, **XChaCha20-Poly1305**, **AES-CCM**, **AES-SIV**), **RSA** and *
+*AES-GCM +
+RSA** hybrids, and **envelope / two-key** flows (**`ITwoKeyEncryptionService`**) composed from **`IEncryptionService`** implementations. Keys can be supplied inline or resolved
+from
 **`Lyo.Keystore`** via **`keyId`**.
 
 The primary contracts are **`IEncryptionService`** (single key per operation), **`ITwoKeyEncryptionService`** (per-operation DEK wrapped by a KEK), and **`EncryptionServiceBase`**
 (shared streaming, string, and file helpers). With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README for documented members.
 
-For architecture, threat model, **`IKeyStore`** expectations, benchmarks, and operational checklists, see **[Security/Encryption `README.md`](../README.md)** — treat that document as
+For architecture, threat model, **`IKeyStore`** expectations, benchmarks, and operational checklists, see **[Security/Encryption `README.md`](../README.md)** — treat that document
+as
 the umbrella guide; this file focuses on **this assembly’s API surface**.
 
 ## Features
@@ -24,15 +27,15 @@ the umbrella guide; this file focuses on **this assembly’s API surface**.
 
 ## Service matrix
 
-| Type | Role |
-|------|------|
-| **`AesGcmEncryptionService`** | AES-GCM; key size via **`AesGcmKeySizeBits`** |
-| **`ChaCha20Poly1305EncryptionService`** | ChaCha20-Poly1305 (IETF nonce) |
-| **`XChaCha20Poly1305EncryptionService`** | XChaCha20-Poly1305 (extended nonce) |
-| **`AesCcmEncryptionService`** | AES-CCM |
-| **`AesSivEncryptionService`** | AES-SIV (misuse-resistant synthetic IV) |
-| **`RsaEncryptionService`** | RSA encrypt/decrypt (chunked for large plaintext) |
-| **`AesGcmRsaEncryptionService`** | Hybrid: RSA wraps AES key, AES-GCM protects payload |
+| Type                                      | Role                                                 |
+|-------------------------------------------|------------------------------------------------------|
+| **`AesGcmEncryptionService`**             | AES-GCM; key size via **`AesGcmKeySizeBits`**        |
+| **`ChaCha20Poly1305EncryptionService`**   | ChaCha20-Poly1305 (IETF nonce)                       |
+| **`XChaCha20Poly1305EncryptionService`**  | XChaCha20-Poly1305 (extended nonce)                  |
+| **`AesCcmEncryptionService`**             | AES-CCM                                              |
+| **`AesSivEncryptionService`**             | AES-SIV (misuse-resistant synthetic IV)              |
+| **`RsaEncryptionService`**                | RSA encrypt/decrypt (chunked for large plaintext)    |
+| **`AesGcmRsaEncryptionService`**          | Hybrid: RSA wraps AES key, AES-GCM protects payload  |
 | **`TwoKeyEncryptionService<TKek, TDek>`** | Envelope: random DEK per operation, KEK encrypts DEK |
 
 Concrete types live under **`AesGcm/`**, **`ChaCha20Poly1305/`**, **`Symmetric/Aes/*`**, **`Symmetric/ChaCha/*`**, **`Rsa/`**, **`AesGcmRsa/`**, and **`TwoKey/`**.
@@ -45,7 +48,8 @@ Concrete types live under **`AesGcm/`**, **`ChaCha20Poly1305/`**, **`Symmetric/A
   chunks (default plaintext chunk size **1 MiB**; configurable)
 - **`EncryptToFileAsync`** / **`DecryptFromFileAsync`**
 
-Pass **`keyId`** to use **`IKeyStore`**; pass **`key`** (or **`kek`** on two-key) for explicit material. If both are omitted and the implementation requires a store, operations throw
+Pass **`keyId`** to use **`IKeyStore`**; pass **`key`** (or **`kek`** on two-key) for explicit material. If both are omitted and the implementation requires a store, operations
+throw
 **`InvalidOperationException`**.
 
 ## **`ITwoKeyEncryptionService`** (envelope)
@@ -92,24 +96,24 @@ when both derive from **`IEncryptionService`** and are constructible from **`IKe
 
 **`EncryptionServiceOptions`** (per concrete service):
 
-| Property | Typical use |
-|----------|-------------|
-| **`FileExtension`** | Suffix for encrypted artifacts (required non-empty on base ctor) |
-| **`MinInputSize`** / **`MaxInputSize`** | Enforced on encrypt paths |
-| **`CurrentFormatVersion`** | Stream/header version; defaults align with **`StreamFormatVersion.V1`** |
-| **`AesGcmKeySize`** / **`AesSivKeySize`** | Algorithm-specific key material where applicable |
+| Property                                  | Typical use                                                             |
+|-------------------------------------------|-------------------------------------------------------------------------|
+| **`FileExtension`**                       | Suffix for encrypted artifacts (required non-empty on base ctor)        |
+| **`MinInputSize`** / **`MaxInputSize`**   | Enforced on encrypt paths                                               |
+| **`CurrentFormatVersion`**                | Stream/header version; defaults align with **`StreamFormatVersion.V1`** |
+| **`AesGcmKeySize`** / **`AesSivKeySize`** | Algorithm-specific key material where applicable                        |
 
 ## Result and error types
 
 - **`Lyo.Encryption.Models.EncryptionResult`** / **`DecryptionResult`** – **`Result<byte[]>`** with key metadata for APIs that avoid exceptions
-- **`DecryptionFailedException`**, **`EncryptionException`**, **`InvalidDataException`**, **`ArgumentOutsideRangeException`** – see **`IEncryptionService`** XML for which throws apply
+- **`DecryptionFailedException`**, **`EncryptionException`**, **`InvalidDataException`**, **`ArgumentOutsideRangeException`** – see **`IEncryptionService`** XML for which throws
+  apply
 
 ## Upgrade checklist (short)
 
 1. Confirm **nonce / IV uniqueness** policy for each algorithm when integrating custom stores (see parent **`README.md`**).
 2. After dependency bumps (**BouncyCastle**, **Dorssel** AES extras), run **`Lyo.Encryption.Benchmarks`** in **Release** with algorithm-specific filters.
 3. Validate **FIPS / regional** requirements externally — this library follows general best practices but does not certify every jurisdiction.
-
 
 ## Dependencies
 
@@ -119,13 +123,13 @@ when both derive from **`IEncryptionService`** and are constructible from **`IKe
 
 ### NuGet packages
 
-| Package                                      | Version  | Notes |
-|----------------------------------------------|----------|--------|
-| `BouncyCastle.Cryptography`                  | `2.6.2`  | |
-| `Dorssel.Security.Cryptography.AesExtra`     | `2.0.0`  | |
-| `Microsoft.Bcl.AsyncInterfaces`            | `10.0.0` | *netstandard2.0 only* |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` | *netstandard2.0 and net10.0* |
-| `System.Threading.Tasks.Extensions`        | `4.6.3`  | *netstandard2.0 only* |
+| Package                                                 | Version  | Notes                        |
+|---------------------------------------------------------|----------|------------------------------|
+| `BouncyCastle.Cryptography`                             | `2.6.2`  |                              |
+| `Dorssel.Security.Cryptography.AesExtra`                | `2.0.0`  |                              |
+| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` | *netstandard2.0 only*        |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  | *netstandard2.0 and net10.0* |
+| `System.Threading.Tasks.Extensions`                     | `4.6.3`  | *netstandard2.0 only*        |
 
 ### Project references
 

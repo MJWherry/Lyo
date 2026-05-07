@@ -12,23 +12,21 @@ namespace Lyo.Privacy.Rules;
 /// </summary>
 public sealed class CompositeRedactionRule : IRedactionRule
 {
-    private readonly IReadOnlyList<IRedactionRule> _rules;
+    /// <summary>Ordered inner rules (for diagnostics and policy export).</summary>
+    public IReadOnlyList<IRedactionRule> InnerRules { get; }
 
     public CompositeRedactionRule(IEnumerable<IRedactionRule> rules)
     {
         var ruleList = rules.AsReadOnlyList();
         ArgumentHelpers.ThrowIfNullOrEmpty(ruleList);
-        _rules = ruleList;
+        InnerRules = ruleList;
     }
-
-    /// <summary>Ordered inner rules (for diagnostics and policy export).</summary>
-    public IReadOnlyList<IRedactionRule> InnerRules => _rules;
 
     public RedactionKind Kind => RedactionKind.Composite;
 
     public IEnumerable<RedactionSpan> EnumerateSpans(string input)
     {
-        foreach (var r in _rules) {
+        foreach (var r in InnerRules) {
             foreach (var s in r.EnumerateSpans(input))
                 yield return new(s.Start, s.Length, Kind);
         }

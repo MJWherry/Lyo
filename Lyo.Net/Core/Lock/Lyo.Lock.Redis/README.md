@@ -1,6 +1,7 @@
 # Lyo.Lock.Redis
 
-Distributed implementation of `ILockService` using **Redis** and [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Use this when multiple app instances must exclude each other on the same logical key.
+Distributed implementation of `ILockService` using **Redis** and [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Use this when multiple app instances
+must exclude each other on the same logical key.
 
 **Keyed semaphores** (`IKeyedSemaphoreService`) are not implemented here; they remain in-process in [`Lyo.Lock`](../Lyo.Lock/README.md).
 
@@ -81,10 +82,10 @@ Example `appsettings.json`:
 
 ### `RedisLockOptions` (extends `LockOptions`)
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| `AcquirePollInterval` | 10 ms | Delay between retries when `UsePubSubForAcquireWait` is `false`. |
-| `UsePubSubForAcquireWait` | `true` | Subscribe to a per-key notify channel while waiting; publisher runs on successful Lua delete in `ReleaseAsync`. |
+| Property                  | Default | Description                                                                                                     |
+|---------------------------|---------|-----------------------------------------------------------------------------------------------------------------|
+| `AcquirePollInterval`     | 10 ms   | Delay between retries when `UsePubSubForAcquireWait` is `false`.                                                |
+| `UsePubSubForAcquireWait` | `true`  | Subscribe to a per-key notify channel while waiting; publisher runs on successful Lua delete in `ReleaseAsync`. |
 
 Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `KeyPrefix`, `EnableMetrics`, `SkipKeyNormalization`.
 
@@ -97,7 +98,8 @@ Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `K
 
 ## Operational notes
 
-- **TTL vs work duration** — if your critical section can run longer than `lockDuration`, the key may expire and another instance can acquire. Size `DefaultLockDuration` / per-call `lockDuration` above worst-case runtime, or shorten the guarded work.
+- **TTL vs work duration** — if your critical section can run longer than `lockDuration`, the key may expire and another instance can acquire. Size `DefaultLockDuration` / per-call
+  `lockDuration` above worst-case runtime, or shorten the guarded work.
 - **Clocks** — acquire timeout uses `DateTime.UtcNow` on the client for deadline calculation; Redis handles key TTL independently.
 - **Fairness** — Redis locks are not strictly FIFO; under contention, which waiter wins is nondeterministic.
 - **Metrics** — same names as `Lyo.Lock.Constants.Metrics` when `EnableMetrics` is true (see [`Lyo.Lock` README](../Lyo.Lock/README.md#metrics-constants)).
@@ -110,13 +112,13 @@ Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `K
 
 ### NuGet packages
 
-| Package | Version |
-|---------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
-| `StackExchange.Redis` | `[2.12,)` |
+| Package                                           | Version     |
+|---------------------------------------------------|-------------|
+| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`     |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`     |
+| `Microsoft.Extensions.DependencyInjection`        | `[10,)`     |
+| `Microsoft.Extensions.Logging.Abstractions`       | `[10.0.1,)` |
+| `StackExchange.Redis`                             | `[2.12,)`   |
 
 ### Project references
 

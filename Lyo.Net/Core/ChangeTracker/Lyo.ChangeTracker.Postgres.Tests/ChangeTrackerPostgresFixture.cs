@@ -28,7 +28,6 @@ public sealed class ChangeTrackerPostgresFixture : PostgresContainerFixtureBase
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
-
         var trackerFactory = ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
         ChangeTracker = new PostgresChangeTracker(trackerFactory);
     }

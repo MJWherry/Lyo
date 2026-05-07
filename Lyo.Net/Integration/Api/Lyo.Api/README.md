@@ -3,8 +3,10 @@
 Core API library for building RESTful minimal APIs with Entity Framework Core. Provides a fluent `ApiEndpointBuilder` to generate CRUD endpoints with caching, **`ILyoMapper`**
 -based DTO mapping, validation, and per-endpoint authorization.
 
-The public registration surface is **`ServiceCollectionExtensions`** (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Endpoint mapping uses **`ApiEndpointBuilder`**
-with **`ApiEndpointBuilderExtensions`** (`CreateBuilder`, `CreateReadOnlyBuilder`), or **`DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints`** for a single dynamic `{entityType}` route
+The public registration surface is **`ServiceCollectionExtensions`** (`AddLyoQueryServices`, `AddLyoCrudServices`, optional export/sproc/diff). Endpoint mapping uses *
+*`ApiEndpointBuilder`**
+with **`ApiEndpointBuilderExtensions`** (`CreateBuilder`, `CreateReadOnlyBuilder`), or **`DynamicCrudEndpointBuilder.MapDynamicCrudEndpoints`** for a single dynamic `{entityType}`
+route
 tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s README). With XML documentation generation enabled for the solution (`GenerateDocumentationFile` in
 `Directory.Build.props`), IntelliSense surfaces the same summaries as this README for documented APIs; CRUD service implementations use `<inheritdoc />` where they mirror the
 `I*Service` interfaces.
@@ -841,7 +843,6 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 | MaxDegreeOfParallelism | 10      | Parallelism             |
 | UseParallelProcessing  | true    | Use parallel processing |
 | Timeout                | 5 min   | Bulk timeout            |
-
 
 ## Dependencies
 

@@ -34,6 +34,5 @@ public sealed record Person(
 {
     public override string ToString()
         => $"Person: TahoeId={TahoeId}, FullName='{FullName}', Age={Age}, Dob={Dob}, Premium={IsPremium}, " +
-           $"Addresses={Addresses.Count}, Emails={EmailAddresses.Count}, Phones={PhoneNumbers.Count}, Associates={Associates.Count}, " +
-           $"Public={IsPublic}, OptOut={IsOptedOut}";
+            $"Addresses={Addresses.Count}, Emails={EmailAddresses.Count}, Phones={PhoneNumbers.Count}, Associates={Associates.Count}, " + $"Public={IsPublic}, OptOut={IsOptedOut}";
 }

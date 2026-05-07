@@ -66,7 +66,6 @@ This library has been designed for production use and includes:
 - ✅ Cancellation token support
 - ✅ Extensible architecture
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Images.csproj`.)*

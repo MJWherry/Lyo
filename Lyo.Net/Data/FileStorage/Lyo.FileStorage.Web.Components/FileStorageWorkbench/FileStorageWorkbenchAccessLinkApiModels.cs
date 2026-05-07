@@ -8,10 +8,4 @@ public sealed record FileStorageWorkbenchCreateAccessLinkRequest(
     int? MaxDownloads = null,
     string? TenantId = null);
 
-public sealed record FileStorageWorkbenchAccessLinkResponse(
-    Guid LinkId,
-    string Token,
-    string DownloadUrl,
-    string PresignedReadUrl,
-    DateTime CreatedUtc,
-    DateTime? ExpiresAtUtc);
+public sealed record FileStorageWorkbenchAccessLinkResponse(Guid LinkId, string Token, string DownloadUrl, string PresignedReadUrl, DateTime CreatedUtc, DateTime? ExpiresAtUtc);

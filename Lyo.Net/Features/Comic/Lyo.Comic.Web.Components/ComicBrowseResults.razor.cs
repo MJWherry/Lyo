@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Comic.Web.Components;
 
-/// <summary>Layout shell for <see cref="ComicBrowseCard"/> grids and lists. Scoped CSS applies on any host page (not only <see cref="ComicSearch"/>).</summary>
+/// <summary>Layout shell for <see cref="ComicBrowseCard" /> grids and lists. Scoped CSS applies on any host page (not only <see cref="ComicSearch" />).</summary>
 public partial class ComicBrowseResults
 {
     [Parameter]
@@ -21,11 +21,8 @@ public partial class ComicBrowseResults
             ComicBrowseViewMode.GridSmall => "comic-browse-results__grid comic-browse-results__grid--small",
             ComicBrowseViewMode.ListNoImage => "comic-browse-results__list comic-browse-results__list--no-image",
             ComicBrowseViewMode.ListLine => "comic-browse-results__list comic-browse-results__list--line",
-            _ => "comic-browse-results__grid comic-browse-results__grid--small"
+            var _ => "comic-browse-results__grid comic-browse-results__grid--small"
         };
 
-    private string RootClass
-        => string.IsNullOrWhiteSpace(Class)
-            ? $"comic-browse-results {LayoutClass}"
-            : $"comic-browse-results {LayoutClass} {Class}";
+    private string RootClass => string.IsNullOrWhiteSpace(Class) ? $"comic-browse-results {LayoutClass}" : $"comic-browse-results {LayoutClass} {Class}";
 }

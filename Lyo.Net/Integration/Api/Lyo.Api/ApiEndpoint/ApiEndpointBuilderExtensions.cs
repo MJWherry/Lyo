@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint;
 
-/// <summary>Entry points for typed minimal-API CRUD: creates <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}" /> instances from <see cref="WebApplication" />.</summary>
+/// <summary>
+/// Entry points for typed minimal-API CRUD: creates <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}" /> instances from
+/// <see cref="WebApplication" />.
+/// </summary>
 public static class ApiEndpointBuilderExtensions
 {
     /// <summary>Registers Query, QueryProject, and Get only (<see cref="ApiFeatureFlag.ReadOnly" />). Default sort uses the entity primary key.</summary>

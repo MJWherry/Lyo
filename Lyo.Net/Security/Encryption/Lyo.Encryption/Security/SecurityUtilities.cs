@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-
 #if NET10_0_OR_GREATER
 using System.Security.Cryptography;
 #endif

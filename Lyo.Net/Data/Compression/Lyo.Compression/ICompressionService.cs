@@ -6,8 +6,8 @@ namespace Lyo.Compression;
 /// <summary>Compress and decompress payloads using the algorithm bound to the implementing service instance.</summary>
 /// <remarks>
 /// <para>
-/// Implementations are typically registered as singletons. File outputs use atomic write-to-temp-then-rename where applicable. Respect <see cref="Models.CompressionServiceOptions.MaxInputSize" />
-/// for both compressed input size and maximum decompressed output size.
+/// Implementations are typically registered as singletons. File outputs use atomic write-to-temp-then-rename where applicable. Respect
+/// <see cref="Models.CompressionServiceOptions.MaxInputSize" /> for both compressed input size and maximum decompressed output size.
 /// </para>
 /// </remarks>
 public interface ICompressionService
@@ -55,7 +55,8 @@ public interface ICompressionService
     Task<string> DecompressStringFromStreamAsync(Stream inputStream, Encoding? encoding = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Compresses a file on disk. When <paramref name="outputFilePath" /> is null, output path is derived from <paramref name="inputFilePath" /> and <see cref="FileExtension" />.
+    /// Compresses a file on disk. When <paramref name="outputFilePath" /> is null, output path is derived from <paramref name="inputFilePath" /> and <see cref="FileExtension" />
+    /// .
     /// </summary>
     FileCompressionInfo CompressFile(string inputFilePath, string? outputFilePath = null);
 
@@ -83,9 +84,7 @@ public interface ICompressionService
     /// <summary>Compressed size divided by original size (0–1+); convenience over metadata types.</summary>
     double GetCompressionRatio(byte[] originalBytes, byte[] compressedBytes);
 
-    /// <summary>
-    /// Heuristic check for common compressed magic bytes (e.g. GZip, zlib wrapper, Brotli-ish leading byte). Not a guarantee — treat as a hint only.
-    /// </summary>
+    /// <summary>Heuristic check for common compressed magic bytes (e.g. GZip, zlib wrapper, Brotli-ish leading byte). Not a guarantee — treat as a hint only.</summary>
     bool IsLikelyCompressed(byte[] data);
 
     /// <summary>Compresses each dictionary entry in parallel; keys are preserved.</summary>

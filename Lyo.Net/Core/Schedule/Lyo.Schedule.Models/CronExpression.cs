@@ -53,9 +53,8 @@ public sealed class CronExpression
         var parts = expression.Trim().Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
         var hasSeconds = format == CronFormat.IncludeSeconds;
         var expectedParts = hasSeconds ? 6 : 5;
-        if (parts.Length != expectedParts) {
+        if (parts.Length != expectedParts)
             throw new FormatException($"Expected {expectedParts} fields but found {parts.Length} in cron expression '{expression}'.");
-        }
 
         var i = 0;
         var seconds = hasSeconds ? ParseField(parts[i++], 0, 59, null) : [0];
@@ -157,9 +156,10 @@ public sealed class CronExpression
 
     private static int? FirstGreaterThan(SortedSet<int> set, int value)
     {
-        foreach (var v in set)
+        foreach (var v in set) {
             if (v > value)
                 return v;
+        }
 
         return null;
     }

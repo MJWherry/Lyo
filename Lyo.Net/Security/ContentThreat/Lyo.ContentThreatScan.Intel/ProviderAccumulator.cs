@@ -1,8 +1,6 @@
 namespace Lyo.ContentThreatScan.Intel;
 
-internal sealed record ProviderAccumulator(
-    List<ContentThreatContribution> Contributions,
-    bool IntelConfirmedMalicious)
+internal sealed record ProviderAccumulator(List<ContentThreatContribution> Contributions, bool IntelConfirmedMalicious)
 {
     public static ProviderAccumulator Merge(ProviderAccumulator a, ProviderAccumulator b)
     {
@@ -12,6 +10,5 @@ internal sealed record ProviderAccumulator(
         return new(list, a.IntelConfirmedMalicious || b.IntelConfirmedMalicious);
     }
 
-    public ExternalReputationEnvelope Finish() =>
-        new(Contributions, IntelConfirmedMalicious);
+    public ExternalReputationEnvelope Finish() => new(Contributions, IntelConfirmedMalicious);
 }

@@ -2,6 +2,7 @@ using Lyo.Api;
 using Lyo.Api.Mapping;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Cache;
+using Lyo.Common.Records;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -12,21 +13,24 @@ using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Records;
 
 namespace Lyo.Job.Postgres.Tests;
 
 public sealed class JobPostgresFixture : PostgresContainerFixtureBase
 {
     public IServiceProvider ServiceProvider { get; private set; } = null!;
+
     public ICreateService<JobContext> CreateService { get; private set; } = null!;
+
     public FakeJobEventPublisher FakePublisher { get; private set; } = null!;
+
     public Guid JobDefinitionId { get; private set; }
+
     public JobService JobService { get; private set; } = null!;
 
     protected override async ValueTask OnContainerStartedAsync(string connectionString, CancellationToken cancellationToken)
     {
-        FakePublisher = new FakeJobEventPublisher();
+        FakePublisher = new();
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
         config.ConfigureJobMappings();

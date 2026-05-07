@@ -57,9 +57,7 @@ public static class Extensions
         /// <param name="configuration">The configuration.</param>
         /// <param name="configSectionName">The configuration section name. Default: "ProfanityFilter".</param>
         /// <returns>The service collection for chaining.</returns>
-        public IServiceCollection AddProfanityFilterServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = FileProfanityFilterOptions.SectionName)
+        public IServiceCollection AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string configSectionName = FileProfanityFilterOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

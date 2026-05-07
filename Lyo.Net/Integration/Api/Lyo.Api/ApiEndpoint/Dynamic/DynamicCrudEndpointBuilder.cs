@@ -500,10 +500,7 @@ public static class DynamicCrudEndpointBuilder
             patchResultType.GetProperty("IsSuccess")!, patchResultType.GetProperty("Error")!, updateResultType.GetProperty("Result")!, updateResultType.GetProperty("Error")!);
     }
 
-    private static bool TryGetMetadata(
-        IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
-        string entityType,
-        out EntityEndpointMetadata meta)
+    private static bool TryGetMetadata(IReadOnlyDictionary<string, EntityEndpointMetadata> registry, string entityType, out EntityEndpointMetadata meta)
     {
         if (registry.TryGetValue(entityType, out meta!))
             return true;
@@ -801,10 +798,11 @@ public static class DynamicCrudEndpointBuilder
         if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        if (requests.Count == 0)
+        if (requests.Count == 0) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(
                     httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "At least one patch request is required", DateTime.UtcNow)), statusCode: 400);
+        }
 
         if (meta.PatchPropertyAuthorization != null) {
             var sanitized = new List<PatchRequest>(requests.Count);
@@ -1077,10 +1075,11 @@ public static class DynamicCrudEndpointBuilder
         if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        if (requests.Count == 0)
+        if (requests.Count == 0) {
             return Results.Json(
                 ApiErrorResponseFactory.CreateForError(
                     httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidQuery, "At least one delete request is required", DateTime.UtcNow)), statusCode: 400);
+        }
 
         var task = (Task)meta.Cache.DeleteBulkAsync.Invoke(deleteService, [requests, null, null, null, ct])!;
         await task.ConfigureAwait(false);

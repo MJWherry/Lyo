@@ -44,7 +44,6 @@ public class ValidationException : Exception
         : base(message)
         => Errors = errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToList().AsReadOnly() ?? (IReadOnlyList<string>)new string[] { }.ToList().AsReadOnly());
 
-
     /// <summary>Initializes a new instance of the <see cref="ValidationException" /> class with a single validation error.</summary>
     /// <param name="fieldName">The name of the field that failed validation.</param>
     /// <param name="errorMessage">The validation error message.</param>

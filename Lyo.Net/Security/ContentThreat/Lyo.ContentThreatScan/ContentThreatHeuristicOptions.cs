@@ -19,8 +19,7 @@ public sealed class ContentThreatHeuristicOptions
     public bool AllowScanWhenHintsMissing { get; set; }
 
     /// <summary>Lowercase dotted extensions excluding leading dot (e.g. json, txt).</summary>
-    public HashSet<string> TextExtensions { get; set; } = new(
-        StringComparer.OrdinalIgnoreCase) {
+    public HashSet<string> TextExtensions { get; set; } = new(StringComparer.OrdinalIgnoreCase) {
         "txt",
         "log",
         "json",

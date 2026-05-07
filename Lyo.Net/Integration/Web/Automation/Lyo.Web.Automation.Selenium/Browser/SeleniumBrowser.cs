@@ -19,12 +19,12 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
 {
     private readonly Dictionary<string, string> _metricNames;
     private BrowserAlerts? _alerts;
+    private SeleniumBrowserTabs? _automationTabs;
     private SeleniumCookieJar? _cookieJar;
     private bool _disposed;
     private FrameNavigator? _frames;
     private BrowserKeyboard? _keyboard;
     private TabManager? _nativeTabs;
-    private SeleniumBrowserTabs? _automationTabs;
 
     /// <summary>Gets the underlying WebDriver when the browser is started.</summary>
     public IWebDriver? Driver { get; private set; }
@@ -59,9 +59,6 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
             return _nativeTabs ??= new(this, Logger);
         }
     }
-
-    /// <inheritdoc />
-    public IWebAutomationTabs Tabs => _automationTabs ??= new SeleniumBrowserTabs(this);
 
     /// <summary>Creates a new browser instance.</summary>
     /// <param name="options">Browser and polling options.</param>
@@ -102,6 +99,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         ExecutionContext?.Dispose();
         GC.SuppressFinalize(this);
     }
+
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => _automationTabs ??= new(this);
 
     /// <inheritdoc />
     public IBrowserCookies? CookieJar => Driver != null ? _cookieJar ??= new(this) : null;

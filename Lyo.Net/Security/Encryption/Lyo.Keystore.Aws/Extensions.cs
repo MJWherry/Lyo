@@ -164,7 +164,7 @@ public static class Extensions
                     keyedServiceName, (provider, _) => {
                         var secretsManager = provider.GetRequiredService<IAmazonSecretsManager>();
                         var options = provider.GetRequiredService<AwsKeystoreOptions>();
-                        OperationHelpers.ThrowIfNullOrWhiteSpace(options.SecretNamePrefix, message: $"SecretNamePrefix is required in configuration section '{configSectionName}'");
+                        OperationHelpers.ThrowIfNullOrWhiteSpace(options.SecretNamePrefix, $"SecretNamePrefix is required in configuration section '{configSectionName}'");
                         var prefix = options.SecretNamePrefix;
                         return new(secretsManager, prefix);
                     });

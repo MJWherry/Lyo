@@ -78,7 +78,6 @@ var mobilePhone = person.GetMobilePhone();
 var hasValidEmail = person.HasValidEmail();
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.People.Models.csproj`.)*

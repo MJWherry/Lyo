@@ -1,8 +1,11 @@
 # Lyo.Config.Api.Hosting
 
-Bridges **`IConfigApiClient`** ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into **`Microsoft.Extensions.DependencyInjection`** and **`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared **`ResolvedConfigRecord`** ledger (ETags + **304** polling), then **one definition key JSON blob** binds each **`IOptionsMonitor<TOptions>`**.
+Bridges **`IConfigApiClient`** ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) into **`Microsoft.Extensions.DependencyInjection`** and *
+*`Microsoft.Extensions.Options`**: a **`BackgroundService`** keeps a shared **`ResolvedConfigRecord`** ledger (ETags + **304** polling), then **one definition key JSON blob** binds
+each **`IOptionsMonitor<TOptions>`**.
 
-Prefer **`IOptionsMonitor<TOptions>.CurrentValue`** (or **`OnChange`**) for values that reload at runtime. **`IOptions<TOptions>`** is not registered here and would not observe remote updates anyway.
+Prefer **`IOptionsMonitor<TOptions>.CurrentValue`** (or **`OnChange`**) for values that reload at runtime. **`IOptions<TOptions>`** is not registered here and would not observe
+remote updates anyway.
 
 ## Registration order
 
@@ -48,7 +51,8 @@ Reference the project `Lyo.Config.Api.Hosting` from your worker/API host (`Micro
 ```
 
 - **`StartupTimeout`** — omit or **`null`** to wait indefinitely for the first **200**.
-- **`RequireSuccessOnStartup`** — **`false`** allows the host to start after **`StartupTimeout`** even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer keeping **`true`** unless you tolerate cold-start without remote config).
+- **`RequireSuccessOnStartup`** — **`false`** allows the host to start after **`StartupTimeout`** even if no snapshot arrived (ledger stays empty unless you later reload manually;
+  prefer keeping **`true`** unless you tolerate cold-start without remote config).
 
 ## Missing definition key behaviour
 
@@ -69,6 +73,8 @@ flowchart LR
 
 1. Hosted service probes **`IConfigApiClient.ResolveForAppAsync`** with **`AppKind`/`AppId`** and **`If-None-Match`** from **`ConfigApiResolvedLedger.CurrentEtag`**.
 2. On **200**, the ledger swaps in the new **`ResolvedConfigRecord`** and invalidates **`IChangeToken`** listeners.
-3. Each **`ConfigApiOptionsMonitor<T>`** reacts by re-materializing **`T`** via **`ResolvedConfigRecord.TryGetValue(definitionKey, …)`** + JSON deserialize (same **`ConfigJsonSerializerOptions.Default`** semantics as **`GetValue<T>`** elsewhere).
+3. Each **`ConfigApiOptionsMonitor<T>`** reacts by re-materializing **`T`** via **`ResolvedConfigRecord.TryGetValue(definitionKey, …)`** + JSON deserialize (same *
+   *`ConfigJsonSerializerOptions.Default`** semantics as **`GetValue<T>`** elsewhere).
 
-REST paths remain in **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)**. Resolve outcomes (**`ConfigResolveOutcome`**) are in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**; HTTP registration and **`ConfigPolling`** in **[`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)**.
+REST paths remain in **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)**. Resolve outcomes (**`ConfigResolveOutcome`**) are in *
+*[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**; HTTP registration and **`ConfigPolling`** in **[`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)**.

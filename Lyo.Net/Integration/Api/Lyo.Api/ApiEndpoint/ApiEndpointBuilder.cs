@@ -25,8 +25,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Api.ApiEndpoint;
 
 /// <summary>
-/// Fluent registration of typed CRUD minimal endpoints for one entity: query, projection, get, create/update/patch/delete/upsert (single and bulk), export, metadata, and optional
-/// query history. Call <see cref="Build" /> after configuring operations. Authorization defaults and per-operation overrides are applied here.
+/// Fluent registration of typed CRUD minimal endpoints for one entity: query, projection, get, create/update/patch/delete/upsert (single and bulk), export, metadata, and
+/// optional query history. Call <see cref="Build" /> after configuring operations. Authorization defaults and per-operation overrides are applied here.
 /// </summary>
 public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey>(WebApplication app, string baseRoute, string groupName)
     where TDbContext : DbContext where TDbEntity : class
@@ -370,7 +370,13 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         EndpointAuth? auth = null,
         Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? afterAsync = null)
     {
-        _createConfig = new() { Before = before, After = after, Auth = auth, AfterAsync = afterAsync };
+        _createConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            AfterAsync = afterAsync
+        };
+
         return this;
     }
 
@@ -380,7 +386,13 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         EndpointAuth? auth = null,
         Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? afterAsync = null)
     {
-        _createBulkConfig = new() { Before = before, After = after, Auth = auth, AfterAsync = afterAsync };
+        _createBulkConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            AfterAsync = afterAsync
+        };
+
         return this;
     }
 
@@ -936,10 +948,11 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/QueryHistory", async (
-                    [FromBody] HistoryQuery query,
-                    [FromServices] IQueryHistoryService service,
-                    HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                        [FromBody] HistoryQuery query,
+                        [FromServices] IQueryHistoryService service,
+                        HttpContext httpContext,
+                        CancellationToken ct = default)
+                    => {
                     var result = await service.QueryHistory<TDbEntity, TResponse>(
                             query, _queryHistoryConfig.DefaultOrder, _queryHistoryConfig.StartTimeSelector.Compile(), _queryHistoryConfig.EndTimeSelector.Compile(),
                             SortDirection.Desc, ct)
@@ -1036,9 +1049,9 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapPost(
                 $"{baseRoute}", async ([FromBody] TRequest request, [FromServices] ICreateService<TDbContext> basicService, HttpContext httpContext, CancellationToken ct = default)
                     => {
-                    var result = await basicService
-                        .CreateAsync<TRequest, TDbEntity, TResponse>(request, _createConfig.Before, _createConfig.After, _createConfig.AfterAsync, ct)
+                    var result = await basicService.CreateAsync<TRequest, TDbEntity, TResponse>(request, _createConfig.Before, _createConfig.After, _createConfig.AfterAsync, ct)
                         .ConfigureAwait(false);
+
                     if (result.IsSuccess)
                         return Results.Created($"{baseRoute}/{result.Data!.GetType().GetProperty("Id")?.GetValue(result.Data)}", result);
 
@@ -1060,8 +1073,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Bulk", async ([FromBody] List<TRequest> requests, [FromServices] ICreateService<TDbContext> basicService, CancellationToken ct = default) => {
-                    var result = await basicService
-                        .CreateBulkAsync<TRequest, TDbEntity, TResponse>(requests, _createBulkConfig.Before, _createBulkConfig.After, _createBulkConfig.AfterAsync, ct)
+                    var result = await basicService.CreateBulkAsync<TRequest, TDbEntity, TResponse>(
+                            requests, _createBulkConfig.Before, _createBulkConfig.After, _createBulkConfig.AfterAsync, ct)
                         .ConfigureAwait(false);
 
                     return Results.Ok(result);

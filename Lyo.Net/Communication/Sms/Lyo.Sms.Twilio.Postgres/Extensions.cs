@@ -36,9 +36,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL Twilio SMS DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddTwilioSmsDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresTwilioSmsOptions.SectionName)
+        public IServiceCollection AddTwilioSmsDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresTwilioSmsOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

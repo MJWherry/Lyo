@@ -18,8 +18,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
             """
             TRUNCATE TABLE audit.audit_changes RESTART IDENTITY CASCADE;
             TRUNCATE TABLE audit.audit_events RESTART IDENTITY CASCADE;
-            """,
-            cancellationToken: TestContext.Current.CancellationToken);
+            """, TestContext.Current.CancellationToken);
     }
 
     [Fact]

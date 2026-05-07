@@ -1,6 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Models;
 
 namespace Lyo.Web.Automation.Selenium.Browser;
 
@@ -9,13 +7,13 @@ public sealed class SeleniumBrowserTabs : IWebAutomationTabs
 {
     private readonly SeleniumBrowser _browser;
 
+    private TabManager Native => _browser.NativeTabs;
+
     internal SeleniumBrowserTabs(SeleniumBrowser browser)
     {
         ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
-
-    private TabManager Native => _browser.NativeTabs;
 
     /// <inheritdoc />
     public Task<IReadOnlyList<AutomationTabInfo>> ListTabsAsync(CancellationToken ct = default)
@@ -55,12 +53,13 @@ public sealed class SeleniumBrowserTabs : IWebAutomationTabs
     /// <inheritdoc />
     public Task<string> OpenNewTabAsync(string? url = null, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(url))
+        if (string.IsNullOrWhiteSpace(url)) {
             return Task.Run(
                 () => {
                     ct.ThrowIfCancellationRequested();
                     return Native.OpenNewTabNative();
                 }, ct);
+        }
 
         return Native.OpenNewTabAndWaitForLoadAsync(url, ct);
     }
@@ -84,6 +83,5 @@ public sealed class SeleniumBrowserTabs : IWebAutomationTabs
             }, ct);
     }
 
-    private static AutomationTabInfo ToNeutral(BrowserTabInfo t)
-        => new(t.Index, t.IsActive, t.WindowHandle, t.Url, t.Title, t.DisplayName);
+    private static AutomationTabInfo ToNeutral(BrowserTabInfo t) => new(t.Index, t.IsActive, t.WindowHandle, t.Url, t.Title, t.DisplayName);
 }

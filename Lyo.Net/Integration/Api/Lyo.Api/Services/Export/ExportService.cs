@@ -24,7 +24,8 @@ namespace Lyo.Api.Services.Export;
 
 /// <inheritdoc cref="IExportService{TContext}" />
 /// <remarks>
-/// When columns contain SmartFormat templates (e.g. "{FirstName} {LastName}"), they are converted to ComputedFields on the query and resolved through the ProjectionService pipeline.
+/// When columns contain SmartFormat templates (e.g. "{FirstName} {LastName}"), they are converted to ComputedFields on the query and resolved through the ProjectionService
+/// pipeline.
 /// </remarks>
 public class ExportService<TContext>(
     IQueryService<TContext> queryService,

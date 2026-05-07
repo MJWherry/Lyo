@@ -56,9 +56,7 @@ public static class Extensions
         /// </code>
         /// <para>Note: You must also register a storage implementation (e.g. AddContactUsPostgres) to have a working service.</para>
         /// </remarks>
-        public IServiceCollection AddContactUsFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = ContactUsServiceOptions.SectionName)
+        public IServiceCollection AddContactUsFromConfiguration(IConfiguration configuration, string configSectionName = ContactUsServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

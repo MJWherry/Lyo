@@ -31,7 +31,6 @@ if (vector.TryNormalize(out var normalized))
 - `Lyo.Mathematics.Examples`: runnable usage samples.
 - `Lyo.Mathematics.Benchmarks`: lightweight performance harness.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Mathematics.csproj`.)*

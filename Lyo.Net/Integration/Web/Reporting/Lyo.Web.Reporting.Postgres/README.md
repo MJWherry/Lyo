@@ -148,7 +148,6 @@ bool DeleteReportAsync(
     CancellationToken ct = default)
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Web.Reporting.Postgres.csproj`.)*

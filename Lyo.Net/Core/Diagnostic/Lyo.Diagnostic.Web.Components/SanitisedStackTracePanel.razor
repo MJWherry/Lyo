@@ -46,7 +46,7 @@ else {
                         <td style="font-family: monospace; font-size: 0.85rem;">@f.ShortMethod</td>
                         <td>@(f.LocationSummary ?? "—")</td>
                         <td>
-                            @(f.IsAsync ? "async " : "")@(f.IsLambda ? "lambda" : "")@((!f.IsAsync && !f.IsLambda) ? "—" : "")
+                            @(f.IsAsync ? "async " : "")@(f.IsLambda ? "lambda" : "")@(!f.IsAsync && !f.IsLambda ? "—" : "")
                         </td>
                     </tr>
                 }
@@ -66,6 +66,7 @@ else {
 }
 
 @code {
+
     [Parameter]
     public SanitisedStackTrace? Trace { get; set; }
 

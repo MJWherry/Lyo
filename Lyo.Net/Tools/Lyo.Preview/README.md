@@ -32,7 +32,6 @@ await Preview.FileAsync("/path/to/file.pdf");
 await Preview.Async(bytes, FileTypeInfo.Png);
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Preview.csproj`.)*

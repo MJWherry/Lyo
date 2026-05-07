@@ -10,8 +10,9 @@ namespace Lyo.Encryption;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Pass <c>keyId</c> to resolve key material from <see cref="Lyo.Keystore.IKeyStore" /> when the implementation is constructed with a store; pass <c>key</c> for inline symmetric
-/// keys. Streaming helpers write a small versioned header then length-prefixed ciphertext chunks — see <see cref="EncryptionServiceBase" /> source for the exact frame layout.
+/// Pass <c>keyId</c> to resolve key material from <see cref="Lyo.Keystore.IKeyStore" /> when the implementation is constructed with a store; pass <c>key</c> for inline
+/// symmetric keys. Streaming helpers write a small versioned header then length-prefixed ciphertext chunks — see <see cref="EncryptionServiceBase" /> source for the exact frame
+/// layout.
 /// </para>
 /// </remarks>
 public interface IEncryptionService

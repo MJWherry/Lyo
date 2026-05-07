@@ -300,6 +300,7 @@ public sealed class InMemoryIOTempStorageProvider : IIOTempStorageProvider
                 _committed = true;
                 _commit(ToArray());
             }
+
             return base.DisposeAsync();
         }
 #endif

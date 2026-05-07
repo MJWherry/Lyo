@@ -1,6 +1,9 @@
 namespace Lyo.IO.Temp.Enums;
 
-/// <summary>Behaviour when <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxFileCount" />, <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxTotalSizeBytes" />, or per-file limits would be exceeded.</summary>
+/// <summary>
+/// Behaviour when <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxFileCount" />, <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxTotalSizeBytes" />, or per-file
+/// limits would be exceeded.
+/// </summary>
 public enum TempOverflowStrategy
 {
     /// <summary>Throw an exception rather than evicting existing data.</summary>

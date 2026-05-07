@@ -63,7 +63,6 @@ and call your `IWebhookSignatureVerifier` directly.
 
 - **Lyo.Webhook.Twilio** — Twilio `X-Twilio-Signature` validation
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Webhook.csproj`.)*

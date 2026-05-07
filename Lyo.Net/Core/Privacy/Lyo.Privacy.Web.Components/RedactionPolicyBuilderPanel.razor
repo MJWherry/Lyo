@@ -3,7 +3,8 @@
 
 <MudStack Spacing="3">
     <MudText Typo="Typo.body2" Color="Color.Secondary">
-        Rules follow JSON policy order: national IDs → detectors → API patterns → support-export token regexes → custom regex chips. Use <strong>Apply to Redaction tab</strong> to test.
+        Rules follow JSON policy order: national IDs → detectors → API patterns → support-export token regexes → custom regex chips. Use <strong>Apply to Redaction tab</strong> to
+        test.
     </MudText>
 
     <MudPaper Class="pa-3" Outlined="true">
@@ -14,10 +15,13 @@
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.Logging)))">Logging</MudButton>
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.SupportExport)))">Support export</MudButton>
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.PublicSurface)))">Public surface</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.RegressionTesting)))">Regression testing</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ApplyTemplate(nameof(PrivacyPresetNames.RegressionTesting)))">Regression testing
+                </MudButton>
                 <MudDivider Vertical="true" FlexItem="true" Class="mx-1"/>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="ApplyAsync">Apply to Redaction tab</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyDraftJsonAsync">Copy draft JSON</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" OnClick="CopyDraftJsonAsync">Copy
+                    draft JSON
+                </MudButton>
             </MudStack>
         </MudStack>
     </MudPaper>
@@ -55,7 +59,8 @@
                     <MudCheckBox T="bool" @bind-Value="_idUsSsn" Label="United States SSN (###-##-#### heuristics)"/>
                     <MudCheckBox T="bool" @bind-Value="_idUkNino" Label="UK NINO (loose pattern)"/>
                     <MudCheckBox T="bool" @bind-Value="_idDeSteuer" Label="Germany Steuer-ID (11 digits)"/>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Run before phone/email so SSN-shaped lines are not missed when phone rules use a higher digit minimum.</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Run before phone/email so SSN-shaped lines are not missed when phone rules use a higher digit minimum.
+                    </MudText>
                 </MudStack>
             </MudPaper>
         </MudTabPanel>
@@ -103,11 +108,13 @@
                             </MudSelect>
                         </MudItem>
                         <MudItem xs="12" sm="4">
-                            <MudNumericField T="int" @bind-Value="_phoneDigitsParam" Label="Digits parameter" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="15" FullWidth="true"
+                            <MudNumericField T="int" @bind-Value="_phoneDigitsParam" Label="Digits parameter" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="15"
+                                             FullWidth="true"
                                              HelperText="Last-N visible or window for first-of-last."/>
                         </MudItem>
                         <MudItem xs="12" sm="4">
-                            <MudNumericField T="int" @bind-Value="_phoneMinDigits" Label="Minimum digit count" Variant="Variant.Outlined" Margin="Margin.Dense" Min="7" Max="19" FullWidth="true"/>
+                            <MudNumericField T="int" @bind-Value="_phoneMinDigits" Label="Minimum digit count" Variant="Variant.Outlined" Margin="Margin.Dense" Min="7" Max="19"
+                                             FullWidth="true"/>
                         </MudItem>
                     </MudGrid>
                     <MudText Typo="Typo.caption" Color="Color.Secondary">Applies when Phone is enabled on Common detectors.</MudText>
@@ -122,7 +129,8 @@
                         <MudSelectItem Value="@("truncate")">Truncate last octet</MudSelectItem>
                         <MudSelectItem Value="@("full")">Redact full address</MudSelectItem>
                     </MudSelect>
-                    <MudNumericField T="ulong" @bind-Value="_bankMinNumeric" Label="Bank account: minimum numeric value (0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                    <MudNumericField T="ulong" @bind-Value="_bankMinNumeric" Label="Bank account: minimum numeric value (0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     FullWidth="true"/>
                     <MudText Typo="Typo.caption" Color="Color.Secondary">IPv4 mode applies when IPv4 / IPv6 detector is enabled.</MudText>
                 </MudStack>
             </MudPaper>
@@ -134,7 +142,8 @@
                     <MudCheckBox T="bool" @bind-Value="_apiAws" Label="AWS access key id (AKIA…)"/>
                     <MudCheckBox T="bool" @bind-Value="_apiGithub" Label="GitHub PAT (ghp_ / ghs_ …)"/>
                     <MudCheckBox T="bool" @bind-Value="_apiAssignment" Label="High-entropy KEY=value assignments"/>
-                    <MudNumericField T="double" @bind-Value="_apiMinEntropy" Label="Minimum entropy (bits/char, 0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense" FullWidth="true"/>
+                    <MudNumericField T="double" @bind-Value="_apiMinEntropy" Label="Minimum entropy (bits/char, 0 = off)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                     FullWidth="true"/>
                     <MudDivider Class="my-1"/>
                     <MudCheckBox T="bool" @bind-Value="_extraBearerJwt" Label="Support-export extras: Bearer + JWT-shaped strings (regex rules)"/>
                 </MudStack>
@@ -149,7 +158,8 @@
                                   ValuesChanged="OnRegexChipsChanged"
                                   Placeholder="One .NET regex per chip — Enter to add (kind Custom)"
                                   ShowClearButton="true"/>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Each chip becomes a regex rule with the policy placeholder per match. Invalid patterns fail on Apply.</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Each chip becomes a regex rule with the policy placeholder per match. Invalid patterns fail on Apply.
+                    </MudText>
                 </MudStack>
             </MudPaper>
         </MudTabPanel>
@@ -157,6 +167,7 @@
 </MudStack>
 
 @code {
+
     [Parameter]
     public EventCallback<RedactionPolicy> OnPolicyApplied { get; set; }
 
@@ -235,7 +246,6 @@
         _extraBearerJwt = false;
         _idUsSsn = _idUkNino = _idDeSteuer = false;
         _ruleEmail = _rulePhone = _ruleCard = _ruleUrl = _ruleIp = _ruleAddress = _ruleIban = _ruleBank = _apiAws = _apiGithub = _apiAssignment = false;
-
         switch (name) {
             case nameof(PrivacyPresetNames.Minimal):
                 _placeholder = "[redacted]";
@@ -303,11 +313,7 @@
 
     private RedactionPolicy BuildPolicy()
     {
-        var b = new RedactionPolicyBuilder()
-            .WithPolicyName(string.IsNullOrWhiteSpace(_policyLabel) ? "Workbench policy" : _policyLabel.Trim())
-            .WithPlaceholder(string.IsNullOrWhiteSpace(_placeholder) ? "[redacted]" : _placeholder.Trim())
-            .WithMergeAdjacentRuns(_mergeAdjacent);
-
+        var b = new RedactionPolicyBuilder().WithPolicyName(string.IsNullOrWhiteSpace(_policyLabel) ? "Workbench policy" : _policyLabel.Trim()).WithPlaceholder(string.IsNullOrWhiteSpace(_placeholder) ? "[redacted]" : _placeholder.Trim()).WithMergeAdjacentRuns(_mergeAdjacent);
         foreach (var literal in _neverRedactChips) {
             if (!string.IsNullOrWhiteSpace(literal))
                 b.AddNeverRedactSubstring(literal.Trim());
@@ -316,10 +322,13 @@
         var packs = NationalIdPacks.None;
         if (_idUsSsn)
             packs |= NationalIdPacks.UnitedStatesSsn;
+
         if (_idUkNino)
             packs |= NationalIdPacks.UnitedKingdomNino;
+
         if (_idDeSteuer)
             packs |= NationalIdPacks.GermanySteuerId;
+
         if (packs != NationalIdPacks.None)
             b.AddNationalIdRule(packs);
 
@@ -330,31 +339,40 @@
             var mode = _phoneMode switch {
                 "full" => PhoneMaskMode.Full,
                 "firstOfLast" => PhoneMaskMode.FirstDigitOfLastGroup,
-                _ => PhoneMaskMode.LastDigits
+                var _ => PhoneMaskMode.LastDigits
             };
+
             b.AddPhoneRule(mode, _phoneDigitsParam, _phoneMinDigits);
         }
 
         if (_ruleCard)
             b.AddRule(new PaymentCardRedactionRule());
+
         if (_ruleUrl)
             b.AddRule(new UrlRedactionRule());
+
         if (_ruleIp)
             b.AddIpRule(_ipMode == "truncate" ? IpRedactionMode.TruncateLastSegment : IpRedactionMode.Full);
+
         if (_ruleAddress)
             b.AddRule(new AddressRedactionRule());
+
         if (_ruleIban)
             b.AddRule(new IbanRedactionRule());
+
         if (_ruleBank)
             b.AddBankAccountRule(_bankMinNumeric);
 
         var api = ApiSecretPatterns.None;
         if (_apiAws)
             api |= ApiSecretPatterns.AwsAccessKey;
+
         if (_apiGithub)
             api |= ApiSecretPatterns.GitHubPersonalAccessToken;
+
         if (_apiAssignment)
             api |= ApiSecretPatterns.HighEntropyAssignment;
+
         if (api != ApiSecretPatterns.None)
             b.AddApiSecretRule(api, _apiMinEntropy);
 

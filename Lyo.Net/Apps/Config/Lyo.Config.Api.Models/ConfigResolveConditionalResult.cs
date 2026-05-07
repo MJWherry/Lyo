@@ -13,7 +13,7 @@ public sealed class ConfigResolveConditionalResult(ConfigResolveOutcome outcome,
     public HttpStatusDescriptor? Failure { get; } = failure;
 }
 
-/// <summary>Lightweight descriptor when <see cref="ConfigResolveOutcome.Failed"/> (non-success).</summary>
+/// <summary>Lightweight descriptor when <see cref="ConfigResolveOutcome.Failed" /> (non-success).</summary>
 public sealed class HttpStatusDescriptor(int statusCode, string reasonPhrase)
 {
     public int StatusCode { get; } = statusCode;

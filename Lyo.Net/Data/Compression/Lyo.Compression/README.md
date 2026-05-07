@@ -4,7 +4,8 @@ A production-ready .NET compression library providing efficient, thread-safe com
 algorithms, batch operations, and atomic file operations.
 
 The primary contract is **`ICompressionService`** (**`CompressionService`** is the default implementation). With **XML documentation** enabled in the repo
-(`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the API
+(`GenerateDocumentationFile` in `Directory.Build.props`), IntelliSense on **`ICompressionService`** and **`CompressionServiceOptions`** carries the same behavioral detail as the
+API
 summaries below; this README stays the long-form guide (examples, security, configuration tables).
 
 ## 📑 Table of Contents
@@ -717,7 +718,6 @@ The library throws specific exceptions for different error conditions:
 - ✅ Encoding fallback for robustness
 - ✅ Configurable limits and options
 - ✅ Responsive cancellation support in batch operations
-
 
 ## Dependencies
 

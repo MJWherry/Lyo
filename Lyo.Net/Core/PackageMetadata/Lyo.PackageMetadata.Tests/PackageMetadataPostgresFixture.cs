@@ -1,4 +1,3 @@
-
 using Lyo.PackageMetadata.Postgres;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Testing.Containers;
@@ -26,15 +25,12 @@ public sealed class PackageMetadataPostgresFixture : PostgresContainerFixtureBas
         });
 
         services.AddDbContextFactory<PackageMetadataDbContext>(opts => opts.UseNpgsql(
-            connectionString,
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
+            connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
 
         ServiceProvider = services.BuildServiceProvider();
         Factory = ServiceProvider.GetRequiredService<IDbContextFactory<PackageMetadataDbContext>>();
-
         await using var ctx = await Factory.CreateDbContextAsync(cancellationToken);
         await ctx.Database.MigrateAsync(cancellationToken);
-
         var shortId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-aaaaaaaaaaaa");
         var longId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var t0 = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -46,8 +42,7 @@ public sealed class PackageMetadataPostgresFixture : PostgresContainerFixtureBas
                 ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.None,
                 CreatedAt = t0,
                 UpdatedAt = t0
-            },
-            new PackageMetadataEntity {
+            }, new PackageMetadataEntity {
                 Id = longId,
                 Ecosystem = PackageEcosystem.NuGet,
                 Name = "LongMatch",
@@ -57,9 +52,11 @@ public sealed class PackageMetadataPostgresFixture : PostgresContainerFixtureBas
                 CreatedAt = t0,
                 UpdatedAt = t0
             });
+
         ctx.StackPrefixes.AddRange(
             new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = shortId, NormalizedPrefix = "Npgsql." },
             new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = longId, NormalizedPrefix = "Npgsql.Internal." });
+
         await ctx.SaveChangesAsync(cancellationToken);
     }
 

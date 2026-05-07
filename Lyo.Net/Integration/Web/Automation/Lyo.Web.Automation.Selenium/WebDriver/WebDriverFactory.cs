@@ -91,7 +91,6 @@ public static class WebDriverFactory
         var ad = context.ArtifactsDirectory!;
         Directory.CreateDirectory(ad);
         service.LogPath = Path.Combine(ad, "geckodriver.log");
-
         return new(service, o);
     }
 

@@ -1,4 +1,5 @@
 // ReSharper disable InconsistentNaming
+
 #pragma warning disable IDE0018 // Inline variable declaration -- false positive
 
 namespace Lyo.QRCode.Encoding.Iso;

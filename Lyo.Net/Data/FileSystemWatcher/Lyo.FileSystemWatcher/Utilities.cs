@@ -112,9 +112,8 @@ public static class Utilities
                 fileSize = fileInfo.Length;
                 try {
                     var fingerprintBytes = SparseFileFingerprinter.FingerprintAsync(file, fileSize.Value, ct).GetAwaiter().GetResult();
-                    if (fingerprintBytes != null && fingerprintBytes.Length > 0) {
+                    if (fingerprintBytes != null && fingerprintBytes.Length > 0)
                         fingerprint = HexEncoding.ToHexString(fingerprintBytes);
-                    }
                 }
                 catch { /* Ignore fingerprint failures */
                 }
@@ -443,13 +442,11 @@ public static class Utilities
     /// <returns>MD5 hash of (size + sampled bytes), or null if the file does not exist</returns>
     /// <exception cref="UnauthorizedAccessException">Thrown when the file cannot be accessed due to access restrictions</exception>
     /// <exception cref="IOException">Thrown when the file cannot be accessed due to I/O errors</exception>
-    public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default,
-        FileFingerprintOptions? options = null) =>
-        SparseFileFingerprinter.FingerprintAsync(path, fileSize, ct, options);
+    public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default, FileFingerprintOptions? options = null)
+        => SparseFileFingerprinter.FingerprintAsync(path, fileSize, ct, options);
 
-    /// <inheritdoc cref="SparseFileFingerprinter.MetadataOnlyHex"/>
-    public static string MetadataOnlyFingerprintHex(long fileSize, DateTime lastWriteTimeUtc) =>
-        SparseFileFingerprinter.MetadataOnlyHex(fileSize, lastWriteTimeUtc);
+    /// <inheritdoc cref="SparseFileFingerprinter.MetadataOnlyHex" />
+    public static string MetadataOnlyFingerprintHex(long fileSize, DateTime lastWriteTimeUtc) => SparseFileFingerprinter.MetadataOnlyHex(fileSize, lastWriteTimeUtc);
 
     /// <summary>Lowercase hex (legacy shape for this module).</summary>
     public static string ToHexString(byte[] bytes) => HexEncoding.ToHexString(bytes, TextLetterCase.Lower);

@@ -15,7 +15,7 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
 
     public Action<CreateContext<TRequest, TDbEntity, TDbContext>>? AfterCreate { get; init; }
 
-    /// <summary>Runs after persist when set; synchronous <see cref="AfterCreate"/> is skipped unless this is null.</summary>
+    /// <summary>Runs after persist when set; synchronous <see cref="AfterCreate" /> is skipped unless this is null.</summary>
     public Func<CreateContext<TRequest, TDbEntity, TDbContext>, Task>? AfterCreateAsync { get; init; }
 
     public Action<UpdateContext<TRequest, TDbEntity, TDbContext>>? BeforeUpdate { get; init; }

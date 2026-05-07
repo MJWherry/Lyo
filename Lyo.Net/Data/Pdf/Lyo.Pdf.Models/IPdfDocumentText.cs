@@ -3,8 +3,8 @@ using Lyo.Result;
 namespace Lyo.Pdf.Models;
 
 /// <summary>
-/// Text/layout/table extraction for one <see cref="IPdfReader" /> (access via <see cref="IPdfReader.Text" />).
-/// Word-only overloads do not scan the PdfPig document; defaults follow <see cref="PdfServiceOptions" /> established at load time.
+/// Text/layout/table extraction for one <see cref="IPdfReader" /> (access via <see cref="IPdfReader.Text" />). Word-only overloads do not scan the PdfPig document; defaults
+/// follow <see cref="PdfServiceOptions" /> established at load time.
 /// </summary>
 public interface IPdfDocumentText
 {
@@ -84,11 +84,7 @@ public interface IPdfDocumentText
         PdfInferFormattingFlags inferFlags = PdfInferFormattingFlags.Bold | PdfInferFormattingFlags.Semicolon | PdfInferFormattingFlags.Underline,
         IReadOnlyList<char>? keyValueDelimiters = null);
 
-    Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
-        ColumnHeader[] headers,
-        int? page = null,
-        double yTolerance = 5.0,
-        CancellationToken ct = default);
+    Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(ColumnHeader[] headers, int? page = null, double yTolerance = 5.0, CancellationToken ct = default);
 
     IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(ColumnHeader[] headers, int? page = null, double yTolerance = 5.0);
 

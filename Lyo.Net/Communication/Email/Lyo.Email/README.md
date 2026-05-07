@@ -591,7 +591,6 @@ requested, processing stops and partial results are returned.
 - `TestConnectionAsync` throws `OperationCanceledException` if cancelled
 - Bulk operations check cancellation between emails and stop early if cancelled
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Email.csproj`.)*
@@ -612,7 +611,7 @@ requested, processing stops and partial results are returned.
 - [`Lyo.Email.Models`](../Lyo.Email.Models/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
-**Production Ready:** This library has been reviewed for production use and includes:
+  **Production Ready:** This library has been reviewed for production use and includes:
 
 - ✅ Thread-safe operations
 - ✅ Comprehensive error handling

@@ -79,7 +79,6 @@ await commentStore.RemoveReactionAsync(commentRef, userRef);
 - **comment.comment_reaction** – `id` (uuid), `for_entity_type`, `for_entity_id` (comment id), `from_entity_type`, `from_entity_id` (reactor), `reaction_type` (0=Like, 1=Dislike),
   `created_timestamp`. Unique on (for_entity_type, for_entity_id, from_entity_type, from_entity_id)
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Comment.Postgres.csproj`.)*

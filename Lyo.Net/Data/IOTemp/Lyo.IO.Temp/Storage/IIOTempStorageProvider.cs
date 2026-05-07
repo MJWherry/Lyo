@@ -3,8 +3,9 @@ using System.Text;
 namespace Lyo.IO.Temp.Storage;
 
 /// <summary>
-/// Abstracts all file-system I/O performed by <see cref="IOTempService" />, <see cref="Lyo.IO.Temp.Models.IOTempSession" />, and <see cref="Lyo.IO.Temp.Models.IOTempFileGenerator" />. Implement this
-/// interface to swap in a different storage backend (in-memory, cloud blob, etc.) without changing IOTemp business logic.
+/// Abstracts all file-system I/O performed by <see cref="IOTempService" />, <see cref="Lyo.IO.Temp.Models.IOTempSession" />, and
+/// <see cref="Lyo.IO.Temp.Models.IOTempFileGenerator" />. Implement this interface to swap in a different storage backend (in-memory, cloud blob, etc.) without changing IOTemp
+/// business logic.
 /// </summary>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempStorageProvider

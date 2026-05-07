@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Lock;
 
-/// <summary>Releases the per-key <see cref="SemaphoreSlim"/> for <see cref="LocalLockService"/> and removes the dictionary entry when the last reference ends.</summary>
+/// <summary>Releases the per-key <see cref="SemaphoreSlim" /> for <see cref="LocalLockService" /> and removes the dictionary entry when the last reference ends.</summary>
 internal sealed class LocalLockHandle(ConcurrentDictionary<string, SemaphoreEntry> locks, SemaphoreEntry entry, string key, ILogger logger, IMetrics metrics, string keyForMetrics)
     : ILockHandle
 {
@@ -27,14 +27,15 @@ internal sealed class LocalLockHandle(ConcurrentDictionary<string, SemaphoreEntr
 
         if (Interlocked.Decrement(ref entry.RefCount) == 0)
             TryRemoveSemaphoreEntry(locks, key, entry);
+
         return default;
     }
 
     public void Dispose() => ReleaseAsync().AsTask().GetAwaiter().GetResult();
 
     public async ValueTask DisposeAsync() => await ReleaseAsync().ConfigureAwait(false);
-    
+
     // Conditional remove: ICollection<KeyValuePair<>>.Remove is available on netstandard2.0; TryRemove(KeyValuePair<>) was added in netstandard2.1.
-    private static bool TryRemoveSemaphoreEntry(ConcurrentDictionary<string, SemaphoreEntry> locks, string key, SemaphoreEntry entry) =>
-        ((ICollection<KeyValuePair<string, SemaphoreEntry>>)locks).Remove(new(key, entry));
+    private static bool TryRemoveSemaphoreEntry(ConcurrentDictionary<string, SemaphoreEntry> locks, string key, SemaphoreEntry entry)
+        => ((ICollection<KeyValuePair<string, SemaphoreEntry>>)locks).Remove(new(key, entry));
 }

@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.ChangeTracker.Postgres.Tests.ChangeTrackerPostgresFixture))]
+using Lyo.ChangeTracker.Postgres.Tests;
+
+[assembly: AssemblyFixture(typeof(ChangeTrackerPostgresFixture))]

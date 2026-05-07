@@ -11,5 +11,6 @@ namespace Lyo.IO.Temp.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public record IOTempServiceStats(int ActiveSessionCount, int KeyedSessionCount, long TotalBytesUsed, string ServiceDirectory)
 {
-    public override string ToString() => $"Active={ActiveSessionCount} Keyed={KeyedSessionCount} TotalUsed={FileSizeUnitInfo.FormatBestFitAbbreviation(TotalBytesUsed)} ServiceDir={ServiceDirectory}";
-};
+    public override string ToString()
+        => $"Active={ActiveSessionCount} Keyed={KeyedSessionCount} TotalUsed={FileSizeUnitInfo.FormatBestFitAbbreviation(TotalBytesUsed)} ServiceDir={ServiceDirectory}";
+}

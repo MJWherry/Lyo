@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.Endato.Postgres.Tests.EndatoPostgresFixture))]
+using Lyo.Endato.Postgres.Tests;
+
+[assembly: AssemblyFixture(typeof(EndatoPostgresFixture))]

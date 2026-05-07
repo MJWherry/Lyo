@@ -4,7 +4,8 @@ namespace Lyo.Comic.Web.Components;
 public static class ComicCoverUrls
 {
     /// <summary>
-    /// Returns a display URL for a cover ref. When <paramref name="coverImageRef" /> parses as a GUID, returns <c>/comic-files/{id}</c>; otherwise returns the ref as-is (e.g. full URL).
+    /// Returns a display URL for a cover ref. When <paramref name="coverImageRef" /> parses as a GUID, returns <c>/comic-files/{id}</c>; otherwise returns the ref as-is (e.g.
+    /// full URL).
     /// </summary>
     public static string? Resolve(string? coverImageRef)
     {

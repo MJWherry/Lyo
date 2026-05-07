@@ -1,11 +1,10 @@
+using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Lyo.Web.Automation.Playwright.Service;
-using Lyo.Testing;
 using Lyo.Web.Automation.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace Lyo.Web.Automation.Playwright.Tests;
 
@@ -23,7 +22,20 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
         _provider = BuildProvider();
     }
 
+    public void Dispose()
+    {
+        _provider.Dispose();
+        _loggerFactory.Dispose();
+    }
+
     public string EngineName => "Playwright";
+
+    public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
+    {
+        var service = _provider.GetRequiredService<IPlaywrightBrowserService>();
+        IWebAutomationSession session = service.CreateSession();
+        return Task.FromResult(session);
+    }
 
     public void UseTestOutputLogger(ITestOutputHelper output)
     {
@@ -35,19 +47,6 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
 
         _provider.Dispose();
         _provider = BuildProvider();
-    }
-
-    public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
-    {
-        var service = _provider.GetRequiredService<IPlaywrightBrowserService>();
-        IWebAutomationSession session = service.CreateSession();
-        return Task.FromResult(session);
-    }
-
-    public void Dispose()
-    {
-        _provider.Dispose();
-        _loggerFactory.Dispose();
     }
 
     private ServiceProvider BuildProvider()

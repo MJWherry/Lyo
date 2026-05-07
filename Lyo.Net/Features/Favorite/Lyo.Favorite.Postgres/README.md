@@ -71,7 +71,6 @@ var count = await favoriteStore.GetCountForEntityAsync(
 - **favorite.favorite** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `created_timestamp`
 - Unique index on `(for_entity_type, for_entity_id, from_entity_type, from_entity_id)` prevents duplicate favorites.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Favorite.Postgres.csproj`.)*

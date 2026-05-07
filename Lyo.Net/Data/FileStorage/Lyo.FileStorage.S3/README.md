@@ -108,10 +108,6 @@ Files are automatically organized by GUID prefixes:
 
 `IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`.
 
-
-
-
-
 ## Dependencies
 
 *(Synchronized from `Lyo.FileStorage.S3.csproj`.)*

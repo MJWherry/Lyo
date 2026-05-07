@@ -2,7 +2,6 @@
 
 PostgreSQL implementation of `Lyo.Config` for storing typed config definitions by entity type and config bindings by `EntityRef`.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Config.Postgres.csproj`.)*

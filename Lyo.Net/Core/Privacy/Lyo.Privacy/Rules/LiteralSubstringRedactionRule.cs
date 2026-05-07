@@ -8,18 +8,17 @@ namespace Lyo.Privacy.Rules;
 public sealed class LiteralSubstringRedactionRule : IRedactionRule
 {
     private readonly StringComparison _comparison;
-    private readonly string _needle;
+
+    public string Needle { get; }
+
+    public bool IgnoreCase => _comparison == StringComparison.OrdinalIgnoreCase;
 
     public LiteralSubstringRedactionRule(string needle, bool ignoreCase = true)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(needle);
-        _needle = needle;
+        Needle = needle;
         _comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
     }
-
-    public string Needle => _needle;
-
-    public bool IgnoreCase => _comparison == StringComparison.OrdinalIgnoreCase;
 
     public RedactionKind Kind => RedactionKind.Literal;
 
@@ -27,13 +26,13 @@ public sealed class LiteralSubstringRedactionRule : IRedactionRule
     {
         var start = 0;
         while (start < input.Length) {
-            var ix = input.IndexOf(_needle, start, _comparison);
+            var ix = input.IndexOf(Needle, start, _comparison);
             if (ix < 0)
                 yield break;
 
-            yield return new(ix, _needle.Length, Kind);
+            yield return new(ix, Needle.Length, Kind);
 
-            start = ix + _needle.Length;
+            start = ix + Needle.Length;
         }
     }
 }

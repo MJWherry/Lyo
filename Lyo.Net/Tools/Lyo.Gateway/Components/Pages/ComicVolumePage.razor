@@ -59,16 +59,20 @@ else {
             <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridLarge)"
                            Variant="@(_viewMode == ComicBrowseViewMode.GridLarge ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">Grid L</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">Grid L
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridSmall)"
                            Variant="@(_viewMode == ComicBrowseViewMode.GridSmall ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">Grid S</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">Grid S
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListNoImage)"
                            Variant="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">List</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">List
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListLine)"
                            Variant="@(_viewMode == ComicBrowseViewMode.ListLine ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">Lines</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">Lines
+                </MudButton>
             </MudButtonGroup>
         </MudStack>
 
@@ -119,8 +123,7 @@ else {
         return Task.CompletedTask;
     }
 
-    private string? TypeBadge
-        => _series is { ComicType: var t } && t != ComicType.Unknown ? t.ToString() : null;
+    private string? TypeBadge => _series is { ComicType: var t } && t != ComicType.Unknown ? t.ToString() : null;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -136,7 +139,6 @@ else {
         _loadFailed = false;
         _volume = null;
         _series = null;
-
         var vol = await ComicApi.GetAsAsync<ComicVolumeRes>($"{ComicApiPrefix}/volumes/{VolumeId}");
         if (vol is null) {
             _loadFailed = true;
@@ -150,7 +152,6 @@ else {
         }
 
         var chapters = await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/volumes/{VolumeId}/chapters") ?? [];
-
         _volume = vol;
         _series = ToSeries(seriesRes);
         _coverUrl = ComicCoverUrls.Resolve(vol.CoverImageRef);
@@ -170,8 +171,7 @@ else {
         return string.IsNullOrWhiteSpace(_volume.Title) ? "Volume" : _volume.Title;
     }
 
-    private static string ChapterTitle(ComicChapter ch)
-        => $"Ch. {ch.ChapterNumber:G}" + (string.IsNullOrWhiteSpace(ch.Title) ? "" : $" — {ch.Title}");
+    private static string ChapterTitle(ComicChapter ch) => $"Ch. {ch.ChapterNumber:G}" + (string.IsNullOrWhiteSpace(ch.Title) ? "" : $" — {ch.Title}");
 
     private Task GoReaderAsync(Guid chapterId)
     {
@@ -201,8 +201,7 @@ else {
             Demographic = r.Demographic,
             CreatedTimestamp = r.CreatedTimestamp,
             UpdatedTimestamp = r.UpdatedTimestamp,
-            AlternateTitles = r.AlternateTitles.Select(a =>
-                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            AlternateTitles = r.AlternateTitles.Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
             Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
         };
 

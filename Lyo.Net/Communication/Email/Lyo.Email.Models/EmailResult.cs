@@ -13,11 +13,11 @@ public sealed record EmailResult : Result<EmailRequest>
 
     public string? SmtpResponse { get; init; }
 
-    public override string ToString() => $"{MessageId} - {base.ToString()}";
-
     private EmailResult(bool isSuccess, EmailRequest? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }
-    
+
+    public override string ToString() => $"{MessageId} - {base.ToString()}";
+
     /// <summary>Creates a successful EmailResult from SMTP response data.</summary>
     public static EmailResult FromSuccess(EmailRequest request, string smtpResponse, string? messageId = null, DateTime? sentDate = null)
         => new(true, request) { MessageId = messageId, SentDate = sentDate, SmtpResponse = smtpResponse };

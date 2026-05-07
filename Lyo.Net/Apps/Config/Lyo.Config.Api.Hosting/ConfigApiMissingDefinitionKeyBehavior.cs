@@ -7,5 +7,5 @@ public enum ConfigApiMissingDefinitionKeyBehavior
     Throw,
 
     /// <summary>Return <c>new TOptions()</c> when absent or deserialization yields null for reference types.</summary>
-    UseDefaultInstance,
+    UseDefaultInstance
 }

@@ -139,67 +139,6 @@ public static class S3FileStorageS3CompatibleExtensions
         options.ServiceUrl = GetLinodeObjectStorageServiceUrl(options.Region);
     }
 
-    extension(IServiceCollection services)
-    {
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = MinioFileStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyMinioDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(string keyName, Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyMinioDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = WasabiFileStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyWasabiDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(string keyName, Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyWasabiDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = DigitalOceanSpacesFileStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyDigitalOceanSpacesDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(
-            string keyName,
-            Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyDigitalOceanSpacesDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = CloudflareR2FileStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyCloudflareR2Defaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(string keyName, Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyCloudflareR2Defaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = ScalewayFileStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyScalewayDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(string keyName, Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyScalewayDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(
-            string keyName,
-            IConfiguration configuration,
-            string configSectionName = LinodeObjectStorageConfigurationSectionName)
-            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyLinodeObjectStorageDefaults());
-
-        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(
-            string keyName,
-            Action<S3FileStorageOptions> configure)
-            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyLinodeObjectStorageDefaults());
-    }
-
     private static S3FileStorageServiceBuilder AddKeyedForApply(
         IServiceCollection services,
         string keyName,
@@ -256,5 +195,62 @@ public static class S3FileStorageS3CompatibleExtensions
             applyDefaults(options);
             return options;
         });
+    }
+
+    extension(IServiceCollection services)
+    {
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = MinioFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyMinioDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForMinio(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyMinioDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = WasabiFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyWasabiDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForWasabi(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyWasabiDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = DigitalOceanSpacesFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyDigitalOceanSpacesDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForDigitalOceanSpaces(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyDigitalOceanSpacesDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = CloudflareR2FileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyCloudflareR2Defaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForCloudflareR2(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyCloudflareR2Defaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = ScalewayFileStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyScalewayDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForScaleway(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyScalewayDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(
+            string keyName,
+            IConfiguration configuration,
+            string configSectionName = LinodeObjectStorageConfigurationSectionName)
+            => AddKeyedForApply(services, keyName, configuration, configSectionName, static o => o.ApplyLinodeObjectStorageDefaults());
+
+        public S3FileStorageServiceBuilder AddS3FileStorageServiceKeyedForLinodeObjectStorage(string keyName, Action<S3FileStorageOptions> configure)
+            => AddKeyedForConfigure(services, keyName, configure, static o => o.ApplyLinodeObjectStorageDefaults());
     }
 }

@@ -89,10 +89,12 @@
     [Parameter]
     public Guid JobDefinitionId { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string TriggerRoute { get; set; } = "";
 
     private JobTriggerRes? _selected;

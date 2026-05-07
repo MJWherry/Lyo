@@ -36,8 +36,7 @@ public sealed class DiagnosticContextBuilder(IStackTraceDecoder decoder, IExcept
     }
 
     /// <inheritdoc />
-    public Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken ct = default)
-        => BuildAsync(exception, RequestMetadata.Empty, ct);
+    public Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken ct = default) => BuildAsync(exception, RequestMetadata.Empty, ct);
 
     /// <inheritdoc />
     public async Task<DiagnosticContext> BuildAsync(Exception exception, RequestMetadata request, CancellationToken ct = default)

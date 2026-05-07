@@ -617,8 +617,7 @@ public sealed class EmailService : IEmailService
 
     /// <summary>Raises the BulkEmailSent event.</summary>
     /// <param name="results">The list of email send results.</param>
-    private void OnBulkEmailCompleted(IReadOnlyList<Result<EmailRequest>> results)
-        => BulkEmailSent?.Invoke(this, new(BulkResult<EmailRequest>.FromResults(results)));
+    private void OnBulkEmailCompleted(IReadOnlyList<Result<EmailRequest>> results) => BulkEmailSent?.Invoke(this, new(BulkResult<EmailRequest>.FromResults(results)));
 
     /// <summary>Raises the ConnectionTested event.</summary>
     /// <param name="isSuccess">Whether the connection test succeeded.</param>

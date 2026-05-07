@@ -2,19 +2,18 @@ using Microsoft.Extensions.Primitives;
 
 namespace Lyo.Config.Api.Hosting;
 
-/// <summary>Thread-safe latest <see cref="ResolvedConfigRecord"/> plus reload tokens for options monitors.</summary>
+/// <summary>Thread-safe latest <see cref="ResolvedConfigRecord" /> plus reload tokens for options monitors.</summary>
 public sealed class ConfigApiResolvedLedger
 {
     private readonly object _dataLock = new();
     private readonly object _tokenLock = new();
+    private CancellationTokenSource _cts = new();
+    private string? _etag;
 
     private ResolvedConfigRecord? _record;
-    private string? _etag;
-    private CancellationTokenSource _cts = new();
 
     /// <summary>Latest resolved payload (null until first successful resolve).</summary>
-    public ResolvedConfigRecord? Current
-    {
+    public ResolvedConfigRecord? Current {
         get {
             lock (_dataLock)
                 return _record;
@@ -22,8 +21,7 @@ public sealed class ConfigApiResolvedLedger
     }
 
     /// <summary>Opaque ETag from the last successful HTTP response, for <c>If-None-Match</c> probes.</summary>
-    public string? CurrentEtag
-    {
+    public string? CurrentEtag {
         get {
             lock (_dataLock)
                 return _etag;
@@ -51,7 +49,7 @@ public sealed class ConfigApiResolvedLedger
         CancellationTokenSource oldCts;
         lock (_tokenLock) {
             oldCts = _cts;
-            _cts = new CancellationTokenSource();
+            _cts = new();
         }
 
         try {

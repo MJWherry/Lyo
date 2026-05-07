@@ -55,9 +55,7 @@ public static class Extensions
         /// }
         /// </code>
         /// </remarks>
-        public IServiceCollection AddSkiaImageServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = ImageServiceOptions.SectionName)
+        public IServiceCollection AddSkiaImageServiceFromConfiguration(IConfiguration configuration, string configSectionName = ImageServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

@@ -149,8 +149,7 @@ public sealed class PhoneRedactionRule : IRedactionRule, IRedactionMatchFormatte
         return sb.ToString();
     }
 
-    private static bool IsPhoneFormattingChar(char c)
-        => c is '+' or '-' or '.' or '/' or '(' or ')' or ' ' or '\t';
+    private static bool IsPhoneFormattingChar(char c) => c is '+' or '-' or '.' or '/' or '(' or ')' or ' ' or '\t';
 
     private static int CountDigits(string s)
     {

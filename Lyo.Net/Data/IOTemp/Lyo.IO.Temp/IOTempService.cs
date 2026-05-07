@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Lyo.Exceptions;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
@@ -5,10 +8,6 @@ using Lyo.IO.Temp.Storage;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.ExceptionServices;
-
 #if !NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -396,8 +395,8 @@ public sealed class IOTempService : IIOTempService
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(IOTempService));
 
     /// <summary>
-    /// Marks the service disposed, clears the active-session table, and deletes <see cref="ServiceDirectory" /> with retries on transient I/O errors. Exceptions during delete are
-    /// logged; keyed session entries may still reference disposed sessions until removed.
+    /// Marks the service disposed, clears the active-session table, and deletes <see cref="ServiceDirectory" /> with retries on transient I/O errors. Exceptions during delete
+    /// are logged; keyed session entries may still reference disposed sessions until removed.
     /// </summary>
     public void Dispose()
     {

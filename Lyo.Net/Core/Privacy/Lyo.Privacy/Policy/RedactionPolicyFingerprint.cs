@@ -33,9 +33,7 @@ public static class RedactionPolicyFingerprint
 
         var payloadBytes = ms.ToArray();
         var hash = Hasher.ComputeSha256(payloadBytes);
-        return hexCharCount == 0
-            ? string.Empty
-            : HexEncoding.ToHexString(hash.AsSpan(0, Math.Min(hexCharCount / 2, hash.Length)), TextLetterCase.Lower);
+        return hexCharCount == 0 ? string.Empty : HexEncoding.ToHexString(hash.AsSpan(0, Math.Min(hexCharCount / 2, hash.Length)), TextLetterCase.Lower);
     }
 
     private static void AppendRuleDetail(Stream ms, IRedactionRule r)

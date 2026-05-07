@@ -322,9 +322,8 @@ internal static class Menu
             AnsiConsole.MarkupLine("[grey]No migrations defined.[/]");
         else {
             var table = new Table().RoundedBorder().BorderColor(Color.Grey).AddColumn("Status").AddColumn("Migration");
-            foreach (var s in statuses) {
+            foreach (var s in statuses)
                 table.AddRow(s.IsApplied ? "[green]✓ APPLIED[/]" : "[yellow]· PENDING[/]", Markup.Escape(s.Name));
-            }
 
             AnsiConsole.Write(table);
         }

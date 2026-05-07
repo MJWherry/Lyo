@@ -3,7 +3,8 @@
 Service for creating and managing temporary files and directories with session support, configurable naming, and overflow handling. Ideal for upload processing, report generation,
 or any workflow needing short-lived temp storage.
 
-The public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in the
+The public contract is **`IIOTempService`** and **`IIOTempSession`**; **`IOTempService`** / **`IOTempSession`** are the default implementations. With XML doc generation enabled in
+the
 repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror the interfaces.
 
 ## Features
@@ -267,7 +268,6 @@ creation time), async variants of all write operations, and an `EnsureDirectoryA
 |----------------|-----------|-------------------------------------------------------|
 | `InitialDelay` | 5 minutes | Delay before the first cleanup run after app startup. |
 | `Interval`     | 1 hour    | How often to run cleanup after the initial run.       |
-
 
 ## Dependencies
 

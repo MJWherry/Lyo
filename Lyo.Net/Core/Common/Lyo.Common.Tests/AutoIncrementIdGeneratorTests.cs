@@ -69,8 +69,7 @@ public class AutoIncrementIdGeneratorTests
     }
 
     [Fact]
-    public void Constructor_UnsupportedType_Throws()
-        => Assert.Throws<NotSupportedException>(() => new AutoIncrementIdGenerator<short>());
+    public void Constructor_UnsupportedType_Throws() => Assert.Throws<NotSupportedException>(() => new AutoIncrementIdGenerator<short>());
 
     [Fact]
     public void Next_Int_IsMonotonic()
@@ -90,8 +89,10 @@ public class AutoIncrementIdGeneratorTests
         var gen = new AutoIncrementIdGenerator<long>();
         const int count = 5000;
         var results = new long[count];
-
-        Parallel.For(0, count, i => { results[i] = gen.Next(); });
+        Parallel.For(
+            0, count, i => {
+                results[i] = gen.Next();
+            });
 
         Assert.Equal(count, results.Distinct().Count());
         Assert.Equal(count, gen.Current);

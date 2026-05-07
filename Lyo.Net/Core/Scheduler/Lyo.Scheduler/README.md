@@ -62,7 +62,6 @@ await scheduler.StartAsync();
 | RunInBackground | true    | Run actions fire-and-forget vs await            |
 | ActionTimeout   | 120 min | Max duration for each action; null = no timeout |
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Scheduler.csproj`.)*

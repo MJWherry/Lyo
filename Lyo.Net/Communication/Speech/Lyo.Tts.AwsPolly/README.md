@@ -40,7 +40,6 @@ The service can be configured via options or dependency injection. AWS credentia
 - Environment variables
 - AWS credentials file
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Tts.AwsPolly.csproj`.)*

@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Lock;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
@@ -10,15 +9,15 @@ using StackExchange.Redis;
 
 namespace Lyo.Lock.Redis;
 
-/// <summary>Registers <see cref="RedisLockService"/> as <see cref="ILockService"/> with Redis connectivity.</summary>
+/// <summary>Registers <see cref="RedisLockService" /> as <see cref="ILockService" /> with Redis connectivity.</summary>
 public static class RedisLockServiceExtensions
 {
     /// <param name="services">Application service collection.</param>
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="RedisLockOptions"/> and <see cref="RedisLockService"/> as singletons.
-        /// Requires <see cref="IConnectionMultiplexer"/> unless you use the overload that accepts a Redis connection string.
+        /// Registers <see cref="RedisLockOptions" /> and <see cref="RedisLockService" /> as singletons. Requires <see cref="IConnectionMultiplexer" /> unless you use the overload
+        /// that accepts a Redis connection string.
         /// </summary>
         /// <param name="configureOptions">Optional lock/redis behavior tuning.</param>
         public IServiceCollection AddRedisLock(Action<RedisLockOptions>? configureOptions = null)
@@ -39,12 +38,12 @@ public static class RedisLockServiceExtensions
         }
 
         /// <summary>
-        /// Ensures a singleton <see cref="IConnectionMultiplexer"/> from <paramref name="redisConnectionString"/> (uses <c>TryAddSingleton</c>),
-        /// then registers <see cref="RedisLockService"/>.
+        /// Ensures a singleton <see cref="IConnectionMultiplexer" /> from <paramref name="redisConnectionString" /> (uses <c>TryAddSingleton</c>), then registers
+        /// <see cref="RedisLockService" />.
         /// </summary>
         /// <param name="redisConnectionString">StackExchange.Redis connection string.</param>
         /// <param name="configureOptions">Lock options (TTL, prefix, pub/sub, metrics).</param>
-        /// <param name="configureRedis">Optional low-level <see cref="ConfigurationOptions"/> tweaks (e.g. password not in the connection string).</param>
+        /// <param name="configureRedis">Optional low-level <see cref="ConfigurationOptions" /> tweaks (e.g. password not in the connection string).</param>
         public IServiceCollection AddRedisLock(string redisConnectionString, Action<RedisLockOptions>? configureOptions = null, Action<ConfigurationOptions>? configureRedis = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -60,7 +59,8 @@ public static class RedisLockServiceExtensions
         }
 
         /// <summary>
-        /// Reads <see cref="LockOptions.SectionName"/> into <see cref="RedisLockOptions"/> and connects Redis from <paramref name="redisSectionName"/> (<c>ConnectionString</c>, optional <c>Password</c>).
+        /// Reads <see cref="LockOptions.SectionName" /> into <see cref="RedisLockOptions" /> and connects Redis from <paramref name="redisSectionName" /> (<c>ConnectionString</c>,
+        /// optional <c>Password</c>).
         /// </summary>
         /// <param name="configuration">Typically application configuration root.</param>
         /// <param name="configureOptions">Applied after binding lock options from configuration.</param>

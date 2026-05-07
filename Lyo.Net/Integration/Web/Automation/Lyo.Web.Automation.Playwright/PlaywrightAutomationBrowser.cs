@@ -30,8 +30,7 @@ public sealed class PlaywrightAutomationBrowser(IPage page, float locatorTimeout
     public Task NavigateAsync(string url, CancellationToken ct = default) => Browser.NavigateToAsync(url, ct);
 
     /// <inheritdoc />
-    public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default)
-        => ((IWebAutomationNavigator)Browser).NavigateAsync(url, onRequest, ct);
+    public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default) => ((IWebAutomationNavigator)Browser).NavigateAsync(url, onRequest, ct);
 
     /// <inheritdoc />
     public Task ReloadAsync(CancellationToken ct = default) => ((IWebAutomationNavigator)Browser).ReloadAsync(ct);
@@ -54,18 +53,15 @@ public sealed class PlaywrightAutomationBrowser(IPage page, float locatorTimeout
         => ((IWebAutomationPage)Browser).PollForElementsAsync(chain, ct);
 
     /// <inheritdoc />
-    public Task<IWebAutomationElement?> GetElementAsync(ElementLocatorChain chain, CancellationToken ct = default)
-        => ((IWebAutomationPage)Browser).GetElementAsync(chain, ct);
+    public Task<IWebAutomationElement?> GetElementAsync(ElementLocatorChain chain, CancellationToken ct = default) => ((IWebAutomationPage)Browser).GetElementAsync(chain, ct);
 
     /// <inheritdoc />
     public Task<IReadOnlyList<IWebAutomationElement>?> GetElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
         => ((IWebAutomationPage)Browser).GetElementsAsync(chain, ct);
 
     /// <inheritdoc />
-    public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
-        => ((IWebAutomationPage)Browser).TakeViewportSnapshotPngAsync(ct);
+    public Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default) => ((IWebAutomationPage)Browser).TakeViewportSnapshotPngAsync(ct);
 
     /// <inheritdoc />
-    public Task SetViewportSizeAsync(int width, int height, CancellationToken ct = default)
-        => ((IWebAutomationPage)Browser).SetViewportSizeAsync(width, height, ct);
+    public Task SetViewportSizeAsync(int width, int height, CancellationToken ct = default) => ((IWebAutomationPage)Browser).SetViewportSizeAsync(width, height, ct);
 }

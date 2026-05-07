@@ -9,6 +9,21 @@ namespace Lyo.Images;
 /// <summary>Extension methods for ImageSharp image service registration.</summary>
 public static class Extensions
 {
+    /// <summary>Registers <see cref="IQrFrameLayoutService" /> when not already present (QR frame compositing only needs ImageSharp + fonts).</summary>
+    private static void TryAddQrFrameLayoutService(IServiceCollection services)
+    {
+        if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
+            services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
+    }
+
+    /// <summary>Registers <see cref="ISpriteSheetExportService" /> for spritesheet export and slicing helpers.</summary>
+    public static IServiceCollection AddSpriteSheetExportService(this IServiceCollection services)
+    {
+        ArgumentHelpers.ThrowIfNull(services);
+        services.AddScoped<ISpriteSheetExportService, SpriteSheetExportService>();
+        return services;
+    }
+
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
@@ -58,9 +73,7 @@ public static class Extensions
         /// }
         /// </code>
         /// </remarks>
-        public IServiceCollection AddImageSharpImageServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = ImageServiceOptions.SectionName)
+        public IServiceCollection AddImageSharpImageServiceFromConfiguration(IConfiguration configuration, string configSectionName = ImageServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -80,20 +93,5 @@ public static class Extensions
             TryAddQrFrameLayoutService(services);
             return services;
         }
-    }
-
-    /// <summary>Registers <see cref="IQrFrameLayoutService" /> when not already present (QR frame compositing only needs ImageSharp + fonts).</summary>
-    private static void TryAddQrFrameLayoutService(IServiceCollection services)
-    {
-        if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
-            services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
-    }
-
-    /// <summary>Registers <see cref="ISpriteSheetExportService" /> for spritesheet export and slicing helpers.</summary>
-    public static IServiceCollection AddSpriteSheetExportService(this IServiceCollection services)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        services.AddScoped<ISpriteSheetExportService, SpriteSheetExportService>();
-        return services;
     }
 }

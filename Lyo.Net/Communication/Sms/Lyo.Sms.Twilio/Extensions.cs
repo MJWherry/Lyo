@@ -24,9 +24,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration).</param>
         /// <param name="configSectionName">The config section for TwilioOptions (default: "TwilioOptions").</param>
         /// <returns>The service collection for chaining.</returns>
-        public IServiceCollection AddTwilioSmsServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = TwilioOptions.SectionName)
+        public IServiceCollection AddTwilioSmsServiceFromConfiguration(IConfiguration configuration, string configSectionName = TwilioOptions.SectionName)
             => services.AddTwilioSmsService(configuration, configSectionName);
 
         /// <summary>Adds Twilio SMS service using configuration binding.</summary>

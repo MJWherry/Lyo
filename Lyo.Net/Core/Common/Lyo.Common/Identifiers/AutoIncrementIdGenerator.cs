@@ -4,35 +4,34 @@ using System.Runtime.CompilerServices;
 namespace Lyo.Common.Identifiers;
 
 /// <summary>
-/// Thread-safe auto-incrementing ID generator supporting int, long, uint, and ulong.
-/// The value is incremented under a single lock; unsupported generic types throw at construction.
+/// Thread-safe auto-incrementing ID generator supporting int, long, uint, and ulong. The value is incremented under a single lock; unsupported generic types throw at
+/// construction.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed class AutoIncrementIdGenerator<T> where T : struct
+public sealed class AutoIncrementIdGenerator<T>
+    where T : struct
 {
-    private delegate void IncrementRefDelegate(ref T value);
+    private readonly IncrementRefDelegate _incrementRef;
 
     private readonly object _lock = new();
-    private readonly IncrementRefDelegate _incrementRef;
     private T _current;
 
     /// <summary>A shared generator instance for the generic type argument.</summary>
     public static AutoIncrementIdGenerator<T> Shared { get; } = new();
 
-    /// <summary>Creates a generator with an optional starting value. The first <see cref="Next"/> call returns start + 1.</summary>
-    public AutoIncrementIdGenerator(T start = default)
-    {
-        _incrementRef = ResolveIncrementStrategy();
-        _current = start;
-    }
-
     /// <summary>Returns the current value.</summary>
-    public T Current
-    {
+    public T Current {
         get {
             lock (_lock)
                 return _current;
         }
+    }
+
+    /// <summary>Creates a generator with an optional starting value. The first <see cref="Next" /> call returns start + 1.</summary>
+    public AutoIncrementIdGenerator(T start = default)
+    {
+        _incrementRef = ResolveIncrementStrategy();
+        _current = start;
     }
 
     /// <summary>Sets the current value used by the next increment.</summary>
@@ -51,16 +50,19 @@ public sealed class AutoIncrementIdGenerator<T> where T : struct
         }
     }
 
-    public override string ToString() =>  $"Current={Current}";
+    public override string ToString() => $"Current={Current}";
 
     private static IncrementRefDelegate ResolveIncrementStrategy()
     {
         if (typeof(T) == typeof(int))
             return IncrementInt;
+
         if (typeof(T) == typeof(long))
             return IncrementLong;
+
         if (typeof(T) == typeof(uint))
             return IncrementUInt;
+
         if (typeof(T) == typeof(ulong))
             return IncrementULong;
 
@@ -94,4 +96,6 @@ public sealed class AutoIncrementIdGenerator<T> where T : struct
             Unsafe.As<T, ulong>(ref value)++;
         }
     }
+
+    private delegate void IncrementRefDelegate(ref T value);
 }

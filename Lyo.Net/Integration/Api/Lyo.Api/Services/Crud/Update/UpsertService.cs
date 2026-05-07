@@ -214,6 +214,7 @@ public class UpsertService<TContext>(
             if (toCreate.Count > 0) {
                 var createBulkResult = await createService.CreateBulkAsync<TRequest, TDbModel, TResult>(
                     toCreate, AdaptCreateHook(beforeCreate), AdaptCreateHook(afterCreate), null, ct);
+
                 createResults = createBulkResult.Results.ToList();
             }
 

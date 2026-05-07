@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL comment DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddCommentDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresCommentOptions.SectionName)
+        public IServiceCollection AddCommentDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresCommentOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL comment store using configuration binding.</summary>
-        public IServiceCollection AddPostgresCommentStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresCommentOptions.SectionName)
+        public IServiceCollection AddPostgresCommentStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresCommentOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

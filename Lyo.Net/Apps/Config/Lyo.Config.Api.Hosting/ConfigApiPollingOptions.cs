@@ -13,14 +13,16 @@ public sealed class ConfigApiPollingOptions
     /// <summary>Passed to Config API routing (<c>/api/config/{kind}/{id}</c>).</summary>
     public string AppId { get; set; } = string.Empty;
 
-    /// <summary>Backoff after HTTP 304 (<see cref="Lyo.Config.Api.Models.ConfigResolveOutcome.NotModified"/>).</summary>
+    /// <summary>Backoff after HTTP 304 (<see cref="Lyo.Config.Api.Models.ConfigResolveOutcome.NotModified" />).</summary>
     public TimeSpan DelayWhenNotModified { get; set; } = TimeSpan.FromSeconds(15);
 
-    /// <summary>Maximum wall-clock duration for the blocking first probe in <see cref="IHostedService.StartAsync(System.Threading.CancellationToken)" />;
-    /// absent or non-positive disables the deadline.</summary>
+    /// <summary>
+    /// Maximum wall-clock duration for the blocking first probe in <see cref="IHostedService.StartAsync(System.Threading.CancellationToken)" />; absent or non-positive disables
+    /// the deadline.
+    /// </summary>
     public TimeSpan? StartupTimeout { get; set; } = TimeSpan.FromMinutes(5);
 
-    /// <summary>If true and <see cref="StartupTimeout"/> elapses without a successful 200 snapshot, startup fails.</summary>
+    /// <summary>If true and <see cref="StartupTimeout" /> elapses without a successful 200 snapshot, startup fails.</summary>
     public bool RequireSuccessOnStartup { get; set; } = true;
 
     internal void ThrowIfMisconfiguredWhenEnabled()

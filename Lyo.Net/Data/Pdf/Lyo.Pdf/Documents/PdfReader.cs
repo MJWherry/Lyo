@@ -6,47 +6,23 @@ using PigDoc = UglyToad.PdfPig.PdfDocument;
 
 namespace Lyo.Pdf.Documents;
 
-/// <summary>
-/// Caller-owned PdfPig-backed reader plus <see cref="ITextExtractor"/>; not thread-safe.
-/// </summary>
+/// <summary>Caller-owned PdfPig-backed reader plus <see cref="ITextExtractor" />; not thread-safe.</summary>
 public sealed class PdfReader : IPdfReader
 {
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly PdfServiceOptions _options;
-    private readonly IMetrics _metrics;
-    private PigDoc _pig;
-    private byte[] _buffer;
-    private int _disposed;
     private readonly string? _filePath;
     private readonly string? _url;
+    private byte[] _buffer;
+    private int _disposed;
+    private PigDoc _pig;
 
     private ITextExtractor? _text;
 
-    internal PdfReader(
-        ILoggerFactory loggerFactory,
-        PdfServiceOptions options,
-        IMetrics metrics,
-        byte[] pdfBytes,
-        PigDoc pig,
-        string? filePath = null,
-        string? url = null)
-    {
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-        _buffer = pdfBytes ?? throw new ArgumentNullException(nameof(pdfBytes));
-        _pig = pig ?? throw new ArgumentNullException(nameof(pig));
-        _filePath = filePath;
-        _url = url;
-    }
+    internal PdfServiceOptions Options { get; }
 
-    internal PdfServiceOptions Options => _options;
-
-    internal ILoggerFactory LoggerFactory => _loggerFactory;
+    internal ILoggerFactory LoggerFactory { get; }
 
     /// <summary>Underlying PdfPig document; disposed when this reader is disposed.</summary>
-    public PigDoc PdfPig
-    {
+    public PigDoc PdfPig {
         get {
             EnsureNotDisposed();
             return _pig;
@@ -55,32 +31,19 @@ public sealed class PdfReader : IPdfReader
 
     internal PigDoc Pig => PdfPig;
 
-    internal T WithPdf<T>(Func<PigDoc, T> reader)
+    internal PdfReader(ILoggerFactory loggerFactory, PdfServiceOptions options, IMetrics metrics, byte[] pdfBytes, PigDoc pig, string? filePath = null, string? url = null)
     {
-        ArgumentHelpers.ThrowIfNull(reader);
-        EnsureNotDisposed();
-        return reader(_pig);
+        LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        Options = options ?? throw new ArgumentNullException(nameof(options));
+        Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+        _buffer = pdfBytes ?? throw new ArgumentNullException(nameof(pdfBytes));
+        _pig = pig ?? throw new ArgumentNullException(nameof(pig));
+        _filePath = filePath;
+        _url = url;
     }
-
-    internal static PdfReader OpenTransient(ILoggerFactory loggerFactory, PdfServiceOptions options, IMetrics metrics, byte[] pdfBytes)
-    {
-        ArgumentHelpers.ThrowIfNull(pdfBytes);
-        ArgumentHelpers.ThrowIfGreaterThan(
-            pdfBytes.Length, MaxAllowedBytes(options), nameof(pdfBytes),
-            $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({MaxAllowedBytes(options)} bytes).");
-
-        var pig = PigDoc.Open(pdfBytes);
-        return new(loggerFactory, options, metrics, pdfBytes, pig);
-    }
-
-    internal static long MaxAllowedBytes(PdfServiceOptions options)
-        => options.MaxPdfSizeBytes.GetValueOrDefault() > 0
-            ? options.MaxPdfSizeBytes!.Value
-            : PdfServiceOptions.SuggestedMaxPdfSizeBytes;
 
     /// <inheritdoc />
-    public ReadOnlyMemory<byte> SourceBytes
-    {
+    public ReadOnlyMemory<byte> SourceBytes {
         get {
             EnsureNotDisposed();
             return _buffer;
@@ -88,13 +51,10 @@ public sealed class PdfReader : IPdfReader
     }
 
     /// <inheritdoc />
-    public IMetrics Metrics => _metrics;
+    public IMetrics Metrics { get; }
 
     /// <inheritdoc />
-    public ITextExtractor Text =>
-        Volatile.Read(ref _disposed) != 0
-            ? throw new ObjectDisposedException(nameof(PdfReader))
-            : _text ??= new PdfTextExtractor(this);
+    public ITextExtractor Text => Volatile.Read(ref _disposed) != 0 ? throw new ObjectDisposedException(nameof(PdfReader)) : _text ??= new PdfTextExtractor(this);
 
     /// <inheritdoc />
     public PdfInfo GetInfo()
@@ -110,9 +70,7 @@ public sealed class PdfReader : IPdfReader
         if (!string.IsNullOrWhiteSpace(info.ModifiedDate) && DateTime.TryParse(info.ModifiedDate, out var md))
             modifiedDate = md;
 
-        return new PdfInfo(
-            document.NumberOfPages, info.Title, info.Author, info.Subject, info.Creator, info.Producer, _filePath, _url,
-            creationDate, modifiedDate);
+        return new(document.NumberOfPages, info.Title, info.Author, info.Subject, info.Creator, info.Producer, _filePath, _url, creationDate, modifiedDate);
     }
 
     public ValueTask DisposeAsync()
@@ -126,6 +84,26 @@ public sealed class PdfReader : IPdfReader
     }
 
     public void Dispose() => DisposeCore();
+
+    internal T WithPdf<T>(Func<PigDoc, T> reader)
+    {
+        ArgumentHelpers.ThrowIfNull(reader);
+        EnsureNotDisposed();
+        return reader(_pig);
+    }
+
+    internal static PdfReader OpenTransient(ILoggerFactory loggerFactory, PdfServiceOptions options, IMetrics metrics, byte[] pdfBytes)
+    {
+        ArgumentHelpers.ThrowIfNull(pdfBytes);
+        ArgumentHelpers.ThrowIfGreaterThan(
+            pdfBytes.Length, MaxAllowedBytes(options), nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({MaxAllowedBytes(options)} bytes).");
+
+        var pig = PigDoc.Open(pdfBytes);
+        return new(loggerFactory, options, metrics, pdfBytes, pig);
+    }
+
+    internal static long MaxAllowedBytes(PdfServiceOptions options)
+        => options.MaxPdfSizeBytes.GetValueOrDefault() > 0 ? options.MaxPdfSizeBytes!.Value : PdfServiceOptions.SuggestedMaxPdfSizeBytes;
 
     private void EnsureNotDisposed()
     {

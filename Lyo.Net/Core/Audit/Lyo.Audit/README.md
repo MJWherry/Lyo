@@ -80,7 +80,6 @@ services.AddPostgresAuditRecorder(new PostgresAuditOptions {
 When `EnableAutoMigrations` is true, migrations run at **host startup** (via `IHostedService`), not during service registration. Ensure your app uses a host (e.g.
 `Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`).
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Audit.csproj`.)*

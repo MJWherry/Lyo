@@ -3,6 +3,7 @@
 Part of the [Lyo](../../../README.md) workspace: **`Lyo.TestConsole`**.
 
 ## Related projects
+
 - [`Lyo.Api.Client`](../../Integration/Api/Lyo.Api.Client/README.md)
 - [`Lyo.Api.Models`](../../Integration/Api/Lyo.Api.Models/README.md)
 - [`Lyo.Api`](../../Integration/Api/Lyo.Api/README.md)

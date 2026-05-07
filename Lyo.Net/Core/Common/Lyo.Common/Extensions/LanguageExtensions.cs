@@ -2,9 +2,7 @@ using Lyo.Common.Records;
 
 namespace Lyo.Common.Extensions;
 
-/// <summary>
-/// Extension methods on string tokens for resolving <see cref="LanguageCodeInfo"/> and <see cref="FileTypeInfo"/> from ISO, BCP 47, MIME, and file-extension inputs.
-/// </summary>
+/// <summary>Extension methods on string tokens for resolving <see cref="LanguageCodeInfo" /> and <see cref="FileTypeInfo" /> from ISO, BCP 47, MIME, and file-extension inputs.</summary>
 /// <remarks>The extension receiver is named for ISO 639-1 lookups but is reused as the raw token for each factory method below.</remarks>
 public static class LanguageExtensions
 {

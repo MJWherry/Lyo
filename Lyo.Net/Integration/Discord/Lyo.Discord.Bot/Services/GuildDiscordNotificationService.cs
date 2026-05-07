@@ -62,7 +62,12 @@ public sealed class GuildDiscordNotificationService(ICacheService cache, ILogger
     }
 
     /// <inheritdoc />
-    public async Task<bool> TrySendMessageToGuildLogChannelAsync(DiscordClient client, ulong guildId, string? content = null, DiscordEmbed? embed = null, CancellationToken ct = default)
+    public async Task<bool> TrySendMessageToGuildLogChannelAsync(
+        DiscordClient client,
+        ulong guildId,
+        string? content = null,
+        DiscordEmbed? embed = null,
+        CancellationToken ct = default)
     {
         if (!TryResolveLogChannelId(guildId, out var logChId))
             return false;

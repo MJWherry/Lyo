@@ -3,6 +3,7 @@
 Blazor components library for the Lyo web UI framework with MudBlazor integration.
 
 ## Related projects
+
 - [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md)

@@ -9,13 +9,13 @@ public sealed class PlaywrightBrowserTabs : IWebAutomationTabs
 {
     private readonly PlaywrightBrowser _browser;
 
+    private PlaywrightTabManager Native => _browser.NativeTabs;
+
     internal PlaywrightBrowserTabs(PlaywrightBrowser browser)
     {
         ArgumentHelpers.ThrowIfNull(browser);
         _browser = browser;
     }
-
-    private PlaywrightTabManager Native => _browser.NativeTabs;
 
     /// <inheritdoc />
     public Task<IReadOnlyList<AutomationTabInfo>> ListTabsAsync(CancellationToken ct = default)
@@ -53,12 +53,10 @@ public sealed class PlaywrightBrowserTabs : IWebAutomationTabs
     }
 
     /// <inheritdoc />
-    public Task<string> OpenNewTabAsync(string? url = null, CancellationToken ct = default)
-        => Native.OpenNewPageAsync(url, ct);
+    public Task<string> OpenNewTabAsync(string? url = null, CancellationToken ct = default) => Native.OpenNewPageAsync(url, ct);
 
     /// <inheritdoc />
-    public Task CloseCurrentTabAsync(CancellationToken ct = default)
-        => Native.CloseCurrentAsync(ct);
+    public Task CloseCurrentTabAsync(CancellationToken ct = default) => Native.CloseCurrentAsync(ct);
 
     /// <inheritdoc />
     public Task SetTabDisplayNameAsync(string tabKey, string? displayName, CancellationToken ct = default)
@@ -71,6 +69,5 @@ public sealed class PlaywrightBrowserTabs : IWebAutomationTabs
             }, ct);
     }
 
-    private static AutomationTabInfo ToNeutral(PlaywrightBrowserTabInfo t)
-        => new(t.Index, t.IsActive, t.PageKey, t.Url, t.Title, t.DisplayName);
+    private static AutomationTabInfo ToNeutral(PlaywrightBrowserTabInfo t) => new(t.Index, t.IsActive, t.PageKey, t.Url, t.Title, t.DisplayName);
 }

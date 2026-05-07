@@ -5,17 +5,8 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Length
 {
+    public double Meters { get; }
 
-    public Length(double meters)
-
-    {
-
-        Meters = MathValueGuards.NonNegativeFinite(meters, nameof(meters));
-
-    }
-
-
-    public double Meters { get;  }
     public double Centimeters => Meters * 100d;
 
     public double Kilometers => Meters / 1000d;
@@ -25,6 +16,8 @@ public readonly record struct Length
     public double Feet => Meters / 0.3048d;
 
     public double Miles => Meters / 1609.344d;
+
+    public Length(double meters) => Meters = MathValueGuards.NonNegativeFinite(meters, nameof(meters));
 
     public static Length FromMeters(double meters) => new(meters);
 

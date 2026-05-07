@@ -8,22 +8,21 @@ public sealed class PostgresTestContainer : IAsyncDisposable
     private readonly PostgreSqlContainer _container;
     private bool _started;
 
+    public string ConnectionString => _started ? _container.GetConnectionString() : throw new InvalidOperationException("Call StartAsync before reading ConnectionString.");
+
     public PostgresTestContainer(PostgresContainerOptions? options = null)
     {
-        options ??= new PostgresContainerOptions();
+        options ??= new();
         var builder = new PostgreSqlBuilder(options.Image);
         options.ConfigureBuilder?.Invoke(builder);
         _container = builder.Build();
     }
 
-    public string ConnectionString =>
-        _started ? _container.GetConnectionString() : throw new InvalidOperationException("Call StartAsync before reading ConnectionString.");
+    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
         await _container.StartAsync(cancellationToken);
         _started = true;
     }
-
-    public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 }

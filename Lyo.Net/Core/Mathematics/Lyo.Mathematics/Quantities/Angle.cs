@@ -5,18 +5,11 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Angle
 {
+    public double Radians { get; }
 
-    public Angle(double radians)
-
-    {
-
-        Radians = MathValueGuards.Finite(radians, nameof(radians));
-
-    }
-
-
-    public double Radians { get;  }
     public double Degrees => Radians * (180d / Math.PI);
+
+    public Angle(double radians) => Radians = MathValueGuards.Finite(radians, nameof(radians));
 
     public static Angle FromRadians(double radians) => new(radians);
 

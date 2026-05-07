@@ -1,7 +1,6 @@
 using Lyo.Encryption;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FileMetadataStore.Postgres.Tests;

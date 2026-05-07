@@ -82,9 +82,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL change tracking services using configuration binding.</summary>
-        public IServiceCollection AddPostgresChangeTrackerFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresChangeTrackerOptions.SectionName)
+        public IServiceCollection AddPostgresChangeTrackerFromConfiguration(IConfiguration configuration, string configSectionName = PostgresChangeTrackerOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

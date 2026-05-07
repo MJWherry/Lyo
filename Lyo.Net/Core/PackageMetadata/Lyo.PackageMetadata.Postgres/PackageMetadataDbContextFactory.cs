@@ -11,11 +11,9 @@ public sealed class PackageMetadataDbContextFactory : IDesignTimeDbContextFactor
     public PackageMetadataDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("PACKAGE_METADATA_CONNECTION_STRING");
-        OperationHelpers.ThrowIfNullOrWhiteSpace(connectionString,
-            "PACKAGE_METADATA_CONNECTION_STRING environment variable must be set for design-time operations.");
+        OperationHelpers.ThrowIfNullOrWhiteSpace(connectionString, "PACKAGE_METADATA_CONNECTION_STRING environment variable must be set for design-time operations.");
         var optionsBuilder = new DbContextOptionsBuilder<PackageMetadataDbContext>();
-        optionsBuilder.UseNpgsql(connectionString, npgsql =>
-            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema));
+        optionsBuilder.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema));
         return new(optionsBuilder.Options);
     }
 }

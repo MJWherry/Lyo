@@ -14,10 +14,7 @@ public class SortBy
     /// <summary>Optional. When omitted, sort order is determined by the list order in the request.</summary>
     public int? Priority { get; set; }
 
-    public SortBy()
-    {
-        PropertyName = string.Empty;
-    }
+    public SortBy() => PropertyName = string.Empty;
 
     public SortBy(string propertyName, SortDirection direction, int? priority = null)
     {

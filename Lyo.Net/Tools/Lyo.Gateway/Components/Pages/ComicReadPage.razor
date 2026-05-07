@@ -2,8 +2,8 @@
 @using Lyo.Comic
 @using Lyo.Comic.Api.Models.Response
 @using Lyo.Comic.Web.Components
-@using Constants = Constants
 @using Microsoft.AspNetCore.WebUtilities
+@using Constants = Constants
 @inherits AuthorizedPage
 @inject IComicApiClient ComicApi
 @inject NavigationManager Navigator
@@ -74,7 +74,6 @@ else {
         _volumePlaceholderForId = null;
         _volumePlaceholderUrl = null;
         PageName = "Reading";
-
         await LoadSeriesViewerAsync(SeriesId);
     }
 
@@ -89,10 +88,8 @@ else {
 
         var series = ToSeries(res);
         var chapters = await GetChaptersAsync(seriesId);
-
         ComicChapter? chapter;
         var pageFromQuery = 1;
-
         if (TryParseReadQuery(chapters, out var chapterFromQuery, out var pageParsed)) {
             chapter = chapters.FirstOrDefault(c => c.Id == chapterFromQuery) ?? chapters.FirstOrDefault();
             if (chapter is null) {
@@ -113,12 +110,10 @@ else {
         _currentChapter = chapter;
         _totalPages = chapter?.PageCount ?? 0;
         _currentPage = chapter is not null ? ClampPage(pageFromQuery, chapter.PageCount ?? 1) : 1;
-
         if (chapter is not null)
             await CacheChapterPagesAsync(chapter);
 
         await RefreshVolumePlaceholderAsync(chapter);
-
         _loadedSeriesId = seriesId;
         _viewerReady = true;
         ReplaceReadUrl(seriesId);
@@ -156,10 +151,8 @@ else {
     {
         chapterId = default;
         page = 1;
-
         var uri = Navigator.ToAbsoluteUri(Navigator.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
-
         if (!query.TryGetValue("chapter", out var chapterValues))
             return false;
 
@@ -171,13 +164,7 @@ else {
             return false;
 
         chapterId = chap;
-
-        if (query.TryGetValue("page", out var pageValues) &&
-            int.TryParse(
-                pageValues.ToString(),
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var p))
+        if (query.TryGetValue("page", out var pageValues) && int.TryParse(pageValues.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var p))
             page = p;
 
         return true;
@@ -191,19 +178,17 @@ else {
             return;
 
         var qs = $"chapter={Uri.EscapeDataString(_currentChapter.Id.ToString())}&page={_currentPage.ToString(CultureInfo.InvariantCulture)}";
-        Navigator.NavigateTo($"/{Constants.Page.ComicsRead}/{seriesId}?{qs}", forceLoad: false, replace: true);
+        Navigator.NavigateTo($"/{Constants.Page.ComicsRead}/{seriesId}?{qs}", false, true);
     }
 
-    private async Task<IReadOnlyList<ComicChapter>> GetChaptersAsync(Guid sid)
-        => await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/series/{sid}/chapters") ?? [];
+    private async Task<IReadOnlyList<ComicChapter>> GetChaptersAsync(Guid sid) => await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/series/{sid}/chapters") ?? [];
 
     private async Task CacheChapterPagesAsync(ComicChapter chapter)
     {
         _pageImageCache.Clear();
         var pages = await ComicApi.GetAsAsync<IReadOnlyList<ComicPageRes>>($"{ComicApiPrefix}/chapters/{chapter.Id}/pages") ?? [];
         foreach (var item in pages) {
-            _pageImageCache[item.PageNumber] =
-                Guid.TryParse(item.ImageRef, out var id) ? $"/comic-files/{id}" : item.ImageRef;
+            _pageImageCache[item.PageNumber] = Guid.TryParse(item.ImageRef, out var id) ? $"/comic-files/{id}" : item.ImageRef;
         }
     }
 
@@ -272,8 +257,7 @@ else {
             Demographic = r.Demographic,
             CreatedTimestamp = r.CreatedTimestamp,
             UpdatedTimestamp = r.UpdatedTimestamp,
-            AlternateTitles = r.AlternateTitles.Select(a =>
-                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            AlternateTitles = r.AlternateTitles.Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
             Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
         };
 

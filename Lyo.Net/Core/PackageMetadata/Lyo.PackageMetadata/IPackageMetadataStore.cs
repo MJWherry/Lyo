@@ -2,9 +2,9 @@ namespace Lyo.PackageMetadata;
 
 /// <summary>Resolves package catalog metadata for a stack frame. Implementations may be in-memory, backed by Postgres, etc.</summary>
 /// <remarks>
-/// Third-party implementations must ship <see cref="TryGetManyForStrippedMethodPrefixesAsync"/> alongside
-/// <see cref="TryGetForFrameAsync"/> (see README for contract). Matching uses <see cref="StringComparison.Ordinal" /> StartsWith semantics on the stripped method vs registered prefixes where the longest registered prefix wins.
-/// The lookup methods expose a separate frame-namespace string parameter that is <strong>reserved</strong>; it is not used for matching today.
+/// Third-party implementations must ship <see cref="TryGetManyForStrippedMethodPrefixesAsync" /> alongside <see cref="TryGetForFrameAsync" /> (see README for contract).
+/// Matching uses <see cref="StringComparison.Ordinal" /> StartsWith semantics on the stripped method vs registered prefixes where the longest registered prefix wins. The lookup
+/// methods expose a separate frame-namespace string parameter that is <strong>reserved</strong>; it is not used for matching today.
 /// </remarks>
 public interface IPackageMetadataStore
 {
@@ -16,8 +16,8 @@ public interface IPackageMetadataStore
 
     /// <summary>Resolves package metadata for many stripped method paths in one store operation where possible.</summary>
     /// <remarks>
-    /// For each distinct key in <paramref name="strippedMethodPrefixes"/>, yields the same metadata as calling <see cref="TryGetForFrameAsync"/> with that string as <c>strippedMethodPrefix</c>
-    /// (longest registered namespace prefix wins; the frame namespace prefix argument remains unused). Returned map omits duplicates: each key appears once.
+    /// For each distinct key in <paramref name="strippedMethodPrefixes" />, yields the same metadata as calling <see cref="TryGetForFrameAsync" /> with that string as
+    /// <c>strippedMethodPrefix</c> (longest registered namespace prefix wins; the frame namespace prefix argument remains unused). Returned map omits duplicates: each key appears once.
     /// When no prefix matches a key, the value is <see langword="null" />. An empty input list yields an empty map.
     /// </remarks>
     ValueTask<IReadOnlyDictionary<string, PackageMetadata?>> TryGetManyForStrippedMethodPrefixesAsync(IReadOnlyList<string> strippedMethodPrefixes, CancellationToken ct = default);

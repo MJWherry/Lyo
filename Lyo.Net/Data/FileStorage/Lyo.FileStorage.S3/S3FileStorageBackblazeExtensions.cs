@@ -31,6 +31,22 @@ public static class S3FileStorageBackblazeExtensions
         return $"https://s3.{b2Region.Trim()}.backblazeb2.com";
     }
 
+    private static void RegisterBackblazeS3OptionsFromConfiguration(IServiceCollection services, IConfiguration configuration, string configSectionName)
+    {
+        if (services.Any(s => s.ServiceType == typeof(S3FileStorageOptions)))
+            return;
+
+        services.AddSingleton<S3FileStorageOptions>(_ => {
+            var section = configuration.GetSection(configSectionName);
+            var options = new S3FileStorageOptions();
+            if (section.Exists())
+                section.Bind(options);
+
+            options.ApplyBackblazeB2Defaults();
+            return options;
+        });
+    }
+
     extension(IServiceCollection services)
     {
         /// <summary>
@@ -69,23 +85,6 @@ public static class S3FileStorageBackblazeExtensions
         }
 
         /// <summary>Same keyed multipart registration as <see cref="Extensions.AddKeyedS3MultipartUploadService" />; kept for discoverability when using B2.</summary>
-        public IServiceCollection AddKeyedS3MultipartUploadServiceForBackblaze(string serviceKey)
-            => services.AddKeyedS3MultipartUploadService(serviceKey);
-    }
-
-    private static void RegisterBackblazeS3OptionsFromConfiguration(IServiceCollection services, IConfiguration configuration, string configSectionName)
-    {
-        if (services.Any(s => s.ServiceType == typeof(S3FileStorageOptions)))
-            return;
-
-        services.AddSingleton<S3FileStorageOptions>(_ => {
-            var section = configuration.GetSection(configSectionName);
-            var options = new S3FileStorageOptions();
-            if (section.Exists())
-                section.Bind(options);
-
-            options.ApplyBackblazeB2Defaults();
-            return options;
-        });
+        public IServiceCollection AddKeyedS3MultipartUploadServiceForBackblaze(string serviceKey) => services.AddKeyedS3MultipartUploadService(serviceKey);
     }
 }

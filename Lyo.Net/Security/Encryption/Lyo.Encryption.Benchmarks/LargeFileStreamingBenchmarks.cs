@@ -4,6 +4,7 @@ using BenchmarkDotNet.Jobs;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Keystore;
+
 // ReSharper disable InconsistentNaming
 
 namespace Lyo.Encryption.Benchmarks;

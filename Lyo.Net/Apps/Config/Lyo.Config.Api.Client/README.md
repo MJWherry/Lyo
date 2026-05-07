@@ -1,10 +1,13 @@
 # Lyo.Config.Api.Client
 
-Typed HTTP client for **`/api/config/{appKind}/{appId}`**: **`IConfigApiClient`**, **`ConfigPolling`**, and **`AddConfigApiClientFromConfiguration`** (bind section **`ConfigApi`** via [`ConfigApiClientOptions`](./ConfigApiClientOptions.cs)).
+Typed HTTP client for **`/api/config/{appKind}/{appId}`**: **`IConfigApiClient`**, **`ConfigPolling`**, and **`AddConfigApiClientFromConfiguration`** (bind section **`ConfigApi`**
+via [`ConfigApiClientOptions`](./ConfigApiClientOptions.cs)).
 
-References **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models)** for **`ConfigResolveConditionalResult`** / **`ConfigResolveOutcome`**, and **`Lyo.Config`** for **`AppConfigEntity`** and **`ResolvedConfigRecord`**.
+References **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models)** for **`ConfigResolveConditionalResult`** / **`ConfigResolveOutcome`**, and **`Lyo.Config`** for *
+*`AppConfigEntity`** and **`ResolvedConfigRecord`**.
 
-See **[`Lyo.Config.Api.Models/README.md`](../Lyo.Config.Api.Models/README.md)** (contracts) and **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)** (routing). Optional **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)** wraps polling + **`IOptionsMonitor<T>`**.
+See **[`Lyo.Config.Api.Models/README.md`](../Lyo.Config.Api.Models/README.md)** (contracts) and **[`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md)** (routing). Optional
+**[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)** wraps polling + **`IOptionsMonitor<T>`**.
 
 ## Quick start
 

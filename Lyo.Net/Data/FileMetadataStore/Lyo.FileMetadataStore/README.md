@@ -9,19 +9,21 @@ Clients depend on **`IFileMetadataStore`** only where they manipulate **canonica
 
 ## Methods
 
-| Operation | Responsibility |
-|-----------|----------------|
-| **`GetMetadataAsync(Guid fileId)`** | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing (callers distinguish 404 mappings). |
-| **`SaveMetadataAsync(Guid, FileStoreResult)`** | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns). |
-| **`DeleteMetadataAsync(Guid)`** | Returns **`false`** if absent (**idempotent deletes** OK). |
-| **`FindByHashAsync(byte[] hash)`** | Duplicate detection shortcut (often combined with cryptographic hash algorithms from **`Lyo.Hashing`**). |
-| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits—enumerate blob metadata referencing a KMS/KEK logical key/version pair. |
+| Operation                                                          | Responsibility                                                                                                                                                  |
+|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`GetMetadataAsync(Guid fileId)`**                                | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing (callers distinguish 404 mappings).                                                |
+| **`SaveMetadataAsync(Guid, FileStoreResult)`**                     | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns). |
+| **`DeleteMetadataAsync(Guid)`**                                    | Returns **`false`** if absent (**idempotent deletes** OK).                                                                                                      |
+| **`FindByHashAsync(byte[] hash)`**                                 | Duplicate detection shortcut (often combined with cryptographic hash algorithms from **`Lyo.Hashing`**).                                                        |
+| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits—enumerate blob metadata referencing a KMS/KEK logical key/version pair.                                                                     |
 
-`FileStoreResult` (under **`Lyo.FileMetadataStore.Models`**) aggregates whatever your blob layer needs persisted (MIME hints, **`FileUploadState`**, encryption headers, multipart ETags). Keep it versioning-tolerant—adding JSON columns in Postgres shouldn’t force API breaks if clients ignore unknown fields.
+`FileStoreResult` (under **`Lyo.FileMetadataStore.Models`**) aggregates whatever your blob layer needs persisted (MIME hints, **`FileUploadState`**, encryption headers, multipart
+ETags). Keep it versioning-tolerant—adding JSON columns in Postgres shouldn’t force API breaks if clients ignore unknown fields.
 
 ## Architectural guidance
 
-Treat metadata writes as **eventually consistent** relative to blob existence unless you orchestrate Saga-style compensations (`Save blob → Save metadata`; if latter fails delete blob).
+Treat metadata writes as **eventually consistent** relative to blob existence unless you orchestrate Saga-style compensations (`Save blob → Save metadata`; if latter fails delete
+blob).
 
 For multi-tenant systems, prepend tenant key to logical file ids **outside** interface or augment models with partitioning columns inside concrete stores.
 

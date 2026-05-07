@@ -48,8 +48,7 @@ public static class Extensions
             services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<PackageMetadataDbContext, PostgresPackageMetadataOptions>();
             services.AddDbContextFactory<PackageMetadataDbContext>(dbOpts => dbOpts.UseNpgsql(
-                options.ConnectionString,
-                npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
 
             return services;
         }
@@ -86,10 +85,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPackageMetadataDbContextFactory(options);
-            services.AddSingleton<IPackageMetadataStore>(sp =>
-                new PostgresPackageMetadataStore(
-                    sp.GetRequiredService<IDbContextFactory<PackageMetadataDbContext>>(),
-                    sp.GetRequiredService<IOptions<PostgresPackageMetadataOptions>>().Value));
+            services.AddSingleton<IPackageMetadataStore>(sp => new PostgresPackageMetadataStore(
+                sp.GetRequiredService<IDbContextFactory<PackageMetadataDbContext>>(), sp.GetRequiredService<IOptions<PostgresPackageMetadataOptions>>().Value));
+
             return services;
         }
     }

@@ -45,7 +45,7 @@
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
         <ProjectReference Include="..\..\Features\ShortUrl\Lyo.ShortUrl\Lyo.ShortUrl.csproj"/>
-        <ProjectReference Include="..\..\Integration\Web\Automation\Lyo.Web.Automation.Playwright\Lyo.Web.Automation.Playwright.csproj" />
+        <ProjectReference Include="..\..\Integration\Web\Automation\Lyo.Web.Automation.Playwright\Lyo.Web.Automation.Playwright.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Automation\Lyo.Web.Automation.Selenium\Lyo.Web.Automation.Selenium.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Reporting\Lyo.Web.Reporting.Postgres\Lyo.Web.Reporting.Postgres.csproj"/>

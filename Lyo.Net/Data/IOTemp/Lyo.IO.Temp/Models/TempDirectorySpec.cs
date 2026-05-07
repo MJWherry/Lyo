@@ -6,6 +6,9 @@ namespace Lyo.IO.Temp.Models;
 /// <summary>Describes the structure of a simulated temp directory: how many files to create, their size, and any nested subdirectories.</summary>
 public record TempDirectorySpec
 {
+    [ThreadStatic]
+    private static Random? _rng;
+
     /// <summary>Number of random files to create directly in this directory.</summary>
     public int FileCount { get; init; }
 
@@ -49,10 +52,6 @@ public record TempDirectorySpec
     /// <summary>Creates a flat spec with randomised file count and sizes using <see cref="FileSizeUnitInfo" /> units.</summary>
     public static TempDirectorySpec Random(int minFiles, int maxFiles, FileSizeUnitInfo minUnit, double minAmount, FileSizeUnitInfo maxUnit, double maxAmount)
         => Random(minFiles, maxFiles, minUnit.ConvertToBytes(minAmount), maxUnit.ConvertToBytes(maxAmount));
-    
-    [ThreadStatic]
-    private static Random? _rng;
 
     private static Random GetRandom() => _rng ??= new();
-
 }

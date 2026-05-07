@@ -88,11 +88,11 @@ public interface ICsvService
     /// <summary>Exports a data table to CSV bytes.</summary>
     byte[] ExportToCsvBytesFromDataTable(DataTable.Models.DataTable dataTable);
 
-    /// <summary>Parses a CSV file row-by-row as <typeparamref name="T"/> (lazy enumeration).</summary>
+    /// <summary>Parses a CSV file row-by-row as <typeparamref name="T" /> (lazy enumeration).</summary>
     /// <typeparam name="T">Mapped row type.</typeparam>
     IEnumerable<T> ParseFile<T>(string csvFilePath);
 
-    /// <summary>Parses a CSV stream row-by-row as <typeparamref name="T"/>.</summary>
+    /// <summary>Parses a CSV stream row-by-row as <typeparamref name="T" />.</summary>
     IEnumerable<T> ParseStream<T>(Stream csvStream);
 
     /// <summary>Parses a CSV file into a nested dictionary (row → column → cell text).</summary>
@@ -118,7 +118,7 @@ public interface ICsvService
     /// <returns>Complete HTML document string with table.</returns>
     string ExportToHtmlTable(byte[] csvBytes, bool? hasHeaderRow = null);
 
-    /// <summary>Parses CSV bytes row-by-row as <typeparamref name="T"/>.</summary>
+    /// <summary>Parses CSV bytes row-by-row as <typeparamref name="T" />.</summary>
     IEnumerable<T> ParseBytes<T>(byte[] csvBytes);
 
     /// <summary>Parses CSV bytes into a nested dictionary (row → column → cell text).</summary>
@@ -130,7 +130,7 @@ public interface ICsvService
     /// <summary>Downloads CSV from a URL and parses it as a nested dictionary.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseFromUrlAsDictionary(string url);
 
-    /// <summary>Downloads CSV from a URL and maps rows to <typeparamref name="T"/> (blocking).</summary>
+    /// <summary>Downloads CSV from a URL and maps rows to <typeparamref name="T" /> (blocking).</summary>
     IEnumerable<T> ParseFromUrl<T>(string url);
 
 #if !NETSTANDARD2_0
@@ -213,10 +213,10 @@ public interface ICsvService
     /// <summary>Exports a data table to CSV bytes asynchronously.</summary>
     Task<byte[]> ExportToCsvBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default);
 
-    /// <summary>Parses a CSV file into a list of <typeparamref name="T"/>.</summary>
+    /// <summary>Parses a CSV file into a list of <typeparamref name="T" />.</summary>
     Task<List<T>> ParseFileAsync<T>(string csvFilePath, CancellationToken ct = default);
 
-    /// <summary>Parses a CSV stream into a list of <typeparamref name="T"/>.</summary>
+    /// <summary>Parses a CSV stream into a list of <typeparamref name="T" />.</summary>
     Task<List<T>> ParseStreamAsync<T>(Stream csvStream, CancellationToken ct = default);
 
     /// <summary>Parses a CSV file into a nested dictionary asynchronously.</summary>
@@ -241,7 +241,7 @@ public interface ICsvService
     /// <returns>Complete HTML document string with table.</returns>
     Task<string> ExportToHtmlTableAsync(byte[] csvBytes, bool? hasHeaderRow = null, CancellationToken ct = default);
 
-    /// <summary>Parses CSV bytes into a list of <typeparamref name="T"/>.</summary>
+    /// <summary>Parses CSV bytes into a list of <typeparamref name="T" />.</summary>
     Task<List<T>> ParseBytesAsync<T>(byte[] csvBytes, CancellationToken ct = default);
 
     /// <summary>Parses CSV bytes into a nested dictionary asynchronously.</summary>
@@ -258,18 +258,18 @@ public interface ICsvService
     /// <param name="ct">Cancellation token.</param>
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseFromUrlAsDictionaryAsync(string url, CancellationToken ct = default);
 
-    /// <summary>Downloads CSV from a URL and materializes rows as <typeparamref name="T"/>.</summary>
+    /// <summary>Downloads CSV from a URL and materializes rows as <typeparamref name="T" />.</summary>
     /// <typeparam name="T">Row type to map.</typeparam>
     /// <param name="url">HTTP(S) URL to the CSV resource.</param>
     /// <param name="ct">Cancellation token.</param>
     Task<List<T>> ParseFromUrlAsync<T>(string url, CancellationToken ct = default);
 
-    /// <summary>Parses multiple CSV files to data tables, returning one result per path (same order as <paramref name="csvFilePaths"/>).</summary>
+    /// <summary>Parses multiple CSV files to data tables, returning one result per path (same order as <paramref name="csvFilePaths" />).</summary>
     /// <param name="csvFilePaths">Paths to CSV files on disk.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic column names. When null, uses service configuration.</param>
     IReadOnlyList<Result<DataTable.Models.DataTable>> BatchParseFilesAsDataTable(IEnumerable<string> csvFilePaths, bool? hasHeaderRow = null);
 
-    /// <summary>Parses multiple CSV files to data tables asynchronously, returning one result per path (same order as <paramref name="csvFilePaths"/>).</summary>
+    /// <summary>Parses multiple CSV files to data tables asynchronously, returning one result per path (same order as <paramref name="csvFilePaths" />).</summary>
     /// <param name="csvFilePaths">Paths to CSV files on disk.</param>
     /// <param name="hasHeaderRow">When true, first row is headers. When false, synthetic column names. When null, uses service configuration.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -302,10 +302,10 @@ public interface ICsvService
     /// <summary>Computes row/column statistics for a CSV stream.</summary>
     Task<CsvStatistics> GetStatisticsAsync(Stream csvStream, CancellationToken ct = default);
 
-    /// <summary>Reads a CSV file in chunks and invokes <paramref name="processChunk"/> for each chunk.</summary>
+    /// <summary>Reads a CSV file in chunks and invokes <paramref name="processChunk" /> for each chunk.</summary>
     Task ProcessFileInChunksAsync<T>(string csvFilePath, int chunkSize, Func<IEnumerable<T>, Task> processChunk, CsvParseOptions? options = null, CancellationToken ct = default);
 
-    /// <summary>Reads a CSV stream in chunks and invokes <paramref name="processChunk"/> for each chunk.</summary>
+    /// <summary>Reads a CSV stream in chunks and invokes <paramref name="processChunk" /> for each chunk.</summary>
     Task ProcessStreamInChunksAsync<T>(Stream csvStream, int chunkSize, Func<IEnumerable<T>, Task> processChunk, CsvParseOptions? options = null, CancellationToken ct = default);
 
     /// <summary>Validates a CSV file against a column schema.</summary>
@@ -329,7 +329,7 @@ public interface ICsvService
     /// <summary>Concatenates multiple CSV files into one, optionally repeating headers.</summary>
     Task CombineCsvFilesAsync(IEnumerable<string> inputFiles, string outputFile, bool includeHeaders = true, CancellationToken ct = default);
 
-    /// <summary>Splits one CSV file into multiple files with at most <paramref name="rowsPerFile"/> data rows each.</summary>
+    /// <summary>Splits one CSV file into multiple files with at most <paramref name="rowsPerFile" /> data rows each.</summary>
     Task SplitCsvFileAsync(string inputFile, int rowsPerFile, string outputDirectory, CancellationToken ct = default);
 #endif
 }

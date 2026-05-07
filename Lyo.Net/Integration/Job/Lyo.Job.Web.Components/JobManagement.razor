@@ -15,7 +15,8 @@
 @code {
 
     /// <summary>Base route for job endpoints (e.g. "Job"). Definitions will use BaseRoute/Definition, runs use BaseRoute/Run, etc.</summary>
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string BaseRoute { get; set; } = "Job";
 
     /// <summary>Optional URL to fetch SpJobStatistic data. When null, the stats tab shows no data.</summary>

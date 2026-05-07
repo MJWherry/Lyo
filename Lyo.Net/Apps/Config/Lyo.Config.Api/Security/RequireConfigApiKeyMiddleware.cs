@@ -33,10 +33,7 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         var expected = (_options.ApiKey ?? string.Empty).Trim();
         if (expected.Length == 0) {
             ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await ctx.Response.WriteAsJsonAsync(
-                    new { detail = "API key enforcement is enabled but no server key has been configured." })
-                .ConfigureAwait(false);
-
+            await ctx.Response.WriteAsJsonAsync(new { detail = "API key enforcement is enabled but no server key has been configured." }).ConfigureAwait(false);
             return;
         }
 
@@ -49,7 +46,6 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
         var credentialBytes = credential;
         var matches = baseline.Length == credentialBytes.Length && CryptographicOperations.FixedTimeEquals(baseline, credentialBytes);
         CryptographicOperations.ZeroMemory(credentialBytes);
-
         if (!matches) {
             ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
@@ -74,8 +70,7 @@ public sealed class RequireConfigApiKeyMiddleware(RequestDelegate next, IOptions
             return false;
         }
 
-        if (!AuthenticationHeaderValue.TryParse(auth, out var parsed) ||
-           !string.Equals(parsed.Scheme.Trim(), "Bearer", StringComparison.OrdinalIgnoreCase)) {
+        if (!AuthenticationHeaderValue.TryParse(auth, out var parsed) || !string.Equals(parsed.Scheme.Trim(), "Bearer", StringComparison.OrdinalIgnoreCase)) {
             credential = null;
             return false;
         }

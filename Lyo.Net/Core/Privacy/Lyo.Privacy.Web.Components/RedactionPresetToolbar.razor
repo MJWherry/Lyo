@@ -13,13 +13,7 @@
 </MudStack>
 
 @code {
-    private static readonly string[] Presets = [
-        PrivacyPresetNames.Minimal,
-        PrivacyPresetNames.Logging,
-        PrivacyPresetNames.SupportExport,
-        PrivacyPresetNames.PublicSurface,
-        PrivacyPresetNames.RegressionTesting
-    ];
+    private static readonly string[] Presets = [PrivacyPresetNames.Minimal, PrivacyPresetNames.Logging, PrivacyPresetNames.SupportExport, PrivacyPresetNames.PublicSurface, PrivacyPresetNames.RegressionTesting];
 
     [Parameter]
     public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;

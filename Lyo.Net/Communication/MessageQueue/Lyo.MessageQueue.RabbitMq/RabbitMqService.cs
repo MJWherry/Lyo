@@ -40,7 +40,7 @@ public sealed class RabbitMqService : IRabbitMqService
         IConnectionFactory connectionFactory,
         HttpClient? httpClient = null,
         ILogger<RabbitMqService>? logger = null,
-        IMetrics? metrics = null, 
+        IMetrics? metrics = null,
         JsonSerializerOptions? serializerOptions = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
@@ -171,7 +171,7 @@ public sealed class RabbitMqService : IRabbitMqService
             _logger.LogWarning("Cannot create exchange {ExchangeName}: not connected", exchangeName);
             return false;
         }
-        
+
         arguments ??= new Dictionary<string, object>(0);
         try {
             await _publishChannel!.ExchangeDeclareAsync(exchangeName, exchangeType, durable, autoDelete, arguments!, cancellationToken: ct).ConfigureAwait(false);
@@ -226,7 +226,7 @@ public sealed class RabbitMqService : IRabbitMqService
             _logger.LogWarning("Cannot create queue {QueueName}: not connected", queueName);
             return false;
         }
-        
+
         arguments ??= new Dictionary<string, object>(0);
         using var timer = _metrics.StartTimer(Constants.Metrics.QueueOperationDuration, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
         var sw = Stopwatch.StartNew();
@@ -245,7 +245,8 @@ public sealed class RabbitMqService : IRabbitMqService
                 return true;
 
             _metrics.IncrementCounter(Constants.Metrics.QueueCreated, 1, [(Constants.Metrics.Tags.Queue, queueName)]);
-            _metrics.RecordHistogram(Constants.Metrics.QueueOperationDurationMs, sw.ElapsedMilliseconds, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
+            _metrics.RecordHistogram(
+                Constants.Metrics.QueueOperationDurationMs, sw.ElapsedMilliseconds, [(Constants.Metrics.Tags.Operation, "create"), (Constants.Metrics.Tags.Queue, queueName)]);
 
             return true;
         }
@@ -529,7 +530,8 @@ public sealed class RabbitMqService : IRabbitMqService
         };
 
         using var response = await _httpClient.PostAsync(
-                $"queues/{vhost}/{Uri.EscapeDataString(queueName)}/get", new StringContent(JsonSerializer.Serialize(request, _serializerOptions), Encoding.UTF8, FileTypeInfo.Json.MimeType), ct)
+                $"queues/{vhost}/{Uri.EscapeDataString(queueName)}/get",
+                new StringContent(JsonSerializer.Serialize(request, _serializerOptions), Encoding.UTF8, FileTypeInfo.Json.MimeType), ct)
             .ConfigureAwait(false);
 
         response.EnsureSuccessStatusCode();
@@ -561,7 +563,6 @@ public sealed class RabbitMqService : IRabbitMqService
         //    _logger.LogWarning("Cannot subscribe to queue {QueueName}: message handler is null", queueName);
         //    return false;
         //}
-
         if (!IsConnected()) {
             _logger.LogWarning("Cannot subscribe to queue {QueueName}: not connected", queueName);
             return false;

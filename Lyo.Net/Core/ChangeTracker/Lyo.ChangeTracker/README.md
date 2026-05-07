@@ -30,7 +30,6 @@ await changeTracker.RecordChangeAsync(change);
 var history = await changeTracker.GetForEntityAsync(orderRef);
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.ChangeTracker.csproj`.)*

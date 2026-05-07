@@ -5,28 +5,16 @@ using System.Text.Json;
 
 namespace Lyo.Web.Automation.Tests.Fixtures;
 
-/// <summary>
-/// Hosts deterministic local pages used by browser automation contract tests.
-/// </summary>
+/// <summary>Hosts deterministic local pages used by browser automation contract tests.</summary>
 public sealed class WebAutomationTestPageHostFixture : IDisposable
 {
     private static readonly string HomePageHtml = ReadAsset("Pages/home.html");
     private static readonly string NextPageHtml = ReadAsset("Pages/next.html");
     private static readonly string ControlsPageHtml = ReadAsset("Pages/controls.html");
+    private readonly CancellationTokenSource _cts = new();
 
     private readonly HttpListener _listener;
-    private readonly CancellationTokenSource _cts = new();
     private readonly Task _serverTask;
-
-    public WebAutomationTestPageHostFixture()
-    {
-        var port = GetAvailablePort();
-        BaseUri = new Uri($"http://127.0.0.1:{port}/");
-        _listener = new HttpListener();
-        _listener.Prefixes.Add(BaseUri.AbsoluteUri);
-        _listener.Start();
-        _serverTask = Task.Run(() => RunServerLoopAsync(_cts.Token));
-    }
 
     public Uri BaseUri { get; }
 
@@ -38,40 +26,44 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
 
     public Uri EchoApiUri => new(BaseUri, "api/echo");
 
+    public WebAutomationTestPageHostFixture()
+    {
+        var port = GetAvailablePort();
+        BaseUri = new($"http://127.0.0.1:{port}/");
+        _listener = new();
+        _listener.Prefixes.Add(BaseUri.AbsoluteUri);
+        _listener.Start();
+        _serverTask = Task.Run(() => RunServerLoopAsync(_cts.Token));
+    }
+
     public void Dispose()
     {
         _cts.Cancel();
         _listener.Close();
-        try
-        {
+        try {
             _serverTask.GetAwaiter().GetResult();
         }
-        catch (OperationCanceledException)
-        {
+        catch (OperationCanceledException) {
             // Ignore server loop cancellation during fixture teardown.
         }
-        catch (HttpListenerException)
-        {
+        catch (HttpListenerException) {
             // Listener can throw when disposed while awaiting contexts.
         }
+
         _cts.Dispose();
     }
 
     private async Task RunServerLoopAsync(CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested)
-        {
+        while (!ct.IsCancellationRequested) {
             HttpListenerContext context;
-            try
-            {
+            try {
                 context = await _listener.GetContextAsync();
             }
-            catch (ObjectDisposedException) when (ct.IsCancellationRequested)
-            {
+            catch (ObjectDisposedException) when (ct.IsCancellationRequested) {
                 break;
             }
-            catch (HttpListenerException) when (ct.IsCancellationRequested)
-            {
+            catch (HttpListenerException) when (ct.IsCancellationRequested) {
                 break;
             }
 
@@ -88,7 +80,7 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
             ("GET", "/controls") => ("text/html; charset=utf-8", ControlsPageHtml, HttpStatusCode.OK),
             ("GET", "/files/sample-a.txt") => ("text/plain; charset=utf-8", "sample-a", HttpStatusCode.OK),
             ("GET", "/files/sample-b.txt") => ("text/plain; charset=utf-8", "sample-b", HttpStatusCode.OK),
-            _ => await BuildDynamicResponseAsync(request, path)
+            var _ => await BuildDynamicResponseAsync(request, path)
         };
 
         response.StatusCode = (int)statusCode;
@@ -101,8 +93,7 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
 
     private static async Task<(string contentType, string body, HttpStatusCode statusCode)> BuildDynamicResponseAsync(HttpListenerRequest request, string path)
     {
-        if (request.HttpMethod?.Equals("POST", StringComparison.OrdinalIgnoreCase) == true &&
-            path.Equals("/api/echo", StringComparison.OrdinalIgnoreCase)) {
+        if (request.HttpMethod?.Equals("POST", StringComparison.OrdinalIgnoreCase) == true && path.Equals("/api/echo", StringComparison.OrdinalIgnoreCase)) {
             using var reader = new StreamReader(request.InputStream, request.ContentEncoding ?? Encoding.UTF8);
             var rawBody = await reader.ReadToEndAsync();
             var payload = JsonSerializer.Serialize(new { ok = true, method = "POST", body = rawBody });

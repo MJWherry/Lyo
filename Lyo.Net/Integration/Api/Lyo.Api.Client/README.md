@@ -1,6 +1,7 @@
 # Lyo.Api.Client
 
-HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and **`System.Text.Json`** parity with server options when you wire them.
+HTTP client tailored for **Lyo-shaped minimal APIs**: JSON in/out, gzip/brotli/deflate handling, **query-string encoding** for GET DTOs, file upload helpers, and *
+*`System.Text.Json`** parity with server options when you wire them.
 
 Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—resolve via **`IHttpClientFactory`** so lifetimes stay correct in DI).
 
@@ -13,7 +14,8 @@ Implements **`IDisposable`** (**`ApiClient`** disposes underlying resources—re
 **GET**
 
 - **`GetAsAsync<TResult>(uri, beforeRequest, ct)`** basic JSON GET.
-- **`GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)`** serializes `TRequest` properties as query parameters (helps mirror `Lyo.Api` endpoints that accept flattened DTO queries).
+- **`GetAsAsync<TRequest, TResult>(uri, query, enumerableDelimiter, …)`** serializes `TRequest` properties as query parameters (helps mirror `Lyo.Api` endpoints that accept
+  flattened DTO queries).
 
 **Bodies & verbs**
 
@@ -56,7 +58,8 @@ services.AddLyoApiClient(
 
 ## Typical integration tests
 
-Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
+Spin `WebApplicationFactory` for your API host, call through **`IApiClient`**, assert **`ApiException.StatusCode`** ProblemDetails bodies using shared models from [
+`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
 
 ## Related
 

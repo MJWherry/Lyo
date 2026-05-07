@@ -32,7 +32,6 @@ var result = validator.Validate(new CreateUserRequest { Name = "Matt", Email = "
 - [`Lyo.Common`](../../Common/Lyo.Common/README.md): shared `Result`, `Error`, and metadata contracts.
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md): guard helpers and error utilities used by validation rules.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Validation.csproj`.)*

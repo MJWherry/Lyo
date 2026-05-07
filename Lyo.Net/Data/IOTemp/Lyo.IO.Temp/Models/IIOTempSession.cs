@@ -1,8 +1,6 @@
 namespace Lyo.IO.Temp.Models;
 
-/// <summary>
-/// A scoped workspace under a root directory: tracks created files and directories, enforces limits, and deletes its <see cref="SessionDirectory" /> tree when disposed.
-/// </summary>
+/// <summary>A scoped workspace under a root directory: tracks created files and directories, enforces limits, and deletes its <see cref="SessionDirectory" /> tree when disposed.</summary>
 /// <remarks>UTF-8 text operations use UTF-8 without a BOM.</remarks>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempSession : IAsyncDisposable, IDisposable

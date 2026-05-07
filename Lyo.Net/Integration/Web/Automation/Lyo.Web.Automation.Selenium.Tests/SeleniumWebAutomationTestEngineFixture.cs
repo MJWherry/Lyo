@@ -1,12 +1,10 @@
+using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Automation.Selenium.WebDriver;
-using Lyo.Testing;
 using Lyo.Web.Automation.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace Lyo.Web.Automation.Selenium.Tests;
 
@@ -24,7 +22,20 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
         _provider = BuildProvider();
     }
 
+    public void Dispose()
+    {
+        _provider.Dispose();
+        _loggerFactory.Dispose();
+    }
+
     public string EngineName => "Selenium";
+
+    public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
+    {
+        var service = _provider.GetRequiredService<ISeleniumBrowserService>();
+        IWebAutomationSession session = service.CreateSession();
+        return Task.FromResult(session);
+    }
 
     public void UseTestOutputLogger(ITestOutputHelper output)
     {
@@ -36,19 +47,6 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
 
         _provider.Dispose();
         _provider = BuildProvider();
-    }
-
-    public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
-    {
-        var service = _provider.GetRequiredService<ISeleniumBrowserService>();
-        IWebAutomationSession session = service.CreateSession();
-        return Task.FromResult(session);
-    }
-
-    public void Dispose()
-    {
-        _provider.Dispose();
-        _loggerFactory.Dispose();
     }
 
     private ServiceProvider BuildProvider()
@@ -66,6 +64,7 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
             options.BrowserWindowHeight = 900;
             options.BrowserKind = SeleniumBrowserKind.Chrome;
         });
+
         return services.BuildServiceProvider();
     }
 }

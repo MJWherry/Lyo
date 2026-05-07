@@ -70,9 +70,11 @@
             }
             else {
                 <MudAlert Severity="Severity.Success" Dense="true">Link created.</MudAlert>
+
                 <MudText Typo="Typo.body2"><strong>Link id</strong> @_response.LinkId:D</MudText>
 
                 <MudText Typo="Typo.subtitle2" Class="mt-2">Download (full URL)</MudText>
+
                 @if (!string.IsNullOrEmpty(_downloadAbsoluteUrl)) {
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
                         <MudTextField Value="@_downloadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
@@ -85,21 +87,25 @@
                         </MudTooltip>
                     </MudStack>
                 }
+
                 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@_response.DownloadUrl</MudChip>
                 </MudStack>
 
                 <MudText Typo="Typo.subtitle2" Class="mt-3">Presigned read (full URL)</MudText>
+
                 @if (!string.IsNullOrEmpty(_presignedReadAbsoluteUrl)) {
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
                         <MudTextField Value="@_presignedReadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
                                       Style="min-width:min(100%,560px);"/>
                         <MudTooltip Text="Copy">
-                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_presignedReadAbsoluteUrl!))" aria-label="Copy presign URL"/>
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" OnClick="@(() => CopyToClipboardAsync(_presignedReadAbsoluteUrl!))"
+                                           aria-label="Copy presign URL"/>
                         </MudTooltip>
                     </MudStack>
                 }
+
                 <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mt-1">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">API path</MudText>
                     <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@_response.PresignedReadUrl</MudChip>
@@ -110,6 +116,7 @@
     <DialogActions>
         @if (_response == null) {
             <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
+
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateAsync" Disabled="@_busy">Create</MudButton>
         }
         else {
@@ -155,6 +162,7 @@
     {
         if (!date.HasValue)
             return null;
+
         var t = time ?? TimeSpan.Zero;
         return DateTime.SpecifyKind(date.Value.Date.Add(t), DateTimeKind.Utc);
     }
@@ -191,25 +199,27 @@
             _error = "Not before must be earlier than or equal to expires at.";
             return;
         }
+
         if (winStart.HasValue && winEnd.HasValue && winStart > winEnd) {
             _error = "Window start must be earlier than or equal to window end.";
             return;
         }
+
         if (_maxDownloads is <= 0) {
             _error = "Max downloads must be greater than zero when set.";
             return;
         }
 
         var uri = $"{Workbench.FileStorageApiRoutePrefix.TrimEnd('/')}/files/{FileId:D}/access-links";
-        var body = new FileStorageWorkbenchCreateAccessLinkRequest(notBefore, expires, winStart, winEnd, _maxDownloads,
-            string.IsNullOrWhiteSpace(_tenantId) ? null : _tenantId.Trim());
+        var body = new FileStorageWorkbenchCreateAccessLinkRequest(notBefore, expires, winStart, winEnd, _maxDownloads, string.IsNullOrWhiteSpace(_tenantId) ? null : _tenantId.Trim());
         _busy = true;
         try {
-            _response = await Workbench.ApiClient.PostAsAsync<FileStorageWorkbenchCreateAccessLinkRequest, FileStorageWorkbenchAccessLinkResponse>(uri, body,
-                before: req => {
+            _response = await Workbench.ApiClient.PostAsAsync<FileStorageWorkbenchCreateAccessLinkRequest, FileStorageWorkbenchAccessLinkResponse>(
+                uri, body, req => {
                     if (!string.IsNullOrWhiteSpace(_tenantId))
                         req.Headers.TryAddWithoutValidation("X-Tenant-Id", _tenantId.Trim());
                 });
+
             _downloadAbsoluteUrl = Workbench.GetApiAbsoluteUrl(_response.DownloadUrl);
             _presignedReadAbsoluteUrl = Workbench.GetApiAbsoluteUrl(_response.PresignedReadUrl);
             Workbench.SetStatus($"Created access link {_response.LinkId:D}.", Severity.Success);

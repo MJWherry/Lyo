@@ -50,7 +50,6 @@ var connected = await shortUrlService.TestConnectionAsync(ct);
 - `SetCustomAlias(alias)` – Optional custom slug
 - `SetExpirationDate(date)` – Optional expiration
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.ShortUrl.csproj`.)*

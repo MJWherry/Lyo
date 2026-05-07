@@ -2,14 +2,11 @@ namespace Lyo.PackageMetadata;
 
 internal static class SpdxLicenseExpressionParser
 {
-    private enum TokenKind { End, LeftParen, RightParen, And, Or, With, Identifier }
-
-    private readonly record struct Token(TokenKind Kind, string? Text = null);
-
     internal static SpdxLicenseExpressionSyntax? TryParse(string? input)
     {
         if (input is null)
             return null;
+
         var trimmed = input.Trim();
         if (trimmed.Length == 0)
             return null;
@@ -20,6 +17,7 @@ internal static class SpdxLicenseExpressionParser
             var expr = p.ParseOr();
             if (expr is null || !p.Match(TokenKind.End))
                 return null;
+
             return expr;
         }
         catch {
@@ -39,13 +37,13 @@ internal static class SpdxLicenseExpressionParser
 
             var c = s[i];
             if (c == '(') {
-                list.Add(new Token(TokenKind.LeftParen));
+                list.Add(new(TokenKind.LeftParen));
                 i++;
                 continue;
             }
 
             if (c == ')') {
-                list.Add(new Token(TokenKind.RightParen));
+                list.Add(new(TokenKind.RightParen));
                 i++;
                 continue;
             }
@@ -55,8 +53,10 @@ internal static class SpdxLicenseExpressionParser
                 c = s[i];
                 if (char.IsWhiteSpace(c) || c == '(' || c == ')')
                     break;
+
                 if (!(char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '+' || c == ':'))
                     throw new FormatException();
+
                 i++;
             }
 
@@ -65,18 +65,18 @@ internal static class SpdxLicenseExpressionParser
 
             var lex = s.Substring(start, i - start);
             if (string.Equals(lex, "AND", StringComparison.Ordinal))
-                list.Add(new Token(TokenKind.And));
+                list.Add(new(TokenKind.And));
             else if (string.Equals(lex, "OR", StringComparison.Ordinal))
-                list.Add(new Token(TokenKind.Or));
+                list.Add(new(TokenKind.Or));
             else if (string.Equals(lex, "WITH", StringComparison.Ordinal))
-                list.Add(new Token(TokenKind.With));
+                list.Add(new(TokenKind.With));
             else {
                 ValidateIdentifierLexeme(lex);
-                list.Add(new Token(TokenKind.Identifier, lex));
+                list.Add(new(TokenKind.Identifier, lex));
             }
         }
 
-        list.Add(new Token(TokenKind.End));
+        list.Add(new(TokenKind.End));
         return list;
     }
 
@@ -84,6 +84,7 @@ internal static class SpdxLicenseExpressionParser
     {
         if (lex.Length == 0)
             throw new FormatException();
+
         var plusCount = 0;
         for (var j = 0; j < lex.Length; j++) {
             if (lex[j] == '+')
@@ -92,9 +93,23 @@ internal static class SpdxLicenseExpressionParser
 
         if (plusCount > 1)
             throw new FormatException();
+
         if (plusCount == 1 && lex[lex.Length - 1] != '+')
             throw new FormatException();
     }
+
+    private enum TokenKind
+    {
+        End,
+        LeftParen,
+        RightParen,
+        And,
+        Or,
+        With,
+        Identifier
+    }
+
+    private readonly record struct Token(TokenKind Kind, string? Text = null);
 
     private sealed class ParseState(List<Token> tokens)
     {
@@ -105,11 +120,13 @@ internal static class SpdxLicenseExpressionParser
             var left = ParseAnd();
             if (left is null)
                 return null;
+
             while (Match(TokenKind.Or)) {
                 var right = ParseAnd();
                 if (right is null)
                     return null;
-                left = new SpdxLicenseExpressionSyntax("or", Left: left, Right: right);
+
+                left = new("or", Left: left, Right: right);
             }
 
             return left;
@@ -120,11 +137,13 @@ internal static class SpdxLicenseExpressionParser
             var left = ParseWith();
             if (left is null)
                 return null;
+
             while (Match(TokenKind.And)) {
                 var right = ParseWith();
                 if (right is null)
                     return null;
-                left = new SpdxLicenseExpressionSyntax("and", Left: left, Right: right);
+
+                left = new("and", Left: left, Right: right);
             }
 
             return left;
@@ -135,11 +154,13 @@ internal static class SpdxLicenseExpressionParser
             var left = ParseUnary();
             if (left is null)
                 return null;
+
             while (Match(TokenKind.With)) {
                 var exc = ParseExceptionLeaf();
                 if (exc is null)
                     return null;
-                left = new SpdxLicenseExpressionSyntax("with", InnerLicense: left, InnerException: exc);
+
+                left = new("with", InnerLicense: left, InnerException: exc);
             }
 
             return left;
@@ -151,11 +172,13 @@ internal static class SpdxLicenseExpressionParser
                 var inner = ParseOr();
                 if (inner is null || !Match(TokenKind.RightParen))
                     return null;
+
                 return inner;
             }
 
             if (!Match(TokenKind.Identifier, out var lex) || lex is null)
                 return null;
+
             ValidateIdentifierLexeme(lex);
             return LicenseLeaf(lex);
         }
@@ -164,12 +187,12 @@ internal static class SpdxLicenseExpressionParser
         {
             if (!Match(TokenKind.Identifier, out var lex) || lex is null)
                 return null;
+
             ValidateIdentifierLexeme(lex);
-            return new SpdxLicenseExpressionSyntax("exception", Identifier: StripPlus(lex, out var plus), PlusSuffix: plus ? true : null);
+            return new("exception", StripPlus(lex, out var plus), plus ? true : null);
         }
 
-        private static SpdxLicenseExpressionSyntax LicenseLeaf(string lex) =>
-            new("license", Identifier: StripPlus(lex, out var plus), PlusSuffix: plus ? true : null);
+        private static SpdxLicenseExpressionSyntax LicenseLeaf(string lex) => new("license", StripPlus(lex, out var plus), plus ? true : null);
 
         private static string StripPlus(string lex, out bool plusSuffix)
         {
@@ -186,6 +209,7 @@ internal static class SpdxLicenseExpressionParser
         {
             if (_index >= tokens.Count || tokens[_index].Kind != kind)
                 return false;
+
             _index++;
             return true;
         }
@@ -195,6 +219,7 @@ internal static class SpdxLicenseExpressionParser
             text = null;
             if (_index >= tokens.Count || tokens[_index].Kind != kind)
                 return false;
+
             text = tokens[_index].Text;
             _index++;
             return true;

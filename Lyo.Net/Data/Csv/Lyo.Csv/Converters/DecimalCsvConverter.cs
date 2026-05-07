@@ -4,7 +4,7 @@ using CsvHelper.TypeConversion;
 
 namespace Lyo.Csv.Converters;
 
-/// <summary>CsvHelper converter: empty or unparsable input becomes null; otherwise a <see cref="decimal"/>.</summary>
+/// <summary>CsvHelper converter: empty or unparsable input becomes null; otherwise a <see cref="decimal" />.</summary>
 public sealed class DecimalCsvConverter : ITypeConverter
 {
     /// <summary>Parses a decimal from CSV text; returns null when empty or invalid.</summary>

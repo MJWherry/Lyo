@@ -3,14 +3,15 @@ namespace Lyo.ContentThreatScan.Intel;
 /// <summary>Simple TTL-backed digest cache keyed by lowercase hex SHA256.</summary>
 public sealed class ReputationDigestLookupCache
 {
-    private readonly Dictionary<string, Holder> _map = new(StringComparer.Ordinal);
-    private readonly object _gate = new();
     private readonly int _cap;
+    private readonly object _gate = new();
+    private readonly Dictionary<string, Holder> _map = new(StringComparer.Ordinal);
 
     public ReputationDigestLookupCache(int capacity)
     {
         if (capacity <= 1)
             throw new ArgumentOutOfRangeException(nameof(capacity));
+
         _cap = capacity;
     }
 
@@ -50,7 +51,7 @@ public sealed class ReputationDigestLookupCache
         if (_map.Count < _cap)
             return;
 
-        foreach (var key in _map.Keys.Take((_cap / 2) + 1))
+        foreach (var key in _map.Keys.Take(_cap / 2 + 1))
             _map.Remove(key);
     }
 }

@@ -9,6 +9,6 @@ public enum ConfigResolveOutcome
     /// <summary>Resource unchanged (<c>304 Not Modified</c>).</summary>
     NotModified,
 
-    /// <summary>Error response branch (non-success when <see cref="ConfigApiClientOptions.EnsureStatusCode"/> is false).</summary>
-    Failed,
+    /// <summary>Error response branch (non-success when <see cref="ConfigApiClientOptions.EnsureStatusCode" /> is false).</summary>
+    Failed
 }

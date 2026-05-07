@@ -12,8 +12,7 @@ public static class SchedulerExtensions
         /// <summary>Adds the scheduler service to the service collection.</summary>
         /// <param name="configureOptions">Optional configuration for scheduler options</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddScheduler(Action<SchedulerOptions>? configureOptions = null)
-            => services.AddScheduler(new InMemorySchedulerStateStore(), configureOptions);
+        public IServiceCollection AddScheduler(Action<SchedulerOptions>? configureOptions = null) => services.AddScheduler(new InMemorySchedulerStateStore(), configureOptions);
 
         /// <summary>Adds the scheduler service with a custom state store (e.g. cache-backed for persistence).</summary>
         public IServiceCollection AddScheduler(ISchedulerStateStore stateStore, Action<SchedulerOptions>? configureOptions = null)
@@ -27,9 +26,7 @@ public static class SchedulerExtensions
         }
 
         /// <summary>Adds the scheduler service with a factory for the state store (e.g. for cache-backed that needs CacheService from DI).</summary>
-        public IServiceCollection AddScheduler(
-            Func<IServiceProvider, ISchedulerStateStore> stateStoreFactory,
-            Action<SchedulerOptions>? configureOptions = null)
+        public IServiceCollection AddScheduler(Func<IServiceProvider, ISchedulerStateStore> stateStoreFactory, Action<SchedulerOptions>? configureOptions = null)
         {
             var options = new SchedulerOptions();
             configureOptions?.Invoke(options);

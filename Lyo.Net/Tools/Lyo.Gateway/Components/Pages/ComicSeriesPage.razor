@@ -62,21 +62,26 @@ else {
             <MudButtonGroup OverrideStyles="false" Variant="Variant.Outlined" Size="Size.Small">
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridLarge)"
                            Variant="@(_viewMode == ComicBrowseViewMode.GridLarge ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">Grid L</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.GridLarge ? Color.Primary : Color.Default)">Grid L
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.GridSmall)"
                            Variant="@(_viewMode == ComicBrowseViewMode.GridSmall ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">Grid S</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.GridSmall ? Color.Primary : Color.Default)">Grid S
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListNoImage)"
                            Variant="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">List</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.ListNoImage ? Color.Primary : Color.Default)">List
+                </MudButton>
                 <MudButton OnClick="@(() => _viewMode = ComicBrowseViewMode.ListLine)"
                            Variant="@(_viewMode == ComicBrowseViewMode.ListLine ? Variant.Filled : Variant.Outlined)"
-                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">Lines</MudButton>
+                           Color="@(_viewMode == ComicBrowseViewMode.ListLine ? Color.Primary : Color.Default)">Lines
+                </MudButton>
             </MudButtonGroup>
         </MudStack>
 
         @if (_volumes.Count > 0) {
             <MudText Typo="Typo.h6" Class="mb-2">Volumes</MudText>
+
             <ComicBrowseResults ViewMode="_viewMode" Class="mb-6">
                 @foreach (var v in _volumes) {
                     <ComicBrowseCard Title="@VolumeTitle(v)"
@@ -96,6 +101,7 @@ else {
 
         @if (_orphanChapters.Count > 0) {
             <MudText Typo="Typo.h6" Class="mb-2">Chapters</MudText>
+
             <ComicBrowseResults ViewMode="_viewMode">
                 @foreach (var ch in _orphanChapters) {
                     <ComicBrowseCard Title="@ChapterTitle(ch)"
@@ -142,11 +148,9 @@ else {
         return Task.CompletedTask;
     }
 
-    private IReadOnlyList<ComicChapter> _orphanChapters
-        => _chapters.Where(c => c.VolumeId is null).OrderBy(c => c.ChapterNumber).ToList();
+    private IReadOnlyList<ComicChapter> _orphanChapters => _chapters.Where(c => c.VolumeId is null).OrderBy(c => c.ChapterNumber).ToList();
 
-    private string? TypeBadge
-        => _series is { ComicType: var t } && t != ComicType.Unknown ? t.ToString() : null;
+    private string? TypeBadge => _series is { ComicType: var t } && t != ComicType.Unknown ? t.ToString() : null;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -161,7 +165,6 @@ else {
         _ready = false;
         _loadFailed = false;
         _series = null;
-
         var res = await ComicApi.GetAsAsync<ComicSeriesRes>($"{ComicApiPrefix}/series/{SeriesId}");
         if (res is null) {
             _loadFailed = true;
@@ -171,7 +174,6 @@ else {
         var series = ToSeries(res);
         var volumes = await ComicApi.GetAsAsync<ComicVolumeRes[]>($"{ComicApiPrefix}/series/{SeriesId}/volumes") ?? [];
         var chapters = await ComicApi.GetAsAsync<IReadOnlyList<ComicChapter>>($"{ComicApiPrefix}/series/{SeriesId}/chapters") ?? [];
-
         _series = series;
         PageName = string.IsNullOrWhiteSpace(series.Title) ? "Series" : series.Title;
         _coverUrl = ComicCoverUrls.Resolve(series.CoverImageRef);
@@ -189,8 +191,7 @@ else {
         return string.IsNullOrWhiteSpace(v.Title) ? "Volume" : v.Title;
     }
 
-    private static string? VolumeSubtitle(ComicVolumeRes v)
-        => v.PublishedDate?.ToString("d", CultureInfo.CurrentCulture);
+    private static string? VolumeSubtitle(ComicVolumeRes v) => v.PublishedDate?.ToString("d", CultureInfo.CurrentCulture);
 
     private int? TotalPagesInVolume(Guid volumeId)
     {
@@ -206,8 +207,7 @@ else {
         return any ? sum : null;
     }
 
-    private static string ChapterTitle(ComicChapter ch)
-        => $"Ch. {ch.ChapterNumber:G}" + (string.IsNullOrWhiteSpace(ch.Title) ? "" : $" — {ch.Title}");
+    private static string ChapterTitle(ComicChapter ch) => $"Ch. {ch.ChapterNumber:G}" + (string.IsNullOrWhiteSpace(ch.Title) ? "" : $" — {ch.Title}");
 
     private Task GoVolumeAsync(Guid volumeId)
     {
@@ -231,11 +231,9 @@ else {
         return Task.CompletedTask;
     }
 
-    private ComicChapter? FirstChapterInVolume(Guid volumeId)
-        => _chapters.Where(c => c.VolumeId == volumeId).OrderBy(c => c.ChapterNumber).FirstOrDefault();
+    private ComicChapter? FirstChapterInVolume(Guid volumeId) => _chapters.Where(c => c.VolumeId == volumeId).OrderBy(c => c.ChapterNumber).FirstOrDefault();
 
-    private string ReaderUrl(Guid seriesId, Guid chapterId, int page)
-        => $"/{Constants.Page.ComicsRead}/{seriesId}?chapter={chapterId}&page={page.ToString(CultureInfo.InvariantCulture)}";
+    private string ReaderUrl(Guid seriesId, Guid chapterId, int page) => $"/{Constants.Page.ComicsRead}/{seriesId}?chapter={chapterId}&page={page.ToString(CultureInfo.InvariantCulture)}";
 
     private static ComicSeries ToSeries(ComicSeriesRes r)
         => new() {
@@ -255,8 +253,7 @@ else {
             Demographic = r.Demographic,
             CreatedTimestamp = r.CreatedTimestamp,
             UpdatedTimestamp = r.UpdatedTimestamp,
-            AlternateTitles = r.AlternateTitles.Select(a =>
-                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            AlternateTitles = r.AlternateTitles.Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
             Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
         };
 

@@ -1,6 +1,7 @@
 # Lyo.MessageQueue
 
-Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind **`Lyo.MessageQueue.*` implementations**.
+Portable **queue + exchange** abstraction (`IMqService`) so schedulers, workers, and gateways can compile against **one contract** while swapping RabbitMQ—or future brokers—behind
+**`Lyo.MessageQueue.*` implementations**.
 
 Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity alongside DB/cache checks.
 
@@ -21,9 +22,9 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 
 - **`PeekQueueMessages`** non-destructive reads for diagnostics/back-pressure introspection (**`QueuePeekMessage`** payloads).
 - **`SubscribeToQueue(queueName, Func<byte[], Task<bool>> handler, CancellationToken)`** —
-  - Handler returns **`true`** ⇒ **requeue/nack-with-requeue** semantics (broker-specific mapping).
-  - **`false`** ⇒ acknowledge / remove.
-  - **Cancellation** tears down the subscription loop cooperatively.
+    - Handler returns **`true`** ⇒ **requeue/nack-with-requeue** semantics (broker-specific mapping).
+    - **`false`** ⇒ acknowledge / remove.
+    - **Cancellation** tears down the subscription loop cooperatively.
 
 **Publishing**
 
@@ -31,7 +32,8 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 
 **Topics / exchanges**
 
-- **`BindQueueToExchange`** + **`SendToExchange`** expose AMQP-shaped routing (`routingKey`). Non-Rabbit backends may approximate via topic subscriptions—the interface comment documents that expectation.
+- **`BindQueueToExchange`** + **`SendToExchange`** expose AMQP-shaped routing (`routingKey`). Non-Rabbit backends may approximate via topic subscriptions—the interface comment
+  documents that expectation.
 
 ## Messaging envelopes (`QueueMessageEnvelope<T>`)
 
@@ -63,11 +65,11 @@ This is the **production-grade** path for long-running consumers in Lyo’s own 
 
 ## Implementations & UI
 
-| Package | Role |
-|---------|------|
-| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | Production **`RabbitMQ.Client`** driver + DI helpers. |
-| **`Lyo.MessageQueue.Web.Components`** | Blazor UX for queue inspection/management in internal tools. |
-| **`Lyo.MessageQueue.RabbitMq.Web.Components`** | Rabbit-specific components + wiring. |
+| Package                                                               | Role                                                         |
+|-----------------------------------------------------------------------|--------------------------------------------------------------|
+| [`Lyo.MessageQueue.RabbitMq`](../Lyo.MessageQueue.RabbitMq/README.md) | Production **`RabbitMQ.Client`** driver + DI helpers.        |
+| **`Lyo.MessageQueue.Web.Components`**                                 | Blazor UX for queue inspection/management in internal tools. |
+| **`Lyo.MessageQueue.RabbitMq.Web.Components`**                        | Rabbit-specific components + wiring.                         |
 
 ## Related
 

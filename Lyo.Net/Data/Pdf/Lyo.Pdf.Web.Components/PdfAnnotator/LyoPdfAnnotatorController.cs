@@ -35,11 +35,7 @@ internal sealed class LyoPdfAnnotatorController(IJSRuntime jsRuntime) : IAsyncDi
         }
     }
 
-    public async Task<int> AttachInlineAnnotatorAsync<T>(
-        ElementReference iframe,
-        string htmlContent,
-        DotNetObjectReference<T> dotNetHelper,
-        CancellationToken ct = default)
+    public async Task<int> AttachInlineAnnotatorAsync<T>(ElementReference iframe, string htmlContent, DotNetObjectReference<T> dotNetHelper, CancellationToken ct = default)
         where T : class
     {
         var module = await GetModuleAsync(ct).ConfigureAwait(false);

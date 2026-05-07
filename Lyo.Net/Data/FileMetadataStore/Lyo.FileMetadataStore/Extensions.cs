@@ -47,9 +47,7 @@ public static class Extensions
         /// <param name="configuration">The configuration instance</param>
         /// <param name="configSectionName">The configuration section name (defaults to LocalFileMetadataStoreOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddLocalFileMetadataStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = LocalFileMetadataStoreOptions.SectionName)
+        public IServiceCollection AddLocalFileMetadataStoreFromConfiguration(IConfiguration configuration, string configSectionName = LocalFileMetadataStoreOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

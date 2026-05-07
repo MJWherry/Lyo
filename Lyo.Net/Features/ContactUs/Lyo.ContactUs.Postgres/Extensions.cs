@@ -42,9 +42,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresContactUsOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddContactUsDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresContactUsOptions.SectionName)
+        public IServiceCollection AddContactUsDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresContactUsOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -100,9 +98,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresContactUsOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddContactUsPostgresFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresContactUsOptions.SectionName)
+        public IServiceCollection AddContactUsPostgresFromConfiguration(IConfiguration configuration, string configSectionName = PostgresContactUsOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

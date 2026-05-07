@@ -1,8 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Lyo.Common.Enums;
-using Lyo.Hashing;
 using Lyo.Exceptions;
+using Lyo.Hashing;
 using PackageMetadataModel = Lyo.PackageMetadata.PackageMetadata;
 
 namespace Lyo.Diagnostic.StackTrace;
@@ -44,12 +43,8 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     /// <summary>Detects "   ---> ExceptionType: message" inner-exception separator.</summary>
     private static readonly Regex InnerExceptionSeparator = new(@"^\s*-{3}>\s*.+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    /// <summary>
-    /// Namespace prefixes always treated as BCL / Microsoft platform (not optional NuGet).
-    /// </summary>
-    private static readonly string[] BuiltInSystemPrefixes = [
-        "System.", "Microsoft.", "MS.", "Windows.", "mscorlib.", "Interop.", "Internal."
-    ];
+    /// <summary>Namespace prefixes always treated as BCL / Microsoft platform (not optional NuGet).</summary>
+    private static readonly string[] BuiltInSystemPrefixes = ["System.", "Microsoft.", "MS.", "Windows.", "mscorlib.", "Interop.", "Internal."];
 
     private static readonly string[] TestFrameworkPrefixes = [
         "NUnit.", "Xunit.", "xUnit.", "MSTest.", "Microsoft.VisualStudio.TestTools.", "Microsoft.VisualStudio.TestPlatform.", "NUnit3."
@@ -105,17 +100,6 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         return DecodeAsyncWithStore(rawTrace, ct);
     }
 
-    private async Task<DecodedStackTrace> DecodeAsyncWithStore(string rawTrace, CancellationToken ct)
-    {
-        var keys = CollectStrippedMethodKeys(rawTrace);
-        var map = keys.Count == 0
-            ? new Dictionary<string, PackageMetadataModel?>()
-            : await _options.PackageMetadataStore!
-                .TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
-
-        return await DecodeInternalAsync(rawTrace, null, ct, map).ConfigureAwait(false);
-    }
-
     /// <inheritdoc />
     public async Task<DecodedStackTrace> DecodeAsync(Exception exception, CancellationToken ct = default)
     {
@@ -125,10 +109,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
 
         var store = _options.PackageMetadataStore;
         var keys = CollectStrippedMethodKeysFromException(exception);
-        var map = keys.Count == 0
-            ? new Dictionary<string, PackageMetadataModel?>()
-            : await store.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
-
+        var map = keys.Count == 0 ? new Dictionary<string, PackageMetadataModel?>() : await store.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
         var inners = new List<DecodedStackTrace>();
         var inner = exception.InnerException;
         while (inner is not null) {
@@ -137,13 +118,25 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
             inner = inner.InnerException;
         }
 
-        var rawOuter =
-            $"{exception.GetType().FullName}: {exception.Message}\n{exception.StackTrace ?? string.Empty}";
+        var rawOuter = $"{exception.GetType().FullName}: {exception.Message}\n{exception.StackTrace ?? string.Empty}";
         return await DecodeInternalAsync(rawOuter, inners, ct, map).ConfigureAwait(false);
     }
 
-    private async Task<DecodedStackTrace> DecodeInternalAsync(string rawTrace, IReadOnlyList<DecodedStackTrace>? prebuiltInners,
-        CancellationToken ct, IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap = null)
+    private async Task<DecodedStackTrace> DecodeAsyncWithStore(string rawTrace, CancellationToken ct)
+    {
+        var keys = CollectStrippedMethodKeys(rawTrace);
+        var map = keys.Count == 0
+            ? new Dictionary<string, PackageMetadataModel?>()
+            : await _options.PackageMetadataStore!.TryGetManyForStrippedMethodPrefixesAsync(keys.ToList(), ct).ConfigureAwait(false);
+
+        return await DecodeInternalAsync(rawTrace, null, ct, map).ConfigureAwait(false);
+    }
+
+    private async Task<DecodedStackTrace> DecodeInternalAsync(
+        string rawTrace,
+        IReadOnlyList<DecodedStackTrace>? prebuiltInners,
+        CancellationToken ct,
+        IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap = null)
     {
         SplitTrace(rawTrace, out var messageLines, out var frameLines, out var innerBlocks);
         var allFrames = frameLines.Select(TryParseFrame).OfType<StackFrame>().ToList();
@@ -158,7 +151,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         if (prebuiltInners is not null)
             inners = prebuiltInners.ToList();
         else {
-            inners = new List<DecodedStackTrace>(innerBlocks.Count);
+            inners = new(innerBlocks.Count);
             foreach (var b in innerBlocks)
                 inners.Add(await DecodeInternalAsync(b, [], ct, enrichmentMap).ConfigureAwait(false));
         }
@@ -167,12 +160,11 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var deepest = ResolveDeepestUserFrame(userFrames, inners);
         var lastSystem = systemFrames.Count > 0 ? systemFrames[0] : null;
         return new(
-            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest,
-            lastSystem, BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
+            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest, lastSystem,
+            BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
     }
 
-    private async Task EnrichPackageMetadataAsync(List<StackFrame> allFrames, CancellationToken ct,
-        IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap)
+    private async Task EnrichPackageMetadataAsync(List<StackFrame> allFrames, CancellationToken ct, IReadOnlyDictionary<string, PackageMetadataModel?>? enrichmentMap)
     {
         if (allFrames.Count == 0)
             return;
@@ -190,14 +182,11 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         for (var i = 0; i < allFrames.Count; i++)
             keys[i] = StripForAnalysis(allFrames[i].FullMethod);
 
-        var map =
-            await store.TryGetManyForStrippedMethodPrefixesAsync(keys, ct).ConfigureAwait(false);
-
+        var map = await store.TryGetManyForStrippedMethodPrefixesAsync(keys, ct).ConfigureAwait(false);
         ApplyPackageMetadataMap(allFrames, map);
     }
 
-    private static void ApplyPackageMetadataMap(List<StackFrame> allFrames,
-        IReadOnlyDictionary<string, PackageMetadataModel?> map)
+    private static void ApplyPackageMetadataMap(List<StackFrame> allFrames, IReadOnlyDictionary<string, PackageMetadataModel?> map)
     {
         for (var i = 0; i < allFrames.Count; i++) {
             var f = allFrames[i];
@@ -207,7 +196,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         }
     }
 
-    /// <summary>All stripped methods used for package lookups across this textual trace and nested inner blocks (<see cref="SplitTrace"/> semantics).</summary>
+    /// <summary>All stripped methods used for package lookups across this textual trace and nested inner blocks (<see cref="SplitTrace" /> semantics).</summary>
     private static HashSet<string> CollectStrippedMethodKeys(string rawTrace)
     {
         var set = new HashSet<string>(StringComparer.Ordinal);
@@ -231,8 +220,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
 
     private static void CollectStrippedMethodKeysInto(string rawTrace, HashSet<string> into)
     {
-        SplitTrace(rawTrace, out _, out var frameLines, out var innerBlocks);
-
+        SplitTrace(rawTrace, out var _, out var frameLines, out var innerBlocks);
         foreach (var line in frameLines) {
             var match = FrameRegex.Match(line);
             if (!match.Success)
@@ -260,8 +248,8 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var deepest = ResolveDeepestUserFrame(userFrames, inners);
         var lastSystem = systemFrames.Count > 0 ? systemFrames[0] : null;
         return new(
-            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest,
-            lastSystem, BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
+            string.Join("\n", messageLines).Trim(), allFrames, userFrames, systemFrames, testFrames, asyncFrames, lambdaFrames, crashSite, crashConf, deepest, lastSystem,
+            BuildGroups(analysisFrames), BuildNamespaces(userFrames), DetectRecursion(analysisFrames), BuildFingerprint(userFrames), inners);
     }
 
     private static void SplitTrace(string raw, out List<string> messageLines, out List<string> frameLines, out List<string> innerBlocks)
@@ -365,8 +353,8 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     }
 
     /// <summary>
-    /// Innermost user frame across this exception and nested inners (first user frame in the innermost inner that has one, else
-    /// outer trace’s innermost user frame). Mirrors <see cref="ResolveLikelyCrashSite" /> when root cause is user code.
+    /// Innermost user frame across this exception and nested inners (first user frame in the innermost inner that has one, else outer trace’s innermost user frame). Mirrors
+    /// <see cref="ResolveLikelyCrashSite" /> when root cause is user code.
     /// </summary>
     private static StackFrame? ResolveDeepestUserFrame(IReadOnlyList<StackFrame> outerUserFrames, IReadOnlyList<DecodedStackTrace> inners)
     {
@@ -382,9 +370,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         return null;
     }
 
-    /// <summary>
-    /// Uses the first user-code frame of the innermost nested exception that has one (root cause). Falls back to the outer trace’s first user frame.
-    /// </summary>
+    /// <summary>Uses the first user-code frame of the innermost nested exception that has one (root cause). Falls back to the outer trace’s first user frame.</summary>
     private static (StackFrame? site, CrashSiteConfidence confidence) ResolveLikelyCrashSite(IReadOnlyList<StackFrame> outerUserFrames, IReadOnlyList<DecodedStackTrace> inners)
     {
         for (var i = inners.Count - 1; i >= 0; i--) {
@@ -473,11 +459,11 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
             if (bestRun > 0) {
                 if (SegmentContainsRecursionRelevantFrame(frames, i, bestRun))
                     results.Add(new(frames[i], bestRun, i));
+
                 i += bestRun;
             }
-            else {
+            else
                 i++;
-            }
         }
 
         return results;
@@ -485,8 +471,8 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
 
     /// <summary>
     /// Repeating known BCL / third-party-only tails (e.g. AutoMapper <c>Map → Map</c>) are ignored. Under
-    /// <see cref="StackTraceDecoderOptions.RestrictUserCodeToListedPrefixes" />, app namespaces are classified as system for
-    /// user-frame counting but must still count here so real overflows are detected.
+    /// <see cref="StackTraceDecoderOptions.RestrictUserCodeToListedPrefixes" />, app namespaces are classified as system for user-frame counting but must still count here so real
+    /// overflows are detected.
     /// </summary>
     private bool SegmentContainsRecursionRelevantFrame(IReadOnlyList<StackFrame> frames, int start, int length)
     {
@@ -512,6 +498,7 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
     {
         if (TestFrameworkPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal)))
             return true;
+
         return _systemPrefixes.Any(p => stripped.StartsWith(p, StringComparison.Ordinal));
     }
 
@@ -545,6 +532,6 @@ public sealed class StackTraceDecoder : IStackTraceDecoder
         var key = string.Join("|", userFrames.Select(f => f.FullMethod));
         var hash = Hasher.ComputeSha2(256, Encoding.UTF8.GetBytes(key));
         // First 8 bytes → 16 uppercase hex chars (64-bit prefix of SHA-256).
-        return HexEncoding.ToHexString(hash.AsSpan(0, 8), TextLetterCase.Upper);
+        return HexEncoding.ToHexString(hash.AsSpan(0, 8));
     }
 }

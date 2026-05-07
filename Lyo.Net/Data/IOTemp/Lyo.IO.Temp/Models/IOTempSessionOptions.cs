@@ -3,7 +3,10 @@ using Lyo.IO.Temp.Enums;
 
 namespace Lyo.IO.Temp.Models;
 
-/// <summary>Per-session layout, naming, limits, and overflow behaviour. When created via <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" />, <see cref="RootDirectory" /> is set to the service directory.</summary>
+/// <summary>
+/// Per-session layout, naming, limits, and overflow behaviour. When created via <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" />, <see cref="RootDirectory" /> is set
+/// to the service directory.
+/// </summary>
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempSessionOptions
 {

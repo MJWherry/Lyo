@@ -1,3 +1,3 @@
-using Xunit;
+using Lyo.FileMetadataStore.Postgres.Tests;
 
-[assembly: AssemblyFixture(typeof(Lyo.FileMetadataStore.Postgres.Tests.FileMetadataPostgresFixture))]
+[assembly: AssemblyFixture(typeof(FileMetadataPostgresFixture))]

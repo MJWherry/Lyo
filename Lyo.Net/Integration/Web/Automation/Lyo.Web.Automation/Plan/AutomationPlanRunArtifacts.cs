@@ -90,7 +90,8 @@ internal sealed class AutomationPlanRunArtifacts : IDisposable
             var json = JsonSerializer.Serialize(
                 new VariableDumpDto(
                     runId, stepIndex, phase, strings.ToDictionary(static x => x.Key, static x => x.Value, StringComparer.Ordinal),
-                    stringLists.ToDictionary(static kvp => kvp.Key, static kvp => kvp.Value is List<string> l ? l : kvp.Value.ToList(), StringComparer.Ordinal)), SerializerOptions);
+                    stringLists.ToDictionary(static kvp => kvp.Key, static kvp => kvp.Value is List<string> l ? l : kvp.Value.ToList(), StringComparer.Ordinal)),
+                SerializerOptions);
 
             using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous)) {
                 using (var w = new StreamWriter(fs, new UTF8Encoding(false)))

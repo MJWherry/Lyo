@@ -27,9 +27,7 @@ public static class Extensions
         /// }
         /// </code>
         /// </remarks>
-        public IServiceCollection AddEndatoClientFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = EndatoClientOptions.SectionName)
+        public IServiceCollection AddEndatoClientFromConfiguration(IConfiguration configuration, string configSectionName = EndatoClientOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

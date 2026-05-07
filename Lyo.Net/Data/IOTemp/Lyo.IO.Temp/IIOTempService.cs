@@ -3,12 +3,11 @@ using Lyo.IO.Temp.Models;
 namespace Lyo.IO.Temp;
 
 /// <summary>
-/// Coordinates temporary file and directory storage under a unique <see cref="ServiceDirectory" />: session creation, keyed session reuse, one-off paths, and age-based cleanup.
+/// Coordinates temporary file and directory storage under a unique <see cref="ServiceDirectory" />: session creation, keyed session reuse, one-off paths, and age-based
+/// cleanup.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Disposing the service attempts to delete the entire service directory. Dispose open <see cref="IIOTempSession" /> instances first so their directories are not in use.
-/// </para>
+/// <para>Disposing the service attempts to delete the entire service directory. Dispose open <see cref="IIOTempSession" /> instances first so their directories are not in use.</para>
 /// </remarks>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempService : IDisposable

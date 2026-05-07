@@ -27,7 +27,6 @@ var valueInSi = UnitConversion.Convert(1.0, pressureUnit, pressureUnit);
 - [`Lyo.Scientific.Functions`](../Lyo.Scientific.Functions/README.md): F# implementations for scientific formulas.
 - [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md): shared quantities and typed numerical models.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Scientific.csproj`.)*

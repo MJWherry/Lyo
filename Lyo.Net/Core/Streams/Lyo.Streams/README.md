@@ -1,6 +1,7 @@
 # Lyo.Streams
 
-Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: **`HashingStream`**).
+Common stream implementations including **TeeStream**, **CountingStream**, **ProgressStream**, **ConcatenatedStream**, etc. (**incremental hashing** lives in **`Lyo.Hashing`**: *
+*`HashingStream`**).
 
 ## Features
 
@@ -36,7 +37,6 @@ await concatenated.CopyToAsync(outputStream);
 var progress = new Progress<long>(bytes => Console.WriteLine($"Copied {bytes} bytes"));
 await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 ```
-
 
 ## Dependencies
 

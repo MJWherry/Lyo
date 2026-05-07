@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.Sms.Twilio.Postgres.Tests.TwilioPostgresFixture))]
+using Lyo.Sms.Twilio.Postgres.Tests;
+
+[assembly: AssemblyFixture(typeof(TwilioPostgresFixture))]

@@ -7,7 +7,6 @@ public class HashCodeHelpersTests
     {
         var first = HashCodeHelpers.Combine("abc", 123, null);
         var second = HashCodeHelpers.Combine("abc", 123, null);
-
         Assert.Equal(first, second);
     }
 
@@ -16,7 +15,6 @@ public class HashCodeHelpersTests
     {
         var first = HashCodeHelpers.Combine("abc", 123);
         var second = HashCodeHelpers.Combine("abc", 124);
-
         Assert.NotEqual(first, second);
     }
 
@@ -24,7 +22,6 @@ public class HashCodeHelpersTests
     public void Combine_WithNullValues_DoesNotThrow()
     {
         var hash = HashCodeHelpers.Combine(null, null);
-
         Assert.IsType<int>(hash);
     }
 }

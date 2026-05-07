@@ -1184,13 +1184,11 @@ public class BaseWhereClauseService : IWhereClauseService
     /// <summary>Types that support Contains/StartsWith/EndsWith/Regex using string semantics (including Guid, matched via string representation).</summary>
     private static bool SupportsStringMethodComparisons(Type propertyType) => propertyType == typeof(string) || IsGuidLikeType(propertyType);
 
-    private static Type GetFilterValueParseType(Type propertyType, ComparisonOperatorEnum comparison) 
-        => SupportsStringMethodComparisons(propertyType) && IsStringOrRegexComparison(comparison) 
-            ? typeof(string) 
-            : propertyType;
+    private static Type GetFilterValueParseType(Type propertyType, ComparisonOperatorEnum comparison)
+        => SupportsStringMethodComparisons(propertyType) && IsStringOrRegexComparison(comparison) ? typeof(string) : propertyType;
 
     /// <summary>RHS for string-method / regex filters on Guid must stay <see cref="string" /> (partial fragments); do not convert to <see cref="Guid" />.</summary>
-    private static Expression GetRhsConstantExpression(object? parsedValue, Type parseType, Expression propertyExpression, ComparisonOperatorEnum comparison) 
+    private static Expression GetRhsConstantExpression(object? parsedValue, Type parseType, Expression propertyExpression, ComparisonOperatorEnum comparison)
         => parseType == typeof(string) && propertyExpression.Type != typeof(string) && IsGuidLikeType(propertyExpression.Type) && IsStringOrRegexComparison(comparison)
             ? Expression.Constant(parsedValue, typeof(string))
             : GetValueExpression(parsedValue, parseType, propertyExpression);

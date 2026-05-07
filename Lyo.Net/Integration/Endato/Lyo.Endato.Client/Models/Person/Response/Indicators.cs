@@ -33,6 +33,5 @@ public sealed record Indicators(
 {
     public override string ToString()
         => $"Indicators: bankruptcy={HasBankruptcyRecords}, liens={HasLienRecords}, judgments={HasJudgmentRecords}, " +
-           $"property={HasPropertyRecords}, emails={HasEmails}, mobile={HasMobilePhones}, landlines={HasLandLines}, " +
-           $"addresses={HasAddresses}, debt={HasDebtRecords}";
+            $"property={HasPropertyRecords}, emails={HasEmails}, mobile={HasMobilePhones}, landlines={HasLandLines}, " + $"addresses={HasAddresses}, debt={HasDebtRecords}";
 }

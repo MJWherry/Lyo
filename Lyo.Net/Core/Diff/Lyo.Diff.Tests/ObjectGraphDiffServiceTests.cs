@@ -1,4 +1,5 @@
 using Lyo.Diff.ObjectGraph;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 
 namespace Lyo.Diff.Tests;

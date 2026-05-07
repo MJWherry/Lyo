@@ -77,7 +77,6 @@ await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Tag.Postgres.csproj`.)*

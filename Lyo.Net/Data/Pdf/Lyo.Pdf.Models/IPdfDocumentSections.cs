@@ -1,6 +1,6 @@
 namespace Lyo.Pdf.Models;
 
-/// <summary>Multi-page section boundaries via <see cref="IPdfReader.Text" /> (<see cref="ITextExtractor"/>).</summary>
+/// <summary>Multi-page section boundaries via <see cref="IPdfReader.Text" /> (<see cref="ITextExtractor" />).</summary>
 public interface IPdfDocumentSections
 {
     IReadOnlyList<PdfWord> GetWordsBetweenSections(

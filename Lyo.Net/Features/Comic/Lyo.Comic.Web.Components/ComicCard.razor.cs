@@ -25,8 +25,7 @@ public partial class ComicCard
     [Parameter]
     public EventCallback<ComicSeries> OnOpenSeries { get; set; }
 
-    private string? TypeBadge
-        => Series.ComicType == ComicType.Unknown ? null : Series.ComicType.ToString();
+    private string? TypeBadge => Series.ComicType == ComicType.Unknown ? null : Series.ComicType.ToString();
 
     private Task TapCoverAsync() => OnRead.InvokeAsync(Series);
 

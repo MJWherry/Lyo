@@ -25,7 +25,6 @@ var result = await mq.CheckHealthAsync();
 
 Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`—health comes from the service, no separate registration.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Health.csproj`.)*

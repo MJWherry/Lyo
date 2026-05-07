@@ -5,20 +5,13 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Temperature
 {
+    public double Kelvin { get; }
 
-    public Temperature(double kelvin)
-
-    {
-
-        Kelvin = MathValueGuards.PositiveFinite(kelvin, nameof(kelvin));
-
-    }
-
-
-    public double Kelvin { get;  }
     public double Celsius => Kelvin - 273.15d;
 
     public double Fahrenheit => Celsius * 9d / 5d + 32d;
+
+    public Temperature(double kelvin) => Kelvin = MathValueGuards.PositiveFinite(kelvin, nameof(kelvin));
 
     public static Temperature FromKelvin(double kelvin) => new(kelvin);
 

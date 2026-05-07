@@ -713,7 +713,6 @@ public sealed class LocalCacheService : ICacheService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         OperationHelpers.ThrowIfNull(_payloadCodec, "Typed payload cache requires ICachePayloadCodec.");
         OperationHelpers.ThrowIfNull(_payloadSerializer, "Typed payload cache requires ICachePayloadSerializer.");
-
         var effectiveDuration = duration ?? _options.DefaultExpiration;
         if (!_enabled)
             return await SerializedPayloadTupleFactoryOnlyAsync(factory, token).ConfigureAwait(false);

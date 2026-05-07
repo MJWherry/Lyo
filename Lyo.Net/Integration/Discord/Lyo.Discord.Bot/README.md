@@ -88,7 +88,6 @@ public sealed class MyBot : LyoDiscordBotBase
 
 The database schema itself lives in **Lyo.Discord.Postgres**; this package only drives sync through the API.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Discord.Bot.csproj`.)*

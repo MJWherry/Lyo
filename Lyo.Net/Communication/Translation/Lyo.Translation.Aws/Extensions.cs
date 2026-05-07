@@ -19,9 +19,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration).</param>
         /// <param name="configSectionName">The configuration section name (defaults to "AwsTranslationOptions").</param>
         /// <returns>The service collection for chaining.</returns>
-        public IServiceCollection AddAwsTranslationServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = AwsTranslationOptions.SectionName)
+        public IServiceCollection AddAwsTranslationServiceFromConfiguration(IConfiguration configuration, string configSectionName = AwsTranslationOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

@@ -3,6 +3,7 @@
 Part of the [Lyo](../../../README.md) workspace: **`Portfolio`**.
 
 ## Related projects
+
 - [`Lyo.Cache`](../../Core/Cache/Lyo.Cache/README.md)
 - [`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md)
 - [`Lyo.Csv`](../../Data/Csv/Lyo.Csv/README.md)

@@ -52,9 +52,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresEndatoOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddEndatoDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresEndatoOptions.SectionName)
+        public IServiceCollection AddEndatoDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresEndatoOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

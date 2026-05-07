@@ -23,7 +23,6 @@ public sealed class FileDownloadAccessLinkEntityConfiguration : IEntityTypeConfi
         builder.Property(e => e.IsRevoked).IsRequired().HasDefaultValue(false).HasColumnName("is_revoked");
         builder.Property(e => e.RevokedUtc).HasColumnType("timestamp with time zone").HasColumnName("revoked_utc");
         builder.Property(e => e.TenantId).HasMaxLength(256).HasColumnName("tenant_id");
-
         builder.HasIndex(e => e.TokenHash).IsUnique().HasDatabaseName("ix_file_download_access_links_token_hash");
         builder.HasIndex(e => e.FileId).HasDatabaseName("ix_file_download_access_links_file_id");
         builder.HasIndex(e => e.ExpiresAtUtc).HasDatabaseName("ix_file_download_access_links_expires_at_utc");

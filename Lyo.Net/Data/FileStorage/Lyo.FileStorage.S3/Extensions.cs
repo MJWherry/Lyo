@@ -45,8 +45,7 @@ public static class Extensions
         /// Same as <see cref="AddKeyedS3MultipartUploadService" /> — alias for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO,
         /// Wasabi, R2, etc.).
         /// </summary>
-        public IServiceCollection AddKeyedAwsMultipartUploadService(string serviceKey)
-            => services.AddKeyedS3MultipartUploadService(serviceKey);
+        public IServiceCollection AddKeyedAwsMultipartUploadService(string serviceKey) => services.AddKeyedS3MultipartUploadService(serviceKey);
 
         /// <summary>Adds a keyed S3 file storage service (AWS, Backblaze B2, MinIO, etc.) to the service collection using a builder pattern.</summary>
         /// <param name="keyName">The key name for the keyed file storage service</param>
@@ -67,7 +66,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
             return new(services, keyName);
         }
-   
+
         /// <summary>Registers IAmazonS3 from configuration. Binds <see cref="S3FileStorageOptions" /> from the specified configuration section.</summary>
         /// <param name="configuration">The configuration (e.g. builder.Configuration).</param>
         /// <param name="configSectionName">The configuration section name (defaults to <see cref="S3FileStorageOptions.SectionName" />).</param>

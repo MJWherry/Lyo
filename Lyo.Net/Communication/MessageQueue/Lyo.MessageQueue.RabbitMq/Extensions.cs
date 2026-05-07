@@ -8,12 +8,35 @@ namespace Lyo.MessageQueue.RabbitMq;
 
 public static class Extensions
 {
+    private static IServiceCollection SetupRabbitMqServiceCore(IServiceCollection services, Dictionary<string, object?>? connectionProperties = null)
+    {
+        services.AddSingleton<IConnectionFactory>(provider => {
+            var environment = provider.GetRequiredService<IHostEnvironment>();
+            var options = provider.GetRequiredService<RabbitMqOptions>();
+            var factory = new ConnectionFactory {
+                HostName = options.Host,
+                VirtualHost = options.VirtualHost,
+                Port = options.Port,
+                UserName = options.Username,
+                Password = options.Password,
+                ClientProvidedName = $"{Environment.MachineName} - {environment.ApplicationName} ({environment.EnvironmentName})",
+                ClientProperties = connectionProperties ?? []
+            };
+
+            return factory;
+        });
+
+        services.AddSingleton<RabbitMqService>()
+            .AddSingleton<IRabbitMqService, RabbitMqService>(provider => provider.GetRequiredService<RabbitMqService>())
+            .AddSingleton<IMqService, RabbitMqService>(provider => provider.GetRequiredService<RabbitMqService>());
+
+        return services;
+    }
+
     extension(IServiceCollection services)
     {
         /// <summary>Sets up RabbitMQ service with explicit options configuration via action.</summary>
-        public IServiceCollection SetupRabbitMqService(
-            Dictionary<string, object?> connectionProperties,
-            Action<RabbitMqOptions> configureOptions)
+        public IServiceCollection SetupRabbitMqService(Dictionary<string, object?> connectionProperties, Action<RabbitMqOptions> configureOptions)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(connectionProperties);
@@ -52,30 +75,5 @@ public static class Extensions
 
             return SetupRabbitMqServiceCore(services, connectionProperties);
         }
-    }
-
-    private static IServiceCollection SetupRabbitMqServiceCore(IServiceCollection services, Dictionary<string, object?>? connectionProperties = null)
-    {
-        services.AddSingleton<IConnectionFactory>(provider => {
-            var environment = provider.GetRequiredService<IHostEnvironment>();
-            var options = provider.GetRequiredService<RabbitMqOptions>();
-            var factory = new ConnectionFactory {
-                HostName = options.Host,
-                VirtualHost = options.VirtualHost,
-                Port = options.Port,
-                UserName = options.Username,
-                Password = options.Password,
-                ClientProvidedName = $"{Environment.MachineName} - {environment.ApplicationName} ({environment.EnvironmentName})",
-                ClientProperties = connectionProperties ?? []
-            };
-
-            return factory;
-        });
-
-        services.AddSingleton<RabbitMqService>()
-            .AddSingleton<IRabbitMqService, RabbitMqService>(provider => provider.GetRequiredService<RabbitMqService>())
-            .AddSingleton<IMqService, RabbitMqService>(provider => provider.GetRequiredService<RabbitMqService>());
-
-        return services;
     }
 }

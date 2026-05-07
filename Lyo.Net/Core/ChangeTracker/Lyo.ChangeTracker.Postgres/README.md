@@ -31,7 +31,6 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 - `change_tracker.changes` stores target `EntityRef`, optional actor `EntityRef`, JSON old values, JSON changed values, and timestamps
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.ChangeTracker.Postgres.csproj`.)*

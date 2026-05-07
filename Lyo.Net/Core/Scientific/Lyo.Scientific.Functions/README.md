@@ -21,7 +21,6 @@ var life = SolidMechanicsFunctions.FatigueLifeCycles(new SNCurveInput(Pressure.F
 
 Use `ScientificFormulaRegistry.All` when you want to expose a curated set of available production formulas in a UI, workflow, or documentation generator.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Scientific.Functions.csproj`.)*

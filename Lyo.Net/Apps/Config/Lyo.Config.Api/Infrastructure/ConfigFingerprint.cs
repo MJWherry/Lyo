@@ -7,7 +7,6 @@ internal static class ConfigFingerprint
     internal static byte[] CanonicalUtf8(ResolvedConfigRecord resolved)
     {
         var sorted = resolved.Items.OrderBy(i => i.Definition.Key, StringComparer.Ordinal).ToList();
-
         using var ms = new MemoryStream();
         using (var writer = new Utf8JsonWriter(ms, new() { Indented = false })) {
             writer.WriteStartObject();
@@ -22,7 +21,6 @@ internal static class ConfigFingerprint
                 writer.WriteBoolean("definitionIsRequired", it.Definition.IsRequired);
                 WriteDateUtc(writer, "definitionCreatedUtc", it.Definition.CreatedTimestamp);
                 WriteNullableDateUtc(writer, "definitionUpdatedUtc", it.Definition.UpdatedTimestamp);
-
                 if (it.Binding != null) {
                     writer.WriteString("bindingId", it.Binding.Id);
                     WriteDateUtc(writer, "bindingCreatedUtc", it.Binding.CreatedTimestamp);
@@ -53,8 +51,8 @@ internal static class ConfigFingerprint
         return '"' + hex + '"';
     }
 
-    private static void WriteDateUtc(Utf8JsonWriter writer, string name, DateTime utc) =>
-        writer.WriteString(name, DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture));
+    private static void WriteDateUtc(Utf8JsonWriter writer, string name, DateTime utc)
+        => writer.WriteString(name, DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture));
 
     private static void WriteNullableDateUtc(Utf8JsonWriter writer, string name, DateTime? utc)
     {

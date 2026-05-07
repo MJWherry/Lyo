@@ -7,35 +7,32 @@ namespace Lyo.Config.Api.Hosting;
 public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions>
     where TOptions : class, new()
 {
-    private readonly ConfigApiResolvedLedger _ledger;
     private readonly string _definitionKey;
-    private readonly ConfigApiMissingDefinitionKeyBehavior _missing;
 
     private readonly object _gate = new();
+    private readonly ConfigApiResolvedLedger _ledger;
     private readonly List<Action<TOptions, string?>> _listeners = [];
+    private readonly ConfigApiMissingDefinitionKeyBehavior _missing;
     private readonly IDisposable _reloadSubscription;
-
-    private bool _initialized;
     private TOptions _current = null!;
 
-    public ConfigApiOptionsMonitor(
-        ConfigApiResolvedLedger ledger,
-        string definitionKey,
-        ConfigApiMissingDefinitionKeyBehavior missingDefinitionKeyBehavior)
+    private bool _initialized;
+
+    public ConfigApiOptionsMonitor(ConfigApiResolvedLedger ledger, string definitionKey, ConfigApiMissingDefinitionKeyBehavior missingDefinitionKeyBehavior)
     {
         _ledger = ledger;
         if (definitionKey == null)
             throw new ArgumentNullException(nameof(definitionKey));
+
         _definitionKey = definitionKey.Trim();
         if (_definitionKey.Length == 0)
             throw new ArgumentException("Definition key cannot be empty.", nameof(definitionKey));
-        _missing = missingDefinitionKeyBehavior;
 
+        _missing = missingDefinitionKeyBehavior;
         _reloadSubscription = ChangeToken.OnChange(_ledger.GetReloadToken, Reload);
     }
 
-    public TOptions CurrentValue
-    {
+    public TOptions CurrentValue {
         get {
             lock (_gate) {
                 if (!_initialized)
@@ -60,6 +57,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
     {
         if (listener == null)
             throw new ArgumentNullException(nameof(listener));
+
         lock (_gate) {
             if (!_initialized)
                 Prime();
@@ -68,7 +66,6 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
         }
 
         listener(CurrentValue, Options.DefaultName);
-
         return new Registration(this, listener);
     }
 
@@ -76,7 +73,6 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
     {
         TOptions next;
         List<Action<TOptions, string?>> snapshot;
-
         lock (_gate) {
             next = Materialize(_ledger.Current);
             _current = next;
@@ -94,33 +90,34 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
         _initialized = true;
     }
 
-    /// <remarks>Prefer <see cref="ResolvedConfigRecord.TryGetValue" /> so absent keys surface via <paramref name="missingDefinitionKeyBehavior"/>.</remarks>
+    /// <remarks>Prefer <see cref="ResolvedConfigRecord.TryGetValue" /> so absent keys surface via <paramref name="missingDefinitionKeyBehavior" />.</remarks>
     private TOptions Materialize(ResolvedConfigRecord? record)
     {
-        if (record == null)
+        if (record == null) {
             return _missing == ConfigApiMissingDefinitionKeyBehavior.Throw
                 ? throw new InvalidOperationException("No Config API snapshot is available yet (ledger empty). UseDefaultInstance disables this fault.")
                 : new TOptions();
+        }
 
-        if (!record.TryGetValue(_definitionKey, out var configValue) || configValue == null)
+        if (!record.TryGetValue(_definitionKey, out var configValue) || configValue == null) {
             return _missing == ConfigApiMissingDefinitionKeyBehavior.Throw
                 ? throw new InvalidOperationException(
                     $"Definition key '{_definitionKey}' is missing from resolved Config API payload for '{record.ForEntityType}:{record.ForEntityId}'.")
                 : new TOptions();
+        }
 
         var deserialized = configValue.GetValue<TOptions>(ConfigJsonSerializerOptions.Default);
-
         return deserialized ?? _missing switch {
             ConfigApiMissingDefinitionKeyBehavior.Throw => throw new InvalidOperationException(
                 $"JSON for definition key '{_definitionKey}' did not deserialize to {typeof(TOptions).Name}."),
-            _ => new TOptions(),
+            var _ => new()
         };
     }
 
     private sealed class Registration : IDisposable
     {
-        private ConfigApiOptionsMonitor<TOptions>? _owner;
         private readonly Action<TOptions, string?> _listener;
+        private ConfigApiOptionsMonitor<TOptions>? _owner;
 
         public Registration(ConfigApiOptionsMonitor<TOptions> owner, Action<TOptions, string?> listener)
         {

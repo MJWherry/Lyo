@@ -35,7 +35,6 @@ public class ErrorHandlingTests : IDisposable
 
         await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
         await Task.Delay(500, TestContext.Current.CancellationToken);
-
         Assert.True(errorFired);
         Assert.NotNull(caughtException);
         Assert.IsType<InvalidOperationException>(caughtException);

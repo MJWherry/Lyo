@@ -279,9 +279,8 @@ public static class FormatHelpers
     {
         ArgumentHelpers.ThrowIfNull(value, paramName);
         var len = value.Length;
-        if (len < minLength || len > maxLength) {
+        if (len < minLength || len > maxLength)
             ThrowInvalidFormat($"Value length {len} is outside valid range [{minLength}, {maxLength}]: {value}", paramName, value, $"Length between {minLength} and {maxLength}");
-        }
     }
 
     /// <summary>Throws an InvalidFormatException if the condition is true.</summary>

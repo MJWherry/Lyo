@@ -81,7 +81,6 @@ var testResult = await ttsService.TestConnectionAsync();
 - The library uses Windows SAPI which is only available on Windows
 - Audio output format is always WAV when using Windows Speech Synthesis
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Tts.WindowsSpeech.csproj`.)*

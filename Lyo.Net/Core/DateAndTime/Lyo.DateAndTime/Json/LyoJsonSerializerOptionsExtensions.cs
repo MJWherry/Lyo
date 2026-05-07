@@ -3,10 +3,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.DateAndTime.Json;
 
-/// <summary>Registers <see cref="DateOnlyModel"/> and <see cref="TimeOnlyModel"/> JSON converters on <see cref="JsonSerializerOptions"/>.</summary>
+/// <summary>Registers <see cref="DateOnlyModel" /> and <see cref="TimeOnlyModel" /> JSON converters on <see cref="JsonSerializerOptions" />.</summary>
 public static class LyoJsonSerializerOptionsExtensions
 {
-    /// <summary>Adds <see cref="DateOnlyModelConverter"/> and <see cref="TimeOnlyModelConverter"/>.</summary>
+    /// <summary>Adds <see cref="DateOnlyModelConverter" /> and <see cref="TimeOnlyModelConverter" />.</summary>
     public static JsonSerializerOptions AddLyoDateOnlyModelConverters(this JsonSerializerOptions options)
     {
         ArgumentHelpers.ThrowIfNull(options);

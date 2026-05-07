@@ -1022,8 +1022,8 @@ public sealed class IOTempSession : IIOTempSession
 #region Disposal
 
     /// <summary>
-    /// Deletes <see cref="SessionDirectory" /> with retries on transient I/O errors, records metrics, and invokes <c>onDispose</c> from construction. Exceptions during delete are
-    /// logged; the session is still considered disposed.
+    /// Deletes <see cref="SessionDirectory" /> with retries on transient I/O errors, records metrics, and invokes <c>onDispose</c> from construction. Exceptions during delete
+    /// are logged; the session is still considered disposed.
     /// </summary>
     public void Dispose()
     {

@@ -1,6 +1,8 @@
 # Lyo.Result
 
-Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace and design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling the whole API layer.
+Railway-oriented **`Result` / `Result<T>`** and related types. This package is **orthogonal to** [`Lyo.Common`](../../Common/Lyo.Common/README.md) **`Result`** (different namespace
+and design); many feature libraries pick **`Lyo.Result`** when they want **rich `Error` graphs**, **builders**, **bulk/paged envelopes**, and **`Task` composition** without pulling
+the whole API layer.
 
 ## Concepts
 
@@ -20,7 +22,8 @@ Failures **carry one or more `Error` instances**—not a single string—so you 
 - **`StackTrace`**, **`Exception`**, **`InnerError`** (chained errors mimic exception chains).
 - **`Metadata`**, **`Timestamp`**.
 
-**Factory helpers** on `Error` include **`FromException`**, **`Validation`**, **`NotFound`**, **`Conflict`**, **`Unauthorized`**, etc., so call sites do not hand-roll severity/type for common cases.
+**Factory helpers** on `Error` include **`FromException`**, **`Validation`**, **`NotFound`**, **`Conflict`**, **`Unauthorized`**, etc., so call sites do not hand-roll severity/type
+for common cases.
 
 Validation-specific codes often flow through **`ValidationErrorCodes`**.
 
@@ -46,7 +49,8 @@ Optional presence without conflating “failed operation” with “no value”.
 
 ### Async composition
 
-**`AsyncResultExtensions`** provides **`ThenAsync`** (chain `Task<Result<…>>` only on success), **`OnSuccessAsync` / `OnFailureAsync`**, overloads that propagate **`CancellationToken`**, and adapters from **`Task`** + exceptions into **`Result`**.
+**`AsyncResultExtensions`** provides **`ThenAsync`** (chain `Task<Result<…>>` only on success), **`OnSuccessAsync` / `OnFailureAsync`**, overloads that propagate *
+*`CancellationToken`**, and adapters from **`Task`** + exceptions into **`Result`**.
 
 Use these to keep **async pipelines** linear without nested `if (!result.IsSuccess) return …` noise.
 
@@ -70,7 +74,8 @@ Use these to keep **async pipelines** linear without nested `if (!result.IsSucce
 ## When to choose this vs `Lyo.Common.Result`
 
 - Prefer **`Lyo.Result`** when you need **multiple errors**, **severity/type**, **bulk/paged wrappers**, or **async `ThenAsync` chains**.
-- Prefer **`Lyo.Common`** primitives when you are **only** inside code that already standardized on that **`Result`** surface and you do not want two result types in the same boundary.
+- Prefer **`Lyo.Common`** primitives when you are **only** inside code that already standardized on that **`Result`** surface and you do not want two result types in the same
+  boundary.
 
 ## See also
 

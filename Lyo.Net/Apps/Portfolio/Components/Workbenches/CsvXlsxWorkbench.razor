@@ -177,6 +177,7 @@
                         <MudText Typo="Typo.subtitle2">Merged (@_mergedTable.Rows.Count row(s))</MudText>
 
                         <DataTablePreview Table="@_mergedTable"/>
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedCsvAsync">Download merged .csv</MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadMergedXlsxAsync">Download merged .xlsx</MudButton>

@@ -14,8 +14,8 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
     private static readonly TimeSpan DefaultLockAcquireTimeout = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan DefaultLockDuration = TimeSpan.FromSeconds(10);
     private readonly FileMetadataStoreDbContext _dbContext;
-    private readonly ILogger<PostgresFileDownloadAccessService> _logger;
     private readonly ILockService _lockService;
+    private readonly ILogger<PostgresFileDownloadAccessService> _logger;
 
     public PostgresFileDownloadAccessService(FileMetadataStoreDbContext dbContext, ILockService lockService, ILoggerFactory? loggerFactory = null)
     {
@@ -30,10 +30,13 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
     {
         if (request.FileId == Guid.Empty)
             throw new ArgumentException("FileId is required.", nameof(request));
+
         if (request.MaxDownloads is <= 0)
             throw new ArgumentException("MaxDownloads must be > 0 when provided.", nameof(request));
+
         if (request.WindowStartUtc.HasValue && request.WindowEndUtc.HasValue && request.WindowStartUtc > request.WindowEndUtc)
             throw new ArgumentException("WindowStartUtc must be <= WindowEndUtc.", nameof(request));
+
         if (request.NotBeforeUtc.HasValue && request.ExpiresAtUtc.HasValue && request.NotBeforeUtc > request.ExpiresAtUtc)
             throw new ArgumentException("NotBeforeUtc must be <= ExpiresAtUtc.", nameof(request));
 
@@ -94,10 +97,13 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
 
         if (link.IsRevoked)
             return await FailAsync(FileDownloadAccessConsumeFailureReason.Revoked, link, actorId, ipAddress, "revoked", ct).ConfigureAwait(false);
+
         if (link.NotBeforeUtc.HasValue && now < link.NotBeforeUtc.Value)
             return await FailAsync(FileDownloadAccessConsumeFailureReason.NotYetValid, link, actorId, ipAddress, "not_before", ct).ConfigureAwait(false);
+
         if (link.ExpiresAtUtc.HasValue && now > link.ExpiresAtUtc.Value)
             return await FailAsync(FileDownloadAccessConsumeFailureReason.Expired, link, actorId, ipAddress, "expired", ct).ConfigureAwait(false);
+
         if ((link.WindowStartUtc.HasValue && now < link.WindowStartUtc.Value) || (link.WindowEndUtc.HasValue && now > link.WindowEndUtc.Value))
             return await FailAsync(FileDownloadAccessConsumeFailureReason.OutsideWindow, link, actorId, ipAddress, "outside_window", ct).ConfigureAwait(false);
 
@@ -118,7 +124,7 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
             return await FailAsync(failureReason, latest, actorId, ipAddress, "count_exhausted", ct).ConfigureAwait(false);
         }
 
-        var updatedDownloadCount = (link.DownloadCount + 1);
+        var updatedDownloadCount = link.DownloadCount + 1;
         await AppendAuditAsync(FileAuditEventType.AccessLinkAllowed.ToString(), "Success", link.FileId, actorId, ipAddress, null, ct).ConfigureAwait(false);
         _logger.LogDebug("Access link {AccessLinkId} consumed for file {FileId}; downloadCount={DownloadCount}", link.Id, link.FileId, updatedDownloadCount);
         return new(true, link.FileId, link.Id, null, updatedDownloadCount);
@@ -149,11 +155,11 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
                 ActorId = actorId,
                 Error = normalizedError
             });
+
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
-    private static string Base64UrlEncode(ReadOnlySpan<byte> input)
-        => Convert.ToBase64String(input).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    private static string Base64UrlEncode(ReadOnlySpan<byte> input) => Convert.ToBase64String(input).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     private static byte[] Base64UrlDecode(string input)
     {
@@ -161,8 +167,9 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         padded = (padded.Length % 4) switch {
             2 => padded + "==",
             3 => padded + "=",
-            _ => padded
+            var _ => padded
         };
+
         return Convert.FromBase64String(padded);
     }
 }

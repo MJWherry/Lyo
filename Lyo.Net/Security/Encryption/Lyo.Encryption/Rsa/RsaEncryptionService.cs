@@ -77,10 +77,7 @@ public sealed class RsaEncryptionService : EncryptionServiceBase, IDisposable, I
     }
 
     /// <summary> Disposes of the RSA instance and releases all resources. </summary>
-    public void Dispose()
-    {
-        Dispose(true);
-    }
+    public void Dispose() => Dispose(true);
 
     /// <summary>Gets the algorithm identifier for stream format versioning.</summary>
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.Rsa;

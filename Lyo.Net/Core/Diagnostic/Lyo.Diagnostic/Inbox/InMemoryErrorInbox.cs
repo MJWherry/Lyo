@@ -36,9 +36,8 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
     public IReadOnlyList<ErrorOccurrenceRecord> ListOccurrencesInGroup(ErrorGroupKey key, TimeSpan window)
     {
         var cutoff = DateTimeOffset.UtcNow - window;
-        lock (_lock) {
+        lock (_lock)
             return _occurrences.Where(r => r.OccurredAt >= cutoff && KeysEqual(r.GroupKey, key)).OrderByDescending(r => r.OccurredAt).ToList();
-        }
     }
 
     /// <inheritdoc />

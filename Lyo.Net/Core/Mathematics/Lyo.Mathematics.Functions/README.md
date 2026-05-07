@@ -33,7 +33,6 @@ var qr = LinearAlgebraFunctions.QrDecomposition(new double[,]
 
 Use `MathematicsFormulaRegistry.All` when you want a searchable list of the higher-value production formulas exposed by the library.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Mathematics.Functions.csproj`.)*

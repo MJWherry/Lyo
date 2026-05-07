@@ -158,10 +158,6 @@ Console.WriteLine($"Generated {batchResult.SuccessCount}/{batchResult.TotalCount
 ✅ **Validation**: Input validation for size limits and data requirements  
 ✅ **Test Coverage**: Comprehensive test coverage (recommended)
 
-
-
-
-
 ## Dependencies
 
 *(Synchronized from `Lyo.QRCode.csproj`.)*

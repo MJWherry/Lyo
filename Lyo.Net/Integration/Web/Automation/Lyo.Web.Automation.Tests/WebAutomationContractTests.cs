@@ -25,9 +25,7 @@ public abstract class WebAutomationContractTests<TFactory>
         await using var session = await _factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(_pageHost.HomeUri.ToString(), ct);
-
         var title = await session.Browser.GetTitleAsync(ct);
-
         Assert.Equal("Web Automation Test Page", title);
     }
 
@@ -38,12 +36,10 @@ public abstract class WebAutomationContractTests<TFactory>
         await using var session = await _factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(_pageHost.HomeUri.ToString(), ct);
-
-        var input = await session.Browser.PollForElementAsync(new ElementLocatorChain(ElementLocator.Id("nameInput")), ct);
-        await input.SendKeysAsync("Lyo", clearFirst: true, ct);
-        var echo = await session.Browser.PollForElementAsync(new ElementLocatorChain(ElementLocator.Id("nameEcho")), ct);
+        var input = await session.Browser.PollForElementAsync(new(ElementLocator.Id("nameInput")), ct);
+        await input.SendKeysAsync("Lyo", true, ct);
+        var echo = await session.Browser.PollForElementAsync(new(ElementLocator.Id("nameEcho")), ct);
         var value = await echo.GetTextAsync(ct);
-
         Assert.Equal("Lyo", value);
     }
 
@@ -54,11 +50,9 @@ public abstract class WebAutomationContractTests<TFactory>
         await using var session = await _factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(_pageHost.HomeUri.ToString(), ct);
-
-        var button = await session.Browser.PollForElementAsync(new ElementLocatorChain(ElementLocator.Id("incrementBtn")), ct);
+        var button = await session.Browser.PollForElementAsync(new(ElementLocator.Id("incrementBtn")), ct);
         await button.ClickAsync(ct);
-
-        var counter = await session.Browser.PollForElementAsync(new ElementLocatorChain(ElementLocator.Id("counterText")), ct);
+        var counter = await session.Browser.PollForElementAsync(new(ElementLocator.Id("counterText")), ct);
         var text = await counter.GetTextAsync(ct);
         Assert.Equal("1", text.Trim());
     }
@@ -70,14 +64,11 @@ public abstract class WebAutomationContractTests<TFactory>
         await using var session = await _factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(_pageHost.HomeUri.ToString(), ct);
-
         var link = await session.Browser.PollForElementAsync(new(ElementLocator.Id("nextPageLink")), ct);
         await link.ClickAsync(ct);
-
         var heading = await session.Browser.PollForElementAsync(new(ElementLocator.Id("nextHeadline")), ct);
         var headingText = await heading.GetTextAsync(ct);
         var url = await session.Browser.GetCurrentUrlAsync(ct);
-
         Assert.Equal("Web Automation Next Page", headingText.Trim());
         Assert.Contains("/next", url, StringComparison.OrdinalIgnoreCase);
     }
@@ -90,7 +81,7 @@ public abstract class WebAutomationContractTests<TFactory>
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(_pageHost.ControlsUri.ToString(), ct);
         var searchInput = await session.Browser.PollForElementAsync(new(ElementLocator.Name("searchInput")), ct);
-        await searchInput.SendKeysAsync("comics", clearFirst: true, ct);
+        await searchInput.SendKeysAsync("comics", true, ct);
         var searchButton = await session.Browser.PollForElementAsync(new(ElementLocator.Id("searchButton")), ct);
         await searchButton.ClickAsync(ct);
         var echo = await session.Browser.PollForElementAsync(new(ElementLocator.Id("searchEcho")), ct);
@@ -116,14 +107,8 @@ public abstract class WebAutomationContractTests<TFactory>
         await using var session = await _factory.CreateSessionAsync(ct);
         using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
-
-        var plan = AutomationPlanBuilder
-            .New("store page title")
-            .Navigate(_pageHost.HomeUri.ToString())
-            .StorePageTitle("title")
-            .Build();
-
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+        var plan = AutomationPlanBuilder.New("store page title").Navigate(_pageHost.HomeUri.ToString()).StorePageTitle("title").Build();
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Equal("Web Automation Test Page", result.Snapshot.Strings["title"]);
     }
 
@@ -135,7 +120,7 @@ public abstract class WebAutomationContractTests<TFactory>
         using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New().Navigate(_pageHost.ControlsUri.ToString()).StorePageUrl("url").Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Contains("/controls", result.Snapshot.Strings["url"], StringComparison.OrdinalIgnoreCase);
     }
 
@@ -148,13 +133,11 @@ public abstract class WebAutomationContractTests<TFactory>
         using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<JsonPayloadService>());
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New()
-            .InvokeDiMethod(
-                serviceType: typeof(JsonPayloadService).AssemblyQualifiedName!,
-                methodName: nameof(JsonPayloadService.ReadJson),
-                arguments: new Dictionary<string, string> { ["path"] = jsonPath },
-                resultVariableName: "payload")
-            .HttpRequest("POST", _pageHost.EchoApiUri.ToString(), bodyTemplate: "{strings.payload}", statusCodeVariableName: "status").Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+            .InvokeDiMethod(typeof(JsonPayloadService).AssemblyQualifiedName!, nameof(JsonPayloadService.ReadJson), new() { ["path"] = jsonPath }, resultVariableName: "payload")
+            .HttpRequest("POST", _pageHost.EchoApiUri.ToString(), bodyTemplate: "{strings.payload}", statusCodeVariableName: "status")
+            .Build();
+
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Equal("202", result.Snapshot.Strings["status"]);
     }
 
@@ -166,9 +149,8 @@ public abstract class WebAutomationContractTests<TFactory>
         var tempPath = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", $"{Guid.NewGuid():N}.txt");
         using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
-        var plan = AutomationPlanBuilder.New()
-            .DownloadFile(new Uri(_pageHost.BaseUri, "files/sample-a.txt").ToString(), tempPath, "savedPath").Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+        var plan = AutomationPlanBuilder.New().DownloadFile(new Uri(_pageHost.BaseUri, "files/sample-a.txt").ToString(), tempPath, "savedPath").Build();
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.True(File.Exists(result.Snapshot.Strings["savedPath"]));
     }
 
@@ -181,10 +163,11 @@ public abstract class WebAutomationContractTests<TFactory>
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New()
             .Navigate(_pageHost.ControlsUri.ToString())
-            .FindElements("assetImagesRef", new ElementLocatorChain(ElementLocator.CssSelector(".asset-image")))
-            .ExtractSources("assetImagesRef", "assetUrls", attributeNames: new[] { "src" })
+            .FindElements("assetImagesRef", new(ElementLocator.CssSelector(".asset-image")))
+            .ExtractSources("assetImagesRef", "assetUrls", new[] { "src" })
             .Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.True(result.Snapshot.StringLists["assetUrls"].Count >= 2);
     }
 
@@ -198,11 +181,12 @@ public abstract class WebAutomationContractTests<TFactory>
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New()
             .Navigate(_pageHost.ControlsUri.ToString())
-            .FindElements("assetImagesRef", new ElementLocatorChain(ElementLocator.CssSelector(".asset-image")))
-            .ExtractSources("assetImagesRef", "assetUrls", attributeNames: new[] { "src" })
+            .FindElements("assetImagesRef", new(ElementLocator.CssSelector(".asset-image")))
+            .ExtractSources("assetImagesRef", "assetUrls", new[] { "src" })
             .DownloadUrlsToDirectory("assetUrls", tempDir, "asset")
             .Build();
-        await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+
+        await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.True(Directory.GetFiles(tempDir).Length >= 2);
     }
 
@@ -215,7 +199,7 @@ public abstract class WebAutomationContractTests<TFactory>
         using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<IAutomationPlanDataSink>(sink));
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New().StoreLiteral("payload", "echo=value").UpsertJsonRecords("payload", "step-target").Build();
-        await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+        await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Single(sink.Records);
     }
 
@@ -231,7 +215,7 @@ public abstract class WebAutomationContractTests<TFactory>
         using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<IAutomationPlanFileStorage>(storage));
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New().UploadDirectoryToFileStorage(uploadDirectory, "uploads/test", "uploadedFiles").Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Single(storage.Uploads);
         Assert.Single(result.Snapshot.StringLists["uploadedFiles"]);
     }
@@ -245,9 +229,11 @@ public abstract class WebAutomationContractTests<TFactory>
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New()
             .StoreLiteral("value", "hello")
-            .InvokeDiMethod(typeof(PlanProbeService).AssemblyQualifiedName!, nameof(PlanProbeService.BuildResult), new Dictionary<string, string> { ["value"] = "{strings.value}" }, resultVariableName: "probeResult")
+            .InvokeDiMethod(
+                typeof(PlanProbeService).AssemblyQualifiedName!, nameof(PlanProbeService.BuildResult), new() { ["value"] = "{strings.value}" }, resultVariableName: "probeResult")
             .Build();
-        var result = await runner.RunWithResultAsync(session, plan, runtime: null, logger: null, ct);
+
+        var result = await runner.RunWithResultAsync(session, plan, null, null, ct);
         Assert.Equal("probe:hello", result.Snapshot.Strings["probeResult"]);
     }
 
@@ -293,5 +279,4 @@ public abstract class WebAutomationContractTests<TFactory>
     {
         public Task<string> ReadJson(string path, CancellationToken ct) => Task.FromResult(File.ReadAllText(path));
     }
-
 }

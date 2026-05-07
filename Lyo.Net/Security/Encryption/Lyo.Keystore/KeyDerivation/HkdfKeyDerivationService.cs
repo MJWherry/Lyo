@@ -21,7 +21,6 @@ private readonly HashAlgorithmName _hashAlgorithm;
     public HkdfKeyDerivationService(HashAlgorithmName? hashAlgorithm = null)
     {
         hashAlgorithm ??= HashAlgorithmName.SHA256;
-
 #if NET10_0_OR_GREATER
     _hashAlgorithm = hashAlgorithm.Value;
 #else

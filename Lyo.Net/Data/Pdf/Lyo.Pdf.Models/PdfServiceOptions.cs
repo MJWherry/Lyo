@@ -45,13 +45,10 @@ public class PdfServiceOptions
     /// </summary>
     public double KeyValueStackedMaxFirstGap { get; set; } = 120.0;
 
-    /// <summary>
-    /// Optional per-PDF max size in bytes. If not set or &lt;= 0, SuggestedMaxPdfSizeBytes is used.</summary>
+    /// <summary>Optional per-PDF max size in bytes. If not set or &lt;= 0, SuggestedMaxPdfSizeBytes is used.</summary>
     public long? MaxPdfSizeBytes { get; set; }
 
-    /// <summary>
-    /// Obsolete — there is no global PDF registry anymore; callers own <see cref="IPdfReader"/> instances.
-    /// </summary>
+    /// <summary>Obsolete — there is no global PDF registry anymore; callers own <see cref="IPdfReader" /> instances.</summary>
     [Obsolete("No longer enforced; disposed-owned documents replaced the shared catalog. Remove configuration uses.")]
     public long? MaxTotalLoadedBytes { get; set; }
 

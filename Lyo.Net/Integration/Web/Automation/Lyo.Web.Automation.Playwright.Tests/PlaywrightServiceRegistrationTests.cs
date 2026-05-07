@@ -11,9 +11,7 @@ public sealed class PlaywrightServiceRegistrationTests
         var services = new ServiceCollection();
         services.AddPlaywrightBrowserService(options => options.Headless = true);
         using var provider = services.BuildServiceProvider();
-
         var service = provider.GetService<IPlaywrightBrowserService>();
-
         Assert.NotNull(service);
     }
 }

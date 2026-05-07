@@ -177,13 +177,7 @@ public static class QueryRequestScorer
             var _ => 0
         };
 
-    private static int ScoreWhereClause(
-        int nodeCount,
-        int maxDepth,
-        int subClauseCount,
-        int maxSubClauseDepth,
-        int maxGroupBranchingFactor,
-        int comparisonScore)
+    private static int ScoreWhereClause(int nodeCount, int maxDepth, int subClauseCount, int maxSubClauseDepth, int maxGroupBranchingFactor, int comparisonScore)
     {
         if (nodeCount == 0)
             return 0;

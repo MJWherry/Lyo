@@ -4,7 +4,9 @@ EF Core persistence for **`Lyo.PackageMetadata.IPackageMetadataStore`**.
 
 ## Problem it solves
 
-Stack traces contain **stripped namespaces / assembly-qualified tokens**. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves **“what NuGet/Git package owns this prefix?”** for diagnostics overlays. **`PostgresPackageMetadataStore`** implements the store against normalized tables (**`PackageStackPrefix`** rows ordered by **`NormalizedPrefix`** length) so resolution is **`O(sorted prefixes)` in-process** after each DB read (bulk API loads all prefixes once per call when caching allows).
+Stack traces contain **stripped namespaces / assembly-qualified tokens**. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves **“what NuGet/Git package owns this
+prefix?”** for diagnostics overlays. **`PostgresPackageMetadataStore`** implements the store against normalized tables (**`PackageStackPrefix`** rows ordered by *
+*`NormalizedPrefix`** length) so resolution is **`O(sorted prefixes)` in-process** after each DB read (bulk API loads all prefixes once per call when caching allows).
 
 ## Storage model (conceptual)
 
@@ -25,10 +27,10 @@ Single-frame API **`TryGetForFrameAsync`** delegates to the bulk method with a s
 
 `PostgresPackageMetadataOptions.PrefixCatalogCaching` controls repeated DB chatter:
 
-| Mode | Meaning |
-|------|---------|
+| Mode                                  | Meaning                                                                                                                                                               |
+|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **`InvalidateOnRegisterManyOrClear`** | Maintain an immutable in-process snapshot; reload when mutations bump generation counter (**`ClearPrefixCatalogCache`** or **`RegisterManyAsync`** on same instance). |
-| **`Disabled`** | Always hit Postgres (wrap with outer cache yourself if importing huge catalogs asynchronously). |
+| **`Disabled`**                        | Always hit Postgres (wrap with outer cache yourself if importing huge catalogs asynchronously).                                                                       |
 
 `ClearPrefixCatalogCache()` is harmless when caching disabled (**only bumps generation**).
 
@@ -36,7 +38,8 @@ Cross-process writes **do not** invalidate—document that for ops (*disable sna
 
 ## DI registration (`Extensions`)
 
-- **`AddPackageMetadataDbContextFactory`** (+ `FromConfiguration`) — binds **`PostgresPackageMetadataOptions`**, registers **`PackageMetadataDbContext` factory**, attaches **`AddPostgresMigrations`** bootstrap.
+- **`AddPackageMetadataDbContextFactory`** (+ `FromConfiguration`) — binds **`PostgresPackageMetadataOptions`**, registers **`PackageMetadataDbContext` factory**, attaches *
+  *`AddPostgresMigrations`** bootstrap.
 - **`AddPostgresPackageMetadataStore`** — factory + **`IPackageMetadataStore` ⇒ PostgresPackageMetadataStore** singleton resolving options + **`IDbContextFactory`**.
 
 ## Migrations & schema

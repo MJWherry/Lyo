@@ -6,7 +6,7 @@ public enum ExternalReputationFailureDisposition
     /// <summary>Ignore failure (additive score 0, log).</summary>
     Ignore = 0,
 
-    /// <summary>Add <see cref="ReputationPipelineOptions.ProviderFailureSuspectBump"/> points.</summary>
+    /// <summary>Add <see cref="ReputationPipelineOptions.ProviderFailureSuspectBump" /> points.</summary>
     TreatAsSuspect = 1,
 
     /// <summary>Add a large contribution capped by disposition ceiling (forces threat).</summary>

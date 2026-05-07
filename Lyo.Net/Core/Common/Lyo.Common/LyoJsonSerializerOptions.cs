@@ -4,13 +4,13 @@ using Lyo.Exceptions;
 
 namespace Lyo.Common;
 
-/// <summary>HTTP JSON defaults shared across Lyo APIs and first-party clients: Web preset, camelCase string enums, <see cref="ReferenceHandler.IgnoreCycles"/> for EF-like graphs.</summary>
+/// <summary>HTTP JSON defaults shared across Lyo APIs and first-party clients: Web preset, camelCase string enums, <see cref="ReferenceHandler.IgnoreCycles" /> for EF-like graphs.</summary>
 public static class LyoJsonSerializerOptions
 {
     /// <summary>Creates a new options instance (safe for DI or further mutation).</summary>
-    public static JsonSerializerOptions Create() 
+    public static JsonSerializerOptions Create()
         => new() {
-            PropertyNamingPolicy =  JsonNamingPolicy.CamelCase,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
@@ -18,7 +18,7 @@ public static class LyoJsonSerializerOptions
             Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
         };
 
-    /// <summary>Creates options then applies <paramref name="configure"/>.</summary>
+    /// <summary>Creates options then applies <paramref name="configure" />.</summary>
     public static JsonSerializerOptions Create(Action<JsonSerializerOptions> configure)
     {
         ArgumentHelpers.ThrowIfNull(configure);
@@ -27,10 +27,7 @@ public static class LyoJsonSerializerOptions
         return options;
     }
 
-    /// <summary>
-    /// Copies Lyo HTTP JSON defaults onto <paramref name="target"/> for use with ASP.NET Core
-    /// <c>ConfigureHttpJsonOptions</c>, where the serializer must be mutated in place.
-    /// </summary>
+    /// <summary>Copies Lyo HTTP JSON defaults onto <paramref name="target" /> for use with ASP.NET Core <c>ConfigureHttpJsonOptions</c>, where the serializer must be mutated in place.</summary>
     public static void ApplyTo(JsonSerializerOptions target)
     {
         ArgumentHelpers.ThrowIfNull(target);
@@ -49,17 +46,14 @@ public static class LyoJsonSerializerOptions
     }
 }
 
-/// <summary>Fluent helper to compose <see cref="LyoJsonSerializerOptions"/> with extra converters and flags.</summary>
+/// <summary>Fluent helper to compose <see cref="LyoJsonSerializerOptions" /> with extra converters and flags.</summary>
 public sealed class LyoJsonSerializerOptionsBuilder
 {
     private readonly JsonSerializerOptions _options;
 
-    public LyoJsonSerializerOptionsBuilder()
-    {
-        _options = LyoJsonSerializerOptions.Create();
-    }
+    public LyoJsonSerializerOptionsBuilder() => _options = LyoJsonSerializerOptions.Create();
 
-    /// <summary>Starts from a copy of <paramref name="baseline"/> instead of Lyo defaults.</summary>
+    /// <summary>Starts from a copy of <paramref name="baseline" /> instead of Lyo defaults.</summary>
     public LyoJsonSerializerOptionsBuilder(JsonSerializerOptions baseline)
     {
         ArgumentHelpers.ThrowIfNull(baseline);
@@ -85,6 +79,6 @@ public sealed class LyoJsonSerializerOptionsBuilder
         return this;
     }
 
-    /// <summary>Returns a new <see cref="JsonSerializerOptions"/> copy of the built configuration.</summary>
+    /// <summary>Returns a new <see cref="JsonSerializerOptions" /> copy of the built configuration.</summary>
     public JsonSerializerOptions Build() => new(_options);
 }

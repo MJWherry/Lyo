@@ -77,8 +77,7 @@ public sealed class AutomationPlanBindings
         return false;
     }
 
-    public bool TryGetContextValue(string key, out object? value)
-        => ContextItems.TryGetValue(key, out value);
+    public bool TryGetContextValue(string key, out object? value) => ContextItems.TryGetValue(key, out value);
 
     /// <inheritdoc />
     public override string ToString()

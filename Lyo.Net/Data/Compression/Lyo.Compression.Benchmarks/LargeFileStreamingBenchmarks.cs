@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using Lyo.Compression.Models;
+
 // ReSharper disable InconsistentNaming
 
 namespace Lyo.Compression.Benchmarks;

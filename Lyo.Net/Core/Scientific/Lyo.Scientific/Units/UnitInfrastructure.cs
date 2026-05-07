@@ -22,47 +22,43 @@ public readonly record struct QuantityDimension(
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DerivedUnitDefinition
 {
+    public string Name { get; init; }
+
+    public string Symbol { get; init; }
+
+    public double ToSiFactor { get; init; }
+
+    public QuantityDimension Dimension { get; init; }
 
     public DerivedUnitDefinition(string name, string symbol, QuantityDimension dimension, double toSiFactor)
 
     {
-
         name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
         symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
         toSiFactor = toSiFactor <= 0d ? throw new ArgumentOutOfRangeException(nameof(toSiFactor)) : toSiFactor;
-
         Name = name;
         Symbol = symbol;
         ToSiFactor = toSiFactor;
         Dimension = dimension;
-}
+    }
 
-
-    public string Name { get;  init; }
-    public string Symbol { get;  init; }
-    public double ToSiFactor { get;  init; }
-
-    public QuantityDimension Dimension { get; init; }
     public override string ToString() => $"{Symbol} ({Name}), SI×{ToSiFactor}, {Dimension}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct DimensionedValue
 {
+    public double ValueSi { get; }
+
+    public QuantityDimension Dimension { get; }
 
     public DimensionedValue(double valueSi, QuantityDimension dimension)
 
     {
-
         valueSi = double.IsNaN(valueSi) || double.IsInfinity(valueSi) ? throw new ArgumentOutOfRangeException(nameof(valueSi)) : valueSi;
         ValueSi = valueSi;
         Dimension = dimension;
-
     }
-
-
-    public double ValueSi { get;  }
-    public QuantityDimension Dimension { get; }
 
     public override string ToString() => $"{ValueSi} (SI), {Dimension}";
 }

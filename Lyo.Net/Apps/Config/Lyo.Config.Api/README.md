@@ -1,17 +1,20 @@
 # Lyo.Config.Api
 
-HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../Features/Config/Lyo.Config/). Microservices resolve merged config per deployment identity and poll using **ETags** or an optional **`version`** query mirror.
+HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../Features/Config/Lyo.Config/). Microservices resolve merged config per deployment identity
+and poll using **ETags** or an optional **`version`** query mirror.
 
-Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**. The HTTP typed client and **`AddConfigApiClientFromConfiguration`** live in **`Lyo.Config.Api.Client`** ([readme](../Lyo.Config.Api.Client/README.md)). Route slug → **`EntityRef`** mapping uses **`AppConfigEntity`** from **`Lyo.Config`**. Polling plus **`IOptionsMonitor<T>`** is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)**.
+Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**. The HTTP typed client and *
+*`AddConfigApiClientFromConfiguration`** live in **`Lyo.Config.Api.Client`** ([readme](../Lyo.Config.Api.Client/README.md)). Route slug → **`EntityRef`** mapping uses *
+*`AppConfigEntity`** from **`Lyo.Config`**. Polling plus **`IOptionsMonitor<T>`** is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)**.
 
 ## How routes map to `Lyo.Config`
 
 All API traffic for app config uses a single store entity type **`App`** (`AppConfigEntity.AppEntityType`).
 
-| URL segment | Meaning |
-|-------------|---------|
+| URL segment     | Meaning                                                                                                    |
+|-----------------|------------------------------------------------------------------------------------------------------------|
 | **`{appKind}`** | Taxonomy for the process (e.g. `api`, `gateway`, `worker`). Lowercase slug: letters, digits, `-`, `_`, `.` |
-| **`{appId}`** | Instance id (e.g. `checkout`, `550e8400-e29b-41d4-a716-446655440000`). Same slug rules after URL decode. |
+| **`{appId}`**   | Instance id (e.g. `checkout`, `550e8400-e29b-41d4-a716-446655440000`). Same slug rules after URL decode.   |
 
 Persisted compound id:
 
@@ -20,7 +23,8 @@ EntityType = "App"
 EntityId   = "{appKind}:{appId}"    // e.g. gateway:prod-west
 ```
 
-Definitions you create with **`PUT /manage/definitions`** should use **`forEntityType`: `"App"`**. Bindings must use the same **`App`** + that compound **`forEntityId`**, or use the manage routes below.
+Definitions you create with **`PUT /manage/definitions`** should use **`forEntityType`: `"App"`**. Bindings must use the same **`App`** + that compound **`forEntityId`**, or use
+the manage routes below.
 
 ## Runtime: resolve and poll
 
@@ -123,7 +127,8 @@ var merged = await ConfigPolling.PollUntilChangedAsync(
     cancellationToken: ct);
 ```
 
-Bind **`ConfigApi`** in configuration for **`BaseUrl`**, optional **`ApiKey`**, **`PollInterval`**, etc. ([`ConfigApiClientOptions`](../Lyo.Config.Api.Client/ConfigApiClientOptions.cs)). More examples: [`Lyo.Config.Api.Client/README.md`](../Lyo.Config.Api.Client/README.md).
+Bind **`ConfigApi`** in configuration for **`BaseUrl`**, optional **`ApiKey`**, **`PollInterval`**, etc. ([
+`ConfigApiClientOptions`](../Lyo.Config.Api.Client/ConfigApiClientOptions.cs)). More examples: [`Lyo.Config.Api.Client/README.md`](../Lyo.Config.Api.Client/README.md).
 
 ## Local run
 

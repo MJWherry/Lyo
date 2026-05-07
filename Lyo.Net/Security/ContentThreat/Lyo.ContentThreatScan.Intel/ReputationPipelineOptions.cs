@@ -1,6 +1,6 @@
 namespace Lyo.ContentThreatScan.Intel;
 
-/// <summary>Configurable keys, quotas, weights, caches, ClamTCP and failure hooks for <see cref="DefaultContentThreatReputationPipeline"/>.</summary>
+/// <summary>Configurable keys, quotas, weights, caches, ClamTCP and failure hooks for <see cref="DefaultContentThreatReputationPipeline" />.</summary>
 public sealed class ReputationPipelineOptions
 {
     public Uri MalwareBazaarEndpoint { get; set; } = new("https://mb-api.abuse.ch/api/v1/", UriKind.Absolute);
@@ -9,7 +9,6 @@ public sealed class ReputationPipelineOptions
     public string? MalwareBazaarAuthKey { get; set; }
 
     public Uri VirusTotalApiRoot { get; set; } = new("https://www.virustotal.com/api/v3/", UriKind.Absolute);
-
 
     /// <summary>VirusTotal personal API keys are required for lookups.</summary>
     public string? VirusTotalApiKey { get; set; }

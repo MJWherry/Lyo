@@ -19,11 +19,9 @@ public static class ContentThreatBuffering
         using var ms = new MemoryStream(capacity);
         var buffer = new byte[8192];
         var totalRead = 0;
-
         while (totalRead < maxBytes) {
             ct.ThrowIfCancellationRequested();
             var toRead = Math.Min(buffer.Length, maxBytes - totalRead);
-
 #if NETSTANDARD2_0
             var read = await stream.ReadAsync(buffer, 0, toRead, ct).ConfigureAwait(false);
             if (read == 0)
@@ -45,6 +43,5 @@ public static class ContentThreatBuffering
 
     public static byte[] ComputeSha256(ReadOnlySpan<byte> data) => Hasher.ComputeSha256(data);
 
-    public static string Sha256DigestToHexLower(ReadOnlySpan<byte> digest32) =>
-        HexEncoding.ToHexString(digest32, TextLetterCase.Lower);
+    public static string Sha256DigestToHexLower(ReadOnlySpan<byte> digest32) => HexEncoding.ToHexString(digest32, TextLetterCase.Lower);
 }

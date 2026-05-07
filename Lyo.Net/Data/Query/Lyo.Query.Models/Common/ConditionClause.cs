@@ -67,10 +67,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 
     public override bool Equals(object? obj) => Equals(obj as ConditionClause);
 
-    public override int GetHashCode()
-    {
-        return HashCodeHelpers.Combine(Field, Comparison, ValueHash(Value));
-    }
+    public override int GetHashCode() => HashCodeHelpers.Combine(Field, Comparison, ValueHash(Value));
 
     private static bool ValueEquals(object? a, object? b)
     {

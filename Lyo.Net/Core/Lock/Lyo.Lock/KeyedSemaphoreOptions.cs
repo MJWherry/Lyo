@@ -1,9 +1,9 @@
 namespace Lyo.Lock;
 
-/// <summary>Configuration for <see cref="LocalKeyedSemaphoreService"/>.</summary>
+/// <summary>Configuration for <see cref="LocalKeyedSemaphoreService" />.</summary>
 public class KeyedSemaphoreOptions
 {
-    /// <summary>Configuration section key used by <see cref="LockServiceExtensions"/> bind helpers.</summary>
+    /// <summary>Configuration section key used by <see cref="LockServiceExtensions" /> bind helpers.</summary>
     public const string SectionName = "KeyedSemaphoreOptions";
 
     /// <summary>Default timeout when waiting to acquire a permit.</summary>

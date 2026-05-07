@@ -15,16 +15,10 @@ public interface IComicApiClient : IApiClient
 
     /// <summary>
     /// Uploads a file to the Comic API's file storage and returns the stored file metadata. Optional <paramref name="seriesId" />, <paramref name="volumeId" />, and
-    /// <paramref name="chapterId" /> (non-empty GUIDs) select the storage path prefix; the most specific id wins (chapter, then volume, then series). Omit all three to use the
-    /// default sharded layout.
+    /// <paramref name="chapterId" /> (non-empty GUIDs) select the storage path prefix; the most specific id wins (chapter, then volume, then series). Omit all three to use the default
+    /// sharded layout.
     /// </summary>
-    Task<FileStoreResult?> UploadFileAsync(
-        Stream data,
-        string fileName,
-        Guid? seriesId = null,
-        Guid? volumeId = null,
-        Guid? chapterId = null,
-        CancellationToken ct = default);
+    Task<FileStoreResult?> UploadFileAsync(Stream data, string fileName, Guid? seriesId = null, Guid? volumeId = null, Guid? chapterId = null, CancellationToken ct = default);
 
     /// <summary>Deletes a file from the Comic API's file storage. Returns true if deleted, false if not found.</summary>
     Task<bool> DeleteFileAsync(Guid id, CancellationToken ct = default);

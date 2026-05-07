@@ -19,8 +19,7 @@ public sealed class HttpResponseStream(Stream inner, HttpResponseMessage respons
     public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
 
 #if NET5_0_OR_GREATER
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
-        => inner.ReadAsync(buffer, ct);
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default) => inner.ReadAsync(buffer, ct);
 #endif
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken ct) => inner.ReadAsync(buffer, offset, count, ct);

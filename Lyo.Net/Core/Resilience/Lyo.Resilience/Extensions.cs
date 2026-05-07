@@ -68,9 +68,7 @@ public static class Extensions
         /// under service options.
         /// </param>
         /// <returns>The service collection for chaining.</returns>
-        public IServiceCollection AddLyoResiliencePipelinesFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = "Lyo:ResiliencePipelines")
+        public IServiceCollection AddLyoResiliencePipelinesFromConfiguration(IConfiguration configuration, string configSectionName = "Lyo:ResiliencePipelines")
         {
             var section = configuration.GetSection(configSectionName);
             if (!section.Exists())

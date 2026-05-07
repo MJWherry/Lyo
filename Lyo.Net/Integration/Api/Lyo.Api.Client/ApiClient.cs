@@ -216,24 +216,6 @@ public class ApiClient : IApiClient
         }
     }
 
-    /// <summary>Sends a POST with a JSON body when the API returns no body (for example 204 No Content).</summary>
-    protected async Task PostExpectingNoContentAsync<TRequest>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-    {
-        if (HttpClient.BaseAddress == null)
-            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
-
-        using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName}", Post, uri, typeof(TRequest).FullName)) {
-            Logger.LogDebug("Sending request");
-            using var content = CreateJsonContent(body);
-            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = content;
-            before?.Invoke(request);
-            using var response = await HttpClient.SendAsync(request, ct).ConfigureAwait(false);
-            Logger.LogDebug("{ResponseStatusCode} Response received", response.StatusCode);
-            await EnsureSuccessStatusCodeOrThrowApiExceptionAsync(response, ct).ConfigureAwait(false);
-        }
-    }
-
     public async Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         if (HttpClient.BaseAddress == null)
@@ -381,6 +363,24 @@ public class ApiClient : IApiClient
     }
 
     public void Dispose() => HttpClient.Dispose();
+
+    /// <summary>Sends a POST with a JSON body when the API returns no body (for example 204 No Content).</summary>
+    protected async Task PostExpectingNoContentAsync<TRequest>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    {
+        if (HttpClient.BaseAddress == null)
+            UriHelpers.ThrowIfInvalidAbsoluteUri(uri);
+
+        using (Logger.BeginScope("{RequestMethodName} {Uri} {BodyTypeName}", Post, uri, typeof(TRequest).FullName)) {
+            Logger.LogDebug("Sending request");
+            using var content = CreateJsonContent(body);
+            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+            request.Content = content;
+            before?.Invoke(request);
+            using var response = await HttpClient.SendAsync(request, ct).ConfigureAwait(false);
+            Logger.LogDebug("{ResponseStatusCode} Response received", response.StatusCode);
+            await EnsureSuccessStatusCodeOrThrowApiExceptionAsync(response, ct).ConfigureAwait(false);
+        }
+    }
 
     private async Task EnsureSuccessStatusCodeOrThrowApiExceptionAsync(HttpResponseMessage response, CancellationToken ct)
     {

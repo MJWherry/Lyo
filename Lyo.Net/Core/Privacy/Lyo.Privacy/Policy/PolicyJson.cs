@@ -15,9 +15,7 @@ public static class PolicyJson
     };
 
     private static readonly JsonSerializerOptions WriteOpts = new() {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>Build a policy from JSON. Optional callback mutates the builder before <see cref="RedactionPolicyBuilder.Build" />.</summary>
@@ -45,13 +43,11 @@ public static class PolicyJson
         return b.Build();
     }
 
-    /// <summary>
-    /// Serializes a policy to JSON suitable for <see cref="Build" />. Rules must be concrete types this library can map; <see cref="DelegateRedactionRule" /> is not supported.
-    /// </summary>
+    /// <summary>Serializes a policy to JSON suitable for <see cref="Build" />. Rules must be concrete types this library can map; <see cref="DelegateRedactionRule" /> is not supported.</summary>
     public static string SerializePolicy(RedactionPolicy policy, bool writeIndented = true)
     {
         ArgumentHelpers.ThrowIfNull(policy);
-        var opts = writeIndented ? WriteOpts : new JsonSerializerOptions(WriteOpts) { WriteIndented = false };
+        var opts = writeIndented ? WriteOpts : new(WriteOpts) { WriteIndented = false };
         return JsonSerializer.Serialize(ToDefinitionDto(policy), opts);
     }
 
@@ -63,7 +59,7 @@ public static class PolicyJson
         foreach (var r in policy.Rules)
             AppendRuleDtos(rules, r);
 
-        return new PolicyDefinitionDto {
+        return new() {
             Placeholder = policy.Placeholder,
             Name = policy.Name,
             MergeAdjacentRuns = policy.MergeAdjacentRuns,
@@ -84,62 +80,48 @@ public static class PolicyJson
                 // ReSharper disable once UseStringInterpolation
                 throw new InvalidOperationException(typeof(DelegateRedactionRule).Name + " cannot be exported to policy JSON.");
             case EmailRedactionRule e:
-                rules.Add(new PolicyRuleDto { Kind = "EMAIL", EmailOptions = e.Options });
+                rules.Add(new() { Kind = "EMAIL", EmailOptions = e.Options });
                 break;
             case PhoneRedactionRule p:
-                rules.Add(new PolicyRuleDto { Kind = "PHONE", PhoneMask = p.MaskOptions, PhoneMinDigits = p.MinDigits });
+                rules.Add(new() { Kind = "PHONE", PhoneMask = p.MaskOptions, PhoneMinDigits = p.MinDigits });
                 break;
             case PaymentCardRedactionRule card:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "CARD",
-                    AllowedBins = card.AllowedBin6 is { Count: > 0 } ? card.AllowedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null,
-                    BlockedBins = card.BlockedBin6 is { Count: > 0 } ? card.BlockedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null
-                });
+                rules.Add(
+                    new() {
+                        Kind = "CARD",
+                        AllowedBins = card.AllowedBin6 is { Count: > 0 } ? card.AllowedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null,
+                        BlockedBins = card.BlockedBin6 is { Count: > 0 } ? card.BlockedBin6.OrderBy(s => s, StringComparer.Ordinal).ToList() : null
+                    });
+
                 break;
             case UrlRedactionRule:
-                rules.Add(new PolicyRuleDto { Kind = "URL" });
+                rules.Add(new() { Kind = "URL" });
                 break;
             case IpAddressRedactionRule ip:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "IP",
-                    IpMode = ip.Mode == IpRedactionMode.TruncateLastSegment ? "truncate" : "full"
-                });
+                rules.Add(new() { Kind = "IP", IpMode = ip.Mode == IpRedactionMode.TruncateLastSegment ? "truncate" : "full" });
                 break;
             case AddressRedactionRule:
-                rules.Add(new PolicyRuleDto { Kind = "ADDRESS" });
+                rules.Add(new() { Kind = "ADDRESS" });
                 break;
             case IbanRedactionRule:
-                rules.Add(new PolicyRuleDto { Kind = "IBAN" });
+                rules.Add(new() { Kind = "IBAN" });
                 break;
             case BankAccountNumberRedactionRule bank:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "BANK",
-                    BankMinNumeric = bank.MinNumericValue == 0 ? null : bank.MinNumericValue
-                });
+                rules.Add(new() { Kind = "BANK", BankMinNumeric = bank.MinNumericValue == 0 ? null : bank.MinNumericValue });
                 break;
             case NationalIdRedactionRule n:
-                rules.Add(new PolicyRuleDto { Kind = "NATIONALID", NationalIdPacks = NationalPacksToDtoList(n.Packs) });
+                rules.Add(new() { Kind = "NATIONALID", NationalIdPacks = NationalPacksToDtoList(n.Packs) });
                 break;
             case ApiSecretRedactionRule a:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "APISECRET",
-                    ApiPatterns = ApiPatternsToDtoList(a.Patterns),
-                    ApiMinEntropy = a.MinEntropyBitsPerChar <= 0 ? null : a.MinEntropyBitsPerChar
-                });
+                rules.Add(
+                    new() { Kind = "APISECRET", ApiPatterns = ApiPatternsToDtoList(a.Patterns), ApiMinEntropy = a.MinEntropyBitsPerChar <= 0 ? null : a.MinEntropyBitsPerChar });
+
                 break;
             case LiteralSubstringRedactionRule lit:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "LITERAL",
-                    Literal = lit.Needle,
-                    LiteralIgnoreCase = lit.IgnoreCase
-                });
+                rules.Add(new() { Kind = "LITERAL", Literal = lit.Needle, LiteralIgnoreCase = lit.IgnoreCase });
                 break;
             case RegexRedactionRule rx:
-                rules.Add(new PolicyRuleDto {
-                    Kind = "REGEX",
-                    Regex = rx.Pattern,
-                    RegexKind = rx.Kind.ToString()
-                });
+                rules.Add(new() { Kind = "REGEX", Regex = rx.Pattern, RegexKind = rx.Kind.ToString() });
                 break;
             default:
                 throw new InvalidOperationException($"Cannot export rule type {rule.GetType().Name} to policy JSON.");

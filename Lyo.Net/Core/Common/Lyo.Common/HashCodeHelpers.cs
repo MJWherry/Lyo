@@ -9,8 +9,7 @@ public static class HashCodeHelpers
     public static int Combine(params object?[] values)
     {
         unchecked {
-            return values.Aggregate(17, (current, value) 
-                => (current * 397) ^ (value?.GetHashCode() ?? 0));
+            return values.Aggregate(17, (current, value) => (current * 397) ^ (value?.GetHashCode() ?? 0));
         }
     }
 }

@@ -25,14 +25,14 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
     private static long _nameSequence;
 
-    private readonly IOTempGeneratorContext _ctx;
-    
     [ThreadStatic]
     private static Random? _threadRandom;
 
-    private static Random GetRandom() => _threadRandom ??= new();
+    private readonly IOTempGeneratorContext _ctx;
 
     internal IOTempFileGenerator(IOTempGeneratorContext context) => _ctx = context;
+
+    private static Random GetRandom() => _threadRandom ??= new();
 
 #region Random-bytes files
 
@@ -598,12 +598,13 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             return destDir;
         }
         catch (Exception ex) {
-            if (destDir != null && _ctx.Storage.DirectoryExists(destDir))
+            if (destDir != null && _ctx.Storage.DirectoryExists(destDir)) {
                 try {
                     _ctx.Storage.DeleteDirectory(destDir);
                 }
                 catch { /* best effort */
                 }
+            }
 
             _ctx.Metrics.RecordError(Constants.Metrics.ExtractZipFileDuration, ex);
             _ctx.Metrics.IncrementCounter(Constants.Metrics.ExtractZipFileFailure);
@@ -851,5 +852,6 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
 
         return $"{prefix}{middle}{suffix}";
     }
+
 #endregion
 }

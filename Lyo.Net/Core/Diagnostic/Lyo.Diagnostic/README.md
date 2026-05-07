@@ -18,7 +18,10 @@ Source is grouped by feature folder; namespaces match (e.g. `StackTrace/` → `L
 
 ## Core features
 
-- **Stack trace decoding** (`IStackTraceDecoder`) — frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional **`IPackageMetadataStore`** from **`Lyo.PackageMetadata`** enriches frames with **`PackageMetadata`** (`Id` + `Name`, …). With a configured store, **`DecodeAsync`** / **`IDiagnosticContextBuilder.BuildAsync`** perform **one** bulk metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained **`InnerException`**), not once per subtree. Sync **`Decode`** / **`Build`** throw when a store is set.
+- **Stack trace decoding** (`IStackTraceDecoder`) — frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional **`IPackageMetadataStore`** from *
+  *`Lyo.PackageMetadata`** enriches frames with **`PackageMetadata`** (`Id` + `Name`, …). With a configured store, **`DecodeAsync`** / **`IDiagnosticContextBuilder.BuildAsync`**
+  perform **one** bulk metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained **`InnerException`**), not once per subtree. Sync *
+  *`Decode`** / **`Build`** throw when a store is set.
 - **Classification** (`IExceptionClassifier`) — kind, severity, labels.
 - **Diagnostic context** (`IDiagnosticContextBuilder`) — single payload for one failure.
 - **Structured logging** (`IStructuredLogEnricher`) — `ILogger` scopes with `diag.*` properties.
@@ -39,7 +42,11 @@ services.AddInMemoryErrorInbox(o => o.MaxOccurrences = 5_000);
 
 ### Optional package metadata (`IPackageMetadataStore`)
 
-Use **`Lyo.PackageMetadata`** (`InMemoryPackageMetadataStore`, or **`Lyo.PackageMetadata.Postgres`**). Pass the store as the last argument to `AddDiagnosticsPackage`, or set `StackTraceDecoderOptions.PackageMetadataStore`. **`TryGetManyForStrippedMethodPrefixesAsync`** resolves many stripped methods at once behind that call; Postgres may cache the ordered prefix catalog in-process (**see `PostgresPackageMetadataOptions.PrefixCatalogCaching`** and **`ClearPrefixCatalogCache`**). When a store is configured, use **`DecodeAsync`** and **`BuildAsync`** — sync **`Decode`** / **`Build`** throws. Lookup methods expose a **`namespacePrefix`** parameter that remains **reserved (unused for matching)**; see **`IPackageMetadataStore`** remarks.
+Use **`Lyo.PackageMetadata`** (`InMemoryPackageMetadataStore`, or **`Lyo.PackageMetadata.Postgres`**). Pass the store as the last argument to `AddDiagnosticsPackage`, or set
+`StackTraceDecoderOptions.PackageMetadataStore`. **`TryGetManyForStrippedMethodPrefixesAsync`** resolves many stripped methods at once behind that call; Postgres may cache the
+ordered prefix catalog in-process (**see `PostgresPackageMetadataOptions.PrefixCatalogCaching`** and **`ClearPrefixCatalogCache`**). When a store is configured, use **`DecodeAsync`
+** and **`BuildAsync`** — sync **`Decode`** / **`Build`** throws. Lookup methods expose a **`namespacePrefix`** parameter that remains **reserved (unused for matching)**; see *
+*`IPackageMetadataStore`** remarks.
 
 ```csharp
 using Lyo.Diagnostic;

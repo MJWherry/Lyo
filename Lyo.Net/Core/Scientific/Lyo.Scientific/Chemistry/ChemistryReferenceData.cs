@@ -5,27 +5,26 @@ namespace Lyo.Scientific.Chemistry;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Isotope
 {
+    public string Symbol { get; init; }
+
+    public int MassNumber { get; init; }
+
+    public double AtomicMass { get; init; }
+
+    public double? NaturalAbundancePercent { get; init; }
 
     public Isotope(string symbol, int massNumber, double atomicMass, double? naturalAbundancePercent = null)
 
     {
-
         symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
         massNumber = massNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(massNumber)) : massNumber;
         atomicMass = atomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(atomicMass)) : atomicMass;
-
         Symbol = symbol;
         MassNumber = massNumber;
         AtomicMass = atomicMass;
         NaturalAbundancePercent = naturalAbundancePercent;
-}
+    }
 
-
-    public string Symbol { get;  init; }
-    public int MassNumber { get;  init; }
-    public double AtomicMass { get;  init; }
-
-    public double? NaturalAbundancePercent { get; init; }
     public override string ToString() => NaturalAbundancePercent is { } p ? $"{Symbol}-{MassNumber}, mass={AtomicMass}, x={p:0.###}%" : $"{Symbol}-{MassNumber}, mass={AtomicMass}";
 }
 

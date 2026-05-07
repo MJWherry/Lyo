@@ -1,6 +1,7 @@
 # Lyo.Sms.Web.Components
 
-**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).
+**Blazor (MudBlazor)** workbench UI for exercising an injected **`ISmsService`** (provider-neutral `Result<SmsRequest>` surface). Depends on MudBlazor/snackbar primitives from [
+`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md).
 
 ---
 
@@ -15,10 +16,10 @@ Renders a small operator panel:
 
 Actions:
 
-| Button | Behavior |
-|--------|----------|
-| **Send SMS / MMS** | Builds **`BulkSmsBuilder`**, adds **one row per recipient** with shared body; for **each recipient**, **every** configured media chip is appended via **`AddAttachment`**, so duplicates appear if multiple recipients × same media intent—adjust if you fork the component. |
-| **Test SMS Connection** | Calls **`SmsService.TestConnectionAsync()`**. |
+| Button                  | Behavior                                                                                                                                                                                                                                                                     |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Send SMS / MMS**      | Builds **`BulkSmsBuilder`**, adds **one row per recipient** with shared body; for **each recipient**, **every** configured media chip is appended via **`AddAttachment`**, so duplicates appear if multiple recipients × same media intent—adjust if you fork the component. |
+| **Test SMS Connection** | Calls **`SmsService.TestConnectionAsync()`**.                                                                                                                                                                                                                                |
 
 Outcome panel shows **`BulkResult<SmsRequest>`** summary (total/success/failure/error strings) plus a per-row table using **`LyoResultErrorFormatter`** on failures.
 

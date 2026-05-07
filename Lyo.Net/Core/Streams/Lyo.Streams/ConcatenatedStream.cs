@@ -31,9 +31,9 @@ public class ConcatenatedStream : Stream
         ArgumentHelpers.ThrowIfNull(streams);
         var streamList = streams.ToList();
         OperationHelpers.ThrowIfNullOrEmpty(streamList, nameof(streams));
-        foreach(var s in streamList)
+        foreach (var s in streamList)
             ArgumentHelpers.ThrowIfNull(s);
-        
+
         _streamEnumerator = streamList.GetEnumerator();
         _ownsStreams = ownsStreams;
         MoveToNextStream();

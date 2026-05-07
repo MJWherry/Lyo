@@ -3,6 +3,7 @@
 Part of the [Lyo](../../../README.md) workspace: **`Lyo.TestApi`**.
 
 ## Related projects
+
 - [`Lyo.Api`](../../Integration/Api/Lyo.Api/README.md)
 - [`Lyo.Audit.Postgres`](../../Core/Audit/Lyo.Audit.Postgres/README.md)
 - [`Lyo.Comic.Postgres`](../../Features/Comic/Lyo.Comic.Postgres/README.md)

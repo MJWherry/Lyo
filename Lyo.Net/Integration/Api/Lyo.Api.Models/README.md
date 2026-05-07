@@ -1,13 +1,14 @@
 # Lyo.Api.Models
 
-Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees + projection DTOs).
+Shared **HTTP contract** models for Lyo minimal APIs and their **clients**—distinct from [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md) (filter trees +
+projection DTOs).
 
 ## Request envelopes
 
-| Area | Types (selected) | Notes |
-|------|------------------|-------|
+| Area                             | Types (selected)                                                                                                                | Notes                                                                    |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | Upsert / update / patch / delete | **`UpsertRequest<T>`**, **`UpdateRequest<T>`**, **`PatchRequest`**, **`DeleteRequest`**, matching fluent **`*Builder` classes** | Mirrors generic CRUD endpoints (server validates path + body alignment). |
-| History / exports | **`HistoryQuery`**, **`ExportRequest`**, **`ExportColumnMapping`** | Drive bulk read + file generation endpoints. |
+| History / exports                | **`HistoryQuery`**, **`ExportRequest`**, **`ExportColumnMapping`**                                                              | Drive bulk read + file generation endpoints.                             |
 
 Builders follow **method-chaining** ergonomics so gateways/tests avoid object initializer noise.
 
@@ -31,11 +32,13 @@ Rather than per-app ad-hoc exceptions, this package standardizes:
 
 **`CacheItem` + `CacheItemTypeEnum`** describe server cache introspection endpoints (used by internal tools & load tests).
 
-**`QueryRequestScorer`**, **`QueryRequestScoreBreakdown`** support explainability endpoints around query planning (pair with scoring fields on `ResultFactory` outputs + server logs).
+**`QueryRequestScorer`**, **`QueryRequestScoreBreakdown`** support explainability endpoints around query planning (pair with scoring fields on `ResultFactory` outputs + server
+logs).
 
 ## Relationship to `Lyo.Result`
 
-Some server modules choose [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md) internally; **ProblemDetails** remain the **wire** representation while `Lyo.Result` informs **domain** logic in process boundaries.
+Some server modules choose [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md) internally; **ProblemDetails** remain the **wire** representation while `Lyo.Result` informs *
+*domain** logic in process boundaries.
 
 ## Versioning guidance
 

@@ -1,6 +1,7 @@
 # Lyo.Common
 
-Common primitives and helpers shared across the Lyo library suite: result/error models, validation that returns results, extension methods, utility functions, enum/record metadata lookups, and JSON converters.
+Common primitives and helpers shared across the Lyo library suite: result/error models, validation that returns results, extension methods, utility functions, enum/record metadata
+lookups, and JSON converters.
 
 ## Features
 
@@ -94,10 +95,10 @@ var readOnly = numbers.AsReadOnlyCollectionOrToList();
 - **`Result*` types**: Standardized operation contracts for success/failure.
 - **`CollectionExtensions`**: Materialization/wrapping helpers optimized to avoid unnecessary copies.
 - **Extension classes**: Organized by responsibility:
-  - stream and string helpers
-  - scalar and dictionary conversion helpers
-  - enum metadata helpers
-  - file/geographic/language/status lookup helpers
+    - stream and string helpers
+    - scalar and dictionary conversion helpers
+    - enum metadata helpers
+    - file/geographic/language/status lookup helpers
 - **`Utilities`**: Miscellaneous shared helper functions.
 - **JSON converters**: Serializer support types used by Lyo packages.
 

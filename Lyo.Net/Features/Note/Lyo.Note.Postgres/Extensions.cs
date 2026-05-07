@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL note DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddNoteDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresNoteOptions.SectionName)
+        public IServiceCollection AddNoteDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresNoteOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL note store using configuration binding.</summary>
-        public IServiceCollection AddPostgresNoteStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresNoteOptions.SectionName)
+        public IServiceCollection AddPostgresNoteStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresNoteOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

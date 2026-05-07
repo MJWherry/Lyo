@@ -8,7 +8,7 @@ public sealed class PackageArtifactDigestStreamTests
         var payload = "nupkg-bytes-parity"u8.ToArray();
         var bytesHex = PackageArtifactDigest.ComputeHexSha512(payload);
         using var ms = new MemoryStream(payload);
-        var streamHex = PackageArtifactDigest.ComputeHex(ArtifactDigestAlgorithm.Sha512, ms, leaveOpen: true);
+        var streamHex = PackageArtifactDigest.ComputeHex(ArtifactDigestAlgorithm.Sha512, ms, true);
         Assert.Equal(bytesHex, streamHex);
     }
 }

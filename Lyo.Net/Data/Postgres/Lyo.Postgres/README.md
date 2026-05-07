@@ -15,7 +15,6 @@ with `EnableAutoMigrations = true`, migrations run at **host startup** via `IHos
 
 Ensure your application uses a host (e.g. `Host.CreateDefaultBuilder()` or `WebApplication.CreateBuilder()`).
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Postgres.csproj`.)*

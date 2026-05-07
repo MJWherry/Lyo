@@ -67,9 +67,7 @@ public static class Extensions
         /// }
         /// </code>
         /// </remarks>
-        public IServiceCollection AddTypecastTtsServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = TypecastOptions.SectionName)
+        public IServiceCollection AddTypecastTtsServiceFromConfiguration(IConfiguration configuration, string configSectionName = TypecastOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

@@ -15,28 +15,22 @@ namespace Lyo.Pdf;
 
 public sealed class PdfService : IPdfService
 {
-    private readonly ILoggerFactory _loggerFactory;
+    private readonly HttpClient? _httpClient;
     private readonly ILogger<PdfService> _logger;
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly long _maxPdfSizeBytes;
     private readonly IMetrics _metrics;
     private readonly PdfServiceOptions _options;
-    private readonly HttpClient? _httpClient;
-    private readonly long _maxPdfSizeBytes;
 
-    public PdfService(
-        ILoggerFactory loggerFactory,
-        IMetrics? metrics = null,
-        HttpClient? httpClient = null,
-        PdfServiceOptions? options = null)
+    public PdfService(ILoggerFactory loggerFactory, IMetrics? metrics = null, HttpClient? httpClient = null, PdfServiceOptions? options = null)
     {
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _logger = loggerFactory.CreateLogger<PdfService>();
-        options ??= new PdfServiceOptions();
+        options ??= new();
         _options = options;
         _metrics = options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _httpClient = httpClient;
-        _maxPdfSizeBytes = options.MaxPdfSizeBytes.GetValueOrDefault() > 0
-            ? options.MaxPdfSizeBytes!.Value
-            : PdfServiceOptions.SuggestedMaxPdfSizeBytes;
+        _maxPdfSizeBytes = options.MaxPdfSizeBytes.GetValueOrDefault() > 0 ? options.MaxPdfSizeBytes!.Value : PdfServiceOptions.SuggestedMaxPdfSizeBytes;
     }
 
     /// <inheritdoc />
@@ -48,7 +42,7 @@ public sealed class PdfService : IPdfService
 #else
         var bytes = await File.ReadAllBytesAsync(filePath, ct).ConfigureAwait(false);
 #endif
-        return OpenFromBuffer(bytes, filePath: filePath);
+        return OpenFromBuffer(bytes, filePath);
     }
 
     /// <inheritdoc />
@@ -164,8 +158,7 @@ public sealed class PdfService : IPdfService
     }
 
     /// <inheritdoc />
-    public Task<IPdfReader> OpenFromStreamAsync(Stream stream, CancellationToken ct = default)
-        => Task.Run(() => OpenFromStream(stream), ct);
+    public Task<IPdfReader> OpenFromStreamAsync(Stream stream, CancellationToken ct = default) => Task.Run(() => OpenFromStream(stream), ct);
 
     /// <inheritdoc />
     public IPdfReader OpenFromStream(Stream stream)
@@ -200,49 +193,6 @@ public sealed class PdfService : IPdfService
 
     /// <inheritdoc />
     public IReadOnlyList<IPdfReader> OpenFromStreams(params Stream[] streams) => OpenBatchSync(streams, OpenFromStream);
-
-    private IReadOnlyList<IPdfReader> OpenBatchSync<T>(IReadOnlyList<T> inputs, Func<T, IPdfReader> opener)
-    {
-        var list = new List<IPdfReader>(inputs.Count);
-        try {
-            foreach (var input in inputs)
-                list.Add(opener(input));
-
-            return list;
-        }
-        catch {
-            DisposeReaderList(list);
-            throw;
-        }
-    }
-
-    private void DisposeReaderList(List<IPdfReader> list)
-    {
-        foreach (var doc in list) {
-            try {
-                doc.Dispose();
-            }
-            catch (Exception ex) {
-                _logger.LogWarning(ex, "Failed to dispose partially opened {ReaderType}.", nameof(PdfReader));
-            }
-        }
-    }
-
-    private PdfReader OpenFromBuffer(byte[] pdfBytes, string? filePath = null, string? url = null)
-        => PdfOperationMetrics.Execute(_metrics,
-            Constants.Metrics.LoadDuration, Constants.Metrics.LoadSuccess, Constants.Metrics.LoadFailure, () => {
-                ArgumentHelpers.ThrowIfGreaterThan(
-                    pdfBytes.Length, _maxPdfSizeBytes, nameof(pdfBytes),
-                    $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
-
-                var pig = PigDoc.Open(pdfBytes);
-                _logger.LogDebug(
-                    "Opened {ReaderType} with {PageCount} page(s); source={Source}",
-                    nameof(PdfReader),
-                    pig.NumberOfPages,
-                    filePath ?? url ?? "bytes");
-                return new PdfReader(_loggerFactory, _options, _metrics, pdfBytes, pig, filePath, url);
-            });
 
     /// <inheritdoc />
     public IPdfWriter CreateEmpty()
@@ -282,22 +232,20 @@ public sealed class PdfService : IPdfService
     }
 
     /// <inheritdoc />
-    public Task<IPdfWriter> OpenForEditAsync(byte[] pdfBytes, CancellationToken ct = default)
-        => Task.Run(() => OpenForEdit(pdfBytes), ct);
+    public Task<IPdfWriter> OpenForEditAsync(byte[] pdfBytes, CancellationToken ct = default) => Task.Run(() => OpenForEdit(pdfBytes), ct);
 
     /// <inheritdoc />
-    public Task<IPdfWriter> OpenForEditAsync(string filePath, CancellationToken ct = default)
-        => Task.Run(() => OpenForEdit(filePath), ct);
+    public Task<IPdfWriter> OpenForEditAsync(string filePath, CancellationToken ct = default) => Task.Run(() => OpenForEdit(filePath), ct);
 
     /// <inheritdoc />
-    public Task<IPdfWriter> OpenForEditAsync(Stream stream, CancellationToken ct = default)
-        => Task.Run(() => OpenForEdit(stream), ct);
+    public Task<IPdfWriter> OpenForEditAsync(Stream stream, CancellationToken ct = default) => Task.Run(() => OpenForEdit(stream), ct);
 
     /// <inheritdoc />
     public Task<byte[]> MergePdfsToFileAsync(IReadOnlyList<byte[]> pdfBuffers, string filePath, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
-        return Task.Run(async () => {
+        return Task.Run(
+            async () => {
                 var bytes = await MergePdfsAsync(pdfBuffers, ct).ConfigureAwait(false);
                 ct.ThrowIfCancellationRequested();
                 var directory = Path.GetDirectoryName(filePath);
@@ -355,8 +303,7 @@ public sealed class PdfService : IPdfService
     }
 
     /// <inheritdoc />
-    public Task<byte[]> MergePdfsAsync(IReadOnlyList<byte[]> pdfBuffers, CancellationToken ct = default)
-        => Task.Run(() => MergePdfs(pdfBuffers), ct);
+    public Task<byte[]> MergePdfsAsync(IReadOnlyList<byte[]> pdfBuffers, CancellationToken ct = default) => Task.Run(() => MergePdfs(pdfBuffers), ct);
 
     /// <inheritdoc />
     public byte[] MergePdfs(IReadOnlyList<byte[]> pdfBuffers) => MergePdfsInternal(pdfBuffers);
@@ -411,14 +358,52 @@ public sealed class PdfService : IPdfService
         return MergePdfsToFile(buffers, outputFilePath);
     }
 
+    private IReadOnlyList<IPdfReader> OpenBatchSync<T>(IReadOnlyList<T> inputs, Func<T, IPdfReader> opener)
+    {
+        var list = new List<IPdfReader>(inputs.Count);
+        try {
+            foreach (var input in inputs)
+                list.Add(opener(input));
+
+            return list;
+        }
+        catch {
+            DisposeReaderList(list);
+            throw;
+        }
+    }
+
+    private void DisposeReaderList(List<IPdfReader> list)
+    {
+        foreach (var doc in list) {
+            try {
+                doc.Dispose();
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to dispose partially opened {ReaderType}.", nameof(PdfReader));
+            }
+        }
+    }
+
+    private PdfReader OpenFromBuffer(byte[] pdfBytes, string? filePath = null, string? url = null)
+        => PdfOperationMetrics.Execute(
+            _metrics, Constants.Metrics.LoadDuration, Constants.Metrics.LoadSuccess, Constants.Metrics.LoadFailure, () => {
+                ArgumentHelpers.ThrowIfGreaterThan(
+                    pdfBytes.Length, _maxPdfSizeBytes, nameof(pdfBytes), $"PDF size ({pdfBytes.Length} bytes) exceeds max allowed size ({_maxPdfSizeBytes} bytes).");
+
+                var pig = PigDoc.Open(pdfBytes);
+                _logger.LogDebug("Opened {ReaderType} with {PageCount} page(s); source={Source}", nameof(PdfReader), pig.NumberOfPages, filePath ?? url ?? "bytes");
+                return new PdfReader(_loggerFactory, _options, _metrics, pdfBytes, pig, filePath, url);
+            });
+
     private SharpPdfDoc OpenForEditSharpInternal(byte[] copy)
-        => PdfOperationMetrics.Execute(_metrics,
-            Constants.Metrics.MergeDuration, Constants.Metrics.MergeSuccess, Constants.Metrics.MergeFailure,
+        => PdfOperationMetrics.Execute(
+            _metrics, Constants.Metrics.MergeDuration, Constants.Metrics.MergeSuccess, Constants.Metrics.MergeFailure,
             () => SharpPdfReaderIO.Open(new MemoryStream(copy, false), PdfDocumentOpenMode.Modify));
 
     private byte[] MergePdfsInternal(IReadOnlyList<byte[]> pdfBuffers)
-        => PdfOperationMetrics.Execute(_metrics,
-            Constants.Metrics.MergeDuration, Constants.Metrics.MergeSuccess, Constants.Metrics.MergeFailure, () => {
+        => PdfOperationMetrics.Execute(
+            _metrics, Constants.Metrics.MergeDuration, Constants.Metrics.MergeSuccess, Constants.Metrics.MergeFailure, () => {
                 ArgumentHelpers.ThrowIfNull(pdfBuffers);
                 ArgumentHelpers.ThrowIf(pdfBuffers.Count < 2, "At least two PDFs are required to merge.", nameof(pdfBuffers));
                 using var outputDocument = new SharpPdfDoc();

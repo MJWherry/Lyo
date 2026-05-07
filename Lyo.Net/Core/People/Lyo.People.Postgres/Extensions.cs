@@ -52,9 +52,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresPeopleOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddPeopleDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresPeopleOptions.SectionName)
+        public IServiceCollection AddPeopleDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresPeopleOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

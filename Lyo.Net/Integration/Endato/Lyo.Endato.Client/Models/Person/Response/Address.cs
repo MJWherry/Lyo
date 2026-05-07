@@ -46,6 +46,5 @@ public sealed record Address(
 )
 {
     public override string ToString()
-        => $"Address: '{FullAddress}', Order={AddressOrder}, Deliverable={IsDeliverable}, Public={IsPublic}, " +
-           $"City='{City}', State='{State}', Zip='{Zip}'";
+        => $"Address: '{FullAddress}', Order={AddressOrder}, Deliverable={IsDeliverable}, Public={IsPublic}, " + $"City='{City}', State='{State}', Zip='{Zip}'";
 }

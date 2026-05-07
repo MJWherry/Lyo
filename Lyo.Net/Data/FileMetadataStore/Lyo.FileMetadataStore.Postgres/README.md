@@ -4,7 +4,8 @@ OLTP **`IFileMetadataStore`** plus adjunct services used by richer file pipeline
 
 ### `PostgresFileMetadataStore`
 
-Implements transactional CRUD for canonical metadata rows (**`SaveMetadataAsync`** upserts, **`FindByHashAsync`** leverages indexed digest columns—verify migration indices before huge imports, **`FindByKeyIdAndVersion`** powers rotation reporting).
+Implements transactional CRUD for canonical metadata rows (**`SaveMetadataAsync`** upserts, **`FindByHashAsync`** leverages indexed digest columns—verify migration indices before
+huge imports, **`FindByKeyIdAndVersion`** powers rotation reporting).
 
 Registers as **scoped** in many hosts so each ASP.NET HTTP request obtains its own **`FileMetadataStoreDbContext`** lifecycle (prevent accidental cross-request state).
 
@@ -19,17 +20,21 @@ Implementations packaged here also cover:
 
 ### DI panorama (`Extensions` highlights)
 
-Beyond simple `AddPostgresFileMetadataStore` overloads, you can declare **keyed registrations** (**`AddPostgresFileMetadataStoreKeyed`**) to bind multiple logical stores (different connection strings/schemas) concurrently—essential for gateways hosting **per-tenant** metadata silos without duplicating binaries.
+Beyond simple `AddPostgresFileMetadataStore` overloads, you can declare **keyed registrations** (**`AddPostgresFileMetadataStoreKeyed`**) to bind multiple logical stores (different
+connection strings/schemas) concurrently—essential for gateways hosting **per-tenant** metadata silos without duplicating binaries.
 
-Fluent builder (**`PostgresFileMetadataStoreBuilder.ConfigurePostgresFileStore`**) merges configuration sections + programmatic overrides before **`Build()`** finalizes keyed or default mappings.
+Fluent builder (**`PostgresFileMetadataStoreBuilder.ConfigurePostgresFileStore`**) merges configuration sections + programmatic overrides before **`Build()`** finalizes keyed or
+default mappings.
 
-Separate methods register **only DbContext factories** (`AddFileMetadataStoreDbContextFactory*`) where an API host wants manual context control (unit-of-work wrappers, custom pooling).
+Separate methods register **only DbContext factories** (`AddFileMetadataStoreDbContextFactory*`) where an API host wants manual context control (unit-of-work wrappers, custom
+pooling).
 
 Logs via **`ILogger<PostgresFileMetadataStore>`** at Debug/Warning levels for forensic tracing.
 
 ### Failure handling
 
-Translates Postgres unique violations (`23505`) into predictable outcomes where possible (duplicate hash insert collisions). Inspect `catch` scopes before mapping to **`409 Conflict`** externally.
+Translates Postgres unique violations (`23505`) into predictable outcomes where possible (duplicate hash insert collisions). Inspect `catch` scopes before mapping to *
+*`409 Conflict`** externally.
 
 ### Migrations / schema coupling
 

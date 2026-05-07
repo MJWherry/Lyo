@@ -60,7 +60,6 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 | PreserveBoundary | "bad" → "b*d"               |
 | DetectOnly       | No replacement; only detect |
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Profanity.csproj`.)*

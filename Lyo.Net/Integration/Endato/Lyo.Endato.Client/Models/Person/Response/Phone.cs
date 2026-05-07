@@ -19,7 +19,5 @@ public sealed record Phone(
     //public string PublicLastSeenDate,
 )
 {
-    public override string ToString()
-        => $"Phone: '{PhoneNumber}', Type='{PhoneType}', Order={PhoneOrder}, Connected={IsConnected}, Public={IsPublic}, " +
-           $"Location='{Location}'";
+    public override string ToString() => $"Phone: '{PhoneNumber}', Type='{PhoneType}', Order={PhoneOrder}, Connected={IsConnected}, Public={IsPublic}, " + $"Location='{Location}'";
 }

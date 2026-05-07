@@ -5,28 +5,27 @@ namespace Lyo.Scientific.Chemistry;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ChemicalElement
 {
+    public int AtomicNumber { get; init; }
+
+    public string Symbol { get; init; }
+
+    public string Name { get; init; }
+
+    public double? AtomicMass { get; init; }
 
     public ChemicalElement(int atomicNumber, string symbol, string name, double? atomicMass = null)
 
     {
-
         atomicNumber = atomicNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(atomicNumber)) : atomicNumber;
         symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
         name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
         atomicMass = atomicMass is not null && atomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(atomicMass)) : atomicMass;
-
         AtomicNumber = atomicNumber;
         Symbol = symbol;
         Name = name;
         AtomicMass = atomicMass;
-
     }
 
-
-    public int AtomicNumber { get;  init; }
-    public string Symbol { get;  init; }
-    public string Name { get;  init; }
-    public double? AtomicMass { get;  init; }
     public override string ToString() => AtomicMass is { } m ? $"{AtomicNumber} {Symbol} ({Name}), mass≈{m}" : $"{AtomicNumber} {Symbol} ({Name})";
 }
 

@@ -72,7 +72,6 @@ Example `appsettings.json`:
 - `Phone` (optional) – Phone number
 - `Company` (optional) – Company name
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.ContactUs.csproj`.)*

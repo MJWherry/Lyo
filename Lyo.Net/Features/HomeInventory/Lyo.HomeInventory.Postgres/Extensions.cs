@@ -59,9 +59,7 @@ public static class Extensions
             return services.AddPostgresHomeInventoryStore(options);
         }
 
-        public IServiceCollection AddPostgresHomeInventoryStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresHomeInventoryOptions.SectionName)
+        public IServiceCollection AddPostgresHomeInventoryStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresHomeInventoryOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

@@ -37,7 +37,6 @@ app.MapWebhook("/webhooks/twilio/sms")
 
 - **net10.0**
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Webhook.Twilio.csproj`.)*

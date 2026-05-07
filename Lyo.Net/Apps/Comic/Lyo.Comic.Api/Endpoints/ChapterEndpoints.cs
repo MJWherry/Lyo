@@ -59,12 +59,11 @@ public static class ChapterEndpoints
 
     private static async Task<IResult> RemoveTag(Guid id, string tag, string? tagType, string? slug, ITagStore tagStore, CancellationToken ct = default)
     {
-        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ResolveTagType(tagType), slug: slug, ct: ct);
+        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ResolveTagType(tagType), slug, ct);
         return Results.NoContent();
     }
 
-    private static string ResolveTagType(string? tagType)
-        => string.IsNullOrWhiteSpace(tagType) ? "tag" : tagType.Trim();
+    private static string ResolveTagType(string? tagType) => string.IsNullOrWhiteSpace(tagType) ? "tag" : tagType.Trim();
 
     private static async Task<IResult> GetRatings(Guid id, IRatingStore ratingStore, CancellationToken ct = default)
     {

@@ -7,10 +7,7 @@ public readonly record struct Area
 {
     public double SquareMeters { get; }
 
-    public Area(double squareMeters)
-    {
-        SquareMeters = MathValueGuards.NonNegativeFinite(squareMeters, nameof(squareMeters));
-    }
+    public Area(double squareMeters) => SquareMeters = MathValueGuards.NonNegativeFinite(squareMeters, nameof(squareMeters));
 
     public static Area FromSquareMeters(double squareMeters) => new(squareMeters);
 

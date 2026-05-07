@@ -5,18 +5,11 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Volume
 {
+    public double CubicMeters { get; }
 
-    public Volume(double cubicMeters)
-
-    {
-
-        CubicMeters = MathValueGuards.NonNegativeFinite(cubicMeters, nameof(cubicMeters));
-
-    }
-
-
-    public double CubicMeters { get;  }
     public double Liters => CubicMeters * 1000d;
+
+    public Volume(double cubicMeters) => CubicMeters = MathValueGuards.NonNegativeFinite(cubicMeters, nameof(cubicMeters));
 
     public static Volume FromCubicMeters(double cubicMeters) => new(cubicMeters);
 

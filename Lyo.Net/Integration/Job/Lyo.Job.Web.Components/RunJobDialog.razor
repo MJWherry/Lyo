@@ -94,13 +94,15 @@
     [CascadingParameter]
     IMudDialogInstance MudDialog { get; set; } = null!;
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public IEnumerable<JobDefinitionRes>? JobDefinitions { get; set; }
 
     [Parameter]
     public JobDefinitionRes? SelectedJobDefinition { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string RunRoute { get; set; } = "";
 
     [Inject]

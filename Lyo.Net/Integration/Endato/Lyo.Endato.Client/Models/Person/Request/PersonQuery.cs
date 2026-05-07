@@ -28,6 +28,5 @@ public class PersonQuery
         DateOfBirth = dateOfBirth; //.ToString("MM/dd/yyyy");
     }
 
-    public override string ToString()
-        => $"PersonQuery: FirstName='{FirstName}', LastName='{LastName}', Dob='{DateOfBirth}', ResultsPerPage={ResultsPerPage}";
+    public override string ToString() => $"PersonQuery: FirstName='{FirstName}', LastName='{LastName}', Dob='{DateOfBirth}', ResultsPerPage={ResultsPerPage}";
 }

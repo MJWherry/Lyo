@@ -36,10 +36,13 @@ public sealed class ComicApiClient(HttpClient httpClient, ComicApiClientOptions 
         var parts = new List<string>(3);
         if (seriesId is { } sId && sId != Guid.Empty)
             parts.Add($"seriesId={sId:D}");
+
         if (volumeId is { } vId && vId != Guid.Empty)
             parts.Add($"volumeId={vId:D}");
+
         if (chapterId is { } cId && cId != Guid.Empty)
             parts.Add($"chapterId={cId:D}");
+
         var query = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
         return await PostFileAsAsync<FileStoreResult>($"files/upload{query}", data, fileName, ct: ct);
     }

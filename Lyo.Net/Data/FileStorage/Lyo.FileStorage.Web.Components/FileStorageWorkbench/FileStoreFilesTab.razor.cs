@@ -227,9 +227,7 @@ public partial class FileStoreFilesTab : ComponentBase
             return;
         }
 
-        var parameters = new DialogParameters<FileStoreAccessLinkDialog> {
-            { d => d.Workbench, Workbench }, { d => d.FileId, fileId }
-        };
+        var parameters = new DialogParameters<FileStoreAccessLinkDialog> { { d => d.Workbench, Workbench }, { d => d.FileId, fileId } };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         await Workbench.DialogService.ShowAsync<FileStoreAccessLinkDialog>("Create access link", parameters, options);
     }

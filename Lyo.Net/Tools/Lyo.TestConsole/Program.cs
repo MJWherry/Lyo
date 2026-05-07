@@ -55,7 +55,6 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
-using Lyo.Web.Automation.Playwright;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Reporting.Postgres;
@@ -188,9 +187,7 @@ var host = Host.CreateDefaultBuilder(args)
                 config.EnableMetrics = true; // Enable metrics collection
             }, _ => new LocalFileMetadataStore(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestore")), "two-key-aws");
 
-        services.AddTransient<IApiClient>(_ => new ApiClient(
-            serializerOptions: LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()));
-
+        services.AddTransient<IApiClient>(_ => new ApiClient(serializerOptions: LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()));
         services.AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" });
         services.AddFusionCacheFromConfiguration(context.Configuration);
         services.AddLyoQueryServices();

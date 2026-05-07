@@ -6,24 +6,21 @@ namespace Lyo.Mathematics.Vectors;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Vector3D
 {
+    public double X { get; }
+
+    public double Y { get; }
+
+    public double Z { get; }
+
+    public double Magnitude => Math.Sqrt(X * X + Y * Y + Z * Z);
 
     public Vector3D(double x, double y, double z)
 
     {
-
         X = MathValueGuards.Finite(x, nameof(x));
-
         Y = MathValueGuards.Finite(y, nameof(y));
-
         Z = MathValueGuards.Finite(z, nameof(z));
-
     }
-
-
-    public double X { get;  }
-    public double Y { get;  }
-    public double Z { get;  }
-    public double Magnitude => Math.Sqrt(X * X + Y * Y + Z * Z);
 
     public Vector3D Normalize()
     {

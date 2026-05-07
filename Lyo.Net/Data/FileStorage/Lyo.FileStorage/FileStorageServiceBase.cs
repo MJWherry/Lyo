@@ -14,8 +14,8 @@ using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
-using Lyo.Health;
 using Lyo.Hashing;
+using Lyo.Health;
 using Lyo.Metrics;
 using Lyo.Streams;
 using Microsoft.Extensions.Logging;
@@ -1649,9 +1649,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
         if (fromDeclaredMime != FileTypeInfo.Unknown)
             return fromDeclaredMime.MimeType;
 
-        return !declaredContentType.IsNullOrWhitespace() 
-            ? declaredContentType.Trim() 
-            : FileTypeInfo.Unknown.MimeType;
+        return !declaredContentType.IsNullOrWhitespace() ? declaredContentType.Trim() : FileTypeInfo.Unknown.MimeType;
     }
 
     protected static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)

@@ -68,10 +68,8 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     /// <summary>Gets the largest unit whose converted value from bytes is at least 1 (or Byte for 0/negative input).</summary>
     /// <param name="bytes">The number of bytes.</param>
     /// <returns>The best fit file size unit.</returns>
-    public static FileSizeUnitInfo GetBestFitUnit(long bytes) 
-        => bytes <= 0 
-            ? Byte 
-            : _allUnits.OrderBy(u => u.BytesMultiplier).LastOrDefault(u => bytes >= u.BytesMultiplier) ?? Byte;
+    public static FileSizeUnitInfo GetBestFitUnit(long bytes)
+        => bytes <= 0 ? Byte : _allUnits.OrderBy(u => u.BytesMultiplier).LastOrDefault(u => bytes >= u.BytesMultiplier) ?? Byte;
 
     /// <summary>Formats bytes using the best fit unit abbreviation (e.g., "1.82mb").</summary>
     /// <param name="bytes">The number of bytes.</param>

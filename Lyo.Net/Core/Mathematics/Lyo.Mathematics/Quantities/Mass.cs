@@ -5,20 +5,13 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Mass
 {
+    public double Kilograms { get; }
 
-    public Mass(double kilograms)
-
-    {
-
-        Kilograms = MathValueGuards.NonNegativeFinite(kilograms, nameof(kilograms));
-
-    }
-
-
-    public double Kilograms { get;  }
     public double Grams => Kilograms * 1000d;
 
     public double Pounds => Kilograms * 2.2046226218487757d;
+
+    public Mass(double kilograms) => Kilograms = MathValueGuards.NonNegativeFinite(kilograms, nameof(kilograms));
 
     public static Mass FromKilograms(double kilograms) => new(kilograms);
 

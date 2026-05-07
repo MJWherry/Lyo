@@ -6,56 +6,57 @@ namespace Lyo.Scientific.Astronomy;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Star
 {
+    public string Name { get; init; }
+
+    public Mass Mass { get; init; }
+
+    public Length Radius { get; init; }
+
+    public Power Luminosity { get; init; }
+
+    public Temperature SurfaceTemperature { get; init; }
 
     public Star(string name, Mass mass, Length radius, Power luminosity, Temperature surfaceTemperature)
 
     {
-
         name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
-
         Name = name;
         Mass = mass;
         Radius = radius;
         Luminosity = luminosity;
         SurfaceTemperature = surfaceTemperature;
-}
+    }
 
-
-    public string Name { get;  init; }
-
-    public Mass Mass { get; init; }
-    public Length Radius { get; init; }
-    public Power Luminosity { get; init; }
-    public Temperature SurfaceTemperature { get; init; }
     public override string ToString() => $"{Name}, M={Mass}, R={Radius}, L={Luminosity}, T={SurfaceTemperature}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Moon
 {
+    public string Name { get; init; }
+
+    public PlanetaryBody ParentBody { get; init; }
+
+    public Mass Mass { get; init; }
+
+    public Length MeanRadius { get; init; }
+
+    public Length SemiMajorAxis { get; init; }
+
+    public TimeInterval OrbitalPeriod { get; init; }
 
     public Moon(string name, PlanetaryBody parentBody, Mass mass, Length meanRadius, Length semiMajorAxis, TimeInterval orbitalPeriod)
 
     {
-
         name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
-
         Name = name;
         ParentBody = parentBody;
         Mass = mass;
         MeanRadius = meanRadius;
         SemiMajorAxis = semiMajorAxis;
         OrbitalPeriod = orbitalPeriod;
-}
+    }
 
-
-    public string Name { get;  init; }
-
-    public PlanetaryBody ParentBody { get; init; }
-    public Mass Mass { get; init; }
-    public Length MeanRadius { get; init; }
-    public Length SemiMajorAxis { get; init; }
-    public TimeInterval OrbitalPeriod { get; init; }
     public override string ToString() => $"{Name}, parent={ParentBody.Name}, M={Mass}, R={MeanRadius}, a={SemiMajorAxis}, T={OrbitalPeriod}";
 }
 

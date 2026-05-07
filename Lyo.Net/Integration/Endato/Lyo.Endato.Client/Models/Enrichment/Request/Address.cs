@@ -9,6 +9,5 @@ public class Address
 
     public string AddressLine2 { get; set; } = null!;
 
-    public override string ToString()
-        => $"Address: Line1='{AddressLine1}', Line2='{AddressLine2}'";
+    public override string ToString() => $"Address: Line1='{AddressLine1}', Line2='{AddressLine2}'";
 }

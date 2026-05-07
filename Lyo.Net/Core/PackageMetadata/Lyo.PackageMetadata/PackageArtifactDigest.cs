@@ -19,7 +19,7 @@ public static class PackageArtifactDigest
             ArtifactDigestAlgorithm.Sha512 => HexEncoding.ToHexString(Hasher.ComputeSha512(contents), TextLetterCase.Lower),
             ArtifactDigestAlgorithm.Sha256 => HexEncoding.ToHexString(Hasher.ComputeSha256(contents), TextLetterCase.Lower),
             ArtifactDigestAlgorithm.Sha1 => HexEncoding.ToHexString(ComputeSha1Bytes(contents), TextLetterCase.Lower),
-            var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null),
+            var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
         };
     }
 
@@ -33,7 +33,7 @@ public static class PackageArtifactDigest
                 ArtifactDigestAlgorithm.Sha512 => HexEncoding.ToHexString(Hasher.ComputeSha512(stream), TextLetterCase.Lower),
                 ArtifactDigestAlgorithm.Sha256 => HexEncoding.ToHexString(Hasher.ComputeSha256(stream), TextLetterCase.Lower),
                 ArtifactDigestAlgorithm.Sha1 => HexEncoding.ToHexString(ComputeSha1Stream(stream), TextLetterCase.Lower),
-                var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null),
+                var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
             };
         }
         finally {
@@ -46,8 +46,7 @@ public static class PackageArtifactDigest
     public static string ComputeHexSha512(byte[] packageContents) => ComputeHex(ArtifactDigestAlgorithm.Sha512, packageContents);
 
     /// <inheritdoc cref="ComputeHex(ArtifactDigestAlgorithm, Stream, bool)" />
-    public static string ComputeHexSha512(Stream packageStream, bool leaveOpen = false)
-        => ComputeHex(ArtifactDigestAlgorithm.Sha512, packageStream, leaveOpen);
+    public static string ComputeHexSha512(Stream packageStream, bool leaveOpen = false) => ComputeHex(ArtifactDigestAlgorithm.Sha512, packageStream, leaveOpen);
 
     private static byte[] ComputeSha1Bytes(byte[] data)
     {

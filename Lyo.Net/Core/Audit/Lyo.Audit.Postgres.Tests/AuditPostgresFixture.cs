@@ -26,7 +26,6 @@ public sealed class AuditPostgresFixture : PostgresContainerFixtureBase
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
-
         var recorderFactory = ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         Recorder = new PostgresAuditRecorder(recorderFactory);
     }

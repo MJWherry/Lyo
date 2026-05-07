@@ -91,9 +91,7 @@ public static class Extensions
         /// }
         /// </code>
         /// </remarks>
-        public IServiceCollection AddShortUrlFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = ShortUrlServiceOptions.SectionName)
+        public IServiceCollection AddShortUrlFromConfiguration(IConfiguration configuration, string configSectionName = ShortUrlServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

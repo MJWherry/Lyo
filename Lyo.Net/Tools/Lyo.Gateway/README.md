@@ -3,6 +3,7 @@
 Part of the [Lyo](../../../README.md) workspace: **`Lyo.Gateway`**.
 
 ## Related projects
+
 - [`Lyo.Api.Client`](../../Integration/Api/Lyo.Api.Client/README.md)
 - [`Lyo.Barcode.Native`](../../Data/Barcode/Lyo.Barcode.Native/README.md)
 - [`Lyo.Barcode.TestWorkbench.Web.Components`](../../Data/Barcode/Lyo.Barcode.TestWorkbench.Web.Components/README.md)

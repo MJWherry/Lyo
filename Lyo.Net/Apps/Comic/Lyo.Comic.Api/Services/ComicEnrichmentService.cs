@@ -1,9 +1,9 @@
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
-using Lyo.Comment.Postgres.Database;
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comment;
+using Lyo.Comment.Postgres.Database;
 using Lyo.Common.Enums;
 using Lyo.Common.Identifiers;
 using Lyo.Favorite;
@@ -18,8 +18,8 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Comic.Api.Services;
 
 /// <summary>
-/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryReqBuilder" /> per bounded schema so results
-/// participate in Lyo.Api query caching; favorite totals use store aggregation (GROUP BY) to avoid loading every favorite row.
+/// Aggregates cross-domain metadata for comic entities. List enrichment uses <see cref="IQueryService{TContext}" /> + <see cref="QueryReqBuilder" /> per bounded schema so
+/// results participate in Lyo.Api query caching; favorite totals use store aggregation (GROUP BY) to avoid loading every favorite row.
 /// </summary>
 public sealed class ComicEnrichmentService
 {
@@ -29,16 +29,16 @@ public sealed class ComicEnrichmentService
     private const string SeriesEntityType = "ComicSeries";
     private const string VolumeEntityType = "ComicVolume";
     private const string ChapterEntityType = "ComicChapter";
-    private readonly ICommentStore _commentStore;
     private readonly IQueryService<CommentDbContext> _commentQueryService;
-    private readonly IFavoriteStore _favoriteStore;
+    private readonly ICommentStore _commentStore;
     private readonly IQueryService<FavoriteDbContext> _favoriteQueryService;
-    private readonly int _maxQueryPageSize;
-    private readonly IRatingStore _ratingStore;
-    private readonly IQueryService<RatingDbContext> _ratingQueryService;
+    private readonly IFavoriteStore _favoriteStore;
     private readonly ILogger<ComicEnrichmentService> _logger;
-    private readonly ITagStore _tagStore;
+    private readonly int _maxQueryPageSize;
+    private readonly IQueryService<RatingDbContext> _ratingQueryService;
+    private readonly IRatingStore _ratingStore;
     private readonly IQueryService<TagDbContext> _tagQueryService;
+    private readonly ITagStore _tagStore;
 
     public ComicEnrichmentService(
         ITagStore tagStore,
@@ -166,15 +166,12 @@ public sealed class ComicEnrichmentService
         var commentsTask = QueryTopLevelCommentEntitiesForSeriesAsync(ids, ct);
         var favoriteCountsTask = _favoriteStore.GetFavoriteCountsForEntitiesAsync(SeriesEntityType, ids.ToList(), ct);
         var favoritedTask = callerRef.HasValue ? QueryFavoritedSeriesIdsAsync(callerRef.Value, ids, ct) : Task.FromResult(new HashSet<string>(StringComparer.Ordinal));
-
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountsTask, favoritedTask).ConfigureAwait(false);
-
         var tagsByEntityId = (await tagsTask).GroupBy(t => t.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
         var ratingsByEntityId = (await ratingsTask).GroupBy(r => r.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
         var commentCountsByEntityId = (await commentsTask).GroupBy(c => c.ForEntityId).ToDictionary(static g => g.Key, static g => g.Count());
         var favoriteCounts = await favoriteCountsTask;
         var favoritedLookup = await favoritedTask;
-
         var results = new ComicSeriesRes[items.Count];
         for (var i = 0; i < items.Count; i++) {
             var series = items[i];
@@ -202,9 +199,7 @@ public sealed class ComicEnrichmentService
 
     private Task<List<TagEntity>> QueryTagEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
-            "tags",
-            distinctIds,
-            chunk => {
+            "tags", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
                     .For<TagEntity>()
                     .AddWhere(w => {
@@ -218,14 +213,11 @@ public sealed class ComicEnrichmentService
                     .Build();
 
                 return _tagQueryService.Query<TagEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
-            },
-            ct);
+            }, ct);
 
     private Task<List<RatingEntity>> QueryRatingEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
-            "ratings",
-            distinctIds,
-            chunk => {
+            "ratings", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
                     .For<RatingEntity>()
                     .AddWhere(w => {
@@ -238,14 +230,11 @@ public sealed class ComicEnrichmentService
                     .Build();
 
                 return _ratingQueryService.Query<RatingEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
-            },
-            ct);
+            }, ct);
 
     private Task<List<CommentEntity>> QueryTopLevelCommentEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
-            "comments",
-            distinctIds,
-            chunk => {
+            "comments", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
                     .For<CommentEntity>()
                     .AddWhere(w => {
@@ -259,8 +248,7 @@ public sealed class ComicEnrichmentService
                     .Build();
 
                 return _commentQueryService.Query<CommentEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
-            },
-            ct);
+            }, ct);
 
     private async Task<HashSet<string>> QueryFavoritedSeriesIdsAsync(EntityRef caller, string[] distinctIds, CancellationToken ct)
     {

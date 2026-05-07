@@ -13,7 +13,6 @@ public static class ContentThreatAssessmentComposer
         ArgumentHelpers.ThrowIfNull(heuristicContributions);
         ArgumentHelpers.ThrowIfNull(external);
         ArgumentHelpers.ThrowIfNull(options);
-
         var combinedCount = heuristicContributions.Count + external.Contributions.Count;
         ContentThreatContribution[] merged;
         if (combinedCount == 0)
@@ -23,6 +22,7 @@ public static class ContentThreatAssessmentComposer
             var ix = 0;
             foreach (var c in heuristicContributions)
                 merged[ix++] = c;
+
             foreach (var c in external.Contributions)
                 merged[ix++] = c;
         }

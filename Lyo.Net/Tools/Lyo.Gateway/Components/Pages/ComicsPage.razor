@@ -23,8 +23,7 @@
 
     private const string ComicApiPrefix = "api/comic";
 
-    protected override async Task OnPageInitializedAsync() =>
-        _availableTags = await ComicApi.GetAsAsync<IReadOnlyList<string>>($"{ComicApiPrefix}/series/tags") ?? [];
+    protected override async Task OnPageInitializedAsync() => _availableTags = await ComicApi.GetAsAsync<IReadOnlyList<string>>($"{ComicApiPrefix}/series/tags") ?? [];
 
     private async Task<IReadOnlyList<ComicSeries>> SearchAsync(ComicSeriesQuery query, CancellationToken ct)
     {
@@ -64,8 +63,7 @@
             Demographic = r.Demographic,
             CreatedTimestamp = r.CreatedTimestamp,
             UpdatedTimestamp = r.UpdatedTimestamp,
-            AlternateTitles = r.AlternateTitles.Select(a =>
-                new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
+            AlternateTitles = r.AlternateTitles.Select(a => new ComicAlternateTitle { Id = a.Id, Title = a.Title, Language = a.Language }).ToList(),
             Tags = r.Tags.Count > 0 ? r.Tags.ToList() : []
         };
 

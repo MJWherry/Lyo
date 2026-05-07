@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.PackageMetadata.Tests.PackageMetadataPostgresFixture))]
+using Lyo.PackageMetadata.Tests;
+
+[assembly: AssemblyFixture(typeof(PackageMetadataPostgresFixture))]

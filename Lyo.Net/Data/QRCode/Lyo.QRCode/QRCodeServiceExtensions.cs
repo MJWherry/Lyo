@@ -12,6 +12,16 @@ namespace Lyo.QRCode;
 /// <summary>Registers <see cref="BuiltInQRCodeService" /> as <see cref="IQRCodeService" /> (in-library ISO encoder; PNG/SVG).</summary>
 public static class QRCodeServiceExtensions
 {
+    private static void RegisterBuiltInQrCodeService(IServiceCollection services)
+    {
+        if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
+            services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
+
+        services.AddSingleton<IQRCodeService>(sp => new BuiltInQRCodeService(
+            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<BuiltInQRCodeService>>() ?? NullLogger<BuiltInQRCodeService>.Instance, sp.GetService<IMetrics>(),
+            sp.GetService<IImageService>(), sp.GetRequiredService<IQrFrameLayoutService>()));
+    }
+
     extension(IServiceCollection services)
     {
         /// <summary>Registers <see cref="BuiltInQRCodeService" /> as <see cref="IQRCodeService" />.</summary>
@@ -36,9 +46,7 @@ public static class QRCodeServiceExtensions
         }
 
         /// <summary>Binds <see cref="QRCodeServiceOptions" /> from configuration and registers <see cref="BuiltInQRCodeService" /> as <see cref="IQRCodeService" />.</summary>
-        public IServiceCollection AddQRCodeServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = QRCodeServiceOptions.SectionName)
+        public IServiceCollection AddQRCodeServiceFromConfiguration(IConfiguration configuration, string configSectionName = QRCodeServiceOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -57,15 +65,5 @@ public static class QRCodeServiceExtensions
             RegisterBuiltInQrCodeService(services);
             return services;
         }
-    }
-
-    private static void RegisterBuiltInQrCodeService(IServiceCollection services)
-    {
-        if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
-            services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
-
-        services.AddSingleton<IQRCodeService>(sp => new BuiltInQRCodeService(
-            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<BuiltInQRCodeService>>() ?? NullLogger<BuiltInQRCodeService>.Instance, sp.GetService<IMetrics>(),
-            sp.GetService<IImageService>(), sp.GetRequiredService<IQrFrameLayoutService>()));
     }
 }

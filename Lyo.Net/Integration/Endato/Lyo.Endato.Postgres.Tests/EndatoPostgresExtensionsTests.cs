@@ -2,6 +2,7 @@ using Lyo.Endato.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Endato.Postgres.Tests;
 
 public class EndatoPostgresExtensionsTests

@@ -1,35 +1,35 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Web Automation Controls Page</title>
+    <meta charset="utf-8"/>
+    <title>Web Automation Controls Page</title>
 </head>
 <body>
-  <main id="controlsApp">
+<main id="controlsApp">
     <h1 id="controlsHeadline">Web Automation Controls Page</h1>
     <label for="searchInput">Search</label>
-    <input id="searchInput" name="searchInput" type="text" value="" />
+    <input id="searchInput" name="searchInput" type="text" value=""/>
     <button id="searchButton" type="button">Search</button>
     <ul id="resultsList">
-      <li class="search-item">alpha</li>
-      <li class="search-item">beta</li>
-      <li class="search-item">gamma</li>
+        <li class="search-item">alpha</li>
+        <li class="search-item">beta</li>
+        <li class="search-item">gamma</li>
     </ul>
     <div id="assetContainer">
-      <img class="asset-image" src="/files/sample-a.txt" />
-      <img class="asset-image" src="/files/sample-b.txt" />
+        <img class="asset-image" src="/files/sample-a.txt"/>
+        <img class="asset-image" src="/files/sample-b.txt"/>
     </div>
     <p id="searchEcho"></p>
-  </main>
-  <script>
+</main>
+<script>
     (() => {
-      const input = document.getElementById('searchInput');
-      const button = document.getElementById('searchButton');
-      const echo = document.getElementById('searchEcho');
-      button.addEventListener('click', () => {
-        echo.textContent = `search:${input.value}`;
-      });
+        const input = document.getElementById('searchInput');
+        const button = document.getElementById('searchButton');
+        const echo = document.getElementById('searchEcho');
+        button.addEventListener('click', () => {
+            echo.textContent = `search:${input.value}`;
+        });
     })();
-  </script>
+</script>
 </body>
 </html>

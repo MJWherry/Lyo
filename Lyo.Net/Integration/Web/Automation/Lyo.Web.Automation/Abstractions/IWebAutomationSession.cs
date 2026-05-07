@@ -16,7 +16,8 @@ public interface IWebAutomationSession : IAsyncDisposable, IDisposable
 
     /// <summary>
     /// Launches the browser for this session (WebDriver / Playwright stack). Safe to call more than once if already running. Call before
-    /// <see cref="IWebAutomationNavigator.NavigateAsync(string, CancellationToken)" /> or element polling on <see cref="IWebAutomationPage" /> when using <c>CreateSession</c> from the browser services.
+    /// <see cref="IWebAutomationNavigator.NavigateAsync(string, CancellationToken)" /> or element polling on <see cref="IWebAutomationPage" /> when using <c>CreateSession</c> from the
+    /// browser services.
     /// </summary>
     Task StartBrowserAsync(CancellationToken ct = default);
 }

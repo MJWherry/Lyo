@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 using Lyo.Api;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Cache;
-using Lyo.Common;
 using Lyo.Comic.Postgres;
+using Lyo.Common;
 using Lyo.Compression;
 using Lyo.Config.Postgres;
 using Lyo.Csv;
@@ -113,8 +113,8 @@ builder.Services.AddPostgresFileMetadataStoreKeyed(Constants.FileStorageWorkbenc
         options.EnableAutoMigrations = bool.TryParse(section["EnableAutoMigrations"], out var enableAutoMigrations) ? enableAutoMigrations : true;
     })
     .Build();
-builder.Services.AddPostgresFileDownloadAccessService();
 
+builder.Services.AddPostgresFileDownloadAccessService();
 var redisConnectionString = builder.Configuration.GetSection("Redis")["ConnectionString"] ?? builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
     builder.Services.AddRedisLock(redisConnectionString);

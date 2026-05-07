@@ -225,7 +225,6 @@ When `ILoggerFactory` is registered, the library logs:
 
 Logger category: `Lyo.Resilience.{PipelineName}`
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Resilience.csproj`.)*

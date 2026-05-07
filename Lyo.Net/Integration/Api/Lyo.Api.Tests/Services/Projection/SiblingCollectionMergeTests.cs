@@ -3,6 +3,7 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Formatter;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable UnusedMember.Local
 
@@ -26,7 +27,7 @@ public sealed class SiblingCollectionMergeTests
         var outRow = Assert.IsType<Dictionary<string, object?>>(items[0]);
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.CreatedTimestamp"));
         Assert.True(outRow.TryGetValue("ContactAddresses.Address", out var mergedObj));
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, false);
         Assert.Equal(2, list.Count);
         Assert.Equal("2026-01-01", list[0]["CreatedTimestamp"]?.ToString());
         Assert.Equal("Broad St", list[0]["a"]?.ToString());
@@ -141,7 +142,7 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("ContactAddresses.Address"));
         Assert.DoesNotContain(outRow, kvp => string.Equals(kvp.Key, "ContactAddresses.Address", StringComparison.OrdinalIgnoreCase) && kvp.Value is IList l && l.Count == 0);
         Assert.True(outRow.TryGetValue("ContactAddresses", out var mergedObj));
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, false);
         Assert.Single(list);
         var addr = Assert.IsAssignableFrom<Dictionary<string, object?>>(list[0]["Address"]);
         Assert.Equal("Hollywood", addr["StreetName"]?.ToString());
@@ -168,7 +169,7 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.*"));
         Assert.False(outRow.ContainsKey("ContactAddresses.Address.a"));
         Assert.True(outRow.TryGetValue("ContactAddresses.Address", out var mergedObj));
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, false);
         Assert.Equal(2, list.Count);
         Assert.Equal("St", list[0]["StreetType"]?.ToString());
         Assert.Equal("Main St", list[0]["a"]?.ToString());
@@ -189,7 +190,7 @@ public sealed class SiblingCollectionMergeTests
         Assert.False(row.ContainsKey("DocketCharges.Code"));
         Assert.False(row.ContainsKey("DocketCharges.Number"));
         Assert.True(row.TryGetValue("DocketCharges", out var merged));
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(merged, exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(merged, false);
         Assert.Equal(2, list.Count);
         Assert.Equal("A", list[0]["Code"]);
         Assert.Equal("1", list[0]["Number"]);
@@ -244,7 +245,7 @@ public sealed class SiblingCollectionMergeTests
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
         Assert.False(outRow.ContainsKey("a"));
         Assert.True(outRow.TryGetValue("DocketCharges", out var mergedObj));
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(mergedObj, false);
         Assert.Equal(2, list.Count);
         Assert.Equal("A 1", list[0]["a"]?.ToString());
         Assert.Equal("B 2", list[1]["a"]?.ToString());
@@ -267,7 +268,7 @@ public sealed class SiblingCollectionMergeTests
         service.MergeSiblingCollectionProjectionRows(afterComputed, typeof(Docket), specs, true);
         service.StripAutoDerivedDependencyLeavesFromMergedCollections(afterComputed, specs, ["DocketCharges.Description", "DocketCharges.Number"]);
         var outRow = Assert.IsType<Dictionary<string, object?>>(afterComputed[0]);
-        var list = Assert.IsType<IList<Dictionary<string, object?>>>(outRow["DocketCharges"], exactMatch: false);
+        var list = Assert.IsType<IList<Dictionary<string, object?>>>(outRow["DocketCharges"], false);
         Assert.Equal(2, list.Count);
         Assert.False(list[0].ContainsKey("Description"));
         Assert.False(list[0].ContainsKey("Number"));

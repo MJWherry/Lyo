@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Comic.Api.Client;
 
-/// <summary>Registers <see cref="IComicApiClient"/> with HTTP client defaults.</summary>
+/// <summary>Registers <see cref="IComicApiClient" /> with HTTP client defaults.</summary>
 public static class ComicApiClientExtensions
 {
     public static IServiceCollection AddComicApiClientFromConfiguration(
@@ -27,9 +27,9 @@ public static class ComicApiClientExtensions
             .ConfigureHttpClient(client => {
                 var baseUrl = options.BaseUrl ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(baseUrl))
-                    client.BaseAddress = new Uri($"{baseUrl.TrimEnd('/')}/", UriKind.Absolute);
+                    client.BaseAddress = new($"{baseUrl.TrimEnd('/')}/", UriKind.Absolute);
 
-                foreach (var enc in (options.AcceptEncodings).Select(e => e.Trim().ToLowerInvariant()).Distinct()) {
+                foreach (var enc in options.AcceptEncodings.Select(e => e.Trim().ToLowerInvariant()).Distinct()) {
 #if NETSTANDARD2_0
                     if (enc is not ("gzip" or "deflate"))
                         continue;

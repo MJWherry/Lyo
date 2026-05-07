@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-
 #if NETSTANDARD2_0
 #pragma warning disable CS8604 // Possible null reference argument.
 #endif

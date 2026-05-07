@@ -5,20 +5,13 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Pressure
 {
+    public double Pascals { get; }
 
-    public Pressure(double pascals)
-
-    {
-
-        Pascals = MathValueGuards.NonNegativeFinite(pascals, nameof(pascals));
-
-    }
-
-
-    public double Pascals { get;  }
     public double Kilopascals => Pascals / 1000d;
 
     public double Atmospheres => Pascals / 101_325d;
+
+    public Pressure(double pascals) => Pascals = MathValueGuards.NonNegativeFinite(pascals, nameof(pascals));
 
     public static Pressure FromPascals(double pascals) => new(pascals);
 

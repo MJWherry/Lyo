@@ -10,10 +10,7 @@ using Lyo.Exceptions.Models;
 
 namespace Lyo.Common;
 
-/// <summary>
-/// General-purpose helpers: file-size conversion (powers of 1024), URI redaction, type classification,
-/// SHA256 hashing, and LINQ expression property name/path extraction.
-/// </summary>
+/// <summary>General-purpose helpers: file-size conversion (powers of 1024), URI redaction, type classification, SHA256 hashing, and LINQ expression property name/path extraction.</summary>
 public static class Utilities
 {
     private static readonly HashSet<Type> ScalarTypes = [typeof(string), typeof(decimal), typeof(Guid), typeof(DateTime), typeof(TimeSpan)];
@@ -22,8 +19,8 @@ public static class Utilities
     /// <summary>Converts a byte count into the requested unit using binary (1024-based) steps.</summary>
     /// <param name="bytes">The size in bytes; must not be negative.</param>
     /// <param name="targetUnit">The unit to convert to (each step is a factor of 1024).</param>
-    /// <returns>The size expressed in <paramref name="targetUnit"/>.</returns>
-    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="bytes"/> is negative.</exception>
+    /// <returns>The size expressed in <paramref name="targetUnit" />.</returns>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="bytes" /> is negative.</exception>
     public static double ConvertFromBytes(long bytes, FileSizeUnit targetUnit)
     {
         ArgumentHelpers.ThrowIfNegative(bytes);
@@ -33,9 +30,9 @@ public static class Utilities
 
     /// <summary>Converts a scalar size in the given unit to whole bytes using binary (1024-based) steps.</summary>
     /// <param name="size">The numeric size; must not be negative.</param>
-    /// <param name="sourceUnit">The unit of <paramref name="size"/>.</param>
+    /// <param name="sourceUnit">The unit of <paramref name="size" />.</param>
     /// <returns>The equivalent size in bytes, truncated toward zero.</returns>
-    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="size"/> is negative.</exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="size" /> is negative.</exception>
     public static long ConvertToBytes(double size, FileSizeUnit sourceUnit)
     {
         ArgumentHelpers.ThrowIfNegative(size);
@@ -44,11 +41,11 @@ public static class Utilities
     }
 
     /// <summary>Converts a size between two file-size units via bytes (binary / 1024).</summary>
-    /// <param name="size">The numeric size in <paramref name="sourceUnit"/>; must not be negative.</param>
-    /// <param name="sourceUnit">The unit of <paramref name="size"/>.</param>
+    /// <param name="size">The numeric size in <paramref name="sourceUnit" />; must not be negative.</param>
+    /// <param name="sourceUnit">The unit of <paramref name="size" />.</param>
     /// <param name="targetUnit">The desired output unit.</param>
-    /// <returns>The size expressed in <paramref name="targetUnit"/>.</returns>
-    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="size"/> is negative.</exception>
+    /// <returns>The size expressed in <paramref name="targetUnit" />.</returns>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="size" /> is negative.</exception>
     public static double Convert(double size, FileSizeUnit sourceUnit, FileSizeUnit targetUnit)
     {
         var bytes = ConvertToBytes(size, sourceUnit);
@@ -56,11 +53,11 @@ public static class Utilities
     }
 
     /// <summary>
-    /// Redacts likely-sensitive query or fragment segments (e.g. keys matching <c>*secret</c>, <c>*token</c>,
-    /// <c>*password</c>, or <c>code</c>) by replacing captured values with asterisks.
+    /// Redacts likely-sensitive query or fragment segments (e.g. keys matching <c>*secret</c>, <c>*token</c>, <c>*password</c>, or <c>code</c>) by replacing captured values with
+    /// asterisks.
     /// </summary>
-    /// <param name="uri">The URI string to sanitize, or <see langword="null"/>.</param>
-    /// <returns>A trimmed string with sensitive-looking assignments redacted, or <see langword="null"/> when the input is null or empty after trim.</returns>
+    /// <param name="uri">The URI string to sanitize, or <see langword="null" />.</param>
+    /// <returns>A trimmed string with sensitive-looking assignments redacted, or <see langword="null" /> when the input is null or empty after trim.</returns>
     /// <remarks>Matching is heuristic; pairs named <c>result</c> or <c>status</c> are excluded from the secret/token pattern prefix.</remarks>
     public static string? SanitizeUri(string? uri)
     {
@@ -78,23 +75,29 @@ public static class Utilities
         return sanitizedQueryString;
     }
 
-    /// <summary>Determines whether <paramref name="type"/> is considered a collection for serialization-style checks (enumerable but not <see cref="string"/>).</summary>
+    /// <summary>Determines whether <paramref name="type" /> is considered a collection for serialization-style checks (enumerable but not <see cref="string" />).</summary>
     /// <param name="type">The CLR type to inspect.</param>
-    /// <returns><see langword="true"/> if <paramref name="type"/> implements <see cref="IEnumerable"/> and is not <see cref="string"/>.</returns>
+    /// <returns><see langword="true" /> if <paramref name="type" /> implements <see cref="IEnumerable" /> and is not <see cref="string" />.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsCollectionType(Type type) => type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
 
-    /// <summary>Determines whether <paramref name="type"/> is treated as a scalar (primitive, enum, or a small fixed set including <see cref="string"/>, <see cref="decimal"/>, <see cref="Guid"/>, <see cref="DateTime"/>, <see cref="TimeSpan"/>).</summary>
+    /// <summary>
+    /// Determines whether <paramref name="type" /> is treated as a scalar (primitive, enum, or a small fixed set including <see cref="string" />, <see cref="decimal" />,
+    /// <see cref="Guid" />, <see cref="DateTime" />, <see cref="TimeSpan" />).
+    /// </summary>
     /// <param name="type">The CLR type to inspect.</param>
-    /// <returns><see langword="true"/> if the type is classified as scalar.</returns>
+    /// <returns><see langword="true" /> if the type is classified as scalar.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsScalarType(Type type) => type.IsPrimitive || type.IsEnum || ScalarTypes.Contains(type);
 
     /// <summary>Computes the SHA256 hash of a file.</summary>
     /// <param name="path">Path to an existing file.</param>
     /// <returns>The 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="path"/> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)"/>.</exception>
-    /// <exception cref="InvalidFormatException">Thrown when <paramref name="path"/> fails URI validation.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />
+    /// .
+    /// </exception>
+    /// <exception cref="InvalidFormatException">Thrown when <paramref name="path" /> fails URI validation.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the file does not exist.</exception>
     public static byte[] Hash(string path)
     {
@@ -107,7 +110,7 @@ public static class Utilities
     /// <summary>Computes the SHA256 hash of a byte buffer.</summary>
     /// <param name="input">The data to hash.</param>
     /// <returns>The 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input" /> is <see langword="null" />.</exception>
     public static byte[] Hash(byte[] input)
     {
         ArgumentHelpers.ThrowIfNull(input);
@@ -123,8 +126,8 @@ public static class Utilities
     /// <param name="stream">The stream to read from; must be readable.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task that completes with the 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="stream"/> is <see langword="null"/>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when <paramref name="stream"/> is not readable.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="stream" /> is <see langword="null" />.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when <paramref name="stream" /> is not readable.</exception>
     /// <remarks>On targets below .NET 6, hashing runs synchronously after a yield; cancellation is only observed before that step.</remarks>
     public static async Task<byte[]> HashAsync(Stream stream, CancellationToken ct = default)
     {
@@ -141,12 +144,15 @@ public static class Utilities
 #endif
     }
 
-    /// <summary>Opens the file and computes its SHA256 hash asynchronously (delegates to <see cref="HashAsync(Stream, CancellationToken)"/>).</summary>
+    /// <summary>Opens the file and computes its SHA256 hash asynchronously (delegates to <see cref="HashAsync(Stream, CancellationToken)" />).</summary>
     /// <param name="path">Path to an existing file.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task that completes with the 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="path"/> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)"/>.</exception>
-    /// <exception cref="InvalidFormatException">Thrown when <paramref name="path"/> fails URI validation.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />
+    /// .
+    /// </exception>
+    /// <exception cref="InvalidFormatException">Thrown when <paramref name="path" /> fails URI validation.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the file does not exist.</exception>
     public static async Task<byte[]> HashAsync(string path, CancellationToken ct = default)
     {
@@ -164,7 +170,7 @@ public static class Utilities
     /// <typeparam name="TProperty">The property type.</typeparam>
     /// <param name="expression">A lambda that accesses a single property, optionally wrapped in a conversion.</param>
     /// <returns>The member name of the accessed property.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="expression"/> is not a property access expression.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="expression" /> is not a property access expression.</exception>
     public static string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> expression)
     {
         if (expression.Body is MemberExpression memberExpression)
@@ -183,9 +189,9 @@ public static class Utilities
     /// <summary>Builds a dotted path for nested property access (e.g. <c>x => x.Address.Street</c> → <c>Address.Street</c>).</summary>
     /// <typeparam name="T">The root declaring type.</typeparam>
     /// <typeparam name="TProperty">The leaf property type.</typeparam>
-    /// <param name="expression">A lambda composed only of member accesses from <typeparamref name="T"/> to the leaf property.</param>
+    /// <param name="expression">A lambda composed only of member accesses from <typeparamref name="T" /> to the leaf property.</param>
     /// <returns>The dot-separated property path from root to leaf.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="expression"/> is not a chain of property accesses.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="expression" /> is not a chain of property accesses.</exception>
     public static string GetPropertyPath<T, TProperty>(Expression<Func<T, TProperty>> expression)
     {
         var path = string.Empty;

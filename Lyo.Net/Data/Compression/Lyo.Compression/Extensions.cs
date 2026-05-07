@@ -1,7 +1,9 @@
 using Lyo.Compression.Models;
 using Lyo.Exceptions;
+using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Lyo.Compression;
 
@@ -63,7 +65,10 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers keyed <see cref="CompressionServiceOptions" />, <see cref="CompressionService" />, and <see cref="ICompressionService" /> for multi-tenant or multi-policy scenarios.</summary>
+        /// <summary>
+        /// Registers keyed <see cref="CompressionServiceOptions" />, <see cref="CompressionService" />, and <see cref="ICompressionService" /> for multi-tenant or multi-policy
+        /// scenarios.
+        /// </summary>
         /// <param name="keyedServiceName">Non-empty DI key shared across the three registrations.</param>
         /// <param name="configure">Optional per-key options mutation.</param>
         /// <returns>The service collection for chaining.</returns>
@@ -81,13 +86,9 @@ public static class Extensions
             services.AddKeyedSingleton<CompressionService>(
                 keyedServiceName,
                 (provider, key) => new(
-                    provider.GetService<Microsoft.Extensions.Logging.ILogger<CompressionService>>(),
-                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
-                    provider.GetService<Metrics.IMetrics>()));
+                    provider.GetService<ILogger<CompressionService>>(), provider.GetRequiredKeyedService<CompressionServiceOptions>(key), provider.GetService<IMetrics>()));
 
-            services.AddKeyedSingleton<ICompressionService>(
-                keyedServiceName,
-                (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
+            services.AddKeyedSingleton<ICompressionService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
             return services;
         }
     }

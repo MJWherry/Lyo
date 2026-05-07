@@ -67,6 +67,7 @@ public static class FilesEndpoints
         await using var stream = file.OpenReadStream();
         var result = await fileStorage.SaveFromStreamAsync(
             stream, file.Length, file.FileName, uploadOptions.Compress, uploadOptions.Encrypt, uploadOptions.KeyId, prefixResult.PathPrefix, ct: ct);
+
         return Results.Ok(new { result.Id });
     }
 

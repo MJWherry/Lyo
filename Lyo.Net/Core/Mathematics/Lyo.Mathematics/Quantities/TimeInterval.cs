@@ -5,22 +5,15 @@ namespace Lyo.Mathematics.Quantities;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct TimeInterval
 {
+    public double Seconds { get; }
 
-    public TimeInterval(double seconds)
-
-    {
-
-        Seconds = MathValueGuards.NonNegativeFinite(seconds, nameof(seconds));
-
-    }
-
-
-    public double Seconds { get;  }
     public double Minutes => Seconds / 60d;
 
     public double Hours => Seconds / 3600d;
 
     public TimeSpan TimeSpan => TimeSpan.FromSeconds(Seconds);
+
+    public TimeInterval(double seconds) => Seconds = MathValueGuards.NonNegativeFinite(seconds, nameof(seconds));
 
     public static TimeInterval FromSeconds(double seconds) => new(seconds);
 

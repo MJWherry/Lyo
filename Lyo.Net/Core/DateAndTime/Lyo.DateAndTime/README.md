@@ -371,7 +371,6 @@ public string FormatTimeForState(DateTime utcTime, USState state)
 }
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.DateAndTime.csproj`.)*
@@ -386,6 +385,7 @@ public string FormatTimeForState(DateTime utcTime, USState state)
 
 - [`Lyo.Common`](../../Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+
 ## Repository
 
 [GitHub Repository](https://github.com/mjwherry/Lyo)

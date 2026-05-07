@@ -58,8 +58,8 @@ public class SeleniumBrowserOptions
 
     /// <summary>
     /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol. This is required for network request monitoring in
-    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception startup script populates
-    /// <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script to
+    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception startup script
+    /// populates <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script to
     /// <see cref="StartupScripts" /> so that network requests can still be observed without CDP.
     /// </summary>
     public bool EnablePerformanceLogging { get; set; } = true;

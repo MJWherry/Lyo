@@ -40,7 +40,13 @@ public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
         return this;
     }
 
-    public CreateConfig<TRequest, TEntity, TDbContext> Build() => new() { Before = BeforeAction, After = AfterAction, AfterAsync = AfterAsyncAction, Auth = AuthPolicy };
+    public CreateConfig<TRequest, TEntity, TDbContext> Build()
+        => new() {
+            Before = BeforeAction,
+            After = AfterAction,
+            AfterAsync = AfterAsyncAction,
+            Auth = AuthPolicy
+        };
 }
 
 /// <summary>Fluent config for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet" />.</summary>

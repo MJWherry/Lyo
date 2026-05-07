@@ -103,10 +103,12 @@
     [CascadingParameter]
     IMudDialogInstance MudDialog { get; set; } = null!;
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public JobRunRes? JobRun { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string RunRoute { get; set; } = "";
 
     [Inject]

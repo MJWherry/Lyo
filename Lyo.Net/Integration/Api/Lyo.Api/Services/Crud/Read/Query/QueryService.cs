@@ -156,7 +156,7 @@ public class QueryService<TContext>(
     {
         const string operation = "get_map";
         ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-        IReadOnlyList<string> matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
+        var matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
         var includeArray = matIncludes.Count == 0 ? null : matIncludes is string[] sa ? sa : matIncludes.ToArray();
         using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TResult));
         RecordCrudRequest(operation, typeof(TDbModel));
@@ -229,7 +229,7 @@ public class QueryService<TContext>(
     {
         const string operation = "get";
         ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-        IReadOnlyList<string> matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
+        var matIncludes = includes?.AsReadOnlyList() ?? Array.Empty<string>();
         using var scope = BeginActionScope("GET", null, typeof(TDbModel), typeof(TDbModel));
         RecordCrudRequest(operation, typeof(TDbModel));
         using var timer = StartCrudTimer(operation, typeof(TDbModel));

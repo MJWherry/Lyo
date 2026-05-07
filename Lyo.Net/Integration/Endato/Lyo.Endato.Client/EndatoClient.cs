@@ -15,10 +15,7 @@ public class EndatoClient : ApiClient
     public readonly PersonManager Persons;
 
     public EndatoClient(EndatoClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
-        : base(
-            loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), 
-            httpClient,
-            LyoJsonSerializerOptions.Create(), options)
+        : base(loggerFactory?.CreateLogger<EndatoClient>() ?? NullLoggerFactory.Instance.CreateLogger<EndatoClient>(), httpClient, LyoJsonSerializerOptions.Create(), options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.BaseUrl, nameof(options.BaseUrl));

@@ -607,7 +607,6 @@ public class MyBackgroundService : BackgroundService
 }
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Metrics.csproj`.)*

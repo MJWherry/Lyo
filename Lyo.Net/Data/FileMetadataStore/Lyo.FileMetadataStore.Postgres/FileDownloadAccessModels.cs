@@ -9,11 +9,7 @@ public sealed record CreateFileDownloadAccessLinkRequest(
     int? MaxDownloads = null,
     string? TenantId = null);
 
-public sealed record CreateFileDownloadAccessLinkResult(
-    Guid LinkId,
-    string Token,
-    DateTime CreatedUtc,
-    DateTime? ExpiresAtUtc);
+public sealed record CreateFileDownloadAccessLinkResult(Guid LinkId, string Token, DateTime CreatedUtc, DateTime? ExpiresAtUtc);
 
 public enum FileDownloadAccessConsumeFailureReason
 {

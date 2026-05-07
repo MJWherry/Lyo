@@ -80,12 +80,7 @@ public partial class UniqueValueSelector<T>
 
     private async Task SelectAll()
     {
-        _selectedValues = _filteredItems
-            .Where(item => item.Value != null)
-            .Select(item => item.Value!.ToString())
-            .Where(value => !string.IsNullOrEmpty(value))
-            .ToHashSet();
-
+        _selectedValues = _filteredItems.Where(item => item.Value != null).Select(item => item.Value!.ToString()).Where(value => !string.IsNullOrEmpty(value)).ToHashSet();
         await InvokeAsync(StateHasChanged);
         await SelectedValuesChanged.InvokeAsync(_selectedValues.ToList());
     }

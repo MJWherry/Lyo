@@ -1,6 +1,7 @@
 # Lyo.Sms.Models
 
-Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in provider packages (`Lyo.Sms.Twilio`, etc.).
+Shared **domain types** for [`Lyo.Sms`](../Lyo.Sms/README.md): payloads, paging, events, normalization, and base options. There is **no** SMS sending here—implementations live in
+provider packages (`Lyo.Sms.Twilio`, etc.).
 
 ---
 
@@ -20,13 +21,14 @@ Canonical wire shape for outbound SMS/MMS:
 
 **Cursor-based listing** used by **`ISmsService.GetMessagesAsync`**:
 
-| Field | Role |
-|--------|------|
-| **`From`**, **`To`** | Narrow by participant (E.164). |
+| Field                                     | Role                                                                                                                                                                        |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`From`**, **`To`**                      | Narrow by participant (E.164).                                                                                                                                              |
 | **`DateSentAfter`**, **`DateSentBefore`** | Inclusive-ish window (provider maps to APIs). **`DateSentBefore`** doubles as **next-page cursor**: copy **`NextCursor`** from the previous page into **`DateSentBefore`**. |
-| **`PageSize`** | 1–1000 (default 50). |
+| **`PageSize`**                            | 1–1000 (default 50).                                                                                                                                                        |
 
-`SmsMessageQueryResults<T>` exposes **`Items`**, **`HasMore`**, **`NextCursor`**, plus legacy **`Start`**, **`Amount`**, **`Total`** fields for callers that assumed offset pagination.
+`SmsMessageQueryResults<T>` exposes **`Items`**, **`HasMore`**, **`NextCursor`**, plus legacy **`Start`**, **`Amount`**, **`Total`** fields for callers that assumed offset
+pagination.
 
 ---
 
@@ -67,7 +69,8 @@ These pair with **`SmsServiceBase`** events:
 - **`SmsSendingEventArgs`**, **`SmsSentEventArgs`**
 - **`SmsBulkSendingEventArgs`**, **`BulkSmsSentEventArgs`**
 
-Subscribers receive **`SmsRequest`** / `Result<SmsRequest>` / `BulkResult<SmsRequest>` snapshots suitable for auditing (but **persist** via [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md) or app code if durability matters).
+Subscribers receive **`SmsRequest`** / `Result<SmsRequest>` / `BulkResult<SmsRequest>` snapshots suitable for auditing (but **persist** via [
+`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md) or app code if durability matters).
 
 ---
 

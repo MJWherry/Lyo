@@ -5,12 +5,12 @@ algorithms, key management, and envelope encryption patterns.
 
 ## Documentation map (this folder)
 
-| Document | Scope |
-|----------|--------|
-| **`README.md` (this file)** | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions. |
-| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)** | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
-| **[`Lyo.Keystore/README.md`](Lyo.Keystore/README.md)** | **`Lyo.Keystore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts. |
-| **[`Lyo.Keystore.Aws/README.md`](Lyo.Keystore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation. |
+| Document                                                       | Scope                                                                                                                                                      |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`README.md` (this file)**                                    | Umbrella guide: algorithms, on-disk formats, examples, security practices, stream layouts, exceptions.                                                     |
+| **[`Lyo.Encryption/README.md`](Lyo.Encryption/README.md)**     | **`Lyo.Encryption`** assembly: service matrix, **`IEncryptionService`** / **`ITwoKeyEncryptionService`**, DI helpers on **`EncryptionServiceExtensions`**. |
+| **[`Lyo.Keystore/README.md`](Lyo.Keystore/README.md)**         | **`Lyo.Keystore`** assembly: **`IKeyStore`**, **`LocalKeyStore`**, key derivation utilities, inventory contracts.                                          |
+| **[`Lyo.Keystore.Aws/README.md`](Lyo.Keystore.Aws/README.md)** | AWS-backed **`IKeyStore`** implementation.                                                                                                                 |
 
 Start here for narrative and threat-modeling context; use the per-project READMEs when you only care about one package’s surface area.
 
@@ -1062,7 +1062,6 @@ Built with security best practices in mind, following:
 - NIST SP 800-38D (AES-GCM)
 - RFC 9106 (Argon2)
 - NIST SP 800-57 (RSA key sizes)
-
 
 ## Dependencies
 

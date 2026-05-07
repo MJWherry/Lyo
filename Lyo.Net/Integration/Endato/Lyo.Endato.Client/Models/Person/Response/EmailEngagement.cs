@@ -16,7 +16,5 @@ public sealed record EmailEngagement(
     string[] Naics,
     bool IsBounce)
 {
-    public override string ToString()
-        => $"EmailEngagement: Score={EngagementScore}, Matched={IsMatched}, Bounce={IsBounce}, GoodDomain={IsGoodDomain}, " +
-           $"Naics={Naics.Length}";
+    public override string ToString() => $"EmailEngagement: Score={EngagementScore}, Matched={IsMatched}, Bounce={IsBounce}, GoodDomain={IsGoodDomain}, " + $"Naics={Naics.Length}";
 }

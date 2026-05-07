@@ -5,12 +5,12 @@ namespace Lyo.PackageMetadata;
 /// <summary>Thread-safe in-memory <see cref="IPackageMetadataStore" /> keyed by namespace prefixes (longest match wins). Use for tests or seed data.</summary>
 public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
 {
-#if  NET9_0_OR_GREATER
+#if NET9_0_OR_GREATER
      private readonly Lock _gate = new();
 #else
     private readonly object _gate = new();
 #endif
-   
+
     private readonly List<(string Prefix, PackageMetadata Meta)> _entries = [];
 
     /// <summary>Registers prefixes for one package. Prefixes are normalised to end with <c>.</c> when missing.</summary>
@@ -18,7 +18,6 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     {
         ArgumentHelpers.ThrowIfNull(namespacePrefixes);
         ArgumentHelpers.ThrowIfNull(package);
-
         lock (_gate) {
             AddPrefixes(namespacePrefixes, package);
             SortEntries();
@@ -46,11 +45,7 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     private void AddPrefixes(IReadOnlyList<string> namespacePrefixes, PackageMetadata package)
     {
         _entries.RemoveAll(t => t.Meta.Id == package.Id);
-
-            package = package with {
-                LicenseExpressionSyntax = PackageLicenseExpression.TryParseSyntax(package.LicenseExpression)
-            };
-
+        package = package with { LicenseExpressionSyntax = PackageLicenseExpression.TryParseSyntax(package.LicenseExpression) };
         foreach (var raw in namespacePrefixes) {
             if (string.IsNullOrWhiteSpace(raw))
                 continue;
@@ -64,12 +59,10 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     }
 
     private void SortEntries()
-    {
-        _entries.Sort(static (a, b) => {
+        => _entries.Sort(static (a, b) => {
             var c = b.Prefix.Length.CompareTo(a.Prefix.Length);
             return c != 0 ? c : string.CompareOrdinal(a.Prefix, b.Prefix);
         });
-    }
 
     /// <inheritdoc />
     public ValueTask<PackageMetadata?> TryGetForFrameAsync(string namespacePrefix, string strippedMethodPrefix, CancellationToken ct = default)
@@ -84,12 +77,12 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
     }
 
     /// <inheritdoc />
-    public ValueTask<IReadOnlyDictionary<string, PackageMetadata?>> TryGetManyForStrippedMethodPrefixesAsync(IReadOnlyList<string> strippedMethodPrefixes,
+    public ValueTask<IReadOnlyDictionary<string, PackageMetadata?>> TryGetManyForStrippedMethodPrefixesAsync(
+        IReadOnlyList<string> strippedMethodPrefixes,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(strippedMethodPrefixes);
         ct.ThrowIfCancellationRequested();
-
         var dict = new Dictionary<string, PackageMetadata?>(strippedMethodPrefixes.Count, StringComparer.Ordinal);
         if (strippedMethodPrefixes.Count == 0)
             return new(dict);
@@ -101,7 +94,6 @@ public sealed class InMemoryPackageMetadataStore : IPackageMetadataStore
         foreach (var key in strippedMethodPrefixes) {
             ct.ThrowIfCancellationRequested();
             ArgumentHelpers.ThrowIfNull(key);
-
             if (dict.ContainsKey(key))
                 continue;
 

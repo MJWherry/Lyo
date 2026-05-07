@@ -51,7 +51,6 @@ var url = await azureFileStorage.GetPreSignedUrlAsync(fileId, TimeSpan.FromHours
 
 `IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.FileStorage.Azure.csproj`.)*

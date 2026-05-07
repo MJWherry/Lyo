@@ -133,7 +133,10 @@ public sealed record ReloadAutomationStep(string? Name = null)
     public override string ToString() => FormatStepDebugLine("reload");
 }
 
-/// <summary>Sets viewport/window dimensions for the active tab (engine-specific semantics; see <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.SetViewportSizeAsync" />).</summary>
+/// <summary>
+/// Sets viewport/window dimensions for the active tab (engine-specific semantics; see <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationPage.SetViewportSizeAsync" />
+/// ).
+/// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record SetViewportSizeAutomationStep(int Width, int Height, string? Name = null)
     : AutomationStepDefinition(Name)
@@ -232,8 +235,8 @@ public sealed record WriteStringListToFileAutomationStep(string VariableName, st
 
 /// <summary>
 /// Downloads each URL in a string-list variable into <see cref="TargetDirectory" /> (requires runner HTTP dependency registration). When
-/// <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable
-/// value is used.
+/// <see cref="UrlListFromCompletedStepIndex" /> is set, URLs are read from that step’s snapshot (zero-based completed step index); when null, the current (final) variable value is
+/// used.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DownloadUrlsToDirectoryAutomationStep(
@@ -273,17 +276,12 @@ public sealed record StoreTemplateAutomationStep(string VariableName, string Tem
 
 /// <summary>Maps each item in a source string-list variable through a template and stores the result list.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record StoreStringListFromTemplateAutomationStep(
-    string SourceVariableName,
-    string VariableName,
-    string ItemTemplate,
-    string? Name = null)
+public sealed record StoreStringListFromTemplateAutomationStep(string SourceVariableName, string VariableName, string ItemTemplate, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
     public override string ToString()
-        => FormatStepDebugLine(
-            $"storeStringListFromTemplate src:{SourceVariableName} -> var:{VariableName} template={AutomationDisplayText.Ellipsis(ItemTemplate, 64)}");
+        => FormatStepDebugLine($"storeStringListFromTemplate src:{SourceVariableName} -> var:{VariableName} template={AutomationDisplayText.Ellipsis(ItemTemplate, 64)}");
 }
 
 /// <summary>Stores the current document URL in <see cref="VariableName" />.</summary>
@@ -317,22 +315,16 @@ public sealed record HttpRequestAutomationStep(
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"httpRequest {Method} {AutomationDisplayText.Ellipsis(Url, 96)}");
+    public override string ToString() => FormatStepDebugLine($"httpRequest {Method} {AutomationDisplayText.Ellipsis(Url, 96)}");
 }
 
 /// <summary>Downloads a single HTTP(S) file URL to disk using runtime <c>HttpClient</c>.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record DownloadFileAutomationStep(
-    string Url,
-    string TargetFilePath,
-    string? SavedFilePathVariableName = null,
-    string? Name = null)
+public sealed record DownloadFileAutomationStep(string Url, string TargetFilePath, string? SavedFilePathVariableName = null, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"downloadFile {AutomationDisplayText.Ellipsis(Url, 64)} -> {AutomationDisplayText.Ellipsis(TargetFilePath, 64)}");
+    public override string ToString() => FormatStepDebugLine($"downloadFile {AutomationDisplayText.Ellipsis(Url, 64)} -> {AutomationDisplayText.Ellipsis(TargetFilePath, 64)}");
 }
 
 /// <summary>Extracts source/link values from attributes on an element list into a string-list variable.</summary>
@@ -355,30 +347,21 @@ public sealed record ExtractSourcesAutomationStep(
 
 /// <summary>Upserts JSON records through the configured runtime data sink abstraction.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record UpsertJsonRecordsAutomationStep(
-    string RecordsJsonVariableName,
-    string TargetName,
-    string? Name = null)
+public sealed record UpsertJsonRecordsAutomationStep(string RecordsJsonVariableName, string TargetName, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"upsertJsonRecords var:{RecordsJsonVariableName} -> target:{TargetName}");
+    public override string ToString() => FormatStepDebugLine($"upsertJsonRecords var:{RecordsJsonVariableName} -> target:{TargetName}");
 }
 
 /// <summary>Uploads all files from a local directory through the configured runtime file storage abstraction.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record UploadDirectoryToFileStorageAutomationStep(
-    string SourceDirectory,
-    string DestinationPrefix,
-    string? StoredFileListVariableName = null,
-    string? Name = null)
+public sealed record UploadDirectoryToFileStorageAutomationStep(string SourceDirectory, string DestinationPrefix, string? StoredFileListVariableName = null, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
     public override string ToString()
-        => FormatStepDebugLine(
-            $"uploadDirectoryToFileStorage {AutomationDisplayText.Ellipsis(SourceDirectory, 48)} -> {AutomationDisplayText.Ellipsis(DestinationPrefix, 48)}");
+        => FormatStepDebugLine($"uploadDirectoryToFileStorage {AutomationDisplayText.Ellipsis(SourceDirectory, 48)} -> {AutomationDisplayText.Ellipsis(DestinationPrefix, 48)}");
 }
 
 /// <summary>Invokes a DI-resolved service method for advanced scrape logic that may mutate shared run context.</summary>
@@ -393,6 +376,5 @@ public sealed record InvokeDiMethodAutomationStep(
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => FormatStepDebugLine($"invokeDiMethod service={AutomationDisplayText.Ellipsis(ServiceType, 64)} method={MethodName}");
+    public override string ToString() => FormatStepDebugLine($"invokeDiMethod service={AutomationDisplayText.Ellipsis(ServiceType, 64)} method={MethodName}");
 }

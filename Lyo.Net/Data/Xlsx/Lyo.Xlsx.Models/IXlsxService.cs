@@ -229,10 +229,7 @@ public interface IXlsxService
         CancellationToken ct = default);
 
     /// <summary>Serializes a row/column dictionary map to XLSX bytes asynchronously.</summary>
-    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(
-        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
-        bool useHeaderRow = true,
-        CancellationToken ct = default);
+    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, CancellationToken ct = default);
 
     /// <summary>Exports a Lyo data table to an XLSX file asynchronously.</summary>
     Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, string xlsxFilePath, CancellationToken ct = default);

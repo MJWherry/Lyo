@@ -56,7 +56,6 @@ export PEOPLE_CONNECTION_STRING="Host=localhost;Database=lyo_people;Username=pos
 dotnet ef migrations add MigrationName --project Core/People/Lyo.People.Postgres --context PeopleDbContext
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.People.Postgres.csproj`.)*

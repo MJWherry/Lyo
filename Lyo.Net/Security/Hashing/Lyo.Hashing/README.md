@@ -1,10 +1,12 @@
 # Lyo.Hashing
 
 Digests (**SHA-256/384/512**), optional **MD5** (non-security fingerprints only), hexadecimal encoding (**`HexEncoding`**), incremental hashing (**`HashingStream`**), sparse file
-fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** / **`HashingService`**). A process-wide default is exposed as **`HashingService.Shared`**
+fingerprints (**`SparseFileFingerprinter`**), and an injectable façade (**`IHashingService`** / **`HashingService`**). A process-wide default is exposed as *
+*`HashingService.Shared`**
 (analogous to **`Random.Shared`**).
 
-The public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default **`IHashingService`**
+The public contracts are **`IHashingService`**, **`Hasher`**, **`HexEncoding`**, **`HashingStream`**, and **`SparseFileFingerprinter`**; **`HashingService`** is the default *
+*`IHashingService`**
 implementation. With XML doc generation enabled in the repo, IntelliSense surfaces the same summaries as this README. Implementation types use `<inheritdoc />` where they mirror
 the interfaces.
 
@@ -24,13 +26,13 @@ Hex letter casing for service helpers uses **`TextLetterCase`** (**`Upper`** / *
 
 ## Choosing an API
 
-| Situation | Prefer |
-|-----------|--------|
-| One-off digest in a hot path, no DI | **`Hasher.ComputeSha256`** / **`HexEncoding.ToHexString`** |
-| Tests, scripts, or **`Random.Shared`-style** access | **`HashingService.Shared`** |
-| ASP.NET / hosted apps | Inject **`IHashingService`** via **`AddLyoHashing`** |
-| Hash while copying or processing a stream | **`HashingStream`** or **`IHashingService.CreateHashingStream`** |
-| “Did this huge file change?” without full read | **`FingerprintSampledFileAsync`** / **`SparseFileFingerprinter`** |
+| Situation                                           | Prefer                                                            |
+|-----------------------------------------------------|-------------------------------------------------------------------|
+| One-off digest in a hot path, no DI                 | **`Hasher.ComputeSha256`** / **`HexEncoding.ToHexString`**        |
+| Tests, scripts, or **`Random.Shared`-style** access | **`HashingService.Shared`**                                       |
+| ASP.NET / hosted apps                               | Inject **`IHashingService`** via **`AddLyoHashing`**              |
+| Hash while copying or processing a stream           | **`HashingStream`** or **`IHashingService.CreateHashingStream`**  |
+| “Did this huge file change?” without full read      | **`FingerprintSampledFileAsync`** / **`SparseFileFingerprinter`** |
 
 ## Usage
 
@@ -111,7 +113,8 @@ var s = buf.ToHexString(); // "dead" — always lowercase
 
 ### **`HashingStream`**
 
-Wrap an inner stream; every byte read or written updates the hash. Call **`GetHash()`** when finished (or **`GetHashHex`** for a string). **`GetHashString()`** remains **uppercase** for
+Wrap an inner stream; every byte read or written updates the hash. Call **`GetHash()`** when finished (or **`GetHashHex`** for a string). **`GetHashString()`** remains **uppercase
+** for
 backward compatibility; prefer **`GetHashHex(TextLetterCase)`** for explicit casing.
 
 ```csharp
@@ -153,28 +156,28 @@ Key lifecycle and storage are caller responsibilities.
 
 ### **`HashingOptions`**
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| **`DefaultHexLetterCase`** | **`Upper`** | Casing for **`IHashingService.ToHex`** when **`letterCase`** is omitted |
-| **`FingerprintDefaults`** | **`FileFingerprintOptions.Default`** | Defaults passed to **`FingerprintSampledFileAsync`** when options argument is null |
+| Property                   | Default                              | Description                                                                        |
+|----------------------------|--------------------------------------|------------------------------------------------------------------------------------|
+| **`DefaultHexLetterCase`** | **`Upper`**                          | Casing for **`IHashingService.ToHex`** when **`letterCase`** is omitted            |
+| **`FingerprintDefaults`**  | **`FileFingerprintOptions.Default`** | Defaults passed to **`FingerprintSampledFileAsync`** when options argument is null |
 
 ### **`FileFingerprintOptions`**
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| **`LargeFileThreshold`** | 100 MiB | Above this, extra middle/end samples are read |
-| **`VeryLargeThreshold`** | 1 GiB | Above this, uses mtime + smaller content sample |
-| **`SampleSize`** | 128 bytes | Sample length for start/middle/end reads |
-| **`VeryLargeSampleSize`** | 64 bytes | Content sample size in the very-large path |
+| Property                  | Default   | Description                                     |
+|---------------------------|-----------|-------------------------------------------------|
+| **`LargeFileThreshold`**  | 100 MiB   | Above this, extra middle/end samples are read   |
+| **`VeryLargeThreshold`**  | 1 GiB     | Above this, uses mtime + smaller content sample |
+| **`SampleSize`**          | 128 bytes | Sample length for start/middle/end reads        |
+| **`VeryLargeSampleSize`** | 64 bytes  | Content sample size in the very-large path      |
 
 ### **`ContentDigestAlgorithm`**
 
-| Value | Meaning |
-|-------|---------|
-| **`Sha256`** | SHA-256 |
-| **`Sha384`** | SHA-384 |
-| **`Sha512`** | SHA-512 |
-| **`Md5`** | MD5 — **not for security** |
+| Value        | Meaning                    |
+|--------------|----------------------------|
+| **`Sha256`** | SHA-256                    |
+| **`Sha384`** | SHA-384                    |
+| **`Sha512`** | SHA-512                    |
+| **`Md5`**    | MD5 — **not for security** |
 
 ## Notes
 
@@ -182,7 +185,6 @@ Key lifecycle and storage are caller responsibilities.
   inputs.
 - **`HashFileAsync`** throws if the file is missing; **`FingerprintSampledFileAsync`** returns **`null`** when the path does not exist.
 - On **netstandard2.0**, file hashing uses synchronous **`HashAlgorithm`** paths under the hood where async OS APIs are unavailable.
-
 
 ## Dependencies
 
@@ -192,10 +194,10 @@ Key lifecycle and storage are caller responsibilities.
 
 ### NuGet packages
 
-| Package                                                 | Version   |
-|---------------------------------------------------------|-----------|
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
-| `System.Memory`                                         | `4.6.3`   | *(netstandard2.0 only)* |
+| Package                                                 | Version |
+|---------------------------------------------------------|---------|
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
+| `System.Memory`                                         | `4.6.3` | *(netstandard2.0 only)* |
 
 ### Project references
 

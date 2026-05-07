@@ -2,7 +2,7 @@ using Lyo.DataTable.Models;
 
 namespace Lyo.Xlsx.Models;
 
-/// <summary>Maps an <see cref="XlsxCellValue"/> to a Lyo <see cref="IDataTableCell"/> for HTML/table pipelines.</summary>
+/// <summary>Maps an <see cref="XlsxCellValue" /> to a Lyo <see cref="IDataTableCell" /> for HTML/table pipelines.</summary>
 public static class XlsxCellValueExtensions
 {
     /// <summary>Builds a string-based data table cell, copying formatting when present.</summary>

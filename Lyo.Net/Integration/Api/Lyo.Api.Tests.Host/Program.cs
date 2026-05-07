@@ -95,5 +95,5 @@ app.Run();
 namespace Lyo.Api.Tests.Host
 {
     /// <summary>Entry point type for WebApplicationFactory.</summary>
-    public partial class Program;
+    public class Program;
 }

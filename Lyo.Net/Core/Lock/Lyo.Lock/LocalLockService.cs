@@ -7,12 +7,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Lock;
 
-/// <summary>
-/// In-memory exclusive lock: one holder per key within the current process. Uses a <see cref="SemaphoreSlim"/> per normalized key.
-/// </summary>
+/// <summary>In-memory exclusive lock: one holder per key within the current process. Uses a <see cref="SemaphoreSlim" /> per normalized key.</summary>
 /// <remarks>
-/// Not suitable for coordination across machines or processes; use a distributed <see cref="ILockService"/> for that.
-/// <see cref="LockOptions.DefaultLockDuration"/> is ignored (no TTL).
+/// Not suitable for coordination across machines or processes; use a distributed <see cref="ILockService" /> for that. <see cref="LockOptions.DefaultLockDuration" /> is
+/// ignored (no TTL).
 /// </remarks>
 public sealed class LocalLockService : ILockService
 {
@@ -23,7 +21,7 @@ public sealed class LocalLockService : ILockService
 
     /// <param name="logger">Optional logger for acquire failures and release anomalies.</param>
     /// <param name="options">Timeouts, key normalization, metrics toggles.</param>
-    /// <param name="metrics">When <see cref="LockOptions.EnableMetrics"/> is true and this is non-null, timings and counters are emitted.</param>
+    /// <param name="metrics">When <see cref="LockOptions.EnableMetrics" /> is true and this is non-null, timings and counters are emitted.</param>
     public LocalLockService(ILogger<LocalLockService>? logger = null, LockOptions? options = null, IMetrics? metrics = null)
     {
         _logger = logger ?? NullLogger<LocalLockService>.Instance;

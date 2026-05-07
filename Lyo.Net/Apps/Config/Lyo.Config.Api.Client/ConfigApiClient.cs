@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Config.Api.Models;
 using Lyo.Common.Extensions;
+using Lyo.Config.Api.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,20 +32,8 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
     private readonly ConfigApiClientOptions _options;
 
     public ConfigApiClient(HttpClient httpClient, IOptions<ConfigApiClientOptions> options, JsonSerializerOptions? serializerOptions = null)
-        : base(
-            httpClient: httpClient,
-            options: options.Value,
-            serializerOptions: serializerOptions ?? new JsonSerializerOptions(ConfigJsonSerializerOptions.Default))
-    {
-        _options = options.Value;
-    }
-
-    internal static void ApplyApiKey(HttpRequestHeaders headers, string? apiKey)
-    {
-        headers.Remove("X-Api-Key");
-        if (!apiKey.IsNullOrEmpty())
-            headers.Add("X-Api-Key", apiKey.Trim());
-    }
+        : base(httpClient: httpClient, options: options.Value, serializerOptions: serializerOptions ?? new JsonSerializerOptions(ConfigJsonSerializerOptions.Default))
+        => _options = options.Value;
 
     /// <inheritdoc />
     public async Task<ConfigResolveConditionalResult> ResolveForAppAsync(
@@ -59,7 +47,7 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
         if (HttpClient.BaseAddress == null)
             UriHelpers.ThrowIfInvalidAbsoluteUri($"api/config/{appKind}/{appId}");
 
-        if (!AppConfigEntity.TryCreate(appKind, appId, out _, out var errMsg))
+        if (!AppConfigEntity.TryCreate(appKind, appId, out var _, out var errMsg))
             throw new ArgumentException(errMsg);
 
         var trimmedVersion = version.OrDefault().Trim();
@@ -72,12 +60,10 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
 
         using var response = await HttpClient.SendAsync(request, ct).ConfigureAwait(false);
         var etag = response.Headers.ETag?.ToString();
-
         if (response.StatusCode == HttpStatusCode.NotModified)
             return new(ConfigResolveOutcome.NotModified, etag ?? ifNoneMatch, null);
 
-        if (!response.IsSuccessStatusCode)
-        {
+        if (!response.IsSuccessStatusCode) {
             if (_options.EnsureStatusCode)
                 response.EnsureSuccessStatusCode();
 
@@ -90,17 +76,22 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
 #if NETSTANDARD2_0
         ResolvedConfigRecord? resolvedDeserialized;
         using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false)) {
-            resolvedDeserialized =
-                await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize).ConfigureAwait(false);
+            resolvedDeserialized = await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize).ConfigureAwait(false);
         }
 #else
         await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         var resolvedDeserialized =
             await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize, ct).ConfigureAwait(false);
 #endif
-
         OperationHelpers.ThrowIfNull(resolvedDeserialized, "Resolved config deserialization returned null.");
-        return new ConfigResolveConditionalResult(ConfigResolveOutcome.Ok, etag, resolvedDeserialized);
+        return new(ConfigResolveOutcome.Ok, etag, resolvedDeserialized);
+    }
+
+    internal static void ApplyApiKey(HttpRequestHeaders headers, string? apiKey)
+    {
+        headers.Remove("X-Api-Key");
+        if (!apiKey.IsNullOrEmpty())
+            headers.Add("X-Api-Key", apiKey.Trim());
     }
 }
 
@@ -118,15 +109,12 @@ public static class ConfigApiHttpClientRegistration
             section.Bind(options);
 
         services.TryAddSingleton(Options.Create(options));
-
         return services.AddHttpClient<IConfigApiClient, ConfigApiClient>(client => {
                 if (!string.IsNullOrWhiteSpace(options.BaseUrl))
                     client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
 
                 ConfigApiClient.ApplyApiKey(client.DefaultRequestHeaders, options.ApiKey);
-
-                foreach (
-                    var enc in (options.AcceptEncodings ?? []).Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
+                foreach (var enc in (options.AcceptEncodings ?? []).Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
                     if (client.DefaultRequestHeaders.AcceptEncoding.All(h => !string.Equals(h.Value, enc, StringComparison.OrdinalIgnoreCase)))
                         client.DefaultRequestHeaders.AcceptEncoding.Add(new(enc));
                 }

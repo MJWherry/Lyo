@@ -10,9 +10,9 @@ namespace Lyo.Encryption.TwoKey;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Implementations such as <see cref="TwoKeyEncryptionService{TKeyEncryptionService, TDataEncryptionService}" /> compose two <see cref="IEncryptionService" /> instances (KEK and DEK
-/// roles). Use <c>keyId</c> / <c>kek</c> parameters consistently with the single-key service: keystore-backed workflows pass identifiers; tests or sealed systems may pass raw KEK
-/// bytes.
+/// Implementations such as <see cref="TwoKeyEncryptionService{TKeyEncryptionService, TDataEncryptionService}" /> compose two <see cref="IEncryptionService" /> instances (KEK
+/// and DEK roles). Use <c>keyId</c> / <c>kek</c> parameters consistently with the single-key service: keystore-backed workflows pass identifiers; tests or sealed systems may pass raw
+/// KEK bytes.
 /// </para>
 /// </remarks>
 public interface ITwoKeyEncryptionService

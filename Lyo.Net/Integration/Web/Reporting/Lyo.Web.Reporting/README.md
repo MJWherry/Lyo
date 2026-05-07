@@ -811,7 +811,6 @@ var report = ReportBuilder<MyOptions>.New()
 6. **Consistent Styling** - Use consistent styling across reports
 7. **Filter Metrics** - Use filtering options to show only relevant metrics
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Web.Reporting.csproj`.)*

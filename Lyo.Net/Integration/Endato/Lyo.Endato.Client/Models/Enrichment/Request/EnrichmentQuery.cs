@@ -13,6 +13,5 @@ public class EnrichmentQuery
 
     public string? DoB { get; set; }
 
-    public override string ToString()
-        => $"EnrichmentQuery: FirstName='{FirstName}', LastName='{LastName}', DoB='{DoB}', Address={Address}";
+    public override string ToString() => $"EnrichmentQuery: FirstName='{FirstName}', LastName='{LastName}', DoB='{DoB}', Address={Address}";
 }

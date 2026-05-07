@@ -18,16 +18,12 @@ namespace Lyo.Web.Automation.Plan;
 /// </summary>
 public sealed class AutomationPlanRunner : IAutomationPlanRunner
 {
-    private readonly HttpClient _httpClient;
     private readonly IAutomationPlanDataSink _dataSink;
     private readonly IAutomationPlanFileStorage _fileStorage;
+    private readonly HttpClient _httpClient;
     private readonly IServiceProvider _serviceProvider;
 
-    public AutomationPlanRunner(
-        HttpClient httpClient,
-        IAutomationPlanDataSink dataSink,
-        IAutomationPlanFileStorage fileStorage,
-        IServiceProvider serviceProvider)
+    public AutomationPlanRunner(HttpClient httpClient, IAutomationPlanDataSink dataSink, IAutomationPlanFileStorage fileStorage, IServiceProvider serviceProvider)
     {
         _httpClient = httpClient;
         _dataSink = dataSink;
@@ -367,7 +363,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                 await browser.Tabs.SwitchToTabAsync(await ExpandPlanTemplateAsync(stk.TabKey, bindings, runtime, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
                 return;
             case OpenNewTabAutomationStep ont:
-                string? urlOpen = ont.Url != null ? await ExpandPlanTemplateAsync(ont.Url, bindings, runtime, ct).ConfigureAwait(false) : null;
+                var urlOpen = ont.Url != null ? await ExpandPlanTemplateAsync(ont.Url, bindings, runtime, ct).ConfigureAwait(false) : null;
                 if (string.IsNullOrWhiteSpace(urlOpen))
                     urlOpen = null;
 
@@ -474,12 +470,13 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         if (method == null) {
             if (step.ThrowOnMissingMethod)
                 throw new InvalidOperationException($"No compatible method '{step.MethodName}' found on '{serviceType.FullName}'.");
+
             return;
         }
 
         var args = await BuildInvokeArgumentsAsync(state, browser, stepContext, runtime, step, method, ct).ConfigureAwait(false);
         var raw = method.Invoke(service, args);
-        object? result = raw;
+        var result = raw;
         if (raw is Task task) {
             await task.ConfigureAwait(false);
             result = TryGetTaskResult(task);
@@ -491,21 +488,17 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
 
     private static Type ResolveType(string serviceType)
     {
-        var resolved = Type.GetType(serviceType, throwOnError: false);
+        var resolved = Type.GetType(serviceType, false);
         if (resolved != null)
             return resolved;
-        resolved = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .Select(a => a.GetType(serviceType, throwOnError: false))
-            .FirstOrDefault(static t => t != null);
+
+        resolved = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(serviceType, false)).FirstOrDefault(static t => t != null);
         return resolved ?? throw new InvalidOperationException($"Unable to resolve service type '{serviceType}'. Use assembly-qualified name or ensure assembly is loaded.");
     }
 
     private static MethodInfo? ResolveBestMethod(Type serviceType, string methodName)
     {
-        var candidates = serviceType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
-            .Where(m => string.Equals(m.Name, methodName, StringComparison.Ordinal))
-            .ToList();
+        var candidates = serviceType.GetMethods(BindingFlags.Instance | BindingFlags.Public).Where(m => string.Equals(m.Name, methodName, StringComparison.Ordinal)).ToList();
         if (candidates.Count == 0)
             return null;
 
@@ -513,17 +506,28 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         {
             var p = m.GetParameters();
             var hasCt = p.Any(x => x.ParameterType == typeof(CancellationToken));
+
             bool Has(params Type[] ts) => p.Select(x => x.ParameterType).SequenceEqual(ts);
-            if (Has(typeof(AutomationPlanStepContext), typeof(CancellationToken))) return 100;
-            if (Has(typeof(IWebAutomationBrowser), typeof(AutomationPlanStepContext), typeof(CancellationToken))) return 90;
-            if (Has(typeof(IWebAutomationBrowser), typeof(AutomationPlanExecutionContext), typeof(CancellationToken))) return 80;
-            if (Has(typeof(IWebAutomationBrowser))) return 70;
-            if (hasCt) return 50;
+
+            if (Has(typeof(AutomationPlanStepContext), typeof(CancellationToken)))
+                return 100;
+
+            if (Has(typeof(IWebAutomationBrowser), typeof(AutomationPlanStepContext), typeof(CancellationToken)))
+                return 90;
+
+            if (Has(typeof(IWebAutomationBrowser), typeof(AutomationPlanExecutionContext), typeof(CancellationToken)))
+                return 80;
+
+            if (Has(typeof(IWebAutomationBrowser)))
+                return 70;
+
+            if (hasCt)
+                return 50;
+
             return 40;
         }
 
-        return candidates
-            .OrderByDescending(Score)
+        return candidates.OrderByDescending(Score)
             .FirstOrDefault(m => typeof(Task).IsAssignableFrom(m.ReturnType) || m.ReturnType == typeof(void) || m.ReturnType == typeof(string));
     }
 
@@ -579,6 +583,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         var type = task.GetType();
         if (!type.IsGenericType || type.GetProperty("Result") is not { } prop)
             return null;
+
         return prop.GetValue(task);
     }
 
@@ -772,7 +777,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             throw new InvalidOperationException($"Invalid HTTP(S) URL: {url}");
 
-        using var request = new HttpRequestMessage(new HttpMethod(step.Method), uri);
+        using var request = new HttpRequestMessage(new(step.Method), uri);
         if (step.Headers != null) {
             foreach (var kvp in step.Headers) {
                 var headerValue = await ExpandPlanTemplateAsync(kvp.Value, bindings, runtime, ct).ConfigureAwait(false);
@@ -833,20 +838,17 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         OperationHelpers.ThrowIf(!found, $"Unknown element list ref '{step.ElementsListRefName}'.");
         var urls = new List<string>();
         var dedupe = step.Deduplicate ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) : null;
-        var attributes = step.AttributeNames is { Count: > 0 }
-            ? step.AttributeNames
-            : ["src", "href", "data-src", "data-lazy-src", "srcset"];
+        var attributes = step.AttributeNames is { Count: > 0 } ? step.AttributeNames : ["src", "href", "data-src", "data-lazy-src", "srcset"];
         var pageUrl = await browser.GetCurrentUrlAsync(ct).ConfigureAwait(false);
         var baseUri = runtime?.LinkResolutionBaseUri ?? (Uri.TryCreate(pageUrl, UriKind.Absolute, out var pageUri) ? pageUri : null);
-
         foreach (var element in list!) {
             foreach (var attribute in attributes) {
                 if (string.IsNullOrWhiteSpace(attribute))
                     continue;
+
                 var raw = await element.GetAttributeAsync(attribute, ct).ConfigureAwait(false);
-                if (!step.SplitCommaSeparatedValues || raw.IsNullOrWhitespace() || !raw.Contains(',')) {
+                if (!step.SplitCommaSeparatedValues || raw.IsNullOrWhitespace() || !raw.Contains(','))
                     await AppendSourceValueAsync(state, runtime, urls, dedupe, baseUri, step.ResolveRelativeUrls, raw).ConfigureAwait(false);
-                }
                 else {
                     foreach (var candidate in raw.Split(',')) {
                         var firstToken = candidate.Trim().Split(' ')[0];
@@ -870,6 +872,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
     {
         if (raw.IsNullOrWhitespace())
             return;
+
         var trimmed = raw.Trim();
         if (resolveRelativeUrls && Uri.TryCreate(trimmed, UriKind.Relative, out var relative) && baseUri != null)
             trimmed = new Uri(baseUri, relative).ToString();
@@ -882,6 +885,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                 Elements = state.Elements,
                 ContextItems = state.ContextItems
             };
+
             trimmed = await AutomationPlanInterpolation.ExpandAsync(trimmed, bindings, runtime?.Formatter, CancellationToken.None).ConfigureAwait(false);
         }
 
@@ -900,6 +904,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         var payload = state.Strings.TryGetValue(step.RecordsJsonVariableName, out var direct)
             ? direct
             : await ExpandPlanTemplateAsync(step.RecordsJsonVariableName, bindings, runtime, ct).ConfigureAwait(false);
+
         await _dataSink.UpsertJsonAsync(step.TargetName, payload, ct).ConfigureAwait(false);
     }
 

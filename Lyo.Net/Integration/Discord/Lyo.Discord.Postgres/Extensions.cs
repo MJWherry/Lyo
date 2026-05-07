@@ -83,110 +83,6 @@ public static class Extensions
         BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
     };
 
-    extension(IServiceCollection services)
-    {
-        /// <summary>Adds <see cref="DiscordDbContext" /> to the service collection.</summary>
-        public IServiceCollection AddDiscordDbContext(string connectionString)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-            return services.AddDiscordDbContextFactory(new PostgresDiscordOptions { ConnectionString = connectionString })
-                .AddScoped<DiscordDbContext>(sp => sp.GetRequiredService<IDbContextFactory<DiscordDbContext>>().CreateDbContext());
-        }
-
-        /// <summary>Adds <see cref="DiscordDbContext" /> to the service collection.</summary>
-        public IServiceCollection AddDiscordDbContext(Action<DbContextOptionsBuilder> configure)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configure);
-            services.AddDbContext<DiscordDbContext>(configure);
-            return services;
-        }
-
-        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> to the service collection.</summary>
-        public IServiceCollection AddDiscordDbContextFactory(Action<PostgresDiscordOptions> configure)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configure);
-            var options = new PostgresDiscordOptions();
-            configure(options);
-            return services.AddDiscordDbContextFactory(options);
-        }
-
-        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> using configuration binding.</summary>
-        public IServiceCollection AddDiscordDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresDiscordOptions.SectionName)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configuration);
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            var options = new PostgresDiscordOptions();
-            var section = configuration.GetSection(configSectionName);
-            if (section.Exists())
-                section.Bind(options);
-
-            return services.AddDiscordDbContextFactory(options);
-        }
-
-        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> with optional auto-migrations.</summary>
-        public IServiceCollection AddDiscordDbContextFactory(PostgresDiscordOptions options)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(options);
-            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-            services.AddSingleton(Options.Create(options));
-            services.AddPostgresMigrations<DiscordDbContext, PostgresDiscordOptions>();
-            services.AddDbContextFactory<DiscordDbContext>(dbOptions => dbOptions.UseNpgsql(
-                options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresDiscordOptions.Schema)));
-
-            return services;
-        }
-
-        /// <summary>
-        /// Registers Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services. Requires <c>AddLyoQueryServices</c>,
-        /// cache, and <see cref="MapsterMapper.IMapper" /> (configure mappings via <see cref="ConfigureDiscordMappings" />).
-        /// </summary>
-        public IServiceCollection AddPostgresDiscord(Action<PostgresDiscordOptions> configure)
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            ArgumentHelpers.ThrowIfNull(configure);
-            var options = new PostgresDiscordOptions();
-            configure(options);
-            return services.AddPostgresDiscord(options);
-        }
-
-        /// <summary>Registers Discord PostgreSQL persistence using configuration binding.</summary>
-        public IServiceCollection AddPostgresDiscordFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresDiscordOptions.SectionName)
-        {
-            ArgumentHelpers.ThrowIfNull(configuration);
-            var options = new PostgresDiscordOptions();
-            var section = configuration.GetSection(configSectionName);
-            if (section.Exists())
-                section.Bind(options);
-
-            return services.AddPostgresDiscord(options);
-        }
-
-        /// <summary>Registers Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services.</summary>
-        public IServiceCollection AddPostgresDiscord(PostgresDiscordOptions options)
-        {
-            services.AddDiscordDbContextFactory(options);
-            services.AddLyoCrudServices<DiscordDbContext>();
-            return services;
-        }
-
-        /// <summary>Registers config definition seeding for <see cref="DiscordGuildSettings" /> (requires <c>AddPostgresConfigStore</c>).</summary>
-        public IServiceCollection AddDiscordGuildSettingsInfrastructure()
-        {
-            ArgumentHelpers.ThrowIfNull(services);
-            services.AddHostedService<DiscordGuildSettingsDefinitionSeeder>();
-            return services;
-        }
-    }
-
     /// <summary>Maps Discord REST endpoints (query, CRUD, export). Call after <see cref="AddPostgresDiscord" />.</summary>
     public static WebApplication BuildDiscordGroup(this WebApplication app)
     {
@@ -284,5 +180,105 @@ public static class Extensions
             return "(unknown)";
 
         return n.Length > maxLen ? n[..maxLen] : n;
+    }
+
+    extension(IServiceCollection services)
+    {
+        /// <summary>Adds <see cref="DiscordDbContext" /> to the service collection.</summary>
+        public IServiceCollection AddDiscordDbContext(string connectionString)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
+            return services.AddDiscordDbContextFactory(new PostgresDiscordOptions { ConnectionString = connectionString })
+                .AddScoped<DiscordDbContext>(sp => sp.GetRequiredService<IDbContextFactory<DiscordDbContext>>().CreateDbContext());
+        }
+
+        /// <summary>Adds <see cref="DiscordDbContext" /> to the service collection.</summary>
+        public IServiceCollection AddDiscordDbContext(Action<DbContextOptionsBuilder> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddDbContext<DiscordDbContext>(configure);
+            return services;
+        }
+
+        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> to the service collection.</summary>
+        public IServiceCollection AddDiscordDbContextFactory(Action<PostgresDiscordOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresDiscordOptions();
+            configure(options);
+            return services.AddDiscordDbContextFactory(options);
+        }
+
+        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> using configuration binding.</summary>
+        public IServiceCollection AddDiscordDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDiscordOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresDiscordOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
+
+            return services.AddDiscordDbContextFactory(options);
+        }
+
+        /// <summary>Adds PostgreSQL Discord <see cref="IDbContextFactory{TContext}" /> with optional auto-migrations.</summary>
+        public IServiceCollection AddDiscordDbContextFactory(PostgresDiscordOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton(Options.Create(options));
+            services.AddPostgresMigrations<DiscordDbContext, PostgresDiscordOptions>();
+            services.AddDbContextFactory<DiscordDbContext>(dbOptions => dbOptions.UseNpgsql(
+                options.ConnectionString, npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", PostgresDiscordOptions.Schema)));
+
+            return services;
+        }
+
+        /// <summary>
+        /// Registers Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services. Requires <c>AddLyoQueryServices</c>,
+        /// cache, and <see cref="MapsterMapper.IMapper" /> (configure mappings via <see cref="ConfigureDiscordMappings" />).
+        /// </summary>
+        public IServiceCollection AddPostgresDiscord(Action<PostgresDiscordOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresDiscordOptions();
+            configure(options);
+            return services.AddPostgresDiscord(options);
+        }
+
+        /// <summary>Registers Discord PostgreSQL persistence using configuration binding.</summary>
+        public IServiceCollection AddPostgresDiscordFromConfiguration(IConfiguration configuration, string configSectionName = PostgresDiscordOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(configuration);
+            var options = new PostgresDiscordOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
+
+            return services.AddPostgresDiscord(options);
+        }
+
+        /// <summary>Registers Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services.</summary>
+        public IServiceCollection AddPostgresDiscord(PostgresDiscordOptions options)
+        {
+            services.AddDiscordDbContextFactory(options);
+            services.AddLyoCrudServices<DiscordDbContext>();
+            return services;
+        }
+
+        /// <summary>Registers config definition seeding for <see cref="DiscordGuildSettings" /> (requires <c>AddPostgresConfigStore</c>).</summary>
+        public IServiceCollection AddDiscordGuildSettingsInfrastructure()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddHostedService<DiscordGuildSettingsDefinitionSeeder>();
+            return services;
+        }
     }
 }

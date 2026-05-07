@@ -266,15 +266,7 @@ public sealed class AutomationPlanBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(elementsListRefName);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(variableName);
-        _steps.Add(
-            new ExtractSourcesAutomationStep(
-                elementsListRefName,
-                variableName,
-                attributeNames,
-                resolveRelativeUrls,
-                deduplicate,
-                splitCommaSeparatedValues,
-                stepName));
+        _steps.Add(new ExtractSourcesAutomationStep(elementsListRefName, variableName, attributeNames, resolveRelativeUrls, deduplicate, splitCommaSeparatedValues, stepName));
         return this;
     }
 
@@ -288,11 +280,7 @@ public sealed class AutomationPlanBuilder
     }
 
     /// <summary>Uploads all files from a directory through the configured runtime file storage service.</summary>
-    public AutomationPlanBuilder UploadDirectoryToFileStorage(
-        string sourceDirectory,
-        string destinationPrefix,
-        string? storedFileListVariableName = null,
-        string? stepName = null)
+    public AutomationPlanBuilder UploadDirectoryToFileStorage(string sourceDirectory, string destinationPrefix, string? storedFileListVariableName = null, string? stepName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(destinationPrefix);

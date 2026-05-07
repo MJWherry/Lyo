@@ -6,63 +6,75 @@ namespace Lyo.Scientific.Engineering;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record MaterialProperty
 {
-
-    public MaterialProperty(string name, Density density, SpecificHeatCapacity specificHeatCapacity, ThermalConductivity thermalConductivity, DynamicViscosity? dynamicViscosity = null, ThermalExpansionCoefficient? thermalExpansionCoefficient = null, ModulusOfElasticity? modulusOfElasticity = null, Pressure? yieldStrength = null, FractureToughness? fractureToughness = null)
-
-    {
-
-        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
-
-        this.Name = name;
-        this.Density = density;
-        this.SpecificHeatCapacity = specificHeatCapacity;
-        this.ThermalConductivity = thermalConductivity;
-        this.DynamicViscosity = dynamicViscosity;
-        this.ThermalExpansionCoefficient = thermalExpansionCoefficient;
-        this.ModulusOfElasticity = modulusOfElasticity;
-        this.YieldStrength = yieldStrength;
-        this.FractureToughness = fractureToughness;
-}
-
-
-    public string Name { get;  init; }
+    public string Name { get; init; }
 
     public Density Density { get; init; }
+
     public SpecificHeatCapacity SpecificHeatCapacity { get; init; }
+
     public ThermalConductivity ThermalConductivity { get; init; }
+
     public DynamicViscosity? DynamicViscosity { get; init; }
+
     public ThermalExpansionCoefficient? ThermalExpansionCoefficient { get; init; }
+
     public ModulusOfElasticity? ModulusOfElasticity { get; init; }
+
     public Pressure? YieldStrength { get; init; }
+
     public FractureToughness? FractureToughness { get; init; }
+
+    public MaterialProperty(
+        string name,
+        Density density,
+        SpecificHeatCapacity specificHeatCapacity,
+        ThermalConductivity thermalConductivity,
+        DynamicViscosity? dynamicViscosity = null,
+        ThermalExpansionCoefficient? thermalExpansionCoefficient = null,
+        ModulusOfElasticity? modulusOfElasticity = null,
+        Pressure? yieldStrength = null,
+        FractureToughness? fractureToughness = null)
+
+    {
+        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+        Name = name;
+        Density = density;
+        SpecificHeatCapacity = specificHeatCapacity;
+        ThermalConductivity = thermalConductivity;
+        DynamicViscosity = dynamicViscosity;
+        ThermalExpansionCoefficient = thermalExpansionCoefficient;
+        ModulusOfElasticity = modulusOfElasticity;
+        YieldStrength = yieldStrength;
+        FractureToughness = fractureToughness;
+    }
+
     public override string ToString() => $"{Name}, ρ={Density}, cp={SpecificHeatCapacity}, k={ThermalConductivity}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ThermodynamicState
 {
+    public double? Moles { get; }
+
+    public Temperature Temperature { get; }
+
+    public Pressure Pressure { get; }
+
+    public Volume Volume { get; }
+
+    public Mass? Mass { get; }
 
     public ThermodynamicState(Temperature temperature, Pressure pressure, Volume volume, Mass? mass = null, double? moles = null)
 
     {
-
         moles = moles is not null && moles < 0d ? throw new ArgumentOutOfRangeException(nameof(moles)) : moles;
-
-    
-        this.Temperature = temperature;
-        this.Pressure = pressure;
-        this.Volume = volume;
-        this.Mass = mass;
+        Temperature = temperature;
+        Pressure = pressure;
+        Volume = volume;
+        Mass = mass;
         Moles = moles;
-}
+    }
 
-
-    public double? Moles { get;  }
-
-    public Temperature Temperature { get; }
-    public Pressure Pressure { get; }
-    public Volume Volume { get; }
-    public Mass? Mass { get; }
     public override string ToString()
         => $"T={Temperature}, P={Pressure}, V={Volume}, m={ScientificModelDisplay.NullProp(Mass, static m => m.ToString())}, n={ScientificModelDisplay.NullProp(Moles, static n => n.ToString())}";
 }
@@ -94,58 +106,64 @@ public readonly record struct ConvectiveHeatTransferInput(HeatTransferCoefficien
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct RadiativeHeatTransferInput
 {
+    public double Emissivity { get; }
+
+    public Area Area { get; }
+
+    public Temperature HotTemperature { get; }
+
+    public Temperature ColdTemperature { get; }
 
     public RadiativeHeatTransferInput(double emissivity, Area area, Temperature hotTemperature, Temperature coldTemperature)
 
     {
-
         emissivity = emissivity is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(emissivity)) : emissivity;
-
-    
-        this.Area = area;
-        this.HotTemperature = hotTemperature;
-        this.ColdTemperature = coldTemperature;
+        Area = area;
+        HotTemperature = hotTemperature;
+        ColdTemperature = coldTemperature;
         Emissivity = emissivity;
-}
+    }
 
-
-    public double Emissivity { get;  }
-
-    public Area Area { get; }
-    public Temperature HotTemperature { get; }
-    public Temperature ColdTemperature { get; }
     public override string ToString() => $"ε={Emissivity}, A={Area}, {HotTemperature}/{ColdTemperature}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct HeatExchangerInput
 {
-
-    public HeatExchangerInput(MassFlowRate hotMassFlowRate, SpecificHeatCapacity hotSpecificHeatCapacity, Temperature hotInletTemperature, MassFlowRate coldMassFlowRate, SpecificHeatCapacity coldSpecificHeatCapacity, Temperature coldInletTemperature, double effectiveness)
-
-    {
-
-        effectiveness = effectiveness is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(effectiveness)) : effectiveness;
-
-    
-        this.HotMassFlowRate = hotMassFlowRate;
-        this.HotSpecificHeatCapacity = hotSpecificHeatCapacity;
-        this.HotInletTemperature = hotInletTemperature;
-        this.ColdMassFlowRate = coldMassFlowRate;
-        this.ColdSpecificHeatCapacity = coldSpecificHeatCapacity;
-        this.ColdInletTemperature = coldInletTemperature;
-        Effectiveness = effectiveness;
-}
-
-
-    public double Effectiveness { get;  }
+    public double Effectiveness { get; }
 
     public MassFlowRate HotMassFlowRate { get; }
+
     public SpecificHeatCapacity HotSpecificHeatCapacity { get; }
+
     public Temperature HotInletTemperature { get; }
+
     public MassFlowRate ColdMassFlowRate { get; }
+
     public SpecificHeatCapacity ColdSpecificHeatCapacity { get; }
+
     public Temperature ColdInletTemperature { get; }
+
+    public HeatExchangerInput(
+        MassFlowRate hotMassFlowRate,
+        SpecificHeatCapacity hotSpecificHeatCapacity,
+        Temperature hotInletTemperature,
+        MassFlowRate coldMassFlowRate,
+        SpecificHeatCapacity coldSpecificHeatCapacity,
+        Temperature coldInletTemperature,
+        double effectiveness)
+
+    {
+        effectiveness = effectiveness is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(effectiveness)) : effectiveness;
+        HotMassFlowRate = hotMassFlowRate;
+        HotSpecificHeatCapacity = hotSpecificHeatCapacity;
+        HotInletTemperature = hotInletTemperature;
+        ColdMassFlowRate = coldMassFlowRate;
+        ColdSpecificHeatCapacity = coldSpecificHeatCapacity;
+        ColdInletTemperature = coldInletTemperature;
+        Effectiveness = effectiveness;
+    }
+
     public override string ToString() => $"ε={Effectiveness}, hot ṁ={HotMassFlowRate}, cold ṁ={ColdMassFlowRate}, Thi={HotInletTemperature}, Tci={ColdInletTemperature}";
 }
 
@@ -158,96 +176,100 @@ public readonly record struct HeatExchangerResult(Energy HeatTransferred, Temper
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ConvectionCorrelationInput
 {
+    public double ReynoldsNumber { get; }
+
+    public double PrandtlNumber { get; }
+
+    public Length CharacteristicLength { get; }
+
+    public ThermalConductivity ThermalConductivity { get; }
+
+    public bool IsHeating { get; }
 
     public ConvectionCorrelationInput(double reynoldsNumber, double prandtlNumber, Length characteristicLength, ThermalConductivity thermalConductivity, bool isHeating)
 
     {
-
         reynoldsNumber = reynoldsNumber < 0d ? throw new ArgumentOutOfRangeException(nameof(reynoldsNumber)) : reynoldsNumber;
-
         prandtlNumber = prandtlNumber <= 0d ? throw new ArgumentOutOfRangeException(nameof(prandtlNumber)) : prandtlNumber;
-
-    
-        this.CharacteristicLength = characteristicLength;
-        this.ThermalConductivity = thermalConductivity;
-        this.IsHeating = isHeating;
+        CharacteristicLength = characteristicLength;
+        ThermalConductivity = thermalConductivity;
+        IsHeating = isHeating;
         ReynoldsNumber = reynoldsNumber;
         PrandtlNumber = prandtlNumber;
-}
+    }
 
-
-    public double ReynoldsNumber { get;  }
-    public double PrandtlNumber { get;  }
-
-    public Length CharacteristicLength { get; }
-    public ThermalConductivity ThermalConductivity { get; }
-    public bool IsHeating { get; }
     public override string ToString() => $"Re={ReynoldsNumber}, Pr={PrandtlNumber}, L={CharacteristicLength}, k={ThermalConductivity}, heating={IsHeating}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NaturalConvectionInput
 {
-
-    public NaturalConvectionInput(Acceleration gravity, ThermalExpansionCoefficient thermalExpansionCoefficient, Temperature surfaceTemperature, Temperature fluidTemperature, Length characteristicLength, KinematicViscosity kinematicViscosity, double prandtlNumber)
-
-    {
-
-        prandtlNumber = prandtlNumber <= 0d ? throw new ArgumentOutOfRangeException(nameof(prandtlNumber)) : prandtlNumber;
-
-    
-        this.Gravity = gravity;
-        this.ThermalExpansionCoefficient = thermalExpansionCoefficient;
-        this.SurfaceTemperature = surfaceTemperature;
-        this.FluidTemperature = fluidTemperature;
-        this.CharacteristicLength = characteristicLength;
-        this.KinematicViscosity = kinematicViscosity;
-        PrandtlNumber = prandtlNumber;
-}
-
-
-    public double PrandtlNumber { get;  }
+    public double PrandtlNumber { get; }
 
     public Acceleration Gravity { get; }
+
     public ThermalExpansionCoefficient ThermalExpansionCoefficient { get; }
+
     public Temperature SurfaceTemperature { get; }
+
     public Temperature FluidTemperature { get; }
+
     public Length CharacteristicLength { get; }
+
     public KinematicViscosity KinematicViscosity { get; }
+
+    public NaturalConvectionInput(
+        Acceleration gravity,
+        ThermalExpansionCoefficient thermalExpansionCoefficient,
+        Temperature surfaceTemperature,
+        Temperature fluidTemperature,
+        Length characteristicLength,
+        KinematicViscosity kinematicViscosity,
+        double prandtlNumber)
+
+    {
+        prandtlNumber = prandtlNumber <= 0d ? throw new ArgumentOutOfRangeException(nameof(prandtlNumber)) : prandtlNumber;
+        Gravity = gravity;
+        ThermalExpansionCoefficient = thermalExpansionCoefficient;
+        SurfaceTemperature = surfaceTemperature;
+        FluidTemperature = fluidTemperature;
+        CharacteristicLength = characteristicLength;
+        KinematicViscosity = kinematicViscosity;
+        PrandtlNumber = prandtlNumber;
+    }
+
     public override string ToString() => $"g={Gravity}, L={CharacteristicLength}, Pr={PrandtlNumber}, Ts={SurfaceTemperature}, T∞={FluidTemperature}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct RadiationExchangeInput
 {
+    public double EmissivityHot { get; }
+
+    public double EmissivityCold { get; }
+
+    public double ViewFactor { get; }
+
+    public Area Area { get; }
+
+    public Temperature HotTemperature { get; }
+
+    public Temperature ColdTemperature { get; }
 
     public RadiationExchangeInput(double emissivityHot, double emissivityCold, Area area, Temperature hotTemperature, Temperature coldTemperature, double viewFactor)
 
     {
-
         emissivityHot = emissivityHot is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(emissivityHot)) : emissivityHot;
-
         emissivityCold = emissivityCold is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(emissivityCold)) : emissivityCold;
-
         viewFactor = viewFactor is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(viewFactor)) : viewFactor;
-
-    
-        this.Area = area;
-        this.HotTemperature = hotTemperature;
-        this.ColdTemperature = coldTemperature;
+        Area = area;
+        HotTemperature = hotTemperature;
+        ColdTemperature = coldTemperature;
         EmissivityHot = emissivityHot;
         EmissivityCold = emissivityCold;
         ViewFactor = viewFactor;
-}
+    }
 
-
-    public double EmissivityHot { get;  }
-    public double EmissivityCold { get;  }
-    public double ViewFactor { get;  }
-
-    public Area Area { get; }
-    public Temperature HotTemperature { get; }
-    public Temperature ColdTemperature { get; }
     public override string ToString() => $"εh={EmissivityHot}, εc={EmissivityCold}, F={ViewFactor}, A={Area}, {HotTemperature}/{ColdTemperature}";
 }
 
@@ -266,26 +288,24 @@ public readonly record struct ReynoldsNumberInput(FluidFlowState State)
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct DragForceInput
 {
+    public double DragCoefficient { get; }
+
+    public Density FluidDensity { get; }
+
+    public Velocity Velocity { get; }
+
+    public Area ReferenceArea { get; }
 
     public DragForceInput(Density fluidDensity, Velocity velocity, double dragCoefficient, Area referenceArea)
 
     {
-
         dragCoefficient = dragCoefficient < 0d ? throw new ArgumentOutOfRangeException(nameof(dragCoefficient)) : dragCoefficient;
-
-    
-        this.FluidDensity = fluidDensity;
-        this.Velocity = velocity;
-        this.ReferenceArea = referenceArea;
+        FluidDensity = fluidDensity;
+        Velocity = velocity;
+        ReferenceArea = referenceArea;
         DragCoefficient = dragCoefficient;
-}
+    }
 
-
-    public double DragCoefficient { get;  }
-
-    public Density FluidDensity { get; }
-    public Velocity Velocity { get; }
-    public Area ReferenceArea { get; }
     public override string ToString() => $"ρ={FluidDensity}, v={Velocity}, Cd={DragCoefficient}, A={ReferenceArea}";
 }
 
@@ -298,86 +318,78 @@ public readonly record struct BuoyancyInput(Density FluidDensity, Volume Displac
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct PipeFlowInput
 {
+    public double FrictionFactor { get; }
+
+    public FluidFlowState State { get; }
+
+    public Length PipeLength { get; }
 
     public PipeFlowInput(FluidFlowState state, Length pipeLength, double frictionFactor)
 
     {
-
         frictionFactor = frictionFactor < 0d ? throw new ArgumentOutOfRangeException(nameof(frictionFactor)) : frictionFactor;
-
-    
-        this.State = state;
-        this.PipeLength = pipeLength;
+        State = state;
+        PipeLength = pipeLength;
         FrictionFactor = frictionFactor;
-}
+    }
 
-
-    public double FrictionFactor { get;  }
-
-    public FluidFlowState State { get; }
-    public Length PipeLength { get; }
     public override string ToString() => $"L={PipeLength}, f={FrictionFactor}, {State}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct CompressibleFlowInput
 {
+    public double SpecificHeatRatio { get; }
+
+    public double GasConstant { get; }
+
+    public double MachNumber { get; }
+
+    public Pressure StagnationPressure { get; }
+
+    public Temperature StagnationTemperature { get; }
 
     public CompressibleFlowInput(Pressure stagnationPressure, Temperature stagnationTemperature, double specificHeatRatio, double gasConstant, double machNumber)
 
     {
-
         specificHeatRatio = specificHeatRatio <= 1d ? throw new ArgumentOutOfRangeException(nameof(specificHeatRatio)) : specificHeatRatio;
-
         gasConstant = gasConstant <= 0d ? throw new ArgumentOutOfRangeException(nameof(gasConstant)) : gasConstant;
-
         machNumber = machNumber < 0d ? throw new ArgumentOutOfRangeException(nameof(machNumber)) : machNumber;
-
-    
-        this.StagnationPressure = stagnationPressure;
-        this.StagnationTemperature = stagnationTemperature;
+        StagnationPressure = stagnationPressure;
+        StagnationTemperature = stagnationTemperature;
         SpecificHeatRatio = specificHeatRatio;
         GasConstant = gasConstant;
         MachNumber = machNumber;
-}
+    }
 
-
-    public double SpecificHeatRatio { get;  }
-    public double GasConstant { get;  }
-    public double MachNumber { get;  }
-
-    public Pressure StagnationPressure { get; }
-    public Temperature StagnationTemperature { get; }
     public override string ToString() => $"P0={StagnationPressure}, T0={StagnationTemperature}, γ={SpecificHeatRatio}, R={GasConstant}, M={MachNumber}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NozzleFlowInput
 {
+    public double SpecificHeatRatio { get; }
+
+    public double GasConstant { get; }
+
+    public Pressure ChamberPressure { get; }
+
+    public Temperature ChamberTemperature { get; }
+
+    public Pressure ExitPressure { get; }
 
     public NozzleFlowInput(Pressure chamberPressure, Temperature chamberTemperature, Pressure exitPressure, double specificHeatRatio, double gasConstant)
 
     {
-
         specificHeatRatio = specificHeatRatio <= 1d ? throw new ArgumentOutOfRangeException(nameof(specificHeatRatio)) : specificHeatRatio;
-
         gasConstant = gasConstant <= 0d ? throw new ArgumentOutOfRangeException(nameof(gasConstant)) : gasConstant;
-
-    
-        this.ChamberPressure = chamberPressure;
-        this.ChamberTemperature = chamberTemperature;
-        this.ExitPressure = exitPressure;
+        ChamberPressure = chamberPressure;
+        ChamberTemperature = chamberTemperature;
+        ExitPressure = exitPressure;
         SpecificHeatRatio = specificHeatRatio;
         GasConstant = gasConstant;
-}
+    }
 
-
-    public double SpecificHeatRatio { get;  }
-    public double GasConstant { get;  }
-
-    public Pressure ChamberPressure { get; }
-    public Temperature ChamberTemperature { get; }
-    public Pressure ExitPressure { get; }
     public override string ToString() => $"Pc={ChamberPressure}, Tc={ChamberTemperature}, Pe={ExitPressure}, γ={SpecificHeatRatio}, R={GasConstant}";
 }
 
@@ -390,47 +402,41 @@ public readonly record struct NozzleFlowResult(Velocity ExitVelocity, MassFlowRa
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NormalShockInput
 {
+    public double UpstreamMachNumber { get; }
+
+    public double SpecificHeatRatio { get; }
 
     public NormalShockInput(double upstreamMachNumber, double specificHeatRatio)
 
     {
-
         upstreamMachNumber = upstreamMachNumber <= 1d ? throw new ArgumentOutOfRangeException(nameof(upstreamMachNumber)) : upstreamMachNumber;
-
         specificHeatRatio = specificHeatRatio <= 1d ? throw new ArgumentOutOfRangeException(nameof(specificHeatRatio)) : specificHeatRatio;
         UpstreamMachNumber = upstreamMachNumber;
         SpecificHeatRatio = specificHeatRatio;
-}
+    }
 
-
-    public double UpstreamMachNumber { get;  }
-    public double SpecificHeatRatio { get;  }
     public override string ToString() => $"M1={UpstreamMachNumber}, γ={SpecificHeatRatio}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ObliqueShockInput
 {
+    public double UpstreamMachNumber { get; }
+
+    public double SpecificHeatRatio { get; }
+
+    public Angle ShockAngle { get; }
 
     public ObliqueShockInput(double upstreamMachNumber, Angle shockAngle, double specificHeatRatio)
 
     {
-
         upstreamMachNumber = upstreamMachNumber <= 1d ? throw new ArgumentOutOfRangeException(nameof(upstreamMachNumber)) : upstreamMachNumber;
-
         specificHeatRatio = specificHeatRatio <= 1d ? throw new ArgumentOutOfRangeException(nameof(specificHeatRatio)) : specificHeatRatio;
-
-    
-        this.ShockAngle = shockAngle;
+        ShockAngle = shockAngle;
         UpstreamMachNumber = upstreamMachNumber;
         SpecificHeatRatio = specificHeatRatio;
-}
+    }
 
-
-    public double UpstreamMachNumber { get;  }
-    public double SpecificHeatRatio { get;  }
-
-    public Angle ShockAngle { get; }
     public override string ToString() => $"M1={UpstreamMachNumber}, θ={ShockAngle}, γ={SpecificHeatRatio}";
 }
 
@@ -514,51 +520,46 @@ public readonly record struct FatigueInput(Pressure AlternatingStress, Pressure 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct SNCurveInput
 {
+    public double FatigueStrengthCoefficient { get; }
+
+    public double FatigueStrengthExponent { get; }
+
+    public Pressure StressAmplitude { get; }
 
     public SNCurveInput(Pressure stressAmplitude, double fatigueStrengthCoefficient, double fatigueStrengthExponent)
 
     {
-
         fatigueStrengthCoefficient = fatigueStrengthCoefficient <= 0d ? throw new ArgumentOutOfRangeException(nameof(fatigueStrengthCoefficient)) : fatigueStrengthCoefficient;
-
         fatigueStrengthExponent = fatigueStrengthExponent >= 0d ? throw new ArgumentOutOfRangeException(nameof(fatigueStrengthExponent)) : fatigueStrengthExponent;
-
-    
-        this.StressAmplitude = stressAmplitude;
+        StressAmplitude = stressAmplitude;
         FatigueStrengthCoefficient = fatigueStrengthCoefficient;
         FatigueStrengthExponent = fatigueStrengthExponent;
-}
+    }
 
-
-    public double FatigueStrengthCoefficient { get;  }
-    public double FatigueStrengthExponent { get;  }
-
-    public Pressure StressAmplitude { get; }
     public override string ToString() => $"σa={StressAmplitude}, σf'={FatigueStrengthCoefficient}, b={FatigueStrengthExponent}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BeamSectionProfile
 {
+    public string Name { get; init; }
+
+    public Area CrossSectionArea { get; init; }
+
+    public AreaMomentOfInertia AreaMomentOfInertia { get; init; }
+
+    public Length DistanceFromNeutralAxis { get; init; }
 
     public BeamSectionProfile(string name, Area crossSectionArea, AreaMomentOfInertia areaMomentOfInertia, Length distanceFromNeutralAxis)
 
     {
-
         name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
+        Name = name;
+        CrossSectionArea = crossSectionArea;
+        AreaMomentOfInertia = areaMomentOfInertia;
+        DistanceFromNeutralAxis = distanceFromNeutralAxis;
+    }
 
-        this.Name = name;
-        this.CrossSectionArea = crossSectionArea;
-        this.AreaMomentOfInertia = areaMomentOfInertia;
-        this.DistanceFromNeutralAxis = distanceFromNeutralAxis;
-}
-
-
-    public string Name { get;  init; }
-
-    public Area CrossSectionArea { get; init; }
-    public AreaMomentOfInertia AreaMomentOfInertia { get; init; }
-    public Length DistanceFromNeutralAxis { get; init; }
     public override string ToString() => $"{Name}, A={CrossSectionArea}, I={AreaMomentOfInertia}, y={DistanceFromNeutralAxis}";
 }
 

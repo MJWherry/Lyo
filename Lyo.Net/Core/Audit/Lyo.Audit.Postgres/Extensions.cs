@@ -52,9 +52,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresAuditOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddAuditDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresAuditOptions.SectionName)
+        public IServiceCollection AddAuditDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresAuditOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -99,9 +97,7 @@ public static class Extensions
         /// <param name="configuration">The configuration (e.g. builder.Configuration)</param>
         /// <param name="configSectionName">The configuration section name (defaults to PostgresAuditOptions.SectionName)</param>
         /// <returns>The service collection for chaining</returns>
-        public IServiceCollection AddPostgresAuditRecorderFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresAuditOptions.SectionName)
+        public IServiceCollection AddPostgresAuditRecorderFromConfiguration(IConfiguration configuration, string configSectionName = PostgresAuditOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

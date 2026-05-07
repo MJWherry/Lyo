@@ -49,8 +49,7 @@ public sealed class PostgresTagStore : ITagStore, IHealth
         var slugNormalized = NormalizeSlug(slug);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var exists = await context.Tags.AnyAsync(
-                t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized,
-                ct)
+                t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized, ct)
             .ConfigureAwait(false);
 
         if (exists)
@@ -80,7 +79,8 @@ public sealed class PostgresTagStore : ITagStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
         var slugNormalized = NormalizeSlug(slug);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized)
+        var entities = await context.Tags
+            .Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntity.EntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -152,6 +152,5 @@ public sealed class PostgresTagStore : ITagStore, IHealth
             CreatedTimestamp = e.CreatedTimestamp
         };
 
-    private static string NormalizeSlug(string? slug)
-        => string.IsNullOrWhiteSpace(slug) ? string.Empty : slug.Trim();
+    private static string NormalizeSlug(string? slug) => string.IsNullOrWhiteSpace(slug) ? string.Empty : slug.Trim();
 }

@@ -101,8 +101,7 @@ public class CreateService<TContext>(
         CreateContext<TRequest, TDbModel, TContextLocal> ctx,
         Action<CreateContext<TRequest, TDbModel, TContextLocal>>? after,
         Func<CreateContext<TRequest, TDbModel, TContextLocal>, Task>? afterAsync)
-        where TDbModel : class
-        where TContextLocal : DbContext
+        where TDbModel : class where TContextLocal : DbContext
     {
         if (afterAsync != null)
             return afterAsync(ctx);
@@ -160,8 +159,7 @@ public class CreateService<TContext>(
         var results = new List<CreateResult<TResult>>();
         var failed = new List<(int Index, TRequest Request)>();
         int successCount = 0, failureCount = 0;
-        var (successResults, failedRequests) =
-            await TryBulkCreateWithTracking<TRequest, TDbModel, TResult>(requests, before, after, afterAsync, ct).ConfigureAwait(false);
+        var (successResults, failedRequests) = await TryBulkCreateWithTracking<TRequest, TDbModel, TResult>(requests, before, after, afterAsync, ct).ConfigureAwait(false);
         results.AddRange(successResults);
         successCount += successResults.Count;
         failed.AddRange(failedRequests);

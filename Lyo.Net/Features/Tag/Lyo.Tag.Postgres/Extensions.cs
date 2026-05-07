@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL tag DbContextFactory using configuration binding.</summary>
-        public IServiceCollection AddTagDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresTagOptions.SectionName)
+        public IServiceCollection AddTagDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresTagOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds PostgreSQL tag store using configuration binding.</summary>
-        public IServiceCollection AddPostgresTagStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresTagOptions.SectionName)
+        public IServiceCollection AddPostgresTagStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresTagOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

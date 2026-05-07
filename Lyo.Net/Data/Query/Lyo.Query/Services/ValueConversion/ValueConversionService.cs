@@ -121,8 +121,8 @@ public sealed class ValueConversionService(ICacheService cache, CacheOptions cac
     private static object ConvertToEnum(object value, Type enumType)
     {
         if (value is string stringValue) {
-            return Enum.TryParse(enumType, stringValue, true, out var enumResult) 
-                ? enumResult 
+            return Enum.TryParse(enumType, stringValue, true, out var enumResult)
+                ? enumResult
                 : throw new InvalidOperationException($"Cannot convert string '{stringValue}' to enum type {enumType.Name}");
         }
 

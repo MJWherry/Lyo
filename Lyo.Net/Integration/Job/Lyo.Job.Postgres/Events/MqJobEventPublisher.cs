@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Postgres.Events;
 
 /// <summary>
-/// Default <see cref="IJobEventPublisher" /> implementation backed by <see cref="IMqService" />. Uses the standard job MQ topology (exchange <c>job.events</c>, routing keys, and
-/// per-worker-type queues) defined in <see cref="Constants.Mq" />.
+/// Default <see cref="IJobEventPublisher" /> implementation backed by <see cref="IMqService" />. Uses the standard job MQ topology (exchange <c>job.events</c>, routing keys,
+/// and per-worker-type queues) defined in <see cref="Constants.Mq" />.
 /// <para>Register via <c>services.AddMqJobEventPublisher()</c> after registering your <see cref="IMqService" /> implementation (e.g. <c>services.AddRabbitMq(...)</c>).</para>
 /// </summary>
 public sealed class MqJobEventPublisher : IJobEventPublisher

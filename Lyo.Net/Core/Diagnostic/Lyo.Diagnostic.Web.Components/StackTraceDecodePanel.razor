@@ -8,7 +8,8 @@
                       Placeholder="e.g. MyApp or MyApp. — Enter after each prefix"
                       ShowClearButton="true"/>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-            Only frames under one of these prefixes are <strong>your</strong> code when strict mode is on. When strict mode is off, anything that is not built-in third-party or test framework is also treated as user code (legacy default for APIs).
+            Only frames under one of these prefixes are <strong>your</strong> code when strict mode is on. When strict mode is off, anything that is not built-in third-party or
+            test framework is also treated as user code (legacy default for APIs).
         </MudText>
     </div>
 
@@ -23,7 +24,8 @@
                       Placeholder="e.g. AcmeCorp.Sdk. — optional; add libraries you use"
                       ShowClearButton="true"/>
         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
-            Add library namespace prefixes you want excluded from user code and crash-site hints (e.g. mocking tools when strict mode is off). There is no exhaustive built-in list of NuGet packages.
+            Add library namespace prefixes you want excluded from user code and crash-site hints (e.g. mocking tools when strict mode is off). There is no exhaustive built-in list
+            of NuGet packages.
         </MudText>
     </div>
 
@@ -39,6 +41,7 @@
 </MudStack>
 
 @code {
+
     [Parameter]
     public EventCallback<DecodedStackTrace> OnDecoded { get; set; }
 
@@ -65,17 +68,12 @@
         return Task.CompletedTask;
     }
 
-    private static List<string> TrimmedChips(IEnumerable<string> chips)
-        => chips.Where(static s => !string.IsNullOrWhiteSpace(s)).Select(static s => s.Trim()).ToList();
+    private static List<string> TrimmedChips(IEnumerable<string> chips) => chips.Where(static s => !string.IsNullOrWhiteSpace(s)).Select(static s => s.Trim()).ToList();
 
     private async Task DecodeAsync()
     {
         try {
-            var decoder = new StackTraceDecoder(new StackTraceDecoderOptions {
-                UserCodePrefixes = TrimmedChips(_prefixChips),
-                ExtraSystemPrefixes = TrimmedChips(_thirdPartyChips),
-                RestrictUserCodeToListedPrefixes = _restrictUserPrefixes
-            });
+            var decoder = new StackTraceDecoder(new() { UserCodePrefixes = TrimmedChips(_prefixChips), ExtraSystemPrefixes = TrimmedChips(_thirdPartyChips), RestrictUserCodeToListedPrefixes = _restrictUserPrefixes });
             var decoded = await decoder.DecodeAsync(_raw);
             await OnDecoded.InvokeAsync(decoded);
         }

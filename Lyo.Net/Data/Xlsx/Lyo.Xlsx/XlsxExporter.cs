@@ -54,7 +54,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.String)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.String)' />
     public void ExportToXlsx<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string xlsxFilePath, string? worksheetName = null)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -65,7 +66,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         workbook.SaveAs(xlsxFilePath);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.String)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.String)' />
     public void ExportToXlsx<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream xlsxStream, string? worksheetName = null)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -77,7 +79,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         workbook.SaveAs(xlsxStream);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytes``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytes``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String)' />
     public byte[] ExportToXlsxBytes<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string? worksheetName = null)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -88,7 +91,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.String)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.String)' />
     public void ExportToXlsx<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, string xlsxFilePath)
     {
         ArgumentHelpers.ThrowIfNull(dataSets);
@@ -103,7 +107,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         workbook.SaveAs(xlsxFilePath);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.IO.Stream)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsx``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.IO.Stream)' />
     public void ExportToXlsx<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, Stream xlsxStream)
     {
         ArgumentHelpers.ThrowIfNull(dataSets);
@@ -129,7 +134,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean)' />
     public void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, string xlsxFilePath, bool useHeaderRow = true)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -139,7 +145,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         workbook.SaveAs(xlsxFilePath);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean)' />
     public void ExportToXlsxFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, Stream xlsxStream, bool useHeaderRow = true)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -150,7 +157,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         workbook.SaveAs(xlsxStream);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesFromDictionary(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean)' />
     public byte[] ExportToXlsxBytesFromDictionary(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -447,7 +455,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(IEnumerable<T> data, Stream xlsxStream, string? worksheetName = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -485,7 +494,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(
         IEnumerable<T> data,
         IReadOnlyList<PropertyInfo> selectedProperties,
@@ -518,7 +528,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(
         IEnumerable<T> data,
         IReadOnlyList<PropertyInfo> selectedProperties,
@@ -552,7 +563,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Reflection.PropertyInfo},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Reflection.PropertyInfo},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(
         IEnumerable<T> data,
         IReadOnlyDictionary<string, PropertyInfo> columns,
@@ -586,7 +598,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Func{``0,System.String}},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Func{``0,System.String}},System.IO.Stream,System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(
         IEnumerable<T> data,
         IReadOnlyDictionary<string, Func<T, string>> columnFormatters,
@@ -620,7 +633,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToXlsxBytesAsync<T>(
         IEnumerable<T> data,
         IReadOnlyList<PropertyInfo> selectedProperties,
@@ -635,7 +649,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.String,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, string xlsxFilePath, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataSets);
@@ -668,7 +683,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.IO.Stream,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.IO.Stream,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, Stream xlsxStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataSets);
@@ -702,7 +718,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         }
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesAsync``1(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Collections.Generic.IEnumerable{``0}},System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToXlsxBytesAsync<T>(IReadOnlyDictionary<string, IEnumerable<T>> dataSets, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(dataSets);
@@ -712,7 +729,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         return memoryStream.ToArray();
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string xlsxFilePath,
@@ -724,7 +742,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         await Task.Run(() => ExportToXlsxFromDictionary(data, xlsxFilePath, useHeaderRow), ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Threading.CancellationToken)' />
     public async Task ExportToXlsxFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream xlsxStream,
@@ -736,7 +755,8 @@ internal sealed class XlsxExporter : IXlsxExporter
         await Task.Run(() => ExportToXlsxFromDictionary(data, xlsxStream, useHeaderRow), ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Xlsx.Models.IXlsxExporter.ExportToXlsxBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
     public async Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         bool useHeaderRow = true,

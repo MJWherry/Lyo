@@ -2,6 +2,7 @@ using Lyo.Api.Services.Crud;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
+
 // ReSharper disable EntityFramework.NPlusOne.IncompleteDataUsage
 
 namespace Lyo.Api.Tests;

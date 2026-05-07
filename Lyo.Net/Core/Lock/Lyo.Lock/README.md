@@ -4,12 +4,13 @@ Key-based **exclusive locks** and **keyed semaphores** (bounded concurrency per 
 
 ## When to use what
 
-| Primitive | Type | Scope | Typical use |
-|-----------|------|--------|-------------|
-| `ILockService` / `LocalLockService` | Mutex per key | One process | Guard mutations to one aggregate, avoid duplicate work, serialize handlers per entity ID |
+| Primitive                                               | Type                       | Scope       | Typical use                                                                                        |
+|---------------------------------------------------------|----------------------------|-------------|----------------------------------------------------------------------------------------------------|
+| `ILockService` / `LocalLockService`                     | Mutex per key              | One process | Guard mutations to one aggregate, avoid duplicate work, serialize handlers per entity ID           |
 | `IKeyedSemaphoreService` / `LocalKeyedSemaphoreService` | Counting semaphore per key | One process | Cap concurrent exports/API calls/backfills *per tenant or resource key* without global rate limits |
 
-For **multiple servers or processes**, register a distributed `ILockService` (see [`Lyo.Lock.Redis`](../Lyo.Lock.Redis/README.md)). Keyed semaphores in this package remain **local only**.
+For **multiple servers or processes**, register a distributed `ILockService` (see [`Lyo.Lock.Redis`](../Lyo.Lock.Redis/README.md)). Keyed semaphores in this package remain **local
+only**.
 
 ## Features
 
@@ -55,28 +56,29 @@ await semaphoreService.ExecuteAsync("export:tenant-1", 3, async ct => await RunE
 
 ### Rules for keyed semaphores
 
-- Use a **stable `maxConcurrency`** for a given key while any permit is held or waiters exist. If you pass a different `maxConcurrency` for an active key, `LocalKeyedSemaphoreService` throws (`InvalidOperationException`) instead of undefined behavior.
+- Use a **stable `maxConcurrency`** for a given key while any permit is held or waiters exist. If you pass a different `maxConcurrency` for an active key,
+  `LocalKeyedSemaphoreService` throws (`InvalidOperationException`) instead of undefined behavior.
 - Cancellation tokens on `AcquireAsync` / `ExecuteAsync` are honored while waiting.
 
 ## Configuration
 
 ### `LockOptions` (`LockOptions` section)
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| `DefaultAcquireTimeout` | 30s | Max wait for `AcquireAsync` / `ExecuteWithLockAsync`. |
-| `DefaultLockDuration` | 60s | Used by **distributed** locks (Redis TTL). Ignored by `LocalLockService`. |
-| `KeyPrefix` | `lyo:lock:` | Prefix for Redis keys; harmless for local-only usage. |
-| `SkipKeyNormalization` | `false` | When `true`, keys are not lowercased (caller must ensure consistent casing). |
-| `EnableMetrics` | `false` | Record lock timings/counters when `IMetrics` is available. |
+| Property                | Default     | Description                                                                  |
+|-------------------------|-------------|------------------------------------------------------------------------------|
+| `DefaultAcquireTimeout` | 30s         | Max wait for `AcquireAsync` / `ExecuteWithLockAsync`.                        |
+| `DefaultLockDuration`   | 60s         | Used by **distributed** locks (Redis TTL). Ignored by `LocalLockService`.    |
+| `KeyPrefix`             | `lyo:lock:` | Prefix for Redis keys; harmless for local-only usage.                        |
+| `SkipKeyNormalization`  | `false`     | When `true`, keys are not lowercased (caller must ensure consistent casing). |
+| `EnableMetrics`         | `false`     | Record lock timings/counters when `IMetrics` is available.                   |
 
 ### `KeyedSemaphoreOptions` (`KeyedSemaphoreOptions` section)
 
-| Property | Default | Description |
-|----------|---------|-------------|
-| `DefaultAcquireTimeout` | 30s | Max wait for a permit. |
-| `SkipKeyNormalization` | `false` | Same semantics as lock options. |
-| `EnableMetrics` | `false` | Record semaphore timings/counters when `IMetrics` is available. |
+| Property                | Default | Description                                                     |
+|-------------------------|---------|-----------------------------------------------------------------|
+| `DefaultAcquireTimeout` | 30s     | Max wait for a permit.                                          |
+| `SkipKeyNormalization`  | `false` | Same semantics as lock options.                                 |
+| `EnableMetrics`         | `false` | Record semaphore timings/counters when `IMetrics` is available. |
 
 Example `appsettings.json`:
 
@@ -103,21 +105,21 @@ When metrics are enabled and `IMetrics` is registered, names match `Lyo.Lock.Con
 
 **Locks (`Constants.Metrics`)**
 
-| Name | Role |
-|------|------|
-| `lock.acquire.duration` | Wait time for acquisition |
-| `lock.acquire.success` / `lock.acquire.failure` | Counter |
-| `lock.release.duration` | Release timing |
-| `lock.execute.duration` | Wall time for `ExecuteWithLockAsync` |
+| Name                                            | Role                                 |
+|-------------------------------------------------|--------------------------------------|
+| `lock.acquire.duration`                         | Wait time for acquisition            |
+| `lock.acquire.success` / `lock.acquire.failure` | Counter                              |
+| `lock.release.duration`                         | Release timing                       |
+| `lock.execute.duration`                         | Wall time for `ExecuteWithLockAsync` |
 
 **Semaphores (`Constants.SemaphoreMetrics`)**
 
-| Name | Role |
-|------|------|
-| `semaphore.acquire.duration` | Wait time for a permit |
-| `semaphore.acquire.success` / `semaphore.acquire.failure` | Counter |
-| `semaphore.release.duration` | Release timing |
-| `semaphore.execute.duration` | Wall time for `ExecuteAsync` |
+| Name                                                      | Role                         |
+|-----------------------------------------------------------|------------------------------|
+| `semaphore.acquire.duration`                              | Wait time for a permit       |
+| `semaphore.acquire.success` / `semaphore.acquire.failure` | Counter                      |
+| `semaphore.release.duration`                              | Release timing               |
+| `semaphore.execute.duration`                              | Wall time for `ExecuteAsync` |
 
 Tag dimension: `key` — logical key string as passed by the caller (see XML docs on `Constants`).
 
@@ -146,12 +148,12 @@ Tag dimension: `key` — logical key string as passed by the caller (see XML doc
 
 ### NuGet packages
 
-| Package | Version |
-|---------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| Package                                                 | Version     |
+|---------------------------------------------------------|-------------|
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`     |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`     |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10.0.1,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10.0.1,)` |
 
 ### Project references
 

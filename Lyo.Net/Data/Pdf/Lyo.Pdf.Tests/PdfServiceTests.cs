@@ -330,6 +330,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void ExtractKeyValuePairs_VerticalLayout_SameLineValue_ReadsTextAfterKey()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom));
 
         // Same baseline Y: "Pages:" then value tokens to the right (common in forms).
@@ -345,6 +346,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_UsesFontNameBoldVsRegular()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
             => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
@@ -365,6 +367,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_EqualsDelimiter_CustomOrder()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> { W("Name = Alice", 10, 100, 200, 190), W("Role = Dev", 10, 100, 170, 160) };
@@ -377,6 +380,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_ColonTerminated_NoBold()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> {
@@ -395,6 +399,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_None_ReturnsEmpty()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, string fontName, double left, double right, double top, double bottom, bool fdBold)
             => new(text, new(left, right, top, bottom), new(11, fontName, fdBold));
 
@@ -407,6 +412,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void InferKeyValuePairsFromFormatting_BoldOnly_IgnoresDelimiterLines()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom), new(11, "Lato-Regular"));
 
         var words = new List<PdfWord> { W("Department:", 10, 100, 200, 190), W("Engineering", 10, 100, 185, 175) };
@@ -418,6 +424,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     public void ExtractKeyValuePairs_VerticalLayout_ReadsValueBelowKey()
     {
         using var facetPdf = OpenBlankReadPdf();
+
         static PdfWord W(string text, double left, double right, double top, double bottom) => new(text, new(left, right, top, bottom));
 
         // Higher top = higher on page; key row then value row below (smaller Y centroid).

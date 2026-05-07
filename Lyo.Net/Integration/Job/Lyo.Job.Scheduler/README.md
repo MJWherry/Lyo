@@ -41,7 +41,6 @@ await scheduler.StartAsync();
 2. **Schedule check** – Evaluates each definition’s schedules via `DateAndTime.IsPastDue` (with MonthFlags) and creates job runs when due.
 3. **Job run completion** – Subscribes to `job.run.complete`; on message, fetches the run, updates last-run state, and processes triggers when criteria match.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Job.Scheduler.csproj`.)*

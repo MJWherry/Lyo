@@ -60,7 +60,6 @@ services.AddPostgresJobManagement(new PostgresJobOptions
 app.BuildJobGroup();
 ```
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Job.Postgres.csproj`.)*

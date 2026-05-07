@@ -6,23 +6,20 @@ namespace Lyo.Mathematics.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ComplexNumber
 {
+    public double Real { get; }
+
+    public double Imaginary { get; }
+
+    public double Magnitude => Math.Sqrt(Real * Real + Imaginary * Imaginary);
+
+    public double PhaseRadians => Math.Atan2(Imaginary, Real);
 
     public ComplexNumber(double real, double imaginary)
 
     {
-
         Real = MathValueGuards.Finite(real, nameof(real));
-
         Imaginary = MathValueGuards.Finite(imaginary, nameof(imaginary));
-
     }
-
-
-    public double Real { get;  }
-    public double Imaginary { get;  }
-    public double Magnitude => Math.Sqrt(Real * Real + Imaginary * Imaginary);
-
-    public double PhaseRadians => Math.Atan2(Imaginary, Real);
 
     public static ComplexNumber FromPolar(double magnitude, Angle phase)
         => new(

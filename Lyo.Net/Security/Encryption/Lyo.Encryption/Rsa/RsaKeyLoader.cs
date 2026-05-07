@@ -1,12 +1,12 @@
-﻿using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-#if !NET10_0_OR_GREATER
+﻿#if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 #else
 using System.Text.RegularExpressions;
 #endif
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Lyo.Encryption.Rsa;
 

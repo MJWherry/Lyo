@@ -77,7 +77,6 @@ at deploy time.
 - **`IConfigStore`** — full API surface.
 - **`Lyo.Config.Postgres`** — EF Core schema (`config` schema), **`PostgresConfigStore`**, migrations.
 
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Config.csproj`.)*

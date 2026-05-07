@@ -36,7 +36,10 @@ public class CompressionServiceOptions
     /// <summary>Maximum compressed input length and maximum allowed decompressed output size (bytes).</summary>
     public long MaxInputSize { get; set; } = 10L * 1024 * 1024 * 1024; // 10 GB
 
-    /// <summary>When <see langword="true" />, record compression metrics if a non-null <see cref="Lyo.Metrics.IMetrics" /> is supplied to <see cref="Lyo.Compression.CompressionService" />.</summary>
+    /// <summary>
+    /// When <see langword="true" />, record compression metrics if a non-null <see cref="Lyo.Metrics.IMetrics" /> is supplied to
+    /// <see cref="Lyo.Compression.CompressionService" />.
+    /// </summary>
     public bool EnableMetrics { get; set; } = false;
 
     public override string ToString()

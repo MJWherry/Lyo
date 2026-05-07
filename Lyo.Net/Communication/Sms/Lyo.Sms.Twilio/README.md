@@ -510,10 +510,6 @@ Options are automatically validated on startup:
 
 If validation fails, an `OptionsValidationException` or `InvalidOperationException` is thrown.
 
-
-
-
-
 ## Dependencies
 
 *(Synchronized from `Lyo.Sms.Twilio.csproj`.)*

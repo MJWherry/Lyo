@@ -117,10 +117,12 @@
     [Parameter]
     public Guid JobDefinitionId { get; set; }
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
 
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string ScheduleRoute { get; set; } = "";
 
     private JobScheduleRes? _selected;

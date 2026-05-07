@@ -10,8 +10,8 @@ public static class ComicFileStoragePath
     public static string BuildVolumePrefix(Guid seriesId, Guid volumeId) => $"{seriesId:D}/{volumeId:D}";
 
     /// <summary>
-    /// Returns <c>{seriesId}/{volumeId-or-empty-guid}/{chapterId}</c> using standard GUID representation (hyphenated), for use as <see cref="Lyo.FileStorage.IFileStorageService" /> path
-    /// prefix.
+    /// Returns <c>{seriesId}/{volumeId-or-empty-guid}/{chapterId}</c> using standard GUID representation (hyphenated), for use as
+    /// <see cref="Lyo.FileStorage.IFileStorageService" /> path prefix.
     /// </summary>
     public static string BuildPathPrefix(ComicChapter chapter)
     {

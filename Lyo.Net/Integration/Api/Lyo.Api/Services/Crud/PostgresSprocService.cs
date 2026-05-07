@@ -10,9 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Api.Services.Crud;
 
 /// <inheritdoc cref="ISprocService" />
-/// <remarks>
-/// PostgreSQL: runs set-returning functions via <c>SELECT * FROM schema.func(@a, @b, …)</c>, maps rows with <see cref="ILyoMapper" />, and caches like the legacy MSSQL path.
-/// </remarks>
+/// <remarks>PostgreSQL: runs set-returning functions via <c>SELECT * FROM schema.func(@a, @b, …)</c>, maps rows with <see cref="ILyoMapper" />, and caches like the legacy MSSQL path.</remarks>
 public sealed class PostgresSprocService<TContext>(
     IDbContextFactory<TContext> contextFactory,
     ILyoMapper mapper,

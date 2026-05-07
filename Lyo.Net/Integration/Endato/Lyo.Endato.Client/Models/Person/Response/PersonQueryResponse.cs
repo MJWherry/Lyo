@@ -29,5 +29,5 @@ public sealed record PersonQueryResponse(
 {
     public override string ToString()
         => $"PersonQueryResponse: Persons={Persons.Count}, RequestId={RequestId}, Type='{RequestType}', " +
-           $"TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}";
+            $"TimeMs={TotalRequestExecutionTimeMs}, RequestTime={RequestTime:O}, Error={IsError}";
 }
