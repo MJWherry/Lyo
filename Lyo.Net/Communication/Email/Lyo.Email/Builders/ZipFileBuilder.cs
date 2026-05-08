@@ -112,6 +112,10 @@ public sealed class ZipFileBuilder
         return this;
     }
 
+    /// <summary>Gets the relative path from a base directory to a target file in a framework-compatible way.</summary>
+    /// <param name="basePath">The base directory path.</param>
+    /// <param name="file">The target file path.</param>
+    /// <returns>The relative path from <paramref name="basePath" /> to <paramref name="file" />.</returns>
     private static string GetRelativePathCompat(string basePath, string file)
     {
 #if NETSTANDARD2_0
@@ -169,12 +173,15 @@ public sealed class ZipFileBuilder
             OperationHelpers.ThrowIf(true, "ZipFileBuilder has already been built. Create a new instance to build another zip file.");
     }
 
+    /// <summary>Releases resources used by the ZIP archive and backing stream.</summary>
     public void Dispose()
     {
         _archive.Dispose();
         _zipStream.Dispose();
     }
 
+    /// <summary>Returns a diagnostic string for the current ZIP builder state.</summary>
+    /// <returns>A string containing open state and entry count.</returns>
     public override string ToString() => $"ZipFileBuilder: IsOpen={_isOpen}, Entries={_archive.Entries.Count}";
 
 #if NETSTANDARD2_0

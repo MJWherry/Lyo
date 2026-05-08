@@ -9,32 +9,46 @@ namespace Lyo.Sms.Twilio;
 /// <summary>Result of a Twilio SMS/MMS operation with Twilio-specific properties.</summary>
 public sealed record TwilioSmsResult : Result<SmsRequest>
 {
+    /// <summary>Gets the Twilio message SID.</summary>
     public string? MessageId { get; init; }
 
+    /// <summary>Gets the Twilio delivery status for the message.</summary>
     public string? Status { get; init; }
 
+    /// <summary>Gets the timestamp when the message was created.</summary>
     public DateTime? DateCreated { get; init; }
 
+    /// <summary>Gets the timestamp when the message was sent.</summary>
     public DateTime? DateSent { get; init; }
 
+    /// <summary>Gets the timestamp when the message was last updated.</summary>
     public DateTime? DateUpdated { get; init; }
 
+    /// <summary>Gets the number of SMS segments used to send the message.</summary>
     public int? NumSegments { get; init; }
 
+    /// <summary>Gets the Twilio account SID associated with this message.</summary>
     public string? AccountSid { get; init; }
 
+    /// <summary>Gets the message price reported by Twilio.</summary>
     public decimal? Price { get; init; }
 
+    /// <summary>Gets the currency unit for <see cref="Price" />.</summary>
     public string? PriceUnit { get; init; }
 
+    /// <summary>Gets the provider-specific Twilio error code, when available.</summary>
     public int? TwilioErrorCode { get; init; }
 
+    /// <summary>Gets or sets the message direction.</summary>
     public Direction Direction { get; set; }
 
     private TwilioSmsResult(bool isSuccess, SmsRequest? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }
 
-    /// <summary>Creates a successful TwilioSmsResult from a Twilio MessageResource.</summary>
+    /// <summary>Creates a successful Twilio SMS result from a Twilio message resource.</summary>
+    /// <param name="messageResource">The Twilio message resource returned by the API.</param>
+    /// <param name="request">The SMS request represented by the Twilio message.</param>
+    /// <returns>A successful <see cref="TwilioSmsResult" /> instance.</returns>
     public static TwilioSmsResult FromMessageResource(MessageResource messageResource, SmsRequest request)
         => new(true, request) {
             MessageId = messageResource.Sid,
@@ -49,14 +63,19 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
             Direction = MapDirection(messageResource.Direction)
         };
 
-    /// <summary>Creates a failed TwilioSmsResult from an exception.</summary>
+    /// <summary>Creates a failed Twilio SMS result from an exception.</summary>
+    /// <param name="exception">The exception that caused the failure.</param>
+    /// <param name="request">The SMS request associated with the failure.</param>
+    /// <param name="accountSid">Optional Twilio account SID associated with the failure.</param>
+    /// <param name="twilioErrorCode">Optional provider-specific Twilio error code.</param>
+    /// <returns>A failed <see cref="TwilioSmsResult" /> instance.</returns>
     public static TwilioSmsResult FromException(Exception exception, SmsRequest request, string? accountSid = null, int? twilioErrorCode = null)
     {
         var error = Error.FromException(exception);
         return new(false, request, [error]) { AccountSid = accountSid, TwilioErrorCode = twilioErrorCode };
     }
 
-    /// <summary>Creates a TwilioSmsResult from persisted log data (e.g. TwilioSmsLogEntity).</summary>
+    /// <summary>Creates a Twilio SMS result from persisted log data.</summary>
     public static TwilioSmsResult FromLog(
         SmsRequest request,
         bool isSuccess,
@@ -92,7 +111,7 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
         return new(false, request, [new(errorMessage ?? "Unknown error", "SMS_SEND_FAILED")]) { TwilioErrorCode = twilioErrorCode, AccountSid = accountSid, Direction = dir };
     }
 
-    /// <summary>Creates a failed TwilioSmsResult with a custom error message.</summary>
+    /// <summary>Creates a failed Twilio SMS result with a custom error message.</summary>
     public static TwilioSmsResult FromError(
         string errorMessage,
         string errorCode,
@@ -105,6 +124,9 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
         return new(false, request, [error]) { AccountSid = accountSid, TwilioErrorCode = twilioErrorCode };
     }
 
+    /// <summary>Maps Twilio direction values to internal direction values.</summary>
+    /// <param name="twilioDirection">The Twilio message direction value.</param>
+    /// <returns>The mapped internal <see cref="Direction" /> value.</returns>
     private static Direction MapDirection(MessageResource.DirectionEnum? twilioDirection)
     {
         if (twilioDirection == null)
@@ -120,6 +142,9 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
         };
     }
 
+    /// <summary>Attempts to parse a nullable integer from a string value.</summary>
+    /// <param name="value">The value to parse.</param>
+    /// <returns>The parsed integer, or <see langword="null" /> when parsing fails.</returns>
     private static int? TryParseInt(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -131,6 +156,9 @@ public sealed record TwilioSmsResult : Result<SmsRequest>
         return null;
     }
 
+    /// <summary>Attempts to parse a nullable decimal from a string value.</summary>
+    /// <param name="value">The value to parse.</param>
+    /// <returns>The parsed decimal, or <see langword="null" /> when parsing fails.</returns>
     private static decimal? TryParseDecimal(string? value)
     {
         if (value.IsNullOrWhitespace())

@@ -20,5 +20,7 @@ public sealed record SmsMessageQueryResults<T>(IReadOnlyList<T> Items, int PageS
     /// <summary>Backward compatibility: total count when known, null when HasMore.</summary>
     public int? Total => HasMore ? null : Items.Count;
 
+    /// <summary>Returns a compact summary of this query result page.</summary>
+    /// <returns>A string containing page size, item count, and pagination state.</returns>
     public override string ToString() => $"PageSize={PageSize} Count={Items.Count} HasMore={HasMore}";
 }

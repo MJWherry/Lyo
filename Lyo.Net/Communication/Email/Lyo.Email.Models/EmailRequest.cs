@@ -3,6 +3,13 @@ using System.Diagnostics;
 namespace Lyo.Email.Models;
 
 /// <summary>Represents an email message with sender, recipients, and subject.</summary>
+/// <param name="FromAddress">The sender email address.</param>
+/// <param name="FromName">The sender display name.</param>
+/// <param name="ToAddresses">Primary recipient email addresses.</param>
+/// <param name="CcAddresses">Carbon-copy recipient email addresses.</param>
+/// <param name="BccAddresses">Blind-carbon-copy recipient email addresses.</param>
+/// <param name="Subject">The email subject line.</param>
+/// <param name="Attachments">Optional attachment metadata associated with the email.</param>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record EmailRequest(
     string? FromAddress = null,
@@ -13,6 +20,8 @@ public sealed record EmailRequest(
     string? Subject = null,
     IReadOnlyList<EmailAttachment>? Attachments = null)
 {
+    /// <summary>Returns a readable summary of sender, recipients, and subject.</summary>
+    /// <returns>A human-readable string representing this email request.</returns>
     public override string ToString()
     {
         var parts = new List<string>();

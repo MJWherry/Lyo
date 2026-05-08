@@ -166,19 +166,27 @@ public sealed class BulkSmsBuilder
     /// <returns>A new BulkSmsBuilder instance.</returns>
     public static BulkSmsBuilder New() => new();
 
+    /// <summary>Returns a diagnostic string for the current bulk SMS builder state.</summary>
+    /// <returns>A string containing message count and configured default sender.</returns>
     public override string ToString() => $"BulkSMS: {_messages.Count} messages, DefaultFrom={_defaultFrom ?? "(not set)"}";
 
     [DebuggerDisplay("{ToString(),nq}")]
     private class MessageEntry
     {
+        /// <summary>Gets or sets the recipient phone number.</summary>
         public string To { get; set; } = null!;
 
+        /// <summary>Gets or sets the SMS body text.</summary>
         public string? Body { get; set; }
 
+        /// <summary>Gets or sets the sender phone number.</summary>
         public string? From { get; set; }
 
+        /// <summary>Gets the media URLs attached to this message.</summary>
         public List<Uri> MediaUrls { get; } = new();
 
+        /// <summary>Returns a diagnostic string for the current message entry.</summary>
+        /// <returns>A string containing recipient, sender, body length, and media count.</returns>
         public override string ToString() => $"To={To}, From={From ?? "(default)"}, BodyLength={Body?.Length ?? 0}, MediaCount={MediaUrls.Count}";
     }
 }

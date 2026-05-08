@@ -21,6 +21,8 @@ public abstract class SmsServiceOptions
     /// <summary>Enable metrics collection for SMS operations. Default: false</summary>
     public bool EnableMetrics { get; set; } = false;
 
+    /// <summary>Returns a string representation of SMS service option values.</summary>
+    /// <returns>A string containing sender defaults, limits, and metrics setting.</returns>
     public override string ToString()
         => $"DefaultFromPhoneNumber: {DefaultFromPhoneNumber}, BulkSmsConcurrencyLimit: {BulkSmsConcurrencyLimit}, MaxMessageBodyLength: {MaxMessageBodyLength}, MaxBulkSmsLimit: {MaxBulkSmsLimit}, EnableMetrics: {EnableMetrics}";
 }

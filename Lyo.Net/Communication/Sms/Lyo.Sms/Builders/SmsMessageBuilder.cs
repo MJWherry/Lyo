@@ -129,6 +129,8 @@ public sealed class SmsMessageBuilder
     /// <returns>A new SmsMessageBuilder instance.</returns>
     public static SmsMessageBuilder New() => new();
 
+    /// <summary>Returns a diagnostic string for the current SMS builder state.</summary>
+    /// <returns>A string containing sender, recipient, body length, and attachment count.</returns>
     public override string ToString()
         => $"SMS: To={_request.To ?? "(not set)"}, From={_request.From ?? "(not set)"}, Body length={_request.Body?.Length ?? 0}, Media={_request.MediaUrls.Count}";
 }

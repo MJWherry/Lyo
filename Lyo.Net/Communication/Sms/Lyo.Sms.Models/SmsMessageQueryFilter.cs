@@ -21,5 +21,7 @@ public class SmsMessageQueryFilter
     /// <summary>Number of messages per page (1–1000). Default 50.</summary>
     public int PageSize { get; set; } = 50;
 
+    /// <summary>Returns a readable summary of filter criteria.</summary>
+    /// <returns>A string containing sender, recipient, date bounds, and page size.</returns>
     public override string ToString() => $"From: {From}, To: {To}, DateSentAfter: {DateSentAfter}, DateSentBefore: {DateSentBefore}, PageSize: {PageSize}";
 }

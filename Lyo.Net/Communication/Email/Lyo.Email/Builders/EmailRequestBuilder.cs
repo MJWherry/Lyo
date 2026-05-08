@@ -13,6 +13,7 @@ namespace Lyo.Email.Builders;
 public sealed class EmailRequestBuilder
 {
     private readonly List<EmailAttachment> _attachmentMetadata = [];
+    
     private readonly BodyBuilder _bodyBuilder = new();
 
     private readonly MimeMessage _message = new();
@@ -444,6 +445,9 @@ public sealed class EmailRequestBuilder
         return this;
     }
 
+    /// <summary>Reads the entire content of a stream into a byte array.</summary>
+    /// <param name="stream">The source stream to read.</param>
+    /// <returns>The stream content as a byte array.</returns>
     private static byte[] ReadStreamToBytes(Stream stream)
     {
         if (stream is MemoryStream ms)
@@ -466,5 +470,7 @@ public sealed class EmailRequestBuilder
     /// <returns>A new EmailRequestBuilder instance.</returns>
     public static EmailRequestBuilder New() => new();
 
+    /// <summary>Returns a diagnostic string for the current email builder state.</summary>
+    /// <returns>A string containing subject and recipient count.</returns>
     public override string ToString() => $"Email: {(string.IsNullOrWhiteSpace(_message.Subject) ? "(no subject)" : _message.Subject)} to {_message.To.Count} recipient(s)";
 }

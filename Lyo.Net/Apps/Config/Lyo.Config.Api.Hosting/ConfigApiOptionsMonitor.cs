@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -21,13 +22,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
     public ConfigApiOptionsMonitor(ConfigApiResolvedLedger ledger, string definitionKey, ConfigApiMissingDefinitionKeyBehavior missingDefinitionKeyBehavior)
     {
         _ledger = ledger;
-        if (definitionKey == null)
-            throw new ArgumentNullException(nameof(definitionKey));
-
-        _definitionKey = definitionKey.Trim();
-        if (_definitionKey.Length == 0)
-            throw new ArgumentException("Definition key cannot be empty.", nameof(definitionKey));
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(definitionKey);
         _missing = missingDefinitionKeyBehavior;
         _reloadSubscription = ChangeToken.OnChange(_ledger.GetReloadToken, Reload);
     }

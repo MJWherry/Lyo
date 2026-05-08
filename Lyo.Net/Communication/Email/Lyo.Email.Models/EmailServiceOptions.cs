@@ -43,6 +43,8 @@ public sealed class EmailServiceOptions
     /// <summary>Gets or sets the maximum number of attachments allowed per email (default: 20).</summary>
     public int MaxAttachmentCountPerEmail { get; set; } = 20;
 
+    /// <summary>Returns a string representation of the configured email service options.</summary>
+    /// <returns>A string containing host, port, sender details, and bulk/attachment limits.</returns>
     public override string ToString()
         => $"{Host}:{Port} Username={Username} FromAddress={DefaultFromAddress} FromName={DefaultFromName} BulkEmailConcurrencyLimit={BulkEmailConcurrencyLimit} MaxBulkEmailLimit={MaxBulkEmailLimit} MaxAttachmentCountPerEmail={MaxAttachmentCountPerEmail}";
 }
@@ -50,6 +52,10 @@ public sealed class EmailServiceOptions
 /// <summary>Validator for EmailServiceOptions to ensure required properties are set.</summary>
 public sealed class EmailServiceOptionsValidator : IValidateOptions<EmailServiceOptions>
 {
+    /// <summary>Validates an <see cref="EmailServiceOptions" /> instance.</summary>
+    /// <param name="name">The named options instance identifier, if any.</param>
+    /// <param name="options">The options instance to validate.</param>
+    /// <returns><see cref="ValidateOptionsResult.Success" /> when valid; otherwise a failure result with validation details.</returns>
     public ValidateOptionsResult Validate(string? name, EmailServiceOptions? options)
     {
         if (options == null)

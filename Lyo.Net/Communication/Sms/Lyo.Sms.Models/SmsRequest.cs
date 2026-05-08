@@ -18,8 +18,13 @@ public class SmsRequest
     /// <summary>Gets or sets the list of media URLs for MMS attachments.</summary>
     public List<Uri> MediaUrls { get; init; } = [];
 
+    /// <summary>Initializes a new empty SMS request.</summary>
     public SmsRequest() { }
 
+    /// <summary>Initializes a new SMS request with recipient, optional body, and optional sender.</summary>
+    /// <param name="to">The recipient phone number.</param>
+    /// <param name="body">The SMS body text.</param>
+    /// <param name="from">The sender phone number.</param>
     public SmsRequest(string to, string? body = null, string? from = null)
     {
         To = to;
@@ -27,6 +32,8 @@ public class SmsRequest
         From = from;
     }
 
+    /// <summary>Returns a readable summary of this SMS request.</summary>
+    /// <returns>A string containing recipient, sender, truncated body, and media count.</returns>
     public override string ToString()
     {
         var parts = new List<string> { $"To: {To}", $"From: {From}", $"Body: {Body?.Substring(0, Math.Min(Body?.Length ?? 0, 50))}{(Body?.Length > 50 ? "..." : "")}" };

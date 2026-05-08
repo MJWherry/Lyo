@@ -71,8 +71,8 @@ public sealed class BulkEmailRequestBuilder
                 HtmlBody = htmlBody,
                 FromAddress = null,
                 FromName = null,
-                CcAddresses = new(),
-                BccAddresses = new()
+                CcAddresses = [],
+                BccAddresses = []
             });
 
         return this;
@@ -104,8 +104,8 @@ public sealed class BulkEmailRequestBuilder
                 HtmlBody = htmlBody,
                 FromAddress = fromAddress,
                 FromName = fromName,
-                CcAddresses = new(),
-                BccAddresses = new()
+                CcAddresses = [],
+                BccAddresses = []
             });
 
         return this;
@@ -117,11 +117,9 @@ public sealed class BulkEmailRequestBuilder
     /// <exception cref="InvalidOperationException">Thrown when no messages have been added yet.</exception>
     public BulkEmailRequestBuilder AddCc(string cc)
     {
-        if (_messages.Count == 0)
-            OperationHelpers.ThrowIf(true, "Cannot add CC: No messages have been added yet. Call Add() first.");
-
+        OperationHelpers.ThrowIfZero(_messages.Count, "Cannot add CC: No messages have been added yet. Call Add() first.");
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(cc);
-        _messages[_messages.Count - 1].CcAddresses.Add(cc);
+        _messages[^1].CcAddresses.Add(cc);
         return this;
     }
 
@@ -131,11 +129,9 @@ public sealed class BulkEmailRequestBuilder
     /// <exception cref="InvalidOperationException">Thrown when no messages have been added yet.</exception>
     public BulkEmailRequestBuilder AddBcc(string bcc)
     {
-        if (_messages.Count == 0)
-            OperationHelpers.ThrowIf(true, "Cannot add BCC: No messages have been added yet. Call Add() first.");
-
+        OperationHelpers.ThrowIfZero(_messages.Count, "Cannot add BCC: No messages have been added yet. Call Add() first.");
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(bcc);
-        _messages[_messages.Count - 1].BccAddresses.Add(bcc);
+        _messages[^1].BccAddresses.Add(bcc);
         return this;
     }
 
@@ -155,8 +151,7 @@ public sealed class BulkEmailRequestBuilder
     /// <exception cref="InvalidOperationException">Thrown when no messages are added.</exception>
     public IEnumerable<EmailRequestBuilder> Build()
     {
-        if (_messages.Count == 0)
-            OperationHelpers.ThrowIf(true, "No messages have been added to the bulk send");
+        OperationHelpers.ThrowIfZero(_messages.Count, "No messages have been added to the bulk send");
 
         foreach (var message in _messages) {
             var builder = EmailRequestBuilder.New().SetSubject(message.Subject).AddTo(message.To);
@@ -192,24 +187,34 @@ public sealed class BulkEmailRequestBuilder
     /// <returns>A new BulkEmailBuilder instance.</returns>
     public static BulkEmailRequestBuilder New() => new();
 
+    /// <summary>Returns a diagnostic string for the current bulk email builder state.</summary>
+    /// <returns>A string containing message count and configured default sender.</returns>
     public override string ToString() => $"BulkEmail: {_messages.Count} messages, DefaultFrom={_defaultFromAddress ?? "(not set)"}";
 
     private class MessageEntry
     {
+        /// <summary>Gets or sets the primary recipient email address.</summary>
         public string To { get; set; } = null!;
 
+        /// <summary>Gets or sets the email subject line.</summary>
         public string Subject { get; set; } = null!;
 
+        /// <summary>Gets or sets the plain-text email body.</summary>
         public string? TextBody { get; set; }
 
+        /// <summary>Gets or sets the HTML email body.</summary>
         public string? HtmlBody { get; set; }
 
+        /// <summary>Gets or sets the sender email address for this message.</summary>
         public string? FromAddress { get; set; }
 
+        /// <summary>Gets or sets the sender display name for this message.</summary>
         public string? FromName { get; set; }
 
+        /// <summary>Gets or sets the CC recipients for this message.</summary>
         public List<string> CcAddresses { get; set; } = [];
 
+        /// <summary>Gets or sets the BCC recipients for this message.</summary>
         public List<string> BccAddresses { get; set; } = [];
     }
 }

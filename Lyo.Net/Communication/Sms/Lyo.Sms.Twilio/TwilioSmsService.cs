@@ -91,14 +91,19 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
         return new(r.Items.Select(x => (Result<SmsRequest>)x).ToList(), r.PageSize, r.HasMore, r.NextCursor);
     }
 
-    /// <summary>Sends an SMS or MMS message using the Twilio API.</summary>
-    /// <param name="request">The message to send. Must have a To address and either a body or media attachments.</param>
-    /// <returns>A Result&lt;SmsRequest&gt; indicating success or failure with details.</returns>
-    /// <remarks>Long messages (>160 characters) are automatically split into multiple segments by Twilio.</remarks>
-    /// <inheritdoc />
+    /// <summary>Creates a standardized failure result for Twilio operations.</summary>
+    /// <param name="exception">The exception that caused the failure.</param>
+    /// <param name="code">The internal error code associated with the failure.</param>
+    /// <param name="request">The SMS request associated with the failure when available.</param>
+    /// <returns>A failed <see cref="TwilioSmsResult" /> instance.</returns>
     protected override TwilioSmsResult CreateFailure(Exception exception, string code, SmsRequest? request = null)
         => TwilioSmsResult.FromException(exception, request ?? new SmsRequest(), _options.AccountSid);
 
+    /// <summary>Sends an SMS or MMS message using the Twilio API.</summary>
+    /// <param name="request">The message to send. It must include a recipient and either body content or media attachments.</param>
+    /// <param name="ct">Cancellation token to cancel the send operation.</param>
+    /// <returns>A <see cref="TwilioSmsResult" /> indicating success or failure details.</returns>
+    /// <remarks>Long messages may be split into multiple segments by Twilio.</remarks>
     protected override async Task<TwilioSmsResult> SendCoreAsync(SmsRequest request, CancellationToken ct = default)
     {
         var sw = Stopwatch.StartNew();
