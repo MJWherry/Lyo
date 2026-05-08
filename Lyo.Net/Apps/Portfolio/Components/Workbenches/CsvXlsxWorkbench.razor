@@ -294,7 +294,7 @@
     {
         _csvError = string.Empty;
         _csvTable = null;
-        _csvBytes = Encoding.UTF8.GetBytes(_csvText ?? string.Empty);
+        _csvBytes = Encoding.UTF8.GetBytes(_csvText);
         try {
             var result = CsvService.ParseBytesAsDataTable(_csvBytes, _csvHasHeader);
             if (result.IsSuccess && result.Data != null)
@@ -479,11 +479,11 @@
         _dictJsonBytes = null;
         _dictJsonFileName = Path.ChangeExtension(file.FileName, ".json");
         try {
-            object? payload = null;
+            object? payload;
             if (IsCsv(file.FileName))
                 payload = await CsvService.ParseBytesAsDictionaryAsync(file.Content).ConfigureAwait(false);
             else if (IsXlsx(file.FileName))
-                payload = XlsxService.ParseXlsxBytesAsDictionary(file.Content);
+                payload = await XlsxService.ParseXlsxBytesAsDictionaryAsync(file.Content);
             else {
                 _dictJsonError = "Use a .csv or .xlsx file.";
                 return;

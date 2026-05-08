@@ -398,7 +398,7 @@
     {
         try {
             var text = await Js.ReadClipboardTextAsync();
-            _rawText = text ?? string.Empty;
+            _rawText = text;
             if (string.IsNullOrWhiteSpace(_rawText)) {
                 SetStatus("Clipboard is empty.", Severity.Warning);
                 return;

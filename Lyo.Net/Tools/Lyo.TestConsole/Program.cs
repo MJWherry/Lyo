@@ -66,6 +66,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+// ReSharper disable UnusedVariable
+#pragma warning disable CS8601 // Possible null reference assignment.
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) => {
@@ -147,7 +149,7 @@ var host = Host.CreateDefaultBuilder(args)
             .Map(dest => dest.Body, src => src.Data != null ? src.Data.Body : null)
             .Map(
                 dest => dest.MediaUrlsJson,
-                src => src.Data != null && src.Data.MediaUrls != null && src.Data.MediaUrls.Count > 0
+                src => src.Data != null && src.Data.MediaUrls.Count > 0
                     ? JsonSerializer.Serialize(src.Data.MediaUrls.Select(u => u.ToString()).ToList())
                     : null)
             .Map(dest => dest.IsSuccess, src => src.IsSuccess)
@@ -180,11 +182,11 @@ var host = Host.CreateDefaultBuilder(args)
             .Build(context.Configuration);
 
         services.AddFileStorageServiceKeyed(
-            "two-key-local-filestore", config => {
-                config.RootDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestorage");
-                config.EnableDuplicateDetection = true;
-                config.DuplicateStrategy = DuplicateHandlingStrategy.ReturnExisting;
-                config.EnableMetrics = true; // Enable metrics collection
+            "two-key-local-filestore", o => {
+                o.RootDirectoryPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestorage");
+                o.EnableDuplicateDetection = true;
+                o.DuplicateStrategy = DuplicateHandlingStrategy.ReturnExisting;
+                o.EnableMetrics = true; // Enable metrics collection
             }, _ => new LocalFileMetadataStore(Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "local-filestore")), "two-key-aws");
 
         services.AddTransient<IApiClient>(_ => new ApiClient(serializerOptions: LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters()));
@@ -199,7 +201,7 @@ await host.StartAsync();
 using var scope = host.Services.CreateScope();
 var sp = scope.ServiceProvider;
 var logger = sp.GetRequiredService<ILogger<Program>>();
-var pw = sp.GetService<IPlaywrightBrowserService>();
+var pw = sp.GetRequiredService<IPlaywrightBrowserService>();
 var pws = pw.CreateSession();
 await pws.StartBrowserAsync();
 await pws.Browser.NavigateToAsync("https://mangafire.to/manga/witch-hat-atelierr.pjyy4");

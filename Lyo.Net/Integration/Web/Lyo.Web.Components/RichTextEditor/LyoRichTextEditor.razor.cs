@@ -31,7 +31,7 @@ public partial class LyoRichTextEditor : IAsyncDisposable
     private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-rich-text-editor" : ElementId.Trim();
 
     [Inject]
-    private IJSRuntime JsRuntime { get; set; } = default!;
+    private IJSRuntime JsRuntime { get; set; } = null!;
 
     [Parameter]
     public string? Value { get; set; }

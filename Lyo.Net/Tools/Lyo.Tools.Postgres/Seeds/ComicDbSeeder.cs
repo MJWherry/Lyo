@@ -120,7 +120,7 @@ public sealed class ComicDbSeeder
         var usedSlugs = new HashSet<string>(StringComparer.Ordinal);
         var seriesFaker = new Faker<SeriesEntity>().RuleFor(s => s.Id, _ => Guid.NewGuid())
             .RuleFor(s => s.Title, f => f.Lorem.Sentence(f.Random.Int(1, 4)).TrimEnd('.'))
-            .RuleFor(s => s.Slug, (f, s) => UniqueSlug(SlugOf(s.Title), usedSlugs))
+            .RuleFor(s => s.Slug, (_, s) => UniqueSlug(SlugOf(s.Title), usedSlugs))
             .RuleFor(s => s.ComicType, f => f.PickRandom(ComicType.Manga, ComicType.Manhwa, ComicType.Manhua, ComicType.Webtoon, ComicType.Western))
             .RuleFor(s => s.Status, f => f.PickRandom(ComicStatus.Ongoing, ComicStatus.Completed, ComicStatus.Hiatus, ComicStatus.Cancelled))
             .RuleFor(s => s.Description, f => f.Random.Bool(0.8f) ? f.Lorem.Paragraphs(f.Random.Int(1, 3)) : null)
