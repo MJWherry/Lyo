@@ -17,7 +17,7 @@ public readonly record struct UniformDistributionParameters
     {
         minimum = MathValueGuards.Finite(minimum, nameof(minimum));
         maximum = MathValueGuards.Finite(maximum, nameof(maximum));
-        ArgumentHelpers.ThrowIfLessThanOrEqual(maximum, minimum, nameof(maximum));
+        ArgumentHelpers.ThrowIfLessThanOrEqual(maximum, minimum);
         Minimum = minimum;
         Maximum = maximum;
     }

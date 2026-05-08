@@ -5,6 +5,7 @@ namespace Lyo.Mathematics.Matrices;
 /// <summary>2×2 dense matrix of finite <see cref="double" /> elements in row-major order (<c>M11, M12</c> / <c>M21, M22</c>).</summary>
 /// <remarks>Consumed by <c>LinearAlgebraFunctions</c> for determinants, inversion, eigenvalues, and solves.</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
+// ReSharper disable once InconsistentNaming
 public readonly record struct Matrix2x2
 {
     public double M11 { get; }

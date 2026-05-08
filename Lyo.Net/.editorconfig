@@ -157,6 +157,9 @@ resharper_unused_method_return_value_local_highlighting = none
 # Record positional parameters (e.g. human-readable Description) are intentionally not read everywhere; Equals/ToString still use them.
 resharper_not_accessed_positional_property_global_highlighting = none
 resharper_not_accessed_positional_property_local_highlighting = none
+# Parameters used only for ArgumentOutOfRangeException / guard clauses are intentional (API surface, single validation point).
+resharper_parameter_only_used_for_precondition_check_global_highlighting = none
+resharper_parameter_only_used_for_precondition_check_local_highlighting = none
 
 [{*.bash,*.sh,*.zsh}]
 indent_style = space

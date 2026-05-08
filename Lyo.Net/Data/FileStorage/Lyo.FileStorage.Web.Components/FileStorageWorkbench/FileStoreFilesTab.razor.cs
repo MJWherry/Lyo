@@ -11,7 +11,7 @@ namespace Lyo.FileStorage.Web.Components.FileStorageWorkbench;
 
 public partial class FileStoreFilesTab : ComponentBase
 {
-    private const string _guidValidationPattern = "^[{(]?[0-9A-Fa-f]{8}(?:-?[0-9A-Fa-f]{4}){3}-?[0-9A-Fa-f]{12}[)}]?$";
+    private const string GuidValidationPattern = "^[{(]?[0-9A-Fa-f]{8}(?:-?[0-9A-Fa-f]{4}){3}-?[0-9A-Fa-f]{12}[)}]?$";
 
     private int _cryptoOpsTab;
 
@@ -395,7 +395,7 @@ public partial class FileStoreFilesTab : ComponentBase
 
     private void EnsureStagingSession()
     {
-        if (_stagingSession != null || Workbench == null)
+        if (_stagingSession != null)
             return;
 
         _stagingSession = Workbench.TempService.CreateSession();

@@ -130,7 +130,7 @@
                                            Value="_migrationTargetKeyId"
                                            ValueChanged="OnMigrationTargetKeyIdChanged">
                                     <MudSelectItem T="string" Value="@string.Empty">Source key</MudSelectItem>
-                                    @foreach (var keyId in Workbench!.AvailableKeyIds) {
+                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
                                         <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
                                     }
                                 </MudSelect>
@@ -206,7 +206,7 @@
                                 <LyoChipInput Values="@_rotationFileIds"
                                               ValuesChanged="OnRotationFileIdsChanged"
                                               Placeholder="Paste or type file ids"
-                                              ValidationPattern="@_guidValidationPattern"
+                                              ValidationPattern="@GuidValidationPattern"
                                               ValidationErrorMessage="Enter a valid file id. Comma-separated and newline-separated paste is supported."/>
                             </MudItem>
                             <MudItem xs="12" sm="6">
@@ -216,7 +216,7 @@
                                            Value="_rotationTargetKeyId"
                                            ValueChanged="OnRotationTargetKeyIdChanged">
                                     <MudSelectItem T="string" Value="@string.Empty">Keep current key</MudSelectItem>
-                                    @foreach (var keyId in Workbench!.AvailableKeyIds) {
+                                    @foreach (var keyId in Workbench.AvailableKeyIds) {
                                         <MudSelectItem T="string" Value="@keyId">@keyId</MudSelectItem>
                                     }
                                 </MudSelect>
@@ -287,13 +287,13 @@
             <MudStack Spacing="2">
                 <MudText Typo="Typo.h6">File metadata</MudText>
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
-                    Postgres-backed rows from the Test API (<code>@Workbench!.FileMetadataQueryRoute</code>/QueryProject). Use <strong>View</strong> for full metadata,
+                    Postgres-backed rows from the Test API (<code>@Workbench.FileMetadataQueryRoute</code>/QueryProject). Use <strong>View</strong> for full metadata,
                     <strong>Access link…</strong> for a time- or count-limited share URL, or download or delete from the row menu.
                 </MudText>
                 <LyoDataGridProjected @ref="_fileMetadataGrid"
-                                      ApiClient="Workbench!.ApiClient"
+                                      ApiClient="Workbench.ApiClient"
                                       GridKey="FileStorageWorkbenchFileMetadata"
-                                      Route="@Workbench!.FileMetadataQueryRoute"
+                                      Route="@Workbench.FileMetadataQueryRoute"
                                       Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh)"
                                       GridClass="file-metadata-grid-dense"
                                       KeySelector="@FileStorageGridRowHelper.GetFileRowKey"

@@ -44,7 +44,7 @@ else {
         <MudItem xs="12" md="4" Style="display: flex;">
             <MudPaper Class="pa-4" Outlined="true" Style="display:flex; flex-direction:column; flex:1 1 auto; width:100%; min-height:320px;">
                 <MudText Typo="Typo.h6" Class="mb-2" Style="flex-shrink:0;">JSON output</MudText>
-                <MudTextField @bind-Value="_outputText"
+                <MudTextField @bind-Value="@_outputText"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
                               Lines="14"

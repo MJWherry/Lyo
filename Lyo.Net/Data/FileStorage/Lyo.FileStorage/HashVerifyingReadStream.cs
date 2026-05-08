@@ -12,7 +12,6 @@ internal sealed class HashVerifyingReadStream : Stream
 {
     private readonly byte[]? _expectedHash;
     private readonly Guid _fileId;
-    private readonly SysCryptoHashAlgorithm _hashAlgorithm;
     private readonly HashingStream _hashingStream;
     private readonly ILogger _logger;
     private readonly bool _throwOnMismatch;
@@ -33,7 +32,6 @@ internal sealed class HashVerifyingReadStream : Stream
 
     public HashVerifyingReadStream(Stream inner, SysCryptoHashAlgorithm hashAlgorithm, byte[]? expectedHash, bool throwOnMismatch, ILogger logger, Guid fileId)
     {
-        _hashAlgorithm = hashAlgorithm;
         _hashingStream = new(inner, hashAlgorithm);
         _expectedHash = expectedHash;
         _throwOnMismatch = throwOnMismatch;

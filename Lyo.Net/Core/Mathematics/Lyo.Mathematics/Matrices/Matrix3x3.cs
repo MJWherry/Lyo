@@ -5,6 +5,7 @@ namespace Lyo.Mathematics.Matrices;
 /// <summary>3×3 dense matrix of finite <see cref="double" /> elements in row-major order.</summary>
 /// <remarks>Used by <c>LinearAlgebraFunctions</c> for linear solves, inversion, and eigenvalue helpers.</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
+// ReSharper disable once InconsistentNaming
 public readonly record struct Matrix3x3
 {
     public double M11 { get; }

@@ -7,7 +7,6 @@ namespace Lyo.Privacy.Metrics;
 
 internal static class PrivacyMetricsRecorder
 {
-    private static readonly (string, string)[] NoTags = [];
 
     public static void RecordTextRedactionResult(IMetrics metrics, RedactionResult result, string? policyName)
     {

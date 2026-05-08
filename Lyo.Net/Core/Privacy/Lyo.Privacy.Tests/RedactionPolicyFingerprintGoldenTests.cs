@@ -31,7 +31,7 @@ public sealed class RedactionPolicyFingerprintGoldenTests
         var policy = new RedactionPolicyBuilder().AddRule(new EmailRedactionRule()).Build();
         var full = RedactionPolicyFingerprint.ComputeSha256HexPrefix(policy, 64);
         Assert.Equal(64, full.Length);
-        Assert.Equal(full[..16], RedactionPolicyFingerprint.ComputeSha256HexPrefix(policy, 16));
+        Assert.Equal(full[..16], RedactionPolicyFingerprint.ComputeSha256HexPrefix(policy));
         Assert.Equal(full[..8], RedactionPolicyFingerprint.ComputeSha256HexPrefix(policy, 8));
     }
 }
