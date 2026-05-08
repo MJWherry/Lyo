@@ -7,9 +7,9 @@ public class WindowsTtsRequest : TtsRequest
 {
     public string VoiceId { get; set; } = null!;
 
-    public string Volume { get; set; }
+    public string Volume { get; set; } = null!;
 
-    public string SpeechRate { get; set; }
+    public string SpeechRate { get; set; } = null!;
 
     public AudioFormat? OutputFormat { get; set; }
 }

@@ -120,7 +120,7 @@ public sealed class AzureMultipartUploadService : IMultipartUploadService
                 }
 
                 var len = new FileInfo(tempPath).Length;
-                FileAvailability? availabilityOverride = null;
+                FileAvailability? availabilityOverride;
                 await using (var scanStream = File.OpenRead(tempPath)) {
                     var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
                     availabilityOverride = scan.ThreatLevel switch {

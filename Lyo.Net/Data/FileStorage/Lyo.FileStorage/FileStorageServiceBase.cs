@@ -1614,8 +1614,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable
             while ((hashRead = await inputStream.ReadAsync(hashBuffer, 0, hashBufferSize, ct).ConfigureAwait(false)) > 0)
                 hashAlgoForCompute.TransformBlock(hashBuffer, 0, hashRead, null, 0);
 
-            hashAlgoForCompute.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-            originalHash = hashAlgoForCompute.Hash!;
+            hashAlgoForCompute.TransformFinalBlock([], 0, 0);
+            originalHash = hashAlgoForCompute.Hash;
 #endif
             var metadata = new FileStoreResult(
                 fileId, originalFileName, originalSize, originalHash, sourceFileName, finalSize, sourceFileHash ?? originalHash, compress, compressionAlgorithm, compressedSize,

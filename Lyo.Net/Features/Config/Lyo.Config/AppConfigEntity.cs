@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Lyo.Common.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Config;
 
@@ -39,9 +40,7 @@ public static class AppConfigEntity
 
     private static string NormalizeSegment(string raw, string paramName)
     {
-        if (string.IsNullOrWhiteSpace(raw))
-            throw new ArgumentException("Value cannot be null or whitespace.", paramName);
-
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(raw,paramName);
         var s = raw.Trim().ToLowerInvariant();
         ValidateSlug(s, paramName);
         return s;
@@ -49,15 +48,12 @@ public static class AppConfigEntity
 
     private static void ValidateSlug(string value, string paramName)
     {
-        if (value.Length is < 1 or > 128)
-            throw new ArgumentException("Length must be 1–128.", paramName);
-
+        ArgumentHelpers.ThrowIfNotInRange(value.Length,0, 128, paramName);
         foreach (var c in value.AsSpan()) {
             var okLower = c >= 'a' && c <= 'z';
             var okDigit = c >= '0' && c <= '9';
             var ok = okLower || okDigit || c is '-' or '_' or '.';
-            if (!ok)
-                throw new ArgumentException("Only lowercase letters, digits, '-', '_', and '.' allowed.", paramName);
+            ArgumentHelpers.ThrowIf(!ok, "Only lowercase letters, digits, '-', '_', and '.' allowed.", paramName);
         }
     }
 }
