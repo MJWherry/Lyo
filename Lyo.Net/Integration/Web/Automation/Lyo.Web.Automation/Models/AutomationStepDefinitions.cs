@@ -11,6 +11,7 @@ namespace Lyo.Web.Automation.Models;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(NavigateAutomationStep), "navigate")]
 [JsonDerivedType(typeof(FindElementAutomationStep), "findElement")]
+[JsonDerivedType(typeof(FindDescendantAutomationStep), "findDescendant")]
 [JsonDerivedType(typeof(ElementActionAutomationStep), "elementAction")]
 [JsonDerivedType(typeof(FindAndActAutomationStep), "findAndAct")]
 [JsonDerivedType(typeof(FindElementChainAutomationStep), "findElementChain")]
@@ -77,6 +78,18 @@ public sealed record FindElementAutomationStep(string RefName, ElementLocator Lo
 {
     /// <inheritdoc />
     public override string ToString() => FormatStepDebugLine($"findElement ref={RefName} @ {Locator}");
+}
+
+/// <summary>
+/// Polls for a descendant under a previously stored parent element ref (<c>PollForDescendantAsync</c>), then stores it as <see cref="RefName" /> (for example options inside a
+/// custom listbox).
+/// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FindDescendantAutomationStep(string ParentRefName, string RefName, ElementLocator Locator, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"findDescendant parent={ParentRefName} ref={RefName} @ {Locator}");
 }
 
 /// <summary>Runs an <see cref="ElementAction" /> on a previously stored element ref.</summary>

@@ -20,8 +20,7 @@ public sealed class PlaywrightDialogs
         var page = _browser.GetRequiredPage();
         page.Dialog += Handler;
         return new ActionDisposable(() => page.Dialog -= Handler);
-
-        void Handler(object? o, IDialog d) => o = d.AcceptAsync();
+        void Handler(object? _, IDialog d) => d.AcceptAsync();
     }
 
     /// <summary>Registers a one-shot handler that accepts the next dialog, then unsubscribes.</summary>
@@ -34,7 +33,7 @@ public sealed class PlaywrightDialogs
         void Handler(object? _, IDialog d)
         {
             page.Dialog -= Handler;
-            _ = d.AcceptAsync();
+            d.AcceptAsync();
         }
     }
 

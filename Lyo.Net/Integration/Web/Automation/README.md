@@ -323,6 +323,7 @@ await runner.RunWithResultAsync(
 | `Reload`                       | `reload`                                                  | Full document reload                                                                                                     |
 | `Delay`                        | `delay`                                                   | Milliseconds                                                                                                             |
 | `FindElement`                  | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref**                                                                                                   |
+| `FindDescendant`             | `findDescendant`                                          | Polls **under a stored parent ref** (`PollForDescendantAsync`); locator `value` supports `{{vars}}`                      |
 | `FindElements`                 | `findElementsChain`                                       | Stores **element list ref**                                                                                              |
 | `ElementAction`                | `elementAction`                                           | Click, input, select, …                                                                                                  |
 | `FindAndAct`                   | `findAndAct`                                              | Single locator                                                                                                           |
@@ -343,7 +344,21 @@ await runner.RunWithResultAsync(
 | `UploadDirectoryToFileStorage` | `uploadDirectoryToFileStorage`                            | Uses runner file storage dependency; uploads local directory and optionally stores uploaded keys/URLs                    |
 | `InvokeDiMethod`               | `invokeDiMethod`                                          | Uses runner service provider dependency; resolves service by type and invokes method (supports context-aware signatures) |
 
-**`ElementAction`** JSON uses nested **`type`**: `click`, `inputText`, `sendKeys`, `clear`, `submit`, `selectByText`, `selectByValue`, `selectByIndex`.
+**`ElementAction`** JSON uses nested **`type`**: `click`, `inputText`, `sendKeys`, `clear`, `submit`, `selectByText`, `selectByValue`, `selectByIndex`, `dropdown`.
+
+### `dropdown` (native and custom)
+
+Use a single **`dropdown`** action for both **`<select>`** and **custom** menus. The default **`mode`** is **`auto`**: the runner inspects the target element’s tag name—**`select`** uses native selection; anything else uses the custom path.
+
+- **`mode`**: **`auto`** (default), **`native`**, or **`custom`**. With **`auto`**, you do not need to know the widget type in advance.
+- **Native (`<select>`)**: set exactly one of **`selectByText`**, **`selectByValue`**, or **`selectByIndex`** (same semantics as the standalone `selectBy*` actions). With **`mode: auto`**, these fields are used when the target resolves to a `<select>`.
+- **Custom widgets** (button opens a list, React Select, etc.): set **`optionLocator`** for one option row; do **not** set the native fields. With **`mode: auto`**, this applies when the target is not a `<select>`.
+  - The step’s **element ref** is usually the **trigger** that opens the list.
+  - **`optionLocator`**: often **`CssSelector`**, e.g. `[role=listbox] [data-value="x"]` or `#panel [role=option]:has-text("Beta")`.
+  - **`clickTriggerFirst`** (default **`true`**): scroll into view and click the trigger before resolving the option.
+  - **`scopeParentRef`**: optional stored ref for an **ancestor** of the options; the option is found with **`PollForDescendantAsync`** from that parent. If omitted, the option is resolved at **page scope** after the list opens (typical for portaled menus when a unique selector identifies the open list).
+
+You can still use the standalone **`selectByText`** / **`selectByValue`** / **`selectByIndex`** actions on `<select>` elements, or compose **`click`** / **`findDescendant`** steps manually when **`dropdown`** is not enough.
 
 ---
 
@@ -373,7 +388,44 @@ var plan = AutomationPlanBuilder
 // run with session + logger ...
 ```
 
-### 2. Chained locators (nested scope)
+### 2. `dropdown` on a custom widget (page-scoped option, `mode` defaults to auto)
+
+```csharp
+using Lyo.Web.Automation.Models;
+
+var plan = AutomationPlanBuilder
+    .New("Custom dropdown")
+    .Navigate("https://example.com/form")
+    .FindElement("menuTrigger", ElementLocator.Id("countryMenuBtn"))
+    .ElementAction(
+        "menuTrigger",
+        new DropdownElementAction(
+            OptionLocator: ElementLocator.CssSelector("#countryListbox [role=option][data-code=\"US\"]"),
+            ClickTriggerFirst: true,
+            ScopeParentRef: null))
+    .Build();
+```
+
+### 3. Same, with option resolved under a stored parent ref
+
+```csharp
+.FindElement("panel", ElementLocator.Id("countryListbox")) // must be findable when hidden, or use a visible wrapper
+.FindElement("menuTrigger", ElementLocator.Id("countryMenuBtn"))
+.ElementAction(
+    "menuTrigger",
+    new DropdownElementAction(
+        ElementLocator.CssSelector("[role=option][data-code=\"US\"]"),
+        ClickTriggerFirst: true,
+        ScopeParentRef: "panel"))
+```
+
+### 3b. `dropdown` on a native `<select>` (`auto` detects `select`)
+
+```csharp
+.ElementAction("countrySelect", new DropdownElementAction(SelectByValue: "US"))
+```
+
+### 4. Chained locators (nested scope)
 
 ```csharp
 var chain = ElementLocator
@@ -389,7 +441,7 @@ var plan = AutomationPlanBuilder
     .Build();
 ```
 
-### 3. List extraction and file output
+### 5. List extraction and file output
 
 ```csharp
 var listChain = new ElementLocatorChain(
@@ -405,7 +457,7 @@ var plan = AutomationPlanBuilder
     .Build();
 ```
 
-### 4. JSON plan (deserialize and run)
+### 6. JSON plan (deserialize and run)
 
 Types use **`System.Text.Json.Serialization`** attributes (`JsonPolymorphic` / `JsonDerivedType`) so **your** app can configure **`JsonSerializerOptions`** and deserialize. Example
 shape (camelCase):
@@ -451,7 +503,7 @@ var plan = JsonSerializer.Deserialize<AutomationPlan>(json, options)
 await runner.RunAsync(session, plan, logger, ct);
 ```
 
-### 5. Reading results (`RunWithResultAsync`)
+### 7. Reading results (`RunWithResultAsync`)
 
 ```csharp
 var result = await runner.RunWithResultAsync(
@@ -473,7 +525,7 @@ if (result.Context.TryGetStringListAtCompletedStep(3, "hrefs", out var hrefsAtSt
 }
 ```
 
-### 6. Downloads from a URL list (with optional step snapshot)
+### 8. Downloads from a URL list (with optional step snapshot)
 
 After a step fills a **string list** variable (for example `srcs`), **`downloadUrlsToDirectory`** saves each URL to **`targetDirectory`** (runner must have an HTTP dependency
 configured). By default the runner uses the **final** value of that variable. If a **later** step overwrites or clears it, set *
@@ -496,7 +548,7 @@ var plan = AutomationPlanBuilder
     .Build();
 ```
 
-### 7. Scrape fields, bind DTO JSON, and call an API
+### 9. Scrape fields, bind DTO JSON, and call an API
 
 ```csharp
 var plan = AutomationPlanBuilder
@@ -516,7 +568,7 @@ var plan = AutomationPlanBuilder
     .Build();
 ```
 
-### 8. Scrape file links, download, then upload to storage
+### 10. Scrape file links, download, then upload to storage
 
 ```csharp
 var plan = AutomationPlanBuilder
@@ -545,7 +597,7 @@ var plan = AutomationPlanBuilder
     .Build();
 ```
 
-### 9. Invoke DI scraper method and reuse context
+### 11. Invoke DI scraper method and reuse context
 
 ```csharp
 // DI registration in your host

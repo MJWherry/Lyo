@@ -30,6 +30,9 @@ public interface IWebAutomationElement
     /// <summary>Visible text of the element (same idea as DOM inner text / Selenium element text).</summary>
     Task<string> GetTextAsync(CancellationToken ct = default);
 
+    /// <summary>Lowercase HTML tag name of this element (for example <c>select</c>, <c>button</c>).</summary>
+    Task<string> GetTagNameAsync(CancellationToken ct = default);
+
     /// <summary>Polls for a descendant of this element matching <paramref name="locator" /> (scoped search).</summary>
     Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default);
 

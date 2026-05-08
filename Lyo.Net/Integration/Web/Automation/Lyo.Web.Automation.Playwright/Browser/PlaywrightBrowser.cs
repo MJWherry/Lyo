@@ -132,7 +132,6 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         Page = null;
         _playwright = null;
         await (ExecutionContext?.DisposeAsync() ?? default).ConfigureAwait(false);
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
@@ -173,7 +172,6 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         Page = null;
         _playwright = null;
         ExecutionContext?.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
@@ -239,13 +237,6 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     {
         EnsureStarted();
         var done = false;
-
-        void Handle(object? _, IRequest req)
-        {
-            if (!Volatile.Read(ref done) && onRequest(req.Url))
-                Volatile.Write(ref done, true);
-        }
-
         Page!.Request += Handle;
         try {
             await Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
@@ -254,6 +245,14 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         }
         finally {
             Page.Request -= Handle;
+        }
+
+        return;
+
+        void Handle(object? _, IRequest req)
+        {
+            if (!Volatile.Read(ref done) && onRequest(req.Url))
+                Volatile.Write(ref done, true);
         }
     }
 

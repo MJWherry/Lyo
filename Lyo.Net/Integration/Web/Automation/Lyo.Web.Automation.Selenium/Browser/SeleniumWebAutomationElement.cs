@@ -113,6 +113,14 @@ internal sealed class SeleniumWebAutomationElement : IWebAutomationElement
             }, ct);
 
     /// <inheritdoc />
+    public Task<string> GetTagNameAsync(CancellationToken ct = default)
+        => Task.Run(
+            () => {
+                ct.ThrowIfCancellationRequested();
+                return _element.TagName.ToLowerInvariant();
+            }, ct);
+
+    /// <inheritdoc />
     public async Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(locator);

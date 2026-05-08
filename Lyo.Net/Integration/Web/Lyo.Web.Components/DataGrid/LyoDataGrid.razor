@@ -34,7 +34,7 @@
                                          Disabled="@(!CanExport())"
                                          Dense>
                                     @foreach (var flag in GetExportFlags(AvailableExportTypes)) {
-                                        @if (flag is not FileTypeFlags.Unknown or FileTypeFlags.All) {
+                                        @if (flag is not (FileTypeFlags.Unknown or FileTypeFlags.All)) {
                                             <MudMenuItem OnClick="@(() => BulkExport(flag))"
                                                          Icon="@Extensions.GetIcon(flag)">
                                                 Export as @flag

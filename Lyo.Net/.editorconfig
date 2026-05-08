@@ -160,6 +160,10 @@ resharper_not_accessed_positional_property_local_highlighting = none
 # Parameters used only for ArgumentOutOfRangeException / guard clauses are intentional (API surface, single validation point).
 resharper_parameter_only_used_for_precondition_check_global_highlighting = none
 resharper_parameter_only_used_for_precondition_check_local_highlighting = none
+# Library/framework code: helpers and API members may be unused within the solution but kept for consumers or future wiring.
+dotnet_diagnostic.IDE0051.severity = none
+resharper_unused_member_global_highlighting = none
+resharper_unused_member_local_highlighting = none
 
 [{*.bash,*.sh,*.zsh}]
 indent_style = space

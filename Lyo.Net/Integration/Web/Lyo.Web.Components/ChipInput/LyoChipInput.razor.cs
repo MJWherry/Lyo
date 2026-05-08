@@ -5,7 +5,7 @@ using Microsoft.JSInterop;
 
 namespace Lyo.Web.Components.ChipInput;
 
-public partial class LyoChipInput : IAsyncDisposable
+public partial class LyoChipInput
 {
     private static readonly char[] ValueSeparators = [',', '\uFF0C', ';', '\t', '\n', '\r'];
     private DotNetObjectReference<LyoChipInput>? _dotNetRef;
@@ -24,10 +24,10 @@ public partial class LyoChipInput : IAsyncDisposable
     private string RootId => string.IsNullOrWhiteSpace(ElementId) ? "lyo-lyo-chip-input" : ElementId.Trim();
 
     [Inject]
-    private ISnackbar Snackbar { get; set; } = default!;
+    private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
-    private IJSRuntime JsRuntime { get; set; } = default!;
+    private IJSRuntime JsRuntime { get; set; } = null!;
 
     [Parameter]
     public IEnumerable<string> Values { get; set; } = [];
@@ -70,7 +70,7 @@ public partial class LyoChipInput : IAsyncDisposable
     [Parameter]
     public IValidator<string>? ChipValidator { get; set; }
 
-    private IEnumerable<string> EnumeratedValues => Values ?? Enumerable.Empty<string>();
+    private IEnumerable<string> EnumeratedValues => Values;
 
     private bool HasValuesOrSelection => EnumeratedValues.Any() || (SelectableChips && SelectedValues.Any());
 
@@ -82,7 +82,9 @@ public partial class LyoChipInput : IAsyncDisposable
             try {
                 await _pasteModule.DisposeAsync();
             }
-            catch { }
+            catch {
+                // ignored
+            }
 
             _pasteModule = null;
         }
@@ -120,18 +122,20 @@ public partial class LyoChipInput : IAsyncDisposable
                 if (_textFieldRef is not null)
                     await _textFieldRef.FocusAsync();
             }
-            catch { }
+            catch {
+                // ignored
+            }
         }
     }
 
     private Task OnTextValueChanged(string value)
     {
-        _inputValue = value ?? "";
-        if (_lastValidationError is not null) {
-            _lastValidationError = null;
-            StateHasChanged();
-        }
+        _inputValue = value;
+        if (_lastValidationError is null)
+            return Task.CompletedTask;
 
+        _lastValidationError = null;
+        StateHasChanged();
         return Task.CompletedTask;
     }
 

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Web.Automation.Core;
+using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Models;
 
@@ -15,6 +16,7 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(SelectByTextElementAction), "selectByText")]
 [JsonDerivedType(typeof(SelectByValueElementAction), "selectByValue")]
 [JsonDerivedType(typeof(SelectByIndexElementAction), "selectByIndex")]
+[JsonDerivedType(typeof(DropdownElementAction), "dropdown")]
 public abstract record ElementAction;
 
 [DebuggerDisplay("{ToString(),nq}")]
@@ -72,4 +74,22 @@ public sealed record SelectByIndexElementAction(int Index) : ElementAction
 {
     /// <inheritdoc />
     public override string ToString() => $"selectByIndex ({Index})";
+}
+
+/// <summary>
+/// Generic dropdown: native <c>&lt;select&gt;</c> or custom menu. Default <see cref="DropdownElementAction.Mode" /> is <see cref="DropdownSelectionMode.Auto" /> (uses tag name).
+/// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record DropdownElementAction(
+    DropdownSelectionMode Mode = DropdownSelectionMode.Auto,
+    string? SelectByText = null,
+    string? SelectByValue = null,
+    int? SelectByIndex = null,
+    ElementLocator? OptionLocator = null,
+    bool ClickTriggerFirst = true,
+    string? ScopeParentRef = null) : ElementAction
+{
+    /// <inheritdoc />
+    public override string ToString()
+        => $"dropdown (mode: {Mode})";
 }

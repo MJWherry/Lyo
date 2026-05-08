@@ -47,7 +47,6 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
             return;
 
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Serialization;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResult = Lyo.Job.Postgres.Database.JobRunResult;
 

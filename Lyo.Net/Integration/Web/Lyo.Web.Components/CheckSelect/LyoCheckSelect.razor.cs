@@ -12,7 +12,7 @@ public partial class LyoCheckSelect<TValue>
 {
     private List<LyoSelectOption<TValue>> _filteredItems = [];
     private MudMenu? _menu;
-    private string _search = string.Empty;
+    private string? _search = string.Empty;
     private HashSet<TValue> _selected = new(EqualityComparer<TValue>.Default);
 
     /// <summary>Label shown above the trigger button.</summary>
@@ -57,7 +57,7 @@ public partial class LyoCheckSelect<TValue>
 
     private bool IsPlaceholder => _selected.Count == 0;
 
-    private string Search {
+    private string? Search {
         get => _search;
         set {
             if (_search == value)
@@ -70,7 +70,7 @@ public partial class LyoCheckSelect<TValue>
 
     protected override void OnParametersSet()
     {
-        var incoming = new HashSet<TValue>(SelectedValues ?? [], EqualityComparer<TValue>.Default);
+        var incoming = new HashSet<TValue>(SelectedValues, EqualityComparer<TValue>.Default);
         if (!_selected.SetEquals(incoming))
             _selected = incoming;
 

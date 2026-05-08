@@ -86,6 +86,14 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     }
 
     /// <inheritdoc />
+    public async Task<string> GetTagNameAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var name = await locator.EvaluateAsync<string>("e => e.tagName.toLowerCase()").ConfigureAwait(false);
+        return name;
+    }
+
+    /// <inheritdoc />
     public Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator1, CancellationToken ct = default)
         => browser.PollForDescendantElementAsync(locator, locator1, ct);
 

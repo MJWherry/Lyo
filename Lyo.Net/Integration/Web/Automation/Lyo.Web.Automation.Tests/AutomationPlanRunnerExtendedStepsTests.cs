@@ -22,7 +22,9 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
                                 { "type": "upsertJsonRecords", "recordsJsonVariableName": "dtoJson", "targetName": "products" },
                                 { "type": "uploadDirectoryToFileStorage", "sourceDirectory": "/tmp/files", "destinationPrefix": "dest" },
                                 { "type": "storeStringListFromTemplate", "sourceVariableName": "in", "variableName": "out", "itemTemplate": "{strings.item}" },
-                                { "type": "invokeDiMethod", "serviceType": "Lyo.Web.Automation.Tests.AutomationPlanRunnerExtendedStepsTests+ContextWriterScraper, Lyo.Web.Automation.Tests", "methodName": "Scrape" }
+                                { "type": "invokeDiMethod", "serviceType": "Lyo.Web.Automation.Tests.AutomationPlanRunnerExtendedStepsTests+ContextWriterScraper, Lyo.Web.Automation.Tests", "methodName": "Scrape" },
+                                { "type": "findDescendant", "parentRefName": "panel", "refName": "row", "locator": { "kind": 2, "value": "[data-id]" } },
+                                { "type": "elementAction", "elementRefName": "open", "action": { "type": "dropdown", "optionLocator": { "kind": 2, "value": "[role=option]" }, "clickTriggerFirst": true, "scopeParentRef": "list" } }
                               ]
                             }
                             """;
@@ -33,7 +35,11 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
             plan.Steps, step => Assert.IsType<HttpRequestAutomationStep>(step), step => Assert.IsType<DownloadFileAutomationStep>(step),
             step => Assert.IsType<ExtractSourcesAutomationStep>(step), step => Assert.IsType<UpsertJsonRecordsAutomationStep>(step),
             step => Assert.IsType<UploadDirectoryToFileStorageAutomationStep>(step), step => Assert.IsType<StoreStringListFromTemplateAutomationStep>(step),
-            step => Assert.IsType<InvokeDiMethodAutomationStep>(step));
+            step => Assert.IsType<InvokeDiMethodAutomationStep>(step),
+            step => Assert.IsType<FindDescendantAutomationStep>(step),
+            step => Assert.IsType<ElementActionAutomationStep>(step));
+        var elementActionStep = (ElementActionAutomationStep)plan.Steps[8];
+        Assert.IsType<DropdownElementAction>(elementActionStep.Action);
     }
 
     [Fact]
@@ -103,7 +109,7 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
 
     private sealed class ContextWriterScraper
     {
-        public Task Scrape(AutomationPlanStepContext context, CancellationToken ct)
+        public Task Scrape(AutomationPlanStepContext context)
         {
             context.ContextItems["auth.cookie"] = "session=abc";
             return Task.CompletedTask;

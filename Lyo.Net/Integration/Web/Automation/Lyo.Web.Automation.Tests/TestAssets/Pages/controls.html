@@ -20,6 +20,20 @@
         <img class="asset-image" src="/files/sample-b.txt"/>
     </div>
     <p id="searchEcho"></p>
+    <div id="customDropdownWrap">
+        <button type="button" id="customDropdownTrigger">Pick</button>
+        <div id="customDropdownList" role="listbox" style="display:none;border:1px solid #ccc;margin-top:4px">
+            <div role="option" data-value="a">Option A</div>
+            <div role="option" data-value="b">Option B</div>
+        </div>
+    </div>
+    <p id="customDropdownEcho"></p>
+    <label for="planNativeSel">Native select</label>
+    <select id="planNativeSel">
+        <option value="a">A</option>
+        <option value="b">B</option>
+    </select>
+    <p id="planNativeEcho"></p>
 </main>
 <script>
     (() => {
@@ -29,6 +43,32 @@
         button.addEventListener('click', () => {
             echo.textContent = `search:${input.value}`;
         });
+    })();
+    (() => {
+        const trig = document.getElementById('customDropdownTrigger');
+        const list = document.getElementById('customDropdownList');
+        const echo = document.getElementById('customDropdownEcho');
+        if (!trig || !list || !echo) return;
+        trig.addEventListener('click', () => {
+            list.style.display = list.style.display === 'none' ? 'block' : 'none';
+        });
+        list.querySelectorAll('[role=option]').forEach(opt => {
+            opt.addEventListener('click', () => {
+                const v = opt.getAttribute('data-value') || '';
+                echo.textContent = 'picked:' + v;
+                list.style.display = 'none';
+            });
+        });
+    })();
+    (() => {
+        const sel = document.getElementById('planNativeSel');
+        const echo = document.getElementById('planNativeEcho');
+        if (!sel || !echo) return;
+        const update = () => {
+            echo.textContent = 'native:' + sel.value;
+        };
+        sel.addEventListener('change', update);
+        update();
     })();
 </script>
 </body>

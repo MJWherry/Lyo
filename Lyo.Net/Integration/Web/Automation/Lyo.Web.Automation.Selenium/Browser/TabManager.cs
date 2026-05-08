@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Selenium.Service;
 using Microsoft.Extensions.Logging;
@@ -80,10 +81,10 @@ public sealed class TabManager
     public void SetDisplayName(string windowHandle, string? displayName)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(windowHandle);
-        if (string.IsNullOrWhiteSpace(displayName))
+        if (displayName.IsNullOrWhitespace())
             _displayNames.Remove(windowHandle);
         else
-            _displayNames[windowHandle] = displayName!;
+            _displayNames[windowHandle] = displayName;
 
         _logger.LogDebug("Set display name for tab {Handle}", windowHandle);
     }
@@ -243,8 +244,8 @@ public sealed class TabManager
                 }
 
                 result = OpenNewTabHandle(driver, newHandle);
-                if (!string.IsNullOrWhiteSpace(url))
-                    _scraper.NavigateTo(url!);
+                if (!url.IsNullOrWhitespace())
+                    _scraper.NavigateTo(url);
             });
 
         return result!;
@@ -319,7 +320,7 @@ public sealed class TabManager
     {
         var driver = _scraper.GetRequiredDriver();
         var before = new HashSet<string>(driver.WindowHandles, StringComparer.Ordinal);
-        var openUrl = string.IsNullOrWhiteSpace(url) ? "about:blank" : url!;
+        var openUrl = url.OrDefaultIfWhiteSpace("about:blank");
         ((IJavaScriptExecutor)driver).ExecuteScript("window.open(arguments[0], '_blank');", openUrl);
         var after = driver.WindowHandles.ToList();
         var newHandle = after.FirstOrDefault(h => !before.Contains(h));
@@ -341,19 +342,20 @@ public sealed class TabManager
         _displayNames.Remove(targetHandle);
         PruneDisplayNames(driver.WindowHandles);
         var remaining = driver.WindowHandles;
-        if (remaining.Count > 0) {
-            var fallback = remaining.Contains(original) ? original : remaining[0];
-            driver.SwitchTo().Window(fallback);
-        }
+        if (remaining.Count <= 0)
+            return;
+
+        var fallback = remaining.Contains(original) ? original : remaining[0];
+        driver.SwitchTo().Window(fallback);
     }
 
     private void OpenNewWindowFallback(IWebDriver driver, string? url)
     {
-        var openUrl = string.IsNullOrWhiteSpace(url) ? "about:blank" : url!;
+        var openUrl = url.OrDefaultIfWhiteSpace("about:blank");
         ((IJavaScriptExecutor)driver).ExecuteScript("window.open(arguments[0], '_blank', 'popup,width=800,height=600');", openUrl);
         var handles = driver.WindowHandles.ToList();
         if (handles.Count > 0)
-            driver.SwitchTo().Window(handles[handles.Count - 1]);
+            driver.SwitchTo().Window(handles[^1]);
     }
 
     private T RunTabRead<T>(string operation, Func<T> func)

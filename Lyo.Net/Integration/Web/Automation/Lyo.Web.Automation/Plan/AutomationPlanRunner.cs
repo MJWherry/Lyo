@@ -310,6 +310,16 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
     private static Task<string> ExpandPlanTemplateAsync(string template, AutomationPlanInterpolationBindings bindings, AutomationPlanRuntimeOptions? runtime, CancellationToken ct)
         => AutomationPlanInterpolation.ExpandAsync(template, bindings, runtime?.Formatter, ct);
 
+    private static async Task<ElementLocator> ExpandElementLocatorAsync(
+        ElementLocator locator,
+        AutomationPlanInterpolationBindings bindings,
+        AutomationPlanRuntimeOptions? runtime,
+        CancellationToken ct)
+    {
+        var expandedValue = await ExpandPlanTemplateAsync(locator.Value, bindings, runtime, ct).ConfigureAwait(false);
+        return locator with { Value = expandedValue };
+    }
+
     private static string StepLabel(AutomationStepDefinition step) => !string.IsNullOrWhiteSpace(step.Name) ? step.Name! : step.GetType().Name;
 
     /// <summary>Re-applies run/step correlation on loggers when child work may not inherit ambient scopes (e.g. thread pool).</summary>
@@ -377,6 +387,9 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                 return;
             case FindElementAutomationStep f:
                 await FindAndStoreElementAsync(browser, state, f.RefName, f.Locator, ct).ConfigureAwait(false);
+                return;
+            case FindDescendantAutomationStep fd:
+                await FindAndStoreDescendantAsync(browser, state, runtime, fd, ct).ConfigureAwait(false);
                 return;
             case FindElementChainAutomationStep fc:
                 await FindAndStoreChainAsync(browser, state, fc.RefName, fc.Chain, ct).ConfigureAwait(false);
@@ -626,6 +639,23 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         state.ThrowIfRefNameTaken(refName);
         var element = await browser.PollForElementAsync(locator, ct).ConfigureAwait(false);
         state.Elements[refName] = element;
+    }
+
+    private static async Task FindAndStoreDescendantAsync(
+        IWebAutomationBrowser browser,
+        PlanExecutionState state,
+        AutomationPlanRuntimeOptions? runtime,
+        FindDescendantAutomationStep step,
+        CancellationToken ct)
+    {
+        var bindings = CreateBindings(state, browser);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(step.RefName, nameof(step.RefName));
+        state.ThrowIfRefNameTaken(step.RefName);
+        var parentKey = await ExpandPlanTemplateAsync(step.ParentRefName, bindings, runtime, ct).ConfigureAwait(false);
+        var parent = state.ResolveElement(parentKey);
+        var locator = await ExpandElementLocatorAsync(step.Locator, bindings, runtime, ct).ConfigureAwait(false);
+        var child = await parent.PollForDescendantAsync(locator, ct).ConfigureAwait(false);
+        state.Elements[step.RefName] = child;
     }
 
     private static async Task FindAndStoreChainAsync(IWebAutomationBrowser browser, PlanExecutionState state, string refName, ElementLocatorChain chain, CancellationToken ct)
@@ -964,10 +994,111 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
             case SelectByIndexElementAction x:
                 await element.SelectByIndexAsync(x.Index, ct).ConfigureAwait(false);
                 return;
+            case DropdownElementAction d:
+                await ApplyDropdownElementActionAsync(state, browser, runtime, element, d, ct).ConfigureAwait(false);
+                return;
             default:
                 OperationHelpers.ThrowIf(true, $"Unsupported element action: {action.GetType().Name}");
                 return;
         }
+    }
+
+    private static int CountNativeDropdownSelectors(string? expandedText, string? expandedValue, int? index)
+    {
+        var n = 0;
+        if (!string.IsNullOrWhiteSpace(expandedText))
+            n++;
+        if (!string.IsNullOrWhiteSpace(expandedValue))
+            n++;
+        if (index.HasValue)
+            n++;
+
+        return n;
+    }
+
+    private static async Task ApplyDropdownElementActionAsync(
+        PlanExecutionState state,
+        IWebAutomationBrowser browser,
+        AutomationPlanRuntimeOptions? runtime,
+        IWebAutomationElement target,
+        DropdownElementAction action,
+        CancellationToken ct)
+    {
+        var bindings = CreateBindings(state, browser);
+        var expandedText = action.SelectByText is { } st
+            ? (await ExpandPlanTemplateAsync(st, bindings, runtime, ct).ConfigureAwait(false)).Trim()
+            : null;
+        if (string.IsNullOrEmpty(expandedText))
+            expandedText = null;
+
+        var expandedValue = action.SelectByValue is { } sv
+            ? (await ExpandPlanTemplateAsync(sv, bindings, runtime, ct).ConfigureAwait(false)).Trim()
+            : null;
+        if (string.IsNullOrEmpty(expandedValue))
+            expandedValue = null;
+
+        var index = action.SelectByIndex;
+        var nativeCount = CountNativeDropdownSelectors(expandedText, expandedValue, index);
+
+        var mode = action.Mode;
+        if (mode == DropdownSelectionMode.Auto) {
+            var tag = await target.GetTagNameAsync(ct).ConfigureAwait(false);
+            mode = string.Equals(tag, "select", StringComparison.OrdinalIgnoreCase) ? DropdownSelectionMode.Native : DropdownSelectionMode.Custom;
+        }
+
+        if (mode == DropdownSelectionMode.Native) {
+            ArgumentHelpers.ThrowIf(
+                nativeCount != 1,
+                "Dropdown with mode Native or Auto on <select> requires exactly one of selectByText, selectByValue, or selectByIndex (after template expansion).");
+            if (expandedText != null)
+                await target.SelectByTextAsync(expandedText, ct).ConfigureAwait(false);
+            else if (expandedValue != null)
+                await target.SelectByValueAsync(expandedValue, ct).ConfigureAwait(false);
+            else
+                await target.SelectByIndexAsync(index!.Value, ct).ConfigureAwait(false);
+
+            return;
+        }
+
+        ArgumentHelpers.ThrowIf(
+            nativeCount > 0,
+            "Dropdown custom selection must not set selectByText, selectByValue, or selectByIndex; use optionLocator instead.");
+        ArgumentHelpers.ThrowIfNull(action.OptionLocator, "Dropdown custom selection requires optionLocator.");
+        await ApplyCustomDropdownOptionClickAsync(state, browser, runtime, target, action, ct).ConfigureAwait(false);
+    }
+
+    private static async Task ApplyCustomDropdownOptionClickAsync(
+        PlanExecutionState state,
+        IWebAutomationBrowser browser,
+        AutomationPlanRuntimeOptions? runtime,
+        IWebAutomationElement trigger,
+        DropdownElementAction action,
+        CancellationToken ct)
+    {
+        var bindings = CreateBindings(state, browser);
+        var optionLocator = await ExpandElementLocatorAsync(action.OptionLocator!, bindings, runtime, ct).ConfigureAwait(false);
+        string? scopeRef = null;
+        if (!string.IsNullOrWhiteSpace(action.ScopeParentRef))
+            scopeRef = (await ExpandPlanTemplateAsync(action.ScopeParentRef!, bindings, runtime, ct).ConfigureAwait(false)).Trim();
+
+        if (string.IsNullOrEmpty(scopeRef))
+            scopeRef = null;
+
+        if (action.ClickTriggerFirst) {
+            await trigger.ScrollIntoViewAsync(ct).ConfigureAwait(false);
+            await trigger.ClickAsync(ct).ConfigureAwait(false);
+        }
+
+        IWebAutomationElement optionEl;
+        if (scopeRef != null) {
+            var parent = state.ResolveElement(scopeRef);
+            optionEl = await parent.PollForDescendantAsync(optionLocator, ct).ConfigureAwait(false);
+        }
+        else
+            optionEl = await browser.PollForElementAsync(optionLocator, ct).ConfigureAwait(false);
+
+        await optionEl.ScrollIntoViewAsync(ct).ConfigureAwait(false);
+        await optionEl.ClickAsync(ct).ConfigureAwait(false);
     }
 
     private sealed class PlanExecutionState

@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Playwright.Browser;
@@ -36,7 +37,7 @@ public static class PlaywrightServiceExtensions
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
-        var sectionName = string.IsNullOrWhiteSpace(configSectionName) ? PlaywrightBrowserOptions.SectionName : configSectionName!;
+        var sectionName = configSectionName.OrDefaultIfWhiteSpace(PlaywrightBrowserOptions.SectionName);
         services.AddSingleton(_ => {
             var o = new PlaywrightBrowserOptions();
             configuration.GetSection(sectionName).Bind(o);

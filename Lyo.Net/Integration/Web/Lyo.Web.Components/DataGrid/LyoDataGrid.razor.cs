@@ -7,6 +7,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.Csv.Models;
@@ -236,8 +237,8 @@ public partial class LyoDataGrid<T>
     public void Dispose()
     {
         StopAutoRefresh();
-        _cts?.Cancel();
-        _cts?.Dispose();
+        _cts.Cancel();
+        _cts.Dispose();
     }
 
 #endregion
@@ -375,10 +376,12 @@ public partial class LyoDataGrid<T>
 
     private async Task SaveClientState()
     {
+        if (_dataGrid is null)
+            return;
         try {
             // Convert SortDefinitions to serializable format
             List<SavedSort>? sorts = null;
-            if (_dataGrid?.SortDefinitions?.Any() == true)
+            if (_dataGrid.SortDefinitions.Count != 0)
                 sorts = _dataGrid.SortDefinitions.Values.Select(sd => new SavedSort { SortBy = sd.SortBy, Descending = sd.Descending, Index = sd.Index }).ToList();
 
             // Persist keys tracked across pages when KeySelector is set (SelectedItems alone drops off-page rows after paging)
@@ -473,7 +476,7 @@ public partial class LyoDataGrid<T>
 
         // Add search and filters
         var activeConditions = _filterStates.Where(f => f.IsEnabled).Select(f => f.Condition).ToList();
-        WhereClause? queryNode = null;
+        WhereClause? queryNode;
         if (!string.IsNullOrEmpty(_searchText) && EffectiveQuickSearchProperties.Any()) {
             var orChildren = new List<WhereClause>();
             foreach (var prop in EffectiveQuickSearchProperties) {
@@ -491,7 +494,7 @@ public partial class LyoDataGrid<T>
             queryBuilder.AddWhere(queryNode);
 
         // Add sorting
-        if (_dataGrid?.SortDefinitions?.Any() == true) {
+        if (_dataGrid is not null && _dataGrid.SortDefinitions.Count != 0) {
             var sortedDefinitions = _dataGrid.SortDefinitions.Values.OrderBy(s => s.Index).ToList();
             for (var i = 0; i < sortedDefinitions.Count; i++) {
                 var sort = sortedDefinitions[i];
@@ -505,7 +508,7 @@ public partial class LyoDataGrid<T>
 
     private void AddSortToQuery(LyoQueryReqBuilder queryBuilder, SortDefinition<T> sort, int index)
     {
-        if (sort.SortBy.Contains(".")) {
+        if (sort.SortBy.Contains('.')) {
             // Navigational property sorting
             var sortParts = sort.SortBy.Split(".", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var currentType = typeof(T);
@@ -531,7 +534,7 @@ public partial class LyoDataGrid<T>
             // Simple property sorting
             PropertyInfo? propertyInfo;
             if (Guid.TryParse(sort.SortBy, out var _)) {
-                var keyName = sort.SortFunc?.Invoke(default)?.ToString();
+                var keyName = sort.SortFunc.Invoke(default)?.ToString();
                 propertyInfo = string.IsNullOrEmpty(keyName) ? null : typeof(T).GetProperty(keyName);
             }
             else
@@ -628,7 +631,7 @@ public partial class LyoDataGrid<T>
 
         _autoRefreshActive = true;
         _autoRefreshTimer = new(
-            async state => {
+            async _ => {
                 try {
                     await InvokeAsync(async () => {
                         if (_cts.Token.IsCancellationRequested || _loading || !_autoRefreshEnabled)
@@ -754,6 +757,11 @@ public partial class LyoDataGrid<T>
 
             var dialog = await DialogService.ShowAsync<ExportColumnSelectorDialog>("Select Fields to Export", parameters, dialogOptions);
             var result = await dialog.Result;
+            if (result is null) {
+                Logger.LogInformation("Result is null");
+                return;
+            }
+            
             if (result.Canceled) {
                 Logger.LogInformation("Export canceled by user");
                 return;
@@ -763,7 +771,7 @@ public partial class LyoDataGrid<T>
             selectedProps = selectedItems?.Where(p => !p.IsCustom)
                 .OrderBy(p => p.Order)
                 .Select(p => typeof(T).GetProperty(p.Value, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase))
-                .Where(p => p != null && p!.CanRead)
+                .Where(p => p != null && p.CanRead)
                 .Cast<PropertyInfo>()
                 .ToList() ?? [];
 
@@ -817,6 +825,12 @@ public partial class LyoDataGrid<T>
 
             var dialog = await DialogService.ShowAsync<ExportColumnSelectorDialog>("Select Fields to Export", parameters, dialogOptions);
             var result = await dialog.Result;
+
+            if (result is null) {
+                Logger.LogInformation("Result is null");
+                return;
+            }
+            
             if (result.Canceled) {
                 Logger.LogInformation("Export canceled by user");
                 return;
@@ -841,7 +855,7 @@ public partial class LyoDataGrid<T>
         }
 
         var exportRequest = new ExportRequest { Query = ToProjectionQueryReq(query), Format = format, ColumnList = columnList };
-        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute!, exportRequest, ct: _cts.Token);
+        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute, exportRequest, ct: _cts.Token);
         using var stream = new MemoryStream(bytes);
         stream.Position = 0;
         await Js.DownloadFileFromStreamReference(stream, $"export.{flag.ToString().ToLowerInvariant()}", Enum.Parse<MimeType>(flag.ToString()).ToString().ToLowerInvariant());
@@ -887,7 +901,7 @@ public partial class LyoDataGrid<T>
         var totalPages = (int)Math.Ceiling((double)totalCount / maxPageSize);
         for (var page = 0; page < totalPages; page++) {
             var offset = page * maxPageSize;
-            var pageItems = await FetchPageForExport(offset, maxPageSize);
+            var pageItems = (await FetchPageForExport(offset, maxPageSize)).AsReadOnlyList();
             if (pageItems.Any())
                 allItems.AddRange(pageItems);
         }
