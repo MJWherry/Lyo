@@ -19,21 +19,28 @@ public sealed class WhereClauseExplainNode
     /// <summary>Whether this subtree (including <see cref="SubClause" /> when present) matches the entity.</summary>
     public bool Passed { get; init; }
 
+    /// <summary>Whether this node is a condition leaf, a group, or none (placeholder).</summary>
     public WhereClauseExplainKind Kind { get; init; }
 
     /// <summary>Path from the root, e.g. <c>0/2</c> for third child of first group; <c>sub</c> for a <see cref="WhereClause.SubClause" /> chain.</summary>
     public string Path { get; init; } = "";
 
+    /// <summary>Optional description copied from the source <see cref="WhereClause" />.</summary>
     public string? Description { get; init; }
 
+    /// <summary>For group nodes, AND or OR; otherwise null.</summary>
     public GroupOperatorEnum? GroupOperator { get; init; }
 
+    /// <summary>For group nodes, child explanation nodes in order.</summary>
     public IReadOnlyList<WhereClauseExplainNode>? Children { get; init; }
 
+    /// <summary>For condition nodes, the dotted field path.</summary>
     public string? Field { get; init; }
 
+    /// <summary>For condition nodes, the comparison operator.</summary>
     public ComparisonOperatorEnum? Comparison { get; init; }
 
+    /// <summary>For condition nodes, the literal filter value from the clause.</summary>
     public object? FilterValue { get; init; }
 
     /// <summary>String form of the value(s) read from the entity for this condition's field path (scalar, collection samples, or count).</summary>
@@ -111,6 +118,7 @@ public sealed class WhereClauseExplainResult
     /// <summary>Same as <see cref="Root" />.<see cref="WhereClauseExplainNode.Passed" />.</summary>
     public bool Passed => Root.Passed;
 
+    /// <summary>Root of the explanation tree mirroring the where clause structure.</summary>
     public WhereClauseExplainNode Root { get; }
 
     /// <summary>AST path to the first failing condition or group (depth-first, And/SubClause order), when <see cref="Passed" /> is false.</summary>
@@ -125,6 +133,7 @@ public sealed class WhereClauseExplainResult
     /// </summary>
     public IReadOnlyList<ExplainOrBranchOutcome>? OrBranchOutcomes { get; }
 
+    /// <summary>Constructs an explain result with optional blocking path and OR-branch detail.</summary>
     public WhereClauseExplainResult(
         WhereClauseExplainNode root,
         string? blockingPath = null,

@@ -7,5 +7,6 @@ namespace Lyo.Query.Models.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class QueryPropertyNameAttribute(string propertyName) : Attribute
 {
+    /// <summary>The canonical query/serialization name for the attributed property.</summary>
     public string PropertyName { get; } = propertyName;
 }

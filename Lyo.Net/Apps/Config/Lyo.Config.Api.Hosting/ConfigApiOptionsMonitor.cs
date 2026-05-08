@@ -50,9 +50,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
     /// <remarks>Immediately invokes <paramref name="listener" /> with the current cached value (<see cref="Options.DefaultName" />).</remarks>
     public IDisposable OnChange(Action<TOptions, string?> listener)
     {
-        if (listener == null)
-            throw new ArgumentNullException(nameof(listener));
-
+        ArgumentHelpers.ThrowIfNull(listener);
         lock (_gate) {
             if (!_initialized)
                 Prime();

@@ -103,5 +103,5 @@ public class NanoIdTests
     }
 
     [Fact]
-    public void CreateBulk_ThrowsOnZero() => Assert.Throws<ArgumentOutOfRangeException>(() => NanoId.CreateBulk(0));
+    public void CreateBulk_ThrowsOnZero() => Assert.Throws<ArgumentOutsideRangeException>(() => NanoId.CreateBulk(0));
 }

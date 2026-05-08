@@ -77,7 +77,7 @@ public sealed class BulkSmsBuilder
 
         if (_maxLimit.HasValue && _messages.Count >= _maxLimit.Value) {
             throw new ArgumentOutsideRangeException(
-                nameof(to), _messages.Count + 1, 1, _maxLimit.Value, $"Cannot add more messages. Maximum limit of {_maxLimit.Value} messages has been reached.");
+                nameof(to), _messages.Count, 1, _maxLimit.Value, $"Cannot add more messages. Maximum limit of {_maxLimit.Value} messages has been reached.");
         }
 
         string? normalizedFrom = null;
@@ -115,11 +115,7 @@ public sealed class BulkSmsBuilder
     /// <exception cref="InvalidFormatException">Thrown when URL format is invalid or not absolute.</exception>
     public BulkSmsBuilder AddAttachmentToMessage(int messageIndex, string url)
     {
-        if (messageIndex < 0 || messageIndex >= _messages.Count) {
-            throw new ArgumentOutsideRangeException(
-                nameof(messageIndex), messageIndex, 0, _messages.Count - 1, $"Message index {messageIndex} is out of range. Valid range: 0 to {_messages.Count - 1}.");
-        }
-
+        ArgumentHelpers.ThrowIfNotInRange(messageIndex, 0, _messages.Count);
         var uri = UriHelpers.GetValidWebUri(url);
         var message = _messages[messageIndex];
         message.MediaUrls.Add(uri);

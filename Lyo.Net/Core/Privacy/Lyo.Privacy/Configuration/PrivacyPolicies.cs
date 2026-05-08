@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Policy;
 using Lyo.Privacy.Rules;
@@ -13,9 +14,7 @@ public static class PrivacyPolicies
     /// <summary>Appends rules for a named preset to an existing builder (does not clear the builder).</summary>
     public static RedactionPolicyBuilder AppendPreset(this RedactionPolicyBuilder builder, string preset)
     {
-        if (preset is null)
-            throw new ArgumentNullException(nameof(preset));
-
+        ArgumentHelpers.ThrowIfNull(preset);
         switch (preset) {
             case PrivacyPresetNames.Minimal:
                 break;

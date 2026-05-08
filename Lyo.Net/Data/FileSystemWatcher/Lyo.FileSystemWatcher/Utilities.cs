@@ -6,8 +6,15 @@ using Lyo.Hashing.Files;
 
 namespace Lyo.FileSystemWatcher;
 
+/// <summary>Directory tree snapshotting, change detection between two snapshots, hashing, and fingerprint helpers.</summary>
 public static class Utilities
 {
+    /// <summary>Recursively walks <paramref name="path" /> and builds a <see cref="SnapshotTree" /> with optional hashing and reuse from <paramref name="oldTree" />.</summary>
+    /// <param name="path">Root directory to scan.</param>
+    /// <param name="enableHashing">When true, computes fingerprints/hashes per file for move detection (slower).</param>
+    /// <param name="pathComparison">Path comparison for segment dictionaries.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <param name="oldTree">Previous snapshot; when hashing is enabled, metadata may be reused for unchanged files.</param>
     public static SnapshotTree TakeSnapshot(
         string path,
         bool enableHashing = true,
@@ -152,6 +159,11 @@ public static class Utilities
         }
     }
 
+    /// <summary>Compares two snapshots and returns a list of file/directory create/delete/move/rename/changed events.</summary>
+    /// <param name="oldTree">Previous snapshot.</param>
+    /// <param name="newTree">Current snapshot.</param>
+    /// <param name="pathComparison">Path comparison for matching.</param>
+    /// <param name="ct">Cancellation token.</param>
     public static List<FileSystemChangeInfo> DetectChanges(
         SnapshotTree oldTree,
         SnapshotTree newTree,
@@ -309,6 +321,7 @@ public static class Utilities
             yield return (fileEntry.Path, fileEntry);
     }
 
+    /// <summary>Selects the best prior path for a file that appears to have moved/renamed, using hash/fingerprint candidates.</summary>
     public static string? FindBestMatch(List<string> candidates, string newPath, SnapshotTree newTree, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         if (candidates.Count == 0)
@@ -325,6 +338,7 @@ public static class Utilities
         return validCandidates.FirstOrDefault(c => string.Equals(Path.GetFileName(c), newFileName, pathComparison)) ?? validCandidates[0];
     }
 
+    /// <summary>Heuristic match for a new directory path to a missing old directory path (rename/move detection).</summary>
     public static string? FindDirectoryMatch(
         SnapshotTree oldTree,
         SnapshotTree newTree,
@@ -349,6 +363,7 @@ public static class Utilities
             .FirstOrDefault(e => !newTree.ContainsPath(e) && !processedPaths.Contains(e));
     }
 
+    /// <summary>Whether the immediate children or file content fingerprints under <paramref name="dirPath" /> differ between snapshots.</summary>
     public static bool HasDirectoryChanged(string dirPath, SnapshotTree oldTree, SnapshotTree newTree, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         var stringComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
@@ -382,6 +397,7 @@ public static class Utilities
             yield return sub.FullPath;
     }
 
+    /// <summary>Counts all files and subdirectories under <paramref name="directoryPath" /> using live file system enumeration.</summary>
     public static (int fileCount, int dirCount) GetDirectoryContentCounts(string directoryPath)
     {
         try {
@@ -394,6 +410,7 @@ public static class Utilities
         }
     }
 
+    /// <summary>Counts files and descendant directories under <paramref name="directoryPath" /> as recorded in <paramref name="snapshot" />.</summary>
     public static (int fileCount, int dirCount) GetSnapshotCounts(string directoryPath, SnapshotTree snapshot, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
     {
         if (!snapshot.TryGetDirectory(directoryPath, out var node) || node is null)
@@ -414,6 +431,7 @@ public static class Utilities
         }
     }
 
+    /// <summary>Computes MD5 of file contents at <paramref name="path" />; returns an empty array when access fails.</summary>
     public static byte[] Hash(string path, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
@@ -440,6 +458,7 @@ public static class Utilities
     /// <param name="fileSize">Size of the file in bytes</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>MD5 hash of (size + sampled bytes), or null if the file does not exist</returns>
+    /// <param name="options">Optional sparse fingerprint tuning; forwarded to <see cref="SparseFileFingerprinter.FingerprintAsync" />.</param>
     /// <exception cref="UnauthorizedAccessException">Thrown when the file cannot be accessed due to access restrictions</exception>
     /// <exception cref="IOException">Thrown when the file cannot be accessed due to I/O errors</exception>
     public static Task<byte[]?> Fingerprint(string path, long fileSize, CancellationToken ct = default, FileFingerprintOptions? options = null)

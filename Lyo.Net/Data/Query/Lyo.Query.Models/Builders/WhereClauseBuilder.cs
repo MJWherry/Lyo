@@ -9,6 +9,10 @@ using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Builders;
 
+/// <summary>
+/// Fluent builder for <see cref="WhereClause" /> trees: combines <see cref="ConditionClause" /> leaves with <see cref="GroupOperatorEnum" />, supports nested groups, sub-clauses
+/// for two-phase filtering, and typed expression-based paths via <see cref="WhereClauseBuilderFor{T}" />.
+/// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class WhereClauseBuilder
 {
@@ -23,12 +27,16 @@ public class WhereClauseBuilder
         _description = description;
     }
 
+    /// <summary>Sets the optional <see cref="WhereClause.Description" /> on the built group (when applicable).</summary>
+    /// <param name="description">Human-readable label.</param>
+    /// <returns>This builder instance.</returns>
     public WhereClauseBuilder SetDescription(string description)
     {
         _description = description;
         return this;
     }
 
+    /// <summary>Adds a <see cref="ConditionClause" /> with the given dotted field path and operator.</summary>
     public WhereClauseBuilder AddCondition(string field, ComparisonOperatorEnum op, object? value, string? description = null)
     {
         _children.Add(new ConditionClause(field, op, value, description));
@@ -175,12 +183,14 @@ public class WhereClauseBuilder
         return this;
     }
 
+    /// <summary>Appends an arbitrary pre-built clause node as a sibling under this builder's top-level group.</summary>
     public WhereClauseBuilder Add(WhereClause node)
     {
         _children.Add(node);
         return this;
     }
 
+    /// <summary>Merges an inner AND group with the current group (left-associative when operators differ).</summary>
     public WhereClauseBuilder AddAnd(Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(GroupOperatorEnum.And);
@@ -212,6 +222,7 @@ public class WhereClauseBuilder
         return this;
     }
 
+    /// <summary>Merges an inner OR group with the current group (left-associative when operators differ).</summary>
     public WhereClauseBuilder AddOr(Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(GroupOperatorEnum.Or);
@@ -242,6 +253,7 @@ public class WhereClauseBuilder
     }
 
     // New explicit grouping API: allows callers to create explicit grouped nodes.
+    /// <summary>Appends an explicit nested <see cref="GroupClause" /> built by <paramref name="configure" />.</summary>
     public WhereClauseBuilder AddGroup(GroupOperatorEnum op, Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(op);
@@ -257,8 +269,10 @@ public class WhereClauseBuilder
         return this;
     }
 
+    /// <summary>Convenience for <see cref="AddGroup(Lyo.Query.Models.Enums.GroupOperatorEnum, System.Action{WhereClauseBuilder})" /> with <see cref="GroupOperatorEnum.And" />.</summary>
     public WhereClauseBuilder AddGroupAnd(Action<WhereClauseBuilder> configure) => AddGroup(GroupOperatorEnum.And, configure);
 
+    /// <summary>Convenience for <see cref="AddGroup(Lyo.Query.Models.Enums.GroupOperatorEnum, System.Action{WhereClauseBuilder})" /> with <see cref="GroupOperatorEnum.Or" />.</summary>
     public WhereClauseBuilder AddGroupOr(Action<WhereClauseBuilder> configure) => AddGroup(GroupOperatorEnum.Or, configure);
 
     /// <summary>Adds a SubQuery for two-phase execution (root in DB, subquery in-memory).</summary>
@@ -271,6 +285,7 @@ public class WhereClauseBuilder
     }
 
     // Returns a grouped WhereClause using this builder's operator (does not add to children)
+    /// <summary>Returns a nested group clause without appending it to the current builder’s child list (advanced composition).</summary>
     public WhereClause Group(Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(_groupOperator);
@@ -283,14 +298,21 @@ public class WhereClauseBuilder
     }
 
     // Explicit combine helper
+    /// <summary>Builds a single <see cref="GroupClause" /> over <paramref name="nodes" /> with operator <paramref name="op" />.</summary>
     public static WhereClause CombineAs(GroupOperatorEnum op, params WhereClause[] nodes) => new GroupClause(op, nodes);
 
+    /// <summary>Starts a builder whose top-level combiner is AND.</summary>
     public static WhereClauseBuilder And() => new(GroupOperatorEnum.And);
 
+    /// <summary>Starts a builder whose top-level combiner is OR.</summary>
     public static WhereClauseBuilder Or() => new(GroupOperatorEnum.Or);
 
+    /// <summary>Returns a typed helper that resolves property paths from lambda expressions.</summary>
     public WhereClauseBuilderFor<T> For<T>() => new(this);
 
+    /// <summary>Builds a <see cref="GroupClause" /> over all added children (always wrapped in a group, even for a single child). Throws if no conditions were added.</summary>
+    /// <returns>The root <see cref="WhereClause" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no child clauses were added.</exception>
     public WhereClause Build()
     {
         OperationHelpers.ThrowIf(_children.Count == 0, "Cannot build query with no conditions");
@@ -314,6 +336,7 @@ public class WhereClauseBuilder
         return c;
     }
 
+    /// <summary>Builds an AND group using a nested configure callback (same as <c>WhereClauseBuilder.And(); configure; Build()</c>).</summary>
     public static WhereClause And(Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(GroupOperatorEnum.And);
@@ -321,6 +344,7 @@ public class WhereClauseBuilder
         return builder.Build();
     }
 
+    /// <summary>Builds an OR group using a nested configure callback.</summary>
     public static WhereClause Or(Action<WhereClauseBuilder> configure)
     {
         var builder = new WhereClauseBuilder(GroupOperatorEnum.Or);
@@ -328,7 +352,8 @@ public class WhereClauseBuilder
         return builder.Build();
     }
 
-    /// <summary>Builds a WhereClause from condition nodes. If searchProperty and searchText are provided, adds a Contains condition.</summary>
+    /// <summary>Builds a <see cref="WhereClause" /> from loose <see cref="ConditionClause" /> nodes. If <paramref name="searchProperty" /> and <paramref name="searchText" /> are provided, appends a Contains condition.</summary>
+    /// <returns>An AND group of all non-empty conditions, a single condition, or null when nothing remains.</returns>
     public static WhereClause? FromConditions(IEnumerable<ConditionClause> conditions, string? searchProperty = null, string? searchText = null)
     {
         var nodes = new List<WhereClause>();
@@ -353,6 +378,7 @@ public class WhereClauseBuilder
 
     public override string ToString() => $"{string.Join($" {_groupOperator.ToString().ToUpperInvariant()} ", _children)}";
 
+    /// <summary>Typed projection of <see cref="WhereClauseBuilder" /> that resolves field paths from expressions (honors <see cref="QueryPropertyNameAttribute" />).</summary>
     public class WhereClauseBuilderFor<T>(WhereClauseBuilder parent)
     {
         private static string PathFrom<TProp>(Expression<Func<T, TProp>> selector) => ExpressionPropertyPath.GetPropertyPath(selector);

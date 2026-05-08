@@ -383,13 +383,8 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
     {
         if (mediaUrls.Count == 0)
             return;
-
-        if (mediaUrls.Count > MaxMediaAttachmentsPerMessage) {
-            throw new ArgumentOutsideRangeException(
-                nameof(mediaUrls), mediaUrls.Count, 1, MaxMediaAttachmentsPerMessage,
-                $"Maximum of {MaxMediaAttachmentsPerMessage} media attachments allowed per message. Provided: {mediaUrls.Count}");
-        }
-
+        
+        ArgumentHelpers.ThrowIfLessThan(mediaUrls.Count, MaxMediaAttachmentsPerMessage);
         Logger.LogDebug("Validated {Count} media URLs", mediaUrls.Count);
     }
 }

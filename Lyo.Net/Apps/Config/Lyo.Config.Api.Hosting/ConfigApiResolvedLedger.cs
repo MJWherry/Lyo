@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Microsoft.Extensions.Primitives;
 
 namespace Lyo.Config.Api.Hosting;
@@ -38,9 +39,7 @@ public sealed class ConfigApiResolvedLedger
     /// <summary>Atomically updates the snapshot and notifies change listeners.</summary>
     public void SetResolved(ResolvedConfigRecord resolved, string? etag)
     {
-        if (resolved == null)
-            throw new ArgumentNullException(nameof(resolved));
-
+        ArgumentHelpers.ThrowIfNull(resolved);
         lock (_dataLock) {
             _record = resolved;
             _etag = etag;

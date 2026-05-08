@@ -38,12 +38,8 @@ public static class ConfigApiHostingRegistrationExtensions
             ConfigApiMissingDefinitionKeyBehavior missingDefinitionKeyBehavior = ConfigApiMissingDefinitionKeyBehavior.Throw)
             where TOptions : class, new()
         {
-            if (services == null)
-                throw new ArgumentNullException(nameof(services));
-
-            if (definitionKey == null)
-                throw new ArgumentNullException(nameof(definitionKey));
-
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(definitionKey);
             services.TryAddSingleton<ConfigApiResolvedLedger>();
             services.AddSingleton<IOptionsMonitor<TOptions>>(sp => new ConfigApiOptionsMonitor<TOptions>(
                 sp.GetRequiredService<ConfigApiResolvedLedger>(), definitionKey, missingDefinitionKeyBehavior));

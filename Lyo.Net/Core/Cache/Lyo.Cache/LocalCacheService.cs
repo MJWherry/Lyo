@@ -9,7 +9,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Cache;
 
-/// <summary>Local-only cache implementation using IMemoryCache. No distributed cache or FusionCache.</summary>
+/// <summary>
+/// Local-only <see cref="ICacheService" /> built on <see cref="IMemoryCache" />: normalized keys, tag indexes for bulk invalidation, optional payload codec/serializer, and
+/// metrics.
+/// </summary>
+/// <remarks>Keys are stored lower-invariant. Disable caching via <see cref="CacheOptions.Enabled" />.</remarks>
 public sealed class LocalCacheService : ICacheService
 {
     private const string TagPrefix = "__tag:";
@@ -30,6 +34,13 @@ public sealed class LocalCacheService : ICacheService
     /// <summary>Bidirectional tag index: tag → cache key set (inner dict keys are normalized cache keys).</summary>
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, byte>> _tagToKeys = new();
 
+    /// <summary>Initializes a new <see cref="LocalCacheService" />.</summary>
+    /// <param name="memoryCache">Backing Microsoft cache instance.</param>
+    /// <param name="logger">Optional logger.</param>
+    /// <param name="options">Behavior and expirations; defaults to a new <see cref="CacheOptions" />.</param>
+    /// <param name="metrics">Optional metrics; used when <paramref name="options" />.<see cref="CacheOptions.EnableMetrics" /> is true.</param>
+    /// <param name="payloadCodec">Required for payload APIs; may be null when only object cache is used.</param>
+    /// <param name="payloadSerializer">Required for typed payload APIs.</param>
     public LocalCacheService(
         IMemoryCache memoryCache,
         ILogger<LocalCacheService>? logger = null,

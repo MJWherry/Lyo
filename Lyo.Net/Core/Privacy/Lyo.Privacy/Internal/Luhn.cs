@@ -1,12 +1,12 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Privacy.Internal;
 
 internal static class Luhn
 {
-    public static bool IsValid(string digits)
+    public static bool IsValid(string? digits)
     {
-        if (digits is null)
-            throw new ArgumentNullException(nameof(digits));
-
+        ArgumentHelpers.ThrowIfNull(digits);
         if (digits.Length < 2)
             return false;
 

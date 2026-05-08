@@ -29,11 +29,20 @@ public static class SharedEntityMetadataCache
     public static PropertyInfo? ResolveProperty(Type type, string name)
         => PropertyCache.GetOrAdd($"{EntityMetadata.PropertyPrefix}{type.FullName}:{name}", _ => ResolvePropertyCore(type, name));
 
-    /// <summary>Normalizes a field path. Shared by projection service.</summary>
+    /// <summary>Normalizes a dotted field path to canonical property names on <paramref name="rootType" />. Shared by projection and query services.</summary>
+    /// <param name="rootType">The entity type at the root of the path.</param>
+    /// <param name="path">The dotted path (may include <c>*</c> or collection <c>count</c> segments as supported by projection).</param>
+    /// <returns>The normalized dotted path using actual CLR property names.</returns>
+    /// <exception cref="ArgumentException">Thrown when a segment is invalid or not found.</exception>
     public static string NormalizeFieldPath(Type rootType, string path)
         => NormalizedPathCache.GetOrAdd($"{EntityMetadata.NormalizedPathPrefix}{rootType.FullName}:{path}", _ => NormalizeFieldPathCore(rootType, path));
 
     /// <summary>Attempts to normalize a field path without throwing. Failures are not cached (only successful normalizations use <see cref="NormalizedPathCache" />).</summary>
+    /// <param name="rootType">The entity type at the root of the path.</param>
+    /// <param name="path">The dotted path to normalize.</param>
+    /// <param name="normalized">When the method returns <c>true</c>, the normalized path; otherwise <c>null</c>.</param>
+    /// <param name="errorMessage">When the method returns <c>false</c>, the failure reason; otherwise <c>null</c>.</param>
+    /// <returns><c>true</c> if normalization succeeded.</returns>
     public static bool TryNormalizeFieldPath(Type rootType, string path, [NotNullWhen(true)] out string? normalized, [NotNullWhen(false)] out string? errorMessage)
     {
         try {

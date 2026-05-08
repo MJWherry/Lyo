@@ -6,21 +6,28 @@ namespace Lyo.Cache;
 [DebuggerDisplay("{ToString(),nq}")]
 public class CacheOptions
 {
+    /// <summary>Configuration section name for binding from <c>IConfiguration</c>.</summary>
     public const string SectionName = "CacheOptions";
 
+    /// <summary>When false, <see cref="LocalCacheService" /> bypasses storage and always invokes factories.</summary>
     public bool Enabled { get; set; } = true;
 
     /// <summary>Enables metrics collection for cache operations.</summary>
     public bool EnableMetrics { get; set; } = false;
 
+    /// <summary>Cache lifetime for reflected <see cref="System.Reflection.PropertyInfo" /> lookups (e.g. query comparison helpers).</summary>
     public TimeSpan PropertyInfoExpiration { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>Cache lifetime for type metadata entries used by conversion and comparison.</summary>
     public TimeSpan TypeMetadataExpiration { get; set; } = TimeSpan.FromHours(4);
 
+    /// <summary>Cache lifetime for compiled property getter delegates.</summary>
     public TimeSpan PropertyGetterExpiration { get; set; } = TimeSpan.FromHours(4);
 
+    /// <summary>Cache lifetime for property-difference plan metadata.</summary>
     public TimeSpan ComparisonInfoExpiration { get; set; } = TimeSpan.FromHours(1);
 
+    /// <summary>Default absolute expiration for entries unless overridden per call or per type.</summary>
     public TimeSpan DefaultExpiration { get; set; } = TimeSpan.FromHours(1);
 
     /// <summary>Defaults for byte payload cache APIs (compress/encrypt framing).</summary>

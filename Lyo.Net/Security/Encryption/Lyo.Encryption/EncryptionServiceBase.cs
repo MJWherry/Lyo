@@ -38,6 +38,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     /// <inheritdoc />
     public string FileExtension => Options.FileExtension;
 
+    /// <inheritdoc />
     public virtual Encoding DefaultEncoding { get; set; } = Encoding.UTF8;
 
     /// <inheritdoc />
@@ -57,12 +58,15 @@ public abstract class EncryptionServiceBase : IEncryptionService
         return Decrypt(chunk, keyId, key);
     }
 
+    /// <inheritdoc />
     public virtual byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => Encrypt((encoding ?? DefaultEncoding).GetBytes(text), keyId, key);
 
+    /// <inheritdoc />
     public virtual string DecryptString(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => (encoding ?? DefaultEncoding).GetString(Decrypt(encryptedBytes, keyId, key));
 
+    /// <inheritdoc />
     public virtual async Task EncryptToStreamAsync(
         Stream input,
         Stream output,
@@ -93,6 +97,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
         }
     }
 
+    /// <inheritdoc />
     public virtual async Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(input);
@@ -197,6 +202,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
     }
 
     // File operation methods from IEncryptionService
+    /// <inheritdoc />
     public virtual async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(data);
@@ -206,6 +212,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
         await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public virtual async Task EncryptToFileAsync(
         Stream input,
         string outputPath,
@@ -221,6 +228,7 @@ public abstract class EncryptionServiceBase : IEncryptionService
         await EncryptToStreamAsync(input, outputStream, keyId, key, chunkSize, ct).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public virtual async Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);

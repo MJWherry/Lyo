@@ -58,9 +58,7 @@ public static class NanoId
 
     private static string[] GenerateBulk(string alphabet, int size, int count)
     {
-        if (count <= 0)
-            throw new ArgumentOutOfRangeException(nameof(count), "Count must be positive.");
-
+        ArgumentHelpers.ThrowIfLessThanOrEqual(count, 0);
         ValidateArgs(alphabet, size);
         var mask = ComputeMask(alphabet.Length);
         var perIdBuf = PoolSize(size, mask, alphabet.Length);

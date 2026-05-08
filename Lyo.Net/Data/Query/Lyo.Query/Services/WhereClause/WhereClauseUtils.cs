@@ -7,6 +7,9 @@ namespace Lyo.Query.Services.WhereClause;
 /// <summary>Static utilities for WhereClause tree operations. Shared by QueryService and ProjectionService.</summary>
 public static class WhereClauseUtils
 {
+    /// <summary>Computes a stable string fingerprint of a where-clause tree for cache keys and logging (not cryptographic).</summary>
+    /// <param name="node">The root clause node.</param>
+    /// <returns>A concatenated structural string, or an empty string for unsupported node types.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetWhereClauseTreeHash(Models.Common.WhereClause node)
         => node switch {
@@ -17,6 +20,9 @@ public static class WhereClauseUtils
             var _ => ""
         };
 
+    /// <summary>Whether the tree contains any <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> anywhere.</summary>
+    /// <param name="node">The root node, or <c>null</c>.</param>
+    /// <returns><c>true</c> if a sub-clause exists in the tree.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool HasAnySubClause(Models.Common.WhereClause? node)
         => node switch {
@@ -27,6 +33,16 @@ public static class WhereClauseUtils
         };
 
     /// <summary>Extracts flat conditions from a WhereClause for projection-level filtering. Returns false if SubQueries or unsupported operators are present.</summary>
+    /// <param name="node">The root clause, or <c>null</c>.</param>
+    /// <param name="conditions">When the method returns <c>true</c>, all <see cref="ConditionClause" /> leaves in evaluation order.</param>
+    /// <param name="op">
+    /// When the method returns <c>true</c>, the combining operator for a single <see cref="GroupClause" /> (<see cref="GroupOperatorEnum.And" /> or
+    /// <see cref="GroupOperatorEnum.Or" />); for a bare condition, <see cref="GroupOperatorEnum.And" />.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if <paramref name="node" /> is null, a single <see cref="ConditionClause" /> without a sub-clause, or an AND/OR group without sub-clauses whose children
+    /// flatten recursively; otherwise <c>false</c>.
+    /// </returns>
     public static bool TryExtractConditions(Models.Common.WhereClause? node, out List<ConditionClause> conditions, out GroupOperatorEnum op)
     {
         conditions = [];

@@ -6,8 +6,10 @@ namespace Lyo.Query.Models.Common.Request;
 [DebuggerDisplay("{ToString(),nq}")]
 public abstract class QueryRequestBase
 {
+    /// <summary>Zero-based offset for paging (skip).</summary>
     public int? Start { get; set; }
 
+    /// <summary>Maximum number of rows to return (take).</summary>
     public int? Amount { get; set; }
 
     /// <summary>
@@ -16,10 +18,12 @@ public abstract class QueryRequestBase
     /// </summary>
     public List<object[]> Keys { get; set; } = [];
 
+    /// <summary>Optional filter tree applied to the query.</summary>
     public WhereClause? WhereClause { get; set; }
 
     /// <summary>Must match database entity property or decorate the response entity property with DatabaseNameAttribute</summary>
     public List<string> Include { get; set; } = [];
 
+    /// <summary>Ordered collection of sort keys (see <see cref="SortBy.Priority" /> for cross-property ordering).</summary>
     public List<SortBy> SortBy { get; set; } = [];
 }

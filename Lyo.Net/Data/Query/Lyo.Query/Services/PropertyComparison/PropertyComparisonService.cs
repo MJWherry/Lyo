@@ -4,8 +4,14 @@ using Lyo.Cache;
 
 namespace Lyo.Query.Services.PropertyComparison;
 
+/// <summary>
+/// Cached reflection-based implementation of <see cref="IPropertyComparisonService" />: builds comparison plans per entity/request type pair and reuses compiled property getters.
+/// </summary>
+/// <param name="cache">Cache for comparison metadata and delegates.</param>
+/// <param name="cacheOptions">Expirations for cached reflection artifacts.</param>
 public sealed class PropertyComparisonService(ICacheService cache, CacheOptions cacheOptions) : IPropertyComparisonService
 {
+    /// <inheritdoc />
     public Dictionary<string, object?> GetPropertyDifferences<TEntity, TOther>(TEntity entity, TOther newData)
     {
         var entityType = typeof(TEntity);

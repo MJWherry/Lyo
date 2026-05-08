@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Diagnostic.Breadcrumbs;
 
 /// <summary>Thread-safe bounded breadcrumb trail using a FIFO queue; oldest entries drop when over capacity.</summary>
@@ -12,9 +14,7 @@ public sealed class RingBufferBreadcrumbTrail : IBreadcrumbTrail
     /// <param name="redactor">Applied on every add; defaults to <see cref="PassThroughBreadcrumbRedactor.Instance" />.</param>
     public RingBufferBreadcrumbTrail(int capacity, IBreadcrumbRedactor? redactor = null)
     {
-        if (capacity < 1)
-            throw new ArgumentOutOfRangeException(nameof(capacity));
-
+        ArgumentHelpers.ThrowIfLessThan(capacity, 1);
         _capacity = capacity;
         _redactor = redactor ?? PassThroughBreadcrumbRedactor.Instance;
     }

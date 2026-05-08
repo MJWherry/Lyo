@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Exceptions;
 
 namespace Lyo.Privacy.Internal;
 
@@ -6,8 +7,7 @@ internal static class IbanValidator
 {
     public static bool IsValidMod97(string normalized)
     {
-        if (normalized is null)
-            throw new ArgumentNullException(nameof(normalized));
+        ArgumentHelpers.ThrowIfNull(normalized);
 #if NETSTANDARD2_0
         if (normalized.Length is < 15 or > 34)
             return false;

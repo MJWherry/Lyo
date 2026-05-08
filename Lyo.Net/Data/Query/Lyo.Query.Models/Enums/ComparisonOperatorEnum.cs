@@ -2,8 +2,8 @@ using System.ComponentModel;
 
 namespace Lyo.Query.Models.Enums;
 
-//todo Add Only
-//todo add starts/ends with, etc work for guid values
+/// <summary>Predicate operator for a <see cref="Lyo.Query.Models.Common.ConditionClause" />. Applicable CLR types vary per member.</summary>
+/// <remarks>GUID fields support the same string-style operators as <see cref="string" /> by comparing canonical string forms.</remarks>
 public enum ComparisonOperatorEnum
 {
     [Description("Unknown")]

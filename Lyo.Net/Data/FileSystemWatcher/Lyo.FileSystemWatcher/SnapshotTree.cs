@@ -6,21 +6,28 @@ namespace Lyo.FileSystemWatcher;
 /// </summary>
 public sealed class SnapshotTree
 {
+    /// <summary>Root directory that was snapshotted.</summary>
     public string RootPath { get; }
 
+    /// <summary>String comparison used when matching paths against this tree.</summary>
     public StringComparison PathComparison { get; }
 
+    /// <summary>Comparer for path segment keys (derived from <see cref="PathComparison" />).</summary>
     public StringComparer SegmentComparer { get; }
 
+    /// <summary>Root node of the tree (synthetic root holding top-level children of <see cref="RootPath" />).</summary>
     public SnapshotDirectoryNode Root { get; }
 
+    /// <summary>Total file entries in the tree.</summary>
     public int FileCount { get; }
 
+    /// <summary>Total directory nodes excluding the synthetic root segment when applicable.</summary>
     public int DirectoryCount { get; }
 
     /// <summary>Files plus directories (excluding the snapshot root node), matching prior flat dictionary key count.</summary>
     public int TotalEntryCount => FileCount + DirectoryCount;
 
+    /// <summary>Creates a snapshot descriptor. Prefer <see cref="Utilities.TakeSnapshot" /> for construction.</summary>
     public SnapshotTree(string rootPath, StringComparison pathComparison, SnapshotDirectoryNode root, int fileCount, int directoryCount)
     {
         RootPath = rootPath;
@@ -31,6 +38,7 @@ public sealed class SnapshotTree
         DirectoryCount = directoryCount;
     }
 
+    /// <summary>Whether <paramref name="fullPath" /> exists in this snapshot as a file or directory node.</summary>
     public bool ContainsPath(string fullPath)
     {
         if (TryGetDirectory(fullPath, out var _))
@@ -39,6 +47,7 @@ public sealed class SnapshotTree
         return TryGetFile(fullPath, out var _);
     }
 
+    /// <summary>Attempts to resolve a file path to its <see cref="DirectorySnapshotEntry" />.</summary>
     public bool TryGetFile(string fullPath, out DirectorySnapshotEntry? entry)
     {
         entry = null;
@@ -53,6 +62,7 @@ public sealed class SnapshotTree
         return dirNode.Files.TryGetValue(fileName, out entry);
     }
 
+    /// <summary>Attempts to resolve a directory path to a <see cref="SnapshotDirectoryNode" />.</summary>
     public bool TryGetDirectory(string fullPath, out SnapshotDirectoryNode? node)
     {
         node = null;

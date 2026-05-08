@@ -4,19 +4,27 @@ using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Common;
 
+/// <summary>Boolean combination of child clauses with <see cref="Operator" /> (AND/OR).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class GroupClause : WhereClause, IEquatable<GroupClause>
 {
+    /// <summary>Whether child clauses are combined with AND or OR.</summary>
     public GroupOperatorEnum Operator { get; set; }
 
+    /// <summary>Child nodes evaluated according to <see cref="Operator" />.</summary>
     public List<WhereClause> Children { get; set; }
 
+    /// <summary>Initializes a group with <see cref="GroupOperatorEnum.And" /> and an empty child list.</summary>
     public GroupClause()
     {
         Operator = GroupOperatorEnum.And;
         Children = [];
     }
 
+    /// <summary>Initializes a group with the given operator and children.</summary>
+    /// <param name="groupOperator">AND or OR.</param>
+    /// <param name="children">Child clauses (must not be null).</param>
+    /// <param name="description">Optional <see cref="WhereClause.Description" />.</param>
     public GroupClause(GroupOperatorEnum groupOperator, List<WhereClause> children, string? description = null)
     {
         Operator = groupOperator;
@@ -24,6 +32,7 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
         Description = description;
     }
 
+    /// <summary>Initializes a group with the given operator, optional description, and child nodes.</summary>
     public GroupClause(GroupOperatorEnum op, string? description = null, params WhereClause[] children)
     {
         Operator = op;
@@ -31,6 +40,7 @@ public class GroupClause : WhereClause, IEquatable<GroupClause>
         Children = new(children);
     }
 
+    /// <summary>Initializes a group from a sequence of child clauses.</summary>
     public GroupClause(GroupOperatorEnum op, IEnumerable<WhereClause> children, string? description = null)
     {
         Operator = op;

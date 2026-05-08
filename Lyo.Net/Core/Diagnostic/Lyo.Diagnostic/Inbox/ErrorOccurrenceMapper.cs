@@ -2,6 +2,7 @@ using Lyo.Diagnostic.Breadcrumbs;
 using Lyo.Diagnostic.Classification;
 using Lyo.Diagnostic.Context;
 using Lyo.Diagnostic.Sanitisation;
+using Lyo.Exceptions;
 
 namespace Lyo.Diagnostic.Inbox;
 
@@ -22,9 +23,7 @@ public static class ErrorOccurrenceMapper
         int maxExceptionMessageLength = DefaultMaxExceptionMessageLength,
         int maxBreadcrumbsInSnapshot = DefaultMaxBreadcrumbsInSnapshot)
     {
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
+        ArgumentHelpers.ThrowIfNull(context);
         string? crashLocation;
         string? exceptionMessage;
         if (sanitiser is not null) {

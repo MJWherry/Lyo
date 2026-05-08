@@ -50,6 +50,14 @@ internal record PropertyPathMetadata(IReadOnlyList<PropertyInfo> Properties, Typ
     public override string ToString() => $"PropertyCount={Properties.Count} CollectionIndex={CollectionPropertyIndex} FinalType={FinalType.FullName} IsCountPath={IsCountPath}";
 }
 
+/// <summary>
+/// Default <see cref="IWhereClauseService" />: builds LINQ expression trees for <see cref="Lyo.Query.Models.Common.WhereClause" />, caches predicates and matchers, and supports
+/// in-memory evaluation and <see cref="ExplainMatch{TEntity}" /> for loaded entities.
+/// </summary>
+/// <remarks>
+/// Requires <see cref="ICacheService" /> and <see cref="IValueConversionService" />. Uses <see cref="SharedEntityMetadataCache" /> for reflection metadata. Optional metrics
+/// record durations and counters under <see cref="Lyo.Query.Constants.Metrics" />.
+/// </remarks>
 public class BaseWhereClauseService : IWhereClauseService
 {
     private const string MatcherCachePrefix = "filter_matcher";
@@ -66,6 +74,12 @@ public class BaseWhereClauseService : IWhereClauseService
     protected readonly CacheOptions CacheOptions;
     protected readonly IValueConversionService ValueConversion;
 
+    /// <summary>Initializes a new instance of <see cref="BaseWhereClauseService" />.</summary>
+    /// <param name="cache">Cache for compiled predicates and matchers.</param>
+    /// <param name="cacheOptions">Expiration and feature flags (including type-specific expirations).</param>
+    /// <param name="valueConversion">Converts filter literal values to property types.</param>
+    /// <param name="logger">Optional logger; defaults to a null logger.</param>
+    /// <param name="metrics">Optional metrics; used only when <paramref name="cacheOptions" />.<see cref="CacheOptions.EnableMetrics" /> is true and this parameter is non-null.</param>
     public BaseWhereClauseService(
         ICacheService cache,
         CacheOptions cacheOptions,
@@ -80,6 +94,7 @@ public class BaseWhereClauseService : IWhereClauseService
         _metrics = cacheOptions.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
     }
 
+    /// <inheritdoc />
     public virtual bool MatchesWhereClause<TEntity>(TEntity entity, Models.Common.WhereClause? queryNode)
     {
         if (entity is null || queryNode is null)
@@ -114,6 +129,7 @@ public class BaseWhereClauseService : IWhereClauseService
         return new(root, blockingPath, failureSummary, orBranches);
     }
 
+    /// <inheritdoc />
     public virtual IQueryable<TEntity> ApplyWhereClause<TEntity>(IQueryable<TEntity> source, Models.Common.WhereClause? queryNode, bool includeSubClauses = true)
     {
         if (queryNode is null)
@@ -135,6 +151,7 @@ public class BaseWhereClauseService : IWhereClauseService
         }
     }
 
+    /// <inheritdoc />
     public virtual IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null)
     {
         if (string.IsNullOrEmpty(propertyName))
@@ -163,6 +180,7 @@ public class BaseWhereClauseService : IWhereClauseService
         }
     }
 
+    /// <inheritdoc />
     public virtual IQueryable<TEntity> ApplyOrdering<TEntity>(
         IQueryable<TEntity> queryable,
         IEnumerable<SortBy> sortByProps,
@@ -189,6 +207,7 @@ public class BaseWhereClauseService : IWhereClauseService
         }
     }
 
+    /// <inheritdoc />
     public virtual IEnumerable<string> GetCollectionIncludePathsForWhereClause<TEntity>(Models.Common.WhereClause? queryNode)
     {
         if (queryNode == null)
@@ -218,6 +237,7 @@ public class BaseWhereClauseService : IWhereClauseService
             }, typeof(TEntity), tags) ?? [];
     }
 
+    /// <inheritdoc />
     public virtual bool TryValidatePropertyPath<TEntity>(string propertyName, out string? errorMessage)
     {
         errorMessage = null;
@@ -545,6 +565,14 @@ public class BaseWhereClauseService : IWhereClauseService
             yield return f;
     }
 
+    /// <summary>
+    /// Builds a LINQ predicate expression for <paramref name="queryNode" /> without applying it to an <see cref="IQueryable{T}" />. Override in derived services that customize
+    /// translation.
+    /// </summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <param name="queryNode">The filter tree, or <c>null</c>.</param>
+    /// <param name="includeSubClauses">When <c>false</c>, omits <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> chains from the expression.</param>
+    /// <returns>A lambda <c>x => …</c>, or <c>null</c> when <paramref name="queryNode" /> is null.</returns>
     public virtual Expression<Func<TEntity, bool>>? BuildExpressionFromWhereClause<TEntity>(Models.Common.WhereClause? queryNode, bool includeSubClauses = true)
     {
         if (queryNode == null)
@@ -1168,7 +1196,7 @@ public class BaseWhereClauseService : IWhereClauseService
         };
 
     /// <summary>
-    /// Guid (and nullable Guid) use the same string operations as <see cref="string" />; values are compared on canonical <see cref="Guid.ToString" /> forms (aligned with
+    /// Guid (and nullable Guid) use the same string operations as <see cref="string" />; values are compared on canonical <see cref="Guid.ToString()" /> forms (aligned with
     /// typical SQL string casts).
     /// </summary>
     private static bool IsGuidLikeType(Type type)
@@ -1304,6 +1332,11 @@ public class BaseWhereClauseService : IWhereClauseService
         return (ValueConversion.ConvertToTargetType(value, propertyType), null);
     }
 
+    /// <summary>Whether <paramref name="entity" /> matches <paramref name="queryNode" /> using a cached compiled delegate.</summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <param name="entity">The entity instance.</param>
+    /// <param name="queryNode">The filter tree, or <c>null</c> for a vacuous match.</param>
+    /// <returns><c>true</c> if the entity matches; <c>false</c> if the entity is null or the clause does not match.</returns>
     public virtual bool Match<TEntity>(TEntity entity, Models.Common.WhereClause? queryNode)
     {
         if (entity == null)
@@ -1315,6 +1348,14 @@ public class BaseWhereClauseService : IWhereClauseService
         return GetOrCreateWhereClauseMatcher<TEntity>(queryNode)(entity);
     }
 
+    /// <summary>Whether <paramref name="entity" /> matches the optional <see cref="QueryReq.WhereClause" /> on <paramref name="queryRequest" />.</summary>
+    /// <typeparam name="TEntity">The entity type.</typeparam>
+    /// <param name="entity">The entity instance.</param>
+    /// <param name="queryRequest">The API query request, or <c>null</c> (treated as no filter).</param>
+    /// <returns>
+    /// <c>false</c> if <paramref name="entity" /> is null; <c>true</c> if the request is null or has no where clause; otherwise the result of
+    /// <see cref="Match{TEntity}(TEntity, Lyo.Query.Models.Common.WhereClause?)" />.
+    /// </returns>
     public virtual bool Match<TEntity>(TEntity entity, QueryReq? queryRequest)
     {
         if (entity == null)

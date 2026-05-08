@@ -43,9 +43,7 @@ public sealed class InMemoryErrorInbox : IErrorOccurrenceSink, IErrorInboxReader
     /// <inheritdoc />
     public bool TryGetOccurrence(string occurrenceId, out ErrorOccurrenceRecord? record)
     {
-        if (occurrenceId is null)
-            throw new ArgumentNullException(nameof(occurrenceId));
-
+        ArgumentHelpers.ThrowIfNull(occurrenceId);
         lock (_lock) {
             for (var i = _occurrences.Count - 1; i >= 0; i--) {
                 if (_occurrences[i].OccurrenceId == occurrenceId) {

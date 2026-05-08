@@ -4,8 +4,10 @@ using Lyo.Query.Models.Attributes;
 
 namespace Lyo.Query.Models.Builders;
 
+/// <summary>Resolves dotted query paths from LINQ expression lambdas, including <c>Count()</c> suffix mapping to a <c>Count</c> segment.</summary>
 internal static class QueryBuilderExpressionPathHelper
 {
+    /// <summary>Extracts a dotted property path from <paramref name="expr" />, honoring <see cref="QueryPropertyNameAttribute" /> on properties.</summary>
     public static string GetPropertyPath(LambdaExpression? expr)
     {
         if (expr == null)

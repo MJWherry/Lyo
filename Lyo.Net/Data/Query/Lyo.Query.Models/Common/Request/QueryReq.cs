@@ -6,6 +6,7 @@ namespace Lyo.Query.Models.Common.Request;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class QueryReq : QueryRequestBase, IQueryExecutionRequest
 {
+    /// <summary>Execution options for counting, include filtering, and related query behavior.</summary>
     public QueryRequestOptions Options { get; set; } = new();
 
     QueryRequestOptions IQueryExecutionRequest.Options => Options;
