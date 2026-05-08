@@ -8,7 +8,21 @@ using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 
 namespace Lyo.DateAndTime;
 
-/// <summary>Static utility class for date and time operations including timezone conversions and scheduling.</summary>
+/// <summary>US-state timezone conversions and day-of-week scheduling helpers anchored in each state’s local civil time.</summary>
+/// <remarks>
+/// <para>
+/// Time zones resolve through <see cref="Lyo.Common.Enums.GeographicInfo.FromState" /> (IANA ids such as <c>America/New_York</c>). When the OS cannot resolve an id,
+/// conversion members return <see langword="null" /> rather than throwing.
+/// </para>
+/// <para>
+/// Scheduling interprets <see cref="DayFlags" /> with one bit per weekday. Next-run search scans at most seven local midnights ahead; discrete <c>IsPastDue</c> scans cap
+/// backward history similarly. The interval-based <c>IsPastDue</c> overload only evaluates <em>today’s</em> local window — unlike the discrete-times overload which walks
+/// multiple days.
+/// </para>
+/// <para>
+/// On .NET 6+, APIs use <see cref="TimeOnly" />; on .NET Standard 2.0 use <see cref="TimeOnlyModel" /> instead (this library aliases the type internally).
+/// </para>
+/// </remarks>
 public static class DateAndTime
 {
     private const int DefaultMaxDaysLookAhead = 7;
@@ -187,16 +201,21 @@ public static class DateAndTime
         return false;
     }
 
-    /// <summary>Checks if a scheduled job is past due within a time window with intervals.</summary>
-    /// <param name="usStateAbbreviation">The US state abbreviation</param>
-    /// <param name="startTime">The start time of the scheduling window</param>
-    /// <param name="endTime">The end time of the scheduling window</param>
-    /// <param name="minuteInterval">The interval in minutes between scheduled times</param>
-    /// <param name="scheduleFlags">The day flags indicating which days are scheduled</param>
-    /// <param name="lastRunDateTime">The last run DateTime in UTC. If null, defaults to 7 days ago.</param>
-    /// <returns>True if the schedule is past due, false otherwise</returns>
-    /// <exception cref="ArgumentException">Thrown when startTime is greater than endTime or minuteInterval is less than or equal to zero</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the state is not mapped</exception>
+    /// <summary>Interval-based past-due check that only inspects <em>today’s</em> local window in the given state.</summary>
+    /// <remarks>
+    /// Unlike the discrete-time overload, this method does not walk historical days: it returns <see langword="false" /> unless the current local day matches
+    /// <paramref name="scheduleFlags" />, the clock is inside <c>[startTime, endTime]</c>, and the latest completed tick strictly after
+    /// <paramref name="lastRunDateTime" /> (localized) is still in the past relative to “now”.
+    /// </remarks>
+    /// <param name="usStateAbbreviation">State whose local civil time defines “today” and the window.</param>
+    /// <param name="startTime">Inclusive window start.</param>
+    /// <param name="endTime">Inclusive window end.</param>
+    /// <param name="minuteInterval">Positive minute stride between ticks.</param>
+    /// <param name="scheduleFlags">Bitmask of weekdays that participate.</param>
+    /// <param name="lastRunDateTime">Last successful run in UTC; defaults to seven days ago when <see langword="null" />.</param>
+    /// <returns><see langword="true" /> when a tick should have fired after the localized last run but before now.</returns>
+    /// <exception cref="ArgumentException"><paramref name="startTime" /> is after <paramref name="endTime" />, or <paramref name="minuteInterval" /> is not positive.</exception>
+    /// <exception cref="InvalidOperationException">Local time or last-run localization failed for the state.</exception>
     public static bool IsPastDue(USState usStateAbbreviation, TimeOnly startTime, TimeOnly endTime, int minuteInterval, DayFlags scheduleFlags, DateTime? lastRunDateTime)
     {
         ArgumentHelpers.ThrowIf(startTime > endTime, "Start time must be less than or equal to end time.", nameof(startTime));
@@ -224,12 +243,17 @@ public static class DateAndTime
         return lastScheduledTime > lastRun.Value;
     }
 
-    /// <summary>Gets all scheduled times for a given day based on schedule times and day flags.</summary>
-    /// <param name="date">The date to get scheduled times for</param>
-    /// <param name="scheduleTimes">The list of scheduled times</param>
-    /// <param name="scheduleFlags">The day flags indicating which days are scheduled</param>
-    /// <returns>An enumerable of scheduled DateTime values for the day</returns>
-    /// <exception cref="ArgumentNullException">Thrown when scheduleTimes is null</exception>
+    /// <summary>Enumerates concrete local <see cref="DateTime" /> instants on a calendar day for discrete schedule times.</summary>
+    /// <remarks>
+    /// Uses <paramref name="date" />.<see cref="DateTime.Date" /> only — caller must supply the intended civil calendar day (this overload does not take a
+    /// <see cref="Lyo.Common.Enums.USState" />). Combine with <see cref="ConvertToLocalTime" /> first if you need another zone’s calendar.
+    /// </remarks>
+    /// <param name="date">Any instant on the target day; only its date component is used.</param>
+    /// <param name="scheduleTimes">Clock times to materialize on that date.</param>
+    /// <param name="scheduleFlags">Bitmask of weekdays that participate in the schedule.</param>
+    /// <returns>Ordered local instants on <paramref name="date" /> when the weekday matches; otherwise empty.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="scheduleTimes" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentException"><paramref name="scheduleTimes" /> is empty.</exception>
     public static IEnumerable<DateTime> GetScheduledTimesForDay(DateTime date, IEnumerable<TimeOnly> scheduleTimes, DayFlags scheduleFlags)
     {
         var times = scheduleTimes.ToList();
@@ -242,14 +266,15 @@ public static class DateAndTime
             yield return date.Date.Add(scheduleTime.ToTimeSpan());
     }
 
-    /// <summary>Gets all scheduled times for a given day within a time window with intervals.</summary>
-    /// <param name="date">The date to get scheduled times for</param>
-    /// <param name="startTime">The start time of the scheduling window</param>
-    /// <param name="endTime">The end time of the scheduling window</param>
-    /// <param name="intervalMinutes">The interval in minutes between scheduled times</param>
-    /// <param name="scheduleFlags">The day flags indicating which days are scheduled</param>
-    /// <returns>An enumerable of scheduled DateTime values for the day</returns>
-    /// <exception cref="ArgumentException">Thrown when startTime is greater than endTime or intervalMinutes is less than or equal to zero</exception>
+    /// <summary>Enumerates interval-based schedule ticks on a calendar day inside <c>[startTime, endTime]</c>.</summary>
+    /// <remarks>Uses <paramref name="date" />.<see cref="DateTime.Date" /> only; caller supplies the intended civil day (no <see cref="Lyo.Common.Enums.USState" /> parameter).</remarks>
+    /// <param name="date">Any instant on the target day; only its date component is used.</param>
+    /// <param name="startTime">Inclusive window start (local time-of-day).</param>
+    /// <param name="endTime">Inclusive window end (local time-of-day).</param>
+    /// <param name="intervalMinutes">Positive minute stride between generated instants.</param>
+    /// <param name="scheduleFlags">Bitmask of weekdays that participate in the schedule.</param>
+    /// <returns>Local instants for every tick in the window when the weekday matches; otherwise empty.</returns>
+    /// <exception cref="ArgumentException"><paramref name="startTime" /> is after <paramref name="endTime" />, or <paramref name="intervalMinutes" /> is not positive.</exception>
     public static IEnumerable<DateTime> GetScheduledTimesForDay(DateTime date, TimeOnly startTime, TimeOnly endTime, int intervalMinutes, DayFlags scheduleFlags)
     {
         ArgumentHelpers.ThrowIf(startTime > endTime, "Start time must be less than or equal to end time.", nameof(startTime));

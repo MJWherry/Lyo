@@ -1,390 +1,100 @@
 # Lyo.DateAndTime
 
-A production-ready date and time utility library for .NET with timezone conversion, scheduling, and US state timezone
-mapping support.
+Date, time, US timezone conversion, day-of-week scheduling, and US holiday metadata for .NET. The API is **static** and **thread-safe** (no mutable shared state).
 
-## DateOnly and TimeOnly on .NET Standard 2.0
-
-This library targets **`netstandard2.0`** (and **`net10.0`**). The BCL types **`System.DateOnly`** and **`System.TimeOnly`** are not available on .NET Standard 2.0; they were
-introduced in .NET 6.
-
-For that surface area, the library provides **`DateOnlyModel`** and **`TimeOnlyModel`**: implementations aligned with the `System.DateOnly` / `System.TimeOnly` APIs so consumers on
-`netstandard2.0` get the same date-only and time-of-day behavior. Scheduling helpers on `DateAndTime` use `System.TimeOnly` when building for .NET 6 or later, and `TimeOnlyModel`
-when building for .NET Standard 2.0.
-
-## Features
-
-- ✅ **Timezone Conversion** - Convert between UTC and US state local times
-- ✅ **US State Mapping** - Automatic timezone mapping for all US states
-- ✅ **Scheduling** - Find next scheduled times and check if schedules are past due
-- ✅ **Day Flags** - Flexible day-of-week scheduling with flags (weekdays, weekends, specific days)
-- ✅ **Time Windows** - Schedule within time windows with configurable intervals
-- ✅ **Cross-Platform** - Supports .NET Standard 2.0 and .NET 10.0
-- ✅ **DateOnly/TimeOnly Support** - `DateOnlyModel` / `TimeOnlyModel` on .NET Standard 2.0;
-  see [DateOnly and TimeOnly on .NET Standard 2.0](#dateonly-and-timeonly-on-net-standard-20). Scheduling APIs use `System.TimeOnly` on .NET 6+.
-- ✅ **JSON Serialization** - Built-in JSON converters for DateOnlyModel and TimeOnlyModel
-- ✅ **Simple API** - Easy to use static utility class, no instantiation required
-- ✅ **Error Handling** - Comprehensive error handling with meaningful exceptions
-- ✅ **Input Validation** - Automatic validation of method parameters
-
-## Quick Start
-
-### Use the Static Utility Class
-
-```csharp
-// Get current local time for New York
-var nyTime = DateAndTime.GetCurrentLocalDateTime(USState.NY);
-
-// Convert UTC to local time
-var utcTime = DateTime.UtcNow;
-var localTime = DateAndTime.ConvertToLocalTime(USState.CA, utcTime);
-
-// Convert local time to UTC
-var localDateTime = new DateTime(2024, 1, 15, 10, 0, 0);
-var utcDateTime = DateAndTime.ConvertToUtc(USState.TX, localDateTime);
-```
-
-## Core Concepts
-
-### US States and Timezones
-
-The library maps all US states to their respective timezones:
-
-- **Eastern Time Zone** - NY, FL, MA, GA, etc.
-- **Central Time Zone** - TX, IL, MO, etc.
-- **Mountain Time Zone** - CO, AZ, UT, etc.
-- **Pacific Time Zone** - CA, WA, OR, NV
-- **Alaska Time Zone** - AK, HI
-
-### Day Flags
-
-Use `DayFlags` enum to specify which days of the week are scheduled:
-
-```csharp
-// Weekdays only (Monday-Friday)
-DayFlags.Weekdays
-
-// Weekends only (Saturday-Sunday)
-DayFlags.Weekends
-
-// Every day
-DayFlags.EveryDay
-
-// Specific days
-DayFlags.Mon | DayFlags.Wed | DayFlags.Fri
-
-// Custom combination
-DayFlags.Mon | DayFlags.Tue | DayFlags.Thu
-```
-
-## API Reference
-
-### Timezone Conversion
-
-#### GetCurrentLocalDateTime
-
-Gets the current local DateTime for a given US state.
-
-```csharp
-DateTime? GetCurrentLocalDateTime(USState usStateAbbreviation)
-```
-
-**Example:**
-
-```csharp
-var nyTime = DateAndTime.GetCurrentLocalDateTime(USState.NY);
-```
-
-#### ConvertToLocalTime
-
-Converts a UTC DateTime to local time for a given US state.
-
-```csharp
-DateTime? ConvertToLocalTime(USState usStateAbbreviation, DateTime utcDateTime)
-```
-
-**Example:**
-
-```csharp
-var utcTime = new DateTime(2024, 1, 15, 15, 0, 0, DateTimeKind.Utc);
-var localTime = DateAndTime.ConvertToLocalTime(USState.CA, utcTime);
-```
-
-#### ConvertToUtc
-
-Converts a local DateTime to UTC for a given US state.
-
-```csharp
-DateTime? ConvertToUtc(USState usStateAbbreviation, DateTime localDateTime)
-```
-
-**Example:**
-
-```csharp
-var localTime = new DateTime(2024, 1, 15, 10, 0, 0);
-var utcTime = DateAndTime.ConvertToUtc(USState.NY, localTime);
-```
-
-### Scheduling
-
-#### GetNextScheduledDateTime (List of Times)
-
-Gets the next scheduled DateTime based on a list of times and day flags.
-
-```csharp
-DateTime GetNextScheduledDateTime(
-    USState usStateAbbreviation, 
-    IEnumerable<TimeOnly> scheduleTimes, 
-    DayFlags scheduleFlags)
-```
-
-**Example:**
-
-```csharp
-var scheduleTimes = new List<TimeOnly>
-{
-    new TimeOnly(9, 0),  // 9:00 AM
-    new TimeOnly(14, 0), // 2:00 PM
-    new TimeOnly(18, 0)  // 6:00 PM
-};
-
-var nextTime = DateAndTime.GetNextScheduledDateTime(
-    USState.NY, 
-    scheduleTimes, 
-    DayFlags.Weekdays);
-```
-
-#### GetNextScheduledDateTime (Time Window)
-
-Gets the next scheduled DateTime within a time window with intervals.
-
-```csharp
-DateTime GetNextScheduledDateTime(
-    USState usStateAbbreviation, 
-    TimeOnly startTime, 
-    TimeOnly endTime, 
-    int intervalMinutes, 
-    DayFlags scheduleFlags)
-```
-
-**Example:**
-
-```csharp
-var nextTime = DateAndTime.GetNextScheduledDateTime(
-    USState.CA,
-    new TimeOnly(9, 0),   // Start at 9:00 AM
-    new TimeOnly(17, 0),  // End at 5:00 PM
-    60,                   // Every 60 minutes
-    DayFlags.Weekdays);
-```
-
-#### IsPastDue (List of Times)
-
-Checks if a scheduled job is past due based on schedule times and last run time.
-
-```csharp
-bool IsPastDue(
-    USState usStateAbbreviation, 
-    List<TimeOnly> scheduleTimes, 
-    DayFlags scheduleFlags, 
-    DateTime? lastRunDateTime)
-```
-
-**Example:**
-
-```csharp
-var scheduleTimes = new List<TimeOnly> { new TimeOnly(9, 0) };
-var lastRun = DateTime.UtcNow.AddDays(-2);
-
-var isPastDue = DateAndTime.IsPastDue(
-    USState.NY,
-    scheduleTimes,
-    DayFlags.Weekdays,
-    lastRun);
-```
-
-#### IsPastDue (Time Window)
-
-Checks if a scheduled job is past due within a time window with intervals.
-
-```csharp
-bool IsPastDue(
-    USState usStateAbbreviation, 
-    TimeOnly startTime, 
-    TimeOnly endTime, 
-    int minuteInterval, 
-    DayFlags scheduleFlags, 
-    DateTime? lastRunDateTime)
-```
-
-**Example:**
-
-```csharp
-var isPastDue = DateAndTime.IsPastDue(
-    USState.CA,
-    new TimeOnly(9, 0),
-    new TimeOnly(17, 0),
-    60,
-    DayFlags.Weekdays,
-    DateTime.UtcNow.AddHours(-3));
-```
-
-#### GetScheduledTimesForDay
-
-Gets all scheduled times for a given day.
-
-```csharp
-IEnumerable<DateTime> GetScheduledTimesForDay(
-    USState usStateAbbreviation, 
-    DateTime date, 
-    IEnumerable<TimeOnly> scheduleTimes, 
-    DayFlags scheduleFlags)
-
-IEnumerable<DateTime> GetScheduledTimesForDay(
-    USState usStateAbbreviation, 
-    DateTime date, 
-    TimeOnly startTime, 
-    TimeOnly endTime, 
-    int intervalMinutes, 
-    DayFlags scheduleFlags)
-```
-
-**Example:**
-
-```csharp
-var date = new DateTime(2024, 1, 15); // Monday
-var scheduleTimes = new List<TimeOnly> { new TimeOnly(9, 0), new TimeOnly(15, 0) };
-
-var times = DateAndTime.GetScheduledTimesForDay(
-    USState.NY,
-    date,
-    scheduleTimes,
-    DayFlags.Mon);
-```
-
-#### IsScheduledDay
-
-Checks if a given DateTime falls on a scheduled day.
-
-```csharp
-bool IsScheduledDay(DateTime dateTime, DayFlags scheduleFlags)
-```
-
-**Example:**
-
-```csharp
-var date = new DateTime(2024, 1, 15); // Monday
-var isScheduled = DateAndTime.IsScheduledDay(date, DayFlags.Weekdays); // true
-```
-
-### Timezone Utilities
-
-#### GetTimeZoneByState
-
-Gets the TimeZoneInfo for a given US state abbreviation.
-
-```csharp
-TimeZoneInfo? GetTimeZoneByState(USState usStateAbbreviation)
-```
-
-**Example:**
-
-```csharp
-var timezone = DateAndTime.GetTimeZoneByState(USState.NY);
-```
-
-## Configuration
-
-The utility class uses default values for look-ahead and past-due checking:
-
-- **MaxDaysLookAhead**: 7 days (when finding next scheduled time)
-- **MaxDaysPastDueCheck**: 7 days (when checking if schedule is past due)
-
-These are internal constants and cannot be configured. If you need different values, you can create wrapper methods or extend the functionality.
-
-## JSON Serialization
-
-The library includes JSON converters for `DateOnlyModel` and `TimeOnlyModel` (used on .NET Standard 2.0):
-
-```csharp
-var options = new JsonSerializerOptions();
-options.Converters.Add(new DateOnlyModelConverter());
-options.Converters.Add(new TimeOnlyModelConverter());
-
-var json = JsonSerializer.Serialize(dateOnlyModel, options);
-```
-
-## Error Handling
-
-The library throws meaningful exceptions:
-
-- **`ArgumentNullException`** - When required parameters are null
-- **`ArgumentException`** - When parameters are invalid (e.g., empty collections, invalid intervals)
-- **`InvalidOperationException`** - When operations cannot be completed (e.g., state not mapped, no scheduled times
-  found)
-- **`TimeZoneNotFoundException`** - When a timezone is not found on the system
-
-## Examples
-
-### Example 1: Check if Job is Past Due
-
-```csharp
-public bool ShouldRunJob(DateTime? lastRunTime)
-{
-    var scheduleTimes = new List<TimeOnly>
-    {
-        new TimeOnly(9, 0),   // 9:00 AM
-        new TimeOnly(15, 0),   // 3:00 PM
-        new TimeOnly(21, 0)   // 9:00 PM
-    };
-
-    return DateAndTime.IsPastDue(
-        USState.NY,
-        scheduleTimes,
-        DayFlags.Weekdays,
-        lastRunTime);
-}
-```
-
-### Example 2: Get Next Scheduled Time
-
-```csharp
-public DateTime GetNextNotificationTime()
-{
-    // Send notifications every hour between 9 AM and 5 PM on weekdays
-    return DateAndTime.GetNextScheduledDateTime(
-        USState.CA,
-        new TimeOnly(9, 0),
-        new TimeOnly(17, 0),
-        60,
-        DayFlags.Weekdays);
-}
-```
-
-### Example 3: Convert Times for Display
-
-```csharp
-public string FormatTimeForState(DateTime utcTime, USState state)
-{
-    var localTime = DateAndTime.ConvertToLocalTime(state, utcTime);
-    return localTime?.ToString("g") ?? "N/A";
-}
-```
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
 ## Dependencies
 
-*(Synchronized from `Lyo.DateAndTime.csproj`.)*
-
-**Target framework:** `netstandard2.0;net10.0`
-
-### NuGet packages
-
-*None declared in this project file.*
-
-### Project references
-
-- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md) — `USState`, `DayFlags`, `GeographicInfo` (IANA timezone IDs per state)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+
+---
+
+## Time zones and `DateAndTime`
+
+`DateAndTime` resolves `TimeZoneInfo` via `GeographicInfo.FromState(usState)` in `Lyo.Common`. Each US state maps to an **IANA** identifier (for example `America/New_York`, `America/Chicago`, `America/Denver`, `America/Los_Angeles`, `America/Phoenix`, `America/Anchorage`, `Pacific/Honolulu`). If the OS does not recognize the ID, `GetTimeZoneByState` returns `null` and conversion helpers return `null` instead of throwing.
+
+### `DateAndTime` — timezone
+
+| Member | Description |
+|--------|-------------|
+| `GetTimeZoneByState(USState)` | `TimeZoneInfo?` for the state’s primary mapping, or `null`. |
+| `GetLocalDateTime(USState, DateTime? utc = null)` | Local `DateTime` in that zone; `utc` defaults to `DateTime.UtcNow`. |
+| `GetCurrentLocalDateTime(USState)` | Same as `GetLocalDateTime(state, DateTime.UtcNow)`. |
+| `ConvertToLocalTime(USState, DateTime utcDateTime)` | Alias of `GetLocalDateTime` with an explicit UTC instant. |
+| `ConvertToUtc(USState, DateTime localDateTime)` | Interprets `localDateTime` in the state’s zone and returns UTC, or `null` if unmapped. |
+
+### `DateAndTime` — scheduling
+
+Scheduling uses **local** `DateTime` in the given state (`GetCurrentLocalDateTime` / conversions). `DayFlags` is a `[Flags]` enum from `Lyo.Common` (weekday bits). Internally the day flag is `1 << (int)date.DayOfWeek`.
+
+**Constants (not configurable):** next-slot search looks up to **7 days** ahead; discrete-time past-due scans up to **7 days** of history when `lastRunDateTime` is null (default anchor is UTC “now minus 7 days”).
+
+| Member | Description |
+|--------|-------------|
+| `GetNextScheduledDateTime(USState, IEnumerable<TimeOnly> times, DayFlags)` | Next local instant strictly after “now” on an allowed day, for one of the listed clock times. |
+| `GetNextScheduledDateTime(USState, TimeOnly start, TimeOnly end, int intervalMinutes, DayFlags)` | Next instant after “now” on an allowed day, stepping by `intervalMinutes` within `[start, end]` inclusive. |
+| `IsPastDue(USState, IEnumerable<TimeOnly> times, DayFlags, DateTime? lastRunUtc)` | `true` if any scheduled slot **after** the localized last run and **on or before** localized “now” falls on an allowed day within the scan window. |
+| `IsPastDue(USState, TimeOnly start, TimeOnly end, int minuteInterval, DayFlags, DateTime? lastRunUtc)` | **Window mode:** only considers **today** (local calendar). Returns `true` only if today is scheduled, “now” is inside `[start, end]`, and the latest tick **at or before** “now” is after the localized last run. |
+| `GetScheduledTimesForDay(DateTime date, IEnumerable<TimeOnly> times, DayFlags)` | Yields local `DateTime` values on `date.Date` for each time if `date` matches `DayFlags`. **Does not** take `USState` (caller supplies the calendar date). |
+| `GetScheduledTimesForDay(DateTime date, TimeOnly start, TimeOnly end, int intervalMinutes, DayFlags)` | Same, for interval ticks in the window on that calendar date. |
+| `IsScheduledDay(DateTime dateTime, DayFlags)` | Whether `dateTime`’s day-of-week is included in `scheduleFlags`. |
+
+**`TimeOnly` vs `TimeOnlyModel`:** On `net6.0` or greater, scheduling APIs use `System.TimeOnly`. On `netstandard2.0`, use `Lyo.DateAndTime.TimeOnlyModel`, which is source-compatible for typical call sites via conditional compilation in this library (`TimeOnly` type alias in `DateAndTime.cs`).
+
+---
+
+## `DateOnlyModel` and `TimeOnlyModel` (.NET Standard 2.0)
+
+`System.DateOnly` and `System.TimeOnly` are not in .NET Standard 2.0. This library provides:
+
+- **`DateOnlyModel`** — day number from 0001-01-01; `Year`/`Month`/`Day`, `Today`, `AddDays`/`AddMonths`/`AddYears`, `FromDateTime`/`Parse`/`TryParse`/`ParseExact`/`TryParseExact`, comparison operators, `ToDateTime()`, `ToDateTime(TimeOnlyModel)`.
+- **`TimeOnlyModel`** — ticks within one day; constructors from hour/minute/(second)/(ms), `Ticks`, `FromTimeSpan`/`FromDateTime`, parse APIs, `ToTimeSpan()`, `ToDateTime(DateOnlyModel)`, `Add`/`AddHours`/`AddMinutes`/`AddSeconds`/`AddMilliseconds` (wraps within a day).
+
+---
+
+## US holidays — `HolidayInfo` and `HolidayDateRule`
+
+**`HolidayDateRule`** enum: `Unknown`, `FixedDate`, `NthWeekdayOfMonth`, `LastWeekdayOfMonth`.
+
+**`HolidayInfo`** is an immutable `record` with: `Name`, `Slug`, `Description`, `IsFederal`, `IsObservedWhenWeekend`, `DateRule`, `Month`, `DayOfMonth`, `DayOfWeek`, `Occurrence`, `Aliases`, plus `CanonicalName` (`Slug`).
+
+Static instances include (among others): `NewYearsDay`, `MartinLutherKingJrDay`, `ValentinesDay`, `PresidentsDay`, `StPatricksDay`, `EasterSunday`, `MothersDay`, `MemorialDay`, `Juneteenth`, `FathersDay`, `IndependenceDay`, `LaborDay`, `ColumbusDay`, `Halloween`, `VeteransDay`, `ThanksgivingDay`, `ChristmasDay`, `NewYearsEve`, and `Unknown`.
+
+| API | Description |
+|-----|-------------|
+| `HolidayInfo.All` | All registered holidays (excluding duplicates from reflection order). |
+| `HolidayInfo.FederalHolidays` | Subset with `IsFederal`. |
+| `HolidayInfo.FromName` / `FromSlug` / `FromAlias` | Case-insensitive lookup; blank → `Unknown`. |
+| `GetDate(int year)` | Calendar date; Easter uses Meeus/Jones/Butcher Gregorian algorithm. |
+| `GetObservedDate(int year)` | If `IsObservedWhenWeekend`, weekend dates shift to adjacent weekday (Sat → Fri, Sun → Mon). |
+| `OccursOn(DateTime date, bool includeObservedDate = true)` | True if `date` is the actual or observed holiday date for `date.Year`. |
+| `HolidayInfo.FromDate(DateTime date, bool includeObservedDate = true)` | First non-`Unknown` holiday matching that calendar date, or `null`. |
+
+---
+
+## JSON — `Lyo.DateAndTime.Json`
+
+| Type | Behavior |
+|------|----------|
+| `DateOnlyModelConverter` | `JsonConverter<DateOnlyModel?>` — ISO `yyyy-MM-dd` strings; null/whitespace → null. |
+| `TimeOnlyModelConverter` | `JsonConverter<TimeOnlyModel?>` — `HH:mm:ss.fffffff`; null/whitespace → null. |
+| `LyoJsonSerializerOptionsExtensions.AddLyoDateOnlyModelConverters(JsonSerializerOptions)` | Registers both converters and returns `options`. |
+
+---
+
+## Exceptions
+
+| Type | Typical cause |
+|------|----------------|
+| `ArgumentNullException` | Null collections or required arguments. |
+| `ArgumentException` | Empty schedule lists, invalid intervals (`<= 0`), `startTime > endTime`. |
+| `InvalidOperationException` | Unmapped state, or no matching next schedule within the look-ahead window. |
+| `FormatException` | `Parse` / `ParseExact` failures on models. |
+| `TimeZoneNotFoundException` | Rare; thrown by BCL if a zone id is invalid in edge environments (library usually returns `null` from `GeographicInfo.TimeZone`). |
+
+---
 
 ## Repository
 

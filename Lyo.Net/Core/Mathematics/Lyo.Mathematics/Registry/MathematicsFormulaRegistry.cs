@@ -1,9 +1,15 @@
 namespace Lyo.Mathematics.Registry;
 
+/// <summary>Curated catalog of representative mathematics formulas implemented in <c>Lyo.Mathematics.Functions</c>.</summary>
+/// <remarks>
+/// <see cref="All" /> is intentionally small — use it for discovery, documentation, or capability flags rather than as an exhaustive API index. Prefer IDE metadata on
+/// the concrete <c>*Functions</c> types for the full surface area.
+/// </remarks>
 public static class MathematicsFormulaRegistry
 {
+    /// <summary>Stable ids and metadata for hand-picked production formulas (FFT, QR, integration, descriptive statistics, and similar).</summary>
     public static IReadOnlyList<FormulaDescriptor> All { get; } = [
-        new("arithmetic.average", "Arithmetic", "Lyo.Mathematics.Functions", "Average", "Computes the arithmetic mean of a value set.", "ArithmeticFunctions.Average(double[])"),
+        new("statistics.mean", "Statistics", "Lyo.Mathematics.Functions", "Mean", "Computes the arithmetic mean of a value set.", "StatisticsFunctions.Mean(double[])"),
         new(
             "statistics.describe", "Statistics", "Lyo.Mathematics.Functions", "Describe", "Summarizes count, mean, spread, min, and max.",
             "StatisticsFunctions.Describe(double[])"),

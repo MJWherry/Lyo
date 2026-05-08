@@ -1,6 +1,10 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Mathematics.Models;
+
+/// <summary>Parameter bundle for probability or statistics routines (<c>BinomialDistributionParameters</c>).</summary>
+/// <remarks>Used with <c>DistributionsFunctions</c> and related helpers.</remarks>
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct BinomialDistributionParameters
@@ -10,10 +14,9 @@ public readonly record struct BinomialDistributionParameters
     public double SuccessProbability { get; }
 
     public BinomialDistributionParameters(int trials, double successProbability)
-
     {
-        trials = trials < 0 ? throw new ArgumentOutOfRangeException(nameof(trials)) : trials;
-        successProbability = successProbability is < 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(successProbability)) : successProbability;
+        ArgumentHelpers.ThrowIfLessThan(trials, 0);
+        ArgumentHelpers.ThrowIfNotInRange(successProbability, 0d, 1d);
         Trials = trials;
         SuccessProbability = successProbability;
     }

@@ -2,13 +2,19 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Quantities;
 
+/// <summary>Strongly typed velocity for formulas and engineering models.</summary>
+/// <remarks>Stored in SI-oriented canonical units. Factory methods and the primary constructor reject non-finite values; most magnitudes that cannot be negative are additionally validated as non-negative.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Velocity
 {
+    /// <summary>Same quantity expressed in MetersPerSecond.</summary>
     public double MetersPerSecond { get; }
 
+    /// <summary>Same quantity expressed in KilometersPerHour.</summary>
     public double KilometersPerHour => MetersPerSecond * 3.6d;
 
+    /// <summary>Same quantity expressed in MilesPerHour.</summary>
     public double MilesPerHour => MetersPerSecond * 2.2369362920544d;
 
     public Velocity(double metersPerSecond) => MetersPerSecond = MathValueGuards.Finite(metersPerSecond, nameof(metersPerSecond));

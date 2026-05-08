@@ -1,35 +1,50 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Scientific.Chemistry;
 
+/// <summary>Nuclide record (symbol, mass number, atomic mass, optional terrestrial abundance).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record Isotope
 {
+    /// <summary>Element symbol this isotope belongs to (for example <c>C</c> for carbon-13).</summary>
     public string Symbol { get; init; }
 
+    /// <summary>Mass number A (protons + neutrons); must be positive.</summary>
     public int MassNumber { get; init; }
 
+    /// <summary>Atomic mass for this nuclide (dalton-scale numeric used in this catalog).</summary>
     public double AtomicMass { get; init; }
 
+    /// <summary>Natural terrestrial isotopic abundance in percent when known; otherwise <see langword="null" />.</summary>
     public double? NaturalAbundancePercent { get; init; }
 
+    /// <summary>Creates an isotope after validating inputs.</summary>
+    /// <param name="symbol">Chemical element symbol.</param>
+    /// <param name="massNumber">Strictly positive mass number.</param>
+    /// <param name="atomicMass">Strictly positive atomic mass.</param>
+    /// <param name="naturalAbundancePercent">Optional abundance; not range-checked beyond nullability.</param>
+    /// <exception cref="ArgumentException"><paramref name="symbol" /> is null or whitespace.</exception>
+    /// <exception cref="ArgumentOutsideRangeException"><paramref name="massNumber" /> or <paramref name="atomicMass" /> is not strictly positive.</exception>
     public Isotope(string symbol, int massNumber, double atomicMass, double? naturalAbundancePercent = null)
-
     {
-        symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
-        massNumber = massNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(massNumber)) : massNumber;
-        atomicMass = atomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(atomicMass)) : atomicMass;
+        ArgumentHelpers.ThrowIfNullOrEmpty(symbol);
+        ArgumentHelpers.ThrowIfLessThanOrEqual(massNumber, 0);
+        ArgumentHelpers.ThrowIfLessThanOrEqual(atomicMass, 0d);
         Symbol = symbol;
         MassNumber = massNumber;
         AtomicMass = atomicMass;
         NaturalAbundancePercent = naturalAbundancePercent;
     }
 
+    /// <inheritdoc />
     public override string ToString() => NaturalAbundancePercent is { } p ? $"{Symbol}-{MassNumber}, mass={AtomicMass}, x={p:0.###}%" : $"{Symbol}-{MassNumber}, mass={AtomicMass}";
 }
 
+/// <summary>Relative atomic weights keyed by element symbol for quick stoichiometry and molar-mass estimates.</summary>
 public static class ElementAtomicMasses
 {
+    /// <summary>Case-insensitive map from element symbol to standard relative atomic weight.</summary>
     public static IReadOnlyDictionary<string, double> BySymbol { get; } = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) {
         ["H"] = 1.008,
         ["He"] = 4.002602,
@@ -152,8 +167,10 @@ public static class ElementAtomicMasses
     };
 }
 
+/// <summary>Curated isotope rows for common chemistry and nuclear examples.</summary>
 public static class Isotopes
 {
+    /// <summary>Representative isotopes (hydrogen, carbon, oxygen, uranium) with masses and abundances.</summary>
     public static IReadOnlyList<Isotope> Common { get; } = [
         new("H", 1, 1.00782503223, 99.9885), new("H", 2, 2.01410177812, 0.0115), new("C", 12, 12.0, 98.93), new("C", 13, 13.00335483507, 1.07),
         new("O", 16, 15.99491461957, 99.757), new("U", 235, 235.0439299, 0.72), new("U", 238, 238.05078826, 99.27)

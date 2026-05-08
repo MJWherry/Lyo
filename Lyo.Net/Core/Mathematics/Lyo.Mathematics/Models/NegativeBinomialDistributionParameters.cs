@@ -1,6 +1,10 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Mathematics.Models;
+
+/// <summary>Parameter bundle for probability or statistics routines (<c>NegativeBinomialDistributionParameters</c>).</summary>
+/// <remarks>Used with <c>DistributionsFunctions</c> and related helpers.</remarks>
 
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NegativeBinomialDistributionParameters
@@ -10,10 +14,10 @@ public readonly record struct NegativeBinomialDistributionParameters
     public double SuccessProbability { get; }
 
     public NegativeBinomialDistributionParameters(int targetSuccesses, double successProbability)
-
     {
-        targetSuccesses = targetSuccesses <= 0 ? throw new ArgumentOutOfRangeException(nameof(targetSuccesses)) : targetSuccesses;
-        successProbability = successProbability is <= 0d or > 1d ? throw new ArgumentOutOfRangeException(nameof(successProbability)) : successProbability;
+        ArgumentHelpers.ThrowIfLessThanOrEqual(targetSuccesses, 0);
+        ArgumentHelpers.ThrowIfLessThanOrEqual(successProbability, 0d);
+        ArgumentHelpers.ThrowIfGreaterThan(successProbability, 1d);
         TargetSuccesses = targetSuccesses;
         SuccessProbability = successProbability;
     }

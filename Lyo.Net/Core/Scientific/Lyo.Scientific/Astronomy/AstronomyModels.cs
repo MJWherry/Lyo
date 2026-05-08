@@ -1,37 +1,57 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 using Lyo.Mathematics.Quantities;
 
 namespace Lyo.Scientific.Astronomy;
 
+/// <summary>Solar-system planet and dwarf-planet records with bulk physical parameters.</summary>
+/// <remarks>Masses, radii, and orbits are reference values for demos and calculators; consult mission data for precision work.</remarks>
+
+/// <summary>High-level classification for entries in <see cref="PlanetaryBodies" />.</summary>
 public enum PlanetaryBodyKind
 {
+    /// <summary>Classical planet (cleared neighborhood definition not enforced here).</summary>
     Planet,
+    /// <summary>Dwarf planet catalog entry.</summary>
     DwarfPlanet
 }
 
+/// <summary>Reference bulk properties for a solar-system planet or dwarf planet.</summary>
+/// <remarks>Orbital and rotation periods are illustrative; not ephemeris-grade.</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record PlanetaryBody
 {
+    /// <summary>English name (for example <c>Earth</c>, <c>Pluto</c>).</summary>
     public string Name { get; init; }
 
+    /// <summary>Number of known natural satellites (catalog snapshot, not live).</summary>
     public int NaturalSatelliteCount { get; init; }
 
+    /// <summary>Planet vs dwarf-planet classification for display.</summary>
     public PlanetaryBodyKind Kind { get; init; }
 
+    /// <summary>Bulk mass estimate.</summary>
     public Mass Mass { get; init; }
 
+    /// <summary>Mean spherical radius.</summary>
     public Length MeanRadius { get; init; }
 
+    /// <summary>Semi-major axis of the heliocentric orbit (circular-orbit abstraction).</summary>
     public Length SemiMajorAxis { get; init; }
 
+    /// <summary>Sidereal orbital period (one revolution around the Sun).</summary>
     public TimeInterval SiderealOrbit { get; init; }
 
+    /// <summary>Sidereal rotation period (one spin about the body pole).</summary>
     public TimeInterval SiderealRotation { get; init; }
 
+    /// <summary>Representative mean surface temperature.</summary>
     public Temperature MeanSurfaceTemperature { get; init; }
 
+    /// <summary>Whether the body is commonly illustrated with a ring system.</summary>
     public bool HasRingSystem { get; init; }
 
+    /// <summary>Constructs a catalog row after validating <paramref name="name" /> and non-negative moon count.</summary>
     public PlanetaryBody(
         string name,
         PlanetaryBodyKind kind,
@@ -43,10 +63,9 @@ public sealed record PlanetaryBody
         Temperature meanSurfaceTemperature,
         int naturalSatelliteCount,
         bool hasRingSystem)
-
     {
-        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
-        naturalSatelliteCount = naturalSatelliteCount < 0 ? throw new ArgumentOutOfRangeException(nameof(naturalSatelliteCount)) : naturalSatelliteCount;
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
+        ArgumentHelpers.ThrowIfLessThan(naturalSatelliteCount, 0);
         Name = name;
         NaturalSatelliteCount = naturalSatelliteCount;
         Kind = kind;
@@ -59,11 +78,14 @@ public sealed record PlanetaryBody
         HasRingSystem = hasRingSystem;
     }
 
+    /// <inheritdoc />
     public override string ToString() => $"{Name} ({Kind}), moons={NaturalSatelliteCount}, rings={HasRingSystem}, M={Mass}, R={MeanRadius}";
 }
 
+/// <summary>Curated solar-system catalog used by astronomy helper functions.</summary>
 public static class PlanetaryBodies
 {
+    /// <summary>Ordered list from Mercury through Pluto with reference constants.</summary>
     public static IReadOnlyList<PlanetaryBody> All { get; } = [
         new(
             "Mercury", PlanetaryBodyKind.Planet, Mass.FromKilograms(3.3011e23), Length.FromMeters(2_439_700d), Length.FromMeters(57_909_227_000d),

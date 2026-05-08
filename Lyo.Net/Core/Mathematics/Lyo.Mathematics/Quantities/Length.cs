@@ -2,19 +2,28 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Quantities;
 
+/// <summary>Strongly typed length for formulas and engineering models.</summary>
+/// <remarks>Stored in SI-oriented canonical units. Factory methods and the primary constructor reject non-finite values; most magnitudes that cannot be negative are additionally validated as non-negative.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Length
 {
+    /// <summary>Canonical SI scalar in Meters (storage for this Length).</summary>
     public double Meters { get; }
 
+    /// <summary>Same quantity expressed in Centimeters.</summary>
     public double Centimeters => Meters * 100d;
 
+    /// <summary>Same quantity expressed in Kilometers.</summary>
     public double Kilometers => Meters / 1000d;
 
+    /// <summary>Same quantity expressed in Inches.</summary>
     public double Inches => Meters / 0.0254d;
 
+    /// <summary>Same quantity expressed in Feet.</summary>
     public double Feet => Meters / 0.3048d;
 
+    /// <summary>Same quantity expressed in Miles.</summary>
     public double Miles => Meters / 1609.344d;
 
     public Length(double meters) => Meters = MathValueGuards.NonNegativeFinite(meters, nameof(meters));

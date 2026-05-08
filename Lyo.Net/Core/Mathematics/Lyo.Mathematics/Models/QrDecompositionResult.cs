@@ -1,6 +1,10 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Mathematics.Models;
+
+/// <summary>Result values returned from mathematics routines (<c>QrDecompositionResult</c>).</summary>
+/// <remarks>Immutable contract; safe to cache or serialize alongside the originating computation metadata.</remarks>
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record QrDecompositionResult
@@ -10,10 +14,9 @@ public sealed record QrDecompositionResult
     public double[,] R { get; }
 
     public QrDecompositionResult(double[,] q, double[,] r)
-
     {
-        q = q ?? throw new ArgumentNullException(nameof(q));
-        r = r ?? throw new ArgumentNullException(nameof(r));
+        ArgumentHelpers.ThrowIfNull(q);
+        ArgumentHelpers.ThrowIfNull(r);
         Q = q;
         R = r;
     }

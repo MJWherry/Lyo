@@ -2,8 +2,14 @@ using Lyo.Mathematics.Registry;
 
 namespace Lyo.Scientific;
 
+/// <summary>Curated catalog of scientific formulas implemented in <c>Lyo.Scientific.Functions</c>.</summary>
+/// <remarks>
+/// <see cref="All" /> is intentionally short: use it for UI discovery, capability flags, or onboarding — not as a complete index of every function. Entries reuse
+/// <see cref="FormulaDescriptor" /> from <c>Lyo.Mathematics</c> so scientific and mathematics registries share the same metadata shape.
+/// </remarks>
 public static class ScientificFormulaRegistry
 {
+    /// <summary>Stable ids, display names, and signature hints for representative scientific calculations.</summary>
     public static IReadOnlyList<FormulaDescriptor> All { get; } = [
         new(
             "chemistry.molar_mass", "Chemistry", "Lyo.Scientific.Functions", "Molar Mass", "Parses a compound formula and sums elemental masses.",

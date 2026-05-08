@@ -1,36 +1,54 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Scientific.Chemistry;
 
+/// <summary>Represents a chemical element from the periodic table with optional standard atomic weight.</summary>
+/// <remarks>Use <see cref="PeriodicTable.All" /> for the curated list of elements through oganesson (Z = 118).</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ChemicalElement
 {
+    /// <summary>Atomic number Z (count of protons); must be positive.</summary>
     public int AtomicNumber { get; init; }
 
+    /// <summary>IUPAC element symbol (for example <c>Fe</c>, <c>U</c>).</summary>
     public string Symbol { get; init; }
 
+    /// <summary>English element name (for example <c>Iron</c>).</summary>
     public string Name { get; init; }
 
+    /// <summary>Optional relative atomic mass (dimensionless ratio on the carbon-12 scale) when known for this catalog entry.</summary>
+    /// <remarks>When present, must be strictly positive; <see langword="null" /> means “no numeric mass supplied” (typical for synthetic/heavy elements in stub rows).</remarks>
     public double? AtomicMass { get; init; }
 
+    /// <summary>Creates an element record after validating identifiers and optional mass.</summary>
+    /// <param name="atomicNumber">Strictly positive atomic number.</param>
+    /// <param name="symbol">Non-empty element symbol.</param>
+    /// <param name="name">Non-empty element name.</param>
+    /// <param name="atomicMass">Optional mass; when not <see langword="null" />, must be strictly greater than zero.</param>
+    /// <exception cref="ArgumentOutsideRangeException"><paramref name="atomicNumber" /> is not positive, or <paramref name="atomicMass" /> is present and not strictly positive.</exception>
+    /// <exception cref="ArgumentException"><paramref name="symbol" /> or <paramref name="name" /> is null or whitespace.</exception>
     public ChemicalElement(int atomicNumber, string symbol, string name, double? atomicMass = null)
-
     {
-        atomicNumber = atomicNumber <= 0 ? throw new ArgumentOutOfRangeException(nameof(atomicNumber)) : atomicNumber;
-        symbol = string.IsNullOrWhiteSpace(symbol) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(symbol)) : symbol;
-        name = string.IsNullOrWhiteSpace(name) ? throw new ArgumentException("Value cannot be null or whitespace.", nameof(name)) : name;
-        atomicMass = atomicMass is not null && atomicMass <= 0d ? throw new ArgumentOutOfRangeException(nameof(atomicMass)) : atomicMass;
+        ArgumentHelpers.ThrowIfLessThanOrEqual(atomicNumber, 0);
+        ArgumentHelpers.ThrowIfNullOrEmpty(symbol);
+        ArgumentHelpers.ThrowIfNullOrEmpty(name);
+        ArgumentHelpers.ThrowIfNotNullAndLessThanOrEqual(atomicMass, 0d);
         AtomicNumber = atomicNumber;
         Symbol = symbol;
         Name = name;
         AtomicMass = atomicMass;
     }
 
+    /// <inheritdoc />
     public override string ToString() => AtomicMass is { } m ? $"{AtomicNumber} {Symbol} ({Name}), mass≈{m}" : $"{AtomicNumber} {Symbol} ({Name})";
 }
 
+/// <summary>Static catalog of <see cref="ChemicalElement" /> rows covering Z = 1 through 118.</summary>
+/// <remarks>Atomic masses are omitted for many entries; use <see cref="ElementAtomicMasses" /> for numeric weights in stoichiometry.</remarks>
 public static class PeriodicTable
 {
+    /// <summary>Read-only list of elements in ascending <see cref="ChemicalElement.AtomicNumber" /> order.</summary>
     public static IReadOnlyList<ChemicalElement> All { get; } = [
         new(1, "H", "Hydrogen"), new(2, "He", "Helium"), new(3, "Li", "Lithium"), new(4, "Be", "Beryllium"), new(5, "B", "Boron"), new(6, "C", "Carbon"), new(7, "N", "Nitrogen"),
         new(8, "O", "Oxygen"), new(9, "F", "Fluorine"), new(10, "Ne", "Neon"), new(11, "Na", "Sodium"), new(12, "Mg", "Magnesium"), new(13, "Al", "Aluminium"),

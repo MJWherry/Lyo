@@ -2,13 +2,19 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Quantities;
 
+/// <summary>Strongly typed mass for formulas and engineering models.</summary>
+/// <remarks>Stored in SI-oriented canonical units. Factory methods and the primary constructor reject non-finite values; most magnitudes that cannot be negative are additionally validated as non-negative.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Mass
 {
+    /// <summary>Canonical SI scalar in Kilograms (storage for this Mass).</summary>
     public double Kilograms { get; }
 
+    /// <summary>Same quantity expressed in Grams.</summary>
     public double Grams => Kilograms * 1000d;
 
+    /// <summary>Same quantity expressed in Pounds.</summary>
     public double Pounds => Kilograms * 2.2046226218487757d;
 
     public Mass(double kilograms) => Kilograms = MathValueGuards.NonNegativeFinite(kilograms, nameof(kilograms));

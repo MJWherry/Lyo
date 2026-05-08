@@ -6,26 +6,20 @@ using System.Text.Json.Serialization;
 
 namespace Lyo.DateAndTime.Json;
 
-/// <summary>JSON converter for DateOnlyModel that handles null values properly.</summary>
+/// <summary><see cref="JsonConverter{T}" /> implementation for <see cref="DateOnlyModel" /> using ISO-8601 calendar dates.</summary>
+/// <remarks>Null JSON tokens and empty strings deserialize to <see langword="null" />; writes <c>yyyy-MM-dd</c> for non-null values.</remarks>
 public sealed class DateOnlyModelConverter : JsonConverter<DateOnlyModel?>
 {
     private const string Format = "yyyy-MM-dd";
 
-    /// <summary>Reads a DateOnlyModel from JSON.</summary>
-    /// <param name="reader">The JSON reader</param>
-    /// <param name="typeToConvert">The type to convert</param>
-    /// <param name="options">The serializer options</param>
-    /// <returns>The parsed DateOnlyModel or null if the value is null or whitespace</returns>
+    /// <inheritdoc />
     public override DateOnlyModel? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var text = reader.GetString();
         return string.IsNullOrWhiteSpace(text) ? null : DateOnlyModel.Parse(text);
     }
 
-    /// <summary>Writes a DateOnlyModel to JSON.</summary>
-    /// <param name="writer">The JSON writer</param>
-    /// <param name="value">The DateOnlyModel value to write</param>
-    /// <param name="options">The serializer options</param>
+    /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, DateOnlyModel? value, JsonSerializerOptions options)
     {
         if (value == null)

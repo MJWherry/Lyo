@@ -2,6 +2,8 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Matrices;
 
+/// <summary>3×3 dense matrix of finite <see cref="double" /> elements in row-major order.</summary>
+/// <remarks>Used by <c>LinearAlgebraFunctions</c> for linear solves, inversion, and eigenvalue helpers.</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Matrix3x3
 {
@@ -23,10 +25,11 @@ public readonly record struct Matrix3x3
 
     public double M33 { get; }
 
+    /// <summary>Identity matrix.</summary>
     public static Matrix3x3 Identity => new(1d, 0d, 0d, 0d, 1d, 0d, 0d, 0d, 1d);
 
+    /// <summary>Constructs a matrix from row-major components, each required to be finite.</summary>
     public Matrix3x3(double m11, double m12, double m13, double m21, double m22, double m23, double m31, double m32, double m33)
-
     {
         M11 = MathValueGuards.Finite(m11, nameof(m11));
         M12 = MathValueGuards.Finite(m12, nameof(m12));

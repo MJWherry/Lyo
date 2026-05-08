@@ -13,7 +13,7 @@ namespace Lyo.Exceptions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Optional name parameters follow the same pattern as <see cref="ArgumentNullException.ThrowIfNull" />: when you omit them at the call site, the compiler supplies the caller's
+/// Optional name parameters follow the same pattern as <see cref="M:System.ArgumentNullException.ThrowIfNull(System.Object,System.String)" />: when you omit them at the call site, the compiler supplies the caller's
 /// argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c> explicitly when you
 /// want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
 /// </para>
@@ -538,6 +538,25 @@ public static class ArgumentHelpers
     {
         if (value.CompareTo(threshold) <= 0)
             ThrowArgumentOutsideRange(paramName, value, threshold, null, message ?? $"Value must be strictly greater than {threshold}. Actual value: {value}.");
+    }
+
+    /// <summary>When <paramref name="value" /> is not <see langword="null" />, throws if it is less than or equal to <paramref name="threshold" />.</summary>
+    /// <param name="value">Optional scalar; no validation when <see langword="null" />.</param>
+    /// <param name="threshold">Exclusive lower bound for the non-null case.</param>
+    /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>
+    /// <param name="message">Optional custom error message.</param>
+    /// <remarks>When <paramref name="value" /> is non-null, forwards to the non-nullable <c>ThrowIfLessThanOrEqual&lt;double&gt;</c> overload.</remarks>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when <paramref name="value" /> has a value ≤ <paramref name="threshold" />.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotNullAndLessThanOrEqual(double? value, double threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
+    {
+        if (!value.HasValue)
+            return;
+
+        ThrowIfLessThanOrEqual(value.GetValueOrDefault(), threshold, paramName, message);
     }
 
     /// <summary>Throws an ArgumentException if the value equals the specified other value.</summary>

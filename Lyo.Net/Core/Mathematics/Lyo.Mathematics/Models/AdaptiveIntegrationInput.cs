@@ -1,6 +1,10 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.Mathematics.Models;
+
+/// <summary>Input values for mathematics routines that model a <c>AdaptiveIntegration</c> problem.</summary>
+/// <remarks>Passed to <c>Lyo.Mathematics.Functions</c> static APIs; see the matching <c>*Functions</c> member for validation rules.</remarks>
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record AdaptiveIntegrationInput
@@ -16,13 +20,12 @@ public sealed record AdaptiveIntegrationInput
     public int MaxDepth { get; }
 
     public AdaptiveIntegrationInput(Func<double, double> function, double start, double end, double tolerance, int maxDepth)
-
     {
-        function = function ?? throw new ArgumentNullException(nameof(function));
+        ArgumentHelpers.ThrowIfNull(function);
         start = MathValueGuards.Finite(start, nameof(start));
         end = MathValueGuards.Finite(end, nameof(end));
         tolerance = MathValueGuards.PositiveFinite(tolerance, nameof(tolerance));
-        maxDepth = maxDepth <= 0 ? throw new ArgumentOutOfRangeException(nameof(maxDepth)) : maxDepth;
+        ArgumentHelpers.ThrowIfLessThanOrEqual(maxDepth, 0);
         Function = function;
         Start = start;
         End = end;

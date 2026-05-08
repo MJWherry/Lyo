@@ -2,13 +2,19 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Quantities;
 
+/// <summary>Strongly typed time \1nterval for formulas and engineering models.</summary>
+/// <remarks>Stored in SI-oriented canonical units. Factory methods and the primary constructor reject non-finite values; most magnitudes that cannot be negative are additionally validated as non-negative.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct TimeInterval
 {
+    /// <summary>Canonical SI scalar in Seconds (storage for this TimeInterval).</summary>
     public double Seconds { get; }
 
+    /// <summary>Same quantity expressed in Minutes.</summary>
     public double Minutes => Seconds / 60d;
 
+    /// <summary>Same quantity expressed in Hours.</summary>
     public double Hours => Seconds / 3600d;
 
     public TimeSpan TimeSpan => TimeSpan.FromSeconds(Seconds);

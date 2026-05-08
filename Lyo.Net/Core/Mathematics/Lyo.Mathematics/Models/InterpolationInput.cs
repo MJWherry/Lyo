@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Models;
 
+/// <summary>Input values for mathematics routines that model a <c>Interpolation</c> problem.</summary>
+/// <remarks>Passed to <c>Lyo.Mathematics.Functions</c> static APIs; see the matching <c>*Functions</c> member for validation rules.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct InterpolationInput
 {
@@ -16,7 +19,6 @@ public readonly record struct InterpolationInput
     public double X { get; }
 
     public InterpolationInput(double x0, double y0, double x1, double y1, double x)
-
     {
         x0 = MathValueGuards.Finite(x0, nameof(x0));
         y0 = MathValueGuards.Finite(y0, nameof(y0));

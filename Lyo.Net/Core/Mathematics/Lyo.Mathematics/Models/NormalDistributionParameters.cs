@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace Lyo.Mathematics.Models;
 
+/// <summary>Parameter bundle for probability or statistics routines (<c>NormalDistributionParameters</c>).</summary>
+/// <remarks>Used with <c>DistributionsFunctions</c> and related helpers.</remarks>
+
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NormalDistributionParameters
 {
@@ -10,7 +13,6 @@ public readonly record struct NormalDistributionParameters
     public double StandardDeviation { get; }
 
     public NormalDistributionParameters(double mean, double standardDeviation)
-
     {
         mean = MathValueGuards.Finite(mean, nameof(mean));
         standardDeviation = MathValueGuards.PositiveFinite(standardDeviation, nameof(standardDeviation));

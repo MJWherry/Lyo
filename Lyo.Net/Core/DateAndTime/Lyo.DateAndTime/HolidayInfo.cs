@@ -8,7 +8,23 @@ using Lyo.Exceptions;
 
 namespace Lyo.DateAndTime;
 
-/// <summary>Represents metadata for a U.S. holiday and can resolve its calendar date for a given year.</summary>
+/// <summary>Immutable metadata for a U.S. civic or federal holiday, including rules for computing calendar dates and optional weekend observance shifts.</summary>
+/// <remarks>
+/// <para>Static instances self-register into lookup dictionaries (by slug, name, and aliases) during the static constructor. Use <see cref="FromSlug" />,
+/// <see cref="FromName" />, or <see cref="FromAlias" /> for tolerant user input.</para>
+/// <para>Easter uses the Gregorian Meeus/Jones/Butcher algorithm via <see cref="GetDate" />.</para>
+/// </remarks>
+/// <param name="Name">Canonical English display name.</param>
+/// <param name="Slug">URL-safe identifier.</param>
+/// <param name="Description">Human-readable explanation suitable for tooltips.</param>
+/// <param name="IsFederal"><see langword="true" /> when the holiday is treated as a U.S. federal holiday in this catalog.</param>
+/// <param name="IsObservedWhenWeekend">When <see langword="true" />, <see cref="GetObservedDate" /> shifts Saturday/Sunday occurrences to adjacent weekdays.</param>
+/// <param name="DateRule">Algorithm used to locate the holiday in a calendar year.</param>
+/// <param name="Month">Month discriminator for fixed or movable rules.</param>
+/// <param name="DayOfMonth">Day-of-month for fixed holidays (otherwise unused).</param>
+/// <param name="DayOfWeek">Weekday anchor for nth/last weekday rules.</param>
+/// <param name="Occurrence">1-based weekday occurrence within the month when <paramref name="DateRule" /> is <see cref="HolidayDateRule.NthWeekdayOfMonth" />.</param>
+/// <param name="Aliases">Alternate strings accepted by <see cref="FromAlias" />.</param>
 public sealed record HolidayInfo(
     string Name,
     string Slug,
@@ -98,12 +114,13 @@ public sealed record HolidayInfo(
     private static readonly Dictionary<string, HolidayInfo> _byAlias = new(StringComparer.OrdinalIgnoreCase);
     private static readonly List<HolidayInfo> _all = [];
 
+    /// <summary>Stable identifier equal to <see cref="Slug" />.</summary>
     public string CanonicalName => Slug;
 
-    /// <summary>Gets all registered holiday metadata records.</summary>
+    /// <summary>Every compiled-in holiday instance (excluding sentinel duplicates).</summary>
     public static IReadOnlyList<HolidayInfo> All => _all;
 
-    /// <summary>Gets all holidays marked as U.S. federal holidays.</summary>
+    /// <summary>Holidays where <see cref="IsFederal" /> is <see langword="true" />.</summary>
     public static IReadOnlyList<HolidayInfo> FederalHolidays => _all.Where(i => i.IsFederal).ToArray();
 
     static HolidayInfo()
@@ -124,6 +141,8 @@ public sealed record HolidayInfo(
         }
     }
 
+    /// <summary>Resolves a holiday using its canonical <see cref="Name" />, falling back to <see cref="FromAlias" />.</summary>
+    /// <returns><see cref="Unknown" /> when <paramref name="name" /> is blank.</returns>
     public static HolidayInfo FromName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -132,6 +151,8 @@ public sealed record HolidayInfo(
         return _byName.TryGetValue(Normalize(name), out var holiday) ? holiday : FromAlias(name);
     }
 
+    /// <summary>Resolves a holiday using its URL <see cref="Slug" />.</summary>
+    /// <returns><see cref="Unknown" /> when <paramref name="slug" /> is blank or not found.</returns>
     public static HolidayInfo FromSlug(string? slug)
     {
         if (string.IsNullOrWhiteSpace(slug))
@@ -140,6 +161,8 @@ public sealed record HolidayInfo(
         return _bySlug.TryGetValue(Normalize(slug), out var holiday) ? holiday : Unknown;
     }
 
+    /// <summary>Resolves a holiday using any registered alias (case-insensitive).</summary>
+    /// <returns><see cref="Unknown" /> when <paramref name="alias" /> is blank or not found.</returns>
     public static HolidayInfo FromAlias(string? alias)
     {
         if (string.IsNullOrWhiteSpace(alias))
@@ -148,6 +171,8 @@ public sealed record HolidayInfo(
         return _byAlias.TryGetValue(Normalize(alias), out var holiday) ? holiday : Unknown;
     }
 
+    /// <summary>Computes the calendar date of the holiday for <paramref name="year" />.</summary>
+    /// <exception cref="InvalidOperationException">The rule is unsupported for this instance (other than <see cref="EasterSunday" />).</exception>
     public DateTime GetDate(int year)
     {
         switch (DateRule) {
@@ -165,6 +190,7 @@ public sealed record HolidayInfo(
         }
     }
 
+    /// <summary>Computes the publicly observed date, shifting weekend occurrences when <see cref="IsObservedWhenWeekend" /> is enabled.</summary>
     public DateTime GetObservedDate(int year)
     {
         var date = GetDate(year);
@@ -181,6 +207,7 @@ public sealed record HolidayInfo(
         }
     }
 
+    /// <summary>Determines whether <paramref name="date" /> matches the holiday’s actual or (optionally) observed calendar day.</summary>
     public bool OccursOn(DateTime date, bool includeObservedDate = true)
     {
         var holidayDate = GetDate(date.Year).Date;
@@ -190,6 +217,7 @@ public sealed record HolidayInfo(
         return includeObservedDate && GetObservedDate(date.Year).Date == date.Date;
     }
 
+    /// <summary>Returns the first non-<see cref="Unknown" /> holiday matching <paramref name="date" /> if any.</summary>
     public static HolidayInfo? FromDate(DateTime date, bool includeObservedDate = true)
         => _all.FirstOrDefault(i => !ReferenceEquals(i, Unknown) && i.OccursOn(date, includeObservedDate));
 
