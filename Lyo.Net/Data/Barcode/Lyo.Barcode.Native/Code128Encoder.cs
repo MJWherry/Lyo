@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Barcode.Native;
 
 /// <summary>Encodes Code 128 subset B (ASCII 32–127) to a row of modules (false = white, true = black).</summary>
@@ -6,10 +8,7 @@ internal static class Code128Encoder
     /// <exception cref="ArgumentException">Empty or invalid characters for Code 128 B.</exception>
     internal static bool[] EncodeCode128B(string contents)
     {
-        ArgumentException Throw(string m) => new(m, nameof(contents));
-
-        if (string.IsNullOrEmpty(contents))
-            throw Throw("Barcode data cannot be empty.");
+        ArgumentHelpers.ThrowIf(string.IsNullOrEmpty(contents), "Barcode data cannot be empty.", nameof(contents));
 
         var patterns = new List<int[]>();
 
@@ -21,8 +20,10 @@ internal static class Code128Encoder
         var sum = Code128Patterns.CodeStartB;
         for (var i = 0; i < contents.Length; i++) {
             var c = contents[i];
-            if (c is < (char)32 or > (char)127)
-                throw Throw($"Character U+{(int)c:X4} cannot be encoded in Code 128 B (use ASCII 32–127).");
+            ArgumentHelpers.ThrowIf(
+                c is < (char)32 or > (char)127,
+                $"Character U+{(int)c:X4} cannot be encoded in Code 128 B (use ASCII 32–127).",
+                nameof(contents));
 
             var value = c - ' ';
             sum += value * (i + 1);

@@ -43,5 +43,8 @@ public interface IQRCodeService
     Task<BulkResult<QRCodeRequest, QRCodeResult>> GenerateBatchAsync(IEnumerable<QRCodeRequest> requests, CancellationToken ct = default);
 
     /// <summary>Decodes a QR code from image bytes (PNG, JPEG, BMP, etc.).</summary>
+    /// <param name="imageBytes">Raster image containing a readable QR symbol.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Decoded text and format metadata on success.</returns>
     Task<Result<QRCodeImageReadResult>> ReadFromImageAsync(byte[] imageBytes, CancellationToken ct = default);
 }

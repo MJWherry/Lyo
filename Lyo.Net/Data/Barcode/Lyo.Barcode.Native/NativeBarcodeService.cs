@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Lyo.Barcode.Models;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.Result;
 using Microsoft.Extensions.Logging;
@@ -61,15 +62,24 @@ public class NativeBarcodeService : IBarcodeService
             ArgumentHelpers.ThrowIfNotInRange(o.ModuleWidthPixels, _options.MinModuleWidthPixels, _options.MaxModuleWidthPixels, nameof(options.ModuleWidthPixels));
             ArgumentHelpers.ThrowIfNotInRange(o.BarHeightPixels, _options.MinBarHeightPixels, _options.MaxBarHeightPixels, nameof(options.BarHeightPixels));
             ArgumentHelpers.ThrowIfNotInRange(o.QuietZoneModules, _options.MinQuietZoneModules, _options.MaxQuietZoneModules, nameof(options.QuietZoneModules));
+            if (o.ShowBorder) {
+                ArgumentHelpers.ThrowIfNotInRange(o.BorderWidthPixels, _options.MinBorderWidthPixels, _options.MaxBorderWidthPixels, nameof(options.BorderWidthPixels));
+                ArgumentHelpers.ThrowIfNullOrWhiteSpace(o.BorderColorHex);
+                if (!IsValidHexColor(o.BorderColorHex))
+                    throw new InvalidFormatException("Border color must be hex (#RGB or #RRGGBB).", nameof(options.BorderColorHex), o.BorderColorHex, "Hex color format");
+            }
+
+            if (o.ShowHumanReadableTextBelow) {
+                ArgumentHelpers.ThrowIfNotInRange(o.HumanReadableFontSizePixels, 8, 128, nameof(options.HumanReadableFontSizePixels));
+                ArgumentHelpers.ThrowIfNotInRange(o.HumanReadableMarginTopPixels, 0, 64, nameof(options.HumanReadableMarginTopPixels));
+                ArgumentHelpers.ThrowIfNotInRange(o.HumanReadableMarginBottomPixels, 0, 64, nameof(options.HumanReadableMarginBottomPixels));
+            }
+
             var (imageBytes, w, h) = await Task.Run(
                     () => {
                         var modules = Code128Encoder.EncodeCode128B(data);
-                        var bytes = BarcodeImageRenderer.Render(modules, o);
-                        var quiet = BarcodeImageRenderer.ResolveQuietZoneModules(o.QuietZoneModules);
-                        var fullModules = modules.Length + 2 * quiet;
-                        var widthPx = fullModules * o.ModuleWidthPixels;
-                        var quietPx = quiet * o.ModuleWidthPixels;
-                        var heightPx = o.BarHeightPixels + 2 * quietPx;
+                        var bytes = BarcodeImageRenderer.Render(modules, data, o);
+                        var (widthPx, heightPx) = BarcodeImageRenderer.MeasureDimensions(modules.Length, data, o);
                         return (bytes, widthPx, heightPx);
                     }, ct)
                 .ConfigureAwait(false);
@@ -93,6 +103,23 @@ public class NativeBarcodeService : IBarcodeService
             _metrics.RecordError(_metricNames[nameof(Constants.Metrics.GenerateDuration)], ex);
             return BarcodeResult.FromException(ex, request, GenerateFailed);
         }
+    }
+
+    private static bool IsValidHexColor(string color)
+    {
+        var s = color.Trim();
+        if (s.StartsWith('#'))
+            s = s.Substring(1);
+
+        if (s.Length != 3 && s.Length != 6)
+            return false;
+
+        foreach (var c in s) {
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')))
+                return false;
+        }
+
+        return true;
     }
 
     public async Task<Result<bool>> GenerateToStreamAsync(

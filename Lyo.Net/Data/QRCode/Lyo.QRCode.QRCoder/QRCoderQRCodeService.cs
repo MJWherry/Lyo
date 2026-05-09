@@ -29,6 +29,7 @@ public class QRCoderQRCodeService : IQRCodeService
     private readonly QRCodeServiceOptions _options;
     private readonly IImageService? _imageService;
     private readonly IQrFrameLayoutService? _qrFrameLayout;
+    private readonly QRCodeGenerator _qrGenerator = new();
 
     /// <summary>Initializes a new instance of the <see cref="QRCoderQRCodeService" /> class.</summary>
     /// <param name="options">The QR code service options.</param>
@@ -82,7 +83,14 @@ public class QRCoderQRCodeService : IQRCodeService
 
             // Validate size
             ArgumentHelpers.ThrowIfNotInRange(qrOptions.Size, _options.MinSize, _options.MaxSize, nameof(options.Size));
-            var imageBytes = await Task.Run(() => GenerateQRCodeBytes(data, qrOptions), ct).ConfigureAwait(false);
+            byte[] imageBytes;
+            if (ShouldOffloadQrRasterization(data, qrOptions)) {
+                imageBytes = await Task.Run(() => GenerateQRCodeBytes(data, qrOptions), ct).ConfigureAwait(false);
+            }
+            else {
+                ct.ThrowIfCancellationRequested();
+                imageBytes = GenerateQRCodeBytes(data, qrOptions);
+            }
             imageBytes = await ApplyQrFrameIfNeededAsync(imageBytes, qrOptions, ct).ConfigureAwait(false);
             sw.Stop();
             _metrics.IncrementCounter(_metricNames[nameof(QRCode.Constants.Metrics.GenerateSuccess)]);
@@ -189,23 +197,29 @@ public class QRCoderQRCodeService : IQRCodeService
         if (options.Format != QRCodeFormat.Png || options.Frame is null or { Style: QrFrameStyle.None })
             return imageBytes;
 
-        Task<Result<byte[]>> apply;
-        if (_qrFrameLayout != null)
-            apply = _qrFrameLayout.CompositeQrFramePngAsync(imageBytes, options.Frame, ct);
-        else if (_imageService != null)
-            apply = _imageService.CompositeQrFramePngAsync(imageBytes, options.Frame, ct);
-        else {
-            throw new InvalidOperationException(
-                "Decorative QR frames require IQrFrameLayoutService (AddQRCoderQrCodeService registers it) or IImageService when using Frame, or set Frame.Style to None.");
-        }
+        var apply = _qrFrameLayout != null
+            ? _qrFrameLayout.CompositeQrFramePngAsync(imageBytes, options.Frame, ct)
+            : _imageService != null
+                ? _imageService.CompositeQrFramePngAsync(imageBytes, options.Frame, ct)
+                : throw new InvalidOperationException(
+                    "Decorative QR frames require IQrFrameLayoutService (AddQRCoderQrCodeService registers it) or IImageService when using Frame, or set Frame.Style to None.");
 
         var result = await apply.ConfigureAwait(false);
-        if (!result.IsSuccess || result.Data == null) {
-            var msg = result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors.Select(e => e.Message)) : "Unknown error";
-            throw new InvalidOperationException($"Failed to apply QR frame: {msg}");
-        }
+        OperationHelpers.ThrowIf(
+            !result.IsSuccess || result.Data is null,
+            $"Failed to apply QR frame: {(result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors.Select(e => e.Message)) : "Unknown error")}");
 
-        return result.Data;
+        return result.Data!;
+    }
+
+    /// <summary>Heavy rasterization (large payloads, large pixels-per-module, or Windows icon embedding) runs on the thread pool; lighter work stays inline to avoid scheduling overhead.</summary>
+    private static bool ShouldOffloadQrRasterization(string data, QRCodeOptions options)
+    {
+#if OS_WINDOWS
+        if (options.Icon != null)
+            return true;
+#endif
+        return data.Length > 4096 || options.Size > 512;
     }
 
     /// <summary>Generates QR code bytes using QRCoder library.</summary>
@@ -215,8 +229,7 @@ public class QRCoderQRCodeService : IQRCodeService
             throw new PlatformNotSupportedException($"QR code format '{options.Format}' requires Windows. Use PNG or SVG format on non-Windows platforms.");
 
         var eccLevel = ConvertErrorCorrectionLevel(QRCodeIconEccHelper.GetEffectiveLevel(options.ErrorCorrectionLevel, options.Icon));
-        using var qrGenerator = new QRCodeGenerator();
-        var qrCodeData = qrGenerator.CreateQrCode(data, eccLevel);
+        var qrCodeData = _qrGenerator.CreateQrCode(data, eccLevel);
         return options.Format switch {
             QRCodeFormat.Png => GeneratePng(qrCodeData, options),
             QRCodeFormat.Svg => GenerateSvg(qrCodeData, options),
@@ -315,7 +328,7 @@ public class QRCoderQRCodeService : IQRCodeService
             using var graphics = Graphics.FromImage(qrBitmap);
             graphics.DrawImage(resizedIcon, iconX, iconY);
             if (options.Icon.DrawIconBorder) {
-                using var pen = new Pen(ColorTranslator.FromHtml(options.LightColor), 2);
+                using var pen = new Pen(ColorTranslator.FromHtml(options.DarkColor), 2);
                 graphics.DrawRectangle(pen, iconX - 1, iconY - 1, iconSize + 2, iconSize + 2);
             }
 

@@ -1,6 +1,10 @@
 namespace Lyo.Images.Sprite.Models;
 
 /// <summary>Extract timing: <see cref="ImpliedFps" /> is grid cells ÷ one loop in seconds (null for a single-frame source).</summary>
+/// <param name="SourceFrameCount">Frames detected in the animated source.</param>
+/// <param name="LoopDurationMs">Duration of one full loop in milliseconds.</param>
+/// <param name="GridCells">Total cells in the target spritesheet grid.</param>
+/// <param name="ImpliedFps">Playback rate implied by grid vs loop duration.</param>
 public readonly record struct AnimatedExtractTiming(int SourceFrameCount, double LoopDurationMs, int GridCells, double? ImpliedFps);
 
 /// <summary>How to fill extra grid cells when rows × columns exceeds the sample budget.</summary>

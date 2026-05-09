@@ -54,6 +54,7 @@
                     <MudChipSet T="string" Class="d-flex flex-wrap gap-2">
                         @foreach (var fileState in _fileStates) {
                             <MudChip T="string"
+                                     Style="@ChipContainerStyle"
                                      Color="@(fileState.Status switch {
                                                 LyoFileUploadStatus.Completed => Color.Success,
                                                 LyoFileUploadStatus.Failed => Color.Error,
@@ -81,7 +82,9 @@
                                         </MudTooltip>
                                     }
                                     else {
-                                        <MudText Typo="Typo.body2" Class="lyo-chip-file-name" Style="white-space: nowrap;">@fileState.FileName</MudText>
+                                        <span class="lyo-chip-file-name">
+                                            <MudText Typo="Typo.body2" Style="white-space: nowrap;">@GetChipFileNameDisplay(fileState.FileName)</MudText>
+                                        </span>
                                     }
 
                                     @if (fileState.Status == LyoFileUploadStatus.Uploading) {
@@ -122,6 +125,7 @@
                     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
                         @foreach (var fileState in _fileStates) {
                             <MudChip T="string"
+                                     Style="@ChipContainerStyle"
                                      Color="@(fileState.Status switch {
                                                 LyoFileUploadStatus.Completed => Color.Success,
                                                 LyoFileUploadStatus.Failed => Color.Error,
@@ -149,7 +153,9 @@
                                         </MudTooltip>
                                     }
                                     else {
-                                        <MudText Typo="Typo.body2" Class="lyo-chip-file-name" Style="white-space: nowrap;">@fileState.FileName</MudText>
+                                        <span class="lyo-chip-file-name">
+                                            <MudText Typo="Typo.body2" Style="white-space: nowrap;">@GetChipFileNameDisplay(fileState.FileName)</MudText>
+                                        </span>
                                     }
 
                                     @if (fileState.Status == LyoFileUploadStatus.Uploading) {
@@ -244,11 +250,17 @@
     }
 
     .lyo-chip-file-name {
-        display: inline-block;
+        display: block;
         min-width: 0;
         max-width: 100%;
         overflow: hidden;
         vertical-align: bottom;
+        text-overflow: ellipsis;
+    }
+
+    .lyo-chip-file-name .mud-typography-body2 {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>
 

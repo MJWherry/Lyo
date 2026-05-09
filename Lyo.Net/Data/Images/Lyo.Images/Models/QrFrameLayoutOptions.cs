@@ -33,11 +33,23 @@ public sealed class QrFrameLayoutOptions
     /// <summary>Corner radius for card and panels.</summary>
     public int CornerRadiusPx { get; set; } = 18;
 
-    /// <summary>Height of the header band for <see cref="QrFrameStyle.BadgeWithHeader" />.</summary>
+    /// <summary>
+    /// Minimum height of the header band for <see cref="QrFrameStyle.BadgeWithHeader" /> (pixels in the final image). The layout may grow the band when
+    /// <see cref="AutoSizeHeaderToCaption" /> is true and the caption needs more room.
+    /// </summary>
     public int HeaderHeightPx { get; set; } = 52;
 
-    /// <summary>Caption font size in pixels.</summary>
-    public int CaptionFontSizePx { get; set; } = 18;
+    /// <summary>
+    /// Caption font size in **output pixels** (after QR raster scale). Use <c>0</c> for automatic sizing from QR side length (scales with large rasters). Values greater than zero are
+    /// clamped to a QR-relative maximum so type stays readable without dominating the entire canvas.
+    /// </summary>
+    public int CaptionFontSizePx { get; set; }
+
+    /// <summary>
+    /// When true (default), badge header height is at least <see cref="HeaderHeightPx" /> / QR-fraction rules and is expanded to fit the measured/wrapped caption. When false, only the
+    /// scaled minimum header is used (caption may clip if very large).
+    /// </summary>
+    public bool AutoSizeHeaderToCaption { get; set; } = true;
 
     /// <summary>Preferred font family name (OS-dependent; falls back if missing).</summary>
     public string FontFamily { get; set; } = "DejaVu Sans";
@@ -57,7 +69,7 @@ public sealed class QrFrameLayoutOptions
     /// <summary>Stroke width (pixels) around the card in <see cref="QrFrameStyle.BadgeWithHeader" /> and <see cref="QrFrameStyle.SimpleRoundedPanel" />.</summary>
     public int CardOutlineWidthPx { get; set; } = 4;
 
-    /// <summary>Stroke color for <see cref="CardOutlineWidthPx" /> (hex).</summary>
+    /// <summary>Stroke color for <see cref="CardOutlineWidthPx" /> as opaque <c>#RRGGBB</c> (or <c>#RGB</c>). Host UIs often match this to <see cref="HeaderBackgroundHex"/> on badge layouts so the outer card stroke reads as part of the header chrome.</summary>
     public string CardOutlineHex { get; set; } = "#64748B";
 
     /// <summary>Border stroke width for <see cref="QrFrameStyle.BorderOnly" />.</summary>

@@ -106,12 +106,12 @@ public class BuiltInQRCodeService : IQRCodeService
             if (!result.IsSuccess)
                 return Result<bool>.Failure(result.Errors ?? []);
 
-            if (result is QRCodeResult qrResult && qrResult.ImageBytes != null) {
-                await outputStream.WriteAsync(qrResult.ImageBytes, 0, qrResult.ImageBytes.Length, ct).ConfigureAwait(false);
-                return Result<bool>.Success(true);
-            }
+            if (result is not QRCodeResult qrResult || qrResult.ImageBytes == null)
+                return Result<bool>.Failure(new Error("QR code generation succeeded but image bytes are missing", GenerateFailed));
 
-            return Result<bool>.Failure(new Error("QR code generation succeeded but image bytes are missing", GenerateFailed));
+            await outputStream.WriteAsync(qrResult.ImageBytes.AsMemory(0, qrResult.ImageBytes.Length), ct).ConfigureAwait(false);
+            return Result<bool>.Success(true);
+
         }
         catch (Exception ex) {
             return Result<bool>.Failure(Error.FromException(ex, StreamOperationFailed));
@@ -193,31 +193,27 @@ public class BuiltInQRCodeService : IQRCodeService
                 "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
 
             if (options.Format == QRCodeFormat.Png)
-                bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, _logger, ct).ConfigureAwait(false);
+                bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, options.DarkColor, _logger, ct).ConfigureAwait(false);
             else if (options.Format == QRCodeFormat.Svg) {
                 var svg = System.Text.Encoding.UTF8.GetString(bytes);
-                var withIcon = await QrCodeIconComposer.ApplyIconToSvgAsync(_imageService, svg, options.Icon, options.Size, options.LightColor, _logger, ct).ConfigureAwait(false);
+                var withIcon = await QrCodeIconComposer.ApplyIconToSvgAsync(_imageService, svg, options.Icon, options.Size, options.LightColor, options.DarkColor, _logger, ct).ConfigureAwait(false);
                 bytes = System.Text.Encoding.UTF8.GetBytes(withIcon);
             }
         }
 
         if (options.Format == QRCodeFormat.Png && options.Frame is { Style: not QrFrameStyle.None }) {
-            Result<byte[]> framed;
-            if (_qrFrameLayout != null)
-                framed = await _qrFrameLayout.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false);
-            else if (_imageService != null)
-                framed = await _imageService.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false);
-            else {
-                throw new InvalidOperationException(
-                    "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
-            }
+            var framed = _qrFrameLayout != null
+                ? await _qrFrameLayout.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false)
+                : _imageService != null
+                    ? await _imageService.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false)
+                    : throw new InvalidOperationException(
+                        "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
 
-            if (!framed.IsSuccess || framed.Data == null) {
-                var msg = framed.Errors is { Count: > 0 } ? string.Join("; ", framed.Errors.Select(e => e.Message)) : "Unknown error";
-                throw new InvalidOperationException($"Failed to apply QR frame: {msg}");
-            }
+            OperationHelpers.ThrowIf(
+                !framed.IsSuccess || framed.Data is null,
+                $"Failed to apply QR frame: {(framed.Errors is { Count: > 0 } ? string.Join("; ", framed.Errors.Select(e => e.Message)) : "Unknown error")}");
 
-            bytes = framed.Data;
+            bytes = framed.Data!;
         }
 
         return bytes;

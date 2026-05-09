@@ -6,9 +6,10 @@ namespace Lyo.QRCode.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public class QRCodeServiceOptions
 {
+    /// <summary>Configuration section name for binding from <c>IConfiguration</c>.</summary>
     public const string SectionName = "QRCodeService";
 
-    /// <summary>Gets or sets the default QR code size in pixels. Default: 256</summary>
+    /// <summary>Gets or sets the default <see cref="QRCodeOptions.Size" /> (pixels per module). Default: 256.</summary>
     public int DefaultSize { get; set; } = 256;
 
     /// <summary>Gets or sets the default error correction level. Default: Medium</summary>
@@ -17,10 +18,12 @@ public class QRCodeServiceOptions
     /// <summary>Gets or sets the default QR code format. Default: PNG</summary>
     public QRCodeFormat DefaultFormat { get; set; } = QRCodeFormat.Png;
 
-    /// <summary>Gets or sets the minimum QR code size in pixels. Default: 50</summary>
-    public int MinSize { get; set; } = 50;
+    /// <summary>
+    /// Minimum allowed <see cref="QRCodeOptions.Size" /> (pixels per module), not total image width/height. Default: 1. Hosts may raise this (e.g. 50) to block tiny raster outputs.
+    /// </summary>
+    public int MinSize { get; set; } = 1;
 
-    /// <summary>Gets or sets the maximum QR code size in pixels. Default: 2000</summary>
+    /// <summary>Maximum allowed <see cref="QRCodeOptions.Size" /> (pixels per module). Default: 2000.</summary>
     public int MaxSize { get; set; } = 2000;
 
     /// <summary>Enable metrics collection for QR code operations. Default: false</summary>

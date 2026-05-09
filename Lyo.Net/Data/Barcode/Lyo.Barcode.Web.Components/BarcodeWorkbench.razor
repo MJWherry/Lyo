@@ -40,6 +40,42 @@
                             <MudColorPicker Label="Background" @bind-Value="_lightColor"/>
                         </MudStack>
 
+                        <MudCheckBox T="bool" Label="Border around barcode" @bind-Value="_showBorder" Color="Color.Primary" Dense="true"/>
+                        @if (_showBorder) {
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudNumericField T="int" Label="Border width (px)" @bind-Value="_borderWidthPx" Min="1" Max="64"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex align-center">
+                                    <MudColorPicker Label="Border color" @bind-Value="_borderColor"/>
+                                </MudItem>
+                            </MudGrid>
+                        }
+
+                        <MudCheckBox T="bool" Label="Show text under bars (human-readable)" @bind-Value="_showHumanReadable" Color="Color.Primary" Dense="true"/>
+
+                        @if (_showHumanReadable) {
+                            <MudTextField T="string"
+                                          Label="Caption override (optional)"
+                                          HelperText="Leave empty to print the same text as the barcode data."
+                                          Variant="Variant.Outlined"
+                                          @bind-Value="_humanReadableOverride"/>
+
+                            <MudGrid>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Caption font (px)" @bind-Value="_humanReadableFontPx" Min="8" Max="128"/>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Gap above caption (px)" @bind-Value="_humanReadableMarginTopPx" Min="0" Max="64"/>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField T="int" Label="Padding below caption (px)" @bind-Value="_humanReadableMarginBottomPx" Min="0" Max="64"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            <MudColorPicker Label="Caption color (optional)" @bind-Value="_humanReadableColor"/>
+                        }
+
                         <MudTextField T="string"
                                       Label="Data (ASCII 32–127)"
                                       Variant="Variant.Outlined"
@@ -123,13 +159,28 @@
     private byte[]? _imageBytes;
     private string? _imageSource;
     private MudColor _lightColor = new("#FFFFFF");
+    private bool _showBorder;
+    private int _borderWidthPx = 4;
+    private MudColor _borderColor = new("#000000");
     private int _moduleWidth = 2;
     private int _quietZone = 10;
+    private bool _showHumanReadable;
+    private string _humanReadableOverride = string.Empty;
+    private int _humanReadableFontPx = 14;
+    private int _humanReadableMarginTopPx = 6;
+    private int _humanReadableMarginBottomPx = 4;
+    private MudColor _humanReadableColor = new("#000000");
     private string _statusMessage = string.Empty;
     private Severity _statusSeverity = Severity.Info;
     private int _statusVersion;
     private string _svgMarkup = string.Empty;
     private int _widthPx;
+
+    private static string ToOpaqueRgbHex(MudColor c)
+    {
+        var s = c.ToString(MudColorOutputFormats.Hex);
+        return s is { Length: 9 } && s[0] == '#' ? s[..7] : s;
+    }
 
     private async Task GenerateAsync()
     {
@@ -146,7 +197,20 @@
                 BarHeightPixels = _barHeight,
                 QuietZoneModules = _quietZone,
                 DarkColor = _darkColor.ToString(MudColorOutputFormats.Hex),
-                LightColor = _lightColor.ToString(MudColorOutputFormats.Hex)
+                LightColor = _lightColor.ToString(MudColorOutputFormats.Hex),
+                ShowBorder = _showBorder,
+                BorderWidthPixels = _borderWidthPx,
+                BorderColorHex = ToOpaqueRgbHex(_borderColor),
+                ShowHumanReadableTextBelow = _showHumanReadable,
+                HumanReadableText = string.IsNullOrWhiteSpace(_humanReadableOverride) ? null : _humanReadableOverride,
+                HumanReadableFontSizePixels = _humanReadableFontPx,
+                HumanReadableMarginTopPixels = _humanReadableMarginTopPx,
+                HumanReadableMarginBottomPixels = _humanReadableMarginBottomPx,
+                HumanReadableColorHex = !_showHumanReadable
+                    ? null
+                    : string.Equals(_humanReadableColor.ToString(MudColorOutputFormats.Hex), _darkColor.ToString(MudColorOutputFormats.Hex), StringComparison.OrdinalIgnoreCase)
+                        ? null
+                        : _humanReadableColor.ToString(MudColorOutputFormats.Hex)
             };
 
             var result = await BarcodeService.GenerateAsync(_data, BarcodeSymbology.Code128, options);

@@ -75,6 +75,13 @@ public partial class LyoFileUpload : IDisposable
     [Parameter]
     public int ChipFileNameMaxLength { get; set; } = 32;
 
+    /// <summary>Optional CSS <c>max-width</c> for file status chips (e.g. <c>min(100%, 12rem)</c> or <c>100%</c>). Keeps chips inside narrow columns; combine with <see cref="ChipFileNameMaxLength"/>.</summary>
+    [Parameter]
+    public string? ChipMaxWidthCss { get; set; }
+
+    private string? ChipContainerStyle =>
+        string.IsNullOrWhiteSpace(ChipMaxWidthCss) ? null : $"max-width:{ChipMaxWidthCss.Trim()};overflow:hidden;";
+
     /// <summary>
     /// <see cref="ClientFileDisplayMode.Chips" /> shows per-file chips (subject to <see cref="ShowFiles" />). <see cref="ClientFileDisplayMode.ExternalList" /> hides all chip
     /// UI; use <see cref="OnClientFileReady" /> in a parent listbox/list.

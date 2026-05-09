@@ -4,6 +4,7 @@ using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Images.Models;
 using Lyo.QRCode.Models;
+using Lyo.QRCode.Payloads;
 
 namespace Lyo.QRCode;
 
@@ -29,6 +30,19 @@ public sealed class QRCodeBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(data);
         _data = data;
+        return this;
+    }
+
+    /// <summary>Sets payload from a typed QR content object. If both <see cref="WithData" /> and <see cref="WithPayload" /> are used, the last call wins.</summary>
+    /// <param name="payload">Payload to serialize with <see cref="IQrPayload.ToQrString" />.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="payload" /> is null.</exception>
+    public QRCodeBuilder WithPayload(IQrPayload payload)
+    {
+        ArgumentHelpers.ThrowIfNull(payload);
+        var s = payload.ToQrString();
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(s);
+        _data = s;
         return this;
     }
 

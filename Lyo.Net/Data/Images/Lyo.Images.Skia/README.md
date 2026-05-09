@@ -1,18 +1,24 @@
 # Lyo.Images.Skia
 
-Image processing library for .NET using SkiaSharp. This library provides a SkiaSharp-based implementation of the `IImageService` interface.
+**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.
 
-## Features
+## When to use Skia vs ImageSharp
 
-- **Resize** - Resize images with multiple resize modes (Max, Crop, Pad, BoxPad, Stretch)
-- **Crop** - Crop images to specified rectangles
-- **Rotate** - Rotate images by degrees
-- **Watermark** - Add text watermarks with customizable fonts, colors, positions, and opacity
-- **Format Conversion** - Convert between JPEG, PNG, WebP, GIF, BMP, ICO formats
-- **Thumbnail Generation** - Generate thumbnails with aspect ratio preservation
-- **Compression** - Compress images with quality control
-- **Metadata** - Extract image metadata (dimensions, format, etc.)
-- **Batch Processing** - Process multiple images in batch operations
+| | **Lyo.Images.Skia** | **Lyo.Images (ImageSharp)** |
+|--|---------------------|-----------------------------|
+| **Platforms** | Strong on Linux/mobile; native Skia assets. | Pure managed; broad format support. |
+| **EXIF** | Extended EXIF via MetadataExtractor where wired. | Rich EXIF via ImageSharp metadata APIs. |
+| **QR frames** | `AddSkiaImageService` does **not** auto-register **`IQrFrameLayoutService`**. Register **`QrFrameLayoutService`** (or ImageSharp + `AddImageSharpImageService`) if you need **`CompositeQrFramePngAsync`**. | `AddImageSharpImageService` registers **`IQrFrameLayoutService`** when absent. |
+
+## Public API
+
+| Type | Description |
+|------|-------------|
+| **`SkiaImageService`** | `IImageService` implementation using SkiaSharp bitmap decode/encode. |
+| **`Extensions`** | **`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `"ImageService"` section as ImageSharp. |
+| **`Constants.Metrics`** | Metric name strings for Skia operation timings. |
+
+Internal helpers (**`SkiaExifExtractor`**, etc.) are not part of the supported public contract.
 
 ## Usage
 
@@ -20,68 +26,35 @@ Image processing library for .NET using SkiaSharp. This library provides a SkiaS
 using Lyo.Images;
 using Lyo.Images.Models;
 using Lyo.Images.Skia;
+using Microsoft.Extensions.DependencyInjection;
 
-// Create service with options
-var options = new ImageServiceOptions
-{
-    DefaultQuality = 90,
-    MaxWidth = 10000,
-    MaxHeight = 10000,
-    MaxFileSizeBytes = 100 * 1024 * 1024
-};
+var services = new ServiceCollection();
+services.AddSkiaImageService(o => {
+    o.DefaultQuality = 90;
+    o.MaxWidth = 10_000;
+    o.MaxHeight = 10_000;
+});
 
-IImageService imageService = new SkiaImageService(options, logger);
+var imageService = services.BuildServiceProvider().GetRequiredService<IImageService>();
 
-// Resize an image
-await imageService.ResizeAsync(
-    inputStream,
-    outputStream,
-    width: 800,
-    height: 600,
-    resizeMode: ResizeMode.Max,
-    format: ImageFormat.Jpeg,
-    quality: 90
-);
+await imageService.ResizeAsync(inputStream, outputStream, 800, 600, ResizeMode.Max, ImageFormat.Jpeg, 90);
+```
 
-// Add watermark
-var watermarkOptions = new WatermarkOptions
-{
-    FontSize = 24,
-    FontFamily = "Arial",
-    TextColor = "#FFFFFF",
-    Position = WatermarkPosition.BottomRight,
-    Opacity = 0.7f,
-    Padding = 10
-};
+### Optional: QR frame compositing with Skia-only DI
 
-await imageService.WatermarkAsync(
-    inputStream,
-    outputStream,
-    "Copyright 2024",
-    watermarkOptions
-);
+```csharp
+using Lyo.Images;
+using Microsoft.Extensions.DependencyInjection;
 
-// Generate thumbnail
-var thumbnailBytes = await imageService.GenerateThumbnailAsync(
-    inputStream,
-    maxWidth: 200,
-    maxHeight: 200,
-    format: ImageFormat.Jpeg
-);
+services.AddSingleton<IQrFrameLayoutService>(_ => new QrFrameLayoutService());
+services.AddSkiaImageService();
 ```
 
 ## Advantages of SkiaSharp
 
-- **Cross-platform** - Works on Linux, Windows, macOS, iOS, Android
-- **High Performance** - Optimized native rendering engine
-- **Advanced Text Rendering** - Excellent watermark and text capabilities
-- **Wide Format Support** - Supports JPEG, PNG, WebP, GIF, BMP, ICO, and more
-- **Professional Graphics** - Based on Google's Skia graphics library
-
-## Requirements
-
-- .NET 10.0 or later
-- SkiaSharp 2.88.x or later
+- Cross-platform native rendering performance.
+- Solid text rendering for watermarks.
+- Broad raster format support (JPEG, PNG, WebP, GIF, BMP, ICO, etc.—subject to Skia build).
 
 ## Dependencies
 

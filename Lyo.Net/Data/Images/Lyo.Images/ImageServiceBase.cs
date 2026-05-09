@@ -20,7 +20,7 @@ using static Lyo.Images.ImageErrorCodes;
 
 namespace Lyo.Images;
 
-/// <summary>Base implementation of IImageService using ImageSharp.</summary>
+/// <summary>Abstract base for <see cref="IImageService" /> implementations (e.g. ImageSharp, SkiaSharp) sharing validation, metrics wiring, and common helpers.</summary>
 public abstract class ImageServiceBase : IImageService
 {
     /// <summary>Gets the logger instance.</summary>
@@ -284,17 +284,22 @@ public abstract class ImageServiceBase : IImageService
 
                 ctx.DrawImage(iconImg, new Point(ix, iy), 1f);
                 if (options.DrawOverlayBorder) {
+                    var stroke = Color.Parse("#334155");
+                    if (!string.IsNullOrWhiteSpace(options.OverlayBorderStrokeHex) && Color.TryParse(options.OverlayBorderStrokeHex, out var strokeParsed))
+                        stroke = strokeParsed;
+
                     var bL = Math.Max(0, ix - 1);
                     var bT = Math.Max(0, iy - 1);
                     var bR = Math.Min(w, ix + iconSize + 1);
                     var bB = Math.Min(h, iy + iconSize + 1);
                     if (bR > bL && bB > bT)
-                        ctx.Draw(Pens.Solid(light, 2), new RectangularPolygon(bL, bT, bR - bL, bB - bT));
+                        ctx.Draw(Pens.Solid(stroke, 2), new RectangularPolygon(bL, bT, bR - bL, bB - bT));
                 }
             });
 
             await using var ms = new MemoryStream();
-            await qr.SaveAsync(ms, ImagePngEncoding.Truecolor, ct).ConfigureAwait(false);
+            var pngEncoder = ImagePngEncoding.TruecolorForComposites(Options.UseFastPngForQrComposites);
+            await qr.SaveAsync(ms, pngEncoder, ct).ConfigureAwait(false);
             return Result<byte[]>.Success(ms.ToArray());
         }
         catch (OperationCanceledException ex) {
@@ -314,7 +319,7 @@ public abstract class ImageServiceBase : IImageService
         ArgumentHelpers.ThrowIfNull(options);
         ct.ThrowIfCancellationRequested();
         try {
-            var bytes = await QrFrameLayoutCompositor.ApplyAsync(qrPng, options, ct).ConfigureAwait(false);
+            var bytes = await QrFrameLayoutCompositor.ApplyAsync(qrPng, options, ct, Options.UseFastPngForQrComposites).ConfigureAwait(false);
             return Result<byte[]>.Success(bytes);
         }
         catch (OperationCanceledException ex) {

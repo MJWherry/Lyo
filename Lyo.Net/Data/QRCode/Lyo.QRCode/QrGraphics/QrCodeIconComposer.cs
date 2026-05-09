@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+using Lyo.Exceptions;
 using Lyo.Images;
 using Lyo.Images.Models;
 using Lyo.QRCode.Models;
@@ -17,14 +18,11 @@ internal static class QrCodeIconComposer
         if (icon.IconBytes is { Length: > 0 })
             return icon.IconBytes;
 
-        if (!string.IsNullOrWhiteSpace(icon.IconFilePath)) {
-            if (!File.Exists(icon.IconFilePath))
-                throw new FileNotFoundException($"QR icon file not found: {icon.IconFilePath}", icon.IconFilePath);
+        if (string.IsNullOrWhiteSpace(icon.IconFilePath))
+            return null;
 
-            return File.ReadAllBytes(icon.IconFilePath);
-        }
-
-        return null;
+        ArgumentHelpers.ThrowIfFileNotFound(icon.IconFilePath);
+        return File.ReadAllBytes(icon.IconFilePath);
     }
 
     public static async Task<byte[]> ApplyIconToPngAsync(
@@ -32,29 +30,34 @@ internal static class QrCodeIconComposer
         byte[] qrPngBytes,
         QRCodeIconOptions icon,
         string lightColorHex,
-        ILogger? logger,
+        string darkColorHex,
+        ILogger logger,
         CancellationToken ct)
     {
-        byte[]? rawIcon = null;
         try {
-            rawIcon = TryResolveIconBytes(icon);
+            var rawIcon = TryResolveIconBytes(icon);
             if (rawIcon == null)
                 return qrPngBytes;
 
             var pct = QRCodeIconOptions.ClampIconSizePercent(icon.IconSizePercent);
             // Do not set BackgroundSquareSize: options.Size is pixels-per-module, not the rendered PNG side length.
             // Resizing the QR to that value destroys module alignment and breaks scans / logo placement.
-            var overlayOpts = new ImageCenterOverlayOptions { OverlaySizePercent = pct, DrawOverlayBorder = icon.DrawIconBorder, BorderColorHex = lightColorHex };
+            var overlayOpts = new ImageCenterOverlayOptions {
+                OverlaySizePercent = pct,
+                DrawOverlayBorder = icon.DrawIconBorder,
+                BorderColorHex = lightColorHex,
+                OverlayBorderStrokeHex = darkColorHex
+            };
             var result = await images.CompositeCenterOverlayPngAsync(qrPngBytes, rawIcon, overlayOpts, ct).ConfigureAwait(false);
-            if (!result.IsSuccess || result.Data == null) {
-                logger?.LogWarning("Failed to apply QR icon: {Errors}", result.Errors);
-                return qrPngBytes;
-            }
+            if (result.IsSuccess && result.Data != null)
+                return result.Data;
 
-            return result.Data;
+            logger.LogWarning("Failed to apply QR icon: {Errors}", result.Errors);
+            return qrPngBytes;
+
         }
         catch (Exception ex) {
-            logger?.LogWarning(ex, "Failed to apply QR icon; returning QR without icon.");
+            logger.LogWarning(ex, "Failed to apply QR icon; returning QR without icon.");
             return qrPngBytes;
         }
     }
@@ -65,12 +68,12 @@ internal static class QrCodeIconComposer
         QRCodeIconOptions icon,
         int totalPixelSize,
         string lightColorHex,
+        string darkColorHex,
         ILogger? logger,
         CancellationToken ct)
     {
-        byte[]? rawIcon = null;
         try {
-            rawIcon = TryResolveIconBytes(icon);
+            var rawIcon = TryResolveIconBytes(icon);
             if (rawIcon == null)
                 return svg;
 
@@ -95,7 +98,7 @@ internal static class QrCodeIconComposer
                 return svg;
 
             var border = icon.DrawIconBorder
-                ? $"  <rect x=\"{ix - 1}\" y=\"{iy - 1}\" width=\"{iconSize + 2}\" height=\"{iconSize + 2}\" fill=\"none\" stroke=\"{lightColorHex}\" stroke-width=\"2\"/>\n"
+                ? $"  <rect x=\"{ix - 1}\" y=\"{iy - 1}\" width=\"{iconSize + 2}\" height=\"{iconSize + 2}\" fill=\"none\" stroke=\"{darkColorHex}\" stroke-width=\"2\"/>\n"
                 : "";
 
             var img =

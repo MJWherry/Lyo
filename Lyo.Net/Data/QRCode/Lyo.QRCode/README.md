@@ -1,162 +1,70 @@
 # Lyo.QRCode
 
-QR code generation service for the Lyo framework using the QRCoder library.
+**QR code generation and reading** for Lyo: **`IQRCodeService`**, **`QRCodeBuilder`**, ISO **Model 2** encoding in-box (**`BuiltInQRCodeService`**), optional **QRCoder** adapter package **`Lyo.QRCode.QRCoder`**, and typed **payload helpers** (`Lyo.QRCode.Payloads`) for Wi‑Fi, URLs, vCard, `mailto:`, etc.
 
-## Features
+## Architecture
 
-- **Multiple Formats**: Generate QR codes in PNG, SVG, JPEG, and Bitmap formats
-- **Error Correction Levels**: Support for Low, Medium, Quartile, and High error correction
-- **Custom Colors**: Configure dark and light colors for QR codes
-- **Icon Embedding**: Embed logos/icons in the center of QR codes (PNG, JPEG, Bitmap)
-- **Batch Generation**: Generate multiple QR codes in a single operation
-- **Logging**: Comprehensive logging support via Microsoft.Extensions.Logging
-- **Metrics**: Optional metrics collection for monitoring QR code generation operations
-- **Thread-Safe**: Safe for concurrent use
-- **Async Support**: Full async/await support with cancellation token support
+| Piece | Role |
+|-------|------|
+| **`IQRCodeService`** | Generate to memory, stream, file; batch; **`ReadFromImageAsync`** (ZXing). |
+| **`BuiltInQRCodeService`** | In-library **PNG/SVG** rasterization; **no QRCoder NuGet** for encode. JPEG/BMP not supported here (platform / format limits). |
+| **`Lyo.QRCode.QRCoder`** | Optional **`QRCoderQRCodeService`** + **`AddQRCoderQrCodeService`** for JPEG/Bitmap on Windows and QRCoder-based render path. |
+| **`QRCodeBuilder`** | Fluent **`QRCodeOptions`** + **`WithData`** / **`WithPayload(IQrPayload)`**. |
+| **`Payloads`** | **`IQrPayload`**, **`QrPayloadKind`**, **`WifiQrPayload`**, **`HttpUrlPayload`**, contacts, URI schemes, messaging URLs — all serialize to the string passed to **`GenerateAsync`**. |
 
-## Quick Start
-
-### Basic Usage
+## Quick start (built-in encoder)
 
 ```csharp
 using Lyo.QRCode;
 using Lyo.QRCode.Models;
 using Microsoft.Extensions.DependencyInjection;
 
-// Register the service
 var services = new ServiceCollection();
-services.AddQRCodeService(options =>
-{
-    options.DefaultSize = 256;
-    options.DefaultFormat = QRCodeFormat.Png;
-    options.DefaultErrorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium;
-    options.EnableMetrics = true;
+services.AddQRCodeService(o => {
+    o.DefaultSize = 16; // pixels per module, not total width
+    o.DefaultFormat = QRCodeFormat.Png;
+    o.DefaultErrorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium;
 });
 
-var serviceProvider = services.BuildServiceProvider();
-var qrCodeService = serviceProvider.GetRequiredService<IQRCodeService>();
+var qr = services.BuildServiceProvider().GetRequiredService<IQRCodeService>();
+var result = await qr.GenerateAsync("https://example.com");
 
-// Generate a QR code
-var result = await qrCodeService.GenerateAsync("https://example.com");
-
-if (result.IsSuccess)
-{
-    // Save to file
-    await File.WriteAllBytesAsync("qrcode.png", result.ImageBytes!);
-}
+if (result.IsSuccess && result is QRCodeResult r && r.ImageBytes != null)
+    await File.WriteAllBytesAsync("qr.png", r.ImageBytes);
 ```
 
-### Generate with Custom Options
+### Typed payload (Wi‑Fi example)
 
 ```csharp
-var options = new QRCodeOptions
-{
-    Format = QRCodeFormat.Png,
-    Size = 512,
-    ErrorCorrectionLevel = QRCodeErrorCorrectionLevel.High,
-    DarkColor = "#000000",
-    LightColor = "#FFFFFF",
-    DrawQuietZones = true
-};
+using Lyo.QRCode;
+using Lyo.QRCode.Payloads;
 
-var result = await qrCodeService.GenerateAsync("https://example.com", options);
+var payload = new WifiQrPayload("MySSID", "secret", QrWifiSecurityType.Wpa);
+var (_, opts) = QRCodeBuilder.New()
+    .WithPayload(payload)
+    .WithFormat(QRCodeFormat.Png)
+    .WithSize(12)
+    .Build();
 ```
 
-### Generate to File
+### Optional: QRCoder package
 
-```csharp
-await qrCodeService.GenerateToFileAsync(
-    "https://example.com",
-    "qrcode.png",
-    new QRCodeOptions { Size = 256 }
-);
-```
+Add project/package reference to **`Lyo.QRCode.QRCoder`** and call **`AddQRCoderQrCodeService`** (or **`AddQRCoderQrCodeServiceFromConfiguration`**) instead of or in addition to **`AddQRCodeService`**, depending on how you register **`IQRCodeService`**.
 
-### Generate to Stream
+## Payload helpers (`Lyo.QRCode.Payloads`)
 
-```csharp
-await using var stream = new MemoryStream();
-await qrCodeService.GenerateToStreamAsync(
-    "https://example.com",
-    stream,
-    new QRCodeOptions { Format = QRCodeFormat.Svg }
-);
-```
+- **Wi‑Fi (`WifiQrPayload`)** — Omits **`H:`** when the SSID is not hidden (better phone compatibility than **`H:false`**). Open networks omit **`P`** (not **`P:;`**).
+- **SMS (`SmsPayload`)** — Defaults to **`sms:`** URI scheme; **`smsto:`** is opt-in (some Android SMS apps crash on long **`smsto:`** bodies). Very long URIs throw (**`MaxSmsQrUriLength`**) to avoid app crashes.
 
-### Generate with Icon
+## Key options
 
-```csharp
-var iconBytes = await File.ReadAllBytesAsync("logo.png");
-var options = new QRCodeOptions
-{
-    Size = 512,
-    Icon = new QRCodeIconOptions
-    {
-        IconBytes = iconBytes,
-        IconSizePercent = 20,
-        DrawIconBorder = true
-    }
-};
+- **`QRCodeOptions.Size`** — **Pixels per module** (each black/white square), not the full image width. Total size ≈ module count per side × **`Size`** (and more if a PNG **frame** is composited separately).
+- **`QRCodeOptions.Icon`** — Center logo; built-in path needs **`IImageService`** registered when an icon is set. **`DrawIconBorder`**: the compositor clears a light pad (**`LightColor`**) behind the logo and draws the stroke in **`DarkColor`** so the border remains visible (a light-on-light stroke would disappear).
+- **`QRCodeOptions.Frame`** — Decorative frame; **`BuiltInQRCodeService`** can apply **`QrFrameLayoutOptions`** when registered with frame support; Blazor workbenches often composite frames in a second step via **`IQrFrameLayoutService`** / **`IImageService.CompositeQrFramePngAsync`** (see **`Lyo.Images`**).
 
-var result = await qrCodeService.GenerateAsync("https://example.com", options);
-```
+## Error correction
 
-### Batch Generation
-
-```csharp
-var requests = new[]
-{
-    new QRCodeRequest { Data = "https://example.com/page1", Id = "page1" },
-    new QRCodeRequest { Data = "https://example.com/page2", Id = "page2" },
-    new QRCodeRequest 
-    { 
-        Data = "https://example.com/page3", 
-        Id = "page3",
-        Options = new QRCodeOptions { Size = 512 }
-    }
-};
-
-var batchResult = await qrCodeService.GenerateBatchAsync(requests);
-Console.WriteLine($"Generated {batchResult.SuccessCount}/{batchResult.TotalCount} QR codes");
-```
-
-## Configuration Options
-
-### QRCodeServiceOptions
-
-- `DefaultSize` (int): Default QR code size in pixels (default: 256)
-- `DefaultErrorCorrectionLevel` (QRCodeErrorCorrectionLevel): Default error correction level (default: Medium)
-- `DefaultFormat` (QRCodeFormat): Default output format (default: PNG)
-- `MinSize` (int): Minimum QR code size in pixels (default: 50)
-- `MaxSize` (int): Maximum QR code size in pixels (default: 2000)
-- `EnableMetrics` (bool): Enable metrics collection (default: false)
-
-### QRCodeOptions
-
-- `Format` (QRCodeFormat): Output format (PNG, SVG, JPEG, Bitmap)
-- `Size` (int): QR code size in pixels
-- `ErrorCorrectionLevel` (QRCodeErrorCorrectionLevel): Error correction level (Low, Medium, Quartile, High)
-- `DarkColor` (string): Dark color in hex format (e.g., "#000000")
-- `LightColor` (string): Light color in hex format (e.g., "#FFFFFF")
-- `DrawQuietZones` (bool): Whether to draw quiet zones (default: true)
-- `Icon` (QRCodeIconOptions): Optional icon/logo to embed
-
-## Error Correction Levels
-
-- **Low (L)**: ~7% recovery - Suitable for high-quality printing
-- **Medium (M)**: ~15% recovery - Default, good balance
-- **Quartile (Q)**: ~25% recovery - Good for damaged QR codes
-- **High (H)**: ~30% recovery - Maximum error correction
-
-## Production Readiness
-
-✅ **Thread-Safe**: Safe for concurrent use  
-✅ **Error Handling**: Comprehensive error handling with detailed error messages  
-✅ **Logging**: Full logging support via Microsoft.Extensions.Logging  
-✅ **Metrics**: Optional metrics collection for monitoring  
-✅ **Async Support**: Full async/await support with cancellation tokens  
-✅ **Validation**: Input validation for size limits and data requirements  
-✅ **Test Coverage**: Comprehensive test coverage (recommended)
+**`QRCodeErrorCorrectionLevel`**: Low (~7%), Medium (~15%), Quartile (~25%), High (~30%) recovery. Higher levels tolerate damage and logos better but increase symbol version for the same payload.
 
 ## Dependencies
 
@@ -180,3 +88,7 @@ Console.WriteLine($"Generated {batchResult.SuccessCount}/{batchResult.TotalCount
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Images`](../../Images/Lyo.Images/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+
+## Blazor UI (optional)
+
+- [`Lyo.QRCode.Web.Components`](../Lyo.QRCode.Web.Components/README.md) — **`QrCodeWorkbench`** and related MudBlazor components.

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Barcode.Models;
 
 /// <summary>Output image format for generated barcodes.</summary>
+[DebuggerDisplay("BarcodeFormat.{ToString()}")]
 public enum BarcodeFormat
 {
     /// <summary>Windows BMP (24-bit), no external image dependencies.</summary>

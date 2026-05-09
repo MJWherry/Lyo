@@ -13,7 +13,7 @@ public static class Extensions
     private static void TryAddQrFrameLayoutService(IServiceCollection services)
     {
         if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
-            services.AddSingleton<IQrFrameLayoutService, QrFrameLayoutService>();
+            services.AddSingleton<IQrFrameLayoutService>(sp => new QrFrameLayoutService(sp.GetService<ImageServiceOptions>()));
     }
 
     /// <summary>Registers <see cref="ISpriteSheetExportService" /> for spritesheet export and slicing helpers.</summary>

@@ -110,7 +110,8 @@ public class QRCodeServiceTests
     {
         var service = CreateService();
         var options = new QRCodeOptions {
-            Format = QRCodeFormat.Png, Size = 10 // Too small
+            Format = QRCodeFormat.Png,
+            Size = 0 // Below MinSize (pixels-per-module must be ≥ 1)
         };
 
         var result = await service.GenerateAsync("https://example.com", options, TestContext.Current.CancellationToken);

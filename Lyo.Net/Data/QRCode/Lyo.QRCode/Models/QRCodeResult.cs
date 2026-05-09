@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.QRCode.Models;
 
 /// <summary>Result of a QR code generation operation with QR code-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QRCodeResult : Result<QRCodeRequest>
 {
     /// <summary>The generated QR code image bytes.</summary>
@@ -11,7 +13,7 @@ public sealed record QRCodeResult : Result<QRCodeRequest>
     /// <summary>The QR code format used.</summary>
     public QRCodeFormat? Format { get; init; }
 
-    /// <summary>The size of the QR code in pixels.</summary>
+    /// <summary>Pixels per module (same semantics as <see cref="QRCodeOptions.Size" />) when the implementation reports it.</summary>
     public int? Size { get; init; }
 
     /// <summary>A human-readable message describing the result.</summary>
@@ -42,4 +44,10 @@ public sealed record QRCodeResult : Result<QRCodeRequest>
         var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
         return new(false, request, [error]);
     }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => IsSuccess
+            ? $"Success: Format={Format}, Size={Size}, ImageBytes={ImageBytes?.Length ?? 0} bytes, Message={Message}, Timestamp={Timestamp:O}, Request={Data}"
+            : $"Failure: {string.Join("; ", Errors ?? [])}, Timestamp={Timestamp:O}, Request={Data}";
 }

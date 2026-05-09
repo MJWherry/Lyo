@@ -22,12 +22,21 @@ public class WatermarkOptions
     public int Padding { get; set; } = 10;
 }
 
-/// <summary>Watermark position options.</summary>
+/// <summary>Anchor corner or center for watermark text.</summary>
 public enum WatermarkPosition
 {
+    /// <summary>Upper-left corner (respecting padding).</summary>
     TopLeft,
+
+    /// <summary>Upper-right corner.</summary>
     TopRight,
+
+    /// <summary>Lower-left corner.</summary>
     BottomLeft,
+
+    /// <summary>Lower-right corner.</summary>
     BottomRight,
+
+    /// <summary>Image center.</summary>
     Center
 }

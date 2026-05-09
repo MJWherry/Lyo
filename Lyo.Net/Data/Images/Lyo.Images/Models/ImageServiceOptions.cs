@@ -30,6 +30,9 @@ public class ImageServiceOptions
     /// <summary>Minimum alpha (0-255) for a pixel to be counted during palette extraction when <see cref="IgnoreTransparentPixelsInPalette" /> is enabled. Default: 16.</summary>
     public int PaletteAlphaCutoff { get; set; } = 16;
 
+    /// <summary>When true, QR frame compositing and center-overlay PNG output use faster PNG compression (best speed), trading larger files for lower CPU. Default: false.</summary>
+    public bool UseFastPngForQrComposites { get; set; }
+
     public override string ToString()
-        => $"DefaultQuality: {DefaultQuality}, MaxWidth: {MaxWidth}, MaxHeight: {MaxHeight}, MaxFileSizeBytes: {MaxFileSizeBytes}, EnableMetrics: {EnableMetrics}, IgnoreTransparentPixelsInPalette: {IgnoreTransparentPixelsInPalette}, PaletteAlphaCutoff: {PaletteAlphaCutoff}";
+        => $"DefaultQuality: {DefaultQuality}, MaxWidth: {MaxWidth}, MaxHeight: {MaxHeight}, MaxFileSizeBytes: {MaxFileSizeBytes}, EnableMetrics: {EnableMetrics}, IgnoreTransparentPixelsInPalette: {IgnoreTransparentPixelsInPalette}, PaletteAlphaCutoff: {PaletteAlphaCutoff}, UseFastPngForQrComposites: {UseFastPngForQrComposites}";
 }

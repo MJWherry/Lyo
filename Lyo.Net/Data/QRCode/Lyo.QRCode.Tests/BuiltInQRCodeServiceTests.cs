@@ -61,6 +61,17 @@ public class BuiltInQRCodeServiceTests
     }
 
     [Fact]
+    public async Task GenerateAsync_DefaultOptions_AllowsWorkbenchModulePresets()
+    {
+        // Regression: MinSize must not assume Size is total image pixels (workbench passes 6–32 px/module).
+        var service = new BuiltInQRCodeService(new QRCodeServiceOptions(), NullLogger<BuiltInQRCodeService>.Instance);
+        foreach (var px in new[] { 6, 10, 16, 24, 32 }) {
+            var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = px }, TestContext.Current.CancellationToken);
+            Assert.True(result.IsSuccess, $"Size={px}px/module should be valid");
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_Svg_ContainsSvgRoot()
     {
         var service = CreateService();

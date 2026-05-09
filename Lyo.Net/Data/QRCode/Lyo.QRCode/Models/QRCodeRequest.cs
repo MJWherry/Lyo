@@ -15,6 +15,7 @@ public class QRCodeRequest
     /// <summary>Gets or sets an optional identifier for this request (useful for batch operations).</summary>
     public string? Id { get; set; }
 
+    /// <inheritdoc />
     public override string ToString()
         => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{(Data?.Length > 50 ? "..." : "")}, Options: {Options?.ToString() ?? "(default)"}";
 }

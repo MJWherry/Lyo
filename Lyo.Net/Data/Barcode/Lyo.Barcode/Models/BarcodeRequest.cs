@@ -6,12 +6,16 @@ namespace Lyo.Barcode.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public class BarcodeRequest
 {
+    /// <summary>Payload to encode.</summary>
     public string Data { get; set; } = null!;
 
+    /// <summary>Barcode type.</summary>
     public BarcodeSymbology Symbology { get; set; } = BarcodeSymbology.Code128;
 
+    /// <summary>Per-request raster/SVG options; null uses service defaults.</summary>
     public BarcodeOptions? Options { get; set; }
 
+    /// <summary>Optional correlation id for batch results.</summary>
     public string? Id { get; set; }
 
     public override string ToString()

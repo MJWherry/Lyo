@@ -461,7 +461,7 @@ internal static class QrIsoPngRasterizer
 
         private static void Deflate(Stream output, ArraySegment<byte> bytes)
         {
-            using var deflateStream = new DeflateStream(output, CompressionMode.Compress, true);
+            using var deflateStream = new DeflateStream(output, CompressionLevel.Fastest, leaveOpen: true);
             deflateStream.Write(bytes.Array!, 0, bytes.Count);
         }
 

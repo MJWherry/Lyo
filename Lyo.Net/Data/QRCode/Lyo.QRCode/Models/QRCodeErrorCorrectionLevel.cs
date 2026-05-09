@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.QRCode.Models;
 
 /// <summary>QR code error correction levels.</summary>
+[DebuggerDisplay("ECC.{ToString()}")]
 public enum QRCodeErrorCorrectionLevel
 {
     /// <summary>Low error correction (~7% recovery).</summary>
