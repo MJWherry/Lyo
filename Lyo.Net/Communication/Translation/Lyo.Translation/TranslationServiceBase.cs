@@ -25,10 +25,10 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
     /// <summary>Gets the metrics instance (null if metrics are disabled).</summary>
     protected IMetrics Metrics { get; }
 
-    /// <summary>Gets the semaphore for rate limiting bulk translation operations.</summary>
+    /// <summary>Limits concurrent work inside <see cref="TranslateBulkAsync" />.</summary>
     protected SemaphoreSlim BulkTranslationSemaphore { get; }
 
-    /// <summary>Gets the metric names dictionary. Derived classes can modify this dictionary to override metric names.</summary>
+    /// <summary>Maps logical metric slots (keys from <see cref="Constants.Metrics" />) to provider-specific metric names.</summary>
     protected Dictionary<string, string> MetricNames { get; }
 
     /// <summary>Initializes a new instance of the <see cref="TranslationServiceBase" /> class.</summary>
@@ -77,6 +77,7 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>Results are collected in a concurrent bag; order is not guaranteed to match <paramref name="requests" />.</remarks>
     public async Task<IReadOnlyList<TranslationResult>> TranslateBulkAsync(IEnumerable<TranslationRequest> requests, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(requests);

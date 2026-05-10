@@ -25,6 +25,7 @@ public class TtsServiceOptions
     /// <summary>Gets or sets the maximum number of requests allowed in a bulk operation.</summary>
     public int MaxBulkTtsLimit { get; set; } = 100;
 
+    /// <inheritdoc />
     public override string ToString()
         => $"DefaultVoiceId={DefaultVoiceId}, DefaultOutputFormat={DefaultOutputFormat}, MaxTextLength={MaxTextLength}, EnableMetrics={EnableMetrics}, BulkTtsConcurrencyLimit={BulkTtsConcurrencyLimit}, MaxBulkTtsLimit={MaxBulkTtsLimit}";
 }

@@ -25,15 +25,19 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
     /// <summary>Gets the metrics instance (null if metrics are disabled).</summary>
     private IMetrics Metrics { get; }
 
-    /// <summary>Gets the semaphore for rate limiting bulk TTS operations.</summary>
+    /// <summary>Limits concurrent executions inside <see cref="SynthesizeBulkAsync" />.</summary>
     private SemaphoreSlim BulkTtsSemaphore { get; }
 
-    /// <summary>Gets the metric names dictionary. Derived classes can modify this dictionary to override metric names.</summary>
+    /// <summary>Maps logical metric slots (keys from <see cref="Constants.Metrics" />) to emitter-specific names; replace values in subclasses to namespace metrics per provider.</summary>
     /// <remarks>
     /// <para>This dictionary is thread-safe for reads after construction. Modifications should only occur during construction.</para>
     /// </remarks>
     protected ConcurrentDictionary<string, string> MetricNames { get; }
 
+    /// <summary>Stores options, attaches logging/metrics, and prepares bulk concurrency control.</summary>
+    /// <param name="options">Shared TTS behaviour (limits, metrics toggle, defaults).</param>
+    /// <param name="logger">Optional logger; defaults to null logger.</param>
+    /// <param name="metrics">Optional metrics; when null or metrics disabled in options, a no-op implementation is used.</param>
     protected TtsServiceBase(TtsServiceOptions options, ILogger? logger = null, IMetrics? metrics = null)
     {
         Options = options;
@@ -149,7 +153,10 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
         return result;
     }
 
-    /// <summary>Synthesizes multiple texts to speech in bulk.</summary>
+    /// <summary>Synthesizes multiple texts concurrently (bounded by <see cref="TtsServiceOptions.BulkTtsConcurrencyLimit" />), firing bulk events and metrics.</summary>
+    /// <param name="requests">One or more requests; count must not exceed <see cref="TtsServiceOptions.MaxBulkTtsLimit" />.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>One result per input request (order is not guaranteed to match input order).</returns>
     public async Task<IReadOnlyList<TtsResult<TRequest>>> SynthesizeBulkAsync(IEnumerable<TRequest> requests, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(requests);

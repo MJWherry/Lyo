@@ -1,55 +1,47 @@
 # Lyo.Tts.Typecast
 
-Typecast Text-to-Speech service implementation for the Lyo framework.
+[Lyo.Typecast.Client](../../../Integration/Typecast/Lyo.Typecast.Client/README.md)–backed synthesis: `TypecastTtsService` resolves audio via `TypecastClient`, supports optional voice catalog loading for validation (`LoadVoicesAsync`), bulk flows from [`Lyo.Tts`](../Lyo.Tts/README.md), and Typecast-namespaced metrics.
 
-## Features
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
-- Convert text to speech using the Typecast API
-- Support for multiple voices and languages
-- Bulk synthesis operations
-- Metrics tracking
-- Event notifications
+## Prerequisites
 
-## Usage
+1. Configure API access with [`AddTypecastClientFromConfiguration`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md) (section `TypecastClient` by default).
+2. Add TTS options and the service (`TypecastOptions` section defaults to `TypecastOptions`).
 
-### Basic Usage
+## Dependency injection
 
 ```csharp
-var options = new TypecastOptions
-{
-    ApiKey = "your-api-key",
-    DefaultVoiceId = "voice-id",
-    DefaultLanguageCode = "en-US"
-};
+using Lyo.Tts.Typecast;
+using Lyo.Typecast.Client;
 
-var service = new TypecastTtsService(options);
-var result = await service.SynthesizeAsync("Hello, world!");
-
-if (result.IsSuccess)
-{
-    // Use result.AudioData
-}
+services.AddTypecastClientFromConfiguration(configuration);
+services.AddTypecastTtsServiceFromConfiguration(configuration);
 ```
 
-## Configuration
+`DefaultVoiceId`, `DefaultModel`, `MaxTextLength`, and bulk limits come from `TypecastOptions` (which inherits shared fields from [`TtsServiceOptions`](../Lyo.Tts.Models/README.md)).
 
-The service can be configured via options or dependency injection.
+## Voices and validation
+
+Call `await typecastService.LoadVoicesAsync()` during startup so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; if voices are not loaded, validation is skipped (see logging in `TypecastTtsService`).
+
+## Builder overload caveat
+
+There is an overload named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that **does not write to disk**—it only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file.
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Tts.Typecast.csproj`.)*
-
-**Target framework:** `netstandard2.0;net10.0`
+*(Aligned with [`Lyo.Tts.Typecast.csproj`](Lyo.Tts.Typecast.csproj).)*
 
 ### NuGet packages
 
-| Package                                           | Version |
-|---------------------------------------------------|---------|
+| Package | Version |
+|---------|---------|
 | `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`       | `[10,)` |
-| `Microsoft.Extensions.Options`                    | `[10,)` |
-| `System.Text.Json`                                | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
+| `Microsoft.Extensions.Options` | `[10,)` |
+| `System.Text.Json` | `[10,)` (netstandard2.0) |
 
 ### Project references
 

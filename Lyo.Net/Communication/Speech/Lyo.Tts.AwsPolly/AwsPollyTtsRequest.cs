@@ -48,8 +48,14 @@ public class AwsPollyTtsRequest : TtsRequest
     /// <summary>Gets or sets the volume (e.g., "soft", "medium", "loud", or a numeric value).</summary>
     public string? Volume { get; set; }
 
+    /// <summary>Initializes an empty request (set <see cref="TtsRequest.Text" /> and optional members before synthesis).</summary>
     public AwsPollyTtsRequest() { }
 
+    /// <summary>Initializes a request with common fields populated.</summary>
+    /// <param name="text">Text to synthesize.</param>
+    /// <param name="voiceId">Optional Polly voice.</param>
+    /// <param name="languageCode">Optional BCP 47 language hint (used mainly when no voice is chosen).</param>
+    /// <param name="outputFormat">Audio container/codec; defaults to MP3.</param>
     public AwsPollyTtsRequest(string text, AwsPollyVoiceId? voiceId = null, LanguageCodeInfo? languageCode = null, AudioFormat? outputFormat = null)
     {
         Text = text;
@@ -58,6 +64,7 @@ public class AwsPollyTtsRequest : TtsRequest
         OutputFormat = outputFormat ?? AudioFormat.Mp3;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var parts = new List<string> { $"Text: {Text[..Math.Min(Text.Length, 50)]}{(Text.Length > 50 ? "..." : "")}" };

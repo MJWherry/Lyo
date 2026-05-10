@@ -1,60 +1,70 @@
 # Lyo.Tts.AwsPolly
 
-AWS Polly Text-to-Speech service implementation for the Lyo framework.
+[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.
 
-## Features
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
-- Convert text to speech using Amazon Polly
-- Support for multiple voices and languages
-- Bulk synthesis operations
-- Metrics tracking
-- Event notifications
-
-## Usage
-
-### Basic Usage
+## Quick start (code)
 
 ```csharp
+using Lyo.Common.Enums;
+using Lyo.Common.Records;
+using Lyo.Tts.AwsPolly;
+
 var options = new AwsPollyOptions
 {
     Region = "us-east-1",
-    DefaultVoiceId = "Joanna",
-    DefaultLanguageCode = "en-US"
+    DefaultVoiceId = nameof(AwsPollyVoiceId.Joanna),
+    DefaultLanguageCode = LanguageCodeInfo.EnUs,
+    DefaultOutputFormat = AudioFormat.Mp3
 };
 
-var service = new AwsPollyTtsService(options);
+await using var service = new AwsPollyTtsService(options);
 var result = await service.SynthesizeAsync("Hello, world!");
 
-if (result.IsSuccess)
+if (result.IsSuccess && result.AudioData is { Length: > 0 })
 {
-    // Use result.AudioData
+    await File.WriteAllBytesAsync("out.mp3", result.AudioData);
 }
 ```
 
-## Configuration
+Prefer **IAM roles**, environment credentials, or the shared credentials file instead of embedding `AccessKeyId` / `SecretAccessKey`.
 
-The service can be configured via options or dependency injection. AWS credentials can be provided via:
+## Dependency injection
 
-- AccessKeyId and SecretAccessKey in options
-- IAM roles (when running on AWS)
-- Environment variables
-- AWS credentials file
+```csharp
+using Lyo.Tts.AwsPolly;
+
+services.AddAmazonPollyFromConfiguration(configuration); // registers IAmazonPolly + AwsPollyOptions
+services.AddAwsPollyTtsServiceFromConfiguration(configuration);
+// ITtsService<AwsPollyTtsRequest> and AwsPollyTtsService registered
+```
+
+For a minimal [`ITtsService`](../Lyo.Tts/README.md), register `AwsPollyTtsAppService` beside `AwsPollyTtsService` if your host only exposes the non-generic contract.
+
+Example `appsettings.json` snippets appear in XML documentation on `AddAwsPollyTtsServiceFromConfiguration`.
+
+## Behaviour notes
+
+| Area | Detail |
+|------|--------|
+| Voices | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values |
+| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language |
+| Metrics | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md)) |
 
 ## Dependencies
 
-*(Synchronized from `Lyo.Tts.AwsPolly.csproj`.)*
-
-**Target framework:** `netstandard2.0;net10.0`
+*(Aligned with [`Lyo.Tts.AwsPolly.csproj`](Lyo.Tts.AwsPolly.csproj).)*
 
 ### NuGet packages
 
-| Package                                           | Version  |
-|---------------------------------------------------|----------|
-| `AWSSDK.Polly`                                    | `[4.0,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`  |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`  |
-| `Microsoft.Extensions.Logging.Abstractions`       | `[10,)`  |
-| `Microsoft.Extensions.Options`                    | `[10,)`  |
+| Package | Version |
+|---------|---------|
+| `AWSSDK.Polly` | `[4.0,)` |
+| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
+| `Microsoft.Extensions.Options` | `[10,)` |
 
 ### Project references
 

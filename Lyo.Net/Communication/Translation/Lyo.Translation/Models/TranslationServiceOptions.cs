@@ -29,6 +29,7 @@ public class TranslationServiceOptions
     /// <summary>Gets or sets the maximum number of requests allowed in a bulk operation.</summary>
     public int MaxBulkTranslationLimit { get; set; } = 100;
 
+    /// <inheritdoc />
     public override string ToString()
         => $"DefaultTargetLanguage={DefaultTargetLanguage}, DefaultSourceLanguage={DefaultSourceLanguage}, MaxTextLength={MaxTextLength}, EnableMetrics={EnableMetrics}, BulkTranslationConcurrencyLimit={BulkTranslationConcurrencyLimit}, MaxBulkTranslationLimit={MaxBulkTranslationLimit}";
 }

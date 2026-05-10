@@ -153,10 +153,10 @@ public sealed class TypecastTtsService : TtsServiceBase<TypecastTtsRequest>
         return _voicesByModel.ContainsKey(key);
     }
 
-    /// <summary>Synthesizes text to speech and saves it to a file using a builder.</summary>
-    /// <param name="builder">The TTS request builder.</param>
+    /// <summary>Builds a <see cref="TypecastTtsRequest" /> from <paramref name="builder" /> and returns synthesized audio in the result (no disk I/O).</summary>
+    /// <remarks>For saving to disk, call the base class file overload with <c>builder.Build()</c> instead of this method.</remarks>
+    /// <param name="builder">Fluent request builder.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>A TtsResult indicating success or failure.</returns>
     public async Task<TtsResult<TypecastTtsRequest>> SynthesizeToFileAsync(TypecastTtsRequestBuilder builder, CancellationToken ct = default)
         => await SynthesizeAsync(builder.Build(), ct).ConfigureAwait(false);
 

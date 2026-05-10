@@ -20,8 +20,13 @@ public class TranslationRequest
     [JsonConverter(typeof(NullableLanguageCodeInfoJsonConverter))]
     public LanguageCodeInfo? SourceLanguage { get; set; }
 
+    /// <summary>Initializes an empty request (set <see cref="Text" /> before translating).</summary>
     public TranslationRequest() { }
 
+    /// <summary>Initializes a request with text and target language.</summary>
+    /// <param name="text">Source content.</param>
+    /// <param name="targetLanguageCode">Desired output language.</param>
+    /// <param name="sourceLanguage">Optional source language; omission usually triggers auto-detection.</param>
     public TranslationRequest(string text, LanguageCodeInfo targetLanguageCode, LanguageCodeInfo? sourceLanguage = null)
     {
         Text = text;
@@ -29,6 +34,7 @@ public class TranslationRequest
         SourceLanguage = sourceLanguage;
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         var parts = new List<string> {

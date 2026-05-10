@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <Description>Text-to-Speech models and DTOs shared across Lyo TTS provider implementations.</Description>
         <PackageTags>tts text-to-speech speech models dto</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -13,6 +14,10 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>

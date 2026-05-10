@@ -31,7 +31,7 @@ public sealed class AwsPollyOptions : TtsServiceOptions
     /// <summary>Gets or sets the AWS service URL (optional, for local testing or custom endpoints).</summary>
     public string? ServiceUrl { get; set; }
 
-    /// <summary>Gets or sets the default AWS Polly voice ID as an enum.</summary>
+    /// <summary>Gets the default voice as <see cref="AwsPollyVoiceId" />, parsing <see cref="TtsServiceOptions.DefaultVoiceId" /> or falling back to <see cref="AwsPollyVoiceId.Amy"/>.</summary>
     public AwsPollyVoiceId DefaultVoiceIdEnum => Enum.TryParse<AwsPollyVoiceId>(DefaultVoiceId, out var id) ? id : AwsPollyVoiceId.Amy;
 
     /// <summary>Gets or sets the default language code (e.g., "en-US").</summary>

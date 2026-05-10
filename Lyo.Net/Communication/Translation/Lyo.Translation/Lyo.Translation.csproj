@@ -4,6 +4,7 @@
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
         <Description>Base translation service interface and implementation for translating text between languages.</Description>
         <PackageTags>translation translate language</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +20,10 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
