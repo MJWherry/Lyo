@@ -12,7 +12,7 @@ using Lyo.Comic.Postgres;
 using Lyo.Comic.Postgres.Database;
 using Lyo.Comment.Postgres;
 using Lyo.Comment.Postgres.Database;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Encryption.Extensions;
 using Lyo.Favorite.Postgres;
 using Lyo.Favorite.Postgres.Database;

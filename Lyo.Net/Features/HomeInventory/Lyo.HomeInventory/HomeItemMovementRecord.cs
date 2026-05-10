@@ -1,5 +1,5 @@
 using Lyo.Common.Extensions;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.HomeInventory;
 

@@ -1,8 +1,9 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Comment.Postgres.Database;
 
-public class CommentDbContext : DbContext
+public class CommentDbContext : EntityRefModuleDbContext
 {
     public DbSet<CommentEntity> Comments { get; set; } = null!;
 
@@ -11,6 +12,7 @@ public class CommentDbContext : DbContext
     public CommentDbContext(DbContextOptions<CommentDbContext> options)
         : base(options) { }
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("comment");
@@ -18,16 +20,26 @@ public class CommentDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CommentReactionEntityConfiguration());
     }
 
+    /// <inheritdoc />
     public override int SaveChanges()
     {
-        var now = DateTime.UtcNow;
-        foreach (var entry in ChangeTracker.Entries()) {
-            if (entry.State == EntityState.Added && entry.Entity is CommentEntity c && c.CreatedTimestamp == default)
-                c.CreatedTimestamp = now;
-            else if (entry.State == EntityState.Modified && entry.Entity is CommentEntity c2)
-                c2.UpdatedTimestamp = now;
-        }
-
+        StampCommentTimestamps();
         return base.SaveChanges();
+    }
+
+    /// <inheritdoc />
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        StampCommentTimestamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void StampCommentTimestamps()
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<CommentEntity>()) {
+            if (entry.State == EntityState.Modified)
+                entry.Entity.UpdatedTimestamp = now;
+        }
     }
 }

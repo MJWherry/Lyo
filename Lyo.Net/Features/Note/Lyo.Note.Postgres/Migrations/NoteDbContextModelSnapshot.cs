@@ -36,14 +36,34 @@ namespace Lyo.Note.Postgres.Migrations
                         .HasColumnType("character varying(8192)")
                         .HasColumnName("content");
 
-                    b.Property<DateTime>("CreatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
-
-                    b.Property<string>("ForEntityId")
-                        .IsRequired()
+                    b.Property<string>("Context")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
+                        .HasColumnName("context");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by_id");
+
+                    b.Property<string>("DeletedByType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("deleted_by_type");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("ForEntityId")
+                        .HasColumnType("uuid")
                         .HasColumnName("for_entity_id");
 
                     b.Property<string>("ForEntityType")
@@ -52,10 +72,8 @@ namespace Lyo.Note.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<string>("FromEntityId")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                    b.Property<Guid>("FromEntityId")
+                        .HasColumnType("uuid")
                         .HasColumnName("from_entity_id");
 
                     b.Property<string>("FromEntityType")
@@ -64,17 +82,43 @@ namespace Lyo.Note.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("from_entity_type");
 
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
 
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("private")
+                        .HasColumnName("visibility");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType", "ForEntityId")
-                        .HasDatabaseName("ix_note_for_entity");
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_note_created_at");
 
-                    b.HasIndex("FromEntityType", "FromEntityId")
-                        .HasDatabaseName("ix_note_from_entity");
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_note_expires_at")
+                        .HasFilter("\"expires_at\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "Context")
+                        .HasDatabaseName("ix_note_tenant_context");
+
+                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId")
+                        .HasDatabaseName("ix_note_tenant_for_entity");
+
+                    b.HasIndex("TenantId", "FromEntityType", "FromEntityId")
+                        .HasDatabaseName("ix_note_tenant_from_entity");
 
                     b.ToTable("note", "note");
                 });

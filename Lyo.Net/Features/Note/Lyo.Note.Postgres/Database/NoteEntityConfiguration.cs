@@ -1,23 +1,26 @@
+using Lyo.EntityReference.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Note.Postgres.Database;
 
-public sealed class NoteEntityConfiguration : IEntityTypeConfiguration<NoteEntity>
+public sealed class NoteEntityConfiguration : EntityRefConfiguration<NoteEntity>
 {
-    public void Configure(EntityTypeBuilder<NoteEntity> builder)
+    public NoteEntityConfiguration()
+        : base("note") { }
+
+    /// <inheritdoc />
+    public override void Configure(EntityTypeBuilder<NoteEntity> builder)
     {
         builder.ToTable("note");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
-        builder.Property(e => e.ForEntityType).HasMaxLength(200).IsRequired().HasColumnName("for_entity_type");
-        builder.Property(e => e.ForEntityId).HasMaxLength(200).IsRequired().HasColumnName("for_entity_id");
-        builder.Property(e => e.FromEntityType).HasMaxLength(200).IsRequired().HasColumnName("from_entity_type");
-        builder.Property(e => e.FromEntityId).HasMaxLength(200).IsRequired().HasColumnName("from_entity_id");
+        MapColumns(builder);
         builder.Property(e => e.Content).IsRequired().HasMaxLength(8192).HasColumnName("content");
-        builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-        builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_note_for_entity");
-        builder.HasIndex(e => new { e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_note_from_entity");
+        builder.HasIndex(e => new { e.TenantId, e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_note_tenant_for_entity");
+        builder.HasIndex(e => new { e.TenantId, e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_note_tenant_from_entity");
+        builder.HasIndex(e => new { e.TenantId, e.Context }).HasDatabaseName("ix_note_tenant_context");
+        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("ix_note_created_at");
+        builder.HasIndex(e => e.ExpiresAt).HasDatabaseName("ix_note_expires_at").HasFilter("\"expires_at\" IS NOT NULL");
     }
 }

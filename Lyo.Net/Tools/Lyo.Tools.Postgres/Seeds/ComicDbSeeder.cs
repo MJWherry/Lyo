@@ -1,6 +1,7 @@
 using Bogus;
 using Lyo.Comic.Enums;
 using Lyo.Comic.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -92,18 +93,24 @@ public sealed class ComicDbSeeder
             var tagCount = faker.Random.Int(2, 5);
             var picked = faker.Random.ArrayElements(GenreTags, tagCount);
             foreach (var tag in picked) {
-                var exists = await tagDb.Tags.AnyAsync(t => t.ForEntityType == SeriesEntityType && t.ForEntityId == s.Id.ToString() && t.Name == tag, ct);
+                var exists = await tagDb.Tags.AnyAsync(
+                        t => t.ForEntityType == SeriesEntityType && t.ForEntityId == s.Id && t.Name == tag && t.DeletedAt == null, ct)
+                    .ConfigureAwait(false);
                 if (exists)
                     continue;
 
                 tagDb.Tags.Add(
-                    new() {
+                    new TagEntity {
                         Id = Guid.NewGuid(),
                         ForEntityType = SeriesEntityType,
-                        ForEntityId = s.Id.ToString(),
+                        ForEntityId = s.Id,
+                        FromEntityType = EntityRefWellKnown.SystemActorType,
+                        FromEntityId = EntityRefWellKnown.SystemActorId,
+                        TenantId = EntityRefWellKnown.SingleTenantDefaultId,
                         Name = tag,
                         TagType = "tag",
-                        CreatedTimestamp = DateTime.UtcNow
+                        Slug = string.Empty,
+                        Visibility = EntityRefVisibility.Private
                     });
 
                 totalTags++;

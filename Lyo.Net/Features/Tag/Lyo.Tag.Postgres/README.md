@@ -36,7 +36,7 @@ dotnet ef migrations add MigrationName --project Features/Tag/Lyo.Tag.Postgres
 
 ## Entity Reference
 
-Uses `Lyo.Common.EntityRef` with generic or string-based creation:
+Uses `Lyo.EntityReference.Models.EntityRef` with generic or string-based creation:
 
 ```csharp
 // Generic: uses typeof(T).FullName, keys joined with ":"

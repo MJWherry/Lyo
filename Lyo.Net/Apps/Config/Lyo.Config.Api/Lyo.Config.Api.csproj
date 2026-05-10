@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\..\..\Features\Config\Lyo.Config\Lyo.Config.csproj"/>
         <ProjectReference Include="..\..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
     </ItemGroup>

@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.ChangeTracker;
 

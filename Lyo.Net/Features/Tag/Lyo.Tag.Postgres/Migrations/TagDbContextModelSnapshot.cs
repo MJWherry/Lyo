@@ -30,14 +30,34 @@ namespace Lyo.Tag.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
-
-                    b.Property<string>("ForEntityId")
-                        .IsRequired()
+                    b.Property<string>("Context")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
+                        .HasColumnName("context");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by_id");
+
+                    b.Property<string>("DeletedByType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("deleted_by_type");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("ForEntityId")
+                        .HasColumnType("uuid")
                         .HasColumnName("for_entity_id");
 
                     b.Property<string>("ForEntityType")
@@ -46,15 +66,19 @@ namespace Lyo.Tag.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                    b.Property<Guid>("FromEntityId")
+                        .HasColumnType("uuid")
                         .HasColumnName("from_entity_id");
 
                     b.Property<string>("FromEntityType")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("from_entity_type");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -62,21 +86,42 @@ namespace Lyo.Tag.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<string>("TagType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasDefaultValue("tag")
-                        .HasColumnName("tag_type");
-
                     b.Property<string>("Slug")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasDefaultValue("")
                         .HasColumnName("slug");
 
+                    b.Property<string>("TagType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("tag")
+                        .HasColumnName("tag_type");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("private")
+                        .HasColumnName("visibility");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_tag_created_at");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_tag_expires_at")
+                        .HasFilter("\"expires_at\" IS NOT NULL");
 
                     b.HasIndex("Name")
                         .HasDatabaseName("ix_tag_name");
@@ -84,12 +129,16 @@ namespace Lyo.Tag.Postgres.Migrations
                     b.HasIndex("TagType")
                         .HasDatabaseName("ix_tag_tag_type");
 
-                    b.HasIndex("ForEntityType", "ForEntityId")
-                        .HasDatabaseName("ix_tag_for_entity");
+                    b.HasIndex("TenantId", "Context")
+                        .HasDatabaseName("ix_tag_tenant_context");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "TagType", "Name", "Slug")
+                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId")
+                        .HasDatabaseName("ix_tag_tenant_for_entity");
+
+                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId", "TagType", "Name", "Slug")
                         .IsUnique()
-                        .HasDatabaseName("ix_tag_for_entity_name_unique");
+                        .HasDatabaseName("uq_tag_tenant_entity_name_slug_active")
+                        .HasFilter("\"deleted_at\" IS NULL");
 
                     b.ToTable("tag", "tag");
                 });

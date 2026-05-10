@@ -1,6 +1,6 @@
 # Lyo.ChangeTracker
 
-Generic entity change history built around `Lyo.Common.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.
+Generic entity change history built around `Lyo.EntityReference.Models.EntityRef`. Record property-level changes for any entity type without coupling the tracker to a specific aggregate.
 
 ## Features
 
@@ -12,7 +12,7 @@ Generic entity change history built around `Lyo.Common.EntityRef`. Record proper
 
 ```csharp
 using Lyo.ChangeTracker;
-using Lyo.Common;
+using Lyo.EntityReference.Models;
 
 var orderRef = EntityRef.ForGuid("Order", Guid.Parse("11111111-1111-1111-1111-111111111111"));
 var userRef = EntityRef.ForKey("User", "123");

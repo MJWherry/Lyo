@@ -1,6 +1,7 @@
 using Lyo.Comic.Api.Models.Request;
 using Lyo.Comic.Api.Services;
 using Lyo.Comment;
+using Lyo.EntityReference.Models;
 using Lyo.Favorite;
 using Lyo.Rating;
 using Lyo.Tag;
@@ -73,7 +74,7 @@ public static class VolumeEndpoints
 
     private static async Task<IResult> GetRatings(Guid id, IRatingStore ratingStore, CancellationToken ct = default)
     {
-        var ratings = await ratingStore.GetForEntityAsync(new(EntityType, id.ToString()), ct);
+        var ratings = await ratingStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), ct);
         return Results.Ok(ratings);
     }
 
@@ -82,9 +83,9 @@ public static class VolumeEndpoints
         var record = new RatingRecord {
             Id = Guid.NewGuid(),
             ForEntityType = EntityType,
-            ForEntityId = id.ToString(),
+            ForEntityId = id,
             FromEntityType = req.FromEntityType,
-            FromEntityId = req.FromEntityId,
+            FromEntityId = Guid.Parse(req.FromEntityId),
             Subject = req.Subject,
             Title = req.Title,
             Value = req.Value,
@@ -97,7 +98,7 @@ public static class VolumeEndpoints
 
     private static async Task<IResult> GetComments(Guid id, ICommentStore commentStore, bool includeReplies = true, CancellationToken ct = default)
     {
-        var comments = await commentStore.GetForEntityAsync(new(EntityType, id.ToString()), includeReplies, ct);
+        var comments = await commentStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), includeReplies, ct);
         return Results.Ok(comments);
     }
 
@@ -106,9 +107,9 @@ public static class VolumeEndpoints
         var record = new CommentRecord {
             Id = Guid.NewGuid(),
             ForEntityType = EntityType,
-            ForEntityId = id.ToString(),
+            ForEntityId = id,
             FromEntityType = req.FromEntityType,
-            FromEntityId = req.FromEntityId,
+            FromEntityId = Guid.Parse(req.FromEntityId),
             Content = req.Content,
             ReplyToCommentId = req.ReplyToCommentId
         };
@@ -122,18 +123,18 @@ public static class VolumeEndpoints
         var record = new FavoriteRecord {
             Id = Guid.NewGuid(),
             ForEntityType = EntityType,
-            ForEntityId = id.ToString(),
+            ForEntityId = id,
             FromEntityType = req.FromEntityType,
-            FromEntityId = req.FromEntityId
+            FromEntityId = Guid.Parse(req.FromEntityId)
         };
 
-        await favoriteStore.SaveAsync(record, ct);
+        await favoriteStore.SaveAsync(record, tenantId: null, context: null, ct: ct);
         return Results.NoContent();
     }
 
     private static async Task<IResult> RemoveFavorite(Guid id, [FromBody] RemoveFavoriteReq req, IFavoriteStore favoriteStore, CancellationToken ct = default)
     {
-        await favoriteStore.DeleteAsync(new(EntityType, id.ToString()), new(req.FromEntityType, req.FromEntityId), ct);
+        await favoriteStore.DeleteAsync(EntityRef.ForGuid(EntityType, id), EntityRef.ForGuid(req.FromEntityType, Guid.Parse(req.FromEntityId)), ct: ct);
         return Results.NoContent();
     }
 }

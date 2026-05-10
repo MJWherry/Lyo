@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Tag.Postgres.Database;
@@ -44,6 +45,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
             services.AddSingleton(Options.Create(options));
+            services.AddOptions<EntityRefOptions>();
             services.AddPostgresMigrations<TagDbContext, PostgresTagOptions>();
             services.AddDbContextFactory<TagDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresTagOptions.Schema)));
@@ -81,7 +83,11 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddTagDbContextFactory(options);
-            services.AddSingleton<ITagStore, PostgresTagStore>();
+            services.AddSingleton<ITagStore>(
+                sp => new PostgresTagStore(
+                    sp.GetRequiredService<IDbContextFactory<TagDbContext>>(),
+                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
+                    sp.GetServices<IEntityRefActionInterceptor>()));
             return services;
         }
     }

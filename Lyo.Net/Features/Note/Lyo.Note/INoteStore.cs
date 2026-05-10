@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Note;
 
@@ -18,7 +18,7 @@ public interface INoteStore
     Task<IReadOnlyList<NoteRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default);
 
     /// <summary>Gets all notes for an entity type and optional entity id filter.</summary>
-    Task<IReadOnlyList<NoteRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default);
+    Task<IReadOnlyList<NoteRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default);
 
     /// <summary>Deletes a note by id.</summary>
     Task DeleteAsync(Guid id, CancellationToken ct = default);

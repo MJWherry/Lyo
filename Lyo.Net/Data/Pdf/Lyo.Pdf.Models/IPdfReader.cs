@@ -13,4 +13,7 @@ public interface IPdfReader : IDisposable, IAsyncDisposable
     ITextExtractor Text { get; }
 
     PdfInfo GetInfo();
+
+    /// <summary>Page width and height in PDF points for a 1-based page index.</summary>
+    (double Width, double Height) GetPageSizePoints(int pageNumber1Based);
 }

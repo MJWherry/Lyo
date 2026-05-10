@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Rating;
 

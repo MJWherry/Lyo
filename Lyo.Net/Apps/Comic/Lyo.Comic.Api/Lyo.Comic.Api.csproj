@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>

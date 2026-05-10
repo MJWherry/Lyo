@@ -1,8 +1,9 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Rating.Postgres.Database;
 
-public class RatingDbContext : DbContext
+public class RatingDbContext : EntityRefModuleDbContext
 {
     public DbSet<RatingEntity> Ratings { get; set; } = null!;
 
@@ -11,6 +12,7 @@ public class RatingDbContext : DbContext
     public RatingDbContext(DbContextOptions<RatingDbContext> options)
         : base(options) { }
 
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rating");
@@ -18,16 +20,26 @@ public class RatingDbContext : DbContext
         modelBuilder.ApplyConfiguration(new RatingReactionEntityConfiguration());
     }
 
+    /// <inheritdoc />
     public override int SaveChanges()
     {
-        var now = DateTime.UtcNow;
-        foreach (var entry in ChangeTracker.Entries()) {
-            if (entry.State == EntityState.Added && entry.Entity is RatingEntity r && r.CreatedTimestamp == default)
-                r.CreatedTimestamp = now;
-            else if (entry.State == EntityState.Modified && entry.Entity is RatingEntity r2)
-                r2.UpdatedTimestamp = now;
-        }
-
+        StampRatingTimestamps();
         return base.SaveChanges();
+    }
+
+    /// <inheritdoc />
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        StampRatingTimestamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void StampRatingTimestamps()
+    {
+        var now = DateTime.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<RatingEntity>()) {
+            if (entry.State == EntityState.Modified)
+                entry.Entity.UpdatedTimestamp = now;
+        }
     }
 }

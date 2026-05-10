@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Config;
 using Lyo.Discord.Models;
 using Lyo.Discord.Postgres.Database;

@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Comment;
 
@@ -21,7 +21,7 @@ public interface ICommentStore
     Task<IReadOnlyList<CommentRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default);
 
     /// <summary>Gets all comments for an entity type and optional entity id filter.</summary>
-    Task<IReadOnlyList<CommentRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default);
+    Task<IReadOnlyList<CommentRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default);
 
     /// <summary>Adds or updates a reaction to a comment. One reaction per user per comment; switching from like to dislike updates the existing reaction.</summary>
     /// <param name="commentRef">EntityRef for the comment (e.g. EntityRef.ForKey("Comment", commentId.ToString()))</param>

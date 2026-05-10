@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Config.Postgres.Database;
 using Lyo.Exceptions;
 using Lyo.Health;

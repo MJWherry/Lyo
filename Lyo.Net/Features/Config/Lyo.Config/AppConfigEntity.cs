@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 
 namespace Lyo.Config;

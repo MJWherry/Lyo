@@ -73,6 +73,14 @@ public sealed class PdfReader : IPdfReader
         return new(document.NumberOfPages, info.Title, info.Author, info.Subject, info.Creator, info.Producer, _filePath, _url, creationDate, modifiedDate);
     }
 
+    /// <inheritdoc />
+    public (double Width, double Height) GetPageSizePoints(int pageNumber1Based)
+        => WithPdf(document => {
+            ArgumentHelpers.ThrowIfNotInRange(pageNumber1Based, 1, document.NumberOfPages, nameof(pageNumber1Based), $"Page number must be between 1 and {document.NumberOfPages}.");
+            var page = document.GetPage(pageNumber1Based);
+            return (page.Width, page.Height);
+        });
+
     public ValueTask DisposeAsync()
     {
         Dispose();

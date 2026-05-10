@@ -22,6 +22,7 @@ public sealed class ConfigBindingEntity
     [MaxLength(500)]
     public string ForEntityType { get; set; } = string.Empty;
 
+    /// <summary>Target entity id (string — supports composite keys, e.g. Config API app <c>kind:id</c>).</summary>
     [Required]
     [MaxLength(200)]
     public string ForEntityId { get; set; } = string.Empty;

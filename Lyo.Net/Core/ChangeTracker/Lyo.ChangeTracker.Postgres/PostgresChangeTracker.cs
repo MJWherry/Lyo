@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;

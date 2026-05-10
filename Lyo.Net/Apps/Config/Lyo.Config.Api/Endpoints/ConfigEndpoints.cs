@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Config.Api.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 

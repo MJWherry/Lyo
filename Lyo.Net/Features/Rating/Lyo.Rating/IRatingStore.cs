@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Rating;
 
@@ -30,7 +30,7 @@ public interface IRatingStore
     Task<IReadOnlyList<RatingRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default);
 
     /// <summary>Gets all ratings for an entity type and optional entity id filter.</summary>
-    Task<IReadOnlyList<RatingRecord>> GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, CancellationToken ct = default);
+    Task<IReadOnlyList<RatingRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default);
 
     /// <summary>Deletes a rating by id.</summary>
     Task DeleteAsync(Guid id, CancellationToken ct = default);

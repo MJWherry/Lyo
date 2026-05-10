@@ -5,7 +5,7 @@ using Lyo.Comic.Api.Models.Response;
 using Lyo.Comment;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Common.Enums;
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Favorite;
 using Lyo.Favorite.Postgres.Database;
 using Lyo.Query.Models.Builders;
@@ -67,13 +67,13 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a series domain model with cross-domain metadata.</summary>
     public async Task<ComicSeriesRes> EnrichSeriesAsync(ComicSeries series, EntityRef? callerRef = null, CancellationToken ct = default)
     {
-        var entityRef = new EntityRef(SeriesEntityType, series.Id.ToString());
+        var entityRef = EntityRef.ForGuid(SeriesEntityType, series.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
         var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
-        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct);
+        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
-            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
+            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
             : Task.FromResult<bool?>(null);
 
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountTask, isFavoritedTask).ConfigureAwait(false);
@@ -84,13 +84,13 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a volume domain model with cross-domain metadata.</summary>
     public async Task<ComicVolumeRes> EnrichVolumeAsync(ComicVolume volume, EntityRef? callerRef = null, CancellationToken ct = default)
     {
-        var entityRef = new EntityRef(VolumeEntityType, volume.Id.ToString());
+        var entityRef = EntityRef.ForGuid(VolumeEntityType, volume.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
         var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
-        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct);
+        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
-            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
+            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
             : Task.FromResult<bool?>(null);
 
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountTask, isFavoritedTask).ConfigureAwait(false);
@@ -117,13 +117,13 @@ public sealed class ComicEnrichmentService
     /// <summary>Enriches a chapter domain model with cross-domain metadata.</summary>
     public async Task<ComicChapterRes> EnrichChapterAsync(ComicChapter chapter, EntityRef? callerRef = null, CancellationToken ct = default)
     {
-        var entityRef = new EntityRef(ChapterEntityType, chapter.Id.ToString());
+        var entityRef = EntityRef.ForGuid(ChapterEntityType, chapter.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
         var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
         var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
-        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct);
+        var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
-            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
+            ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
             : Task.FromResult<bool?>(null);
 
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountTask, isFavoritedTask).ConfigureAwait(false);
@@ -157,15 +157,15 @@ public sealed class ComicEnrichmentService
         if (items.Count == 0)
             return [];
 
-        var ids = items.Select(s => s.Id.ToString()).Distinct(StringComparer.Ordinal).Where(static s => !string.IsNullOrWhiteSpace(s)).ToArray();
-        if (ids.Length == 0)
+        var seriesGuids = items.Select(s => s.Id).Distinct().ToArray();
+        if (seriesGuids.Length == 0)
             return [];
 
-        var tagsTask = QueryTagEntitiesForSeriesAsync(ids, ct);
-        var ratingsTask = QueryRatingEntitiesForSeriesAsync(ids, ct);
-        var commentsTask = QueryTopLevelCommentEntitiesForSeriesAsync(ids, ct);
-        var favoriteCountsTask = _favoriteStore.GetFavoriteCountsForEntitiesAsync(SeriesEntityType, ids.ToList(), ct);
-        var favoritedTask = callerRef.HasValue ? QueryFavoritedSeriesIdsAsync(callerRef.Value, ids, ct) : Task.FromResult(new HashSet<string>(StringComparer.Ordinal));
+        var tagsTask = QueryTagEntitiesForSeriesAsync(seriesGuids, ct);
+        var ratingsTask = QueryRatingEntitiesForSeriesAsync(seriesGuids, ct);
+        var commentsTask = QueryTopLevelCommentEntitiesForSeriesAsync(seriesGuids, ct);
+        var favoriteCountsTask = _favoriteStore.GetFavoriteCountsForEntitiesAsync(SeriesEntityType, seriesGuids, ct: ct);
+        var favoritedTask = callerRef.HasValue ? QueryFavoritedSeriesIdsAsync(callerRef.Value, seriesGuids, ct) : Task.FromResult(new HashSet<Guid>());
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountsTask, favoritedTask).ConfigureAwait(false);
         var tagsByEntityId = (await tagsTask).GroupBy(t => t.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
         var ratingsByEntityId = (await ratingsTask).GroupBy(r => r.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
@@ -175,14 +175,13 @@ public sealed class ComicEnrichmentService
         var results = new ComicSeriesRes[items.Count];
         for (var i = 0; i < items.Count; i++) {
             var series = items[i];
-            var idStr = series.Id.ToString();
-            tagsByEntityId.TryGetValue(idStr, out var tagNames);
+            tagsByEntityId.TryGetValue(series.Id, out var tagNames);
             tagNames ??= [];
-            ratingsByEntityId.TryGetValue(idStr, out var ratings);
+            ratingsByEntityId.TryGetValue(series.Id, out var ratings);
             ratings ??= [];
-            var commentCount = commentCountsByEntityId.GetValueOrDefault(idStr);
-            var favoriteCount = favoriteCounts.TryGetValue(idStr, out var fc) ? fc : 0;
-            bool? isFavorited = callerRef.HasValue ? favoritedLookup.Contains(idStr) : null;
+            var commentCount = commentCountsByEntityId.GetValueOrDefault(series.Id);
+            var favoriteCount = favoriteCounts.TryGetValue(series.Id, out var fc) ? fc : 0;
+            bool? isFavorited = callerRef.HasValue ? favoritedLookup.Contains(series.Id) : null;
             results[i] = ToSeriesRes(series, tagNames, ratings, commentCount, favoriteCount, isFavorited);
         }
 
@@ -197,7 +196,7 @@ public sealed class ComicEnrichmentService
     public Task<ComicChapterRes[]> EnrichChapterListAsync(IReadOnlyList<ComicChapter> items, EntityRef? callerRef = null, CancellationToken ct = default)
         => Task.WhenAll(items.Select(c => EnrichChapterAsync(c, callerRef, ct)));
 
-    private Task<List<TagEntity>> QueryTagEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
+    private Task<List<TagEntity>> QueryTagEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "tags", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
@@ -215,7 +214,7 @@ public sealed class ComicEnrichmentService
                 return _tagQueryService.Query<TagEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             }, ct);
 
-    private Task<List<RatingEntity>> QueryRatingEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
+    private Task<List<RatingEntity>> QueryRatingEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "ratings", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
@@ -232,7 +231,7 @@ public sealed class ComicEnrichmentService
                 return _ratingQueryService.Query<RatingEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             }, ct);
 
-    private Task<List<CommentEntity>> QueryTopLevelCommentEntitiesForSeriesAsync(string[] distinctIds, CancellationToken ct)
+    private Task<List<CommentEntity>> QueryTopLevelCommentEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
         => QueryChunksAsync(
             "comments", distinctIds, chunk => {
                 var req = QueryReqBuilder.New()
@@ -250,9 +249,10 @@ public sealed class ComicEnrichmentService
                 return _commentQueryService.Query<CommentEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
             }, ct);
 
-    private async Task<HashSet<string>> QueryFavoritedSeriesIdsAsync(EntityRef caller, string[] distinctIds, CancellationToken ct)
+    private async Task<HashSet<Guid>> QueryFavoritedSeriesIdsAsync(EntityRef caller, Guid[] distinctIds, CancellationToken ct)
     {
-        var favorited = new HashSet<string>(StringComparer.Ordinal);
+        var favorited = new HashSet<Guid>();
+        var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(caller);
         foreach (var chunk in distinctIds.Chunk(IdInClauseChunkSize)) {
             var chunkArr = chunk.ToArray();
             var req = QueryReqBuilder.New()
@@ -261,7 +261,7 @@ public sealed class ComicEnrichmentService
                     w.AddEquals(f => f.ForEntityType, SeriesEntityType);
                     w.In(f => f.ForEntityId, chunkArr);
                     w.AddEquals(f => f.FromEntityType, caller.EntityType);
-                    w.AddEquals(f => f.FromEntityId, caller.EntityId);
+                    w.AddEquals(f => f.FromEntityId, appliedId);
                 })
                 .AddSort(e => e.ForEntityId, SortDirection.Asc)
                 .Done()
@@ -281,8 +281,8 @@ public sealed class ComicEnrichmentService
 
     private async Task<List<TEntity>> QueryChunksAsync<TEntity>(
         string dimensionLabel,
-        string[] distinctIds,
-        Func<string[], Task<QueryRes<TEntity>>> queryChunk,
+        Guid[] distinctIds,
+        Func<Guid[], Task<QueryRes<TEntity>>> queryChunk,
         CancellationToken ct)
         where TEntity : class
     {
@@ -318,13 +318,21 @@ public sealed class ComicEnrichmentService
             ForEntityId = e.ForEntityId,
             FromEntityType = e.FromEntityType,
             FromEntityId = e.FromEntityId,
+            TenantId = e.TenantId,
+            Context = e.Context,
+            CreatedAt = e.CreatedAt,
+            ExpiresAt = e.ExpiresAt,
+            DeletedAt = e.DeletedAt,
+            DeletedByType = e.DeletedByType,
+            DeletedById = e.DeletedById,
+            MetadataJson = e.MetadataJson,
+            Visibility = e.Visibility,
             Subject = e.Subject,
             Title = e.Title,
             Value = e.Value,
             Message = e.Message,
             LikeCount = e.LikeCount,
             DislikeCount = e.DislikeCount,
-            CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp
         };
 

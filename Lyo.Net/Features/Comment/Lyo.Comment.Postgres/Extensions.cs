@@ -1,4 +1,5 @@
 using Lyo.Comment.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
             services.AddSingleton(Options.Create(options));
+            services.AddOptions<EntityRefOptions>();
             services.AddPostgresMigrations<CommentDbContext, PostgresCommentOptions>();
             services.AddDbContextFactory<CommentDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresCommentOptions.Schema)));
@@ -81,7 +83,11 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddCommentDbContextFactory(options);
-            services.AddSingleton<ICommentStore, PostgresCommentStore>();
+            services.AddSingleton<ICommentStore>(
+                sp => new PostgresCommentStore(
+                    sp.GetRequiredService<IDbContextFactory<CommentDbContext>>(),
+                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
+                    sp.GetServices<IEntityRefActionInterceptor>()));
             return services;
         }
     }

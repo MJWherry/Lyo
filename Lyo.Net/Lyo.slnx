@@ -101,6 +101,11 @@
         <Project Path="Core/People/Lyo.People.Postgres/Lyo.People.Postgres.csproj"/>
         <Project Path="Core/People/Lyo.People.Postgres.Tests/Lyo.People.Postgres.Tests.csproj"/>
     </Folder>
+    <Folder Name="/Core/EntityReference/">
+        <Project Path="Core/EntityReference/Lyo.EntityReference.Models/Lyo.EntityReference.Models.csproj"/>
+        <Project Path="Core/EntityReference/Lyo.EntityReference.Models.Tests/Lyo.EntityReference.Models.Tests.csproj"/>
+        <Project Path="Core/EntityReference/Lyo.EntityReference.Postgres/Lyo.EntityReference.Postgres.csproj"/>
+    </Folder>
     <Folder Name="/Core/Health/">
         <Project Path="Core/Health/Lyo.Health/Lyo.Health.csproj"/>
     </Folder>
@@ -139,6 +144,10 @@
         <Project Path="Data/Csv/Lyo.Csv.Tests/Lyo.Csv.Tests.csproj"/>
     </Folder>
     <Folder Name="/Data/Images/">
+        <Project Path="Data/Images/Lyo.Images.Ocr.Tesseract.Tests/Lyo.Images.Ocr.Tesseract.Tests.csproj"/>
+        <Project Path="Data/Images/Lyo.Images.Ocr.Tesseract/Lyo.Images.Ocr.Tesseract.csproj"/>
+        <Project Path="Data/Images/Lyo.Images.Ocr.Tests/Lyo.Images.Ocr.Tests.csproj"/>
+        <Project Path="Data/Images/Lyo.Images.Ocr/Lyo.Images.Ocr.csproj"/>
         <Project Path="Data/Images/Lyo.Images.Skia/Lyo.Images.Skia.csproj"/>
         <Project Path="Data/Images/Lyo.Images.Tests/Lyo.Images.Tests.csproj"/>
         <Project Path="Data/Images/Lyo.Images.Web.Components/Lyo.Images.Web.Components.csproj"/>
@@ -150,6 +159,8 @@
     </Folder>
     <Folder Name="/Data/Pdf/">
         <Project Path="Data/Pdf/Lyo.Pdf.Models/Lyo.Pdf.Models.csproj"/>
+        <Project Path="Data/Pdf/Lyo.Pdf.Ocr/Lyo.Pdf.Ocr.csproj"/>
+        <Project Path="Data/Pdf/Lyo.Pdf.Rendering/Lyo.Pdf.Rendering.csproj"/>
         <Project Path="Data/Pdf/Lyo.Pdf.Tests/Lyo.Pdf.Tests.csproj"/>
         <Project Path="Data/Pdf/Lyo.Pdf.Web.Components/Lyo.Pdf.Web.Components.csproj"/>
         <Project Path="Data/Pdf/Lyo.Pdf/Lyo.Pdf.csproj"/>

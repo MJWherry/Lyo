@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Favorite.Postgres.Database;
 using Lyo.Postgres;
@@ -45,6 +46,7 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
         services.AddSingleton(Options.Create(options));
+        services.AddOptions<EntityRefOptions>();
         services.AddPostgresMigrations<FavoriteDbContext, PostgresFavoriteOptions>();
         services.AddDbContextFactory<FavoriteDbContext>(dbOpts => dbOpts.UseNpgsql(
             options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresFavoriteOptions.Schema)));
@@ -85,7 +87,11 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(options);
         services.AddFavoriteDbContextFactory(options);
-        services.AddSingleton<IFavoriteStore, PostgresFavoriteStore>();
+        services.AddSingleton<IFavoriteStore>(
+            sp => new PostgresFavoriteStore(
+                sp.GetRequiredService<IDbContextFactory<FavoriteDbContext>>(),
+                sp.GetRequiredService<IOptions<EntityRefOptions>>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
         return services;
     }
 }

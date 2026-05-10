@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Rating.Postgres.Database;
@@ -44,6 +45,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
             services.AddSingleton(Options.Create(options));
+            services.AddOptions<EntityRefOptions>();
             services.AddPostgresMigrations<RatingDbContext, PostgresRatingOptions>();
             services.AddDbContextFactory<RatingDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresRatingOptions.Schema)));
@@ -81,7 +83,11 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddRatingDbContextFactory(options);
-            services.AddSingleton<IRatingStore, PostgresRatingStore>();
+            services.AddSingleton<IRatingStore>(
+                sp => new PostgresRatingStore(
+                    sp.GetRequiredService<IDbContextFactory<RatingDbContext>>(),
+                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
+                    sp.GetServices<IEntityRefActionInterceptor>()));
             return services;
         }
     }

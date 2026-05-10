@@ -1,4 +1,4 @@
-using Lyo.Common.Identifiers;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 
 namespace Lyo.Config;
@@ -9,14 +9,14 @@ public sealed class ResolvedConfigRecord
     /// <summary>Gets or sets the target entity type.</summary>
     public string ForEntityType { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the target entity id.</summary>
+    /// <summary>Gets or sets the target entity id (string — may be a composite key such as <c>kind:id</c> for app-scoped config).</summary>
     public string ForEntityId { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the resolved config entries.</summary>
     public IReadOnlyList<ResolvedConfigItemRecord> Items { get; set; } = [];
 
     /// <summary>Gets the referenced entity.</summary>
-    public EntityRef ForEntity => new(ForEntityType, ForEntityId);
+    public EntityRef ForEntity => EntityRef.ForKey(ForEntityType, ForEntityId);
 
     /// <summary>Gets the resolved value for the given key if present.</summary>
     public bool TryGetValue(string key, out ConfigValue? value)

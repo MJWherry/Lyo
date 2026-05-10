@@ -1,0 +1,12 @@
+<Project>
+  <!-- Linux: symlink distro .so names into $(OutputPath)x64 and libdl.so next to $(OutputPath) (InteropDotNet / glibc libdl.so.2). Opt in per project: PrepareTesseractLinuxNativeLibs=true -->
+  <Target Name="PrepareTesseractLinuxNativeLibs"
+          AfterTargets="Build"
+          Condition="'$(PrepareTesseractLinuxNativeLibs)' == 'true' AND $([MSBuild]::IsOSPlatform('Linux'))">
+    <PropertyGroup>
+      <_TesseractSetupScript>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'Lyo.Images.Ocr.Tesseract', 'scripts', 'setup-linux-tesseract-nuget-libs.sh'))))</_TesseractSetupScript>
+      <_TesseractOutDir>$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutputPath)'))))</_TesseractOutDir>
+    </PropertyGroup>
+    <Exec Command="bash &quot;$(_TesseractSetupScript)&quot; &quot;$(_TesseractOutDir)&quot;" />
+  </Target>
+</Project>
