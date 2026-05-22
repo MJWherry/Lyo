@@ -11,7 +11,7 @@ public sealed class OcrModelsTests
         var o = new OcrEngineOptions();
         Assert.False(o.EnableMetrics);
         Assert.Equal("eng", o.DefaultLanguages);
-        Assert.Equal(OcrPageSegmentationMode.Auto, o.DefaultPageSegmentationMode);
+        Assert.Equal(OcrPageSegmentationMode.SparseTextOsd, o.DefaultPageSegmentationMode);
     }
 
     [Fact]

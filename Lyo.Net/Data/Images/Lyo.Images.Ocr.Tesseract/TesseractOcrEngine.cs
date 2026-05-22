@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
-using Lyo.Common.Records;
 using Lyo.Images.Ocr.Models;
 using Lyo.Metrics;
 using Lyo.Result;
@@ -15,6 +14,8 @@ namespace Lyo.Images.Ocr.Tesseract;
 /// <summary>Tesseract implementation of <see cref="IOcrEngine"/> (not thread-safe internally; serializes calls).</summary>
 public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
 {
+    /// <summary>Ceiling on word iterator steps to avoid infinite native loops on pathological segmentation.</summary>
+    internal const int MaxWordIteratorSteps = 200_000;
     private readonly OcrEngineOptions _sharedOptions;
     private readonly TesseractOcrEngineOptions _tesseractOptions;
     private readonly ILogger _logger;
@@ -50,23 +51,19 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
         if (bytes.Length == 0)
             return Result<OcrPageResult>.Failure(new Error("Image stream is empty.", ImageEmpty));
 
-        var languages = string.IsNullOrWhiteSpace(request?.Languages) ? _sharedOptions.DefaultLanguages : request!.Languages!;
+        var languages = string.IsNullOrWhiteSpace(request?.Languages) ? _sharedOptions.DefaultLanguages : request.Languages;
         var psm = request?.PageSegmentationMode ?? _sharedOptions.DefaultPageSegmentationMode;
         var minConf = request?.MinimumConfidencePercent;
 
         var sw = Stopwatch.StartNew();
         try {
-            var result = await Task.Run(() => ReadSync(bytes, languages, psm, minConf, cancellationToken), cancellationToken).ConfigureAwait(false);
+            var result = ReadSync(bytes, languages, psm, minConf, cancellationToken);
             sw.Stop();
             if (!_sharedOptions.EnableMetrics)
                 return result;
 
             _metrics.RecordHistogram(OcrMetrics.ReadDurationMs, sw.Elapsed.TotalMilliseconds);
-            if (result.IsSuccess)
-                _metrics.IncrementCounter(OcrMetrics.ReadSuccess);
-            else
-                _metrics.IncrementCounter(OcrMetrics.ReadFailure);
-
+            _metrics.IncrementCounter(result.IsSuccess ? OcrMetrics.ReadSuccess : OcrMetrics.ReadFailure);
             return result;
         }
         catch (OperationCanceledException ex) {
@@ -90,24 +87,24 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        TesseractEngine engine;
-        try {
-            engine = GetOrCreateEngine(languages);
-        }
-        catch (Exception ex) when (TryUnwrapDllNotFound(ex, out var dllEx)) {
-            _logger.LogError(dllEx, "Native Leptonica/Tesseract library missing for languages {Languages}.", languages);
-            return Result<OcrPageResult>.Failure(new Error(
-                $"{dllEx!.Message} See Lyo.Images.Ocr.Tesseract README (Linux Leptonica symlink).",
-                NativeLibraryNotFound,
-                exception: dllEx));
-        }
-        catch (Exception ex) {
-            _logger.LogError(ex, "Failed to create Tesseract engine for languages {Languages}.", languages);
-            return Result<OcrPageResult>.Failure(ex, EngineNotConfigured);
-        }
-
         _gate.Wait(cancellationToken);
         try {
+            TesseractEngine engine;
+            try {
+                engine = GetOrCreateEngine(languages);
+            }
+            catch (Exception ex) when (TryUnwrapDllNotFound(ex, out var dllEx)) {
+                _logger.LogError(dllEx, "Native Leptonica/Tesseract library missing for languages {Languages}.", languages);
+                return Result<OcrPageResult>.Failure(new Error(
+                    $"{dllEx!.Message} See Lyo.Images.Ocr.Tesseract README (Linux Leptonica symlink).",
+                    NativeLibraryNotFound,
+                    exception: dllEx));
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Failed to create Tesseract engine for languages {Languages}.", languages);
+                return Result<OcrPageResult>.Failure(ex, EngineNotConfigured);
+            }
+
             using var pix = Pix.LoadFromMemory(bytes);
             var imageWidth = pix.Width;
             var imageHeight = pix.Height;
@@ -117,7 +114,17 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
             var words = new List<OcrWord>();
             using var iter = page.GetIterator();
             iter.Begin();
+
+            var step = 0;
             do {
+                if (++step > MaxWordIteratorSteps) {
+                    _logger.LogWarning(
+                        "Stopped OCR word enumeration after {MaxSteps} iterations (languages {Languages}); FullText retained.",
+                        MaxWordIteratorSteps,
+                        languages);
+                    break;
+                }
+
                 if (!iter.TryGetBoundingBox(PageIteratorLevel.Word, out var rect))
                     continue;
 

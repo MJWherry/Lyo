@@ -47,16 +47,12 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 
         // For collections, print each item on its own indented line for readability
         if (Value is not string && Value is IEnumerable many) {
-            var items = many.Cast<object?>().Select(x => x?.ToString() ?? string.Empty).ToList();
-            if (items.Count == 0)
-                return $"{pad}{Field} {Comparison} []";
-
-            if (items.Count == 1)
-                return $"{pad}{Field} {Comparison} '{items[0]}'";
-
-            var innerPad = new string(' ', (indent + 1) * 2);
-            var joined = string.Join("\n", items.Select(i => $"{innerPad}- {i ?? "NULL"}"));
-            return $"{pad}{Field} {Comparison} [\n{joined}\n{pad}]";
+            var items = many.Cast<object?>().Select(x => x?.ToString()).ToList();
+            return items.Count switch {
+                0 => $"{pad}{Field} {Comparison} []",
+                1 => $"{pad}{Field} {Comparison} '{items[0]}'",
+                _ => $"{pad}{Field} {Comparison} [\n{string.Join("\n", items.Select(i => $"{(' ', (indent + 1) * 2)}- {i ?? "NULL"}"))}\n{pad}]"
+            };
         }
 
         // Simple value

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 
@@ -14,7 +13,7 @@ public sealed class WifiQrPayload : IQrPayload
     /// <param name="password">Pre-shared key (empty for open networks when <paramref name="security" /> is <see cref="QrWifiSecurityType.Nopass" />).</param>
     /// <param name="security">Security type for the <c>T:</c> field.</param>
     /// <param name="hidden">Whether the SSID is hidden.</param>
-    public WifiQrPayload(string ssid, string password, QrWifiSecurityType security, bool hidden = false)
+    public WifiQrPayload(string ssid, string? password, QrWifiSecurityType security, bool hidden = false)
     {
         ArgumentHelpers.ThrowIfNull(ssid);
         Ssid = ssid;

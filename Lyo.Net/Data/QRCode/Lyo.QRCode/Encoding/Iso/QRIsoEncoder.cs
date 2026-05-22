@@ -5,120 +5,40 @@ using System.Runtime.CompilerServices;
 namespace Lyo.QRCode.Encoding.Iso;
 
 /// <summary>ISO/IEC 18004 QR symbol construction (internal use). Encoding logic derived from the MIT-licensed QRCoder project.</summary>
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
-    private static readonly BitArray _repeatingPattern = new(
-        new[] {
-            true,
-            true,
-            true,
-            false,
-            true,
-            true,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true,
-            false,
-            false,
-            false,
-            true
-        });
+    private static readonly BitArray RepeatingPattern = new([true, true, true, false, true, true, false, false, false, false, false, true, false, false, false, true]);
 
-    private static readonly BitArray _getFormatGenerator = new(
-        new[] {
-            true,
-            false,
-            true,
-            false,
-            false,
-            true,
-            true,
-            false,
-            true,
-            true,
-            true
-        });
+    private static readonly BitArray GetFormatGenerator = new([true, false, true, false, false, true, true, false, true, true, true]);
 
-    private static readonly BitArray _getFormatMask = new(
-        new[] {
-            true,
-            false,
-            true,
-            false,
-            true,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true,
-            false,
-            false,
-            true,
-            false
-        });
+    private static readonly BitArray GetFormatMask = new([true, false, true, false, true, false, false, false, false, false, true, false, false, true, false]);
 
-    private static readonly BitArray _getFormatMicroMask = new(
-        new[] {
-            true,
-            false,
-            false,
-            false,
-            true,
-            false,
-            false,
-            false,
-            true,
-            false,
-            false,
-            false,
-            true,
-            false,
-            true
-        });
+    private static readonly BitArray GetFormatMicroMask = new([true, false, false, false, true, false, false, false, true, false, false, false, true, false, true]);
 
-    private static readonly BitArray _getVersionGenerator = new(
-        new[] {
-            true,
-            true,
-            true,
-            true,
-            true,
-            false,
-            false,
-            true,
-            false,
-            false,
-            true,
-            false,
-            true
-        });
+    private static readonly BitArray GetVersionGenerator = new([true, true, true, true, true, false, false, true, false, false, true, false, true]);
 
-    private static readonly BitArray _emptyBitArray = new(0);
+    private static readonly BitArray EmptyBitArray = new(0);
 
     /// <summary>Calculates the QR code data which than can be used in one of the rendering classes to generate a graphical representation.</summary>
     /// <param name="plainText">The payload which shall be encoded in the QR code</param>
     /// <param name="eccLevel">The level of error correction data</param>
     /// <param name="forceUtf8">Shall the generator be forced to work in UTF-8 mode?</param>
-    /// <param name="utf8BOM">Should the byte-order-mark be used?</param>
+    /// <param name="utf8Bom">Should the byte-order-mark be used?</param>
     /// <param name="eciMode">Which ECI mode shall be used?</param>
     /// <param name="requestedVersion">Set fixed QR code target version.</param>
     /// <exception cref="DataTooLongException">Thrown when the payload is too big to be encoded in a QR code.</exception>
     /// <returns>Returns the raw QR code data which can be used for rendering.</returns>
-    public static QrIsoMatrix GenerateQrCode(
+    public static QRIsoMatrix GenerateQrCode(
         string plainText,
         ECCLevel eccLevel,
         bool forceUtf8 = false,
-        bool utf8BOM = false,
-        EciMode eciMode = EciMode.Default,
+        bool utf8Bom = false,
+        ECIMode eciMode = ECIMode.Default,
         int requestedVersion = -1)
     {
         eccLevel = ValidateECCLevel(eccLevel);
         // Create data segment from plain text
-        var segment = CreateDataSegment(plainText, forceUtf8, utf8BOM, eciMode);
+        var segment = CreateDataSegment(plainText, forceUtf8, utf8Bom, eciMode);
         // Determine the appropriate version based on segment bit length
         var version = DetermineVersion(segment, eccLevel, requestedVersion);
         // Build the complete bit array for the determined version
@@ -127,10 +47,10 @@ internal sealed partial class QrIsoEncoder
     }
 
     /// <summary>Creates a data segment from plain text, encoding it appropriately.</summary>
-    private static DataSegment CreateDataSegment(string plainText, bool forceUtf8, bool utf8BOM, EciMode eciMode)
+    private static DataSegment CreateDataSegment(string plainText, bool forceUtf8, bool utf8Bom, ECIMode eciMode)
     {
         // Fast path: Use optimized Latin1 segment if conditions allow
-        if (!forceUtf8 && !utf8BOM && eciMode == EciMode.Default && OptimizedLatin1DataSegment.CanEncode(plainText))
+        if (!forceUtf8 && !utf8Bom && eciMode == ECIMode.Default && OptimizedLatin1DataSegment.CanEncode(plainText))
             return new OptimizedLatin1DataSegment(plainText);
 
         var encoding = GetEncodingFromPlaintext(plainText, forceUtf8);
@@ -139,7 +59,7 @@ internal sealed partial class QrIsoEncoder
         return encoding switch {
             EncodingMode.Numeric => new NumericDataSegment(plainText),
             EncodingMode.Alphanumeric => new AlphanumericDataSegment(plainText),
-            EncodingMode.Byte => new ByteDataSegment(plainText, forceUtf8, utf8BOM, eciMode),
+            EncodingMode.Byte => new ByteDataSegment(plainText, forceUtf8, utf8Bom, eciMode),
             var _ => throw new InvalidOperationException($"Unsupported encoding mode: {encoding}")
         };
     }
@@ -177,7 +97,7 @@ internal sealed partial class QrIsoEncoder
     /// <param name="requestedVersion">Set fixed Micro QR code target version; must be -1 to -4 representing M1 to M4, or 0 for default.</param>
     /// <exception cref="DataTooLongException">Thrown when the payload is too big to be encoded in a QR code.</exception>
     /// <returns>Returns the raw QR code data which can be used for rendering.</returns>
-    public static QrIsoMatrix GenerateMicroQrCode(string plainText, ECCLevel eccLevel = ECCLevel.Default, int requestedVersion = 0)
+    public static QRIsoMatrix GenerateMicroQrCode(string plainText, ECCLevel eccLevel = ECCLevel.Default, int requestedVersion = 0)
     {
         if (requestedVersion is < -4 or > 0)
             throw new ArgumentOutOfRangeException(nameof(requestedVersion), requestedVersion, "Requested version must be -1 to -4 representing M1 to M4, or 0 for default.");
@@ -199,7 +119,7 @@ internal sealed partial class QrIsoEncoder
             throw new ArgumentNullException(nameof(plainText));
 
         var encoding = GetEncodingFromPlaintext(plainText, false);
-        var codedText = PlainTextToBinary(plainText, encoding, EciMode.Default, false, false);
+        var codedText = PlainTextToBinary(plainText, encoding, ECIMode.Default, false, false);
         var dataInputLength = GetDataLength(encoding, plainText, codedText, false);
         var version = requestedVersion;
         var minVersion = CapacityTables.CalculateMinimumMicroVersion(dataInputLength, encoding, eccLevel);
@@ -250,7 +170,7 @@ internal sealed partial class QrIsoEncoder
     /// <param name="eccLevel">The level of error correction data</param>
     /// <exception cref="DataTooLongException">Thrown when the payload is too big to be encoded in a QR code.</exception>
     /// <returns>Returns the raw QR code data which can be used for rendering.</returns>
-    public static QrIsoMatrix GenerateQrCode(byte[] binaryData, ECCLevel eccLevel)
+    public static QRIsoMatrix GenerateQrCode(byte[] binaryData, ECCLevel eccLevel)
     {
         eccLevel = ValidateECCLevel(eccLevel);
         var version = CapacityTables.CalculateMinimumVersion(binaryData.Length, EncodingMode.Byte, eccLevel);
@@ -284,8 +204,8 @@ internal sealed partial class QrIsoEncoder
     /// </param>
     /// <param name="eccLevel">The desired error correction level for the QR code. This impacts how much data can be recovered if damaged.</param>
     /// <param name="version">The version of the QR code, determining the size and complexity of the QR code data matrix.</param>
-    /// <returns>A QrIsoMatrix structure containing the full QR code matrix, which can be used for rendering or analysis.</returns>
-    private static QrIsoMatrix GenerateQrCode(BitArray bitArray, ECCLevel eccLevel, int version)
+    /// <returns>A QRISOMatrix structure containing the full QR code matrix, which can be used for rendering or analysis.</returns>
+    private static QRIsoMatrix GenerateQrCode(BitArray bitArray, ECCLevel eccLevel, int version)
     {
         var eccInfo = CapacityTables.GetEccInfo(version, eccLevel);
 
@@ -338,8 +258,8 @@ internal sealed partial class QrIsoEncoder
                 // pad with repeating pattern
                 var repeatingPatternIndex = 0;
                 while (index < dataLength) {
-                    bitArray[index++] = _repeatingPattern[repeatingPatternIndex++];
-                    if (repeatingPatternIndex >= _repeatingPattern.Length)
+                    bitArray[index++] = RepeatingPattern[repeatingPatternIndex++];
+                    if (repeatingPatternIndex >= RepeatingPattern.Length)
                         repeatingPatternIndex = 0;
                 }
             }
@@ -429,9 +349,9 @@ internal sealed partial class QrIsoEncoder
         }
 
         // Place the modules on the QR code matrix
-        QrIsoMatrix PlaceModules()
+        QRIsoMatrix PlaceModules()
         {
-            var qr = new QrIsoMatrix(version, true);
+            var qr = new QRIsoMatrix(version, true);
             var size = qr.ModuleMatrix.Count - 8;
             var tempBitArray = new BitArray(18); //version string requires 18 bits
             using (var blockedModules = new ModulePlacer.BlockedModules(size)) {
@@ -479,8 +399,8 @@ internal sealed partial class QrIsoEncoder
         var count = 15;
         TrimLeadingZeros(fStrEcc, ref index, ref count);
         while (count > 10) {
-            for (var i = 0; i < _getFormatGenerator.Length; i++)
-                fStrEcc[index + i] ^= _getFormatGenerator[i];
+            for (var i = 0; i < GetFormatGenerator.Length; i++)
+                fStrEcc[index + i] ^= GetFormatGenerator[i];
 
             TrimLeadingZeros(fStrEcc, ref index, ref count);
         }
@@ -497,7 +417,7 @@ internal sealed partial class QrIsoEncoder
             WriteEccLevelAndVersion();
 
         // XOR the format string with a predefined mask to add robustness against errors.
-        fStrEcc.Xor(version < 0 ? _getFormatMicroMask : _getFormatMask);
+        fStrEcc.Xor(version < 0 ? GetFormatMicroMask : GetFormatMask);
 
         void WriteEccLevelAndVersion()
         {
@@ -616,8 +536,8 @@ internal sealed partial class QrIsoEncoder
         // Perform error correction encoding using a polynomial generator (specified by _getVersionGenerator).
         while (count > 12) // The target length of the version information error correction information is 12 bits.
         {
-            for (var i = 0; i < _getVersionGenerator.Length; i++)
-                vStr[index + i] ^= _getVersionGenerator[i]; // XOR the current bits with the generator sequence.
+            for (var i = 0; i < GetVersionGenerator.Length; i++)
+                vStr[index + i] ^= GetVersionGenerator[i]; // XOR the current bits with the generator sequence.
 
             TrimLeadingZeros(vStr, ref index, ref count); // Trim leading zeros after each XOR operation to maintain the proper sequence.
         }
@@ -651,11 +571,11 @@ internal sealed partial class QrIsoEncoder
 
         // Divide the message polynomial by the generator polynomial to find the remainder.
         var leadTermSource = messagePolynom;
-        for (var i = 0; leadTermSource.Count > 0 && leadTermSource[leadTermSource.Count - 1].Exponent > 0; i++) {
+        for (var i = 0; leadTermSource.Count > 0 && leadTermSource[^1].Exponent > 0; i++) {
             if (leadTermSource[0].Coefficient == 0) // Simplify the polynomial if the leading coefficient is zero.
             {
                 leadTermSource.RemoveAt(0);
-                leadTermSource.Add(new(0, leadTermSource[leadTermSource.Count - 1].Exponent - 1));
+                leadTermSource.Add(new(0, leadTermSource[^1].Exponent - 1));
             }
             else // Otherwise, perform polynomial reduction using XOR and multiplication with the generator polynomial.
             {
@@ -911,33 +831,26 @@ internal sealed partial class QrIsoEncoder
     }
 
     /// <summary>Checks if the given string can be accurately represented and retrieved in ISO-8859-1 encoding.</summary>
-    private static bool IsValidISO(string input)
-    {
+    private static bool IsValidISO(string input) =>
         // ISO-8859-1 contains the same characters as UTF-16 for the range 0x00-0xFF.
         //   0x00-0x7F: ASCII (0-127)
         //   0x80-0x9F: C1 control characters (128-159)
         //   0xA0-0xFF: Extended Latin (160-255)
-        foreach (var c in input) {
-            if (c > 0xFF)
-                return false;
-        }
-
-        return true;
-    }
+        input.All(c => c <= 0xFF);
 
     /// <summary>Converts plain text to a binary format suitable for QR code generation, based on the specified encoding mode.</summary>
     /// <param name="plainText">The text to be encoded.</param>
     /// <param name="encMode">The encoding mode.</param>
     /// <param name="eciMode">The ECI mode specifying the character encoding to use.</param>
-    /// <param name="utf8BOM">Flag indicating whether to prepend a UTF-8 Byte Order Mark.</param>
+    /// <param name="utf8Bom">Flag indicating whether to prepend a UTF-8 Byte Order Mark.</param>
     /// <param name="forceUtf8">Flag indicating whether UTF-8 encoding is forced.</param>
     /// <returns>A BitArray containing the binary representation of the encoded data.</returns>
-    private static BitArray PlainTextToBinary(string plainText, EncodingMode encMode, EciMode eciMode, bool utf8BOM, bool forceUtf8)
+    private static BitArray PlainTextToBinary(string plainText, EncodingMode encMode, ECIMode eciMode, bool utf8Bom, bool forceUtf8)
         => encMode switch {
             EncodingMode.Alphanumeric => AlphanumericEncoder.GetBitArray(plainText),
             EncodingMode.Numeric => PlainTextToBinaryNumeric(plainText),
-            EncodingMode.Byte => PlainTextToBinaryByte(plainText, eciMode, utf8BOM, forceUtf8),
-            var _ => _emptyBitArray
+            EncodingMode.Byte => PlainTextToBinaryByte(plainText, eciMode, utf8Bom, forceUtf8),
+            var _ => EmptyBitArray
         };
 
     /// <summary>

@@ -2,13 +2,13 @@
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Enumerates the Extended Channel Interpretation (ECI) modes used in QR codes to handle different character encoding standards. ECI mode allows QR codes to efficiently
     /// encode data using character sets other than the default ISO-8859-1.
     /// </summary>
-    public enum EciMode
+    public enum ECIMode
     {
         /// <summary>
         /// Default encoding mode (typically ISO-8859-1). Used when no ECI mode is explicitly specified. This mode is assumed in basic QR codes where no extended character sets are

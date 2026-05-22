@@ -4,10 +4,10 @@ using Lyo.QRCode.Encoding.Iso;
 
 namespace Lyo.QRCode.Encoding;
 
-/// <summary>1-bit indexed PNG rasterization for <see cref="QrIsoMatrix" /> (PNG structure from MIT-licensed QRCoder).</summary>
+/// <summary>1-bit indexed PNG rasterization for <see cref="QRIsoMatrix" /> (PNG structure from MIT-licensed QRCoder).</summary>
 internal static class QrIsoPngRasterizer
 {
-    public static byte[] ToPng(QrIsoMatrix qr, int pixelsPerModule, byte[] darkRgba, byte[] lightRgba, bool drawQuietZones)
+    public static byte[] ToPng(QRIsoMatrix qr, int pixelsPerModule, byte[] darkRgba, byte[] lightRgba, bool drawQuietZones)
     {
         using var png = new PngBuilder();
         var matrix = qr.ModuleMatrix;
@@ -51,9 +51,9 @@ internal static class QrIsoPngRasterizer
 
     private sealed class PngBuilder : IDisposable
     {
-        private static readonly byte[] _pngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+        private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
-        private static readonly uint[] _crcTable = {
+        private static readonly uint[] CrcTable = [
             0x00000000,
             0x77073096,
             0xEE0E612C,
@@ -310,19 +310,19 @@ internal static class QrIsoPngRasterizer
             0xC30C8EA1,
             0x5A05DF1B,
             0x2D02EF8D
-        };
+        ];
 
         // ReSharper disable InconsistentNaming
         // Chunk types
-        private static readonly byte[] _ihdr = { 73, 72, 68, 82 };
+        private static readonly byte[] _ihdr = "IHDR"u8.ToArray();
 
-        private static readonly byte[] _idat = { 73, 68, 65, 84 };
+        private static readonly byte[] _idat = "IDAT"u8.ToArray();
 
-        private static readonly byte[] _iend = { 73, 69, 78, 68 };
+        private static readonly byte[] _iend = "IEND"u8.ToArray();
 
-        private static readonly byte[] _plte = { 80, 76, 84, 69 };
+        private static readonly byte[] _plte = "PLTE"u8.ToArray();
 
-        private static readonly byte[] _trns = { 116, 82, 78, 83 };
+        private static readonly byte[] _trns = "tRNS"u8.ToArray();
         // ReSharper enable InconsistentNaming
 
         public enum ColorType : byte
@@ -335,7 +335,7 @@ internal static class QrIsoPngRasterizer
 
         public void Dispose()
         {
-            _stream?.Dispose();
+            _stream.Dispose();
             _stream = null!;
         }
 
@@ -344,7 +344,7 @@ internal static class QrIsoPngRasterizer
             var bytes = _stream.ToArray();
 
             // Enumerate chunks in file and insert their CRC32 checksums.
-            var chunkOffset = _pngSignature.Length;
+            var chunkOffset = PngSignature.Length;
             while (chunkOffset < bytes.Length) {
                 // Read length field.
                 var dataLength = (bytes[chunkOffset] << 24) | (bytes[chunkOffset + 1] << 16) | (bytes[chunkOffset + 2] << 8) | bytes[chunkOffset + 3];
@@ -369,7 +369,7 @@ internal static class QrIsoPngRasterizer
         /// <summary>Writes the IHDR chunk. This must be the first chunk in the file.</summary>
         public void WriteHeader(int width, int height, byte bitDepth, ColorType colorType)
         {
-            _stream.Write(_pngSignature, 0, _pngSignature.Length);
+            _stream.Write(PngSignature, 0, PngSignature.Length);
             WriteChunkStart(_ihdr, 13);
 
             // Size.
@@ -485,7 +485,7 @@ internal static class QrIsoPngRasterizer
             var c = 0xffffffff;
             var end = index + length;
             for (var n = index; n < end; n++)
-                c = _crcTable[(c ^ data[n]) & 0xff] ^ (c >> 8);
+                c = CrcTable[(c ^ data[n]) & 0xff] ^ (c >> 8);
 
             return c ^ 0xffffffff;
         }

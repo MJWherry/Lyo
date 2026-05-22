@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Provides QR code capacity and error correction data for each version and encoding mode. Used to determine how much data can be stored in a QR code and which version is
@@ -8,7 +8,7 @@ internal sealed partial class QrIsoEncoder
     /// </summary>
     private static class CapacityTables
     {
-        private static readonly int[] _capacityBaseValues = {
+        private static readonly int[] CapacityBaseValues = [
             41,
             25,
             17,
@@ -649,9 +649,9 @@ internal sealed partial class QrIsoEncoder
             1852,
             1273,
             784
-        };
+        ];
 
-        private static readonly int[] _capacityECCBaseValues = {
+        private static readonly int[] CapacityECCBaseValues = [
             19,
             7,
             1,
@@ -1612,9 +1612,9 @@ internal sealed partial class QrIsoEncoder
             15,
             61,
             16
-        };
+        ];
 
-        private static readonly int[] _remainderBits = {
+        private static readonly int[] RemainderBits = [
             0,
             7,
             7,
@@ -1655,15 +1655,15 @@ internal sealed partial class QrIsoEncoder
             0,
             0,
             0
-        };
+        ];
 
         /// <summary>A list containing detailed capacity information for each version of QR codes. The index in the capacity table corresponds to one less than the version number.</summary>
-        private static readonly List<VersionInfo> _capacityTable = CreateCapacityTable(_capacityBaseValues);
+        private static readonly List<VersionInfo> CapacityTable = CreateCapacityTable(CapacityBaseValues);
 
-        private static readonly List<VersionInfo> _microCapacityTable = CreateMicroCapacityTable();
+        private static readonly List<VersionInfo> MicroCapacityTable = CreateMicroCapacityTable();
 
         /// <summary>A table containing the error correction capacities and data codeword information for different combinations of QR code versions and error correction levels.</summary>
-        private static readonly List<ECCInfo> _capacityECCTable = CreateCapacityECCTable(_capacityECCBaseValues);
+        private static readonly List<ECCInfo> CapacityECCTable = CreateCapacityECCTable(CapacityECCBaseValues);
 
         /// <summary>Retrieves the error correction information for a specific QR code version and error correction level.</summary>
         /// <param name="version">The version of the QR code (1 to 40, or -1 to -4 for M1 to M4).</param>
@@ -1674,7 +1674,7 @@ internal sealed partial class QrIsoEncoder
         /// </returns>
         public static ECCInfo GetEccInfo(int version, ECCLevel eccLevel)
         {
-            foreach (var item in _capacityECCTable) {
+            foreach (var item in CapacityECCTable) {
                 if (item.Version == version && item.ErrorCorrectionLevel == eccLevel)
                     return item;
             }
@@ -1689,7 +1689,7 @@ internal sealed partial class QrIsoEncoder
         /// </summary>
         /// <param name="version">The version of the QR code (1 to 40, or -1 to -4 for M1 to M4).</param>
         /// <returns>A <see cref="VersionInfo" /> object containing data capacity details for all error correction levels and encoding modes for the specified version.</returns>
-        public static VersionInfo GetVersionInfo(int version) => version < 0 ? _microCapacityTable[-version - 1] : _capacityTable[version - 1];
+        public static VersionInfo GetVersionInfo(int version) => version < 0 ? MicroCapacityTable[-version - 1] : CapacityTable[version - 1];
 
         /// <summary>
         /// Retrieves the number of remainder bits required for a specific QR code version. Remainder bits are added to the final bit stream to ensure proper alignment with byte
@@ -1697,7 +1697,7 @@ internal sealed partial class QrIsoEncoder
         /// </summary>
         /// <param name="version">The version of the QR code (1 to 40, or -1 to -4 for M1 to M4).</param>
         /// <returns>The number of remainder bits (0 to 7) that must be appended to the encoded bit stream.</returns>
-        public static int GetRemainderBits(int version) => version < 0 ? 0 : _remainderBits[version - 1];
+        public static int GetRemainderBits(int version) => version < 0 ? 0 : RemainderBits[version - 1];
 
         /// <summary>
         /// Determines the minimum QR code version required to encode a given amount of data with a specific encoding mode and error correction level. If no suitable version is
@@ -1712,7 +1712,7 @@ internal sealed partial class QrIsoEncoder
         {
             // only iterates through non-micro QR codes
             // capacity table is already sorted by version number ascending, so the smallest version that can hold the data is the first one found
-            foreach (var x in _capacityTable) {
+            foreach (var x in CapacityTable) {
                 // find the requested ECC level and encoding mode in the capacity table
                 foreach (var y in x.Details) {
                     if (y.ErrorCorrectionLevel == eccLevel && y.CapacityDict[encMode] >= length) {
@@ -1729,7 +1729,7 @@ internal sealed partial class QrIsoEncoder
 
             static void Throw(EncodingMode encMode, ECCLevel eccLevel)
             {
-                var maxSizeByte = _capacityTable.Where(x => x.Details.Any(y => y.ErrorCorrectionLevel == eccLevel))
+                var maxSizeByte = CapacityTable.Where(x => x.Details.Any(y => y.ErrorCorrectionLevel == eccLevel))
                     .Max(x => x.Details.Single(y => y.ErrorCorrectionLevel == eccLevel).CapacityDict[encMode]);
 
                 throw new DataTooLongException(eccLevel.ToString(), encMode.ToString(), maxSizeByte);
@@ -1790,7 +1790,7 @@ internal sealed partial class QrIsoEncoder
         {
             // only iterates through non-micro QR codes
             // capacity table is already sorted by version number ascending, so the smallest version that can hold the data is the first one found
-            foreach (var x in _microCapacityTable) {
+            foreach (var x in MicroCapacityTable) {
                 // find the requested ECC level and encoding mode in the capacity table
                 foreach (var y in x.Details) {
                     // Use ECC level L for Micro QR Code versions 2, 3 and 4 when Default is specified
@@ -1805,7 +1805,7 @@ internal sealed partial class QrIsoEncoder
             }
 
             // if no version was found, throw an exception
-            var maxSizeByte = _microCapacityTable.SelectMany(x => x.Details)
+            var maxSizeByte = MicroCapacityTable.SelectMany(x => x.Details)
                 .Where(y => (y.ErrorCorrectionLevel == eccLevel || (eccLevel == ECCLevel.Default && y.ErrorCorrectionLevel == ECCLevel.L)) && y.CapacityDict.ContainsKey(encMode))
                 .Max(y => y.CapacityDict[encMode]);
 
@@ -1823,40 +1823,40 @@ internal sealed partial class QrIsoEncoder
             var localCapacityECCTable = new List<ECCInfo>(160 + 8);
             for (var i = 0; i < 4 * 6 * 40; i += 4 * 6) {
                 localCapacityECCTable.AddRange(
-                    new[] {
-                        new ECCInfo(
-                            (i + 24) / 24, ECCLevel.L, capacityECCBaseValues[i], capacityECCBaseValues[i + 1], capacityECCBaseValues[i + 2], capacityECCBaseValues[i + 3],
-                            capacityECCBaseValues[i + 4], capacityECCBaseValues[i + 5]),
-                        new ECCInfo(
-                            (i + 24) / 24, ECCLevel.M, capacityECCBaseValues[i + 6], capacityECCBaseValues[i + 7], capacityECCBaseValues[i + 8], capacityECCBaseValues[i + 9],
-                            capacityECCBaseValues[i + 10], capacityECCBaseValues[i + 11]),
-                        new ECCInfo(
-                            (i + 24) / 24, ECCLevel.Q, capacityECCBaseValues[i + 12], capacityECCBaseValues[i + 13], capacityECCBaseValues[i + 14], capacityECCBaseValues[i + 15],
-                            capacityECCBaseValues[i + 16], capacityECCBaseValues[i + 17]),
-                        new ECCInfo(
-                            (i + 24) / 24, ECCLevel.H, capacityECCBaseValues[i + 18], capacityECCBaseValues[i + 19], capacityECCBaseValues[i + 20], capacityECCBaseValues[i + 21],
-                            capacityECCBaseValues[i + 22], capacityECCBaseValues[i + 23])
-                    });
+                [
+                        new(
+                    (i + 24) / 24, ECCLevel.L, capacityECCBaseValues[i], capacityECCBaseValues[i + 1], capacityECCBaseValues[i + 2], capacityECCBaseValues[i + 3],
+                    capacityECCBaseValues[i + 4], capacityECCBaseValues[i + 5]),
+                        new(
+                        (i + 24) / 24, ECCLevel.M, capacityECCBaseValues[i + 6], capacityECCBaseValues[i + 7], capacityECCBaseValues[i + 8], capacityECCBaseValues[i + 9],
+                        capacityECCBaseValues[i + 10], capacityECCBaseValues[i + 11]),
+                        new(
+                        (i + 24) / 24, ECCLevel.Q, capacityECCBaseValues[i + 12], capacityECCBaseValues[i + 13], capacityECCBaseValues[i + 14], capacityECCBaseValues[i + 15],
+                        capacityECCBaseValues[i + 16], capacityECCBaseValues[i + 17]),
+                        new(
+                        (i + 24) / 24, ECCLevel.H, capacityECCBaseValues[i + 18], capacityECCBaseValues[i + 19], capacityECCBaseValues[i + 20], capacityECCBaseValues[i + 21],
+                        capacityECCBaseValues[i + 22], capacityECCBaseValues[i + 23])
+                ]);
             }
 
             localCapacityECCTable.AddRange(
-                new[] {
+            [
                     // Micro QR Code Version M1 - only supports ECCLevel.Default (none)
-                    new ECCInfo(-1, ECCLevel.Default, 3, 20, 2),
+                    new(-1, ECCLevel.Default, 3, 20, 2),
 
                     // Micro QR Code Version M2
-                    new ECCInfo(-2, ECCLevel.L, 5, 40, 5),
-                    new ECCInfo(-2, ECCLevel.M, 4, 32, 6),
+                    new (-2, ECCLevel.L, 5, 40, 5),
+                    new (-2, ECCLevel.M, 4, 32, 6),
 
                     // Micro QR Code Version M3
-                    new ECCInfo(-3, ECCLevel.L, 11, 84, 6),
-                    new ECCInfo(-3, ECCLevel.M, 9, 68, 8),
+                    new (-3, ECCLevel.L, 11, 84, 6),
+                    new (-3, ECCLevel.M, 9, 68, 8),
 
                     // Micro QR Code Version M4
-                    new ECCInfo(-4, ECCLevel.L, 16, 128, 8),
-                    new ECCInfo(-4, ECCLevel.M, 14, 112, 10),
-                    new ECCInfo(-4, ECCLevel.Q, 10, 80, 14)
-                });
+                    new (-4, ECCLevel.L, 16, 128, 8),
+                    new (-4, ECCLevel.M, 14, 112, 10),
+                    new (-4, ECCLevel.Q, 10, 80, 14)
+            ]);
 
             return localCapacityECCTable;
         }
@@ -1873,10 +1873,10 @@ internal sealed partial class QrIsoEncoder
                 localCapacityTable.Add(
                     new(
                         (i + 16) / 16,
-                        new(4) {
+                        [
                             new(
                                 ECCLevel.L,
-                                new() {
+                                new Dictionary<EncodingMode, int> {
                                     { EncodingMode.Numeric, capacityBaseValues[i] },
                                     { EncodingMode.Alphanumeric, capacityBaseValues[i + 1] },
                                     { EncodingMode.Byte, capacityBaseValues[i + 2] },
@@ -1906,7 +1906,7 @@ internal sealed partial class QrIsoEncoder
                                     { EncodingMode.Byte, capacityBaseValues[i + 14] },
                                     { EncodingMode.Kanji, capacityBaseValues[i + 15] }
                                 })
-                        }));
+                        ]));
             }
 
             return localCapacityTable;
@@ -1916,20 +1916,20 @@ internal sealed partial class QrIsoEncoder
         private static List<VersionInfo> CreateMicroCapacityTable()
         {
             var tbl = new List<VersionInfo>(4);
-            var m1details = new List<VersionInfoDetails>(1) {
+            var m1Details = new List<VersionInfoDetails>(1) {
                 new(
                     ECCLevel.Default, // none
                     new(1) { { EncodingMode.Numeric, 5 } })
             };
 
-            tbl.Add(new(-1, m1details));
-            var m2details = new List<VersionInfoDetails>(2) {
+            tbl.Add(new(-1, m1Details));
+            var m2Details = new List<VersionInfoDetails>(2) {
                 new(ECCLevel.L, new(2) { { EncodingMode.Numeric, 10 }, { EncodingMode.Alphanumeric, 6 } }),
                 new(ECCLevel.M, new(2) { { EncodingMode.Numeric, 8 }, { EncodingMode.Alphanumeric, 5 } })
             };
 
-            tbl.Add(new(-2, m2details));
-            var m3details = new List<VersionInfoDetails>(2) {
+            tbl.Add(new(-2, m2Details));
+            var m3Details = new List<VersionInfoDetails>(2) {
                 new(
                     ECCLevel.L, new(4) {
                         { EncodingMode.Numeric, 23 },
@@ -1946,8 +1946,8 @@ internal sealed partial class QrIsoEncoder
                     })
             };
 
-            tbl.Add(new(-3, m3details));
-            var m4details = new List<VersionInfoDetails>(3) {
+            tbl.Add(new(-3, m3Details));
+            var m4Details = new List<VersionInfoDetails>(3) {
                 new(
                     ECCLevel.L, new(4) {
                         { EncodingMode.Numeric, 35 },
@@ -1971,7 +1971,7 @@ internal sealed partial class QrIsoEncoder
                     })
             };
 
-            tbl.Add(new(-4, m4details));
+            tbl.Add(new(-4, m4Details));
             return tbl;
         }
     }

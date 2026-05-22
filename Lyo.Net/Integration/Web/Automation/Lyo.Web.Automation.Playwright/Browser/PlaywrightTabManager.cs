@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
@@ -75,10 +76,10 @@ public sealed class PlaywrightTabManager
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(pageKey);
         ArgumentHelpers.ThrowIf(!Guid.TryParseExact(pageKey, "N", out var id), "PageKey must be a 32-character hex Guid.", nameof(pageKey));
-        if (string.IsNullOrWhiteSpace(displayName))
+        if (displayName.IsNullOrWhitespace())
             _displayNames.Remove(id);
         else
-            _displayNames[id] = displayName!;
+            _displayNames[id] = displayName;
 
         _logger.LogDebug("Set display name for page {PageKey}", pageKey);
     }
@@ -127,8 +128,8 @@ public sealed class PlaywrightTabManager
                 "open_page", async () => {
                     var page = await _browser.GetRequiredContext().NewPageAsync().ConfigureAwait(false);
                     _browser.SetActivePage(page);
-                    if (!string.IsNullOrWhiteSpace(url))
-                        await page.GotoAsync(url!, new() { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
+                    if (!url.IsNullOrWhitespace())
+                        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.Load }).ConfigureAwait(false);
 
                     key = GetOrCreatePageId(page).ToString("N");
                 }, ct)
@@ -224,13 +225,13 @@ public sealed class PlaywrightTabManager
                 action();
 
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, [("result", "success")]));
 
             _logger.LogDebug("Tab operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, [("result", "failure")]));
 
             _browser.Metrics.RecordError(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), ex, PlaywrightMetricTags.ForOperation(_browser, operation));
             _logger.LogWarning(ex, "Tab operation {Operation} failed", operation);
@@ -247,13 +248,13 @@ public sealed class PlaywrightTabManager
                 await action().ConfigureAwait(false);
 
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "success") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, [("result", "success")]));
 
             _logger.LogDebug("Tab operation {Operation} completed", operation);
         }
         catch (Exception ex) {
             _browser.Metrics.IncrementCounter(
-                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, new[] { ("result", "failure") }));
+                _browser.ResolveMetric(nameof(Wm.Metrics.TabOperation)), tags: PlaywrightMetricTags.ForOperation(_browser, operation, [("result", "failure")]));
 
             _browser.Metrics.RecordError(_browser.ResolveMetric(nameof(Wm.Metrics.TabOperationDuration)), ex, PlaywrightMetricTags.ForOperation(_browser, operation));
             _logger.LogWarning(ex, "Tab operation {Operation} failed", operation);

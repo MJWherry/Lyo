@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Specifies the encoding modes for the characters in a QR code.</summary>
     internal enum EncodingMode

@@ -9,7 +9,7 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class TelegramUrlPayload : IQrPayload
 {
-    private static readonly Regex s_username = new("^[a-zA-Z][a-zA-Z0-9_]{3,31}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex UsernameRegex = new("^[a-zA-Z][a-zA-Z0-9_]{3,31}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>Creates a Telegram link (without <c>@</c> prefix).</summary>
     public TelegramUrlPayload(string username)
@@ -30,7 +30,7 @@ public sealed class TelegramUrlPayload : IQrPayload
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(Username), "Username cannot be empty.", nameof(Username));
 
-        if (!s_username.IsMatch(Username))
+        if (!UsernameRegex.IsMatch(Username))
             throw new InvalidFormatException("Telegram username must be 4–32 characters, start with a letter, and contain only letters, digits, and underscores.", nameof(Username), Username, "example_channel");
 
         return "https://t.me/" + Username;

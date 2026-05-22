@@ -4,7 +4,7 @@ namespace Lyo.QRCode.Encoding;
 
 internal static class QrIsoSvgRasterizer
 {
-    public static string ToSvg(QrIsoMatrix qr, int pixelsPerModule, string darkHex, string lightHex, bool drawQuietZones)
+    public static string ToSvg(QRIsoMatrix qr, int pixelsPerModule, string darkHex, string lightHex, bool drawQuietZones)
     {
         var matrix = qr.ModuleMatrix;
         var matrixSize = matrix.Count - (drawQuietZones ? 0 : 8);

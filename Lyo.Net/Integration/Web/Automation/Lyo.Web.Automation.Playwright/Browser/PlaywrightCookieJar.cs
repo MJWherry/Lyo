@@ -29,7 +29,7 @@ internal sealed class PlaywrightCookieJar : IBrowserCookies
                 HttpOnly = c.HttpOnly,
                 Expiry = c.Expires is { } exp && exp > 0 ? DateTimeOffset.FromUnixTimeSeconds((long)exp) : null
             })
-            .ToList<BrowserCookie>();
+            .ToList();
     }
 
     public async Task AddCookiesAsync(IEnumerable<BrowserCookie> cookies, CancellationToken ct = default)

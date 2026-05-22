@@ -88,7 +88,6 @@ public class EmailServiceTests
 
         var results = await service.SendBulkEmailAsync(builders, TestContext.Current.CancellationToken);
         results.ShouldHaveCount(2);
-        results.ShouldAllSatisfy(r => r is not null);
     }
 
     [Fact]

@@ -4,7 +4,7 @@ using System.Buffers;
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Represents a block of codewords in a QR code. QR codes are divided into several blocks for error correction purposes. Each block contains a series of data codewords

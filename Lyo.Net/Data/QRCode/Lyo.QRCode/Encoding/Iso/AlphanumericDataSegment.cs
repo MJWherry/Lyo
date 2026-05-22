@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Data segment optimized for alphanumeric data encoding.</summary>
     private sealed class AlphanumericDataSegment : DataSegment

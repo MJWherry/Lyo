@@ -46,14 +46,13 @@ public static class Utilities
         var root = new SnapshotDirectoryNode(null, "", path, segmentComparer);
         var fileCount = 0;
         var directoryCount = 0;
-        WalkDirectory(root, enableHashing, pathComparison, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, ref fileCount, ref directoryCount);
+        WalkDirectory(root, enableHashing, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, ref fileCount, ref directoryCount);
         return new(path, pathComparison, root, fileCount, directoryCount);
     }
 
     private static void WalkDirectory(
         SnapshotDirectoryNode node,
         bool enableHashing,
-        StringComparison pathComparison,
         SnapshotTree? oldTree,
         CancellationToken ct,
         HashSet<long> sizeLookup,
@@ -79,7 +78,7 @@ public static class Utilities
             var child = new SnapshotDirectoryNode(node, name, dirPath, segmentComparer);
             node.Directories[name] = child;
             directoryCount++;
-            WalkDirectory(child, enableHashing, pathComparison, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, ref fileCount, ref directoryCount);
+            WalkDirectory(child, enableHashing, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, ref fileCount, ref directoryCount);
         }
 
         string[] files;

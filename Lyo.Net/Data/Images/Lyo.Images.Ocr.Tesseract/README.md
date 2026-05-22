@@ -47,7 +47,16 @@ Do **not** confuse it with a nested **`Lyo.Images.Ocr.Tesseract/Lyo.Images.Ocr.T
 
 **`libdl.so`:** **`InteropDotNet`** loads the library name **`libdl`**. Glibc only provides **`libdl.so.2`** (often under **`/lib/x86_64-linux-gnu/`**), so **`libdl.so` is missing** unless you add a symlink. The setup script drops **`libdl.so` → libdl.so.2** next to **`$(OutputPath)`** (same folder as your **`*.dll`**), which is one of the paths .NET probes.
 
-**Automatic (Linux):** projects under **`Lyo.Net/Data/Images/`** that set **`PrepareTesseractLinuxNativeLibs`** to **`true`** run **`scripts/setup-linux-tesseract-nuget-libs.sh`** after each **`Build`**, passing **`$(OutputPath)`** (the **`net10.0/`** folder). **`Lyo.Images.Ocr.Tesseract`** and **`Lyo.Images.Ocr.Tesseract.Tests`** opt in. Other host apps can set the same property on their **`.csproj`** if they reference Tesseract and build on Linux.
+**Automatic (Linux):** **`PrepareTesseractLinuxNativeLibs=true`** triggers **`scripts/setup-linux-tesseract-nuget-libs.sh`** after each **`Build`** (Linux only). The MSBuild **`PrepareTesseractLinuxNativeLibs`** target lives in **`Lyo.Net/Data/Images/Directory.Build.targets`**.
+
+- Projects **under **`Lyo.Net/Data/Images/`**** pick that file up automatically.
+- **`Lyo.Net`** host apps (**`Lyo.TestConsole`**, **`Lyo.Comic.Api`**, **`Lyo.Gateway`**, etc.) must **import it explicitly**:
+
+  `<Import Project="..\..\..\Data\Images\Directory.Build.targets"/>`  
+
+  Adjust the relative path from your **`.csproj`** to **`Data/Images/`** (three levels works from **`Apps/Comic/Lyo.Comic.Api/`**).
+
+**`Lyo.Images.Ocr.Tesseract`** and **`Lyo.Images.Ocr.Tesseract.Tests`** set the property; hosts outside **`Data/Images/`** need **`Import`** **plus** the property (otherwise the symlink step never runs).
 
 **Manual / CI-only:** run the script yourself after **`dotnet build`** / **`dotnet publish`** when you do not use that property:
 

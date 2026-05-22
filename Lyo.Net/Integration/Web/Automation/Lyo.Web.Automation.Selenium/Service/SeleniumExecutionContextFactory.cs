@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Web.Automation.Selenium.Configuration;
 
 namespace Lyo.Web.Automation.Selenium.Service;
@@ -9,9 +10,6 @@ internal static class SeleniumExecutionContextFactory
         var serviceRoot = Path.GetFullPath(options.ServiceRootDirectory);
         var sessionDir = Path.Combine(serviceRoot, $"session-{sessionId:N}");
         Directory.CreateDirectory(sessionDir);
-
-        string OrSub(string? explicitPath, string defaultSegment) => !string.IsNullOrWhiteSpace(explicitPath) ? explicitPath : Path.Combine(sessionDir, defaultSegment);
-
         var browser = OrSub(options.BrowserUserDataDirectory, "browser-profile");
         var artifacts = OrSub(options.ArtifactsDirectory, "artifacts");
         var downloads = OrSub(options.DownloadDirectory, "downloads");
@@ -26,5 +24,7 @@ internal static class SeleniumExecutionContextFactory
             DownloadDirectory = downloads,
             LoggerProvider = new(sessionDir)
         };
+
+        string OrSub(string? explicitPath, string defaultSegment) => explicitPath.OrDefaultIfWhiteSpace(Path.Combine(sessionDir, defaultSegment));
     }
 }

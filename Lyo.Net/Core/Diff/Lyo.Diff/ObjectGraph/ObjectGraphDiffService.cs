@@ -49,7 +49,7 @@ public sealed class ObjectGraphDiffService : IObjectGraphDiffService
 
         var leftType = left.GetType();
         var rightType = right.GetType();
-        if (IsLeaf(left, right, leftType, rightType, options)) {
+        if (IsLeaf(leftType, rightType)) {
             if (!PathAllowed(path, options))
                 return;
 
@@ -186,7 +186,7 @@ public sealed class ObjectGraphDiffService : IObjectGraphDiffService
         return true;
     }
 
-    private static bool IsLeaf(object left, object right, Type leftType, Type rightType, ObjectGraphDiffOptions options)
+    private static bool IsLeaf(Type leftType, Type rightType)
     {
         if (leftType.IsPrimitive || rightType.IsPrimitive)
             return true;
@@ -215,8 +215,8 @@ public sealed class ObjectGraphDiffService : IObjectGraphDiffService
         if (IsNullableOfEnumOrLeaf(leftType) || IsNullableOfEnumOrLeaf(rightType))
             return true;
 
-        if (leftType.IsArray && rightType.IsArray && options.CompareArrayElements)
-            return false;
+        //if (leftType.IsArray && rightType.IsArray && options.CompareArrayElements)
+        //    return false;
 
         return false;
     }

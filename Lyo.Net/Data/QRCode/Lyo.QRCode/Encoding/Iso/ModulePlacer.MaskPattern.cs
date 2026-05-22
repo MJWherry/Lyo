@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     private static partial class ModulePlacer
     {
@@ -52,7 +52,7 @@ internal sealed partial class QrIsoEncoder
             /// </summary>
             /// <param name="qrCode">The QR code data structure to be evaluated.</param>
             /// <returns>The total penalty score of the QR code.</returns>
-            public static int ScoreMicro(QrIsoMatrix qrCode)
+            public static int ScoreMicro(QRIsoMatrix qrCode)
             {
                 var size = qrCode.ModuleMatrix.Count;
                 var sum1 = 0;
@@ -75,7 +75,7 @@ internal sealed partial class QrIsoEncoder
             /// </summary>
             /// <param name="qrCode">The QR code data structure to be evaluated.</param>
             /// <returns>The total penalty score of the QR code.</returns>
-            public static int Score(QrIsoMatrix qrCode)
+            public static int Score(QRIsoMatrix qrCode)
             {
                 int score1 = 0, // Penalty for groups of five or more same-color modules in a row (or column)
                     score2 = 0, // Penalty for blocks of modules in the same color

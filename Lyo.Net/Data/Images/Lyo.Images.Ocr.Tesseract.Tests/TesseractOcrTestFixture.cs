@@ -19,7 +19,7 @@ public sealed class TesseractOcrTestFixture : IDisposable
     {
         Configuration = BuildConfiguration();
         _services = new ServiceCollection()
-            .AddSingleton<IConfiguration>(Configuration)
+            .AddSingleton(Configuration)
             .BuildServiceProvider();
     }
 

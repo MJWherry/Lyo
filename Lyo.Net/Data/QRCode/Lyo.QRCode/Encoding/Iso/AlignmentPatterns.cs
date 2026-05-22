@@ -1,15 +1,15 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>This class contains the alignment patterns used in QR codes.</summary>
     private static class AlignmentPatterns
     {
         /// <summary>A lookup table mapping QR code versions to their corresponding alignment patterns.</summary>
-        private static readonly Dictionary<int, AlignmentPattern> _alignmentPatternTable = CreateAlignmentPatternTable();
+        private static readonly Dictionary<int, AlignmentPattern> AlignmentPatternTable = CreateAlignmentPatternTable();
 
         /// <summary>Retrieves the alignment pattern for a specific QR code version.</summary>
-        public static AlignmentPattern FromVersion(int version) => _alignmentPatternTable[version];
+        public static AlignmentPattern FromVersion(int version) => AlignmentPatternTable[version];
 
         /// <summary>
         /// Creates a lookup table mapping QR code versions to their corresponding alignment patterns. Alignment patterns are used in QR codes to help scanners accurately read the

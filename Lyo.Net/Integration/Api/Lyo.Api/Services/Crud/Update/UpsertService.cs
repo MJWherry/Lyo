@@ -166,7 +166,7 @@ public class UpsertService<TContext>(
     {
         try {
             await using var context = await ContextFactory.CreateDbContextAsync(ct);
-            var results = new List<UpsertResult<TResult>>();
+            var results = new List<UpsertResult<TResult>?>();
             var toCreate = new List<TRequest>();
             var toUpdate = new List<(TDbModel Entity, TResult OldValue, UpsertRequest<TRequest> Request)>();
             foreach (var request in requests) {
@@ -175,7 +175,7 @@ public class UpsertService<TContext>(
                 var entities = await FindEntitiesByRequest<TRequest, TDbModel>(context, request, ct);
                 if (entities.Count == 0) {
                     toCreate.Add(request.NewData);
-                    results.Add(null!); // Placeholder
+                    results.Add(null); // Placeholder
                     continue;
                 }
 
@@ -204,7 +204,7 @@ public class UpsertService<TContext>(
                         before?.Invoke(ctx);
                         beforeUpdate?.Invoke(ctx);
                         toUpdate.Add((entity, old, request));
-                        results.Add(null!); // Placeholder
+                        results.Add(null); // Placeholder
                     }
                 }
             }
@@ -242,11 +242,11 @@ public class UpsertService<TContext>(
                 }
             }
 
-            var created = results.Count(r => r.Result == UpsertResultEnum.Created);
-            var updated = results.Count(r => r.Result == UpsertResultEnum.Updated);
-            var noChange = results.Count(r => r.Result == UpsertResultEnum.NoChange);
-            var failed = results.Count(r => r.Result == UpsertResultEnum.Failed);
-            var bulkResult = new UpsertBulkResult<TResult>(results, created, updated, noChange, failed);
+            var created = results.Count(r => r!.Result == UpsertResultEnum.Created);
+            var updated = results.Count(r => r!.Result == UpsertResultEnum.Updated);
+            var noChange = results.Count(r => r!.Result == UpsertResultEnum.NoChange);
+            var failed = results.Count(r => r!.Result == UpsertResultEnum.Failed);
+            var bulkResult = new UpsertBulkResult<TResult>(results!, created, updated, noChange, failed);
             if (created > 0)
                 await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<TDbModel>(cache, ct).ConfigureAwait(false);
             else if (updated > 0) {

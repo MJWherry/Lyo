@@ -14,8 +14,8 @@ namespace Lyo.Validation;
 /// <summary>Validates a model by reading custom and DataAnnotations attributes from its public properties.</summary>
 public sealed class AttributeValidator<T> : IValidator<T>
 {
-    private static readonly IReadOnlyList<PropertyValidationInfo> _propertyInfos = BuildPropertyInfos();
-    private static readonly bool _supportsObjectValidation = typeof(IValidatableObject).IsAssignableFrom(typeof(T));
+    private static readonly IReadOnlyList<PropertyValidationInfo> PropertyInfos = BuildPropertyInfos();
+    private static readonly bool SupportsObjectValidation = typeof(IValidatableObject).IsAssignableFrom(typeof(T));
 
     /// <summary>Gets a reusable validator instance for the current type.</summary>
     public static AttributeValidator<T> Shared { get; } = new();
@@ -27,7 +27,7 @@ public sealed class AttributeValidator<T> : IValidator<T>
             return Result<T>.Failure("Validation target cannot be null", ValidationErrorCodes.NullValue);
 
         List<Error>? errors = null;
-        foreach (var propertyInfo in _propertyInfos) {
+        foreach (var propertyInfo in PropertyInfos) {
             var propertyValue = propertyInfo.Getter(value);
             foreach (var validator in propertyInfo.Validators) {
                 var validationErrors = validator(value, propertyValue);
@@ -39,7 +39,7 @@ public sealed class AttributeValidator<T> : IValidator<T>
             }
         }
 
-        if (_supportsObjectValidation && value is IValidatableObject validatableObject) {
+        if (SupportsObjectValidation && value is IValidatableObject validatableObject) {
             var context = new ValidationContext(value);
             foreach (var validationResult in validatableObject.Validate(context)) {
                 if (validationResult == ValidationResult.Success)

@@ -1,9 +1,10 @@
 using System.Buffers;
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Represents a polynomial, which is a sum of polynomial terms.</summary>
     private struct Polynom : IDisposable
@@ -28,9 +29,7 @@ internal sealed partial class QrIsoEncoder
         /// <summary>Removes the polynomial term at the specified index.</summary>
         public void RemoveAt(int index)
         {
-            if ((uint)index >= (uint)Count)
-                ThrowIndexArgumentOutOfRangeException();
-
+            ArgumentHelpers.ThrowIfGreaterThanOrEqual(index, Count);
             if (index < Count - 1)
                 Array.Copy(_polyItems, index + 1, _polyItems, index, Count - index - 1);
 
@@ -40,24 +39,15 @@ internal sealed partial class QrIsoEncoder
         /// <summary>Gets or sets a polynomial term at the specified index.</summary>
         public PolynomItem this[int index] {
             get {
-                if ((uint)index >= Count)
-                    ThrowIndexArgumentOutOfRangeException();
-
+                ArgumentHelpers.ThrowIfGreaterThanOrEqual(index, Count);
                 return _polyItems[index];
             }
             set {
-                if ((uint)index >= Count)
-                    ThrowIndexArgumentOutOfRangeException();
-
+                ArgumentHelpers.ThrowIfGreaterThanOrEqual(index, Count);
                 _polyItems[index] = value;
             }
         }
-
-#if NET6_0_OR_GREATER
-        [StackTraceHidden]
-#endif
-        private static void ThrowIndexArgumentOutOfRangeException() => throw new ArgumentOutOfRangeException("index");
-
+        
         /// <summary>Gets the number of polynomial terms in the polynomial.</summary>
         public int Count { get; private set; }
 
@@ -99,14 +89,13 @@ internal sealed partial class QrIsoEncoder
                     while (comparer(items[j], pivot) > 0)
                         j--;
 
-                    if (i <= j) {
-                        // Swap items[i] and items[j]
-                        var temp = items[i];
-                        items[i] = items[j];
-                        items[j] = temp;
-                        i++;
-                        j--;
-                    }
+                    if (i > j)
+                        continue;
+
+                    // Swap items[i] and items[j]
+                    (items[i], items[j]) = (items[j], items[i]);
+                    i++;
+                    j--;
                 }
 
                 // Recursively sort the sub-arrays

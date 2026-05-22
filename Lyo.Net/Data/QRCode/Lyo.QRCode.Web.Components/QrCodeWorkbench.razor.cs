@@ -1,10 +1,7 @@
-using System.Collections.Generic;
 using System.Globalization;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
-using Lyo.Images;
 using Lyo.Images.Models;
-using Lyo.QRCode;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.Payloads;
 using Lyo.Web.Components;
@@ -28,11 +25,11 @@ public partial class QrCodeWorkbench : IAsyncDisposable
     [Parameter]
     public IReadOnlyList<QRCodeFormat>? AllowedFormats { get; set; }
 
-    private static readonly QRCodeFormat[] s_allQrFormats = Enum.GetValues<QRCodeFormat>();
+    private static readonly QRCodeFormat[] AllQrFormats = Enum.GetValues<QRCodeFormat>();
 
     /// <summary>Formats shown in the workbench Format dropdown.</summary>
     protected IReadOnlyList<QRCodeFormat> SelectableFormats =>
-        AllowedFormats is { Count: > 0 } ? AllowedFormats : s_allQrFormats;
+        AllowedFormats is { Count: > 0 } ? AllowedFormats : AllQrFormats;
 
     /// <inheritdoc />
     protected override void OnInitialized()

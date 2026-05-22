@@ -17,7 +17,7 @@ Implementations (e.g. **`Lyo.Images.Ocr.Tesseract`**) register **`IOcrEngine`**.
   "OcrEngine": {
     "EnableMetrics": false,
     "DefaultLanguages": "eng",
-    "DefaultPageSegmentationMode": "Auto"
+    "DefaultPageSegmentationMode": "SparseTextOsd"
   }
 }
 ```

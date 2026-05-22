@@ -1,4 +1,3 @@
-using System.Text;
 using Lyo.Exceptions;
 
 namespace Lyo.QRCode.Payloads;

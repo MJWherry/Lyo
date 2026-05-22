@@ -382,7 +382,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    private async Task EnsureSuccessStatusCodeOrThrowApiExceptionAsync(HttpResponseMessage response, CancellationToken ct)
+    protected async Task EnsureSuccessStatusCodeOrThrowApiExceptionAsync(HttpResponseMessage response, CancellationToken ct)
     {
         if (response.IsSuccessStatusCode)
             return;
@@ -536,7 +536,7 @@ public class ApiClient : IApiClient
         }
     }
 
-    private async Task<TResult?> DeserializeResponseNullableAsync<TResult>(HttpResponseMessage response, CancellationToken ct)
+    protected async Task<TResult?> DeserializeResponseNullableAsync<TResult>(HttpResponseMessage response, CancellationToken ct)
     {
         var content = await ReadDecodedResponseBytesAsync(response, ct).ConfigureAwait(false);
         if (content.Length == 0)

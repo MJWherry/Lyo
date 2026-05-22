@@ -198,5 +198,5 @@ public sealed class VerifiedWebhookEndpointBuilder
         return d;
     }
 
-    private IEnumerable<(string, string)> RouteTags() => new[] { (WebhookMetrics.RouteTag, _pattern) };
+    private IReadOnlyList<(string, string)> RouteTags() => [(WebhookMetrics.RouteTag, _pattern)];
 }

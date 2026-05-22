@@ -3,7 +3,7 @@ using Microsoft.JSInterop;
 
 namespace Lyo.Comic.Web.Components;
 
-public partial class ComicViewer : IAsyncDisposable
+public partial class ComicViewer
 {
     private const int NeighborPrefetchRadius = 5;
 
@@ -320,7 +320,9 @@ public partial class ComicViewer : IAsyncDisposable
         try {
             await _jsModule.InvokeVoidAsync("setPageState", _viewerId, page, EffectiveTotalPages);
         }
-        catch { }
+        catch {
+            // ignored
+        }
     }
 
     private async Task PrefetchPagesAsync(int currentPage, bool wideNeighborRing)
@@ -336,10 +338,9 @@ public partial class ComicViewer : IAsyncDisposable
 
             try {
                 var url = await LoadPageImageAsync(Series, CurrentChapter, p, CancellationToken.None);
-                if (url is null || _prefetchCache.ContainsKey(p))
+                if (url is null || !_prefetchCache.TryAdd(p, url))
                     continue;
 
-                _prefetchCache[p] = url;
                 await _jsModule.InvokeVoidAsync("setPageUrl", _viewerId, p, url);
             }
             catch { }

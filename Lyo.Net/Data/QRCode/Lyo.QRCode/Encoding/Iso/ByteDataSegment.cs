@@ -4,7 +4,7 @@ using System.Buffers;
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Data segment for byte mode encoding (used for UTF-8 and other text encodings).</summary>
     private sealed class ByteDataSegment : DataSegment
@@ -13,13 +13,13 @@ internal sealed partial class QrIsoEncoder
         public bool ForceUtf8 { get; }
 
         /// <summary>Whether to include UTF-8 BOM</summary>
-        public bool Utf8BOM { get; }
+        public bool Utf8Bom { get; }
 
         /// <summary>The ECI mode to use</summary>
-        public EciMode EciMode { get; }
+        public ECIMode ECIMode { get; }
 
         /// <summary>Whether this segment includes an ECI mode indicator</summary>
-        public bool HasEciMode => EciMode != EciMode.Default;
+        public bool HasECIMode => ECIMode != ECIMode.Default;
 
         /// <summary>Gets the encoding mode (always Byte)</summary>
         public override EncodingMode EncodingMode => EncodingMode.Byte;
@@ -27,14 +27,14 @@ internal sealed partial class QrIsoEncoder
         /// <summary>Initializes a new instance of the ByteDataSegment class.</summary>
         /// <param name="text">The text to encode</param>
         /// <param name="forceUtf8">Whether to force UTF-8 encoding</param>
-        /// <param name="utf8BOM">Whether to include UTF-8 BOM</param>
+        /// <param name="utf8Bom">Whether to include UTF-8 BOM</param>
         /// <param name="eciMode">The ECI mode to use</param>
-        public ByteDataSegment(string text, bool forceUtf8, bool utf8BOM, EciMode eciMode)
+        public ByteDataSegment(string text, bool forceUtf8, bool utf8Bom, ECIMode eciMode)
             : base(text)
         {
             ForceUtf8 = forceUtf8;
-            Utf8BOM = utf8BOM;
-            EciMode = eciMode;
+            Utf8Bom = utf8Bom;
+            ECIMode = eciMode;
         }
 
         /// <summary>Calculates the total bit length for this segment when encoded for a specific QR code version.</summary>
@@ -42,9 +42,9 @@ internal sealed partial class QrIsoEncoder
         /// <returns>The total number of bits required for this segment</returns>
         public override int GetBitLength(int version)
         {
-            var modeIndicatorLength = HasEciMode ? 16 : 4;
+            var modeIndicatorLength = HasECIMode ? 16 : 4;
             var countIndicatorLength = GetCountIndicatorLength(version, EncodingMode.Byte);
-            var dataBitLength = GetPlainTextToBinaryByteBitLength(Text, EciMode, Utf8BOM, ForceUtf8);
+            var dataBitLength = GetPlainTextToBinaryByteBitLength(Text, ECIMode, Utf8Bom, ForceUtf8);
             var length = modeIndicatorLength + countIndicatorLength + dataBitLength;
             return length;
         }
@@ -59,27 +59,27 @@ internal sealed partial class QrIsoEncoder
             var index = startIndex;
 
             // write eci mode if present
-            if (HasEciMode) {
+            if (HasECIMode) {
                 index = DecToBin((int)EncodingMode.ECI, 4, bitArray, index);
-                index = DecToBin((int)EciMode, 8, bitArray, index);
+                index = DecToBin((int)ECIMode, 8, bitArray, index);
             }
 
             // write mode indicator
             index = DecToBin((int)EncodingMode.Byte, 4, bitArray, index);
 
             // write count indicator
-            var dataBitLength = GetPlainTextToBinaryByteBitLength(Text, EciMode, Utf8BOM, ForceUtf8);
+            var dataBitLength = GetPlainTextToBinaryByteBitLength(Text, ECIMode, Utf8Bom, ForceUtf8);
             var characterCount = dataBitLength / 8;
             var countIndicatorLength = GetCountIndicatorLength(version, EncodingMode.Byte);
             index = DecToBin(characterCount, countIndicatorLength, bitArray, index);
 
             // write data directly to the bit array
-            index = PlainTextToBinaryByte(Text, EciMode, Utf8BOM, ForceUtf8, bitArray, index);
+            index = PlainTextToBinaryByte(Text, ECIMode, Utf8Bom, ForceUtf8, bitArray, index);
             return index;
         }
     }
 
-    private static readonly System.Text.Encoding _iso8859_1 =
+    private static readonly System.Text.Encoding ISO8859_1 =
 #if NET5_0_OR_GREATER
         System.Text.Encoding.Latin1;
 #else
@@ -90,28 +90,28 @@ internal sealed partial class QrIsoEncoder
     /// <summary>Determines the target encoding for the given text and encoding parameters.</summary>
     /// <param name="plainText">The text to be encoded.</param>
     /// <param name="eciMode">The ECI mode that specifies the character encoding to use.</param>
-    /// <param name="utf8BOM">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
+    /// <param name="utf8Bom">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
     /// <param name="forceUtf8">Forces UTF-8 encoding regardless of the text content's compatibility with ISO-8859-1.</param>
-    /// <param name="includeUtf8BOM">Output parameter indicating whether the UTF-8 BOM should be included.</param>
+    /// <param name="includeUtf8Bom">Output parameter indicating whether the UTF-8 BOM should be included.</param>
     /// <returns>The encoding to use for the text.</returns>
-    private static System.Text.Encoding GetTargetEncoding(string plainText, EciMode eciMode, bool utf8BOM, bool forceUtf8, out bool includeUtf8BOM)
+    private static System.Text.Encoding GetTargetEncoding(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8, out bool includeUtf8Bom)
     {
         System.Text.Encoding targetEncoding;
 
         // Check if the text is valid ISO-8859-1 and UTF-8 is not forced, then encode using ISO-8859-1.
-        if (eciMode == EciMode.Default && !forceUtf8 && IsValidISO(plainText)) {
-            targetEncoding = _iso8859_1;
-            includeUtf8BOM = false;
+        if (eciMode == ECIMode.Default && !forceUtf8 && IsValidISO(plainText)) {
+            targetEncoding = ISO8859_1;
+            includeUtf8Bom = false;
         }
         else {
             // Determine the encoding based on the specified ECI mode.
             switch (eciMode) {
-                case EciMode.Iso8859_1:
+                case ECIMode.Iso8859_1:
                     // Convert text to ISO-8859-1 and encode.
-                    targetEncoding = _iso8859_1;
-                    includeUtf8BOM = false;
+                    targetEncoding = ISO8859_1;
+                    includeUtf8Bom = false;
                     break;
-                case EciMode.Iso8859_2:
+                case ECIMode.Iso8859_2:
                     // Note: ISO-8859-2 is not natively supported on .NET Core
                     //
                     // Users must install the System.Text.Encoding.CodePages package and call Encoding.RegisterProvider(CodePagesEncodingProvider.Instance)
@@ -119,14 +119,14 @@ internal sealed partial class QrIsoEncoder
                     _iso8859_2 ??= System.Text.Encoding.GetEncoding(28592); // ISO-8859-2
                     // Convert text to ISO-8859-2 and encode.
                     targetEncoding = _iso8859_2;
-                    includeUtf8BOM = false;
+                    includeUtf8Bom = false;
                     break;
-                case EciMode.Default:
-                case EciMode.Utf8:
+                case ECIMode.Default:
+                case ECIMode.Utf8:
                 default:
                     // Handle UTF-8 encoding, optionally adding a BOM if specified.
                     targetEncoding = System.Text.Encoding.UTF8;
-                    includeUtf8BOM = utf8BOM;
+                    includeUtf8Bom = utf8Bom;
                     break;
             }
         }
@@ -137,38 +137,38 @@ internal sealed partial class QrIsoEncoder
     /// <summary>Calculates the bit length required to encode plain text using byte mode encoding.</summary>
     /// <param name="plainText">The text to be encoded.</param>
     /// <param name="eciMode">The ECI mode that specifies the character encoding to use.</param>
-    /// <param name="utf8BOM">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
+    /// <param name="utf8Bom">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
     /// <param name="forceUtf8">Forces UTF-8 encoding regardless of the text content's compatibility with ISO-8859-1.</param>
     /// <returns>The number of bits required to encode the text.</returns>
-    private static int GetPlainTextToBinaryByteBitLength(string plainText, EciMode eciMode, bool utf8BOM, bool forceUtf8)
+    private static int GetPlainTextToBinaryByteBitLength(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8)
     {
-        var targetEncoding = GetTargetEncoding(plainText, eciMode, utf8BOM, forceUtf8, out var includeUtf8BOM);
+        var targetEncoding = GetTargetEncoding(plainText, eciMode, utf8Bom, forceUtf8, out var includeUtf8Bom);
         var byteCount = targetEncoding.GetByteCount(plainText);
-        return byteCount * 8 + (includeUtf8BOM ? 24 : 0);
+        return byteCount * 8 + (includeUtf8Bom ? 24 : 0);
     }
 
     /// <summary>Converts plain text into a binary format using byte mode encoding, which supports various character encodings through ECI (Extended Channel Interpretations).</summary>
     /// <param name="plainText">The text to be encoded.</param>
     /// <param name="eciMode">The ECI mode that specifies the character encoding to use.</param>
-    /// <param name="utf8BOM">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
+    /// <param name="utf8Bom">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
     /// <param name="forceUtf8">Forces UTF-8 encoding regardless of the text content's compatibility with ISO-8859-1.</param>
     /// <returns>A BitArray representing the binary data of the encoded text.</returns>
     /// <remarks>
     /// The returned text is always encoded as ISO-8859-1 unless either the text contains a non-ISO-8859-1 character or UTF-8 encoding is forced. This does not meet the QR Code
     /// standard, which requires the use of ECI to specify the encoding when not ISO-8859-1.
     /// </remarks>
-    private static BitArray PlainTextToBinaryByte(string plainText, EciMode eciMode, bool utf8BOM, bool forceUtf8)
+    private static BitArray PlainTextToBinaryByte(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8)
     {
-        var bitLength = GetPlainTextToBinaryByteBitLength(plainText, eciMode, utf8BOM, forceUtf8);
+        var bitLength = GetPlainTextToBinaryByteBitLength(plainText, eciMode, utf8Bom, forceUtf8);
         var bitArray = new BitArray(bitLength);
-        PlainTextToBinaryByte(plainText, eciMode, utf8BOM, forceUtf8, bitArray, 0);
+        PlainTextToBinaryByte(plainText, eciMode, utf8Bom, forceUtf8, bitArray, 0);
         return bitArray;
     }
 
     /// <summary>Converts plain text into a binary format using byte mode encoding, writing directly to an existing BitArray at the specified offset.</summary>
     /// <param name="plainText">The text to be encoded.</param>
     /// <param name="eciMode">The ECI mode that specifies the character encoding to use.</param>
-    /// <param name="utf8BOM">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
+    /// <param name="utf8Bom">Specifies whether to include a Byte Order Mark (BOM) for UTF-8 encoding.</param>
     /// <param name="forceUtf8">Forces UTF-8 encoding regardless of the text content's compatibility with ISO-8859-1.</param>
     /// <param name="bitArray">The target BitArray to write to. Must be large enough to hold the encoded data.</param>
     /// <param name="offset">The starting offset in the BitArray where bits will be written.</param>
@@ -177,23 +177,23 @@ internal sealed partial class QrIsoEncoder
     /// The returned text is always encoded as ISO-8859-1 unless either the text contains a non-ISO-8859-1 character or UTF-8 encoding is forced. This does not meet the QR Code
     /// standard, which requires the use of ECI to specify the encoding when not ISO-8859-1.
     /// </remarks>
-    private static int PlainTextToBinaryByte(string plainText, EciMode eciMode, bool utf8BOM, bool forceUtf8, BitArray bitArray, int offset)
+    private static int PlainTextToBinaryByte(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8, BitArray bitArray, int offset)
     {
-        var targetEncoding = GetTargetEncoding(plainText, eciMode, utf8BOM, forceUtf8, out var includeUtf8BOM);
+        var targetEncoding = GetTargetEncoding(plainText, eciMode, utf8Bom, forceUtf8, out var includeUtf8Bom);
 #if HAS_SPAN
         // We can use stackalloc for small arrays to prevent heap allocations
-        const int MAX_STACK_SIZE_IN_BYTES = 512;
+        const int maxStackSizeInBytes = 512;
         var count = targetEncoding.GetByteCount(plainText);
         byte[]? bufferFromPool = null;
-        var codeBytes = count <= MAX_STACK_SIZE_IN_BYTES ? stackalloc byte[MAX_STACK_SIZE_IN_BYTES] : bufferFromPool = ArrayPool<byte>.Shared.Rent(count);
-        codeBytes = codeBytes.Slice(0, count);
+        var codeBytes = count <= maxStackSizeInBytes ? stackalloc byte[maxStackSizeInBytes] : bufferFromPool = ArrayPool<byte>.Shared.Rent(count);
+        codeBytes = codeBytes[..count];
         targetEncoding.GetBytes(plainText, codeBytes);
 #else
         byte[] codeBytes = targetEncoding.GetBytes(plainText);
 #endif
 
         // Write the data to the BitArray
-        if (includeUtf8BOM) {
+        if (includeUtf8Bom) {
             // write UTF8 preamble (EF BB BF) to the BitArray
             DecToBin(0xEF, 8, bitArray, offset);
             DecToBin(0xBB, 8, bitArray, offset + 8);

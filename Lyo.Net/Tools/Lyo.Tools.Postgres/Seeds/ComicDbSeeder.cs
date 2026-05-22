@@ -40,10 +40,10 @@ public sealed class ComicDbSeeder
             _logger.LogInformation("Comic DB already has data — skipping seed.");
             return;
         }
-
-        var faker = seed.HasValue ? new Faker { Random = new(seed.Value) } : new Faker();
+        
         _logger.LogInformation("Seeding {Count} comic series...", seriesCount);
-        var series = BuildSeries(faker, seriesCount);
+        var series = BuildSeries(seed, seriesCount);
+        var faker = seed.HasValue ? new Faker { Random = new(seed.Value) } : new Faker();
         db.Series.AddRange(series);
         await db.SaveChangesAsync(ct);
         var allChapters = series.SelectMany(s => s.Chapters).ToList();
@@ -122,10 +122,13 @@ public sealed class ComicDbSeeder
         return totalTags;
     }
 
-    private static List<SeriesEntity> BuildSeries(Faker faker, int count)
+    private static List<SeriesEntity> BuildSeries(int? seed, int count)
     {
         var usedSlugs = new HashSet<string>(StringComparer.Ordinal);
-        var seriesFaker = new Faker<SeriesEntity>().RuleFor(s => s.Id, _ => Guid.NewGuid())
+        var seriesFaker = new Faker<SeriesEntity>();
+        if (seed.HasValue)
+            seriesFaker.UseSeed(seed.Value);
+        seriesFaker.RuleFor(s => s.Id, _ => Guid.NewGuid())
             .RuleFor(s => s.Title, f => f.Lorem.Sentence(f.Random.Int(1, 4)).TrimEnd('.'))
             .RuleFor(s => s.Slug, (_, s) => UniqueSlug(SlugOf(s.Title), usedSlugs))
             .RuleFor(s => s.ComicType, f => f.PickRandom(ComicType.Manga, ComicType.Manhwa, ComicType.Manhua, ComicType.Webtoon, ComicType.Western))

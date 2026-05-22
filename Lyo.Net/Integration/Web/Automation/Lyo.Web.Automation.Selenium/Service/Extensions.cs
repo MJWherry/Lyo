@@ -12,84 +12,88 @@ namespace Lyo.Web.Automation.Selenium.Service;
 /// <summary>Extension methods for Selenium browser automation registration.</summary>
 public static class Extensions
 {
-    /// <summary>Registers <see cref="SeleniumBrowserOptions" /> and a scoped <see cref="SeleniumBrowser" /> for direct injection (legacy style).</summary>
-    public static IServiceCollection AddSeleniumBrowser(this IServiceCollection services, Action<SeleniumBrowserOptions>? configure = null)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        RegisterOptionsAndBrowser(services, configure);
-        return services;
-    }
+        /// <summary>Registers <see cref="SeleniumBrowserOptions" /> and a scoped <see cref="SeleniumBrowser" /> for direct injection (legacy style).</summary>
+        public IServiceCollection AddSeleniumBrowser(Action<SeleniumBrowserOptions>? configure = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            RegisterOptionsAndBrowser(services, configure);
+            return services;
+        }
 
-    /// <summary>Registers options built with <see cref="SeleniumBrowserOptionsBuilder" /> and a scoped <see cref="SeleniumBrowser" />.</summary>
-    public static IServiceCollection AddSeleniumBrowser(this IServiceCollection services, Action<SeleniumBrowserOptionsBuilder> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddSingleton(_ => CreateOptionsFromBuilder(configure));
-        services.AddScoped(RegisterSeleniumBrowser);
-        return services;
-    }
+        /// <summary>Registers options built with <see cref="SeleniumBrowserOptionsBuilder" /> and a scoped <see cref="SeleniumBrowser" />.</summary>
+        public IServiceCollection AddSeleniumBrowser(Action<SeleniumBrowserOptionsBuilder> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddSingleton(_ => CreateOptionsFromBuilder(configure));
+            services.AddScoped(RegisterSeleniumBrowser);
+            return services;
+        }
 
-    /// <summary>
-    /// Registers <see cref="SeleniumBrowserOptions" />, scoped <see cref="SeleniumBrowser" />, and singleton <see cref="ISeleniumBrowserService" /> for session-based usage (see
-    /// <see cref="ISeleniumBrowserService.CreateSession" />).
-    /// </summary>
-    public static IServiceCollection AddSeleniumBrowserService(this IServiceCollection services, Action<SeleniumBrowserOptions>? configure = null)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        RegisterOptionsAndBrowser(services, configure);
-        RegisterSeleniumBrowserServiceSingleton(services);
-        return services;
-    }
+        /// <summary>
+        /// Registers <see cref="SeleniumBrowserOptions" />, scoped <see cref="SeleniumBrowser" />, and singleton <see cref="ISeleniumBrowserService" /> for session-based usage (see
+        /// <see cref="ISeleniumBrowserService.CreateSession" />).
+        /// </summary>
+        public IServiceCollection AddSeleniumBrowserService(Action<SeleniumBrowserOptions>? configure = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            RegisterOptionsAndBrowser(services, configure);
+            RegisterSeleniumBrowserServiceSingleton(services);
+            return services;
+        }
 
-    /// <summary>Registers options from a fluent builder plus <see cref="ISeleniumBrowserService" />.</summary>
-    public static IServiceCollection AddSeleniumBrowserService(this IServiceCollection services, Action<SeleniumBrowserOptionsBuilder> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        services.AddSingleton(_ => CreateOptionsFromBuilder(configure));
-        services.AddScoped(RegisterSeleniumBrowser);
-        RegisterSeleniumBrowserServiceSingleton(services);
-        return services;
-    }
+        /// <summary>Registers options from a fluent builder plus <see cref="ISeleniumBrowserService" />.</summary>
+        public IServiceCollection AddSeleniumBrowserService(Action<SeleniumBrowserOptionsBuilder> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            services.AddSingleton(_ => CreateOptionsFromBuilder(configure));
+            services.AddScoped(RegisterSeleniumBrowser);
+            RegisterSeleniumBrowserServiceSingleton(services);
+            return services;
+        }
 
-    /// <summary>Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no <c>IOptions&lt;T&gt;</c>).</summary>
-    /// <param name="configSectionName">Defaults to <see cref="SeleniumBrowserOptions.SectionName" />.</param>
-    public static IServiceCollection AddSeleniumBrowserServiceFromConfiguration(this IServiceCollection services, IConfiguration configuration, string? configSectionName = null)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        var sectionName = configSectionName.IsNullOrWhitespace() ? SeleniumBrowserOptions.SectionName : configSectionName;
-        services.AddSingleton(_ => {
-            var o = new SeleniumBrowserOptions();
-            configuration.GetSection(sectionName).Bind(o);
-            return o;
-        });
+        /// <summary>Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no <c>IOptions&lt;T&gt;</c>).</summary>
+        /// <param name="configuration">The configuration (e.g. builder.Configuration).</param>
+        /// <param name="configSectionName">Defaults to <see cref="SeleniumBrowserOptions.SectionName" />.</param>
+        public IServiceCollection AddSeleniumBrowserServiceFromConfiguration(IConfiguration configuration, string? configSectionName = null)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            var sectionName = configSectionName.IsNullOrWhitespace() ? SeleniumBrowserOptions.SectionName : configSectionName;
+            services.AddSingleton(_ => {
+                var o = new SeleniumBrowserOptions();
+                configuration.GetSection(sectionName).Bind(o);
+                return o;
+            });
 
-        services.AddScoped(RegisterSeleniumBrowser);
-        RegisterSeleniumBrowserServiceSingleton(services);
-        return services;
-    }
+            services.AddScoped(RegisterSeleniumBrowser);
+            RegisterSeleniumBrowserServiceSingleton(services);
+            return services;
+        }
 
-    /// <summary>Registers scraper with explicit options (scoped <see cref="SeleniumBrowser" /> per request).</summary>
-    public static IServiceCollection AddSeleniumBrowser(this IServiceCollection services, SeleniumBrowserOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddSingleton(options);
-        services.AddScoped(RegisterSeleniumBrowser);
-        return services;
-    }
+        /// <summary>Registers scraper with explicit options (scoped <see cref="SeleniumBrowser" /> per request).</summary>
+        public IServiceCollection AddSeleniumBrowser(SeleniumBrowserOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddSingleton(options);
+            services.AddScoped(RegisterSeleniumBrowser);
+            return services;
+        }
 
-    /// <summary>Registers explicit options plus <see cref="ISeleniumBrowserService" />.</summary>
-    public static IServiceCollection AddSeleniumBrowserService(this IServiceCollection services, SeleniumBrowserOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddSingleton(options);
-        services.AddScoped(RegisterSeleniumBrowser);
-        RegisterSeleniumBrowserServiceSingleton(services);
-        return services;
+        /// <summary>Registers explicit options plus <see cref="ISeleniumBrowserService" />.</summary>
+        public IServiceCollection AddSeleniumBrowserService(SeleniumBrowserOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddSingleton(options);
+            services.AddScoped(RegisterSeleniumBrowser);
+            RegisterSeleniumBrowserServiceSingleton(services);
+            return services;
+        }
     }
 
     private static void RegisterOptionsAndBrowser(IServiceCollection services, Action<SeleniumBrowserOptions>? configure)

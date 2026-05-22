@@ -1,4 +1,3 @@
-using Lyo.Images.Ocr;
 using Lyo.Images.Ocr.Models;
 using Lyo.Result;
 using SixLabors.Fonts;
@@ -11,8 +10,6 @@ namespace Lyo.Images.Ocr.Tesseract.Tests;
 
 public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
 {
-    private readonly TesseractOcrTestFixture _fixture = fixture;
-
     [Fact]
     public async Task ReadAsync_empty_stream_returns_ImageEmpty_before_engine_load()
     {
@@ -40,11 +37,11 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
     [Fact]
     public async Task ReadAsync_png_with_clear_text_recognizes_content()
     {
-        Assert.SkipUnless(_fixture.RunNativeIntegration, TesseractOcrTestFixture.NativeIntegrationDisabledSkipMessage);
-        var tessDir = _fixture.ResolveTessdataDirectory();
+        Assert.SkipUnless(fixture.RunNativeIntegration, TesseractOcrTestFixture.NativeIntegrationDisabledSkipMessage);
+        var tessDir = fixture.ResolveTessdataDirectory();
         Assert.SkipWhen(string.IsNullOrEmpty(tessDir), TesseractOcrTestFixture.TessdataResolutionHint);
-        var shared = _fixture.GetOcrEngineOptions();
-        var tess = _fixture.GetTesseractOcrEngineOptions();
+        var shared = fixture.GetOcrEngineOptions();
+        var tess = fixture.GetTesseractOcrEngineOptions();
         if (string.IsNullOrWhiteSpace(tess.TessdataDirectory))
             tess.TessdataDirectory = tessDir;
         
@@ -61,11 +58,11 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
     [Fact]
     public async Task ReadAsync_produces_y_up_boxes()
     {
-        Assert.SkipUnless(_fixture.RunNativeIntegration, TesseractOcrTestFixture.NativeIntegrationDisabledSkipMessage);
-        var tessDir = _fixture.ResolveTessdataDirectory();
+        Assert.SkipUnless(fixture.RunNativeIntegration, TesseractOcrTestFixture.NativeIntegrationDisabledSkipMessage);
+        var tessDir = fixture.ResolveTessdataDirectory();
         Assert.SkipWhen(string.IsNullOrEmpty(tessDir), TesseractOcrTestFixture.TessdataResolutionHint);
-        var shared = _fixture.GetOcrEngineOptions();
-        var tessOpts = _fixture.GetTesseractOcrEngineOptions();
+        var shared = fixture.GetOcrEngineOptions();
+        var tessOpts = fixture.GetTesseractOcrEngineOptions();
         tessOpts.TessdataDirectory = string.IsNullOrWhiteSpace(tessOpts.TessdataDirectory) ? tessDir : tessOpts.TessdataDirectory;
         using var engine = new TesseractOcrEngine(shared, tessOpts);
         await using var png = new MemoryStream(CreatePngWithText("AB"));

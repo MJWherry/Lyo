@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Records;
 
 namespace Lyo.Web.Automation.Tests.Fixtures;
 
@@ -73,13 +74,13 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
 
     private static async Task WriteResponseAsync(HttpListenerRequest request, HttpListenerResponse response, string path)
     {
-        var method = request.HttpMethod?.ToUpperInvariant() ?? "GET";
+        var method = request.HttpMethod.ToUpperInvariant();
         var (contentType, body, statusCode) = (method, path) switch {
-            ("GET", "/") => ("text/html; charset=utf-8", HomePageHtml, HttpStatusCode.OK),
-            ("GET", "/next") => ("text/html; charset=utf-8", NextPageHtml, HttpStatusCode.OK),
-            ("GET", "/controls") => ("text/html; charset=utf-8", ControlsPageHtml, HttpStatusCode.OK),
-            ("GET", "/files/sample-a.txt") => ("text/plain; charset=utf-8", "sample-a", HttpStatusCode.OK),
-            ("GET", "/files/sample-b.txt") => ("text/plain; charset=utf-8", "sample-b", HttpStatusCode.OK),
+            ("GET", "/") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", HomePageHtml, HttpStatusCode.OK),
+            ("GET", "/next") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", NextPageHtml, HttpStatusCode.OK),
+            ("GET", "/controls") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", ControlsPageHtml, HttpStatusCode.OK),
+            ("GET", "/files/sample-a.txt") => ($"{FileTypeInfo.Txt.MimeType}; charset=utf-8", "sample-a", HttpStatusCode.OK),
+            ("GET", "/files/sample-b.txt") => ($"{FileTypeInfo.Txt.MimeType}; charset=utf-8", "sample-b", HttpStatusCode.OK),
             var _ => await BuildDynamicResponseAsync(request, path)
         };
 
@@ -93,14 +94,14 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
 
     private static async Task<(string contentType, string body, HttpStatusCode statusCode)> BuildDynamicResponseAsync(HttpListenerRequest request, string path)
     {
-        if (request.HttpMethod?.Equals("POST", StringComparison.OrdinalIgnoreCase) == true && path.Equals("/api/echo", StringComparison.OrdinalIgnoreCase)) {
-            using var reader = new StreamReader(request.InputStream, request.ContentEncoding ?? Encoding.UTF8);
-            var rawBody = await reader.ReadToEndAsync();
-            var payload = JsonSerializer.Serialize(new { ok = true, method = "POST", body = rawBody });
-            return ("application/json; charset=utf-8", payload, HttpStatusCode.Accepted);
-        }
+        if (request.HttpMethod?.Equals("POST", StringComparison.OrdinalIgnoreCase) != true || !path.Equals("/api/echo", StringComparison.OrdinalIgnoreCase))
+            return ($"{FileTypeInfo.Txt.MimeType}; charset=utf-8", "Not found", HttpStatusCode.NotFound);
 
-        return ("text/plain; charset=utf-8", "Not found", HttpStatusCode.NotFound);
+        using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
+        var rawBody = await reader.ReadToEndAsync();
+        var payload = JsonSerializer.Serialize(new { ok = true, method = "POST", body = rawBody });
+        return ($"{FileTypeInfo.Json.MimeType}; charset=utf-8", payload, HttpStatusCode.Accepted);
+
     }
 
     private static int GetAvailablePort()

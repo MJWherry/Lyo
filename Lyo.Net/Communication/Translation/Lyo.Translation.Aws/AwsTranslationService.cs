@@ -22,7 +22,6 @@ namespace Lyo.Translation.Aws;
 /// </remarks>
 public sealed class AwsTranslationService : TranslationServiceBase
 {
-    private readonly AwsTranslationOptions _options;
     private readonly bool _ownsTranslateClient;
     private readonly IAmazonTranslate _translateClient;
 
@@ -35,7 +34,6 @@ public sealed class AwsTranslationService : TranslationServiceBase
     public AwsTranslationService(AwsTranslationOptions options, ILogger<AwsTranslationService>? logger = null, IMetrics? metrics = null, IAmazonTranslate? translateClient = null)
         : base(options, logger ?? NullLoggerFactory.Instance.CreateLogger<AwsTranslationService>(), metrics)
     {
-        _options = options;
         if (translateClient != null) {
             _translateClient = translateClient;
             _ownsTranslateClient = false;

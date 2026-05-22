@@ -4,7 +4,7 @@
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Data segment that optimizes encoding by analyzing character patterns and switching between encoding modes (Numeric, Alphanumeric, Byte) to minimize the total bit length.

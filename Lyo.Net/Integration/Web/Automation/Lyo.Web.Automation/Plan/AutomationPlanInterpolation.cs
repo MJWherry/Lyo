@@ -58,7 +58,7 @@ public static class AutomationPlanInterpolation
         foreach (var m in SingleBraceToken.Matches(work).Cast<Match>().OrderByDescending(static x => x.Index)) {
             var inner = m.Groups["inner"].Value;
             var colon = inner.IndexOf(':');
-            var selector = (colon >= 0 ? inner.Substring(0, colon) : inner).Trim();
+            var selector = (colon >= 0 ? inner[..colon] : inner).Trim();
             OperationHelpers.ThrowIf(selector.Length == 0, "Template contains an empty placeholder {}.");
             var resolved = await ResolvePlaceholderAsync(selector, bindings, ct).ConfigureAwait(false);
             work = work.Remove(m.Index, m.Length).Insert(m.Index, resolved);

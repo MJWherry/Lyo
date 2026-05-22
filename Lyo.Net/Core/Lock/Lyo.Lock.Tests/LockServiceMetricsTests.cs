@@ -58,7 +58,7 @@ public class LockServiceMetricsTests
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
         Assert.True(metrics.AcquireFailureCounters.Count > 0);
-        var failure = metrics.AcquireFailureCounters.FirstOrDefault(c => HasKey(c.Tags, key));
+        (string Name, long Value, Dictionary<string, string>? Tags)? failure = metrics.AcquireFailureCounters.FirstOrDefault(c => HasKey(c.Tags, key));
         Assert.NotNull(failure);
     }
 

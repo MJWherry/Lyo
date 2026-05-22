@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Extensions;
 
 namespace Lyo.QRCode.Models;
 
@@ -17,5 +18,5 @@ public class QRCodeRequest
 
     /// <inheritdoc />
     public override string ToString()
-        => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{(Data?.Length > 50 ? "..." : "")}, Options: {Options?.ToString() ?? "(default)"}";
+        => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{Data.Truncated(50)}, Options: {Options?.ToString() ?? "(default)"}";
 }

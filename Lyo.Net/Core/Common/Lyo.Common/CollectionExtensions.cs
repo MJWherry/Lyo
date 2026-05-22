@@ -20,7 +20,7 @@ public static class CollectionExtensions
     private static IReadOnlyCollection<T> ReadOnlyCollectionOrWrappedOrCopied<T>(IEnumerable<T>? source)
     {
         ArgumentHelpers.ThrowIfNull(source);
-        return source as IReadOnlyCollection<T> ?? (source is IList<T> ilist ? new ReadOnlyCollection<T>(ilist) : source.ToList());
+        return source as IReadOnlyCollection<T> ?? (source is IList<T> iList ? new ReadOnlyCollection<T>(iList) : source.ToList());
     }
 
     /// <summary>Reuses materialized sequences when compatible; otherwise allocates a single <see cref="List{T}" />.</summary>
@@ -29,7 +29,10 @@ public static class CollectionExtensions
         where TValue : class
     {
         ArgumentHelpers.ThrowIfNull(source);
-        return tryExisting(source) ?? (TValue)(object)source.ToList();
+        // ReSharper disable once PossibleMultipleEnumeration - Does not actually enumerate, tries casting
+        return tryExisting(source) 
+            // ReSharper disable once PossibleMultipleEnumeration
+            ?? (TValue)(object)source.ToList();
     }
 
     /// <summary>Returns the backing array without copying when the sequence is already a <typeparamref name="T" /> array.</summary>

@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Converts numeric plain text into a binary format specifically optimized for QR codes. Numeric compression groups up to 3 digits into 10 bits, less for remaining digits if

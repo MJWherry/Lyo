@@ -152,7 +152,7 @@ public class ScientificLibraryTests
     }
 
     [Fact]
-    public void ScientificUnitPrefixes_ContainMetricPrefix() => Assert.Contains(ScientificUnitPrefixes.Metric, prefix => prefix.Symbol == "k" && prefix.Multiplier == 1e3);
+    public void ScientificUnitPrefixes_ContainMetricPrefix() => Assert.Contains(ScientificUnitPrefixes.Metric, prefix => prefix.Symbol == "k" && Math.Abs(prefix.Multiplier - 1e3) < 1e-10);
 
     [Fact]
     public void UnitConversion_Convert_ComputesEquivalentPressureUnits()

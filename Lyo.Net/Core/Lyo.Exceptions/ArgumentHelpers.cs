@@ -104,7 +104,7 @@ public static class ArgumentHelpers
 #if NETSTANDARD2_0
         if (argument is null)
             ThrowArgumentNull(paramName);
-
+        
         if (string.IsNullOrWhiteSpace(argument))
             ThrowArgumentException("Value cannot be Empty or whitespace.", paramName);
 #else

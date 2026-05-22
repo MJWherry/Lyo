@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.QRCode.Payloads;
@@ -37,9 +36,8 @@ public sealed class GeoPayload : IQrPayload
     /// <inheritdoc />
     public string ToQrString()
     {
-        ArgumentHelpers.ThrowIfNotInRange(Latitude, -90, 90, nameof(Latitude), "Latitude must be between -90 and 90.");
-        ArgumentHelpers.ThrowIfNotInRange(Longitude, -180, 180, nameof(Longitude), "Longitude must be between -180 and 180.");
-
+        ArgumentHelpers.ThrowIfNotInRange(Latitude, -90, 90);
+        ArgumentHelpers.ThrowIfNotInRange(Longitude, -180, 180);
         var lat = Latitude.ToString(CultureInfo.InvariantCulture);
         var lon = Longitude.ToString(CultureInfo.InvariantCulture);
         var core = "geo:" + lat + "," + lon;

@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Represents a 2D point with integer coordinates.</summary>
     private readonly struct Point : IEquatable<Point>

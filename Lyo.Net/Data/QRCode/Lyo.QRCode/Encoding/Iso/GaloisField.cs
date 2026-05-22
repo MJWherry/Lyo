@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using Lyo.Exceptions;
 
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Represents a Galois field of 256 elements (GF(256)) used in finite field arithmetic, typically for error correction algorithms such as Reed-Solomon.
@@ -14,10 +15,10 @@ internal sealed partial class QrIsoEncoder
     internal static class GaloisField
     {
 #if HAS_SPAN
-        internal static ReadOnlySpan<byte> _galoisFieldByExponentAlpha
+        internal static ReadOnlySpan<byte> GaloisFieldByExponentAlpha
             => [
 #else
-        internal static readonly byte[] _galoisFieldByExponentAlpha = [
+        internal static readonly byte[] GaloisFieldByExponentAlpha = [
 #endif
                 1, 2, 4, 8, 16, 32, 64, 128, 29, 58,
                 116, 232, 205, 135, 19, 38, 76, 152, 45, 90,
@@ -48,10 +49,10 @@ internal sealed partial class QrIsoEncoder
             ];
 
 #if HAS_SPAN
-        internal static ReadOnlySpan<byte> _galoisFieldByIntegerValue
+        internal static ReadOnlySpan<byte> GaloisFieldByIntegerValue
             => [
 #else
-        internal static readonly byte[] _galoisFieldByIntegerValue = [
+        internal static readonly byte[] GaloisFieldByIntegerValue = [
 #endif
                 0, 0, 1, 25, 2, 50, 26, 198, 3, 223,
                 51, 238, 27, 104, 199, 75, 4, 100, 224, 14,
@@ -85,7 +86,7 @@ internal sealed partial class QrIsoEncoder
         /// Retrieves the integer value from the Galois field that corresponds to a given exponent. This is used in Reed-Solomon and other error correction calculations involving
         /// Galois fields.
         /// </summary>
-        public static int GetIntValFromAlphaExp(int exp) => _galoisFieldByExponentAlpha[exp];
+        public static int GetIntValFromAlphaExp(int exp) => GaloisFieldByExponentAlpha[exp];
 
         /// <summary>
         /// Retrieves the exponent from the Galois field that corresponds to a given integer value. Throws an exception if the integer value is zero, as zero does not have a
@@ -93,13 +94,8 @@ internal sealed partial class QrIsoEncoder
         /// </summary>
         public static int GetAlphaExpFromIntVal(int intVal)
         {
-            if (intVal == 0)
-                ThrowIntValOutOfRangeException(); // Zero is not valid as it does not have an exponent representation.
-
-            return _galoisFieldByIntegerValue[intVal];
-
-            void ThrowIntValOutOfRangeException()
-                => throw new ArgumentOutOfRangeException(nameof(intVal), "The provided integer value is out of range, as zero is not representable.");
+            ArgumentHelpers.ThrowIfZero(intVal);
+            return GaloisFieldByIntegerValue[intVal];
         }
 
         /// <summary>

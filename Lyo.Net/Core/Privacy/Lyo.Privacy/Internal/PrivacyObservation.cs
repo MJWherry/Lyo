@@ -9,5 +9,5 @@ internal static class PrivacyObservation
     public static IEnumerable<(string Key, string Value)>? TagsForPolicy(string? policyName) => policyName.IsNullOrEmpty() ? null : new[] { ("policy", policyName) };
 
     public static IEnumerable<(string Key, string Value)> TagsForKind(RedactionKind kind, string? policyName)
-        => string.IsNullOrEmpty(policyName) ? [("kind", kind.ToString())] : [("kind", kind.ToString()), ("policy", policyName!)];
+        => policyName.IsNullOrEmpty() ? [("kind", kind.ToString())] : [("kind", kind.ToString()), ("policy", policyName)];
 }

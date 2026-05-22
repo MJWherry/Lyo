@@ -178,7 +178,7 @@ public class BuiltInQRCodeService : IQRCodeService
             throw new PlatformNotSupportedException("The built-in QR service supports PNG and SVG only. Use Lyo.QRCode.QRCoder for JPEG/BMP, or select PNG/SVG.");
 
         var ecc = ToEcc(QRCodeIconEccHelper.GetEffectiveLevel(options.ErrorCorrectionLevel, options.Icon));
-        using var matrix = QrIsoEncoder.GenerateQrCode(data, ecc);
+        using var matrix = QRIsoEncoder.GenerateQrCode(data, ecc);
         var dark = QrHexColor.ToRgba(options.DarkColor);
         var light = QrHexColor.ToRgba(options.LightColor);
         var bytes = options.Format switch {
@@ -219,12 +219,12 @@ public class BuiltInQRCodeService : IQRCodeService
         return bytes;
     }
 
-    private static QrIsoEncoder.ECCLevel ToEcc(QRCodeErrorCorrectionLevel level)
+    private static QRIsoEncoder.ECCLevel ToEcc(QRCodeErrorCorrectionLevel level)
         => level switch {
-            QRCodeErrorCorrectionLevel.Low => QrIsoEncoder.ECCLevel.L,
-            QRCodeErrorCorrectionLevel.Medium => QrIsoEncoder.ECCLevel.M,
-            QRCodeErrorCorrectionLevel.Quartile => QrIsoEncoder.ECCLevel.Q,
-            QRCodeErrorCorrectionLevel.High => QrIsoEncoder.ECCLevel.H,
-            var _ => QrIsoEncoder.ECCLevel.M
+            QRCodeErrorCorrectionLevel.Low => QRIsoEncoder.ECCLevel.L,
+            QRCodeErrorCorrectionLevel.Medium => QRIsoEncoder.ECCLevel.M,
+            QRCodeErrorCorrectionLevel.Quartile => QRIsoEncoder.ECCLevel.Q,
+            QRCodeErrorCorrectionLevel.High => QRIsoEncoder.ECCLevel.H,
+            var _ => QRIsoEncoder.ECCLevel.M
         };
 }

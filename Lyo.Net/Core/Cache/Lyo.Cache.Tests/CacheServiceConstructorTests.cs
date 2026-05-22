@@ -32,6 +32,7 @@ public class CacheServiceConstructorTests
     public void FusionCacheService_WithNullFusionCache_ThrowsArgumentNullException()
     {
         var options = new CacheOptions { Enabled = true };
+        // ReSharper disable once ObjectCreationAsStatement
         var exception = ExceptionAssertions.Throws<ArgumentNullException>(() => new FusionCacheService(null!, _logger, options));
         exception.ParamName.ShouldBe("fusionCache");
     }

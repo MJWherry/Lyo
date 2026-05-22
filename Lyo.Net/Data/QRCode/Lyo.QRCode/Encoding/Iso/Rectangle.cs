@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Represents a rectangle defined by its top-left corner's coordinates, width, and height.</summary>
     private readonly struct Rectangle

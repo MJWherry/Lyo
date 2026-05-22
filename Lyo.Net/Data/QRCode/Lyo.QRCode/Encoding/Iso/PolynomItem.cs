@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Represents an individual term of a polynomial, consisting of a coefficient and an exponent. For example, the term 3x² would be represented as a <see cref="PolynomItem" />

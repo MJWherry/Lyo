@@ -3,7 +3,7 @@ using System.IO.Compression;
 namespace Lyo.QRCode.Encoding.Iso;
 
 /// <summary>Represents the data structure of a QR code.</summary>
-internal sealed class QrIsoMatrix : IDisposable
+internal sealed class QRIsoMatrix : IDisposable
 {
     /// <summary>Specifies the compression mode used for the raw data.</summary>
     public enum Compression
@@ -24,9 +24,9 @@ internal sealed class QrIsoMatrix : IDisposable
     /// <summary>Gets the version of the QR code.</summary>
     public int Version { get; private set; }
 
-    /// <summary>Initializes a new instance of the <see cref="QrIsoMatrix" /> class with the specified version.</summary>
+    /// <summary>Initializes a new instance of the <see cref="QRIsoMatrix" /> class with the specified version.</summary>
     /// <param name="version">The version of the QR code.</param>
-    public QrIsoMatrix(int version)
+    public QRIsoMatrix(int version)
     {
         Version = version;
         var size = ModulesPerSideFromVersion(version);
@@ -35,10 +35,10 @@ internal sealed class QrIsoMatrix : IDisposable
             ModuleMatrix.Add(new(size));
     }
 
-    /// <summary>Initializes a new instance of the <see cref="QrIsoMatrix" /> class with the specified version and padding option.</summary>
+    /// <summary>Initializes a new instance of the <see cref="QRIsoMatrix" /> class with the specified version and padding option.</summary>
     /// <param name="version">The version of the QR code.</param>
     /// <param name="addPadding">Indicates whether padding should be added to the QR code.</param>
-    public QrIsoMatrix(int version, bool addPadding)
+    public QRIsoMatrix(int version, bool addPadding)
     {
         Version = version;
         var size = ModulesPerSideFromVersion(version) + (addPadding ? 8 : 0);
@@ -47,16 +47,16 @@ internal sealed class QrIsoMatrix : IDisposable
             ModuleMatrix.Add(new(size));
     }
 
-    /// <summary>Initializes a new instance of the <see cref="QrIsoMatrix" /> class with raw data from a specified path and compression mode.</summary>
+    /// <summary>Initializes a new instance of the <see cref="QRIsoMatrix" /> class with raw data from a specified path and compression mode.</summary>
     /// <param name="pathToRawData">The path to the raw data file.</param>
     /// <param name="compressMode">The compression mode used for the raw data.</param>
-    public QrIsoMatrix(string pathToRawData, Compression compressMode)
+    public QRIsoMatrix(string pathToRawData, Compression compressMode)
         : this(File.ReadAllBytes(pathToRawData), compressMode) { }
 
-    /// <summary>Initializes a new instance of the <see cref="QrIsoMatrix" /> class with raw data and compression mode.</summary>
+    /// <summary>Initializes a new instance of the <see cref="QRIsoMatrix" /> class with raw data and compression mode.</summary>
     /// <param name="rawData">The raw data of the QR code.</param>
     /// <param name="compressMode">The compression mode used for the raw data.</param>
-    public QrIsoMatrix(byte[] rawData, Compression compressMode)
+    public QRIsoMatrix(byte[] rawData, Compression compressMode)
     {
         //Decompress
         if (compressMode == Compression.Deflate) {
@@ -117,12 +117,11 @@ internal sealed class QrIsoMatrix : IDisposable
         }
     }
 
-    /// <summary>Releases all resources used by the <see cref="QrIsoMatrix" />.</summary>
+    /// <summary>Releases all resources used by the <see cref="QRIsoMatrix" />.</summary>
     public void Dispose()
     {
         ModuleMatrix = null!;
         Version = 0;
-        GC.SuppressFinalize(this);
     }
 
     /// <summary>Gets the raw data of the QR code with the specified compression mode.</summary>
@@ -153,7 +152,7 @@ internal sealed class QrIsoMatrix : IDisposable
             targetStream.Write(new byte[] { 0x51, 0x52, 0x52, 0x00 }, 0, 4);
 #endif
 
-            //Add header - rowsize
+            //Add header - row size
             targetStream.WriteByte((byte)ModuleMatrix.Count);
 
             //Build data queue

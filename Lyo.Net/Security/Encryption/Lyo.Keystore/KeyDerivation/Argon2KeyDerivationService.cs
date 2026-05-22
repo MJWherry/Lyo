@@ -68,7 +68,7 @@ public class Argon2KeyDerivationService : IKeyDerivationService
         var argon2Iterations = MapIterationsToArgon2Range(iterations);
         var actualSalt = salt ?? CryptographicRandom.GetBytes(DefaultSaltSize);
         ArgumentHelpers.ThrowIfNullOrNotInRange(actualSalt, DefaultSaltSize, long.MaxValue, nameof(salt));
-        using var argon2 = new Argon2id(password) {
+        using var argon2 = new Argon2i(password) {
             Salt = actualSalt,
             DegreeOfParallelism = _defaultDegreeOfParallelism,
             Iterations = argon2Iterations,

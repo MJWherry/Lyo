@@ -4,6 +4,7 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
+using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.Csv.Models;
@@ -53,28 +54,28 @@ public partial class LyoDataGridProjected
     private Timer? _visibilityReloadTimer;
 
     [Inject]
-    private ILogger<LyoDataGridProjected> Logger { get; set; } = default!;
+    private ILogger<LyoDataGridProjected> Logger { get; set; } = null!;
 
     [Inject]
-    private IJsInterop Js { get; set; } = default!;
+    private IJsInterop Js { get; set; } = null!;
 
     [Inject]
-    private IXlsxService XlsxService { get; set; } = default!;
+    private IXlsxService XlsxService { get; set; } = null!;
 
     [Inject]
-    private ICsvService CsvService { get; set; } = default!;
+    private ICsvService CsvService { get; set; } = null!;
 
     [Inject]
-    private IDialogService DialogService { get; set; } = default!;
+    private IDialogService DialogService { get; set; } = null!;
 
     [Inject]
-    private JsonSerializerOptions JsonSerializerOptions { get; set; } = default!;
+    private JsonSerializerOptions JsonSerializerOptions { get; set; } = LyoJsonSerializerOptions.Create();
 
     [Inject]
-    private ISnackbar Snackbar { get; set; } = default!;
+    private ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
-    private ClientStore ClientStore { get; set; } = default!;
+    private ClientStore ClientStore { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]
@@ -188,8 +189,8 @@ public partial class LyoDataGridProjected
     {
         _visibilityReloadTimer?.Dispose();
         _autoRefreshTimer?.Dispose();
-        _cts?.Cancel();
-        _cts?.Dispose();
+        _cts.Cancel();
+        _cts.Dispose();
     }
 
     private IEnumerable<string> GetSelectFieldsForQuery()
@@ -283,13 +284,15 @@ public partial class LyoDataGridProjected
     private async Task OnVisibilityChanged(ColumnVisibilityBinder binder)
     {
         await SaveClientState(true);
-        _visibilityReloadTimer?.Dispose();
+        if(_visibilityReloadTimer is not null)
+            await _visibilityReloadTimer.DisposeAsync().ConfigureAwait(false);
         _visibilityReloadTimer = new(_ => _ = InvokeAsync(CheckAndReloadForVisibilityChange), null, VisibilityReloadDebounceMs, Timeout.Infinite);
     }
 
     private async Task CheckAndReloadForVisibilityChange()
     {
-        _visibilityReloadTimer?.Dispose();
+        if(_visibilityReloadTimer is not null)
+            await _visibilityReloadTimer.DisposeAsync().ConfigureAwait(false);
         _visibilityReloadTimer = null;
         if (_dataGrid == null || _loading)
             return;
@@ -302,6 +305,8 @@ public partial class LyoDataGridProjected
 
     private async Task RestoreGridState()
     {
+        if (_dataGrid is null)
+            return;
         try {
             var savedState = await ClientStore.GetGridStateAsync<object?>($"{GridKey}_proj");
             if (savedState == null || _dataGrid == null)
@@ -313,7 +318,7 @@ public partial class LyoDataGridProjected
             if (savedState.PageSize > 0)
                 await _dataGrid.SetRowsPerPageAsync(savedState.PageSize);
 
-            if (_savedSorts?.Any() == true) {
+            if (_savedSorts?.Count > 0) {
                 foreach (var savedSort in _savedSorts.OrderBy(s => s.Index)) {
                     var sortDirection = savedSort.Descending ? SortDirection.Descending : SortDirection.Ascending;
                     var columnId = Guid.TryParse(savedSort.SortBy, out var _) ? savedSort.SortBy : FindColumnIdByTag(savedSort.SortBy);
@@ -470,13 +475,7 @@ public partial class LyoDataGridProjected
         }
     }
 
-    private string GetDataRoute()
-    {
-        if (!string.IsNullOrEmpty(QueryProjectRoute))
-            return QueryProjectRoute;
-
-        return QueryRoute.Replace("/Query", "/QueryProject", StringComparison.OrdinalIgnoreCase);
-    }
+    private string GetDataRoute() => !QueryProjectRoute.IsNullOrEmpty() ? QueryProjectRoute : QueryRoute.Replace("/Query", "/QueryProject", StringComparison.OrdinalIgnoreCase);
 
     private LyoProjectionQueryReqBuilder GetQuery(int offset, int pageSize)
     {
@@ -489,7 +488,11 @@ public partial class LyoDataGridProjected
                 .Cast<WhereClause>()
                 .ToList();
 
-            queryNode = orChildren.Count == 0 ? null : orChildren.Count == 1 ? orChildren[0] : new GroupClause(GroupOperatorEnum.Or, orChildren);
+            queryNode = orChildren.Count switch {
+                0 => null,
+                1 => orChildren[0],
+                var _ => new GroupClause(GroupOperatorEnum.Or, orChildren)
+            };
         }
         else
             queryNode = WhereClauseBuilder.FromConditions(activeConditions);
@@ -498,7 +501,7 @@ public partial class LyoDataGridProjected
             queryBuilder.AddWhere(queryNode);
 
         queryBuilder.AddSelects(SelectFields.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).Distinct().ToArray());
-        if (_dataGrid.SortDefinitions?.Any() == true) {
+        if (_dataGrid?.SortDefinitions.Count != 0) {
             var sortedDefinitions = _dataGrid.SortDefinitions.Values.OrderBy(s => s.Index).ToList();
             for (var i = 0; i < sortedDefinitions.Count; i++) {
                 var sort = sortedDefinitions[i];

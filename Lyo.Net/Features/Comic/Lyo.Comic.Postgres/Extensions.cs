@@ -11,81 +11,82 @@ namespace Lyo.Comic.Postgres;
 /// <summary>Extension methods for registering the PostgreSQL comic store.</summary>
 public static class Extensions
 {
-    /// <summary>Adds the PostgreSQL comic DbContextFactory using explicit options.</summary>
-    public static IServiceCollection AddComicDbContextFactory(this IServiceCollection services, Action<PostgresComicOptions> configure)
+    extension(IServiceCollection services)
     {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresComicOptions();
-        configure(options);
-        return services.AddComicDbContextFactory(options);
-    }
+        /// <summary>Adds the PostgreSQL comic DbContextFactory using explicit options.</summary>
+        public IServiceCollection AddComicDbContextFactory(Action<PostgresComicOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresComicOptions();
+            configure(options);
+            return services.AddComicDbContextFactory(options);
+        }
 
-    /// <summary>Adds the PostgreSQL comic DbContextFactory by binding from configuration.</summary>
-    public static IServiceCollection AddComicDbContextFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresComicOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresComicOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds the PostgreSQL comic DbContextFactory by binding from configuration.</summary>
+        public IServiceCollection AddComicDbContextFactoryFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresComicOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresComicOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddComicDbContextFactory(options);
-    }
+            return services.AddComicDbContextFactory(options);
+        }
 
-    /// <summary>Adds the PostgreSQL comic DbContextFactory using a pre-built options instance.</summary>
-    public static IServiceCollection AddComicDbContextFactory(this IServiceCollection services, PostgresComicOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
-        services.AddSingleton<IOptions<PostgresComicOptions>>(Options.Create(options));
-        services.AddPostgresMigrations<ComicDbContext, PostgresComicOptions>();
-        services.AddDbContextFactory<ComicDbContext>(dbOpts => dbOpts.UseNpgsql(
-            options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresComicOptions.Schema)));
+        /// <summary>Adds the PostgreSQL comic DbContextFactory using a pre-built options instance.</summary>
+        public IServiceCollection AddComicDbContextFactory(PostgresComicOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddSingleton(Options.Create(options));
+            services.AddPostgresMigrations<ComicDbContext, PostgresComicOptions>();
+            services.AddDbContextFactory<ComicDbContext>(dbOpts => dbOpts.UseNpgsql(
+                options.ConnectionString, npgsqlOpts => npgsqlOpts.MigrationsHistoryTable("__EFMigrationsHistory", PostgresComicOptions.Schema)));
 
-        return services;
-    }
+            return services;
+        }
 
-    /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> using explicit options.</summary>
-    public static IServiceCollection AddPostgresComicStore(this IServiceCollection services, Action<PostgresComicOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new PostgresComicOptions();
-        configure(options);
-        return services.AddPostgresComicStore(options);
-    }
+        /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> using explicit options.</summary>
+        public IServiceCollection AddPostgresComicStore(Action<PostgresComicOptions> configure)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configure);
+            var options = new PostgresComicOptions();
+            configure(options);
+            return services.AddPostgresComicStore(options);
+        }
 
-    /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> by binding from configuration.</summary>
-    public static IServiceCollection AddPostgresComicStoreFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string configSectionName = PostgresComicOptions.SectionName)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(configuration);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-        var options = new PostgresComicOptions();
-        var section = configuration.GetSection(configSectionName);
-        if (section.Exists())
-            section.Bind(options);
+        /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> by binding from configuration.</summary>
+        public IServiceCollection AddPostgresComicStoreFromConfiguration(
+            IConfiguration configuration,
+            string configSectionName = PostgresComicOptions.SectionName)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(configuration);
+            ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
+            var options = new PostgresComicOptions();
+            var section = configuration.GetSection(configSectionName);
+            if (section.Exists())
+                section.Bind(options);
 
-        return services.AddPostgresComicStore(options);
-    }
+            return services.AddPostgresComicStore(options);
+        }
 
-    /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> using a pre-built options instance.</summary>
-    public static IServiceCollection AddPostgresComicStore(this IServiceCollection services, PostgresComicOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(services);
-        ArgumentHelpers.ThrowIfNull(options);
-        services.AddComicDbContextFactory(options);
-        services.AddSingleton<IComicStore, PostgresComicStore>();
-        return services;
+        /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> using a pre-built options instance.</summary>
+        public IServiceCollection AddPostgresComicStore(PostgresComicOptions options)
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(options);
+            services.AddComicDbContextFactory(options);
+            services.AddSingleton<IComicStore, PostgresComicStore>();
+            return services;
+        }
     }
 }

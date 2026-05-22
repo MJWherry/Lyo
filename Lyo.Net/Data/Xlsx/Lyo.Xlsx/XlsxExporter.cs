@@ -343,7 +343,7 @@ internal sealed class XlsxExporter : IXlsxExporter
         foreach (var item in dataList) {
             for (var col = 0; col < formatters.Count; col++) {
                 var value = formatters[col](item);
-                worksheet.Cell(row, col + 1).Value = value ?? "";
+                worksheet.Cell(row, col + 1).Value = value;
             }
 
             row++;

@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Lyo.QRCode.Payloads;
 
 /// <summary>vCard 3.0 TEXT property escaping (<c>\</c>, <c>,</c>, <c>;</c>, newlines).</summary>

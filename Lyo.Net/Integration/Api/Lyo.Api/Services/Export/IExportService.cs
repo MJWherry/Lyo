@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Api.Services.Export;
 
 /// <summary>Exports query results to CSV, XLSX, or JSON format.</summary>
+// ReSharper disable once UnusedTypeParameter
 public interface IExportService<TContext>
     where TContext : DbContext
 {

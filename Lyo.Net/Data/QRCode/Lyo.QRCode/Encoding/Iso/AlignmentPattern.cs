@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Represents the alignment pattern used in QR codes, which helps ensure the code remains readable even if it is somewhat distorted. Each QR code version has its own

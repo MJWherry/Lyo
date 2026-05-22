@@ -227,7 +227,11 @@ public sealed class AutomationPlanBuilder
     }
 
     /// <summary>Downloads each URL in a string-list variable (requires runner HTTP dependency registration).</summary>
+    /// <param name="fileNamePrefix"></param>
     /// <param name="urlListFromCompletedStepIndex">When set, use the list as it was after this zero-based step; when null, use the variable’s final value.</param>
+    /// <param name="urlListVariableName"></param>
+    /// <param name="targetDirectory"></param>
+    /// <param name="stepName"></param>
     public AutomationPlanBuilder DownloadUrlsToDirectory(
         string urlListVariableName,
         string targetDirectory,

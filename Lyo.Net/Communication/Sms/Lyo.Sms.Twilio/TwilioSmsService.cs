@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
@@ -137,7 +138,7 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
             }
         }
 
-        var fromNumber = !string.IsNullOrWhiteSpace(request.From) ? request.From : _options.DefaultFromPhoneNumber;
+        var fromNumber = request.From.OrDefaultIfWhiteSpace(_options.DefaultFromPhoneNumber ?? "");
         try {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(fromNumber, nameof(request.From));
         }

@@ -13,5 +13,5 @@ public sealed class OcrEngineOptions
     public string DefaultLanguages { get; set; } = "eng";
 
     /// <summary>Default page segmentation mode when a request does not override it.</summary>
-    public OcrPageSegmentationMode DefaultPageSegmentationMode { get; set; } = OcrPageSegmentationMode.Auto;
+    public OcrPageSegmentationMode DefaultPageSegmentationMode { get; set; } = OcrPageSegmentationMode.SparseTextOsd;
 }

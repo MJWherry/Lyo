@@ -109,19 +109,19 @@ public sealed record HolidayInfo(
         "New Year's Eve", "new-years-eve", "Marks the final day of the calendar year.", false, false, HolidayDateRule.FixedDate, Month.Dec, 31, default, 0,
         ["new year eve", "new years eve"]);
 
-    private static readonly Dictionary<string, HolidayInfo> _byName = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, HolidayInfo> _bySlug = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, HolidayInfo> _byAlias = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<HolidayInfo> _all = [];
+    private static readonly Dictionary<string, HolidayInfo> ByName = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, HolidayInfo> BySlug = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, HolidayInfo> ByAlias = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly List<HolidayInfo> AllHolidays = [];
 
     /// <summary>Stable identifier equal to <see cref="Slug" />.</summary>
     public string CanonicalName => Slug;
 
     /// <summary>Every compiled-in holiday instance (excluding sentinel duplicates).</summary>
-    public static IReadOnlyList<HolidayInfo> All => _all;
+    public static IReadOnlyList<HolidayInfo> All => AllHolidays;
 
     /// <summary>Holidays where <see cref="IsFederal" /> is <see langword="true" />.</summary>
-    public static IReadOnlyList<HolidayInfo> FederalHolidays => _all.Where(i => i.IsFederal).ToArray();
+    public static IReadOnlyList<HolidayInfo> FederalHolidays => AllHolidays.Where(i => i.IsFederal).ToArray();
 
     static HolidayInfo()
     {
@@ -131,13 +131,13 @@ public sealed record HolidayInfo(
             .ToList();
 
         foreach (var holiday in fields) {
-            _all.Add(holiday);
-            _byName[Normalize(holiday.Name)] = holiday;
-            _bySlug[Normalize(holiday.Slug)] = holiday;
-            _byAlias[Normalize(holiday.Name)] = holiday;
-            _byAlias[Normalize(holiday.Slug)] = holiday;
+            AllHolidays.Add(holiday);
+            ByName[Normalize(holiday.Name)] = holiday;
+            BySlug[Normalize(holiday.Slug)] = holiday;
+            ByAlias[Normalize(holiday.Name)] = holiday;
+            ByAlias[Normalize(holiday.Slug)] = holiday;
             foreach (var alias in holiday.Aliases.Where(i => !string.IsNullOrWhiteSpace(i)))
-                _byAlias[Normalize(alias)] = holiday;
+                ByAlias[Normalize(alias)] = holiday;
         }
     }
 
@@ -148,7 +148,7 @@ public sealed record HolidayInfo(
         if (string.IsNullOrWhiteSpace(name))
             return Unknown;
 
-        return _byName.TryGetValue(Normalize(name), out var holiday) ? holiday : FromAlias(name);
+        return ByName.TryGetValue(Normalize(name), out var holiday) ? holiday : FromAlias(name);
     }
 
     /// <summary>Resolves a holiday using its URL <see cref="Slug" />.</summary>
@@ -158,7 +158,7 @@ public sealed record HolidayInfo(
         if (string.IsNullOrWhiteSpace(slug))
             return Unknown;
 
-        return _bySlug.TryGetValue(Normalize(slug), out var holiday) ? holiday : Unknown;
+        return BySlug.TryGetValue(Normalize(slug), out var holiday) ? holiday : Unknown;
     }
 
     /// <summary>Resolves a holiday using any registered alias (case-insensitive).</summary>
@@ -168,7 +168,7 @@ public sealed record HolidayInfo(
         if (string.IsNullOrWhiteSpace(alias))
             return Unknown;
 
-        return _byAlias.TryGetValue(Normalize(alias), out var holiday) ? holiday : Unknown;
+        return ByAlias.TryGetValue(Normalize(alias), out var holiday) ? holiday : Unknown;
     }
 
     /// <summary>Computes the calendar date of the holiday for <paramref name="year" />.</summary>
@@ -219,7 +219,7 @@ public sealed record HolidayInfo(
 
     /// <summary>Returns the first non-<see cref="Unknown" /> holiday matching <paramref name="date" /> if any.</summary>
     public static HolidayInfo? FromDate(DateTime date, bool includeObservedDate = true)
-        => _all.FirstOrDefault(i => !ReferenceEquals(i, Unknown) && i.OccursOn(date, includeObservedDate));
+        => AllHolidays.FirstOrDefault(i => !ReferenceEquals(i, Unknown) && i.OccursOn(date, includeObservedDate));
 
     private static string Normalize(string value) => value.Trim().ToLowerInvariant();
 

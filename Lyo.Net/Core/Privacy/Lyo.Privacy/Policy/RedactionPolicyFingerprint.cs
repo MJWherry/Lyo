@@ -14,6 +14,7 @@ namespace Lyo.Privacy.Policy;
 /// </summary>
 public static class RedactionPolicyFingerprint
 {
+    /// <param name="policy"></param>
     /// <param name="hexCharCount">Even number ≤ 64 recommended; default 16.</param>
     public static string ComputeSha256HexPrefix(RedactionPolicy policy, int hexCharCount = 16)
     {

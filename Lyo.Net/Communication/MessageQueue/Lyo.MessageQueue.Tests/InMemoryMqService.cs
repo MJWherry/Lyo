@@ -48,13 +48,11 @@ public sealed class InMemoryMqService : IMqService, IDisposable
 
     public Task<bool> ClearQueue(string queueName, CancellationToken ct = default)
     {
-        if (_queues.TryGetValue(queueName, out var queue)) {
-            while (queue.TryDequeue(out var _)) { }
+        if (!_queues.TryGetValue(queueName, out var queue))
+            return Task.FromResult(false);
 
-            return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
+        while (queue.TryDequeue(out var _)) { }
+        return Task.FromResult(true);
     }
 
     public Task<bool> SendToQueue(string queueName, byte[] data)
@@ -85,7 +83,7 @@ public sealed class InMemoryMqService : IMqService, IDisposable
         if (!_queues.TryGetValue(queueName, out var queue))
             _queues.TryAdd(queueName, queue = new());
 
-        _ = ProcessQueueAsync(queueName, queue, onMessage, ct);
+        _ = ProcessQueueAsync(queue, onMessage, ct);
         return Task.FromResult(true);
     }
 
@@ -104,7 +102,7 @@ public sealed class InMemoryMqService : IMqService, IDisposable
 
     public Task<bool> DeleteExchange(string exchangeName, bool ifUnused = false, CancellationToken ct = default) => Task.FromResult(true);
 
-    private async Task ProcessQueueAsync(string queueName, ConcurrentQueue<byte[]> queue, Func<byte[], Task<bool>> onMessage, CancellationToken ct)
+    private async Task ProcessQueueAsync(ConcurrentQueue<byte[]> queue, Func<byte[], Task<bool>> onMessage, CancellationToken ct)
     {
         while (!ct.IsCancellationRequested) {
             if (!queue.TryDequeue(out var data)) {

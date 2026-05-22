@@ -37,17 +37,18 @@ public class PhoneNumber
         var cleaned = Regex.Replace(phoneNumber, @"[^\d+]", "");
 
         // If it doesn't start with +, assume US number and add +1
-        if (!cleaned.StartsWith("+")) {
-            // If it starts with 1 and has 11 digits, it's already country code + number
-            if (cleaned.Length == 11 && cleaned.StartsWith("1"))
-                cleaned = "+" + cleaned;
-            // If it has 10 digits, assume US number
-            else if (cleaned.Length == 10)
-                cleaned = "+1" + cleaned;
-            // Otherwise, try to add + if missing
-            else if (cleaned.Length > 0)
-                cleaned = "+" + cleaned;
-        }
+        if (cleaned.StartsWith("+"))
+            return cleaned;
+
+        // If it starts with 1 and has 11 digits, it's already country code + number
+        if (cleaned.Length == 11 && cleaned.StartsWith("1"))
+            cleaned = "+" + cleaned;
+        // If it has 10 digits, assume US number
+        else if (cleaned.Length == 10)
+            cleaned = "+1" + cleaned;
+        // Otherwise, try to add + if missing
+        else if (cleaned.Length > 0)
+            cleaned = "+" + cleaned;
 
         return cleaned;
     }
@@ -55,13 +56,7 @@ public class PhoneNumber
     /// <summary>Determines whether a phone number matches supported formats.</summary>
     /// <param name="phoneNumber">The phone number to validate.</param>
     /// <returns><see langword="true" /> when the phone number is valid; otherwise <see langword="false" />.</returns>
-    public static bool IsValid(string phoneNumber)
-    {
-        if (string.IsNullOrWhiteSpace(phoneNumber))
-            return false;
-
-        return Regex.IsMatch(phoneNumber);
-    }
+    public static bool IsValid(string phoneNumber) => !string.IsNullOrWhiteSpace(phoneNumber) && Regex.IsMatch(phoneNumber);
 
     /// <summary>Returns a display-friendly representation of the phone number.</summary>
     /// <returns>The formatted number when available; otherwise the raw number.</returns>

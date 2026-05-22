@@ -14,11 +14,11 @@ internal static class QrFrameLayoutCompositor
 {
     private const int MaxFontCacheEntries = 64;
 
-    private static readonly object s_fontCacheLock = new();
+    private static readonly object FontCacheLock = new();
 
-    private static readonly Dictionary<string, Font> s_fontCache = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, Font> FontCache = new(StringComparer.Ordinal);
 
-    private static readonly Queue<string> s_fontCacheOrder = new();
+    private static readonly Queue<string> FontCacheOrder = new();
 
     public static async Task<byte[]> ApplyAsync(byte[] qrPng, QrFrameLayoutOptions o, CancellationToken ct, bool useFastPng = false)
     {
@@ -47,14 +47,14 @@ internal static class QrFrameLayoutCompositor
         return outMs.ToArray();
     }
 
-    private static Image<Rgba32> ComposeBadge(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout L)
+    private static Image<Rgba32> ComposeBadge(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout l)
     {
-        var headerH = L.HeaderHeightPx;
-        var notchD = L.NotchDepthPx;
-        var pad = L.PaddingPx;
-        var margin = L.MarginPx;
-        var r = L.CornerRadiusPx;
-        var shadowOff = L.ShadowOffsetPx;
+        var headerH = l.HeaderHeightPx;
+        var notchD = l.NotchDepthPx;
+        var pad = l.PaddingPx;
+        var margin = l.MarginPx;
+        var r = l.CornerRadiusPx;
+        var shadowOff = l.ShadowOffsetPx;
         var cardW = s + 2 * pad;
         var bodyTopOffset = headerH + notchD;
         var totalCardH = bodyTopOffset + pad + s + pad;
@@ -93,12 +93,12 @@ internal static class QrFrameLayoutCompositor
 
             var cardOutline = RoundedRectPath(cardX, cardY, cardW, totalCardH, r);
             ctx.Fill(panel, cardOutline);
-            ctx.Draw(Pens.Solid(edge, L.CardOutlineWidthPx), cardOutline);
+            ctx.Draw(Pens.Solid(edge, l.CardOutlineWidthPx), cardOutline);
             var headerPath = TopRoundedRectPath(cardX, cardY, cardW, headerH, r);
             ctx.Fill(headBg, headerPath);
             if (o.DrawHeaderNotch && notchD > 0) {
                 var cx = cardX + cardW / 2f;
-                var nw = Math.Clamp(L.NotchWidthPx, 8, cardW);
+                var nw = Math.Clamp(l.NotchWidthPx, 8, cardW);
                 var hb = cardY + headerH;
                 var nPb = new PathBuilder();
                 nPb.MoveTo(new(cx - nw / 2f, hb));
@@ -109,7 +109,7 @@ internal static class QrFrameLayoutCompositor
             }
 
             if (hasCaption) {
-                var font = GetOrCreateFont(L.CaptionFontSizePx, o.FontFamily);
+                var font = GetOrCreateFont(l.CaptionFontSizePx, o.FontFamily);
                 var textOpts = new RichTextOptions(font) {
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Origin = new PointF(cardX + cardW / 2f, cardY + headerH / 2f)
                 };
@@ -123,12 +123,12 @@ internal static class QrFrameLayoutCompositor
         return img;
     }
 
-    private static Image<Rgba32> ComposeSimplePanel(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout L)
+    private static Image<Rgba32> ComposeSimplePanel(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout l)
     {
-        var pad = L.PaddingPx;
-        var margin = L.MarginPx;
-        var r = L.CornerRadiusPx;
-        var shadowOff = L.ShadowOffsetPx;
+        var pad = l.PaddingPx;
+        var margin = l.MarginPx;
+        var r = l.CornerRadiusPx;
+        var shadowOff = l.ShadowOffsetPx;
         var cardW = s + 2 * pad;
         var cardH = s + 2 * pad;
         var canvasW = cardW + 2 * margin + shadowOff;
@@ -157,21 +157,21 @@ internal static class QrFrameLayoutCompositor
 
             var cardPath = RoundedRectPath(cardX, cardY, cardW, cardH, r);
             ctx.Fill(panel, cardPath);
-            ctx.Draw(Pens.Solid(edge, L.CardOutlineWidthPx), cardPath);
+            ctx.Draw(Pens.Solid(edge, l.CardOutlineWidthPx), cardPath);
             ctx.DrawImage(qr, new Point(qx, qy), 1f);
         });
 
         return img;
     }
 
-    private static Image<Rgba32> ComposeBorderOnly(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout L)
+    private static Image<Rgba32> ComposeBorderOnly(Image<Rgba32> qr, QrFrameLayoutOptions o, int s, ScaledChromeLayout l)
     {
-        var pad = L.PaddingPx;
-        var margin = L.MarginPx;
-        var r = L.CornerRadiusPx;
-        var footer = L.CaptionFooterPaddingPx;
+        var pad = l.PaddingPx;
+        var margin = l.MarginPx;
+        var r = l.CornerRadiusPx;
+        var footer = l.CaptionFooterPaddingPx;
         var caption = o.CaptionText?.Trim();
-        var extraFooter = string.IsNullOrEmpty(caption) ? 0 : footer + L.CaptionBlockHeightPx + L.FooterCaptionGapPx;
+        var extraFooter = string.IsNullOrEmpty(caption) ? 0 : footer + l.CaptionBlockHeightPx + l.FooterCaptionGapPx;
         var cardW = s + 2 * pad;
         var cardH = s + 2 * pad + extraFooter;
         var canvasW = cardW + 2 * margin;
@@ -186,7 +186,7 @@ internal static class QrFrameLayoutCompositor
         if (!TryParseColor(o.BorderStrokeHex, out var borderCol))
             borderCol = Color.Parse("#334155");
 
-        var stroke = L.BorderStrokeWidthPx;
+        var stroke = l.BorderStrokeWidthPx;
         var innerR = Math.Max(0, r - stroke / 2f);
         var cardX = margin;
         var cardY = margin;
@@ -206,8 +206,8 @@ internal static class QrFrameLayoutCompositor
             ctx.Draw(pen, inner);
             ctx.DrawImage(qr, new Point(qx, qy), 1f);
             if (hasCaption) {
-                var font = GetOrCreateFont(L.CaptionFontSizePx, o.FontFamily);
-                var cy = cardY + pad + s + footer + L.CaptionBlockHeightPx / 2f;
+                var font = GetOrCreateFont(l.CaptionFontSizePx, o.FontFamily);
+                var cy = cardY + pad + s + footer + l.CaptionBlockHeightPx / 2f;
                 var textOpts = new RichTextOptions(font) {
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -312,18 +312,18 @@ internal static class QrFrameLayoutCompositor
     private static Font GetOrCreateFont(float sizePx, string? family)
     {
         var key = FontCacheKey(sizePx, family);
-        lock (s_fontCacheLock) {
-            if (s_fontCache.TryGetValue(key, out var cached))
+        lock (FontCacheLock) {
+            if (FontCache.TryGetValue(key, out var cached))
                 return cached;
 
-            while (s_fontCache.Count >= MaxFontCacheEntries && s_fontCacheOrder.Count > 0) {
-                var evictKey = s_fontCacheOrder.Dequeue();
-                s_fontCache.Remove(evictKey);
+            while (FontCache.Count >= MaxFontCacheEntries && FontCacheOrder.Count > 0) {
+                var evictKey = FontCacheOrder.Dequeue();
+                FontCache.Remove(evictKey);
             }
 
             var font = CreateFont(sizePx, family);
-            s_fontCache[key] = font;
-            s_fontCacheOrder.Enqueue(key);
+            FontCache[key] = font;
+            FontCacheOrder.Enqueue(key);
             return font;
         }
     }
@@ -332,7 +332,7 @@ internal static class QrFrameLayoutCompositor
     {
         var names = string.IsNullOrWhiteSpace(family)
             ? new[] { "DejaVu Sans", "Liberation Sans", "Arial", "Helvetica" }
-            : new[] { family!, "DejaVu Sans", "Liberation Sans", "Arial" };
+            : new[] { family, "DejaVu Sans", "Liberation Sans", "Arial" };
 
         foreach (var n in names) {
             try {
@@ -347,34 +347,21 @@ internal static class QrFrameLayoutCompositor
     }
 
     /// <summary>Pixel sizes derived from QR side length so chrome stays visible when the PNG is huge (e.g. 256 px per module).</summary>
-    private readonly struct ScaledChromeLayout
+    private readonly record struct ScaledChromeLayout(
+        int PaddingPx, 
+        int MarginPx, 
+        float CornerRadiusPx, 
+        int ShadowOffsetPx,
+        int HeaderHeightPx, 
+        int NotchDepthPx,
+        int NotchWidthPx, 
+        float CardOutlineWidthPx,
+        float BorderStrokeWidthPx, 
+        float CaptionFontSizePx, 
+        int CaptionFooterPaddingPx 
+        ,int FooterCaptionGapPx, 
+        int CaptionBlockHeightPx)
     {
-        public int PaddingPx { get; init; }
-
-        public int MarginPx { get; init; }
-
-        public float CornerRadiusPx { get; init; }
-
-        public int ShadowOffsetPx { get; init; }
-
-        public int HeaderHeightPx { get; init; }
-
-        public int NotchDepthPx { get; init; }
-
-        public int NotchWidthPx { get; init; }
-
-        public float CardOutlineWidthPx { get; init; }
-
-        public float BorderStrokeWidthPx { get; init; }
-
-        public float CaptionFontSizePx { get; init; }
-
-        public int CaptionFooterPaddingPx { get; init; }
-
-        public int FooterCaptionGapPx { get; init; }
-
-        /// <summary>Height reserved for wrapped footer caption (border style).</summary>
-        public int CaptionBlockHeightPx { get; init; }
 
         public static ScaledChromeLayout FromOptions(int s, QrFrameLayoutOptions o)
         {
@@ -396,20 +383,16 @@ internal static class QrFrameLayoutCompositor
             // Readable header/footer text at typical web QR sizes (~400–900px side): prior 2.6% of s was often ~15px.
             var autoCaption = Math.Clamp(Math.Max(22f, s * 0.048f), 20f, captionMax);
             var caption = o.CaptionFontSizePx > 0 ? Math.Clamp(o.CaptionFontSizePx, 8f, captionMax) : autoCaption;
-
             var footerPad = Math.Max(o.CaptionFooterPaddingPx, (int)(s * 0.02));
             var footerGap = Math.Max(8, (int)(s * 0.01));
             var captionTrim = o.CaptionText?.Trim() ?? "";
             var hasCaption = captionTrim.Length > 0;
             var innerPadForMeasure = Math.Max((int)(s * 0.012), 6);
             var maxTextWidth = Math.Max(40f, cardW - 2f * innerPadForMeasure);
-
             var headerMax = Math.Max(64, Math.Min((int)(s * 0.42), 3200));
             var headerMinUser = o.HeaderHeightPx > 0 ? o.HeaderHeightPx : 52;
             var headerScaled = Math.Clamp(Math.Max(headerMinUser, (int)(s * 0.16)), 32, headerMax);
-
             var captionBlockH = hasCaption ? EstimateCaptionBlockHeight(captionTrim, caption, maxTextWidth, o.FontFamily) : 0;
-
             var headerH = headerScaled;
             if (o.Style == QrFrameStyle.BadgeWithHeader && o.AutoSizeHeaderToCaption && hasCaption) {
                 var innerPad = Math.Max((int)(s * 0.012), 6);
@@ -417,21 +400,8 @@ internal static class QrFrameLayoutCompositor
                 headerH = Math.Clamp(Math.Max(headerScaled, headerForText), 32, headerMax);
             }
 
-            return new() {
-                PaddingPx = pad,
-                MarginPx = margin,
-                CornerRadiusPx = r,
-                ShadowOffsetPx = shadowOff,
-                HeaderHeightPx = headerH,
-                NotchDepthPx = notchD,
-                NotchWidthPx = notchW,
-                CardOutlineWidthPx = outline,
-                BorderStrokeWidthPx = borderStroke,
-                CaptionFontSizePx = caption,
-                CaptionFooterPaddingPx = footerPad,
-                FooterCaptionGapPx = footerGap,
-                CaptionBlockHeightPx = captionBlockH
-            };
+            return new(pad, margin, r, shadowOff, headerH, notchD, 
+                notchW, outline, borderStroke, caption, footerPad, footerGap, captionBlockH);
         }
     }
 }

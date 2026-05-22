@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using Lyo.Exceptions;
 using Lyo.Mathematics.Quantities;
 
@@ -93,7 +94,7 @@ public readonly record struct ThermodynamicState
     }
 
     public override string ToString()
-        => $"T={Temperature}, P={Pressure}, V={Volume}, m={ScientificModelDisplay.NullProp(Mass, static m => m.ToString())}, n={ScientificModelDisplay.NullProp(Moles, static n => n.ToString())}";
+        => $"T={Temperature}, P={Pressure}, V={Volume}, m={ScientificModelDisplay.NullProp(Mass, static m => m.ToString())}, n={ScientificModelDisplay.NullProp(Moles, static n => n.ToString(CultureInfo.CurrentCulture))}";
 }
 
 [DebuggerDisplay("{ToString(),nq}")]

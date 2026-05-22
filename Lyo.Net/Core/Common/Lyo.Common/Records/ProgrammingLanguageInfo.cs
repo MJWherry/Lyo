@@ -151,19 +151,19 @@ public sealed record ProgrammingLanguageInfo(
     public static readonly ProgrammingLanguageInfo CSS = new(
         "CSS", "css", "css", "Stylesheet language used to define presentation and layout on the web.", [".css"], "Web", false, false, false, true, ["css"]);
 
-    private static readonly Dictionary<string, ProgrammingLanguageInfo> _byName = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, ProgrammingLanguageInfo> _byShortName = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, ProgrammingLanguageInfo> _bySlug = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, ProgrammingLanguageInfo> _byExtension = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, ProgrammingLanguageInfo> _byAlias = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<ProgrammingLanguageInfo> _allLanguages = new();
+    private static readonly Dictionary<string, ProgrammingLanguageInfo> ByName = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ProgrammingLanguageInfo> ByShortName = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ProgrammingLanguageInfo> BySlug = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ProgrammingLanguageInfo> ByExtension = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ProgrammingLanguageInfo> ByAlias = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly List<ProgrammingLanguageInfo> AllLanguages = [];
 
     public string CanonicalName => ShortName;
 
     public string? PrimaryExtension => FileExtensions.FirstOrDefault();
 
     /// <summary>Gets all registered programming language metadata records.</summary>
-    public static IReadOnlyList<ProgrammingLanguageInfo> All => _allLanguages;
+    public static IReadOnlyList<ProgrammingLanguageInfo> All => AllLanguages;
 
     static ProgrammingLanguageInfo()
     {
@@ -173,18 +173,18 @@ public sealed record ProgrammingLanguageInfo(
             .ToList();
 
         foreach (var language in fields) {
-            _allLanguages.Add(language);
-            _byName[Normalize(language.Name)] = language;
-            _byShortName[Normalize(language.ShortName)] = language;
-            _bySlug[Normalize(language.Slug)] = language;
-            _byAlias[Normalize(language.Name)] = language;
-            _byAlias[Normalize(language.ShortName)] = language;
-            _byAlias[Normalize(language.Slug)] = language;
+            AllLanguages.Add(language);
+            ByName[Normalize(language.Name)] = language;
+            ByShortName[Normalize(language.ShortName)] = language;
+            BySlug[Normalize(language.Slug)] = language;
+            ByAlias[Normalize(language.Name)] = language;
+            ByAlias[Normalize(language.ShortName)] = language;
+            ByAlias[Normalize(language.Slug)] = language;
             foreach (var alias in language.Aliases.Where(a => !a.IsNullOrWhitespace()))
-                _byAlias[Normalize(alias)] = language;
+                ByAlias[Normalize(alias)] = language;
 
             foreach (var extension in language.FileExtensions.Where(e => !e.IsNullOrWhitespace()))
-                _byExtension[NormalizeExtension(extension)] = language;
+                ByExtension[NormalizeExtension(extension)] = language;
         }
     }
 
@@ -200,10 +200,10 @@ public sealed record ProgrammingLanguageInfo(
         // Keep short-name resolution exclusive to FromShortName, even when
         // the lower-cased display name overlaps with the short name (for
         // example "zig" vs "Zig").
-        if (_allLanguages.Any(l => string.Equals(l.ShortName, trimmedName, StringComparison.Ordinal)))
+        if (AllLanguages.Any(l => string.Equals(l.ShortName, trimmedName, StringComparison.Ordinal)))
             return Unknown;
 
-        return _byName.TryGetValue(Normalize(trimmedName), out var language) ? language : FromAlias(trimmedName);
+        return ByName.TryGetValue(Normalize(trimmedName), out var language) ? language : FromAlias(trimmedName);
     }
 
     public static ProgrammingLanguageInfo FromShortName(string? shortName)
@@ -211,7 +211,7 @@ public sealed record ProgrammingLanguageInfo(
         if (shortName.IsNullOrWhitespace())
             return Unknown;
 
-        return _byShortName.TryGetValue(Normalize(shortName), out var language) ? language : Unknown;
+        return ByShortName.TryGetValue(Normalize(shortName), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromSlug(string? slug)
@@ -219,7 +219,7 @@ public sealed record ProgrammingLanguageInfo(
         if (slug.IsNullOrWhitespace())
             return Unknown;
 
-        return _bySlug.TryGetValue(Normalize(slug), out var language) ? language : Unknown;
+        return BySlug.TryGetValue(Normalize(slug), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromAlias(string? alias)
@@ -227,7 +227,7 @@ public sealed record ProgrammingLanguageInfo(
         if (alias.IsNullOrWhitespace())
             return Unknown;
 
-        return _byAlias.TryGetValue(Normalize(alias), out var language) ? language : Unknown;
+        return ByAlias.TryGetValue(Normalize(alias), out var language) ? language : Unknown;
     }
 
     public static ProgrammingLanguageInfo FromExtension(string? extension)
@@ -235,7 +235,7 @@ public sealed record ProgrammingLanguageInfo(
         if (extension.IsNullOrWhitespace())
             return Unknown;
 
-        return _byExtension.TryGetValue(NormalizeExtension(extension), out var language) ? language : Unknown;
+        return ByExtension.TryGetValue(NormalizeExtension(extension), out var language) ? language : Unknown;
     }
 
     private static string Normalize(string value) => value.Trim().ToLowerInvariant();

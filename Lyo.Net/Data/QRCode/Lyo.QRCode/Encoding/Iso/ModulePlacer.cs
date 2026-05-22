@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     private static partial class ModulePlacer
     {
@@ -11,7 +11,7 @@ internal sealed partial class QrIsoEncoder
         /// <param name="qrCode">The QR code data structure to modify.</param>
         /// <param name="versionStr">The bit array containing the version information.</param>
         /// <param name="offset">Indicates whether an offset should be applied to the version information placement.</param>
-        public static void PlaceVersion(QrIsoMatrix qrCode, BitArray versionStr, bool offset)
+        public static void PlaceVersion(QRIsoMatrix qrCode, BitArray versionStr, bool offset)
         {
             var offsetValue = offset ? 4 : 0;
             var size = qrCode.ModuleMatrix.Count - offsetValue - offsetValue;
@@ -30,7 +30,7 @@ internal sealed partial class QrIsoEncoder
         /// <param name="qrCode">The QR code data structure to modify.</param>
         /// <param name="formatStr">The bit array containing the format information.</param>
         /// <param name="offset">Specifies whether an offset should be applied.</param>
-        public static void PlaceFormat(QrIsoMatrix qrCode, BitArray formatStr, bool offset)
+        public static void PlaceFormat(QRIsoMatrix qrCode, BitArray formatStr, bool offset)
         {
             var isMicro = qrCode.Version < 0; // Negative versions indicate Micro QR codes.
             var offsetValue = offset ? 4 : 0;
@@ -106,14 +106,14 @@ internal sealed partial class QrIsoEncoder
         /// <param name="blockedModules">List of rectangles representing areas that must not be overwritten.</param>
         /// <param name="eccLevel">The error correction level of the QR code, which affects format string values.</param>
         /// <returns>The index of the selected mask pattern.</returns>
-        public static int MaskCode(QrIsoMatrix qrCode, int version, BlockedModules blockedModules, ECCLevel eccLevel)
+        public static int MaskCode(QRIsoMatrix qrCode, int version, BlockedModules blockedModules, ECCLevel eccLevel)
         {
             var selectedPattern = -1; // no pattern selected yet
             var patternScore = int.MaxValue; // lower score is better
             var size = qrCode.ModuleMatrix.Count - 8;
 
-            // Temporary QrIsoMatrix object to test different mask patterns without altering the original.
-            var qrTemp = new QrIsoMatrix(version, false);
+            // Temporary QRISOMatrix object to test different mask patterns without altering the original.
+            var qrTemp = new QRIsoMatrix(version, false);
             BitArray? versionString = null;
             if (version >= 7) {
                 versionString = new(18);
@@ -187,7 +187,7 @@ internal sealed partial class QrIsoEncoder
         /// A list of rectangles representing areas within the QR code matrix that should not be modified because they contain other necessary information like
         /// format and version info.
         /// </param>
-        public static void PlaceDataWords(QrIsoMatrix qrCode, BitArray data, BlockedModules blockedModules)
+        public static void PlaceDataWords(QRIsoMatrix qrCode, BitArray data, BlockedModules blockedModules)
         {
             var size = qrCode.ModuleMatrix.Count - 8; // Get the size of the QR code matrix.
             var up = true; // A boolean flag used to alternate the direction of filling data: up or down.
@@ -270,7 +270,7 @@ internal sealed partial class QrIsoEncoder
         /// <param name="qrCode">The QR code data structure where the dark module is to be placed.</param>
         /// <param name="version">The version number of the QR code, which determines the specific location of the dark module.</param>
         /// <param name="blockedModules">A list of rectangles representing areas that must not be overwritten, updated to include the dark module.</param>
-        public static void PlaceDarkModule(QrIsoMatrix qrCode, int version, BlockedModules blockedModules)
+        public static void PlaceDarkModule(QRIsoMatrix qrCode, int version, BlockedModules blockedModules)
         {
             // Micro QR codes do not have a dark module
             if (version < 0)
@@ -285,7 +285,7 @@ internal sealed partial class QrIsoEncoder
         /// <summary>Places finder patterns on the QR code. Finder patterns are critical for QR code scanners to correctly orient and recognize the QR code.</summary>
         /// <param name="qrCode">The QR code data structure where the finder patterns will be placed.</param>
         /// <param name="blockedModules">A list of rectangles representing areas that must not be overwritten. This is updated with the areas occupied by the finder patterns.</param>
-        public static void PlaceFinderPatterns(QrIsoMatrix qrCode, BlockedModules blockedModules)
+        public static void PlaceFinderPatterns(QRIsoMatrix qrCode, BlockedModules blockedModules)
         {
             var size = qrCode.ModuleMatrix.Count - 8;
 
@@ -315,7 +315,7 @@ internal sealed partial class QrIsoEncoder
         /// <param name="qrCode">The QR code data structure where the alignment patterns will be placed.</param>
         /// <param name="alignmentPatternLocations">A list of points representing the centers of where alignment patterns should be placed.</param>
         /// <param name="blockedModules">A list of rectangles representing areas that must not be overwritten. Updated with the areas occupied by alignment patterns.</param>
-        public static void PlaceAlignmentPatterns(QrIsoMatrix qrCode, List<Point> alignmentPatternLocations, BlockedModules blockedModules)
+        public static void PlaceAlignmentPatterns(QRIsoMatrix qrCode, List<Point> alignmentPatternLocations, BlockedModules blockedModules)
         {
             // Iterate through each specified location for alignment patterns.
             foreach (var loc in alignmentPatternLocations) {
@@ -346,7 +346,7 @@ internal sealed partial class QrIsoEncoder
         /// <summary>Places timing patterns in the QR code. Timing patterns are alternating dark and light modules that help scanners determine the coordinates of modules within the QR code.</summary>
         /// <param name="qrCode">The QR code data structure where the timing patterns will be placed.</param>
         /// <param name="blockedModules">A list of rectangles representing areas that must not be overwritten. Updated with the areas occupied by timing patterns.</param>
-        public static void PlaceTimingPatterns(QrIsoMatrix qrCode, BlockedModules blockedModules)
+        public static void PlaceTimingPatterns(QRIsoMatrix qrCode, BlockedModules blockedModules)
         {
             // Get the size of the QR code matrix excluding padding.
             var size = qrCode.ModuleMatrix.Count - 8;

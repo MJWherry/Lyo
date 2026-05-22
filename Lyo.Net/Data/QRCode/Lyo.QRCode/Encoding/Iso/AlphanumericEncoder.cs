@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Encodes alphanumeric characters (<c>0–9</c>, <c>A–Z</c> (uppercase), space, <c>$</c>, <c>%</c>, <c>*</c>, <c>+</c>, <c>-</c>, period, <c>/</c>, colon) into a binary
@@ -11,10 +11,10 @@ internal sealed partial class QrIsoEncoder
 #if HAS_SPAN
         // With C# 7.3 and later, this byte array is inlined into the assembly's read-only data section, improving performance and reducing memory usage.
         // See: https://devblogs.microsoft.com/dotnet/performance-improvements-in-net-core-3-0/
-        internal static ReadOnlySpan<byte> _map
+        private static ReadOnlySpan<byte> Map
             => [
 #else
-        internal static readonly byte[] _map = [
+        private static readonly byte[] Map = [
 #endif
                 // 0..31
                 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -36,7 +36,7 @@ internal sealed partial class QrIsoEncoder
             ];
 
         /// <summary>Checks if a character is present in the alphanumeric encoding table.</summary>
-        public static bool CanEncode(char c) => c <= 90 && _map[c] != 255;
+        public static bool CanEncode(char c) => c <= 90 && Map[c] != 255;
 
         /// <summary>Calculates the bit length required to encode alphanumeric text of a given length.</summary>
         /// <param name="textLength">The length of the alphanumeric text to be encoded.</param>
@@ -71,7 +71,7 @@ internal sealed partial class QrIsoEncoder
             // Process each pair of characters.
             while (count >= 2) {
                 // Convert each pair of characters to a number by looking them up in the alphanumeric dictionary and calculating.
-                var dec = _map[plainText[index++]] * 45 + _map[plainText[index++]];
+                var dec = Map[plainText[index++]] * 45 + Map[plainText[index++]];
                 // Convert the number to binary and store it in the BitArray.
                 codeIndex = DecToBin(dec, 11, codeText, codeIndex);
                 count -= 2;
@@ -79,7 +79,7 @@ internal sealed partial class QrIsoEncoder
 
             // Handle the last character if the length is odd.
             if (count > 0)
-                codeIndex = DecToBin(_map[plainText[index]], 6, codeText, codeIndex);
+                codeIndex = DecToBin(Map[plainText[index]], 6, codeText, codeIndex);
 
             return codeIndex;
         }

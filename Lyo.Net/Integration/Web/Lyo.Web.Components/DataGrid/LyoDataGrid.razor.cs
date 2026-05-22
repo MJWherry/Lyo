@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using SortDirection = MudBlazor.SortDirection;
 using LyoQueryReqBuilder = Lyo.Query.Models.Builders.QueryReqBuilder;
+using MudBlazor.Extensions;
 
 namespace Lyo.Web.Components.DataGrid;
 
@@ -695,7 +696,7 @@ public partial class LyoDataGrid<T>
     {
         var keyList = KeySelector != null && _savedSelectedKeys is { Count: > 0 }
             ? _savedSelectedKeys.ToList()
-            : (_dataGrid!.SelectedItems ?? Enumerable.Empty<T>()).Select(i => KeySelector!.Invoke(i)).ToList();
+            : (_dataGrid!.GetState(x => x.SelectedItems) ?? Enumerable.Empty<T>()).Select(i => KeySelector!.Invoke(i)).ToList();
 
         var request = new DeleteRequest { Keys = keyList, AllowMultiple = true };
         try {
@@ -721,7 +722,7 @@ public partial class LyoDataGrid<T>
 
         var result = new List<string>();
         foreach (var col in _dataGrid.RenderedColumns) {
-            if (!col.Hidden)
+            if (!col.GetState(x => x.Hidden))
                 continue;
 
             if (string.Equals(col.Tag?.ToString(), RowActionsColumnTag, StringComparison.Ordinal))

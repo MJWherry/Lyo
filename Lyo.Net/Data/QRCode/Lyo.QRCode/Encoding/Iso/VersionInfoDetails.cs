@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>Represents the detailed information about each error correction level and its corresponding capacities in different encoding modes for a specific version of a QR code.</summary>
     private struct VersionInfoDetails

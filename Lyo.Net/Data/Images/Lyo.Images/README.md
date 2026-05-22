@@ -99,3 +99,8 @@ A reference MudBlazor workbench that builds **`QrFrameLayoutOptions`** from colo
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+
+## Related image libraries
+
+- [`Lyo.Images.Ocr`](../Lyo.Images.Ocr/README.md) — OCR abstractions and models.
+- [`Lyo.Images.OpenCv`](../Lyo.Images.OpenCv/README.md) — OpenCvSharp Telea inpaint on PNG ROI buffers (optional native runtime).

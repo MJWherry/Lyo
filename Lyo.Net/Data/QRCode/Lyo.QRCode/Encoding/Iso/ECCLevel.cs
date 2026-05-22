@@ -1,6 +1,6 @@
 namespace Lyo.QRCode.Encoding.Iso;
 
-internal sealed partial class QrIsoEncoder
+internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Defines the levels of error correction available in QR codes. Each level specifies the proportion of data that can be recovered if the QR code is partially obscured or

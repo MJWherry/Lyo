@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Lyo.Common.Extensions;
 
 namespace Lyo.EntityReference.Models;
 
@@ -40,11 +41,11 @@ public sealed class EntityRefJsonConverter : JsonConverter<EntityRef>
             else
                 reader.Skip();
         }
-
-        if (string.IsNullOrWhiteSpace(entityType) || string.IsNullOrWhiteSpace(entityId))
+        
+        if (entityType.IsNullOrWhitespace() || entityId.IsNullOrWhitespace())
             throw new JsonException("EntityRef JSON must include non-empty entityType and entityId.");
 
-        return new EntityRef(entityType!, entityId!);
+        return new(entityType, entityId);
     }
 
     /// <summary>Writes <c>entityType</c> and <c>entityId</c> as camelCase properties.</summary>

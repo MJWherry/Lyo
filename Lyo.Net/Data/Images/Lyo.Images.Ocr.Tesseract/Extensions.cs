@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Images.Ocr;
 using Lyo.Images.Ocr.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

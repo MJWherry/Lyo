@@ -76,7 +76,7 @@ public sealed class PdfReader : IPdfReader
     /// <inheritdoc />
     public (double Width, double Height) GetPageSizePoints(int pageNumber1Based)
         => WithPdf(document => {
-            ArgumentHelpers.ThrowIfNotInRange(pageNumber1Based, 1, document.NumberOfPages, nameof(pageNumber1Based), $"Page number must be between 1 and {document.NumberOfPages}.");
+            ArgumentHelpers.ThrowIfNotInRange(pageNumber1Based, 1, document.NumberOfPages);
             var page = document.GetPage(pageNumber1Based);
             return (page.Width, page.Height);
         });
