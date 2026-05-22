@@ -3,8 +3,8 @@
 PDF loading, text extraction, and PDFsharp-backed editing for .NET.
 
 - **`IPdfService`** (**`PdfService`**) is the façade for **`Open`** (**`IPdfReadLoader`**), **`CreateEmpty`** / **`OpenForEdit`**, and all **merge** helpers.
-- **`IPdfReadDocument`** exposes **`Text`** (**`IPdfDocumentText`**) and **`Sections`** (**`IPdfDocumentSections`**) — no parallel service surface that repeats the document as the
-  first argument.
+- **`IPdfReadDocument`** exposes **`Text`** (**`ITextExtractor`**, which merges **`IPdfDocumentText`** and **`IPdfDocumentSections`**). **`IPdfReader`** from **`PdfService.Open`**
+  uses **`pdf.Text`** for layout, tables/key–values, **and** section navigation (`GetSection`, `GetLinesBetweenSections`) — same instance, no separate **`Sections`** property.
 - Layout types (`PdfWord`, `PdfTextLine`, `PdfBoundingBox`, `ColumnHeader`) and contracts live in **`Lyo.Pdf.Models`**.
 
 ## Loading and lifetime
@@ -18,13 +18,16 @@ PDF loading, text extraction, and PDFsharp-backed editing for .NET.
 
 ## Extraction and sections (**`IPdfDocumentText`**, **`IPdfDocumentSections`**)
 
-Use the document’s facets (**`pdf.Text`** / **`pdf.Sections`**) rather than repeating **`IPdfReadDocument`** elsewhere:
+Use **`pdf.Text`** (`ITextExtractor`) rather than threading the reader through unrelated APIs:
 
 - Words and lines, optional page and line tolerance (`pdf.Text.GetWords` / `GetLines`).
 - Anchors (`GetWordsBetween` / `GetLinesBetween`).
 - Regions (`GetLinesInBoundingBox`, columnar variants).
-- Key–value and tables (`ExtractKeyValuePairs`, `ExtractTable`, `ExtractDataTable`, inference helpers and `ParseBytesAsDataTable`).
-- Section slicing (`pdf.Sections.GetSection`, `GetLinesBetweenSections`, …).
+- Key–value and tables (**`ExtractKeyValuePairs`**, **`ExtractTable`**, **`ExtractDataTable`**, inference helpers, **`ParseBytesAsDataTable`**) with **page** or **`PdfWord`**
+  overloads, plus **`PdfSection`** overloads, and combined **section + extract** overloads (**`ExtractTable`** / **`ExtractDataTable`** / **`ExtractKeyValuePairs`** plus async) that accept
+  the same **`startSection`**, ordered section labels (and optional **`defaultEndSection`**, page range, **`yTolerance`**) as **`GetSection`** — they return **`null`** when that
+  section is not found.
+- Section slicing (`GetSection`, `GetLinesBetweenSections`, …).
 
 Word-only overloads on **`pdf.Text`** operate on **`PdfWord`** lists and ignore the PdfPig page content; options still reflect the **`PdfServiceOptions`** wired into that service
 instance.

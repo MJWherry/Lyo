@@ -235,6 +235,165 @@ public sealed class PdfTextExtractor : ITextExtractor
         CancellationToken ct = default)
         => await Task.Run(() => ExtractDataTable(words, headers, yTolerance), ct).ConfigureAwait(false);
 
+    public async Task<IReadOnlyList<KvColumnResult>?> ExtractKeyValuePairsAsync(
+        string startSection,
+        IEnumerable<string> knownKeys,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
+        CancellationToken ct = default)
+        => await Task.Run(
+                () => ExtractKeyValuePairs(
+                    startSection,
+                    knownKeys,
+                    sectionsInOrder,
+                    defaultEndSection,
+                    startPage,
+                    endPage,
+                    yTolerance,
+                    keyValueLayout,
+                    keyValueColumnCount),
+                ct)
+            .ConfigureAwait(false);
+
+    public IReadOnlyList<KvColumnResult>? ExtractKeyValuePairs(
+        string startSection,
+        IEnumerable<string> knownKeys,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1)
+    {
+        var section = GetSection(startSection, sectionsInOrder, defaultEndSection, startPage, endPage, yTolerance);
+        return section is null ? null : ExtractKeyValuePairs(section.Words, knownKeys, ResolveExtractYTolerance(yTolerance), keyValueLayout, keyValueColumnCount);
+    }
+
+    public async Task<IReadOnlyList<KvColumnResult>> ExtractKeyValuePairsAsync(
+        PdfSection section,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
+        CancellationToken ct = default)
+        => await Task.Run(() => ExtractKeyValuePairs(section, knownKeys, yTolerance, keyValueLayout, keyValueColumnCount), ct).ConfigureAwait(false);
+
+    public IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        PdfSection section,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1)
+    {
+        ArgumentHelpers.ThrowIfNull(section);
+        return ExtractKeyValuePairs(section.Words, knownKeys, yTolerance, keyValueLayout, keyValueColumnCount);
+    }
+
+    public async Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>?> ExtractTableAsync(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
+        CancellationToken ct = default)
+        => await Task.Run(
+                () => ExtractTable(
+                    startSection,
+                    headers,
+                    sectionsInOrder,
+                    defaultEndSection,
+                    startPage,
+                    endPage,
+                    yTolerance,
+                    inferFormattingForHeaderRows),
+                ct)
+            .ConfigureAwait(false);
+
+    public IReadOnlyList<IReadOnlyDictionary<string, string?>>? ExtractTable(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
+    {
+        ArgumentHelpers.ThrowIfNull(headers);
+        ArgumentHelpers.ThrowIfNull(sectionsInOrder);
+        var section = GetSection(startSection, sectionsInOrder, defaultEndSection, startPage, endPage, yTolerance);
+        return section is null
+            ? null
+            : ExtractTable(section.Words, headers, ResolveExtractYTolerance(yTolerance), inferFormattingForHeaderRows);
+    }
+
+    public async Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
+        PdfSection section,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
+        CancellationToken ct = default)
+        => await Task.Run(() => ExtractTable(section, headers, yTolerance, inferFormattingForHeaderRows), ct).ConfigureAwait(false);
+
+    public IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(
+        PdfSection section,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null)
+    {
+        ArgumentHelpers.ThrowIfNull(section);
+        return ExtractTable(section.Words, headers, yTolerance, inferFormattingForHeaderRows);
+    }
+
+    public async Task<DataTable.Models.DataTable?> ExtractDataTableAsync(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        CancellationToken ct = default)
+        => await Task.Run(
+                () => ExtractDataTable(startSection, headers, sectionsInOrder, defaultEndSection, startPage, endPage, yTolerance),
+                ct)
+            .ConfigureAwait(false);
+
+    public DataTable.Models.DataTable? ExtractDataTable(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null)
+    {
+        ArgumentHelpers.ThrowIfNull(headers);
+        ArgumentHelpers.ThrowIfNull(sectionsInOrder);
+        var section = GetSection(startSection, sectionsInOrder, defaultEndSection, startPage, endPage, yTolerance);
+        return section is null ? null : ExtractDataTable(section.Words, headers, ResolveExtractYTolerance(yTolerance));
+    }
+
+    public async Task<DataTable.Models.DataTable> ExtractDataTableAsync(PdfSection section, ColumnHeader[] headers, double yTolerance = 5.0, CancellationToken ct = default)
+        => await Task.Run(() => ExtractDataTable(section, headers, yTolerance), ct).ConfigureAwait(false);
+
+    public DataTable.Models.DataTable ExtractDataTable(PdfSection section, ColumnHeader[] headers, double yTolerance = 5.0)
+    {
+        ArgumentHelpers.ThrowIfNull(section);
+        return ExtractDataTable(section.Words, headers, yTolerance);
+    }
+
+    private static double ResolveExtractYTolerance(double? yTolerance) => yTolerance ?? 5.0;
+
     public IReadOnlyList<PdfWord> GetWordsBetweenSections(
         string startSection,
         IEnumerable<string> sectionsInOrder,

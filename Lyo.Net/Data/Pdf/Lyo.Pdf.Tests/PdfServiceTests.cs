@@ -580,6 +580,130 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
     }
 
     [Fact]
+    public void ExtractTable_BySectionStart_WhenSectionNotFound_ReturnsNull()
+    {
+        var paths = GetTestPdfPaths();
+        if (paths.Length == 0)
+            return;
+
+        using var pdf = _service.OpenFromFile(paths[0]);
+        ColumnHeader[] headers = [new("A"), new("B")];
+        var sections = new[] { "SUMMARY", "NONEXISTENT_SECTION_FOR_EXTRACT_TABLE", "FOOTER" };
+        var rows = pdf.Text.ExtractTable("NONEXISTENT_SECTION_FOR_EXTRACT_TABLE", headers, sections);
+        Assert.Null(rows);
+    }
+
+    [Fact]
+    public async Task ExtractTableAsync_BySectionStart_WhenSectionNotFound_ReturnsNull()
+    {
+        var paths = GetTestPdfPaths();
+        if (paths.Length == 0)
+            return;
+
+        await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
+        ColumnHeader[] headers = [new("A"), new("B")];
+        var sections = new[] { "NO_SUCH_SECTION_FOR_EXTRACT" };
+        var rows = await pdf.Text.ExtractTableAsync("NO_SUCH_SECTION_FOR_EXTRACT", headers, sections, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        Assert.Null(rows);
+    }
+
+    [Fact]
+    public void ExtractDataTable_BySectionStart_WhenSectionNotFound_ReturnsNull()
+    {
+        var paths = GetTestPdfPaths();
+        if (paths.Length == 0)
+            return;
+
+        using var pdf = _service.OpenFromFile(paths[0]);
+        ColumnHeader[] headers = [new("A"), new("B")];
+        var sections = new[] { "NONEXISTENT_SECTION_FOR_EXTRACT_DT" };
+        var dt = pdf.Text.ExtractDataTable("NONEXISTENT_SECTION_FOR_EXTRACT_DT", headers, sections);
+        Assert.Null(dt);
+    }
+
+    [Fact]
+    public void ExtractKeyValuePairs_BySectionStart_WhenSectionNotFound_ReturnsNull()
+    {
+        var paths = GetTestPdfPaths();
+        if (paths.Length == 0)
+            return;
+
+        using var pdf = _service.OpenFromFile(paths[0]);
+        var sections = new[] { "NONEXISTENT_SECTION_FOR_EXTRACT_KV" };
+        var results = pdf.Text.ExtractKeyValuePairs("NONEXISTENT_SECTION_FOR_EXTRACT_KV", [], sections);
+        Assert.Null(results);
+    }
+
+    [Fact]
+    public void Extract_BySectionAndPdfSection_MatchesChainedExtract_WhenSectionExists()
+    {
+        var paths = GetTestPdfPaths();
+        if (paths.Length == 0)
+            return;
+
+        using var pdf = _service.OpenFromFile(paths[0]);
+        _ = pdf.GetInfo();
+        var lines = pdf.Text.GetLines(1);
+        if (lines.Count == 0)
+            return;
+
+        var firstLineText = lines[0].Text.Trim();
+        if (string.IsNullOrEmpty(firstLineText) || firstLineText.Length < 2)
+            return;
+
+        var sectionName = firstLineText.Length > 20 ? firstLineText[..20] : firstLineText;
+        var sections = new[] { sectionName, "END_MARKER" };
+        var section = pdf.Text.GetSection(sectionName, sections);
+        if (section is null)
+            return;
+
+        ColumnHeader[] headers = [new("A"), new("B")];
+        var chainedTable = pdf.Text.ExtractTable(section.Words, headers);
+        var fromSectionRecord = pdf.Text.ExtractTable(section, headers);
+        var oneShot = pdf.Text.ExtractTable(sectionName, headers, sections);
+        Assert.NotNull(oneShot);
+        AssertTableRowsEqual(chainedTable, fromSectionRecord);
+        AssertTableRowsEqual(chainedTable, oneShot);
+
+        var chainedKv = pdf.Text.ExtractKeyValuePairs(section.Words, []);
+        var fromSecKv = pdf.Text.ExtractKeyValuePairs(section, []);
+        AssertKvColumnResultsEqual(chainedKv, fromSecKv);
+        var oneShotKv = pdf.Text.ExtractKeyValuePairs(sectionName, [], sections);
+        Assert.NotNull(oneShotKv);
+        AssertKvColumnResultsEqual(chainedKv, oneShotKv);
+
+        var chainedDt = pdf.Text.ExtractDataTable(section.Words, headers);
+        var fromSecDt = pdf.Text.ExtractDataTable(section, headers);
+        var oneShotDt = pdf.Text.ExtractDataTable(sectionName, headers, sections);
+        Assert.NotNull(oneShotDt);
+        Assert.Equal(chainedDt.Rows.Count, fromSecDt.Rows.Count);
+        Assert.Equal(chainedDt.Rows.Count, oneShotDt.Rows.Count);
+    }
+
+    private static void AssertTableRowsEqual(
+        IReadOnlyList<IReadOnlyDictionary<string, string?>> expected,
+        IReadOnlyList<IReadOnlyDictionary<string, string?>> actual)
+    {
+        Assert.Equal(expected.Count, actual.Count);
+        for (var i = 0; i < expected.Count; i++) {
+            Assert.Equal(expected[i].Count, actual[i].Count);
+            foreach (var kv in expected[i])
+                Assert.True(actual[i].TryGetValue(kv.Key, out var v) && kv.Value == v);
+        }
+    }
+
+    private static void AssertKvColumnResultsEqual(IReadOnlyList<KvColumnResult> expected, IReadOnlyList<KvColumnResult> actual)
+    {
+        Assert.Equal(expected.Count, actual.Count);
+        for (var i = 0; i < expected.Count; i++) {
+            Assert.Equal(expected[i].ColumnIndex, actual[i].ColumnIndex);
+            Assert.Equal(expected[i].Values.Count, actual[i].Values.Count);
+            foreach (var kv in expected[i].Values)
+                Assert.True(actual[i].Values.TryGetValue(kv.Key, out var v) && kv.Value == v);
+        }
+    }
+
+    [Fact]
     public void InferTableHeadersFromFormatting_TwoLineUnderlinedHeader_MergesStackedLinesIntoColumnLabels()
     {
         using var facetPdf = OpenBlankReadPdf();

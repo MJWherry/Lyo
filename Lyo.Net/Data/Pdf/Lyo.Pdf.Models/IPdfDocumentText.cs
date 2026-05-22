@@ -117,4 +117,99 @@ public interface IPdfDocumentText
     Task<DataTable.Models.DataTable> ExtractDataTableAsync(ColumnHeader[] headers, int? page = null, double yTolerance = 5.0, CancellationToken ct = default);
 
     Task<DataTable.Models.DataTable> ExtractDataTableAsync(IReadOnlyList<PdfWord> words, ColumnHeader[] headers, double yTolerance = 5.0, CancellationToken ct = default);
+
+    Task<IReadOnlyList<KvColumnResult>?> ExtractKeyValuePairsAsync(
+        string startSection,
+        IEnumerable<string> knownKeys,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
+        CancellationToken ct = default);
+
+    IReadOnlyList<KvColumnResult>? ExtractKeyValuePairs(
+        string startSection,
+        IEnumerable<string> knownKeys,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1);
+
+    Task<IReadOnlyList<KvColumnResult>> ExtractKeyValuePairsAsync(
+        PdfSection section,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1,
+        CancellationToken ct = default);
+
+    IReadOnlyList<KvColumnResult> ExtractKeyValuePairs(
+        PdfSection section,
+        IEnumerable<string> knownKeys,
+        double yTolerance = 5.0,
+        PdfKeyValueLayout keyValueLayout = PdfKeyValueLayout.Horizontal,
+        int keyValueColumnCount = 1);
+
+    Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>?> ExtractTableAsync(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
+        CancellationToken ct = default);
+
+    IReadOnlyList<IReadOnlyDictionary<string, string?>>? ExtractTable(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null);
+
+    Task<IReadOnlyList<IReadOnlyDictionary<string, string?>>> ExtractTableAsync(
+        PdfSection section,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null,
+        CancellationToken ct = default);
+
+    IReadOnlyList<IReadOnlyDictionary<string, string?>> ExtractTable(
+        PdfSection section,
+        ColumnHeader[] headers,
+        double yTolerance = 5.0,
+        PdfInferFormattingFlags? inferFormattingForHeaderRows = null);
+
+    Task<DataTable.Models.DataTable?> ExtractDataTableAsync(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null,
+        CancellationToken ct = default);
+
+    DataTable.Models.DataTable? ExtractDataTable(
+        string startSection,
+        ColumnHeader[] headers,
+        IEnumerable<string> sectionsInOrder,
+        string? defaultEndSection = null,
+        int? startPage = null,
+        int? endPage = null,
+        double? yTolerance = null);
+
+    Task<DataTable.Models.DataTable> ExtractDataTableAsync(PdfSection section, ColumnHeader[] headers, double yTolerance = 5.0, CancellationToken ct = default);
+
+    DataTable.Models.DataTable ExtractDataTable(PdfSection section, ColumnHeader[] headers, double yTolerance = 5.0);
 }
