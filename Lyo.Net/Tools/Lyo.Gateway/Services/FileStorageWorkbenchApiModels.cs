@@ -1,6 +1,9 @@
+using Lyo.FileStorage.Models;
 using Lyo.Keystore;
 
 namespace Lyo.Gateway.Services;
+
+public sealed record FileStorageCopyWorkbenchRequest(Guid SourceFileId, CopyFileRequest? Request);
 
 public sealed record FileStorageSaveRequest(
     byte[] Data,

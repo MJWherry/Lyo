@@ -18,19 +18,23 @@ public sealed class InMemoryMultipartUploadSessionStore : IMultipartUploadSessio
 
     public Task UpdateProviderStateAsync(Guid sessionId, string providerStateJson, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var existing))
-            return Task.CompletedTask;
+        var updated = _sessions.AddOrUpdate(
+            sessionId,
+            _ => throw new InvalidOperationException($"Cannot update provider state for missing multipart session {sessionId}."),
+            (_, existing) => existing with { ProviderStateJson = providerStateJson });
 
-        _sessions[sessionId] = existing with { ProviderStateJson = providerStateJson };
+        _ = updated;
         return Task.CompletedTask;
     }
 
     public Task SetStatusAsync(Guid sessionId, MultipartSessionStatus status, CancellationToken ct = default)
     {
-        if (!_sessions.TryGetValue(sessionId, out var existing))
-            return Task.CompletedTask;
+        var updated = _sessions.AddOrUpdate(
+            sessionId,
+            _ => throw new InvalidOperationException($"Cannot set status for missing multipart session {sessionId}."),
+            (_, existing) => existing with { Status = status });
 
-        _sessions[sessionId] = existing with { Status = status };
+        _ = updated;
         return Task.CompletedTask;
     }
 

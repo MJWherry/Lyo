@@ -11,7 +11,7 @@ lookups, and JSON converters.
 - **Result extensions** - Composition helpers such as combine, first-success selection, matching, and success/failure callbacks.
 - **Utility helpers** - Common routines like hashing, file size conversions, and expression-based property path extraction.
 - **CollectionExtensions** - Efficient collection/list/array helpers for null/empty checks and materialization/wrapping behavior.
-- **Typed extension classes** - Explicit `*Extensions` classes for stream/string/scalar/dictionary/enum/file metadata/language lookup helpers.
+- **Typed extension classes** - Explicit `*Extensions` classes for stream/string/scalar/dictionary/enum/file metadata/language helpers.
 - **JSON converters** - `System.Text.Json` converters for package-specific serialization scenarios.
 
 ## Quick Start

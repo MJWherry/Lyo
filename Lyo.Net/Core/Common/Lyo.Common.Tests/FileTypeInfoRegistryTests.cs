@@ -70,6 +70,11 @@ public class FileTypeInfoRegistryTests
         Assert.Same(FileTypeInfo.Gz, FileTypeInfo.FromMimeType("application/x-gzip"));
         Assert.Same(FileTypeInfo.Rar, FileTypeInfo.FromMimeType("application/vnd.rar"));
         Assert.Same(FileTypeInfo.Csv, FileTypeInfo.FromMimeType("text/comma-separated-values"));
+        Assert.Same(FileTypeInfo.Csv, FileTypeInfo.FromMimeType("application/csv"));
+        Assert.Same(FileTypeInfo.JavaScript, FileTypeInfo.FromMimeType("application/javascript"));
+        Assert.Same(FileTypeInfo.JavaScript, FileTypeInfo.FromMimeType("application/x-javascript"));
+        Assert.Same(FileTypeInfo.Graphql, FileTypeInfo.FromMimeType("application/graphql"));
+        Assert.Same(FileTypeInfo.WwwFormUrlEncoded, FileTypeInfo.FromMimeType("application/x-www-form-urlencoded"));
     }
 
     [Fact]

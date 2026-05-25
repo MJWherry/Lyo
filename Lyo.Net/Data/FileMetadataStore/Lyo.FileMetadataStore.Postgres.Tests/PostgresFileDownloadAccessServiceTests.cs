@@ -67,4 +67,38 @@ public class PostgresFileDownloadAccessServiceTests
         var link = await db.FileDownloadAccessLinks.AsNoTracking().SingleAsync(i => i.Id == created.LinkId, TestContext.Current.CancellationToken);
         Assert.Equal(5, link.DownloadCount);
     }
+
+    [Fact]
+    public async Task CreateLinkAsync_WhenMetadataSoftDeleted_ThrowsFileNotFoundException()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
+        var store = new PostgresFileMetadataStore(db);
+        var service = scope.ServiceProvider.GetRequiredService<IFileDownloadAccessService>();
+        var fileId = Guid.NewGuid();
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [1, 3, 5, 7]), TestContext.Current.CancellationToken);
+        await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
+
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.CreateLinkAsync(new(fileId, MaxDownloads: 3), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ValidateAndConsume_WhenMetadataSoftDeleted_DoesNotIncrementDownloadCount()
+    {
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
+        var store = new PostgresFileMetadataStore(db);
+        var service = scope.ServiceProvider.GetRequiredService<IFileDownloadAccessService>();
+        var fileId = Guid.NewGuid();
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [2, 4, 6, 8]), TestContext.Current.CancellationToken);
+        var created = await service.CreateLinkAsync(new(fileId, MaxDownloads: 10), TestContext.Current.CancellationToken);
+        Assert.True(await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken));
+
+        var consumed = await service.ValidateAndConsumeDownloadAsync(created.Token, nowUtc: DateTime.UtcNow, ct: TestContext.Current.CancellationToken);
+        Assert.False(consumed.IsAllowed);
+        Assert.Equal(FileDownloadAccessConsumeFailureReason.NotFound, consumed.FailureReason);
+
+        var link = await db.FileDownloadAccessLinks.AsNoTracking().SingleAsync(i => i.Id == created.LinkId, TestContext.Current.CancellationToken);
+        Assert.Equal(0, link.DownloadCount);
+    }
 }

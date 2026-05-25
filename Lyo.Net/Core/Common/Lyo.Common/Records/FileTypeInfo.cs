@@ -47,6 +47,16 @@ public sealed class FileTypeInfo
     // 🌐 Web Formats
     public static readonly FileTypeInfo Html = new("HTML", "text/html", ".html", [".htm"], FileTypeCategory.DataFiles, "HTML web page");
 
+    public static readonly FileTypeInfo JavaScript = new(
+        "JavaScript", "application/javascript", ".js", [".mjs"], FileTypeCategory.DataFiles, "JavaScript source file",
+        ["text/javascript", "application/x-javascript", "application/ecmascript", "text/ecmascript"]);
+
+    public static readonly FileTypeInfo Graphql = new(
+        "GraphQL", "application/graphql", ".graphql", [".gql"], FileTypeCategory.DataFiles, "GraphQL schema, query, or request body");
+
+    public static readonly FileTypeInfo WwwFormUrlEncoded = new(
+        "WWW form URL-encoded", "application/x-www-form-urlencoded", ".form", null, FileTypeCategory.DataFiles, "application/x-www-form-urlencoded HTTP body (common extension .form)");
+
     // 🧱 Binary & Dump Files
     public static readonly FileTypeInfo Bin = new("BIN", "application/octet-stream", ".bin", null, FileTypeCategory.DataFiles, "Raw binary file");
 

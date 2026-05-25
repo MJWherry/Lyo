@@ -22,6 +22,7 @@ namespace Lyo.FileStorage.S3.Multipart;
 public sealed class S3MultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
+    private readonly IFileContentPolicy _contentPolicy;
     private readonly ILogger<S3MultipartUploadService> _logger;
     private readonly IFileMalwareScanner _malwareScanner;
     private readonly IMetrics _metrics;
@@ -37,6 +38,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         IAmazonS3 s3,
         IMultipartUploadSessionStore sessions,
         IFileMalwareScanner? malwareScanner = null,
+        IFileContentPolicy? contentPolicy = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         ILoggerFactory? loggerFactory = null,
@@ -51,6 +53,7 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         _s3 = s3;
         _sessions = sessions;
         _malwareScanner = malwareScanner ?? NullFileMalwareScanner.Instance;
+        _contentPolicy = contentPolicy ?? new AllowAllFileContentPolicy();
         _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
         _operationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
         _metrics = metrics ?? NullMetrics.Instance;
@@ -61,47 +64,77 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
     public async Task<MultipartBeginResult> BeginAsync(MultipartBeginRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
+        const long s3MinimumPartSize = 5L * 1024 * 1024;
+        // The S3 maximum is 5 GiB; PartSizeBytes is an int, so it's already bounded below that ceiling.
+        OperationHelpers.ThrowIf(request.PartSizeBytes < s3MinimumPartSize, $"S3 multipart PartSizeBytes must be at least {s3MinimumPartSize} (5 MiB).");
+        OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
+        if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
+            throw new InvalidOperationException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+
+        FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
         var sessionId = Guid.NewGuid();
         var targetFileId = Guid.NewGuid();
         var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
         var now = DateTime.UtcNow;
         var stagingKey = BuildStagingKey(request.PathPrefix, sessionId);
+        var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
         string uploadId;
         try {
-            var init = await _s3.InitiateMultipartUploadAsync(new() { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType }, ct)
+            await _contentPolicy.ValidateAsync(
+                    new() {
+                        ByteLength = request.DeclaredContentLength ?? 0,
+                        ContentType = request.ContentType,
+                        OriginalFileName = request.OriginalFileName,
+                        TenantId = tenant
+                    }, ct)
                 .ConfigureAwait(false);
 
-            OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
-            uploadId = init.UploadId;
+            try {
+                var initiate = new InitiateMultipartUploadRequest { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType };
+                S3UploadServerSideEncryption.ApplyToInitiateMultipart(initiate, _options);
+                var init = await _s3.InitiateMultipartUploadAsync(initiate, ct).ConfigureAwait(false);
+
+                OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
+                uploadId = init.UploadId;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "InitiateMultipartUpload failed for staging key {Key}", stagingKey);
+                throw;
+            }
+
+            var state = JsonSerializer.Serialize(new S3ProviderState { StagingKey = stagingKey, UploadId = uploadId });
+            var record = new MultipartUploadSessionRecord(
+                sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
+                request.ContentType, MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes);
+
+            try {
+                await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
+            }
+            catch (Exception) {
+                await TryAbortS3Async(stagingKey, uploadId, CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.AwsS3);
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "InitiateMultipartUpload failed for staging key {Key}", stagingKey);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
+                    CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
             throw;
         }
-
-        var state = JsonSerializer.Serialize(new S3ProviderState { StagingKey = stagingKey, UploadId = uploadId });
-        var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
-        var record = new MultipartUploadSessionRecord(
-            sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName, request.ContentType,
-            MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes);
-
-        try {
-            await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
-        }
-        catch (Exception) {
-            await TryAbortS3Async(stagingKey, uploadId, ct).ConfigureAwait(false);
-            throw;
-        }
-
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
-                    FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
-
-        return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.AwsS3);
     }
 
     /// <inheritdoc />
@@ -126,79 +159,139 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         var orderedParts = request.Parts.OrderBy(p => p.PartNumber).ToList();
         OperationHelpers.ThrowIf(orderedParts.Count == 0, "At least one part is required.");
         var partEtags = orderedParts.Select(p => new PartETag(p.PartNumber, NormalizeS3Etag(p.ETagOrBlockId))).ToList();
+
+        var stagingCommitted = false;
         try {
-            await _s3.CompleteMultipartUploadAsync(
-                    new() {
-                        BucketName = _options.BucketName,
-                        Key = state.StagingKey,
-                        UploadId = state.UploadId,
-                        PartETags = partEtags
-                    }, ct)
+            try {
+                await _s3.CompleteMultipartUploadAsync(
+                        new() {
+                            BucketName = _options.BucketName,
+                            Key = state.StagingKey,
+                            UploadId = state.UploadId,
+                            PartETags = partEtags
+                        }, ct)
+                    .ConfigureAwait(false);
+
+                stagingCommitted = true;
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "CompleteMultipartUpload failed for session {SessionId}", request.SessionId);
+                throw;
+            }
+
+            FileStoreResult result;
+            var tempPath = Path.Combine(Path.GetTempPath(), $"lyo-mpu-{request.SessionId:N}.bin");
+            try {
+                // No-transform fast path: server-side CopyObject from staging → final key, skipping the SaveFromStreamAsync re-upload (saves ~one full payload of upload bandwidth).
+                if (!session.Compress && !session.Encrypt && !(_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner))
+                    result = await _storage.FinalizeMultipartFromStagingAsync(
+                            state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, null, ct)
+                        .ConfigureAwait(false);
+                else if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
+                    using (var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false)) {
+                        await using var fs = File.Create(tempPath);
+                        await getResponse.ResponseStream.CopyToAsync(fs, ct).ConfigureAwait(false);
+                    }
+
+                    var len = new FileInfo(tempPath).Length;
+                    FileAvailability? availabilityOverride;
+                    await using (var scanStream = File.OpenRead(tempPath)) {
+                        var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
+                        availabilityOverride = scan.ThreatLevel switch {
+                            FileScanThreatLevel.Clean => FileAvailability.Available,
+                            FileScanThreatLevel.Suspect => FileAvailability.Quarantined,
+                            FileScanThreatLevel.Threat => throw new FilePolicyRejectedException(scan.Detail ?? "Malware scan rejected the multipart payload."),
+                            var _ => FileAvailability.Quarantined
+                        };
+                    }
+
+                    if (!session.Compress && !session.Encrypt)
+                        result = await _storage.FinalizeMultipartFromStagingAsync(
+                                state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, availabilityOverride, ct)
+                            .ConfigureAwait(false);
+                    else {
+                        await using var input = File.OpenRead(tempPath);
+                        result = await _storage.SaveFromStreamAsync(
+                                input, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
+                                session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)
+                            .ConfigureAwait(false);
+                    }
+                }
+                else {
+                    using var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
+                    var len = getResponse.ContentLength;
+                    result = await _storage.SaveFromStreamAsync(
+                            getResponse.ResponseStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId,
+                            session.PathPrefix, null, session.ContentType, session.TenantId, null, session.TargetFileId, ct)
+                        .ConfigureAwait(false);
+                }
+            }
+            finally {
+                TryDeleteFile(tempPath);
+            }
+
+            try {
+                await _s3.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to delete staging object {Key} after multipart complete", state.StagingKey);
+            }
+
+            await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
+            await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
+                        result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
+
+            return result;
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "CompleteMultipartUpload failed for session {SessionId}", request.SessionId);
-            throw;
-        }
+            // Mark session Failed so the bug is observable and replays/cleanups can target it.
+            try {
+                await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Failed, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogWarning(statusEx, "Failed to set session {SessionId} to Failed", session.SessionId);
+            }
 
-        FileStoreResult result;
-        var tempPath = Path.Combine(Path.GetTempPath(), $"lyo-mpu-{request.SessionId:N}.bin");
-        try {
-            if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
-                using (var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false)) {
-                    await using var fs = File.Create(tempPath);
-                    await getResponse.ResponseStream.CopyToAsync(fs, ct).ConfigureAwait(false);
+            // If we already committed the multipart but later steps failed, attempt to clean up the orphan staging object best-effort.
+            if (stagingCommitted) {
+                try {
+                    await _s3.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, CancellationToken.None).ConfigureAwait(false);
                 }
-
-                var len = new FileInfo(tempPath).Length;
-                FileAvailability? availabilityOverride;
-                await using (var scanStream = File.OpenRead(tempPath)) {
-                    var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
-                    availabilityOverride = scan.ThreatLevel switch {
-                        FileScanThreatLevel.Clean => FileAvailability.Available,
-                        FileScanThreatLevel.Suspect => FileAvailability.Quarantined,
-                        FileScanThreatLevel.Threat => throw new FilePolicyRejectedException(scan.Detail ?? "Malware scan rejected the multipart payload."),
-                        var _ => FileAvailability.Available
-                    };
+                catch (Exception delEx) {
+                    _logger.LogWarning(delEx, "Best-effort delete of committed staging object {Key} failed after upstream completion failure", state.StagingKey);
                 }
-
-                await using var input = File.OpenRead(tempPath);
-                result = await _storage.SaveFromStreamAsync(
-                        input, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
-                        session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)
-                    .ConfigureAwait(false);
             }
             else {
-                using var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
-                var len = getResponse.ContentLength;
-                result = await _storage.SaveFromStreamAsync(
-                        getResponse.ResponseStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId,
-                        session.PathPrefix, null, session.ContentType, session.TenantId, null, session.TargetFileId, ct)
-                    .ConfigureAwait(false);
+                // multipart never committed → abort upload to release parts
+                await TryAbortS3Async(state.StagingKey, state.UploadId, CancellationToken.None).ConfigureAwait(false);
             }
-        }
-        finally {
-            TryDeleteFile(tempPath);
-        }
 
-        try {
-            await _s3.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex) {
-            _logger.LogWarning(ex, "Failed to delete staging object {Key} after multipart complete", state.StagingKey);
-        }
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
 
-        await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
-        await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
-                    result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
-                _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
+            throw;
+        }
+    }
 
-        return result;
+    private static string SanitizeAuditError(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return string.Empty;
+
+        const int max = 512;
+        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
     }
 
     /// <inheritdoc />
@@ -208,19 +301,40 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         if (s == null)
             return;
 
-        if (s.ProviderKind == MultipartUploadProviderKind.AwsS3) {
-            var state = JsonSerializer.Deserialize<S3ProviderState>(s.ProviderStateJson);
-            if (!string.IsNullOrWhiteSpace(state?.StagingKey) && !string.IsNullOrWhiteSpace(state.UploadId))
-                await TryAbortS3Async(state.StagingKey, state.UploadId, ct).ConfigureAwait(false);
-        }
+        try {
+            if (s.ProviderKind == MultipartUploadProviderKind.AwsS3) {
+                var state = JsonSerializer.Deserialize<S3ProviderState>(s.ProviderStateJson);
+                if (!string.IsNullOrWhiteSpace(state?.StagingKey) && !string.IsNullOrWhiteSpace(state.UploadId))
+                    await TryAbortS3Async(state.StagingKey, state.UploadId, ct).ConfigureAwait(false);
+            }
 
-        await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
-                    FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
+            // Mark the session as Aborted first so any session store implementation that retains rows after Delete can surface the correct lifecycle state.
+            try {
+                await _sessions.SetStatusAsync(sessionId, MultipartSessionStatus.Aborted, ct).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogDebug(statusEx, "Failed to set session {SessionId} status to Aborted prior to delete", sessionId);
+            }
+
+            await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics,
+                    FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
     }
 
     private async Task<MultipartPartDescriptor> GetPresignedPartUploadCoreAsync(Guid sessionId, int partNumber, CancellationToken ct)
@@ -237,6 +351,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             PartNumber = partNumber,
             UploadId = state.UploadId
         };
+
+        S3UploadServerSideEncryption.ApplyToPresignedPut(request, _options);
 
         var url = await _s3.GetPreSignedURLAsync(request).ConfigureAwait(false);
         return new(partNumber, url);

@@ -3,6 +3,7 @@ using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
@@ -21,8 +22,7 @@ namespace Lyo.FileStorage.S3;
 /// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .UseEncryptionService("two-key-aws")
 /// .ConfigureS3FileStorage("S3FileStorageOptions") .Build(configuration); // Use factory functions: services.AddS3FileStorageServiceKeyed("client-files")
 /// .ConfigureFileMetadataStore(provider => new LocalFileMetadataStore("/path")) .ConfigureEncryptionService(provider => provider.GetRequiredService
-/// <ITwoKeyEncryptionService>
-/// ()) .ConfigureS3FileStorage(options => { options.BucketName = "my-bucket"; }) .Build(configuration); // Mix and match:
+/// ConfigureEncryptionService(provider => provider.GetRequiredService&lt;ITwoKeyEncryptionService&gt;())ConfigureS3FileStorage(options => { options.BucketName = "my-bucket"; }) .Build(configuration); // Mix and match:
 /// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .ConfigureEncryptionService(provider =>
 /// CreateEncryptionService(provider)) .ConfigureS3FileStorage() // Uses default config section .Build(configuration);
 /// </summary>
@@ -186,38 +186,25 @@ public sealed class S3FileStorageServiceBuilder
 
         // Configure Encryption Service
         string? encryptionServiceKeyToUse = null;
-        if (!string.IsNullOrWhiteSpace(_encryptionServiceKeyName)) {
-            // Use existing keyed encryption service
+        if (!string.IsNullOrWhiteSpace(_encryptionServiceKeyName))
             encryptionServiceKeyToUse = _encryptionServiceKeyName;
-        }
-        else if (!string.IsNullOrWhiteSpace(_encryptionServiceConfigSection)) {
-            // Register encryption service from config section using default key name
-            // This would typically call AddTwoKeyEncryptionServiceKeyed with the config section
-            // For now, we'll use the builder's key name
-            encryptionServiceKeyToUse = _keyName;
-            // Note: Actual registration would need to be done via extension methods
-            // This is a placeholder - the user should register encryption service separately
-        }
         else if (_encryptionServiceFactory != null) {
-            // Register encryption service from factory
             if (!_services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(_keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 _services.AddKeyedSingleton<ITwoKeyEncryptionService>(_keyName, (provider, _) => _encryptionServiceFactory(provider));
 
             encryptionServiceKeyToUse = _keyName;
         }
+        else if (!string.IsNullOrWhiteSpace(_encryptionServiceConfigSection))
+            throw new InvalidOperationException(
+                "WithEncryptionServiceFromConfigSection is not yet supported by S3FileStorageServiceBuilder. Register the ITwoKeyEncryptionService separately and reference it via WithEncryptionServiceKey.");
 
         // Configure File Metadata Store
         string? metadataStoreKeyToUse = null;
-        if (!string.IsNullOrWhiteSpace(_metadataStoreKeyName)) {
-            // Use existing keyed metadata store
+        if (!string.IsNullOrWhiteSpace(_metadataStoreKeyName))
             metadataStoreKeyToUse = _metadataStoreKeyName;
-        }
-        else if (!string.IsNullOrWhiteSpace(_metadataStoreConfigSection)) {
-            // Register from config section - would use AddPostgresFileMetadataStoreKeyed
-            // For now, use default key name
-            metadataStoreKeyToUse = _keyName;
-            // Note: Actual registration would need to be done via extension methods
-        }
+        else if (!string.IsNullOrWhiteSpace(_metadataStoreConfigSection))
+            throw new InvalidOperationException(
+                "WithMetadataStoreFromConfigSection is not yet supported by S3FileStorageServiceBuilder. Register the IFileMetadataStore separately and reference it via WithMetadataStoreKey.");
 
         // Register AWS File Storage Service as scoped to match the scoped metadata store
         _services.AddKeyedScoped<S3FileStorageService>(

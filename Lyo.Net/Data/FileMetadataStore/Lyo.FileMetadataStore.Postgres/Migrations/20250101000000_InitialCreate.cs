@@ -45,7 +45,8 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     hash_algorithm = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     availability = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     content_type = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
-                    tenant_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
+                    tenant_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {

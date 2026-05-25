@@ -61,6 +61,9 @@ public sealed class FileMetadataEntity
 
     public string? Availability { get; set; }
 
+    /// <summary>When set (UTC), logical delete — row kept for auditing; omitted from reads and duplicate detection.</summary>
+    public DateTime? DeletedAt { get; set; }
+
     public FileStoreResult ToFileStoreResult()
     {
         CompressionAlgorithm? compressionAlgorithm = null;
@@ -86,7 +89,7 @@ public sealed class FileMetadataEntity
         return new(
             Guid.Parse(Id), OriginalFileName, OriginalFileSize, OriginalFileHash, SourceFileName, SourceFileSize, SourceFileHash, IsCompressed, compressionAlgorithm,
             CompressedFileSize, CompressedFileHash, IsEncrypted, dekAlgorithm, kekAlgorithm, EncryptedFileSize, EncryptedFileHash, EncryptedDataEncryptionKey, DataEncryptionKeyId,
-            DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, TenantId, availability, DekKeyMaterialBytes);
+            DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, TenantId, availability, DekKeyMaterialBytes, DeletedAt);
     }
 
     public static FileMetadataEntity FromFileStoreResult(FileStoreResult result)
@@ -117,6 +120,7 @@ public sealed class FileMetadataEntity
             HashAlgorithm = result.HashAlgorithm?.ToString(),
             ContentType = result.ContentType,
             TenantId = result.TenantId,
-            Availability = result.Availability.ToString()
+            Availability = result.Availability.ToString(),
+            DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null
         };
 }

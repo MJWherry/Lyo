@@ -12,5 +12,10 @@ public enum FileAuditEventType
     MultipartComplete = 7,
     MultipartAbort = 8,
     AccessLinkAllowed = 9,
-    AccessLinkDenied = 10
+    AccessLinkDenied = 10,
+
+    DirectUploadBegin = 11,
+    DirectUploadComplete = 12,
+    DirectUploadFailed = 13,
+    Copy = 14
 }

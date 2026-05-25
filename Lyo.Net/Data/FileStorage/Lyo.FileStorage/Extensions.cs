@@ -2,6 +2,7 @@ using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
@@ -158,7 +159,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFileStorageServiceKeyed(
             string keyName,
-            Action<LocalFileStorageServiceOptions> config,
+            Action<DiskFileStorageOptions> config,
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             string encryptionServiceKeyName)
         {
@@ -167,8 +168,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(encryptionServiceKeyName);
             ArgumentHelpers.ThrowIfNull(config);
             ArgumentHelpers.ThrowIfNull(configureMetadataStore);
-            services.AddSingleton<LocalFileStorageServiceOptions>(_ => {
-                var options = new LocalFileStorageServiceOptions();
+            services.AddSingleton<DiskFileStorageOptions>(_ => {
+                var options = new DiskFileStorageOptions();
                 config(options);
                 return options;
             });
@@ -177,7 +178,7 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
                 services.AddKeyedScoped<LocalFileStorageService>(
                     keyName, (provider, _) => {
-                        var options = provider.GetRequiredService<LocalFileStorageServiceOptions>();
+                        var options = provider.GetRequiredService<DiskFileStorageOptions>();
                         var loggerFactory = provider.GetService<ILoggerFactory>();
                         var compressionService = provider.GetService<ICompressionService>();
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
@@ -203,7 +204,7 @@ public static class Extensions
         /// <returns>The service collection for chaining</returns>
         public IServiceCollection AddFileStorageServiceKeyed(
             string keyName,
-            Action<LocalFileStorageServiceOptions> config,
+            Action<DiskFileStorageOptions> config,
             Func<IServiceProvider, IFileMetadataStore> configureMetadataStore,
             Func<IServiceProvider, ITwoKeyEncryptionService> configEncryptionService)
         {
@@ -215,8 +216,8 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
-            services.AddSingleton<LocalFileStorageServiceOptions>(_ => {
-                var options = new LocalFileStorageServiceOptions();
+            services.AddSingleton<DiskFileStorageOptions>(_ => {
+                var options = new DiskFileStorageOptions();
                 config(options);
                 return options;
             });
@@ -225,7 +226,7 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
                 services.AddKeyedScoped<LocalFileStorageService>(
                     keyName, (provider, _) => {
-                        var options = provider.GetRequiredService<LocalFileStorageServiceOptions>();
+                        var options = provider.GetRequiredService<DiskFileStorageOptions>();
                         var loggerFactory = provider.GetService<ILoggerFactory>();
                         var compressionService = provider.GetService<ICompressionService>();
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
@@ -262,23 +263,14 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configureMetadataStore);
 
             // Configure options from configuration (if not already registered)
-            if (!services.Any(s => s.ServiceType == typeof(LocalFileStorageServiceOptions))) {
-                services.AddSingleton<LocalFileStorageServiceOptions>(provider => {
-                    var configuration = provider.GetRequiredService<IConfiguration>();
-                    var section = configuration.GetSection(configSectionName);
-                    var options = new LocalFileStorageServiceOptions();
-                    if (!section.Exists())
-                        return options;
-
-                    section.Bind(options);
-                    return options;
-                });
+            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions))) {
+                services.AddSingleton(provider => DiskFileStorageConfigurationBinder.BindDiskFileStorage(provider, configSectionName));
             }
 
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
                 services.AddKeyedScoped<LocalFileStorageService>(
                     keyName, (provider, _) => {
-                        var options = provider.GetRequiredService<LocalFileStorageServiceOptions>();
+                        var options = provider.GetRequiredService<DiskFileStorageOptions>();
                         var loggerFactory = provider.GetService<ILoggerFactory>();
                         var compressionService = provider.GetService<ICompressionService>();
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
@@ -316,24 +308,15 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
-            if (!services.Any(s => s.ServiceType == typeof(LocalFileStorageServiceOptions))) {
-                services.AddSingleton<LocalFileStorageServiceOptions>(provider => {
-                    var configuration = provider.GetRequiredService<IConfiguration>();
-                    var section = configuration.GetSection(configSectionName);
-                    var options = new LocalFileStorageServiceOptions();
-                    if (!section.Exists())
-                        return options;
-
-                    section.Bind(options);
-                    return options;
-                });
+            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions))) {
+                services.AddSingleton(provider => DiskFileStorageConfigurationBinder.BindDiskFileStorage(provider, configSectionName));
             }
 
             // Register file storage service with keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
                 services.AddKeyedScoped<LocalFileStorageService>(
                     keyName, (provider, _) => {
-                        var options = provider.GetRequiredService<LocalFileStorageServiceOptions>();
+                        var options = provider.GetRequiredService<DiskFileStorageOptions>();
                         var loggerFactory = provider.GetService<ILoggerFactory>();
                         var compressionService = provider.GetService<ICompressionService>();
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
@@ -346,6 +329,45 @@ public static class Extensions
             }
 
             return services;
+        }
+    }
+
+    internal static class DiskFileStorageConfigurationBinder
+    {
+        public static DiskFileStorageOptions BindDiskFileStorage(IServiceProvider provider, string? preferredSection)
+        {
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var options = new DiskFileStorageOptions();
+            var lf = provider.GetService<Microsoft.Extensions.Logging.ILoggerFactory>();
+
+            foreach (var name in OrderedSectionCandidates(preferredSection)) {
+                var section = configuration.GetSection(name);
+                if (!section.Exists())
+                    continue;
+
+                section.Bind(options);
+                if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal))
+                    (lf ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk").LogWarning(
+                        "Disk file storage options were loaded from legacy configuration section [{Legacy}]; migrate appsettings to [{Current}].",
+                        DiskFileStorageOptions.LegacySectionName,
+                        DiskFileStorageOptions.SectionName);
+
+                return options;
+            }
+
+            return options;
+        }
+
+        private static IEnumerable<string> OrderedSectionCandidates(string? preferredSection)
+        {
+            if (!string.IsNullOrWhiteSpace(preferredSection))
+                yield return preferredSection.Trim();
+
+            if (!string.Equals(preferredSection, DiskFileStorageOptions.SectionName, StringComparison.Ordinal))
+                yield return DiskFileStorageOptions.SectionName;
+
+            if (!string.Equals(preferredSection, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal))
+                yield return DiskFileStorageOptions.LegacySectionName;
         }
     }
 }

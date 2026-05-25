@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Config.Api.Hosting;
 
 /// <summary>Binding and polling defaults for resolved config synced from Config API.</summary>
@@ -29,11 +31,7 @@ public sealed class ConfigApiPollingOptions
     {
         if (!Enabled)
             return;
-
-        if (string.IsNullOrWhiteSpace(AppKind))
-            throw new InvalidOperationException($"Config API polling enabled but {nameof(AppKind)} is not set.");
-
-        if (string.IsNullOrWhiteSpace(AppId))
-            throw new InvalidOperationException($"Config API polling enabled but {nameof(AppId)} is not set.");
+        OperationHelpers.ThrowIfNullOrWhiteSpace(AppKind);
+        OperationHelpers.ThrowIfNullOrWhiteSpace(AppId);
     }
 }

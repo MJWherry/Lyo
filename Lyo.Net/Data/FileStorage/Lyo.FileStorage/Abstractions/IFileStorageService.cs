@@ -3,7 +3,7 @@ using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.Health;
 
-namespace Lyo.FileStorage;
+namespace Lyo.FileStorage.Abstractions;
 
 /// <summary>Service for saving, retrieving, and deleting files with optional compression and encryption.</summary>
 public interface IFileStorageService : IHealth
@@ -16,6 +16,9 @@ public interface IFileStorageService : IHealth
 
     /// <summary>Occurs when a file has been deleted successfully.</summary>
     event EventHandler<FileDeletedResult>? FileDeleted;
+
+    /// <summary>Occurs when file metadata is fetched (without payload). <c>File</c> is a redacted snapshot — sensitive fields such as the wrapped DEK and KEK salt are omitted.</summary>
+    event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
 
     /// <summary>Occurs when a file audit fact is recorded (save, read, delete, presigned URL, multipart, DEK migration, etc.).</summary>
     event EventHandler<FileAuditEventArgs>? FileAuditOccurred;
@@ -91,7 +94,36 @@ public interface IFileStorageService : IHealth
     /// Returns a time-limited read URL when the backend supports direct browser access (e.g. S3/Azure presigned GET). The URL refers to the stored object (ciphertext if
     /// encrypted). For decrypted downloads use <see cref="GetFileStreamAsync" />. Key material is never embedded in the URL.
     /// </summary>
+    /// <remarks>
+    /// Overload without response header overrides. <paramref name="ct" /> may not cancel synchronous signing in some backends.
+    /// </remarks>
     Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default);
+
+    /// <inheritdoc cref="GetPreSignedReadUrlAsync(Guid, TimeSpan?, string?, CancellationToken)" />
+    /// <remarks>
+    /// <paramref name="ct" /> may not cancel synchronous presigned-url construction in SDKs (<c>AWS</c> / <c>Azure</c>).
+    /// </remarks>
+    Task<string> GetPreSignedReadUrlAsync(
+        Guid fileId,
+        TimeSpan? expiration,
+        string? pathPrefix,
+        PreSignedReadUrlOptions? urlResponseOptions,
+        CancellationToken ct = default);
+
+    /// <summary>Allocates metadata and returns a URL for a single client PUT upload (plaintext, no compression/encryption). Backend-specific.</summary>
+    /// <remarks>
+    /// Persistence and URL construction cooperate with cancellation; synchronous signing phases in vendor SDKs may ignore <paramref name="ct" />.
+    /// </remarks>
+    Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default);
+
+    /// <summary>Verifies backing bytes and finalizes metadata after a direct PUT.</summary>
+    Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default);
+
+    /// <summary>Server-local or server-side copy to a new file id (backing bytes reproduced; metadata duplicated with new identifiers).</summary>
+    /// <remarks>
+    /// Remote copies may incur long-lived SDK calls — treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.
+    /// </remarks>
+    Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default);
 
     /// <summary>Gets a file from storage.</summary>
     /// <param name="fileId">The unique identifier of the file to retrieve</param>
@@ -109,10 +141,18 @@ public interface IFileStorageService : IHealth
 
     /// <summary>Deletes a file from storage.</summary>
     /// <param name="fileId">The unique identifier of the file to delete</param>
+    /// <param name="mode">Whether metadata remains as a tombstone or is permanently purged alongside the backing object.</param>
     /// <param name="ct">Cancellation token</param>
-    /// <returns>True if the file was successfully deleted. Returns false if file not found and ThrowOnDeleteNotFound is false.</returns>
+    /// <returns>True when the backing object was removed from storage (the previous behavior). Metadata handling varies by mode.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the file is not found and ThrowOnDeleteNotFound is true (default)</exception>
-    Task<bool> DeleteFileAsync(Guid fileId, CancellationToken ct = default);
+    /// <remarks>
+    /// <paramref name="mode"/> must reflect operator/retention governance. Do not derive <see cref="FileDeletionMode.RemoveObjectAndPurgeMetadata"/> from inbound HTTP/API client
+    /// input (queries, bodies, headers, etc.).
+    /// </remarks>
+    Task<bool> DeleteFileAsync(
+        Guid fileId,
+        FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata,
+        CancellationToken ct = default);
 
     /// <summary>Gets metadata for a file by its ID.</summary>
     /// <param name="fileId">The unique identifier of the file.</param>

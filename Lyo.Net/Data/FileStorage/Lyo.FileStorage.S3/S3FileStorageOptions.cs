@@ -27,6 +27,9 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     /// <summary> Optional prefix to use for all S3 object keys. Useful for organizing files in a bucket. </summary>
     public string? KeyPrefix { get; set; }
 
-    /// <summary>Enable metrics collection for file storage operations. Default: false</summary>
-    public bool EnableMetrics { get; set; } = false;
+    /// <summary>Optional server-side encryption for new writes (<c>AES256</c>, <c>aws:kms</c>, <c>aws:kms:dsse</c>).</summary>
+    public string? ServerSideEncryption { get; set; }
+
+    /// <summary>Optional KMS key id / ARN when <see cref="ServerSideEncryption" /> is a KMS variant.</summary>
+    public string? ServerSideEncryptionAwsKmsKeyId { get; set; }
 }

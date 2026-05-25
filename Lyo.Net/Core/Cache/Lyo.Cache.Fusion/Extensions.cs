@@ -131,8 +131,9 @@ public static class FusionCacheServiceExtensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
             var redisSection = configuration.GetSection(sectionName);
-            var connectionString = redisSection["ConnectionString"] ??
-                redisSection.Value ?? throw new InvalidOperationException($"Redis connection string not found in configuration section '{sectionName}'");
+            var connectionString = redisSection.GetValue<string>("ConnectionString")
+                .Or(redisSection.Value)
+                .OrThrowInvalidOperation($"Redis connection string not found in configuration section '{sectionName}'");
 
             return services.AddRedisConnection(
                 connectionString, opts => {

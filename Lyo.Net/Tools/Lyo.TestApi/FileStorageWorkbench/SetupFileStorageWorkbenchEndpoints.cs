@@ -4,6 +4,8 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Mvc;
@@ -50,6 +52,16 @@ public static class SetupFileStorageWorkbenchEndpoints
 
     /// <summary>API QueryProject results for file metadata are cached; invalidate after any mutating file operation so grids see new rows.</summary>
     private static Task InvalidateFileMetadataQueryCacheAsync(ICacheService cache) => cache.InvalidateQueryCacheAsync<FileMetadataEntity>();
+
+    private static PreSignedReadUrlOptions? BuildPreSignedReadUrlOptions(string? contentDisposition, string? contentType)
+    {
+        var cd = string.IsNullOrWhiteSpace(contentDisposition) ? null : contentDisposition.Trim();
+        var mime = string.IsNullOrWhiteSpace(contentType) ? null : contentType.Trim();
+        if (cd == null && mime == null)
+            return null;
+
+        return new() { ContentDisposition = cd, ContentType = mime };
+    }
 
     private static int MapFailureStatusCode(FileDownloadAccessConsumeFailureReason? reason)
         => reason switch {
@@ -125,11 +137,84 @@ public static class SetupFileStorageWorkbenchEndpoints
                 .DisableAntiforgery();
 
             group.MapGet(
-                "files/{fileId:guid}/presigned-read", async (Guid fileId, double? expiresHours, string? pathPrefix, IServiceProvider services, CancellationToken ct) => {
+                "files/{fileId:guid}/presigned-read", async (
+                    Guid fileId,
+                    double? expiresHours,
+                    string? pathPrefix,
+                    string? contentDisposition,
+                    string? contentType,
+                    IServiceProvider services,
+                    CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
                     var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
-                    var url = await fileStorage.GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, ct);
+                    var opts = BuildPreSignedReadUrlOptions(contentDisposition, contentType);
+                    var url = opts == null
+                        ? await fileStorage.GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, ct)
+                        : await fileStorage.GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, opts, ct);
+
                     return Results.Ok(new PresignedReadResponse(url));
+                });
+
+            group.MapPost(
+                "direct-upload/begin", async ([FromBody] DirectUploadBeginRequest request, IServiceProvider services, CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    var result = await fileStorage.BeginDirectUploadAsync(request, ct);
+                    return Results.Ok(result);
+                });
+
+            group.MapPost(
+                "direct-upload/{fileId:guid}/complete", async (
+                    Guid fileId,
+                    [FromBody] DirectUploadCompleteRequest? request,
+                    IServiceProvider services,
+                    ICacheService cache,
+                    CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    var result = await fileStorage.CompleteDirectUploadAsync(fileId, request, ct);
+                    await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
+                    return Results.Ok(result);
+                });
+
+            group.MapPut(
+                    "direct-upload/{fileId:guid}/put", async (Guid fileId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
+                        var fileStorage = GetFileStorage(services);
+                        if (fileStorage is not LocalFileStorageService local)
+                            return Results.Json(
+                                new ProblemDetails {
+                                    Title = "Direct upload PUT not supported",
+                                    Detail = "PUT receiver is only available when the keyed IFileStorageService is LocalFileStorageService.",
+                                    Status = StatusCodes.Status501NotImplemented
+                                },
+                                statusCode: StatusCodes.Status501NotImplemented);
+
+                        await local.ReceiveWorkbenchDirectPutAsync(fileId, http.Request.Body, ct).ConfigureAwait(false);
+                        return Results.NoContent();
+                    })
+                .DisableAntiforgery();
+
+            group.MapPost(
+                "files/copy", async ([FromBody] CopyFileWorkbenchRequest request, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    var result = await fileStorage.CopyFileAsync(request.SourceFileId, request.Request, ct);
+                    await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
+                    return Results.Ok(result);
+                });
+
+            group.MapGet(
+                "diagnostics/keys", async (string? prefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
+                    var fileStorage = GetFileStorage(services);
+                    if (fileStorage is not IFileStorageDiagnosticsService dx)
+                        return Results.Json(
+                            new ProblemDetails {
+                                Title = "Diagnostics not supported",
+                                Detail = "The registered IFileStorageService does not implement IFileStorageDiagnosticsService.",
+                                Status = StatusCodes.Status501NotImplemented
+                            },
+                            statusCode: StatusCodes.Status501NotImplemented);
+
+                    var cap = Math.Clamp(maxKeys ?? 1000, 1, 10_000);
+                    var keys = await dx.ListStorageKeysAsync(prefix, cap, ct);
+                    return Results.Ok(keys);
                 });
 
             group.MapPost(
@@ -239,7 +324,14 @@ public static class SetupFileStorageWorkbenchEndpoints
                 });
 
             group.MapGet(
-                "files/access/{token}/presigned-read", async (string token, double? expiresHours, IServiceProvider services, HttpContext http, CancellationToken ct) => {
+                "files/access/{token}/presigned-read", async (
+                    string token,
+                    double? expiresHours,
+                    string? contentDisposition,
+                    string? contentType,
+                    IServiceProvider services,
+                    HttpContext http,
+                    CancellationToken ct) => {
                     var accessService = GetDownloadAccessService(services);
                     var access = await accessService.ValidateAndConsumeDownloadAsync(token, http.User.Identity?.Name, http.Connection.RemoteIpAddress?.ToString(), ct: ct);
                     if (!access.IsAllowed || access.FileId == null)
@@ -248,14 +340,18 @@ public static class SetupFileStorageWorkbenchEndpoints
                     var fileStorage = GetFileStorage(services);
                     var metadata = await fileStorage.GetMetadataAsync(access.FileId.Value, ct);
                     var expiration = expiresHours.HasValue ? TimeSpan.FromHours(expiresHours.Value) : (TimeSpan?)null;
-                    var url = await fileStorage.GetPreSignedReadUrlAsync(access.FileId.Value, expiration, metadata.PathPrefix, ct);
+                    var opts = BuildPreSignedReadUrlOptions(contentDisposition, contentType);
+                    var url = opts == null
+                        ? await fileStorage.GetPreSignedReadUrlAsync(access.FileId.Value, expiration, metadata.PathPrefix, ct)
+                        : await fileStorage.GetPreSignedReadUrlAsync(access.FileId.Value, expiration, metadata.PathPrefix, opts, ct);
+
                     return Results.Ok(new PresignedReadResponse(url));
                 });
 
             group.MapDelete(
                 "files/{fileId:guid}", async (Guid fileId, IServiceProvider services, ICacheService cache, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
-                    var deleted = await fileStorage.DeleteFileAsync(fileId, ct).ConfigureAwait(false);
+                    var deleted = await fileStorage.DeleteFileAsync(fileId, ct: ct).ConfigureAwait(false);
                     if (deleted)
                         await InvalidateFileMetadataQueryCacheAsync(cache).ConfigureAwait(false);
 
@@ -287,7 +383,7 @@ public static class SetupFileStorageWorkbenchEndpoints
                     IDbContextFactory<FileMetadataStoreDbContext> dbFactory,
                     CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct);
-                    var query = db.FileMetadata.AsNoTracking().AsQueryable();
+                    var query = db.FileMetadata.AsNoTracking().AsQueryable().Where(e => e.DeletedAt == null);
                     if (!string.IsNullOrWhiteSpace(searchText)) {
                         var term = searchText.Trim();
                         query = query.Where(e
@@ -309,7 +405,8 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "keys/search", async (string? searchText, int? take, IDbContextFactory<FileMetadataStoreDbContext> dbFactory, IServiceProvider services, CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct);
                     var keyStore = GetKeyStore(services);
-                    var query = db.FileMetadata.AsNoTracking().Where(e => e.IsEncrypted && e.DataEncryptionKeyId != null && e.DataEncryptionKeyVersion != null);
+                    var query = db.FileMetadata.AsNoTracking().Where(e
+                        => e.IsEncrypted && e.DataEncryptionKeyId != null && e.DataEncryptionKeyVersion != null && e.DeletedAt == null);
                     if (!string.IsNullOrWhiteSpace(searchText)) {
                         var term = searchText.Trim();
                         query = query.Where(e => e.DataEncryptionKeyId != null && EF.Functions.ILike(e.DataEncryptionKeyId, $"%{term}%"));
@@ -509,3 +606,5 @@ public sealed record UpdateKeyStringRequest(string KeyId, string KeyString);
 public sealed record SetCurrentVersionRequest(string KeyId, string Version);
 
 public sealed record KeySearchResult(string KeyId, string Version, bool IsCurrent, KeyMetadata? Metadata, int FileCount);
+
+public sealed record CopyFileWorkbenchRequest(Guid SourceFileId, CopyFileRequest? Request);

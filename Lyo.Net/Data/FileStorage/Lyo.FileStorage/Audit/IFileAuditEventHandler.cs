@@ -1,3 +1,5 @@
+using Lyo.FileStorage.Abstractions;
+
 namespace Lyo.FileStorage.Audit;
 
 /// <summary>Receives file audit events raised by <see cref="IFileStorageService" /> and multipart upload services.</summary>

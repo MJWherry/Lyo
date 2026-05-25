@@ -107,7 +107,7 @@ public static class DateAndTime
             }
         }
 
-        return nextScheduledDate ?? throw new InvalidOperationException("No valid scheduled day found.");
+        return nextScheduledDate.OrThrowInvalidOperation("No valid scheduled day found.");
     }
 
     /// <summary>Gets the next scheduled DateTime within a time window with intervals.</summary>

@@ -1,7 +1,7 @@
 using System.Globalization;
 using Lyo.Api.Client;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.Health;
@@ -28,6 +28,8 @@ public sealed class TestApiFileStorageService : IFileStorageService
     public event EventHandler<FileRetrievedResult>? FileRetrieved;
 
     public event EventHandler<FileDeletedResult>? FileDeleted;
+
+    public event EventHandler<FileMetadataRetrievedResult>? FileMetadataRetrieved;
 
     /// <summary>Not raised by this HTTP proxy; audit is recorded by TestApi storage.</summary>
 #pragma warning disable CS0067 // Event required by IFileStorageService
@@ -56,16 +58,27 @@ public sealed class TestApiFileStorageService : IFileStorageService
         return stream;
     }
 
-    public async Task<bool> DeleteFileAsync(Guid fileId, CancellationToken ct = default)
+    public async Task<bool> DeleteFileAsync(
+        Guid fileId,
+        FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata,
+        CancellationToken ct = default)
     {
+        if (mode != FileDeletionMode.RemoveObjectAndTombstoneMetadata)
+            throw new NotSupportedException("The Test API HTTP-backed file storage proxy only supports default deletion (object removed, metadata tombstoned).");
+
         var deleted = await _apiClient.DeleteAsAsync<bool>(BuildUri($"files/{fileId:D}"), ct: ct).ConfigureAwait(false);
         FileDeleted?.Invoke(this, new(fileId, deleted));
         return deleted;
     }
 
     public async Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default)
-        => await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata"), ct: ct).ConfigureAwait(false) ??
-            throw new InvalidOperationException($"Metadata endpoint returned no payload for file '{fileId}'.");
+    {
+        var result = await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata"), ct: ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Metadata endpoint returned no payload for file '{fileId}'.");
+
+        FileMetadataRetrieved?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result)));
+        return result;
+    }
 
     public async Task<DekMigrationResult> MigrateDeksAsync(
         string sourceKeyId,
@@ -143,11 +156,21 @@ public sealed class TestApiFileStorageService : IFileStorageService
         _ = fileId;
         var uri = BuildSaveStreamUri(originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId);
         var result = await _apiClient.PostFileAsAsync<FileStoreResult>(uri, input, originalFileName ?? "upload", ct: ct).ConfigureAwait(false);
-        FileSaved?.Invoke(this, new(result.Id, result, result.OriginalFileSize, result.SourceFileSize, result.IsCompressed, result.IsEncrypted));
+        FileSaved?.Invoke(
+            this,
+            new(result.Id, FileStoreSnapshot.From(result), result.OriginalFileSize, result.SourceFileSize, result.IsCompressed, result.IsEncrypted));
         return result;
     }
 
     public async Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
+        => await GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, null, ct).ConfigureAwait(false);
+
+    public async Task<string> GetPreSignedReadUrlAsync(
+        Guid fileId,
+        TimeSpan? expiration,
+        string? pathPrefix,
+        PreSignedReadUrlOptions? urlResponseOptions,
+        CancellationToken ct = default)
     {
         var path = $"files/{fileId:D}/presigned-read";
         var parts = new List<string>();
@@ -157,9 +180,37 @@ public sealed class TestApiFileStorageService : IFileStorageService
         if (!string.IsNullOrEmpty(pathPrefix))
             parts.Add($"pathPrefix={Uri.EscapeDataString(pathPrefix)}");
 
+        AppendPresignedReadQueryParams(parts, urlResponseOptions);
+
         var qs = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
         var response = await _apiClient.GetAsAsync<PresignedReadResponse>(BuildUri($"{path}{qs}"), ct: ct).ConfigureAwait(false);
         return response?.Url ?? throw new InvalidOperationException("Pre-signed read endpoint returned no payload.");
+    }
+
+    public async Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
+        => await _apiClient.PostAsAsync<DirectUploadBeginRequest, DirectUploadBeginResult>(BuildUri("direct-upload/begin"), request, ct: ct).ConfigureAwait(false);
+
+    public async Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
+        => await _apiClient.PostAsAsync<DirectUploadCompleteRequest?, FileStoreResult>(BuildUri($"direct-upload/{fileId:D}/complete"), completeRequest, ct: ct)
+            .ConfigureAwait(false);
+
+    public async Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
+        => await _apiClient.PostAsAsync<FileStorageCopyWorkbenchRequest, FileStoreResult>(
+                BuildUri("files/copy"),
+                new FileStorageCopyWorkbenchRequest(sourceFileId, request),
+                ct: ct)
+            .ConfigureAwait(false);
+
+    private static void AppendPresignedReadQueryParams(List<string> parts, PreSignedReadUrlOptions? opts)
+    {
+        if (opts == null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(opts.ContentDisposition))
+            parts.Add($"contentDisposition={Uri.EscapeDataString(opts.ContentDisposition.Trim())}");
+
+        if (!string.IsNullOrWhiteSpace(opts.ContentType))
+            parts.Add($"contentType={Uri.EscapeDataString(opts.ContentType.Trim())}");
     }
 
     private string BuildUri(string relativePath) => $"{_routePrefix}/{relativePath}";

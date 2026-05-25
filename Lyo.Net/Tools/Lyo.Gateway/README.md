@@ -21,6 +21,7 @@ Part of the [Lyo](../../../README.md) workspace: **`Lyo.Gateway`**.
 - [`Lyo.Encryption`](../../Security/Encryption/Lyo.Encryption/README.md)
 - [`Lyo.FileMetadataStore.Postgres`](../../Data/FileMetadataStore/Lyo.FileMetadataStore.Postgres/README.md)
 - [`Lyo.FileMetadataStore`](../../Data/FileMetadataStore/Lyo.FileMetadataStore/README.md)
+- [`Lyo.FileStorage.Blob`](../../Data/FileStorage/Lyo.FileStorage.Blob/README.md)
 - [`Lyo.FileStorage.S3`](../../Data/FileStorage/Lyo.FileStorage.S3/README.md)
 - [`Lyo.FileStorage.Web.Components`](../../Data/FileStorage/Lyo.FileStorage.Web.Components/README.md)
 - [`Lyo.FileStorage`](../../Data/FileStorage/Lyo.FileStorage/README.md)

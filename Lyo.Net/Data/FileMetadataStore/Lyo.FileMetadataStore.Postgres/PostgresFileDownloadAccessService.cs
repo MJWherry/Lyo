@@ -40,7 +40,8 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         if (request.NotBeforeUtc.HasValue && request.ExpiresAtUtc.HasValue && request.NotBeforeUtc > request.ExpiresAtUtc)
             throw new ArgumentException("NotBeforeUtc must be <= ExpiresAtUtc.", nameof(request));
 
-        var fileExists = await _dbContext.FileMetadata.AsNoTracking().AnyAsync(i => i.Id == request.FileId.ToString(), ct).ConfigureAwait(false);
+        var fileExists = await _dbContext.FileMetadata.AsNoTracking()
+            .AnyAsync(i => i.Id == request.FileId.ToString() && i.DeletedAt == null, ct).ConfigureAwait(false);
         if (!fileExists)
             throw new FileNotFoundException($"Cannot create access link because file metadata does not exist for fileId '{request.FileId}'.");
 
@@ -106,6 +107,11 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
 
         if ((link.WindowStartUtc.HasValue && now < link.WindowStartUtc.Value) || (link.WindowEndUtc.HasValue && now > link.WindowEndUtc.Value))
             return await FailAsync(FileDownloadAccessConsumeFailureReason.OutsideWindow, link, actorId, ipAddress, "outside_window", ct).ConfigureAwait(false);
+
+        var fileStillActive = await _dbContext.FileMetadata.AsNoTracking()
+            .AnyAsync(m => m.Id == link.FileId.ToString() && m.DeletedAt == null, ct).ConfigureAwait(false);
+        if (!fileStillActive)
+            return await FailAsync(FileDownloadAccessConsumeFailureReason.NotFound, link, actorId, ipAddress, "file_metadata_removed", ct).ConfigureAwait(false);
 
         var updateCount = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
                 $"""

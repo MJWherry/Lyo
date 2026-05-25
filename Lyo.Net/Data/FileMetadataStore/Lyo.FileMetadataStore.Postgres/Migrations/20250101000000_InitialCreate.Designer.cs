@@ -153,6 +153,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("tenant_id");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<DateTime>("Timestamp")
                         .IsRequired()
                         .HasColumnType("timestamp with time zone")

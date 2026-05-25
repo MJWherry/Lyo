@@ -62,13 +62,15 @@ internal sealed class PipelineFileReadStream : Stream
             _disposed = true;
             _cts.Cancel();
             _inner.Dispose();
+
+            // Best-effort wait so the pipeline observes cancellation and releases its resources before this Stream returns to caller.
+            // Bounded so callers using sync-over-async paths never see an indefinite hang; prefer DisposeAsync to wait cleanly.
             try {
-                _pipelineTask.GetAwaiter().GetResult();
+                _pipelineTask.Wait(TimeSpan.FromSeconds(5));
             }
-            catch (OperationCanceledException) {
-                // Expected when the reader is closed early.
+            catch (Exception ex) when (IsExpectedPipelineTeardownException(ex)) {
+                // Expected on cancellation/early reader close.
             }
-            catch (AggregateException ex) when (ex.InnerException is OperationCanceledException) { }
 
             _cts.Dispose();
         }
@@ -90,7 +92,9 @@ internal sealed class PipelineFileReadStream : Stream
             try {
                 await _pipelineTask.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) { }
+            catch (Exception ex) when (IsExpectedPipelineTeardownException(ex)) {
+                // Expected on cancellation/early reader close.
+            }
 
             _cts.Dispose();
         }
@@ -98,6 +102,11 @@ internal sealed class PipelineFileReadStream : Stream
         await base.DisposeAsync().ConfigureAwait(false);
     }
 #endif
+
+    /// <summary>Unifies the patterns of cancellation-shaped exceptions that should be swallowed on stream teardown.</summary>
+    private static bool IsExpectedPipelineTeardownException(Exception ex)
+        => ex is OperationCanceledException
+            || (ex is AggregateException agg && agg.InnerExceptions.All(inner => inner is OperationCanceledException));
 
     private void ThrowIfDisposed()
     {

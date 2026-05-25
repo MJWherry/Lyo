@@ -33,7 +33,8 @@ public record FileStoreResult(
     string? ContentType = null,
     string? TenantId = null,
     FileAvailability Availability = FileAvailability.Available,
-    byte? DekKeyMaterialBytes = null)
+    byte? DekKeyMaterialBytes = null,
+    DateTime? DeletedAt = null)
 {
     public override int GetHashCode() => Id.GetHashCode();
 

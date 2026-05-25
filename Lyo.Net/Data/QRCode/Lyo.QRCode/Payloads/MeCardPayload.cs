@@ -55,7 +55,8 @@ public sealed class MeCardPayload : IQrPayload
             sb.Append("EMAIL:").Append(Email).Append(';');
         }
 
-        sb.Append(";;");
+        // meCard terminates with ';' closing the final field separator plus one more ';' (= ';;' after the last value).
+        sb.Append(';');
         return sb.ToString();
     }
 }

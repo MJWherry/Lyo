@@ -1,6 +1,6 @@
 using Lyo.Comic.Api.Models.Response;
 using Lyo.Comic.Api.Storage;
-using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lyo.Comic.Api.Endpoints;
@@ -125,7 +125,7 @@ public static class FilesEndpoints
     private static async Task<IResult> DeleteFile(Guid id, [FromKeyedServices(FileStorageKey)] IFileStorageService fileStorage, CancellationToken ct = default)
     {
         try {
-            var deleted = await fileStorage.DeleteFileAsync(id, ct);
+            var deleted = await fileStorage.DeleteFileAsync(id, ct: ct);
             return deleted ? Results.Ok() : Results.NotFound();
         }
         catch (FileNotFoundException) {

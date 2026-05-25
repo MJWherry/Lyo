@@ -109,5 +109,21 @@ public enum MimeType
 
     /// <summary>image/vnd.microsoft.icon (Windows icon .ico)</summary>
     [Description("image/vnd.microsoft.icon")]
-    Ico = 23
+    Ico = 23,
+
+    /// <summary>application/javascript (JavaScript source (.js))</summary>
+    [Description("application/javascript")]
+    Js = 24,
+
+    /// <summary>application/graphql (GraphQL document (.graphql))</summary>
+    [Description("application/graphql")]
+    Graphql = 25,
+
+    /// <summary>application/graphql (GraphQL document (.gql))</summary>
+    [Description("application/graphql")]
+    Gql = 26,
+
+    /// <summary>application/x-www-form-urlencoded (URL-encoded form body (.form placeholder))</summary>
+    [Description("application/x-www-form-urlencoded")]
+    UrlEncodedForm = 27
 }

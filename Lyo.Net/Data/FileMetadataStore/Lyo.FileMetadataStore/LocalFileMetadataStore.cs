@@ -45,6 +45,10 @@ public class LocalFileMetadataStore : IFileMetadataStore
 #endif
             var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
             OperationHelpers.ThrowIfNull(metadata, $"Failed to deserialize metadata for file {fileId}");
+            if (metadata.DeletedAt != null) {
+                _logger.LogWarning("Metadata is soft-deleted for {FileId}", fileId);
+                throw new FileNotFoundException($"Metadata for file {fileId} not found");
+            }
             _logger.LogDebug("Retrieved metadata for file {FileId}", fileId);
             return metadata;
         }
@@ -86,9 +90,61 @@ public class LocalFileMetadataStore : IFileMetadataStore
             return false;
         }
 
-        File.Delete(metadataPath);
-        _logger.LogDebug("Deleted metadata file for {FileId}", fileId);
-        return await Task.FromResult(true).ConfigureAwait(false);
+        try {
+#if NETSTANDARD2_0
+            ct.ThrowIfCancellationRequested();
+            var json = File.ReadAllText(metadataPath);
+#else
+            var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+            var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+            if (metadata == null) {
+                _logger.LogWarning("Failed to deserialize metadata for deletion {FileId}", fileId);
+                return false;
+            }
+
+            if (metadata.DeletedAt != null) {
+                _logger.LogDebug("Metadata for {FileId} already soft-deleted", fileId);
+                return false;
+            }
+
+            var options = new JsonSerializerOptions { WriteIndented = false };
+            var tombstoned = metadata with { DeletedAt = DateTime.UtcNow };
+            var serialized = JsonSerializer.Serialize(tombstoned, options);
+#if NETSTANDARD2_0
+            File.WriteAllText(metadataPath, serialized);
+#else
+            await File.WriteAllTextAsync(metadataPath, serialized, ct).ConfigureAwait(false);
+#endif
+            _logger.LogDebug("Soft-deleted metadata file for {FileId}", fileId);
+            return true;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to soft-delete metadata for file {FileId}", fileId);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> PurgeMetadataAsync(Guid fileId, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        _logger.LogDebug("Purging metadata file for file {FileId}", fileId);
+        var metadataPath = GetMetadataPath(fileId);
+        if (!File.Exists(metadataPath)) {
+            _logger.LogDebug("Metadata file not found for {FileId}, nothing to purge", fileId);
+            return Task.FromResult(false);
+        }
+
+        try {
+            File.Delete(metadataPath);
+            _logger.LogDebug("Purged metadata file for file {FileId}", fileId);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Failed to purge metadata for file {FileId}", fileId);
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -114,7 +170,9 @@ public class LocalFileMetadataStore : IFileMetadataStore
                     var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
 #endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
-                    if (metadata?.OriginalFileHash is not { Length: > 0 } storedHash || !HashingService.Shared.FixedTimeEquals(storedHash.AsSpan(), hash.AsSpan()))
+                    if (metadata?.DeletedAt != null || metadata?.Availability == FileAvailability.PendingDirectUpload ||
+                        metadata?.OriginalFileHash is not { Length: > 0 } storedHash ||
+                        !HashingService.Shared.FixedTimeEquals(storedHash.AsSpan(), hash.AsSpan()))
                         continue;
 
                     _logger.LogDebug("Found metadata by hash for file {FileId}", metadata.Id);
@@ -154,7 +212,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
                     var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
 #endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
-                    if (metadata != null && metadata.IsEncrypted && metadata.DataEncryptionKeyId == keyId &&
+                    if (metadata != null && metadata.DeletedAt == null && metadata.IsEncrypted && metadata.DataEncryptionKeyId == keyId &&
                         (keyVersion == null || metadata.DataEncryptionKeyVersion == keyVersion))
                         results.Add(metadata);
                 }

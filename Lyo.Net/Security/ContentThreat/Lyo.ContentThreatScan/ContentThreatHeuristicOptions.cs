@@ -1,3 +1,5 @@
+using Lyo.Common.Records;
+
 namespace Lyo.ContentThreatScan;
 
 /// <summary>Heuristic engine controls (MIME/extension gate, slicing, binary heuristic, regex weights).</summary>
@@ -43,11 +45,10 @@ public sealed class ContentThreatHeuristicOptions
 
     /// <summary>Additional exact content types (includes application/javascript, etc.).</summary>
     public HashSet<string> ExactContentTypes { get; set; } = new(StringComparer.OrdinalIgnoreCase) {
-        "application/javascript",
-        "application/x-javascript",
-        "application/csv",
-        "application/graphql",
-        "application/x-www-form-urlencoded"
+        FileTypeInfo.JavaScript.MimeType,
+        FileTypeInfo.Csv.MimeType,
+        FileTypeInfo.Graphql.MimeType,
+        FileTypeInfo.WwwFormUrlEncoded.MimeType
     };
 
     /// <summary>Upper bound on cumulative SQL rule points before truncation.</summary>

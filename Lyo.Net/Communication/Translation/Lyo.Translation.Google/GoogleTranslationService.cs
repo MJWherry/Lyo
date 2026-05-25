@@ -148,7 +148,7 @@ public sealed class GoogleTranslationService : TranslationServiceBase
             var url = $"{_baseUrl}/detect?key={Uri.EscapeDataString(apiKey)}";
             var requestBody = new { q = text };
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var content = new StringContent(json, Encoding.UTF8, FileTypeInfo.Json.MimeType);
             var response = await _httpClient.PostAsync(url, content, ct).ConfigureAwait(false);
             sw.Stop();
 #if NETSTANDARD2_0

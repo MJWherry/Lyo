@@ -129,6 +129,24 @@ public static class ArgumentHelpers
             ThrowArgumentException("Value cannot be empty.", paramName);
     }
 
+    /// <summary>Throws an <see cref="ArgumentException" /> when <paramref name="argument" /> is not <see langword="null" /> but is empty or white-space-only.</summary>
+    /// <param name="argument">Optional string.</param>
+    /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression.</param>
+    /// <remarks>Does nothing when <paramref name="argument" /> is null (use together with nullable parameters where omission is distinguished from empty).</remarks>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="argument" /> is empty or whitespace.</exception>
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfWhiteSpaceOrEmpty(string? argument, [CallerArgumentExpression("argument")] string? paramName = null)
+    {
+        if (argument is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(argument))
+            ThrowArgumentException("Value cannot be empty or whitespace.", paramName);
+    }
+
     /// <summary>Throws an ArgumentException if the condition is true.</summary>
     /// <param name="condition">The condition to check. If true, an ArgumentException is thrown.</param>
     /// <param name="message">The error message.</param>

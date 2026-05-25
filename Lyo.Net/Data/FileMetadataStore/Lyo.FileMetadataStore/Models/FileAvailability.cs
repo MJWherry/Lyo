@@ -13,5 +13,8 @@ public enum FileAvailability
     Quarantined = 2,
 
     /// <summary>File failed policy or scan; reads are blocked.</summary>
-    Rejected = 3
+    Rejected = 3,
+
+    /// <summary>Placeholder metadata recorded; backing object not finalized (direct/client upload).</summary>
+    PendingDirectUpload = 4
 }

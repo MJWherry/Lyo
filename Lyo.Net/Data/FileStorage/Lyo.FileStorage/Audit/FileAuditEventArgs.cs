@@ -1,3 +1,5 @@
+using Lyo.FileStorage.Abstractions;
+
 namespace Lyo.FileStorage.Audit;
 
 /// <summary>Event arguments for <see cref="IFileStorageService.FileAuditOccurred" />.</summary>

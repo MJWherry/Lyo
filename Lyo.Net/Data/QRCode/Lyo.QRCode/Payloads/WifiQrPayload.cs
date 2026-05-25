@@ -16,6 +16,8 @@ public sealed class WifiQrPayload : IQrPayload
     public WifiQrPayload(string ssid, string? password, QrWifiSecurityType security, bool hidden = false)
     {
         ArgumentHelpers.ThrowIfNull(ssid);
+        if (security != QrWifiSecurityType.Nopass && password is not null)
+            ArgumentHelpers.ThrowIfWhiteSpaceOrEmpty(password, nameof(password));
         Ssid = ssid;
         Password = password ?? string.Empty;
         Security = security;

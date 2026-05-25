@@ -2,17 +2,43 @@
 
 S3-compatible storage for **Lyo.FileStorage** (AWS S3, **Backblaze B2**, MinIO, etc.) via **AWSSDK.S3**.
 
+## Documentation map
+
+| Document | Scope |
+|----------|--------|
+| **[`Lyo.FileStorage/README.md`](../Lyo.FileStorage/README.md)** | **`IFileStorageService`** contract, disk backend, **`FileStorageServiceBaseOptions`**, DTOs |
+| **`Lyo.FileStorage.Blob/README.md`** | Azure Blob analogue for SAS/direct-upload/copy |
+| **This file** | **`S3FileStorageService`**, **`S3FileStorageOptions`**, DI builders (**`AddS3FileStorageServiceKeyed*`**), SSE helpers |
+
+## **`S3FileStorageOptions`** (extends **`FileStorageServiceBaseOptions`**)
+
+| Property | Typical use |
+|----------|-------------|
+| **`SectionName`** | Default appsettings subsection (`S3FileStorageOptions`) |
+| **`BucketName`**, **`Region`** | Target bucket / signing region |
+| **`AccessKeyId`**, **`SecretAccessKey`** | Static keys (optional when using IAM/instance profile) |
+| **`ServiceUrl`** | S3-compatible API base URL |
+| **`ProviderAccountId`** | Compatibility helpers (e.g. Cloudflare R2 account id) |
+| **`KeyPrefix`** | Prepended logical folder for every object |
+| **`ServerSideEncryption`**, **`ServerSideEncryptionAwsKmsKeyId`** | SSE for streamed saves, multipart, copy, compatible presigned PUT |
+| **`EnableMetrics`** | Emit counters/histograms when **`IMetrics`** is registered |
+| **Inherited (`FileStorageServiceBaseOptions`)** | Health probing, hashing, duplicates, **`MaxUploadSizeBytes`**, malware-scan gating, etc. |
+
 ## Features
 
 - ✅ **S3 API** — same client for AWS and S3-compatible endpoints
 - ✅ **Multipart uploads** — keyed `S3MultipartUploadService` is registered with the same key when you call `S3FileStorageServiceBuilder.Build` (unless already registered); if no
   `IMultipartUploadSessionStore` is registered yet, an in-memory store is added (use `AddPostgresFileMetadataStoreKeyed(...).Build()` **before** S3 when using PostgreSQL so
-  sessions use the DB)
+  sessions use the DB). Part size is clamped to the S3 minimum (5 MiB) with an 8 MiB default; total upload limit aligns with `MaxUploadSizeBytes`. Server-side copy is used for the final commit (no download+re-upload round trip).
+- ✅ **Streamed PUT spilling** — `S3UploadStream` keeps small payloads in memory and spills to a deletable temp file once it crosses 4 MiB, then uploads via single PUT under 64 MiB or multipart above that, aborting cleanly on any per-part failure
 - ✅ **Region Support** - Configurable AWS regions
 - ✅ **Custom Endpoints** - Support for S3-compatible services
-- ✅ **Key Prefixing** - Organized file storage with key prefixes
-- ✅ **Automatic Path Organization** - Files organized by GUID prefixes
+- ✅ **Key Prefixing** - Organized file storage with key prefixes via the shared `CloudObjectKeyBuilder`
+- ✅ **Automatic Path Organization** - Files organized by GUID prefixes (suffix is persisted in metadata so reads skip N+1 probes)
 - ✅ **IAM Role Support** - Works with IAM roles for authentication
+- ✅ **Diagnostics** — bucket key listing via `IFileStorageDiagnosticsService` (prefix-aware, combines `KeyPrefix`, normalized + traversal-guarded by `Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix`)
+- ✅ **Server-side copy & direct PUT** — `CopyFileAsync` (`CopyObject`), `BeginDirectUploadAsync` / `CompleteDirectUploadAsync` (presigned PUT + finalize). `RequiredPutHeaders` is populated when SSE or a signed `Content-Type` applies, courtesy of `S3UploadServerSideEncryption.BuildRequiredPutHeaders`
+- ✅ **Presigned GET options** — optional `ContentDisposition` / `ContentType` via `PreSignedReadUrlOptions` (S3 response header overrides). When the caller omits `pathPrefix`, the metadata-stored prefix is used as fallback.
 
 ## Configuration
 
@@ -26,7 +52,10 @@ var options = new S3FileStorageOptions
     Region = "us-east-1",
     KeyPrefix = "app-files", // Optional global prefix
     AccessKeyId = "your-key", // Optional if using IAM roles
-    SecretAccessKey = "your-secret" // Optional if using IAM roles
+    SecretAccessKey = "your-secret", // Optional if using IAM roles
+    // Optional SSE for new uploads, copies, streamed saves, multipart staging, and compatible presigned PUTs:
+    ServerSideEncryption = "AES256", // or "aws:kms" / "aws:kms:dsse"
+    ServerSideEncryptionAwsKmsKeyId = null // set CMK id/ARN when using KMS
 };
 
 var metadataStore = new YourMetadataStore(); // Implement IFileMetadataStore
@@ -85,7 +114,7 @@ services.AddS3FileStorageServiceKeyedForMinio("files", o => {
 - ✅ Handles S3-specific errors gracefully
 - ✅ Supports IAM role-based authentication
 - ✅ Efficient object key lookup
-- ✅ Proper resource disposal
+- ✅ Proper resource disposal (**`Dispose()`** and **`IAsyncDisposable.DisposeAsync()`** when the service owns the **`IAmazonS3`** client)
 - ✅ Comprehensive error handling
 - ✅ Thread-safe operations
 
@@ -107,6 +136,10 @@ Files are automatically organized by GUID prefixes:
 ## Health Checks
 
 `IFileStorageService` extends `IHealth`. Get health directly from the service: `await fileStorage.CheckHealthAsync()`.
+
+## Tests
+
+`Lyo.FileStorage.S3.Tests` exercises this assembly with isolated, dependency-free unit tests using a `DispatchProxy`-based `IAmazonS3` stub (`Support/FakeAmazonS3`). Covered: `S3UploadServerSideEncryption` header/apply logic, `S3UploadStream` (single PUT + multipart begin→complete + abort + SSE forwarding), `S3GetObjectResponseStream` disposal, the shared `CloudObjectKeyBuilder`, and options invariants. Path-prefix traversal coverage lives in `Lyo.FileStorage.Tests` against the shared `Lyo.Exceptions.FileHelpers` helper. Deeper end-to-end coverage of presigned signing and live bucket I/O would need LocalStack.
 
 ## Dependencies
 

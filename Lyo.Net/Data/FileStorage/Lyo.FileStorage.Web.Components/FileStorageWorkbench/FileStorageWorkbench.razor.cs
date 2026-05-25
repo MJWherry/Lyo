@@ -1,4 +1,5 @@
 using Lyo.Api.Client;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
 using Lyo.Keystore;
@@ -18,25 +19,25 @@ public partial class FileStorageWorkbench : ComponentBase
     public FileStorageWorkbenchServiceResolver Resolver { get; set; } = default!;
 
     [Inject]
-    public IApiClient ApiClient { get; set; } = default!;
+    public IApiClient ApiClient { get; set; } = null!;
 
     [Inject]
-    public IIOTempService TempService { get; set; } = default!;
+    public IIOTempService TempService { get; set; } = null!;
 
     [Inject]
-    public IJsInterop Js { get; set; } = default!;
+    public IJsInterop Js { get; set; } = null!;
 
     [Inject]
-    public IJSRuntime JsRuntime { get; set; } = default!;
+    public IJSRuntime JsRuntime { get; set; } = null!;
 
     [Inject]
-    public NavigationManager NavigationManager { get; set; } = default!;
+    public NavigationManager NavigationManager { get; set; } = null!;
 
     [Inject]
-    public ISnackbar Snackbar { get; set; } = default!;
+    public ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
-    public IDialogService DialogService { get; set; } = default!;
+    public IDialogService DialogService { get; set; } = null!;
 
     /// <summary>API route segment for file metadata QueryProject (e.g. <c>Workbench/FileStorage/FileMetadata</c>).</summary>
     [Parameter]

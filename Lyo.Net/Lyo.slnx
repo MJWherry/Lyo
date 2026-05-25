@@ -199,8 +199,10 @@
         <Project Path="Data/Xlsx/Lyo.Xlsx.Tests/Lyo.Xlsx.Tests.csproj" />
     </Folder>
     <Folder Name="/Data/FileStorage/">
-        <Project Path="Data/FileStorage/Lyo.FileStorage.Azure/Lyo.FileStorage.Azure.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Blob/Lyo.FileStorage.Blob.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.Blob.Tests/Lyo.FileStorage.Blob.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage.S3/Lyo.FileStorage.S3.csproj" />
+        <Project Path="Data/FileStorage/Lyo.FileStorage.S3.Tests/Lyo.FileStorage.S3.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage.Tests/Lyo.FileStorage.Tests.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage.Web.Components/Lyo.FileStorage.Web.Components.csproj" />
         <Project Path="Data/FileStorage/Lyo.FileStorage/Lyo.FileStorage.csproj" />

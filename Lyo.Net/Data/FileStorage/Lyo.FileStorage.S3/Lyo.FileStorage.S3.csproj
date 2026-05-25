@@ -28,4 +28,8 @@
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.FileStorage.S3.Tests"/>
+    </ItemGroup>
 </Project>

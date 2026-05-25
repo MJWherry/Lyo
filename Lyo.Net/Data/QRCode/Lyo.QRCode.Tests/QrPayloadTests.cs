@@ -29,7 +29,8 @@ public class QrPayloadTests
     [Fact]
     public void WifiQrPayload_requires_password_for_wpa()
     {
-        Assert.Throws<ArgumentException>(() => new WifiQrPayload("Net", "", QrWifiSecurityType.Wpa).ToQrString());
+        Assert.Throws<ArgumentException>(() => _ = new WifiQrPayload("Net", "", QrWifiSecurityType.Wpa));
+        Assert.Throws<InvalidFormatException>(() => new WifiQrPayload("Net", null, QrWifiSecurityType.Wpa).ToQrString());
     }
 
     [Fact]
@@ -169,7 +170,7 @@ public class QrPayloadTests
             .WithFormat(QRCodeFormat.Png)
             .Build();
 
-        Assert.Equal("WIFI:T:WPA;S:x;P:y;H:false;;", data);
+        Assert.Equal("WIFI:T:WPA;S:x;P:y;;", data);
     }
 
     [Fact]

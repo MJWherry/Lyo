@@ -51,8 +51,13 @@ public sealed class MailtoPayload : IQrPayload
         if (To.Contains('\r') || To.Contains('\n'))
             throw new InvalidFormatException("To address cannot contain newlines.", nameof(To), To, "user@example.com");
 
+        // Per RFC 6068 addr-spec belongs in plain form before '?'; pct-encoding '@' yields mailto URIs Uri.TryCreate rejects on .NET.
+        if (To.Contains('?') || To.Contains('#'))
+            throw new InvalidFormatException("To address cannot contain '?' or '#'. Put subject/body/CC/BCC in the payload properties.", nameof(To), To,
+                "user@example.com");
+
         var sb = new StringBuilder("mailto:");
-        sb.Append(Uri.EscapeDataString(To));
+        sb.Append(To);
 
         var q = new List<string>(4);
         if (!string.IsNullOrEmpty(Subject))
@@ -71,7 +76,8 @@ public sealed class MailtoPayload : IQrPayload
             sb.Append('?').Append(string.Join('&', q));
 
         var s = sb.ToString();
-        if (!Uri.TryCreate(s, UriKind.Absolute, out _))
+        if (!Uri.TryCreate(s, UriKind.Absolute, out var mailtoUri)
+            || !string.Equals(mailtoUri.Scheme, Uri.UriSchemeMailto, StringComparison.OrdinalIgnoreCase))
             throw new InvalidFormatException("mailto URI could not be built.", nameof(To), s, "mailto:user@example.com");
 
         return s;

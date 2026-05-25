@@ -1,6 +1,7 @@
 using Lyo.Encryption;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FileMetadataStore.Postgres.Tests;
@@ -60,13 +61,17 @@ public class PostgresFileMetadataStoreTests
     {
         Assert.NotNull(_fixture.ServiceProvider);
         using var scope = _fixture.ServiceProvider.CreateScope();
-        var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+        var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
+        var store = new PostgresFileMetadataStore(context);
         var fileId = Guid.NewGuid();
         var metadata = CreateMetadata(fileId, [1, 2, 3]);
         await store.SaveMetadataAsync(fileId, metadata, TestContext.Current.CancellationToken);
         var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.True(result);
         await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
+
+        var entity = await context.FileMetadata.AsNoTracking().SingleAsync(e => e.Id == fileId.ToString(), TestContext.Current.CancellationToken);
+        Assert.NotNull(entity.DeletedAt);
     }
 
     [Fact]
@@ -78,6 +83,34 @@ public class PostgresFileMetadataStoreTests
         var fileId = Guid.NewGuid();
         var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.False(result);
+    }
+
+    [Fact]
+    public async Task PurgeMetadataAsync_WhenExists_RemovesRow_Idempotent()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
+        var store = new PostgresFileMetadataStore(context);
+        var fileId = Guid.NewGuid();
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [1, 2]), TestContext.Current.CancellationToken);
+        Assert.True(await store.PurgeMetadataAsync(fileId, TestContext.Current.CancellationToken));
+        Assert.False(await context.FileMetadata.AsNoTracking().AnyAsync(e => e.Id == fileId.ToString(), TestContext.Current.CancellationToken));
+        Assert.False(await store.PurgeMetadataAsync(fileId, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task PurgeMetadataAsync_AfterSoftDelete_RemovesRow()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>();
+        var store = new PostgresFileMetadataStore(context);
+        var fileId = Guid.NewGuid();
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [7]), TestContext.Current.CancellationToken);
+        Assert.True(await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken));
+        Assert.True(await store.PurgeMetadataAsync(fileId, TestContext.Current.CancellationToken));
+        Assert.False(await context.FileMetadata.AsNoTracking().AnyAsync(e => e.Id == fileId.ToString(), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -225,5 +258,64 @@ public class PostgresFileMetadataStoreTests
         var shortHash = new byte[] { 1, 2, 3 };
         var result = await store.FindByHashAsync(shortHash, TestContext.Current.CancellationToken);
         Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task DeleteMetadataAsync_WhenAlreadyDeleted_ReturnsFalse()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+        var fileId = Guid.NewGuid();
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [1]), TestContext.Current.CancellationToken);
+        Assert.True(await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken));
+        Assert.False(await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task FindByHashAsync_AfterSoftDelete_IgnoresTombstone()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+        var fileId = Guid.NewGuid();
+        var hash = new byte[] { 9, 9, 9, 1 };
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, hash), TestContext.Current.CancellationToken);
+        await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
+        Assert.Null(await store.FindByHashAsync(hash, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task SaveMetadataAsync_AfterSoftDeleteWithSameId_ClearsDeletedAt()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+        var fileId = Guid.NewGuid();
+        var refreshed = CreateMetadata(fileId, [4, 5, 6]);
+        await store.SaveMetadataAsync(fileId, CreateMetadata(fileId, [1, 2]), TestContext.Current.CancellationToken);
+        await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(fileId, refreshed, TestContext.Current.CancellationToken);
+        var got = await store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken);
+        Assert.Null(got.DeletedAt);
+        Assert.True(got.OriginalFileHash.SequenceEqual(new byte[] { 4, 5, 6 }));
+    }
+
+    [Fact]
+    public async Task FindByKeyIdAndVersionAsync_ExcludesSoftDeleted()
+    {
+        Assert.NotNull(_fixture.ServiceProvider);
+        using var scope = _fixture.ServiceProvider.CreateScope();
+        var store = new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+        const string keyId = "k1";
+        const string version = "v1";
+        var active = CreateMetadata(Guid.NewGuid(), [1], keyId, version);
+        var removed = CreateMetadata(Guid.NewGuid(), [2], keyId, version);
+        await store.SaveMetadataAsync(active.Id, active, TestContext.Current.CancellationToken);
+        await store.SaveMetadataAsync(removed.Id, removed, TestContext.Current.CancellationToken);
+        await store.DeleteMetadataAsync(removed.Id, TestContext.Current.CancellationToken);
+        var list = (await store.FindByKeyIdAndVersionAsync(keyId, version, TestContext.Current.CancellationToken)).ToList();
+        Assert.Single(list);
+        Assert.Equal(active.Id, list[0].Id);
     }
 }

@@ -5,7 +5,7 @@ OLTP **`IFileMetadataStore`** plus adjunct services used by richer file pipeline
 ### `PostgresFileMetadataStore`
 
 Implements transactional CRUD for canonical metadata rows (**`SaveMetadataAsync`** upserts, **`FindByHashAsync`** leverages indexed digest columns—verify migration indices before
-huge imports, **`FindByKeyIdAndVersion`** powers rotation reporting).
+huge imports, **`FindByKeyIdAndVersion`** powers rotation reporting). Rows support logical delete via nullable **`deleted_at`**; **`GetMetadataAsync`**, duplicate hash lookup, and key-rotation enumeration ignore tombstoned rows. Physical blob lifecycle remains owned by **`Lyo.FileStorage`**.
 
 Registers as **scoped** in many hosts so each ASP.NET HTTP request obtains its own **`FileMetadataStoreDbContext`** lifecycle (prevent accidental cross-request state).
 

@@ -7,7 +7,7 @@ using Lyo.FileStorage.Policy;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using LocalFileStorageServiceOptions = Lyo.FileStorage.Models.LocalFileStorageServiceOptions;
+using DiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
 
 namespace Lyo.FileStorage.Multipart;
 
@@ -15,19 +15,21 @@ namespace Lyo.FileStorage.Multipart;
 public sealed class LocalMultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
+    private readonly IFileContentPolicy _contentPolicy;
     private readonly ILogger<LocalMultipartUploadService> _logger;
     private readonly IFileMalwareScanner _malwareScanner;
     private readonly IMetrics _metrics;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
-    private readonly LocalFileStorageServiceOptions _options;
+    private readonly DiskFileStorageOptions _options;
     private readonly IMultipartUploadSessionStore _sessions;
     private readonly LocalFileStorageService _storage;
 
     public LocalMultipartUploadService(
         LocalFileStorageService storage,
         IMultipartUploadSessionStore sessions,
-        LocalFileStorageServiceOptions options,
+        DiskFileStorageOptions options,
         IFileMalwareScanner? malwareScanner = null,
+        IFileContentPolicy? contentPolicy = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         ILoggerFactory? loggerFactory = null,
@@ -40,6 +42,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
         _sessions = sessions;
         _options = options;
         _malwareScanner = malwareScanner ?? NullFileMalwareScanner.Instance;
+        _contentPolicy = contentPolicy ?? new AllowAllFileContentPolicy();
         _auditHandlers = auditHandlers == null ? [] : auditHandlers.ToList();
         _operationContextAccessor = operationContextAccessor ?? NullFileOperationContextAccessor.Instance;
         _metrics = metrics ?? NullMetrics.Instance;
@@ -51,27 +54,57 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     {
         ArgumentHelpers.ThrowIfNull(request);
         OperationHelpers.ThrowIf(request.PartSizeBytes < 1024, "PartSizeBytes must be at least 1024.");
+        OperationHelpers.ThrowIf(request.Encrypt && string.IsNullOrWhiteSpace(request.KeyId), "Multipart Encrypt=true requires KeyId.");
+        if (_options.MaxUploadSizeBytes is { } cap && request.DeclaredContentLength is { } len && len > cap)
+            throw new InvalidOperationException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
+
+        FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
         var sessionId = Guid.NewGuid();
         var targetFileId = Guid.NewGuid();
         var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
         var now = DateTime.UtcNow;
         var stagingDir = Path.Combine(_options.RootDirectoryPath, ".multipart", sessionId.ToString("N"));
-        Directory.CreateDirectory(stagingDir);
-        var state = JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir });
         var tenant = request.TenantId ?? _operationContextAccessor.Current?.TenantId;
-        var record = new MultipartUploadSessionRecord(
-            sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName, request.ContentType,
-            MultipartSessionStatus.Active, MultipartUploadProviderKind.Local, state, request.DeclaredContentLength, request.PartSizeBytes);
+        try {
+            await _contentPolicy.ValidateAsync(
+                    new() {
+                        ByteLength = request.DeclaredContentLength ?? 0,
+                        ContentType = request.ContentType,
+                        OriginalFileName = request.OriginalFileName,
+                        TenantId = tenant
+                    }, ct)
+                .ConfigureAwait(false);
 
-        await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
-                    FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
+            var record = new MultipartUploadSessionRecord(
+                sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
+                request.ContentType, MultipartSessionStatus.Active, MultipartUploadProviderKind.Local, JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }),
+                request.DeclaredContentLength, request.PartSizeBytes);
 
-        return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.Local);
+            // Persist the session BEFORE creating the staging directory: a session-store failure should not leave an orphan staging dir.
+            await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
+            Directory.CreateDirectory(stagingDir);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return new(sessionId, targetFileId, request.PartSizeBytes, record.ExpiresUtc, MultipartUploadProviderKind.Local);
+        }
+        catch (Exception ex) {
+            // best-effort cleanup if dir was created
+            TryDeleteDir(stagingDir);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
+                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -82,6 +115,7 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     public async Task UploadPartAsync(Guid sessionId, int partNumber, Stream content, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(content);
+        ArgumentHelpers.ThrowIfLessThan(partNumber, 1);
         var session = await GetActiveSessionAsync(sessionId, ct).ConfigureAwait(false);
         var dir = GetStagingDir(session);
         var partPath = Path.Combine(dir, $"part-{partNumber:D5}.bin");
@@ -94,51 +128,72 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
     {
         ArgumentHelpers.ThrowIfNull(request);
         var session = await GetActiveSessionAsync(request.SessionId, ct).ConfigureAwait(false);
-        var dir = GetStagingDir(session);
-        var parts = request.Parts.OrderBy(p => p.PartNumber).ToList();
-        OperationHelpers.ThrowIf(parts.Count == 0, "At least one part is required.");
-        var mergedPath = Path.Combine(dir, "merged.bin");
-        using (var merged = File.Create(mergedPath)) {
-            foreach (var p in parts) {
-                var partPath = Path.Combine(dir, $"part-{p.PartNumber:D5}.bin");
-                if (!File.Exists(partPath))
-                    throw new FileNotFoundException($"Part {p.PartNumber} not found for session {request.SessionId}.");
+        try {
+            var dir = GetStagingDir(session);
+            var parts = request.Parts.OrderBy(p => p.PartNumber).ToList();
+            OperationHelpers.ThrowIf(parts.Count == 0, "At least one part is required.");
+            var mergedPath = Path.Combine(dir, "merged.bin");
+            using (var merged = File.Create(mergedPath)) {
+                foreach (var p in parts) {
+                    ArgumentHelpers.ThrowIfLessThan(p.PartNumber, 1);
+                    var partPath = Path.Combine(dir, $"part-{p.PartNumber:D5}.bin");
+                    if (!File.Exists(partPath))
+                        throw new FileNotFoundException($"Part {p.PartNumber} not found for session {request.SessionId}.");
 
-                using var partStream = File.OpenRead(partPath);
-                await partStream.CopyToAsync(merged, 81920, ct).ConfigureAwait(false);
+                    using var partStream = File.OpenRead(partPath);
+                    await partStream.CopyToAsync(merged, 81920, ct).ConfigureAwait(false);
+                }
             }
+
+            var mergedInfo = new FileInfo(mergedPath);
+            FileAvailability? availabilityOverride = null;
+            if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
+                using var scanStream = File.OpenRead(mergedPath);
+                var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
+                availabilityOverride = scan.ThreatLevel switch {
+                    FileScanThreatLevel.Clean => FileAvailability.Available,
+                    FileScanThreatLevel.Suspect => FileAvailability.Quarantined,
+                    FileScanThreatLevel.Threat => throw new FilePolicyRejectedException(scan.Detail ?? "Malware scan rejected the multipart payload."),
+                    var _ => FileAvailability.Quarantined
+                };
+            }
+
+            using var input = File.OpenRead(mergedPath);
+            var result = await _storage.SaveFromStreamAsync(
+                    input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
+                    session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)
+                .ConfigureAwait(false);
+
+            await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
+            TryDeleteDir(dir);
+            await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
+                        result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            return result;
         }
+        catch (Exception ex) {
+            try {
+                await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Failed, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogWarning(statusEx, "Failed to set session {SessionId} to Failed", session.SessionId);
+            }
 
-        var mergedInfo = new FileInfo(mergedPath);
-        FileAvailability? availabilityOverride = null;
-        if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
-            using var scanStream = File.OpenRead(mergedPath);
-            var scan = await _malwareScanner.ScanAsync(scanStream, session.ContentType, session.OriginalFileName, ct).ConfigureAwait(false);
-            availabilityOverride = scan.ThreatLevel switch {
-                FileScanThreatLevel.Clean => FileAvailability.Available,
-                FileScanThreatLevel.Suspect => FileAvailability.Quarantined,
-                FileScanThreatLevel.Threat => throw new FilePolicyRejectedException(scan.Detail ?? "Malware scan rejected the multipart payload."),
-                var _ => FileAvailability.Available
-            };
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
+                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
+
+            throw;
         }
-
-        using var input = File.OpenRead(mergedPath);
-        var result = await _storage.SaveFromStreamAsync(
-                input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
-                session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)
-            .ConfigureAwait(false);
-
-        await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);
-        TryDeleteDir(dir);
-        await _sessions.DeleteAsync(session.SessionId, ct).ConfigureAwait(false);
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartComplete, DateTime.UtcNow, result.Id, session.TenantId, _operationContextAccessor.Current?.ActorId, result.DataEncryptionKeyId,
-                    result.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
-
-        return result;
     }
 
     /// <inheritdoc />
@@ -149,20 +204,51 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             return;
 
         try {
-            var dir = GetStagingDir(s);
-            TryDeleteDir(dir);
+            try {
+                var dir = GetStagingDir(s);
+                TryDeleteDir(dir);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to delete multipart staging for session {SessionId}", sessionId);
+            }
+
+            // Mark the session as Aborted first so any session store implementation that retains rows after Delete can surface the correct lifecycle state.
+            try {
+                await _sessions.SetStatusAsync(sessionId, MultipartSessionStatus.Aborted, ct).ConfigureAwait(false);
+            }
+            catch (Exception statusEx) {
+                _logger.LogDebug(statusEx, "Failed to set session {SessionId} status to Aborted prior to delete", sessionId);
+            }
+
+            await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
         }
         catch (Exception ex) {
-            _logger.LogWarning(ex, "Failed to delete multipart staging for session {SessionId}", sessionId);
-        }
+            await FileAuditPublication.PublishAsync(
+                    _auditHandlers, null, null,
+                    new(
+                        FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
+                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                .ConfigureAwait(false);
 
-        await _sessions.DeleteAsync(sessionId, ct).ConfigureAwait(false);
-        await FileAuditPublication.PublishAsync(
-                _auditHandlers, null, null,
-                new(
-                    FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
-                    FileAuditOutcome.Success), ct, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
-            .ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private static string SanitizeAuditError(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return string.Empty;
+
+        const int max = 512;
+        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
     }
 
     private async Task<MultipartUploadSessionRecord> GetActiveSessionAsync(Guid sessionId, CancellationToken ct)

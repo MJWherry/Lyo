@@ -21,13 +21,19 @@ public interface IFileMetadataStore
     /// <param name="ct">Cancellation token</param>
     Task SaveMetadataAsync(Guid fileId, FileStoreResult metadata, CancellationToken ct = default);
 
-    /// <summary>Deletes metadata for a file.</summary>
+    /// <summary>Soft-deletes metadata: sets deletion timestamp instead of removing the row. Subsequent <see cref="GetMetadataAsync" /> and duplicate lookups omit tombstones; idempotent deletes return false if already logically deleted.</summary>
     /// <param name="fileId">The unique identifier of the file</param>
     /// <param name="ct">Cancellation token</param>
-    /// <returns>True if metadata was deleted, false if it didn't exist</returns>
+    /// <returns>True when the row transitioned to deleted now; false if missing or already soft-deleted</returns>
     Task<bool> DeleteMetadataAsync(Guid fileId, CancellationToken ct = default);
 
-    /// <summary>Finds metadata by file hash. Used for duplicate detection.</summary>
+    /// <summary>
+    /// Permanently removes persisted metadata (database row or <c>.meta</c> JSON file). Use with operator-backed file deletion when metadata must not remain as a tombstone. Idempotent:
+    /// returns <see langword="false"/> when no record existed.
+    /// </summary>
+    Task<bool> PurgeMetadataAsync(Guid fileId, CancellationToken ct = default);
+
+    /// <summary>Finds metadata by file hash among non-deleted files. Used for duplicate detection.</summary>
     /// <param name="hash">The hash of the original file data</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>The metadata if found, null otherwise</returns>

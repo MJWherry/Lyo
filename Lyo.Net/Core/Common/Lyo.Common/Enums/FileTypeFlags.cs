@@ -228,15 +228,32 @@ public enum FileTypeFlags : long
     [Description("Windows Installer package (MSI) (.msi).")]
     Msi = 1L << 49,
 
+    /// <summary>JavaScript source file (.js).</summary>
+    [Description("JavaScript source file (.js).")]
+    Js = 1L << 50,
+
+    /// <summary>GraphQL document (.graphql).</summary>
+    [Description("GraphQL document (.graphql).")]
+    Graphql = 1L << 51,
+
+    /// <summary>GraphQL document (.gql).</summary>
+    [Description("GraphQL document (.gql).")]
+    Gql = 1L << 52,
+
+    /// <summary>URL-encoded HTTP form placeholder (.form).</summary>
+    [Description("URL-encoded HTTP form (.form).")]
+    UrlEncodedForm = 1L << 53,
+
     // Category flags
     Images = Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif | Tiff | Webp,
     Documents = Pdf | Doc | Docx | Xls | Xlsx,
-    DataFiles = Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump,
+    DataFiles = Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Js | Graphql | Gql | UrlEncodedForm,
     Compressed = Zip | Rar | SevenZip | Tar | Gz | Bz2 | Xz,
     Encrypted = Enc | Gpg,
     Audio = Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm,
     PackageManager = Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi,
 
-    All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif | Tiff | Webp | Zip | Rar | SevenZip |
-        Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm | Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi
+    All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Js | Graphql | Gql | UrlEncodedForm | Jpg | Jpeg | Png | Gif |
+        Bmp | Svg | Tif | Tiff | Webp | Zip | Rar | SevenZip | Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm | Nupkg |
+        Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi
 }

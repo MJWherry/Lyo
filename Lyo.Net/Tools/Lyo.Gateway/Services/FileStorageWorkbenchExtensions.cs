@@ -1,6 +1,7 @@
 using Lyo.Api.Client;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.S3;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Keystore;

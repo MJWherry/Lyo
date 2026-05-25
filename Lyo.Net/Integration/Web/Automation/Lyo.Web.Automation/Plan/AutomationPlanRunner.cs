@@ -506,7 +506,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
             return resolved;
 
         resolved = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(serviceType, false)).FirstOrDefault(static t => t != null);
-        return resolved ?? throw new InvalidOperationException($"Unable to resolve service type '{serviceType}'. Use assembly-qualified name or ensure assembly is loaded.");
+        return resolved.OrThrowInvalidOperation($"Unable to resolve service type '{serviceType}'. Use assembly-qualified name or ensure assembly is loaded.");
     }
 
     private static MethodInfo? ResolveBestMethod(Type serviceType, string methodName)

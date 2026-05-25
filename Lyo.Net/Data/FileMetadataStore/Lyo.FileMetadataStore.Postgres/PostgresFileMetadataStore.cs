@@ -40,7 +40,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     public async Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default)
     {
         _logger.LogDebug("Retrieving metadata for file {FileId}", fileId);
-        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == fileId.ToString() && e.DeletedAt == null, ct).ConfigureAwait(false);
         if (entity == null) {
             _logger.LogWarning("Metadata not found in database for {FileId}", fileId);
             throw new FileNotFoundException($"Metadata for file {fileId} not found");
@@ -77,9 +77,30 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
             return false;
         }
 
+        if (entity.DeletedAt != null) {
+            _logger.LogDebug("Metadata for {FileId} already soft-deleted", fileId);
+            return false;
+        }
+
+        entity.DeletedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        _logger.LogDebug("Soft-deleted metadata in database for file {FileId}", fileId);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> PurgeMetadataAsync(Guid fileId, CancellationToken ct = default)
+    {
+        _logger.LogDebug("Purging metadata for file {FileId}", fileId);
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == fileId.ToString(), ct).ConfigureAwait(false);
+        if (entity == null) {
+            _logger.LogDebug("Metadata not found in database for {FileId}, nothing to purge", fileId);
+            return false;
+        }
+
         _dbContext.FileMetadata.Remove(entity);
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
-        _logger.LogDebug("Deleted metadata from database for file {FileId}", fileId);
+        _logger.LogDebug("Purged metadata row for file {FileId}", fileId);
         return true;
     }
 
@@ -90,7 +111,10 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         _logger.LogDebug("Searching for metadata by hash");
 
         // Let PostgreSQL evaluate bytea equality so the database can use the hash index.
-        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.OriginalFileHash == hash, ct).ConfigureAwait(false);
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(
+                e => e.OriginalFileHash == hash && e.DeletedAt == null &&
+                     (e.Availability == null || e.Availability != nameof(FileAvailability.PendingDirectUpload)), ct)
+            .ConfigureAwait(false);
         if (entity == null) {
             _logger.LogDebug("No metadata found for hash");
             return null;
@@ -106,7 +130,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         _logger.LogDebug("Searching for metadata by keyId '{KeyId}' and version {KeyVersion}", keyId, keyVersion ?? "any");
-        var query = _dbContext.FileMetadata.Where(e => e.DataEncryptionKeyId == keyId && e.IsEncrypted);
+        var query = _dbContext.FileMetadata.Where(e => e.DataEncryptionKeyId == keyId && e.IsEncrypted && e.DeletedAt == null);
         if (keyVersion != null)
             query = query.Where(e => e.DataEncryptionKeyVersion == keyVersion);
 

@@ -11,7 +11,7 @@ using Lyo.IO.Temp.Models;
 using Lyo.Keystore;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
-using LocalFileStorageServiceOptions = Lyo.FileStorage.Models.LocalFileStorageServiceOptions;
+using LocalDiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -47,7 +47,7 @@ public class LocalFileStorageServiceTests : IDisposable
         bool throwOnDeleteNotFound = true,
         HashAlgorithm? hashAlgorithm = null)
     {
-        var options = new LocalFileStorageServiceOptions {
+        var options = new LocalDiskFileStorageOptions {
             RootDirectoryPath = _tempSession.SessionDirectory,
             EnableDuplicateDetection = enableDuplicateDetection,
             ThrowOnFileNotFound = throwOnFileNotFound,
@@ -114,10 +114,26 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService();
         var testData = "Delete me"u8.ToArray();
         var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
-        var deleted = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
+        var deleted = await service.DeleteFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);
         Assert.True(deleted);
         var filePath = Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ""));
         Assert.False(File.Exists(filePath));
+    }
+
+    [Fact]
+    public async Task DeleteFileAsync_Purge_RemovesObjectAndDeletesMetadataFile()
+    {
+        using var service = CreateService();
+        var testData = "Purge delete"u8.ToArray();
+        var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
+        var metaPath = Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ".meta"));
+        Assert.True(File.Exists(metaPath));
+        var deleted = await service.DeleteFileAsync(
+            saveResult.Id, FileDeletionMode.RemoveObjectAndPurgeMetadata, TestContext.Current.CancellationToken);
+        Assert.True(deleted);
+        Assert.False(File.Exists(Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ""))));
+        Assert.False(File.Exists(metaPath));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -349,7 +365,7 @@ public class LocalFileStorageServiceTests : IDisposable
         service.FileDeleted += (_, args) => eventArgs = args;
         var testData = "Delete event test"u8.ToArray();
         var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
-        await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
+        await service.DeleteFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(saveResult.Id, eventArgs.FileId);
         Assert.True(eventArgs.Success);
@@ -366,7 +382,7 @@ public class LocalFileStorageServiceTests : IDisposable
         await service.GetMetadataAsync(saveResult.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(eventArgs);
         Assert.Equal(saveResult.Id, eventArgs.FileId);
-        Assert.NotNull(eventArgs.FileStoreResult);
+        Assert.NotNull(eventArgs.File);
     }
 
     [Fact]
@@ -414,7 +430,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService();
         var nonExistentId = Guid.NewGuid();
-        await Assert.ThrowsAsync<FileNotFoundException>(() => service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => service.DeleteFileAsync(nonExistentId, ct: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -422,7 +438,7 @@ public class LocalFileStorageServiceTests : IDisposable
     {
         using var service = CreateService(throwOnDeleteNotFound: false);
         var nonExistentId = Guid.NewGuid();
-        var result = await service.DeleteFileAsync(nonExistentId, TestContext.Current.CancellationToken);
+        var result = await service.DeleteFileAsync(nonExistentId, ct: TestContext.Current.CancellationToken);
         Assert.False(result);
     }
 
@@ -450,7 +466,7 @@ public class LocalFileStorageServiceTests : IDisposable
         using var service = CreateService(throwOnDeleteNotFound: false);
         var testData = "Test file for delete"u8.ToArray();
         var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
-        var result = await service.DeleteFileAsync(saveResult.Id, TestContext.Current.CancellationToken);
+        var result = await service.DeleteFileAsync(saveResult.Id, ct: TestContext.Current.CancellationToken);
         Assert.True(result);
     }
 
@@ -570,7 +586,7 @@ public class LocalFileStorageServiceTests : IDisposable
         var decryptedData = await service1.GetFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
 
         // Delete the old file
-        await service1.DeleteFileAsync(saveResult1.Id, TestContext.Current.CancellationToken);
+        await service1.DeleteFileAsync(saveResult1.Id, ct: TestContext.Current.CancellationToken);
 
         // Save with version 2
         var saveResult2 = await service2.SaveFileAsync(decryptedData, "secret.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
@@ -1086,7 +1102,7 @@ public class LocalFileStorageServiceTests : IDisposable
         Assert.Equal(originalData, decryptedData);
 
         // Delete old file
-        await serviceV2.DeleteFileAsync(saveResultV1.Id, TestContext.Current.CancellationToken);
+        await serviceV2.DeleteFileAsync(saveResultV1.Id, ct: TestContext.Current.CancellationToken);
 
         // Re-encrypt with v2 (different KEK bytes, same services)
         var saveResultV2 = await serviceV2.SaveFileAsync(decryptedData, "reencrypt.txt", encrypt: true, keyId: keyId, ct: TestContext.Current.CancellationToken);
@@ -1335,7 +1351,8 @@ public class LocalFileStorageServiceTests : IDisposable
         var migrationResult3 = await service.MigrateDeksAsync(keyId, version2, ct: TestContext.Current.CancellationToken);
         Assert.True(migrationResult3.AllSucceeded);
         Assert.Equal(1, migrationResult3.TotalFilesFound);
-        Assert.Equal(1, migrationResult3.SuccessfullyMigrated); // Should skip already migrated file (counts as success)
+        Assert.Equal(0, migrationResult3.SuccessfullyMigrated); // Already-at-target files are now tracked in Skipped
+        Assert.Equal(1, migrationResult3.Skipped);
 
         // Verify metadata is still correct
         var metadata = await service.GetMetadataAsync(saveResultV1.Id, TestContext.Current.CancellationToken);

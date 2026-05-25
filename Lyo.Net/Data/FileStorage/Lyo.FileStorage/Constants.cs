@@ -24,8 +24,6 @@ public static class Constants
         public const string DeleteFailure = "filestorage.delete.failure";
         public const string DeleteDurationMs = "filestorage.delete.duration_ms";
 
-        public const string FileSizeBytes = "filestorage.file_size_bytes";
-
         public const string FileStoragePreSignedUrlGenerated = "filestorage.presigned_url.generated";
         public const string FileStoragePreSignedUrlGenerationFailed = "filestorage.presigned_url.generation_failed";
 
