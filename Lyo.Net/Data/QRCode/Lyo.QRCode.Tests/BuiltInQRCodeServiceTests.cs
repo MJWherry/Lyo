@@ -1,5 +1,3 @@
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.QRCode.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -17,16 +15,6 @@ public class BuiltInQRCodeServiceTests
                 EnableMetrics = false
             }, NullLogger<BuiltInQRCodeService>.Instance);
 
-    private static BuiltInQRCodeService CreateServiceWithFrame()
-        => new(
-            new() {
-                DefaultFormat = QRCodeFormat.Png,
-                DefaultSize = 8,
-                MinSize = 1,
-                DefaultErrorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium,
-                EnableMetrics = false
-            }, NullLogger<BuiltInQRCodeService>.Instance, null, null, new QrFrameLayoutService());
-
     [Fact]
     public async Task GenerateAsync_Png_HasValidHeader()
     {
@@ -40,24 +28,6 @@ public class BuiltInQRCodeServiceTests
         Assert.Equal(0x50, qr.ImageBytes[1]);
         Assert.Equal(0x4E, qr.ImageBytes[2]);
         Assert.Equal(0x47, qr.ImageBytes[3]);
-    }
-
-    [Fact]
-    public async Task GenerateAsync_Png_WithRoundedPanelFrame_IsLargerThanBarePng()
-    {
-        var service = CreateServiceWithFrame();
-        var bare = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken);
-        Assert.True(bare.IsSuccess);
-        var bareQr = Assert.IsType<QRCodeResult>(bare);
-        var framed = await service.GenerateAsync(
-            "https://example.com", new() { Format = QRCodeFormat.Png, Size = 8, Frame = new() { Style = QrFrameStyle.SimpleRoundedPanel, CaptionText = "Scan" } },
-            TestContext.Current.CancellationToken);
-
-        Assert.True(framed.IsSuccess);
-        var framedQr = Assert.IsType<QRCodeResult>(framed);
-        Assert.NotNull(bareQr.ImageBytes);
-        Assert.NotNull(framedQr.ImageBytes);
-        Assert.True(framedQr.ImageBytes!.Length > bareQr.ImageBytes!.Length);
     }
 
     [Fact]

@@ -108,8 +108,8 @@ internal sealed class PlainDirectUploadCoordinator
 
         var ts = DateTime.UtcNow;
         var meta = new FileStoreResult(
-            fileId, request.OriginalFileName ?? fileId.ToString(), 0, Array.Empty<byte>(), fileId.ToString(), 0, Array.Empty<byte>(), false, null, null, null, false, null, null,
-            null, null, null, null, null, null, ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, resolvedTenant, FileAvailability.PendingDirectUpload, null, null);
+            fileId, request.OriginalFileName ?? fileId.ToString(), 0, [], fileId.ToString(), 0, [], false, null, null, null, false, null, null,
+            null, null, null, null, null, null, ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, resolvedTenant, FileAvailability.PendingDirectUpload);
 
         await _metadataService.SaveMetadataAsync(fileId, meta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(
@@ -150,8 +150,6 @@ internal sealed class PlainDirectUploadCoordinator
 
             // Spool to a temp file so we can stream-hash, stream-scan, and stay within bounded RAM regardless of payload size.
             var spoolPath = Path.Combine(Path.GetTempPath(), $"lyo-fs-direct-{fileId:N}.tmp");
-            long observedLength;
-            byte[] plainHash;
             try {
                 using (raw)
 #if NETSTANDARD2_0
@@ -163,17 +161,18 @@ internal sealed class PlainDirectUploadCoordinator
                 await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
                     await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
 #endif
-                observedLength = new FileInfo(spoolPath).Length;
+                var observedLength = new FileInfo(spoolPath).Length;
                 OperationHelpers.ThrowIfLessThan(observedLength, 1, "Direct uploaded object was empty.");
                 OperationHelpers.ThrowIf(
                     _options.MaxUploadSizeBytes.HasValue && observedLength > _options.MaxUploadSizeBytes.Value,
                     $"Uploaded payload length {observedLength} exceeds MaxUploadSizeBytes.");
 
                 OperationHelpers.ThrowIf(
-                    completeRequest?.ExpectedByteLength.HasValue == true && completeRequest!.ExpectedByteLength!.Value != observedLength,
+                    completeRequest?.ExpectedByteLength.HasValue == true && completeRequest.ExpectedByteLength!.Value != observedLength,
                     $"Expected byte length {completeRequest?.ExpectedByteLength} but read observed {observedLength}.");
 
                 // Stream-hash from disk.
+                byte[] plainHash;
                 using (var ha = _options.HashAlgorithm.Create())
 #if NETSTANDARD2_0
                 {
@@ -260,11 +259,11 @@ internal sealed class PlainDirectUploadCoordinator
 
     private static string SanitizeAuditError(string? message)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsNullOrEmpty())
             return string.Empty;
 
         const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
         return s.Length > max ? s[..max] : s;
     }
 

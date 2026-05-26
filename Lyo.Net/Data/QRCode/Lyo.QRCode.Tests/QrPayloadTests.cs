@@ -40,7 +40,7 @@ public class QrPayloadTests
     [Fact]
     public void WifiQrPayload_wpa_not_hidden_omits_H()
     {
-        var p = new WifiQrPayload("Net", "secret", QrWifiSecurityType.Wpa, false);
+        var p = new WifiQrPayload("Net", "secret", QrWifiSecurityType.Wpa);
         Assert.Equal("WIFI:T:WPA;S:Net;P:secret;;", p.ToQrString());
     }
 
@@ -49,7 +49,7 @@ public class QrPayloadTests
     {
         var body = new string('x', SmsPayload.MaxSmsQrUriLength);
         var p = new SmsPayload("+1", body);
-        Assert.Throws<InvalidFormatException>(() => p.ToQrString());
+        Assert.Throws<InvalidFormatException>(p.ToQrString);
     }
 
     [Fact]

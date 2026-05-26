@@ -9,11 +9,11 @@ namespace Lyo.Images;
 /// <summary>Extension methods for ImageSharp image service registration.</summary>
 public static class Extensions
 {
-    /// <summary>Registers <see cref="IQrFrameLayoutService" /> when not already present (QR frame compositing only needs ImageSharp + fonts).</summary>
-    private static void TryAddQrFrameLayoutService(IServiceCollection services)
+    /// <summary>Registers <see cref="IImageDecorationService" /> when not already present (overlay/frame/caption/padding primitives are usable independently of <see cref="IImageService" />).</summary>
+    private static void TryAddImageDecorationService(IServiceCollection services)
     {
-        if (!services.Any(s => s.ServiceType == typeof(IQrFrameLayoutService)))
-            services.AddSingleton<IQrFrameLayoutService>(sp => new QrFrameLayoutService(sp.GetService<ImageServiceOptions>()));
+        if (!services.Any(s => s.ServiceType == typeof(IImageDecorationService)))
+            services.AddSingleton<IImageDecorationService>(sp => new ImageDecorationService(sp.GetService<ImageServiceOptions>()));
     }
 
     /// <summary>Registers <see cref="ISpriteSheetExportService" /> for spritesheet export and slicing helpers.</summary>
@@ -37,7 +37,7 @@ public static class Extensions
             configure?.Invoke(options);
             services.AddSingleton(options);
             services.AddSingleton<IImageService, ImageSharpImageService>();
-            TryAddQrFrameLayoutService(services);
+            TryAddImageDecorationService(services);
             return services;
         }
 
@@ -50,7 +50,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddSingleton(options);
             services.AddSingleton<IImageService, ImageSharpImageService>();
-            TryAddQrFrameLayoutService(services);
+            TryAddImageDecorationService(services);
             return services;
         }
 
@@ -90,7 +90,7 @@ public static class Extensions
             }
 
             services.AddSingleton<IImageService, ImageSharpImageService>();
-            TryAddQrFrameLayoutService(services);
+            TryAddImageDecorationService(services);
             return services;
         }
     }

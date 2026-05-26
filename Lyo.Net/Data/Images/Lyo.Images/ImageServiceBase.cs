@@ -7,10 +7,7 @@ using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing;
-using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
@@ -45,7 +42,11 @@ public abstract class ImageServiceBase : IImageService
         Logger = logger ?? NullLogger.Instance;
         Metrics = options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         MetricNames = CreateMetricNamesDictionary();
+        Decoration = new(options, null, metrics);
     }
+
+    /// <summary>Decoration primitives (overlay / frame / caption / outer padding). Delegated to <see cref="ImageDecorationService" /> so backend implementations don't re-implement them.</summary>
+    protected ImageDecorationService Decoration { get; }
 
     /// <inheritdoc />
     public ImageFormat DefaultFormat => ImageFormat.Jpeg;
@@ -240,97 +241,51 @@ public abstract class ImageServiceBase : IImageService
     }
 
     /// <inheritdoc />
-    public async Task<Result<byte[]>> CompositeCenterOverlayPngAsync(
-        byte[] backgroundPng,
-        byte[] overlayImageBytes,
-        ImageCenterOverlayOptions options,
+    public Task<Result<bool>> OverlayAsync(
+        Stream backgroundStream,
+        Stream overlayStream,
+        Stream outputStream,
+        OverlayOptions options,
+        ImageFormat? format = null,
+        int? quality = null,
         CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNull(backgroundPng);
-        ArgumentHelpers.ThrowIfNull(overlayImageBytes);
-        ArgumentHelpers.ThrowIfNull(options);
-        var overlayPct = Math.Clamp(options.OverlaySizePercent, 1, 50);
-        using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.CompositeOverlayDuration)]);
-        ct.ThrowIfCancellationRequested();
-        try {
-            await using var bgStream = new MemoryStream(backgroundPng, false);
-            using var qr = await Image.LoadAsync<Rgba32>(bgStream, ct).ConfigureAwait(false);
-            if (options.BackgroundSquareSize is > 0) {
-                var s = options.BackgroundSquareSize.Value;
-                if (qr.Width != s || qr.Height != s)
-                    qr.Mutate(x => x.Resize(s, s));
-            }
-
-            var w = qr.Width;
-            var h = qr.Height;
-            var side = Math.Min(w, h);
-            var iconSize = Math.Max(1, (int)(side * (overlayPct / 100.0)));
-            var ix = (w - iconSize) / 2;
-            var iy = (h - iconSize) / 2;
-            if (!Color.TryParse(options.BorderColorHex, out var light))
-                light = Color.White;
-
-            await using var iconStream = new MemoryStream(overlayImageBytes, false);
-            using var iconImg = await Image.LoadAsync<Rgba32>(iconStream, ct).ConfigureAwait(false);
-            iconImg.Mutate(x => x.Resize(new ResizeOptions { Size = new(iconSize, iconSize), Mode = ImageSharpResizeMode.Pad, PadColor = Color.Transparent }));
-            qr.Mutate(ctx => {
-                // Clamp pad/border to canvas — small QR sizes (e.g. under 8 px) made ix-2 negative and broke drawing.
-                var padL = Math.Max(0, ix - 2);
-                var padT = Math.Max(0, iy - 2);
-                var padR = Math.Min(w, ix + iconSize + 2);
-                var padB = Math.Min(h, iy + iconSize + 2);
-                if (padR > padL && padB > padT)
-                    ctx.Fill(light, new RectangularPolygon(padL, padT, padR - padL, padB - padT));
-
-                ctx.DrawImage(iconImg, new Point(ix, iy), 1f);
-                if (options.DrawOverlayBorder) {
-                    var stroke = Color.Parse("#334155");
-                    if (!string.IsNullOrWhiteSpace(options.OverlayBorderStrokeHex) && Color.TryParse(options.OverlayBorderStrokeHex, out var strokeParsed))
-                        stroke = strokeParsed;
-
-                    var bL = Math.Max(0, ix - 1);
-                    var bT = Math.Max(0, iy - 1);
-                    var bR = Math.Min(w, ix + iconSize + 1);
-                    var bB = Math.Min(h, iy + iconSize + 1);
-                    if (bR > bL && bB > bT)
-                        ctx.Draw(Pens.Solid(stroke, 2), new RectangularPolygon(bL, bT, bR - bL, bB - bT));
-                }
-            });
-
-            await using var ms = new MemoryStream();
-            var pngEncoder = ImagePngEncoding.TruecolorForComposites(Options.UseFastPngForQrComposites);
-            await qr.SaveAsync(ms, pngEncoder, ct).ConfigureAwait(false);
-            return Result<byte[]>.Success(ms.ToArray());
-        }
-        catch (OperationCanceledException ex) {
-            Logger.LogWarning(ex, "Center overlay operation was cancelled");
-            return Result<byte[]>.Failure(ex, OperationCancelled);
-        }
-        catch (Exception ex) {
-            Logger.LogError(ex, "Failed to composite center overlay");
-            return Result<byte[]>.Failure(ex, CompositeOverlayFailed);
-        }
-    }
+        => Decoration.OverlayAsync(backgroundStream, overlayStream, outputStream, options, format, quality, ct);
 
     /// <inheritdoc />
-    public virtual async Task<Result<byte[]>> CompositeQrFramePngAsync(byte[] qrPng, QrFrameLayoutOptions options, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNull(qrPng);
-        ArgumentHelpers.ThrowIfNull(options);
-        ct.ThrowIfCancellationRequested();
-        try {
-            var bytes = await QrFrameLayoutCompositor.ApplyAsync(qrPng, options, ct, Options.UseFastPngForQrComposites).ConfigureAwait(false);
-            return Result<byte[]>.Success(bytes);
-        }
-        catch (OperationCanceledException ex) {
-            Logger.LogWarning(ex, "QR frame composite was cancelled");
-            return Result<byte[]>.Failure(ex, OperationCancelled);
-        }
-        catch (Exception ex) {
-            Logger.LogError(ex, "Failed to composite QR frame");
-            return Result<byte[]>.Failure(ex, QrFrameCompositeFailed);
-        }
-    }
+    public Task<Result<bool>> AddFrameAsync(
+        Stream inputStream,
+        Stream outputStream,
+        FrameOptions options,
+        ImageFormat? format = null,
+        int? quality = null,
+        CancellationToken ct = default)
+        => Decoration.AddFrameAsync(inputStream, outputStream, options, format, quality, ct);
+
+    /// <inheritdoc />
+    public Task<Result<bool>> AddCaptionAsync(
+        Stream inputStream,
+        Stream outputStream,
+        CaptionOptions options,
+        ImageFormat? format = null,
+        int? quality = null,
+        CancellationToken ct = default)
+        => Decoration.AddCaptionAsync(inputStream, outputStream, options, format, quality, ct);
+
+    /// <inheritdoc />
+    public Task<Result<bool>> AddOuterPaddingAsync(
+        Stream inputStream,
+        Stream outputStream,
+        PaddingOptions options,
+        ImageFormat? format = null,
+        int? quality = null,
+        CancellationToken ct = default)
+        => Decoration.AddOuterPaddingAsync(inputStream, outputStream, options, format, quality, ct);
+
+    /// <inheritdoc />
+    public IImageDecorationPipeline Pipeline(byte[] input) => Decoration.Pipeline(input);
+
+    /// <inheritdoc />
+    public IImageDecorationPipeline Pipeline(Stream input) => Decoration.Pipeline(input);
 
     /// <inheritdoc />
     public virtual async Task<Result<ImagePalette>> GetPaletteAsync(Stream imageStream, int colorCount, CancellationToken ct = default)
@@ -585,17 +540,7 @@ public abstract class ImageServiceBase : IImageService
         };
 
     /// <summary>Gets the appropriate encoder for the image format.</summary>
-    protected static IImageEncoder GetEncoder(ImageFormat format, int? quality)
-        => format switch {
-            ImageFormat.Jpeg => new JpegEncoder { Quality = quality ?? 90 },
-            ImageFormat.Png => ImagePngEncoding.Truecolor,
-            ImageFormat.WebP => throw new NotSupportedException("WebP format requires additional package"),
-            ImageFormat.Gif => throw new NotSupportedException("GIF format requires additional package"),
-            ImageFormat.Bmp => throw new NotSupportedException("BMP format requires additional package"),
-            ImageFormat.Tiff => throw new NotSupportedException("TIFF format requires additional package"),
-            ImageFormat.Ico => throw new NotSupportedException("ICO format requires additional package"),
-            var _ => new JpegEncoder { Quality = quality ?? 90 }
-        };
+    protected static IImageEncoder GetEncoder(ImageFormat format, int? quality) => ImageEncoderFactory.GetEncoder(format, quality);
 
     /// <summary>Detects the image format from decoded format.</summary>
     protected static ImageFormat DetectFormat(IImageFormat? decodedFormat)

@@ -1,12 +1,9 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.Metrics;
 using Lyo.QRCode.Encoding;
 using Lyo.QRCode.Encoding.Iso;
 using Lyo.QRCode.Models;
-using Lyo.QRCode.QrGraphics;
 using Lyo.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,27 +13,19 @@ namespace Lyo.QRCode;
 
 /// <summary>
 /// QR generation using the in-library ISO/IEC 18004 encoder (no QRCoder NuGet dependency). Supports PNG and SVG; JPEG and BMP require Windows (same constraint as the
-/// QRCoder-backed service).
+/// QRCoder-backed service). Decoration (logo overlay, frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the returned
+/// bytes for that.
 /// </summary>
 public class BuiltInQRCodeService : IQRCodeService
 {
-    private readonly IImageService? _imageService;
     private readonly ILogger<BuiltInQRCodeService> _logger;
     private readonly Dictionary<string, string> _metricNames;
     private readonly IMetrics _metrics;
     private readonly QRCodeServiceOptions _options;
-    private readonly IQrFrameLayoutService? _qrFrameLayout;
 
-    public BuiltInQRCodeService(
-        QRCodeServiceOptions options,
-        ILogger<BuiltInQRCodeService>? logger = null,
-        IMetrics? metrics = null,
-        IImageService? imageService = null,
-        IQrFrameLayoutService? qrFrameLayout = null)
+    public BuiltInQRCodeService(QRCodeServiceOptions options, ILogger<BuiltInQRCodeService>? logger = null, IMetrics? metrics = null)
     {
         _options = options;
-        _imageService = imageService;
-        _qrFrameLayout = qrFrameLayout;
         _logger = logger ?? NullLogger<BuiltInQRCodeService>.Instance;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _metricNames = new() {
@@ -72,12 +61,14 @@ public class BuiltInQRCodeService : IQRCodeService
                 new QRCodeOptions { Format = _options.DefaultFormat, Size = _options.DefaultSize, ErrorCorrectionLevel = _options.DefaultErrorCorrectionLevel };
 
             ArgumentHelpers.ThrowIfNotInRange(qrOptions.Size, _options.MinSize, _options.MaxSize, nameof(options.Size));
-            var imageBytes = await GenerateQrCodeBytesAsync(data, qrOptions, ct).ConfigureAwait(false);
+            var imageBytes = GenerateQrCodeBytes(data, qrOptions);
             sw.Stop();
             _metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.GenerateSuccess)]);
             _logger.LogDebug("Generated QR code (built-in): {DataLength} bytes, Format: {Format}, Size: {Size}px", data.Length, qrOptions.Format, qrOptions.Size);
-            return QRCodeResult.FromSuccess(
-                request, imageBytes, qrOptions.Format, qrOptions.Size, $"QR code generated successfully. Format: {qrOptions.Format}, Size: {qrOptions.Size}px");
+            return await Task.FromResult(
+                    QRCodeResult.FromSuccess(
+                        request, imageBytes, qrOptions.Format, qrOptions.Size, $"QR code generated successfully. Format: {qrOptions.Format}, Size: {qrOptions.Size}px"))
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException ex) {
             sw.Stop();
@@ -171,7 +162,7 @@ public class BuiltInQRCodeService : IQRCodeService
         return Task.Run(() => QRCodeZxingRead.Decode(imageBytes), ct);
     }
 
-    private async Task<byte[]> GenerateQrCodeBytesAsync(string data, QRCodeOptions options, CancellationToken ct)
+    private static byte[] GenerateQrCodeBytes(string data, QRCodeOptions options)
     {
         if (options.Format is QRCodeFormat.Jpeg or QRCodeFormat.Bitmap)
             throw new PlatformNotSupportedException("The built-in QR service supports PNG and SVG only. Use Lyo.QRCode.QRCoder for JPEG/BMP, or select PNG/SVG.");
@@ -180,42 +171,11 @@ public class BuiltInQRCodeService : IQRCodeService
         using var matrix = QRIsoEncoder.GenerateQrCode(data, ecc);
         var dark = QrHexColor.ToRgba(options.DarkColor);
         var light = QrHexColor.ToRgba(options.LightColor);
-        var bytes = options.Format switch {
+        return options.Format switch {
             QRCodeFormat.Png => QrIsoPngRasterizer.ToPng(matrix, options.Size, dark, light, options.DrawQuietZones),
             QRCodeFormat.Svg => System.Text.Encoding.UTF8.GetBytes(QrIsoSvgRasterizer.ToSvg(matrix, options.Size, options.DarkColor, options.LightColor, options.DrawQuietZones)),
             var _ => QrIsoPngRasterizer.ToPng(matrix, options.Size, dark, light, options.DrawQuietZones)
         };
-
-        if (options.Icon != null && QrCodeIconComposer.TryResolveIconBytes(options.Icon) != null) {
-            OperationHelpers.ThrowIfNull(
-                _imageService,
-                "Embedding a QR icon requires IImageService. Register an image service (for example AddImageSharpImageService) and pass IImageService into BuiltInQRCodeService, or remove the icon.");
-
-            if (options.Format == QRCodeFormat.Png)
-                bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, options.DarkColor, _logger, ct).ConfigureAwait(false);
-            else if (options.Format == QRCodeFormat.Svg) {
-                var svg = System.Text.Encoding.UTF8.GetString(bytes);
-                var withIcon = await QrCodeIconComposer.ApplyIconToSvgAsync(_imageService, svg, options.Icon, options.Size, options.LightColor, options.DarkColor, _logger, ct)
-                    .ConfigureAwait(false);
-
-                bytes = System.Text.Encoding.UTF8.GetBytes(withIcon);
-            }
-        }
-
-        if (options.Format == QRCodeFormat.Png && options.Frame is { Style: not QrFrameStyle.None }) {
-            var framed = _qrFrameLayout != null ? await _qrFrameLayout.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false) :
-                _imageService != null ? await _imageService.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false) :
-                throw new InvalidOperationException(
-                    "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
-
-            OperationHelpers.ThrowIf(
-                !framed.IsSuccess || framed.Data is null,
-                $"Failed to apply QR frame: {(framed.Errors is { Count: > 0 } ? string.Join("; ", framed.Errors.Select(e => e.Message)) : "Unknown error")}");
-
-            bytes = framed.Data!;
-        }
-
-        return bytes;
     }
 
     private static QRIsoEncoder.ECCLevel ToEcc(QRCodeErrorCorrectionLevel level)

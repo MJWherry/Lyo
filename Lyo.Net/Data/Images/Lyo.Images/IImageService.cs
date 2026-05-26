@@ -4,8 +4,11 @@ using Lyo.Result;
 
 namespace Lyo.Images;
 
-/// <summary>Service interface for image processing operations.</summary>
-public interface IImageService
+/// <summary>
+/// Service interface for image processing operations. Extends <see cref="IImageDecorationService" /> so consumers that depend on <see cref="IImageService" /> get the
+/// overlay/frame/caption/padding primitives for free.
+/// </summary>
+public interface IImageService : IImageDecorationService
 {
     /// <summary>Gets the default image format.</summary>
     ImageFormat DefaultFormat { get; }
@@ -92,13 +95,4 @@ public interface IImageService
 
     /// <summary>Processes multiple images in batch.</summary>
     Task<BulkResult<ImageProcessRequest, ImageOperationResult>> ProcessBatchAsync(IEnumerable<ImageProcessRequest> requests, CancellationToken ct = default);
-
-    /// <summary>
-    /// Draws <paramref name="overlayImageBytes" /> centered on <paramref name="backgroundPng" /> (square canvas), with an optional light pad and border—typical for QR + logo.
-    /// Output is PNG bytes.
-    /// </summary>
-    Task<Result<byte[]>> CompositeCenterOverlayPngAsync(byte[] backgroundPng, byte[] overlayImageBytes, ImageCenterOverlayOptions options, CancellationToken ct = default);
-
-    /// <summary>Draws a decorative frame around a square QR PNG (badge, rounded panel, or stroked border). Requires <see cref="SixLabors.Fonts" /> at runtime for captioned styles.</summary>
-    Task<Result<byte[]>> CompositeQrFramePngAsync(byte[] qrPng, QrFrameLayoutOptions options, CancellationToken ct = default);
 }

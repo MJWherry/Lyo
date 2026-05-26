@@ -1,6 +1,8 @@
 using System.Globalization;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+using Lyo.Images;
+using Lyo.Images.Builders;
 using Lyo.Images.Models;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.Payloads;
@@ -16,8 +18,9 @@ using SixLabors.ImageSharp;
 namespace Lyo.QRCode.Web.Components;
 
 /// <summary>
-/// Blazor workbench for QR generation: three columns (output and styling, typed payloads, result). PNG decorative frames are composited after rasterization using
-/// <see cref="QrFrameLayoutOptions" />; MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp.
+/// Blazor workbench for QR generation: three columns (output and styling, typed payloads, result). After the raw QR is generated, the workbench chains
+/// <see cref="IImageDecorationService" /> primitives (overlay, frame, caption, padding) via <see cref="IImageDecorationService.Pipeline(byte[])" /> to apply the workbench's
+/// badge preset. MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp before being passed into the pipeline.
 /// </summary>
 public partial class QrCodeWorkbench : IAsyncDisposable
 {
@@ -122,10 +125,10 @@ public partial class QrCodeWorkbench : IAsyncDisposable
 
     private bool LogoSupported => _format is QRCodeFormat.Png or QRCodeFormat.Svg;
 
-    private QrFrameStyle SelectedFrameStyle => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
+    private QrBadgePreset SelectedFrameStyle => Enum.IsDefined(typeof(QrBadgePreset), _frameStyleInt) ? (QrBadgePreset)_frameStyleInt : QrBadgePreset.None;
 
     /// <summary>PNG frame modes that can render optional caption text (header or footer band).</summary>
-    private bool FrameShowsCaptionField => _format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None;
+    private bool FrameShowsCaptionField => _format == QRCodeFormat.Png && SelectedFrameStyle != QrBadgePreset.None;
 
     /// <summary>Data URL fallback for SVG thumbnail when blob URL is unavailable.</summary>
     private string? SvgBytesDataUrl
@@ -182,7 +185,7 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         _format = list[0];
     }
 
-    private Task OnFrameStyleChangedAsync(QrFrameStyle style)
+    private Task OnFrameStyleChangedAsync(QrBadgePreset style)
     {
         _frameStyleInt = (int)style;
         StateHasChanged();
@@ -334,45 +337,71 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// 6-digit <c>#RRGGBB</c> for <see cref="QrFrameLayoutOptions" /> / ImageSharp (never truncate <see cref="MudColor" /> strings — length-9 forms are not always
-    /// <c>#RRGGBBAA</c>).
-    /// </summary>
+    /// <summary>6-digit <c>#RRGGBB</c> for ImageSharp (never truncate <see cref="MudColor" /> strings — length-9 forms are not always <c>#RRGGBBAA</c>).</summary>
     private static string ToOpaqueRgbHex(MudColor c)
     {
         c.Deconstruct(out var r, out var g, out var b);
         return $"#{r:X2}{g:X2}{b:X2}";
     }
 
-    private QrFrameLayoutOptions BuildFrameLayoutOptions()
-    {
-        var headerHex = ToOpaqueRgbHex(_frameHeaderBg);
-        var opts = new QrFrameLayoutOptions {
-            Style = SelectedFrameStyle,
-            CaptionText = string.IsNullOrWhiteSpace(_frameCaption) ? null : _frameCaption.Trim(),
-            CaptionFontSizePx = _frameCaptionFontSize,
-            HeaderHeightPx = _frameHeaderMinPx > 0 ? _frameHeaderMinPx : 52,
-            AutoSizeHeaderToCaption = SelectedFrameStyle == QrFrameStyle.BadgeWithHeader && _frameAutoSizeHeader,
-            HeaderBackgroundHex = headerHex,
-            HeaderCaptionTextHex = ToOpaqueRgbHex(_frameCaptionColor),
-            PanelBackgroundHex = ToOpaqueRgbHex(_framePanelBg)
-        };
-
-        // Badge: outer card stroke should read as part of the header chrome (defaults to slate otherwise).
-        if (SelectedFrameStyle == QrFrameStyle.BadgeWithHeader)
-            opts.CardOutlineHex = headerHex;
-
-        return opts;
-    }
-
-    private static string FrameStyleLabel(QrFrameStyle style)
+    private static string FrameStyleLabel(QrBadgePreset style)
         => style switch {
-            QrFrameStyle.None => "None",
-            QrFrameStyle.BadgeWithHeader => "Badge with header",
-            QrFrameStyle.SimpleRoundedPanel => "Rounded panel",
-            QrFrameStyle.BorderOnly => "Border only",
+            QrBadgePreset.None => "None",
+            QrBadgePreset.BadgeWithHeader => "Badge with header",
+            QrBadgePreset.SimpleRoundedPanel => "Rounded panel",
+            QrBadgePreset.BorderOnly => "Border only",
             var _ => style.ToString()
         };
+
+    /// <summary>Translates the workbench preset into a chain of <see cref="IImageDecorationPipeline" /> stages applied after raw QR generation (PNG only).</summary>
+    private void ApplyBadgePreset(IImageDecorationPipeline pipeline)
+    {
+        var preset = SelectedFrameStyle;
+        if (preset == QrBadgePreset.None)
+            return;
+
+        var hasCaption = !string.IsNullOrWhiteSpace(_frameCaption);
+        var headerHex = ToOpaqueRgbHex(_frameHeaderBg);
+        var captionTextHex = ToOpaqueRgbHex(_frameCaptionColor);
+        var panelHex = ToOpaqueRgbHex(_framePanelBg);
+        switch (preset) {
+            case QrBadgePreset.BadgeWithHeader:
+                if (hasCaption) {
+                    pipeline.AddCaption(b => b
+                        .WithText(_frameCaption.Trim())
+                        .WithPlacement(CaptionPlacement.HeaderAbove)
+                        .WithBackgroundColor(headerHex)
+                        .WithTextColor(captionTextHex)
+                        .WithFont(_frameCaptionFontSize)
+                        .WithBandHeight(_frameHeaderMinPx > 0 ? _frameHeaderMinPx : 52)
+                        .WithAutoSize(_frameAutoSizeHeader)
+                        .WithNotch());
+                }
+
+                pipeline.AddOuterPadding(b => b.WithPanelColor(panelHex).WithCornerRadius(16).WithShadow("#33000000", 6))
+                    .AddFrame(b => b.WithStrokeColor(headerHex).WithStrokeWidth(2).WithCornerRadius(16).WithPadding(0));
+
+                break;
+            case QrBadgePreset.SimpleRoundedPanel:
+                pipeline.AddOuterPadding(b => b.WithPanelColor(panelHex).WithCornerRadius(24))
+                    .AddFrame(b => b.WithStrokeColor("#334155").WithStrokeWidth(2).WithCornerRadius(24).WithPadding(0));
+
+                break;
+            case QrBadgePreset.BorderOnly:
+                pipeline.AddFrame(b => b.WithStrokeColor("#334155").WithStrokeWidth(3).WithPadding(16));
+                if (hasCaption) {
+                    pipeline.AddCaption(b => b
+                        .WithText(_frameCaption.Trim())
+                        .WithPlacement(CaptionPlacement.FooterBelow)
+                        .WithBackgroundColor(panelHex)
+                        .WithTextColor(captionTextHex)
+                        .WithFont(_frameCaptionFontSize)
+                        .WithBandHeight(_frameHeaderMinPx > 0 ? _frameHeaderMinPx : 52));
+                }
+
+                break;
+        }
+    }
 
     /// <summary>Builds the QR string from the current payload kind and fields.</summary>
     private bool TryBuildQrData(out string data, out string? error)
@@ -454,18 +483,30 @@ public partial class QrCodeWorkbench : IAsyncDisposable
             var imageBytes = qrResult.ImageBytes;
             _lastOutputWidth = null;
             _lastOutputHeight = null;
-            if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
-                var frameOpts = BuildFrameLayoutOptions();
-                var framed = await QrFrameLayout.CompositeQrFramePngAsync(imageBytes, frameOpts, CancellationToken.None).ConfigureAwait(false);
-                if ((!framed.IsSuccess || framed.Data == null) && ImageService != null)
-                    framed = await ImageService.CompositeQrFramePngAsync(imageBytes, frameOpts, CancellationToken.None).ConfigureAwait(false);
+            var needsOverlay = LogoSupported && _logoBytes is { Length: > 0 };
+            var needsFrameChain = _format == QRCodeFormat.Png && SelectedFrameStyle != QrBadgePreset.None;
+            if (needsOverlay || needsFrameChain) {
+                var pipelineFormat = _format == QRCodeFormat.Svg ? ImageFormat.Svg : ImageFormat.Png;
+                var pipeline = Decoration.Pipeline(imageBytes);
+                if (needsOverlay) {
+                    var iconPct = QRCodeIconOptions.ClampIconSizePercent(_iconSizePercent);
+                    pipeline.Overlay(_logoBytes!, b => {
+                        b.WithOverlaySizePercent(iconPct).WithPadColor(ToOpaqueRgbHex(_lightColor));
+                        if (_drawIconBorder)
+                            b.WithBorder(ToOpaqueRgbHex(_darkColor));
+                    });
+                }
 
-                if (!framed.IsSuccess || framed.Data == null) {
-                    SetStatus(LyoResultErrorFormatter.FormatErrors(framed.Errors), Severity.Error);
+                if (needsFrameChain)
+                    ApplyBadgePreset(pipeline);
+
+                var composed = await pipeline.ToByteArrayAsync(pipelineFormat).ConfigureAwait(false);
+                if (!composed.IsSuccess || composed.Data is null) {
+                    SetStatus(LyoResultErrorFormatter.FormatErrors(composed.Errors), Severity.Error);
                     return;
                 }
 
-                imageBytes = framed.Data;
+                imageBytes = composed.Data;
             }
 
             await RevokeSvgPreviewObjectUrlAsync();
@@ -592,5 +633,21 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         WebLarge,
         PrintHd,
         Custom
+    }
+
+    /// <summary>Badge-style presets for chaining <see cref="IImageDecorationPipeline" /> stages after raw QR generation (PNG only). Replaces the removed <c>QrFrameStyle</c> enum.</summary>
+    public enum QrBadgePreset
+    {
+        /// <summary>No decoration; the raw QR bytes are returned.</summary>
+        None = 0,
+
+        /// <summary>Header band (with optional notch) + outer card + thin frame matching the header chrome.</summary>
+        BadgeWithHeader = 1,
+
+        /// <summary>Outer rounded card + thin frame in a neutral slate stroke.</summary>
+        SimpleRoundedPanel = 2,
+
+        /// <summary>Just a stroke around the QR; caption (if supplied) becomes a footer band underneath.</summary>
+        BorderOnly = 3
     }
 }

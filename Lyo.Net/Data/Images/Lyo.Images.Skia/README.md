@@ -5,11 +5,11 @@ metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), 
 
 ## When to use Skia vs ImageSharp
 
-|               | **Lyo.Images.Skia**                                                                                                                                                                                         | **Lyo.Images (ImageSharp)**                                                    |
-|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| **Platforms** | Strong on Linux/mobile; native Skia assets.                                                                                                                                                                 | Pure managed; broad format support.                                            |
-| **EXIF**      | Extended EXIF via MetadataExtractor where wired.                                                                                                                                                            | Rich EXIF via ImageSharp metadata APIs.                                        |
-| **QR frames** | `AddSkiaImageService` does **not** auto-register **`IQrFrameLayoutService`**. Register **`QrFrameLayoutService`** (or ImageSharp + `AddImageSharpImageService`) if you need **`CompositeQrFramePngAsync`**. | `AddImageSharpImageService` registers **`IQrFrameLayoutService`** when absent. |
+|                | **Lyo.Images.Skia**                                                                                                                                                                                                                                                | **Lyo.Images (ImageSharp)**                                              |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| **Platforms**  | Strong on Linux/mobile; native Skia assets.                                                                                                                                                                                                                        | Pure managed; broad format support.                                      |
+| **EXIF**       | Extended EXIF via MetadataExtractor where wired.                                                                                                                                                                                                                   | Rich EXIF via ImageSharp metadata APIs.                                  |
+| **Decoration** | Inherits the ImageSharp-backed `IImageDecorationService` primitives via `ImageServiceBase`; `AddSkiaImageService` does **not** auto-register `IImageDecorationService` separately. Add `AddImageSharpImageService` first if you want it resolvable as its own type. | `AddImageSharpImageService` registers `IImageDecorationService` as well. |
 
 ## Public API
 
@@ -41,14 +41,18 @@ var imageService = services.BuildServiceProvider().GetRequiredService<IImageServ
 await imageService.ResizeAsync(inputStream, outputStream, 800, 600, ResizeMode.Max, ImageFormat.Jpeg, 90);
 ```
 
-### Optional: QR frame compositing with Skia-only DI
+### Decoration primitives
+
+`SkiaImageService` inherits the ImageSharp-backed `IImageDecorationService` primitives (`OverlayAsync`, `AddFrameAsync`, `AddCaptionAsync`, `AddOuterPaddingAsync`,
+plus the `Pipeline(...)` fluent API) through `ImageServiceBase`. To resolve `IImageDecorationService` as its own DI registration alongside Skia, add the
+ImageSharp registration first:
 
 ```csharp
 using Lyo.Images;
 using Microsoft.Extensions.DependencyInjection;
 
-services.AddSingleton<IQrFrameLayoutService>(_ => new QrFrameLayoutService());
-services.AddSkiaImageService();
+services.AddImageSharpImageService(); // registers IImageDecorationService
+services.AddSkiaImageService();       // overrides IImageService with Skia
 ```
 
 ## Advantages of SkiaSharp

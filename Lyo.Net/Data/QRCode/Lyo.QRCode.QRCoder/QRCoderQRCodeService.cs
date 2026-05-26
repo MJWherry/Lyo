@@ -2,8 +2,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using Lyo.Exceptions;
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.Metrics;
 using Lyo.QRCode.Models;
 using Lyo.Result;
@@ -11,42 +9,31 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using QRCoder;
 using static Lyo.QRCode.QRCodeErrorCodes;
-#if OS_WINDOWS
-using System.Drawing.Imaging;
-#endif
 
 namespace Lyo.QRCode.QRCoder;
 
-/// <summary>QR code service implementation using QRCoder library.</summary>
+/// <summary>
+/// QR code service implementation using the QRCoder NuGet library. PNG/SVG are cross-platform; JPEG/BMP still require Windows because QRCoder routes them through
+/// <c>System.Drawing</c>. Decoration (logo overlay, frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the returned
+/// bytes for that.
+/// </summary>
 public class QRCoderQRCodeService : IQRCodeService
 {
     private readonly ILogger<QRCoderQRCodeService> _logger;
 
-    /// <summary>Gets the metric names dictionary.</summary>
     private readonly Dictionary<string, string> _metricNames;
 
     private readonly IMetrics _metrics;
     private readonly QRCodeServiceOptions _options;
-    private readonly IImageService? _imageService;
-    private readonly IQrFrameLayoutService? _qrFrameLayout;
     private readonly QRCodeGenerator _qrGenerator = new();
 
     /// <summary>Initializes a new instance of the <see cref="QRCoderQRCodeService" /> class.</summary>
     /// <param name="options">The QR code service options.</param>
     /// <param name="logger">The logger instance.</param>
     /// <param name="metrics">Optional metrics instance.</param>
-    /// <param name="imageService">Optional image service for decorative PNG frames (and future cross-platform icon support).</param>
-    /// <param name="qrFrameLayout">Optional frame compositor; preferred over <paramref name="imageService" /> for frames when both are registered.</param>
-    public QRCoderQRCodeService(
-        QRCodeServiceOptions options,
-        ILogger<QRCoderQRCodeService>? logger = null,
-        IMetrics? metrics = null,
-        IImageService? imageService = null,
-        IQrFrameLayoutService? qrFrameLayout = null)
+    public QRCoderQRCodeService(QRCodeServiceOptions options, ILogger<QRCoderQRCodeService>? logger = null, IMetrics? metrics = null)
     {
         _options = options;
-        _imageService = imageService;
-        _qrFrameLayout = qrFrameLayout;
         _logger = logger ?? NullLogger<QRCoderQRCodeService>.Instance;
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
         _metricNames = new() {
@@ -81,7 +68,6 @@ public class QRCoderQRCodeService : IQRCodeService
             var qrOptions = options ??
                 new QRCodeOptions { Format = _options.DefaultFormat, Size = _options.DefaultSize, ErrorCorrectionLevel = _options.DefaultErrorCorrectionLevel };
 
-            // Validate size
             ArgumentHelpers.ThrowIfNotInRange(qrOptions.Size, _options.MinSize, _options.MaxSize, nameof(options.Size));
             byte[] imageBytes;
             if (ShouldOffloadQrRasterization(data, qrOptions))
@@ -91,7 +77,6 @@ public class QRCoderQRCodeService : IQRCodeService
                 imageBytes = GenerateQRCodeBytes(data, qrOptions);
             }
 
-            imageBytes = await ApplyQrFrameIfNeededAsync(imageBytes, qrOptions, ct).ConfigureAwait(false);
             sw.Stop();
             _metrics.IncrementCounter(_metricNames[nameof(QRCode.Constants.Metrics.GenerateSuccess)]);
             _logger.LogDebug("Generated QR code: {DataLength} bytes, Format: {Format}, Size: {Size}px", data.Length, qrOptions.Format, qrOptions.Size);
@@ -142,7 +127,6 @@ public class QRCoderQRCodeService : IQRCodeService
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         try {
-            // Ensure directory exists
             var directory = Path.GetDirectoryName(filePath);
             if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
@@ -192,32 +176,8 @@ public class QRCoderQRCodeService : IQRCodeService
         return Task.Run(() => QRCodeZxingRead.Decode(imageBytes), ct);
     }
 
-    private async Task<byte[]> ApplyQrFrameIfNeededAsync(byte[] imageBytes, QRCodeOptions options, CancellationToken ct)
-    {
-        if (options.Format != QRCodeFormat.Png || options.Frame is null or { Style: QrFrameStyle.None })
-            return imageBytes;
-
-        var apply = _qrFrameLayout != null ? _qrFrameLayout.CompositeQrFramePngAsync(imageBytes, options.Frame, ct) :
-            _imageService != null ? _imageService.CompositeQrFramePngAsync(imageBytes, options.Frame, ct) : throw new InvalidOperationException(
-                "Decorative QR frames require IQrFrameLayoutService (AddQRCoderQrCodeService registers it) or IImageService when using Frame, or set Frame.Style to None.");
-
-        var result = await apply.ConfigureAwait(false);
-        OperationHelpers.ThrowIf(
-            !result.IsSuccess || result.Data is null,
-            $"Failed to apply QR frame: {(result.Errors is { Count: > 0 } ? string.Join("; ", result.Errors.Select(e => e.Message)) : "Unknown error")}");
-
-        return result.Data!;
-    }
-
-    /// <summary>Heavy rasterization (large payloads, large pixels-per-module, or Windows icon embedding) runs on the thread pool; lighter work stays inline to avoid scheduling overhead.</summary>
-    private static bool ShouldOffloadQrRasterization(string data, QRCodeOptions options)
-    {
-#if OS_WINDOWS
-        if (options.Icon != null)
-            return true;
-#endif
-        return data.Length > 4096 || options.Size > 512;
-    }
+    /// <summary>Heavy rasterization (large payloads or large pixels-per-module) runs on the thread pool; lighter work stays inline to avoid scheduling overhead.</summary>
+    private static bool ShouldOffloadQrRasterization(string data, QRCodeOptions options) => data.Length > 4096 || options.Size > 512;
 
     /// <summary>Generates QR code bytes using QRCoder library.</summary>
     private byte[] GenerateQRCodeBytes(string data, QRCodeOptions options)
@@ -238,7 +198,6 @@ public class QRCoderQRCodeService : IQRCodeService
         };
     }
 
-    /// <summary>Converts QRCodeErrorCorrectionLevel to QRCoder ECCLevel.</summary>
     private static QRCodeGenerator.ECCLevel ConvertErrorCorrectionLevel(QRCodeErrorCorrectionLevel level)
         => level switch {
             QRCodeErrorCorrectionLevel.Low => QRCodeGenerator.ECCLevel.L,
@@ -248,109 +207,34 @@ public class QRCoderQRCodeService : IQRCodeService
             var _ => QRCodeGenerator.ECCLevel.M
         };
 
-    /// <summary>Generates PNG format QR code.</summary>
-    private byte[] GeneratePng(QRCodeData qrCodeData, QRCodeOptions options)
+    private static byte[] GeneratePng(QRCodeData qrCodeData, QRCodeOptions options)
     {
         using var qrCode = new PngByteQRCode(qrCodeData);
-        var qrCodeBytes = qrCode.GetGraphic(options.Size, ColorTranslator.FromHtml(options.DarkColor), ColorTranslator.FromHtml(options.LightColor), options.DrawQuietZones);
-#if OS_WINDOWS
-        if (options.Icon != null)
-            qrCodeBytes = ApplyIcon(qrCodeBytes, options);
-#endif
-        return qrCodeBytes;
+        return qrCode.GetGraphic(options.Size, ColorTranslator.FromHtml(options.DarkColor), ColorTranslator.FromHtml(options.LightColor), options.DrawQuietZones);
     }
 
-    /// <summary>Generates SVG format QR code.</summary>
-    private byte[] GenerateSvg(QRCodeData qrCodeData, QRCodeOptions options)
+    private static byte[] GenerateSvg(QRCodeData qrCodeData, QRCodeOptions options)
     {
         using var qrCode = new SvgQRCode(qrCodeData);
         var svgString = qrCode.GetGraphic(options.Size, ColorTranslator.FromHtml(options.DarkColor), ColorTranslator.FromHtml(options.LightColor), options.DrawQuietZones);
-#if OS_WINDOWS
-        // Apply icon if specified (for SVG, we'd need to embed it)
-        if (options.Icon != null)
-            _logger.LogWarning("Icon embedding is not supported for SVG format");
-#endif
         return System.Text.Encoding.UTF8.GetBytes(svgString);
     }
 #if OS_WINDOWS
-    /// <summary>Generates JPEG format QR code.</summary>
-    private byte[] GenerateJpeg(QRCodeData qrCodeData, QRCodeOptions options)
+    private static byte[] GenerateJpeg(QRCodeData qrCodeData, QRCodeOptions options)
     {
         using var qrCode = new BitmapByteQRCode(qrCodeData);
         var bitmapBytes = qrCode.GetGraphic(options.Size, options.DarkColor, options.LightColor);
-
-        // Apply icon if specified
-        if (options.Icon != null)
-            bitmapBytes = ApplyIcon(bitmapBytes, options);
-
-        // Convert bitmap bytes to JPEG
-        using var bitmap = ByteArrayToBitmap(bitmapBytes, options.Size);
-        using var memoryStream = new MemoryStream();
-        bitmap.Save(memoryStream, ImageFormat.Jpeg);
-        return memoryStream.ToArray();
+        using var memoryStream = new MemoryStream(bitmapBytes);
+        using var bitmap = new Bitmap(memoryStream);
+        using var jpegStream = new MemoryStream();
+        bitmap.Save(jpegStream, System.Drawing.Imaging.ImageFormat.Jpeg);
+        return jpegStream.ToArray();
     }
 
-    /// <summary>Generates Bitmap format QR code.</summary>
-    private byte[] GenerateBitmap(QRCodeData qrCodeData, QRCodeOptions options)
+    private static byte[] GenerateBitmap(QRCodeData qrCodeData, QRCodeOptions options)
     {
         using var qrCode = new BitmapByteQRCode(qrCodeData);
-        var bitmapBytes = qrCode.GetGraphic(options.Size, options.DarkColor, options.LightColor);
-
-        // Apply icon if specified
-        if (options.Icon != null)
-            bitmapBytes = ApplyIcon(bitmapBytes, options);
-
-        return bitmapBytes;
-    }
-
-    /// <summary>Applies an icon to the center of the QR code.</summary>
-    private byte[] ApplyIcon(byte[] qrCodeBytes, QRCodeOptions options)
-    {
-        if (options.Icon == null)
-            return qrCodeBytes;
-
-        var iconRaw = QrCodeIconComposer.TryResolveIconBytes(options.Icon);
-        if (iconRaw == null || iconRaw.Length == 0)
-            return qrCodeBytes;
-
-        try {
-            using var qrBitmap = ByteArrayToBitmap(qrCodeBytes);
-            using var iconBitmap = ByteArrayToBitmap(iconRaw);
-            var side = Math.Min(qrBitmap.Width, qrBitmap.Height);
-            var pct = QRCodeIconOptions.ClampIconSizePercent(options.Icon.IconSizePercent);
-            var iconSize = Math.Max(1, (int)(side * (pct / 100.0)));
-            var iconX = (qrBitmap.Width - iconSize) / 2;
-            var iconY = (qrBitmap.Height - iconSize) / 2;
-            using var resizedIcon = new Bitmap(iconBitmap, iconSize, iconSize);
-            using var graphics = Graphics.FromImage(qrBitmap);
-            graphics.DrawImage(resizedIcon, iconX, iconY);
-            if (options.Icon.DrawIconBorder) {
-                using var pen = new Pen(ColorTranslator.FromHtml(options.DarkColor), 2);
-                graphics.DrawRectangle(pen, iconX - 1, iconY - 1, iconSize + 2, iconSize + 2);
-            }
-
-            using var resultStream = new MemoryStream();
-            qrBitmap.Save(resultStream, ImageFormat.Png);
-            return resultStream.ToArray();
-        }
-        catch (Exception ex) {
-            _logger.LogWarning(ex, "Failed to apply icon to QR code, returning QR code without icon");
-            return qrCodeBytes;
-        }
-    }
-
-    /// <summary>Converts byte array to Bitmap.</summary>
-    private static Bitmap ByteArrayToBitmap(byte[] bytes, int? expectedSize = null)
-    {
-        using var memoryStream = new MemoryStream(bytes);
-        var bitmap = new Bitmap(memoryStream);
-        if (expectedSize.HasValue && (bitmap.Width != expectedSize.Value || bitmap.Height != expectedSize.Value)) {
-            var resized = new Bitmap(bitmap, expectedSize.Value, expectedSize.Value);
-            bitmap.Dispose();
-            return resized;
-        }
-
-        return new(bitmap);
+        return qrCode.GetGraphic(options.Size, options.DarkColor, options.LightColor);
     }
 #endif
 }

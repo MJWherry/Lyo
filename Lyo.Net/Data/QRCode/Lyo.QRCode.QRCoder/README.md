@@ -7,8 +7,8 @@ QRCoder's mature renderers; pick the built-in **`BuiltInQRCodeService`** when yo
 
 | Type                                  | Description                                                                                                                                                |
 |---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`QRCoderQRCodeService`**            | `IQRCodeService` implementation. Optional dependencies: `IImageService` and `IQrFrameLayoutService` (used when QR options include an icon or frame).        |
-| **`QRCoderQrCodeServiceExtensions`**  | DI: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`. Each variant also registers `IQrFrameLayoutService` if one isn't already in the container. |
+| **`QRCoderQRCodeService`**            | `IQRCodeService` implementation. No image dependencies — decoration (logo, frame, caption, padding) is the consumer's job via `Lyo.Images.IImageDecorationService`. |
+| **`QRCoderQrCodeServiceExtensions`**  | DI: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`. |
 
 ## Usage
 
@@ -52,6 +52,9 @@ services.AddQRCoderQrCodeServiceFromConfiguration(builder.Configuration);
 
 - **JPEG / Bitmap** outputs go through `System.Drawing` and are only fully supported on **Windows**; PNG/SVG paths run cross-platform.
 - Decoding (`ReadFromImageAsync`) reuses `Lyo.Codes.ZXing` exactly like the built-in service.
+- **Decoration is out of scope**: the QRCoder service no longer applies center logos or frames. Pipe the returned bytes through
+  `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the
+  [`Lyo.Images` README](../../Images/Lyo.Images/README.md)).
 
 ## Dependencies
 
@@ -71,6 +74,5 @@ services.AddQRCoderQrCodeServiceFromConfiguration(builder.Configuration);
 
 ### Project references
 
-- [`Lyo.Images`](../../Images/Lyo.Images/README.md)
 - [`Lyo.QRCode`](../Lyo.QRCode/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)

@@ -2,23 +2,27 @@ using System.Diagnostics;
 
 namespace Lyo.QRCode.Models;
 
-/// <summary>Options for embedding an icon/logo in the center of a QR code.</summary>
+/// <summary>
+/// Hints for the QR encoder about a planned center logo. The encoder uses <see cref="IconSizePercent" /> to choose an ECC level high enough that the logo can erase modules
+/// without breaking scanning; <see cref="IconBytes" />, <see cref="IconFilePath" />, and <see cref="DrawIconBorder" /> are metadata for the consumer's overlay call (e.g.
+/// <c>IImageDecorationService.OverlayAsync</c> in <c>Lyo.Images</c>) and are never read by the encoder itself.
+/// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class QRCodeIconOptions
 {
     /// <summary>Maximum <see cref="IconSizePercent" /> for reliable scanning. Center logos above this erase too many modules even at high ECC.</summary>
     public const int MaxIconSizePercent = 30;
 
-    /// <summary>Gets or sets the icon image bytes (optional if <see cref="IconFilePath" /> is set).</summary>
+    /// <summary>Icon image bytes carried alongside the QR options for the consumer's overlay step (not read by the encoder).</summary>
     public byte[]? IconBytes { get; set; }
 
-    /// <summary>Gets or sets a path to an icon image file (optional if <see cref="IconBytes" /> is set).</summary>
+    /// <summary>Path to an icon image file carried alongside the QR options for the consumer's overlay step (not read by the encoder).</summary>
     public string? IconFilePath { get; set; }
 
-    /// <summary>Gets or sets the icon width/height as a percentage of the QR image side (1–<see cref="MaxIconSizePercent" />). Default: 15</summary>
+    /// <summary>Planned icon width/height as a percent of the QR side (1–<see cref="MaxIconSizePercent" />). Default: 15. This is the only field the encoder uses—to pick an ECC level robust to that erased fraction.</summary>
     public int IconSizePercent { get; set; } = 15;
 
-    /// <summary>Gets or sets whether to draw a border around the icon. Default: true</summary>
+    /// <summary>Whether the consumer's overlay step should draw a border around the icon. Metadata only; never read by the encoder.</summary>
     public bool DrawIconBorder { get; set; } = true;
 
     /// <summary>Clamps <paramref name="iconSizePercent" /> to <c>1</c>…<see cref="MaxIconSizePercent" /> (e.g. for compositing when options were set without validation).</summary>

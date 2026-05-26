@@ -61,12 +61,34 @@ Add project/package reference to **`Lyo.QRCode.QRCoder`** and call **`AddQRCoder
 
 ## Key options
 
-- **`QRCodeOptions.Size`** — **Pixels per module** (each black/white square), not the full image width. Total size ≈ module count per side × **`Size`** (and more if a PNG **frame**
-  is composited separately).
-- **`QRCodeOptions.Icon`** — Center logo; built-in path needs **`IImageService`** registered when an icon is set. **`DrawIconBorder`**: the compositor clears a light pad (*
-  *`LightColor`**) behind the logo and draws the stroke in **`DarkColor`** so the border remains visible (a light-on-light stroke would disappear).
-- **`QRCodeOptions.Frame`** — Decorative frame; **`BuiltInQRCodeService`** can apply **`QrFrameLayoutOptions`** when registered with frame support; Blazor workbenches often
-  composite frames in a second step via **`IQrFrameLayoutService`** / **`IImageService.CompositeQrFramePngAsync`** (see **`Lyo.Images`**).
+- **`QRCodeOptions.Size`** — **Pixels per module** (each black/white square), not the full image width. Total size ≈ module count per side × **`Size`** (decoration applied
+  separately may grow that further).
+- **`QRCodeOptions.Icon`** — **Hint only** for the encoder: the only field consumed is **`IconSizePercent`**, which bumps the effective ECC level so a planned center logo
+  doesn't break scanning. **`IconBytes`**, **`IconFilePath`**, and **`DrawIconBorder`** are metadata for the consumer's overlay call — the QR encoder never composites the icon.
+  Apply the actual overlay (and any frame/caption/padding) post-generation through **`Lyo.Images.IImageDecorationService`** (see migration note below).
+
+### Migration: decoration moved out of the encoder
+
+`QRCodeOptions.Frame`, `QRCodeBuilder.WithFrame(...)`, and the optional `IImageService` / `IQrFrameLayoutService` constructor parameters on `BuiltInQRCodeService` are gone.
+Compose icons and chrome on the returned bytes with `Lyo.Images`:
+
+```csharp
+using Lyo.Images;
+using Lyo.Images.Builders;
+using Lyo.Common.Enums;
+
+var qr = await qrService.GenerateAsync(data, options);
+var qrBytes = ((QRCodeResult)qr).ImageBytes!;
+
+var decorated = await decoration.Pipeline(qrBytes)
+    .Overlay(logoBytes, b => b.WithOverlaySizePercent(18).WithPadColor("#FFFFFF").WithBorder("#000000"))
+    .AddCaption(b => b.WithText("Scan Me").WithNotch())
+    .AddOuterPadding(b => b.WithPanelColor("#FFFFFF").WithCornerRadius(16))
+    .AddFrame(b => b.WithStrokeColor("#1e293b").WithStrokeWidth(2).WithCornerRadius(16))
+    .ToByteArrayAsync(ImageFormat.Png);
+```
+
+`OverlayAsync` works on PNG (raster) and SVG (embeds a base64 PNG `<image>` before `</svg>`); the other primitives require raster input.
 
 ## Error correction
 
@@ -93,7 +115,6 @@ the same payload.
 - [`Lyo.Codes.ZXing`](../../Codes/Lyo.Codes.ZXing/README.md)
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
-- [`Lyo.Images`](../../Images/Lyo.Images/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 

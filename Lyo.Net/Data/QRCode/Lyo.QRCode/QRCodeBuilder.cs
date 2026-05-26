@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-using Lyo.Images.Models;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.Payloads;
 
@@ -17,7 +16,6 @@ public sealed class QRCodeBuilder
     private bool? _drawQuietZones;
     private QRCodeErrorCorrectionLevel? _errorCorrectionLevel;
     private QRCodeFormat? _format;
-    private QrFrameLayoutOptions? _frame;
     private QRCodeIconOptions? _icon;
     private string? _lightColor;
     private int? _size;
@@ -151,21 +149,6 @@ public sealed class QRCodeBuilder
         return this;
     }
 
-    /// <summary>Sets a decorative PNG frame (badge, panel, or border). PNG output only; requires a registered image service at generation time.</summary>
-    public QRCodeBuilder WithFrame(QrFrameLayoutOptions frame)
-    {
-        ArgumentHelpers.ThrowIfNull(frame);
-        _frame = frame;
-        return this;
-    }
-
-    /// <summary>Removes the frame from the QR code.</summary>
-    public QRCodeBuilder WithoutFrame()
-    {
-        _frame = null;
-        return this;
-    }
-
     /// <summary>Clears all builder properties.</summary>
     /// <returns>The builder instance for method chaining.</returns>
     public QRCodeBuilder Clear()
@@ -208,9 +191,6 @@ public sealed class QRCodeBuilder
 
         if (_icon != null)
             options.Icon = _icon;
-
-        if (_frame != null)
-            options.Frame = _frame;
 
         return (_data, options);
     }
@@ -267,9 +247,6 @@ public sealed class QRCodeBuilder
 
         if (_icon != null)
             parts.Add("HasIcon: true");
-
-        if (_frame is { Style: not QrFrameStyle.None })
-            parts.Add($"Frame: {_frame.Style}");
 
         return $"QR Code: {string.Join(", ", parts)}";
     }

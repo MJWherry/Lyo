@@ -56,7 +56,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     }
 
     /// <inheritdoc />
-    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);

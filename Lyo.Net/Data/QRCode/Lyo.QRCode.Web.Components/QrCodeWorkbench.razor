@@ -2,8 +2,7 @@
 @using Lyo.QRCode.Models
 @using Lyo.QRCode.Payloads
 @inject IQRCodeService QrCodeService
-@inject IQrFrameLayoutService QrFrameLayout
-@inject IImageService? ImageService
+@inject IImageDecorationService Decoration
 @inject IJsInterop Js
 @inject IJSRuntime JsRuntime
 @inject ISnackbar Snackbar
@@ -121,14 +120,14 @@
 
                         <MudDivider Class="my-1"/>
 
-                        @* Row: frame style *@
+                        @* Row: frame preset *@
                         <MudGrid Spacing="1">
                             <MudItem xs="12">
-                                <MudSelect T="QrFrameStyle" Label="Frame style (PNG)" Value="SelectedFrameStyle" ValueChanged="OnFrameStyleChangedAsync"
+                                <MudSelect T="QrBadgePreset" Label="Frame style (PNG)" Value="SelectedFrameStyle" ValueChanged="OnFrameStyleChangedAsync"
                                            Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
                                            Disabled="@(_format != QRCodeFormat.Png)"
                                            HelperText="Applied after generate.">
-                                    @foreach (var st in Enum.GetValues<QrFrameStyle>()) {
+                                    @foreach (var st in Enum.GetValues<QrBadgePreset>()) {
                                         <MudSelectItem Value="@st">@FrameStyleLabel(st)</MudSelectItem>
                                     }
                                 </MudSelect>
@@ -155,12 +154,12 @@
                                     <MudNumericField T="int" Label="Min. header (px)" Value="_frameHeaderMinPx" ValueChanged="OnFrameHeaderMinPxChangedAsync"
                                                      Min="0" Max="3200" Step="1"
                                                      Variant="Variant.Outlined" dense="true" Margin="Margin.Dense"
-                                                     Disabled="@(SelectedFrameStyle != QrFrameStyle.BadgeWithHeader)"
+                                                     Disabled="@(SelectedFrameStyle != QrBadgePreset.BadgeWithHeader)"
                                                      HelperText="Badge only"/>
                                 </MudItem>
                                 <MudItem xs="12" sm="4" Class="d-flex align-center">
                                     <MudCheckBox T="bool" Label="Auto-size header" @bind-Value="_frameAutoSizeHeader" dense="true" Size="Size.Small"
-                                                 Disabled="@(SelectedFrameStyle != QrFrameStyle.BadgeWithHeader)"/>
+                                                 Disabled="@(SelectedFrameStyle != QrBadgePreset.BadgeWithHeader)"/>
                                 </MudItem>
                             </MudGrid>
 
@@ -168,7 +167,7 @@
                             <MudGrid Spacing="1">
                                 <MudItem xs="12" sm="4">
                                     <MudColorPicker Label="Header color" @bind-Value="_frameHeaderBg" ColorPickerMode="ColorPickerMode.HEX"
-                                                    Disabled="@(SelectedFrameStyle == QrFrameStyle.SimpleRoundedPanel || SelectedFrameStyle == QrFrameStyle.BorderOnly)"
+                                                    Disabled="@(SelectedFrameStyle == QrBadgePreset.SimpleRoundedPanel || SelectedFrameStyle == QrBadgePreset.BorderOnly)"
                                                     Class="mud-width-full"/>
                                 </MudItem>
                                 <MudItem xs="12" sm="4">
@@ -368,7 +367,7 @@
                                         @if (_lastOutputWidth is > 0 && _lastOutputHeight is > 0) {
                                             <MudText Typo="Typo.body2">@_lastOutputWidth × @_lastOutputHeight px</MudText>
 
-                                            @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
+                                            @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrBadgePreset.None) {
                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Includes frame.</MudText>
                                             }
                                         }

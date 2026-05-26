@@ -35,5 +35,9 @@ public enum ImageFormat
 
     /// <summary>ICO image format (.ico)</summary>
     [Description("ico")]
-    Ico
+    Ico,
+
+    /// <summary>SVG image format (.svg). Vector text-based; decoration primitives treat SVG as XML and skip raster compositing.</summary>
+    [Description("svg")]
+    Svg
 }

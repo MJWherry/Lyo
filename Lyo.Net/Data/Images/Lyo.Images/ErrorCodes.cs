@@ -45,9 +45,15 @@ public static class ImageErrorCodes
     /// <summary>Invalid image dimensions.</summary>
     public const string InvalidDimensions = "IMAGE_INVALID_DIMENSIONS";
 
-    /// <summary>Failed to composite center overlay.</summary>
+    /// <summary>Failed to composite an overlay onto the background image.</summary>
     public const string CompositeOverlayFailed = "IMAGE_COMPOSITE_OVERLAY_FAILED";
 
-    /// <summary>Failed to composite QR decorative frame.</summary>
-    public const string QrFrameCompositeFailed = "IMAGE_QR_FRAME_COMPOSITE_FAILED";
+    /// <summary>Failed to draw a decorative frame around the image.</summary>
+    public const string FrameCompositeFailed = "IMAGE_FRAME_COMPOSITE_FAILED";
+
+    /// <summary>Failed to compose a caption band onto the image.</summary>
+    public const string CaptionCompositeFailed = "IMAGE_CAPTION_COMPOSITE_FAILED";
+
+    /// <summary>Failed to apply outer padding/shadow around the image.</summary>
+    public const string OuterPaddingCompositeFailed = "IMAGE_OUTER_PADDING_COMPOSITE_FAILED";
 }
