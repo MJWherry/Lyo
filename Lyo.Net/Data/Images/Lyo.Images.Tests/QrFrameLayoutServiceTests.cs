@@ -59,7 +59,7 @@ public class QrFrameLayoutServiceTests
         var corner = img[24, 24];
         var inset = img[36, 36];
         Assert.True(corner.R < 252 || corner.G < 252 || corner.B < 252, $"Expected canvas color at bbox corner (not panel white), got R={corner.R} G={corner.G} B={corner.B}.");
-        Assert.True(inset.R > 248 && inset.G > 248 && inset.B > 248, $"Expected white panel just inside the arc, got R={inset.R} G={inset.G} B={inset.B}.");
+        Assert.True(inset is { R: > 248, G: > 248, B: > 248 }, $"Expected white panel just inside the arc, got R={inset.R} G={inset.G} B={inset.B}.");
     }
 
     [Fact]

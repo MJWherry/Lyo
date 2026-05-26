@@ -73,7 +73,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
     }
 
     /// <inheritdoc />
-    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
         var cap = Math.Min(maxKeys, 10_000);

@@ -17,7 +17,7 @@ public static class CloudObjectKeyBuilder
     public static string Build(Guid fileId, string extension = "", string? pathPrefix = null, string? storagePrefix = null)
     {
         var idString = fileId.ToString("N");
-        var fileName = idString + (extension ?? "");
+        var fileName = idString + extension;
         var parts = new List<string>(4);
         if (!storagePrefix.IsNullOrWhitespace())
             parts.Add(storagePrefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\'));

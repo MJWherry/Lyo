@@ -17,7 +17,7 @@ public sealed class CloudObjectKeyBuilderTests
     public void Build_NoExtension_ReturnsKeyWithoutTrailingDot()
     {
         var id = new Guid("12345678-1234-1234-1234-123456789012");
-        var key = CloudObjectKeyBuilder.Build(id, "");
+        var key = CloudObjectKeyBuilder.Build(id);
         Assert.DoesNotContain('.', key);
     }
 
@@ -26,7 +26,7 @@ public sealed class CloudObjectKeyBuilderTests
     {
         var id = new Guid("12345678-1234-1234-1234-123456789012");
         var idN = id.ToString("N");
-        var key = CloudObjectKeyBuilder.Build(id, ".gz", "tenant/alpha", null);
+        var key = CloudObjectKeyBuilder.Build(id, ".gz", "tenant/alpha");
         Assert.Equal($"tenant/alpha/{idN}.gz", key);
     }
 }

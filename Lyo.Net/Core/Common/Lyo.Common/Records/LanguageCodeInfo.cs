@@ -128,13 +128,13 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     public static readonly LanguageCodeInfo FilPh = new("FilPh", "fil-PH", "fil", "fil", "Filipino (Philippines)");
 
     // Static registry with fast lookups
-    private static readonly Dictionary<string, LanguageCodeInfo> _byBcp47 = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, LanguageCodeInfo> _byIso6391 = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, LanguageCodeInfo> _byIso6393 = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<LanguageCodeInfo> _allCodes = [];
+    private static readonly Dictionary<string, LanguageCodeInfo> ByBcp47 = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, LanguageCodeInfo> ByIso6391 = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, LanguageCodeInfo> ByIso6393 = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly List<LanguageCodeInfo> AllCodes = [];
 
     /// <summary>Gets all registered language codes.</summary>
-    public static IReadOnlyList<LanguageCodeInfo> All => _allCodes;
+    public static IReadOnlyList<LanguageCodeInfo> All => AllCodes;
 
     static LanguageCodeInfo()
     {
@@ -146,20 +146,20 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
             .ToList();
 
         foreach (var langCode in fields) {
-            _allCodes.Add(langCode);
-            _byBcp47[langCode.Bcp47] = langCode;
+            AllCodes.Add(langCode);
+            ByBcp47[langCode.Bcp47] = langCode;
             if (!langCode.Iso6391.IsNullOrWhitespace()) {
                 // For ISO 639-1, store the first occurrence (base variant)
                 var iso1 = langCode.Iso6391;
-                if (!_byIso6391.ContainsKey(iso1))
-                    _byIso6391[iso1] = langCode;
+                if (!ByIso6391.ContainsKey(iso1))
+                    ByIso6391[iso1] = langCode;
             }
 
             if (!langCode.Iso6393.IsNullOrWhitespace()) {
                 // For ISO 639-3, store the first occurrence (base variant)
                 var iso3 = langCode.Iso6393;
-                if (!_byIso6393.ContainsKey(iso3))
-                    _byIso6393[iso3] = langCode;
+                if (!ByIso6393.ContainsKey(iso3))
+                    ByIso6393[iso3] = langCode;
             }
         }
     }
@@ -173,7 +173,7 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
             return Unknown;
 
         var trimmed = bcp47Code.Trim();
-        return _byBcp47.TryGetValue(trimmed, out var code) ? code : Unknown;
+        return ByBcp47.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 
     /// <summary>Finds a language code by its ISO 639-1 (2-letter) code.</summary>
@@ -186,7 +186,7 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
             return Unknown;
 
         var trimmed = iso6391Code.Trim().ToLowerInvariant();
-        return _byIso6391.TryGetValue(trimmed, out var code) ? code : Unknown;
+        return ByIso6391.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 
     /// <summary>Finds a language code by its ISO 639-3 (3-letter) code.</summary>
@@ -199,6 +199,6 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
             return Unknown;
 
         var trimmed = iso6393Code.Trim().ToLowerInvariant();
-        return _byIso6393.TryGetValue(trimmed, out var code) ? code : Unknown;
+        return ByIso6393.TryGetValue(trimmed, out var code) ? code : Unknown;
     }
 }

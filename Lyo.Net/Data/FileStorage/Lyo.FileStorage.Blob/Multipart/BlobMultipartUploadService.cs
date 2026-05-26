@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -297,11 +298,11 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
 
     private static string SanitizeAuditError(string? message)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsNullOrEmpty())
             return string.Empty;
 
         const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
         return s.Length > max ? s[..max] : s;
     }
 

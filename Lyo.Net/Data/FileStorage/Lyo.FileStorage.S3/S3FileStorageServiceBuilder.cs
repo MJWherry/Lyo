@@ -222,7 +222,7 @@ public sealed class S3FileStorageServiceBuilder
                     metadataService = provider.GetRequiredService<IFileMetadataStore>();
 
                 var compressionService = provider.GetService<ICompressionService>();
-                ITwoKeyEncryptionService? encryptionService = null;
+                ITwoKeyEncryptionService? encryptionService;
                 if (!string.IsNullOrWhiteSpace(encryptionServiceKeyToUse))
                     encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyToUse);
                 else if (_encryptionServiceFactory != null)

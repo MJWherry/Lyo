@@ -107,7 +107,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var fileId = Guid.NewGuid();
         await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
         var trimmedBase = _options.DirectUploadReceiveBaseUri!.Trim().TrimEnd('/');
-        var routeTrim = (_options.DirectUploadPutRouteRelativePath ?? "").Trim().Trim('/');
+        var routeTrim = _options.DirectUploadPutRouteRelativePath.Trim().Trim('/');
         var putUrl = $"{trimmedBase}/{routeTrim}/{fileId:D}/put";
         var expiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         var storageRootFull = NormalizeStorageRootFullPath();
@@ -531,7 +531,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
                 yield break;
             }
 
-            IEnumerable<string>? filesEnumerable = null;
+            IEnumerable<string>? filesEnumerable;
             try {
                 filesEnumerable = Directory.EnumerateFiles(dir);
             }
@@ -555,7 +555,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
                 }
             }
 
-            IEnumerable<string>? subdirs = null;
+            IEnumerable<string>? subdirs;
             try {
                 subdirs = Directory.EnumerateDirectories(dir);
             }

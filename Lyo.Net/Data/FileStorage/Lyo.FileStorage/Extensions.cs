@@ -1,3 +1,4 @@
+using Lyo.Common.Extensions;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
@@ -359,7 +360,7 @@ public static class Extensions
 
         private static IEnumerable<string> OrderedSectionCandidates(string? preferredSection)
         {
-            if (!string.IsNullOrWhiteSpace(preferredSection))
+            if (!preferredSection.IsNullOrWhitespace())
                 yield return preferredSection.Trim();
 
             if (!string.Equals(preferredSection, DiskFileStorageOptions.SectionName, StringComparison.Ordinal))

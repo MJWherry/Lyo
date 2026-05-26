@@ -247,7 +247,7 @@ public static class OperationHelpers
         where T : class, IComparable<T>, IConvertible
     {
         ThrowIfNull(value);
-        ThrowIfNotInRange(value!, min, max, paramName, message);
+        ThrowIfNotInRange(value, min, max, paramName, message);
     }
 
     /// <summary>Throws an <see cref="InvalidOperationException" /> if the <see cref="DateTime" /> value is not within the specified range.</summary>
@@ -353,7 +353,7 @@ public static class OperationHelpers
 
     /// <summary>
     /// Throws an <see cref="InvalidOperationException" /> if <paramref name="value" /> is null or negative; uses the same comparisons and default messages as
-    /// <see cref="ArgumentHelpers.ThrowIfNegative{T}(System.Nullable{T},System.String)" />.
+    /// <see cref="ArgumentHelpers.ThrowIfNegative{T}(T,string)" />.
     /// </summary>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -373,7 +373,7 @@ public static class OperationHelpers
 
     /// <summary>
     /// Throws an <see cref="InvalidOperationException" /> if <paramref name="value" /> is null, negative, or zero; parallel to
-    /// <see cref="ArgumentHelpers.ThrowIfNegativeOrZero{T}(System.Nullable{T},System.String)" />.
+    /// <see cref="ArgumentHelpers.ThrowIfNegativeOrZero{T}(T,string)" />.
     /// </summary>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -393,7 +393,7 @@ public static class OperationHelpers
 
     /// <summary>
     /// Throws an <see cref="InvalidOperationException" /> if <paramref name="value" /> is null or strictly positive; parallel to
-    /// <see cref="ArgumentHelpers.ThrowIfPositive{T}(System.Nullable{T},System.String)" />.
+    /// <see cref="ArgumentHelpers.ThrowIfPositive{T}(T,string)" />.
     /// </summary>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -413,7 +413,7 @@ public static class OperationHelpers
 
     /// <summary>
     /// Throws an <see cref="InvalidOperationException" /> if <paramref name="value" /> is null or not strictly negative; parallel to
-    /// <see cref="ArgumentHelpers.ThrowIfPositiveOrZero{T}(System.Nullable{T},System.String)" />.
+    /// <see cref="ArgumentHelpers.ThrowIfPositiveOrZero{T}(T,string)" />.
     /// </summary>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]

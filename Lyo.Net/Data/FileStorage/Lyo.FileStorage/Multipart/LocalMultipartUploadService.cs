@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Extensions;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -245,11 +246,11 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
 
     private static string SanitizeAuditError(string? message)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsNullOrEmpty())
             return string.Empty;
 
         const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
         return s.Length > max ? s[..max] : s;
     }
 

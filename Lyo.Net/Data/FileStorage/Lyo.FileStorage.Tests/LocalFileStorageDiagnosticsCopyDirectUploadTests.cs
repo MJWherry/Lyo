@@ -169,9 +169,9 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     public async Task ListStorageKeys_IncludesUploadedFile_WithForwardSlashShape()
     {
         using var service = CreateService();
-        var DX = AsDiagnostics(service);
+        var dx = AsDiagnostics(service);
         await service.SaveFileAsync("k"u8.ToArray(), "keyed.bin", ct: TestContext.Current.CancellationToken);
-        var keys = await DX.ListStorageKeysAsync(null, 500, TestContext.Current.CancellationToken);
+        var keys = await dx.ListStorageKeysAsync(null, 500, TestContext.Current.CancellationToken);
         Assert.NotEmpty(keys);
         Assert.All(keys, k => Assert.False(k.Contains('\\', StringComparison.Ordinal)));
     }

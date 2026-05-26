@@ -27,7 +27,7 @@ public sealed class S3GetObjectResponseStreamTests
         var (inner, response) = CreatePayload([7, 8, 9]);
         var wrapper = new S3GetObjectResponseStream(response);
         var buffer = new byte[3];
-        await wrapper.ReadAsync(buffer, TestContext.Current.CancellationToken);
+        _ = await wrapper.ReadAsync(buffer, TestContext.Current.CancellationToken);
         Assert.Equal([7, 8, 9], buffer);
         await wrapper.DisposeAsync();
         Assert.Throws<ObjectDisposedException>(() => inner.ReadByte());

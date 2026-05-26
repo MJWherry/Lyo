@@ -39,7 +39,7 @@ public partial class ComicViewer
     /// <summary>The comic series currently being read.</summary>
     [Parameter]
     [EditorRequired]
-    public ComicSeries Series { get; set; } = default!;
+    public ComicSeries Series { get; set; } = null!;
 
     /// <summary>Full ordered list of chapters available for navigation (same language / filter as the reading session). Used to populate the chapter selector and chapter-skip buttons.</summary>
     [Parameter]
@@ -92,7 +92,7 @@ public partial class ComicViewer
     public string? CoverImageUrl { get; set; }
 
     [Inject]
-    private IJSRuntime Js { get; set; } = default!;
+    private IJSRuntime Js { get; set; } = null!;
 
     private int EffectiveTotalPages => TotalPages > 0 ? TotalPages : CurrentChapter?.PageCount ?? 1;
 

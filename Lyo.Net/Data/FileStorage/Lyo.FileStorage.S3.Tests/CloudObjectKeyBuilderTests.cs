@@ -27,7 +27,7 @@ public sealed class CloudObjectKeyBuilderTests
     {
         var id = new Guid("ab345678-1234-1234-1234-1234567890aa");
         var idN = id.ToString("N");
-        var key = CloudObjectKeyBuilder.Build(id, ".gz", "incoming/x", null);
+        var key = CloudObjectKeyBuilder.Build(id, ".gz", "incoming/x");
         Assert.Equal($"incoming/x/{idN}.gz", key);
     }
 

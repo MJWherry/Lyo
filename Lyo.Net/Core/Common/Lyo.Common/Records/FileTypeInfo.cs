@@ -212,9 +212,9 @@ public sealed class FileTypeInfo
         .ToArray();
 
     // Static registry with fast lookups
-    private static readonly Dictionary<string, FileTypeInfo> _byMimeType = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, FileTypeInfo> _byExtension = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<FileTypeInfo> _allTypes = new();
+    private static readonly Dictionary<string, FileTypeInfo> ByMimeType = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, FileTypeInfo> ByExtension = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly List<FileTypeInfo> AllTypes = [];
 
     public string Name { get; }
 
@@ -237,7 +237,7 @@ public sealed class FileTypeInfo
     public string Description { get; }
 
     /// <summary>Gets all registered file types.</summary>
-    public static IReadOnlyList<FileTypeInfo> All => _allTypes;
+    public static IReadOnlyList<FileTypeInfo> All => AllTypes;
 
     static FileTypeInfo()
     {
@@ -249,13 +249,13 @@ public sealed class FileTypeInfo
             .ToList();
 
         foreach (var fileType in fields) {
-            _allTypes.Add(fileType);
-            _byMimeType[fileType.MimeType] = fileType;
+            AllTypes.Add(fileType);
+            ByMimeType[fileType.MimeType] = fileType;
             foreach (var mimeAlias in fileType.MimeTypeAliases)
-                _byMimeType[mimeAlias] = fileType;
+                ByMimeType[mimeAlias] = fileType;
 
             foreach (var ext in fileType.Extensions)
-                _byExtension[ext.ToLowerInvariant()] = fileType;
+                ByExtension[ext.ToLowerInvariant()] = fileType;
         }
     }
 
@@ -297,7 +297,7 @@ public sealed class FileTypeInfo
             return Unknown;
 
         var trimmed = mimeType.Trim();
-        return _byMimeType.TryGetValue(trimmed, out var type) ? type : Unknown;
+        return ByMimeType.TryGetValue(trimmed, out var type) ? type : Unknown;
     }
 
     /// <summary>Finds a file type by its extension.</summary>
@@ -313,13 +313,13 @@ public sealed class FileTypeInfo
             normalized = "." + normalized;
 
         normalized = normalized.ToLowerInvariant();
-        return _byExtension.TryGetValue(normalized, out var type) ? type : Unknown;
+        return ByExtension.TryGetValue(normalized, out var type) ? type : Unknown;
     }
 
     /// <summary>Gets file types by category.</summary>
     /// <param name="category">The file type category.</param>
     /// <returns>An enumerable of file types in the specified category.</returns>
-    public static IEnumerable<FileTypeInfo> ByCategory(FileTypeCategory category) => _allTypes.Where(t => t.Category == category);
+    public static IEnumerable<FileTypeInfo> ByCategory(FileTypeCategory category) => AllTypes.Where(t => t.Category == category);
 
     /// <summary>Gets the file type from a file path.</summary>
     /// <param name="filePath">The file path.</param>

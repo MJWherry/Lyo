@@ -438,7 +438,7 @@
     private IReadOnlyCollection<string> GetDelimiterSelectedValues(LyoPdfAnnotationResult row)
     {
         var list = new List<string>();
-        foreach (var c in row.KeyValueInferDelimiters ?? "") {
+        foreach (var c in row.KeyValueInferDelimiters) {
             if (char.IsWhiteSpace(c) || char.IsControl(c))
                 continue;
 
@@ -447,18 +447,18 @@
                 list.Add(s);
         }
 
-        if (list.Count == 0) {
-            list.Add(":");
-            list.Add(";");
-        }
+        if (list.Count != 0)
+            return list;
 
+        list.Add(":");
+        list.Add(";");
         return list;
     }
 
     private IEnumerable<char> GetExtraDelimiterChars(LyoPdfAnnotationResult row)
     {
         var seen = new HashSet<char>();
-        foreach (var c in row.KeyValueInferDelimiters ?? "") {
+        foreach (var c in row.KeyValueInferDelimiters) {
             if (char.IsWhiteSpace(c) || char.IsControl(c) || KvDelimiterPresetChars.Contains(c))
                 continue;
 
@@ -514,7 +514,7 @@
         if (char.IsWhiteSpace(c) || char.IsControl(c))
             return;
 
-        var current = row.KeyValueInferDelimiters ?? "";
+        var current = row.KeyValueInferDelimiters;
         if (current.Contains(c)) {
             _customDelimiterDraft[row.Key] = "";
             InvokeAsync(StateHasChanged);

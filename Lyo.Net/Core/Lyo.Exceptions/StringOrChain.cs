@@ -80,23 +80,23 @@ public readonly struct StringOrChain
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowIfWhiteSpace(Func<string, Exception> createException, string? message = null) => _value.OrThrowIfWhiteSpace(createException, message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperation(System.String)" />
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperation(string,string)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowInvalidOperation(string? message = null) => _value.OrThrowInvalidOperation(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperationIfWhiteSpace(System.String)" />
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperationIfWhiteSpace(string,string)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowInvalidOperationIfWhiteSpace(string? message = null) => _value.OrThrowInvalidOperationIfWhiteSpace(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowArgument(System.String)" />
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowArgument(string,string)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowArgument(string? message = null) => _value.OrThrowArgument(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowKeyNotFound(System.String)" />
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowKeyNotFound(string,string)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowKeyNotFound(string? message = null) => _value.OrThrowKeyNotFound(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowNotSupported(System.String)" />
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowNotSupported(string,string)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrThrowNotSupported(string? message = null) => _value.OrThrowNotSupported(message);
 }

@@ -104,10 +104,10 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     private static readonly Dictionary<USState, List<GeographicInfo>> _byState = new();
     private static readonly Dictionary<CountryCode, List<GeographicInfo>> _byCountry = new();
     private static readonly Dictionary<string, List<GeographicInfo>> _byTimeZone = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<GeographicInfo> _allLocations = new();
+    private static readonly List<GeographicInfo> AllLocations = [];
 
     /// <summary>Gets all registered geographic locations.</summary>
-    public static IReadOnlyList<GeographicInfo> All => _allLocations;
+    public static IReadOnlyList<GeographicInfo> All => AllLocations;
 
     /// <summary>Gets the TimeZoneInfo object for this location's timezone.</summary>
     /// <returns>The TimeZoneInfo, or null if TimeZoneId is invalid or not set.</returns>
@@ -148,7 +148,7 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
             if (location == Unknown)
                 continue;
 
-            _allLocations.Add(location);
+            AllLocations.Add(location);
             if (location.State.HasValue) {
                 if (!_byState.ContainsKey(location.State.Value))
                     _byState[location.State.Value] = [];

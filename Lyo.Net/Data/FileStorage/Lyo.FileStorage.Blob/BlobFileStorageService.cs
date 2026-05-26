@@ -56,7 +56,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
     }
 
     /// <inheritdoc />
-    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
         var cap = Math.Min(maxKeys, 10_000);
@@ -448,7 +448,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
 
             sasBuilder.SetPermissions(BlobSasPermissions.Read);
             if (!string.IsNullOrWhiteSpace(urlResponseOptions?.ContentDisposition))
-                sasBuilder.ContentDisposition = urlResponseOptions!.ContentDisposition;
+                sasBuilder.ContentDisposition = urlResponseOptions.ContentDisposition;
 
             if (!string.IsNullOrWhiteSpace(urlResponseOptions?.ContentType))
                 sasBuilder.ContentType = urlResponseOptions.ContentType;

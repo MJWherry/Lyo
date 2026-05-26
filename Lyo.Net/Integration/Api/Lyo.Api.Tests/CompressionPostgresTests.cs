@@ -55,7 +55,8 @@ public class CompressionPostgresTests : IDisposable
         using var content = new ByteArrayContent(gzippedBytes);
         content.Headers.ContentType = new(FileTypeInfo.Json.MimeType);
         content.Headers.ContentEncoding.Add("gzip");
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/Query") { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/Job/Definition/Query");
+        request.Content = content;
         using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<QueryRes<JobDefinitionRes>>(JsonOptions, TestContext.Current.CancellationToken);

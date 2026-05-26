@@ -153,7 +153,7 @@ public static class OrThrowExtensions
         }
 
         /// <summary>Returns the string when it is not null, empty, or whitespace; otherwise throws <see cref="InvalidOperationException" />.</summary>
-        /// <inheritdoc cref="OrThrowInvalidOperation(string?)" path="/param[@name='message']" />
+        /// <inheritdoc cref="OrThrowInvalidOperation(string,string)" path="/param[@name='message']" />
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrThrowInvalidOperationIfWhiteSpace(string? message = null)
         {
@@ -164,7 +164,7 @@ public static class OrThrowExtensions
         }
 
         /// <summary>Returns the string when it is not null and not empty; otherwise throws <see cref="ArgumentException" />.</summary>
-        /// <inheritdoc cref="OrThrowInvalidOperation(string?)" path="/param[@name='message']" />
+        /// <inheritdoc cref="OrThrowInvalidOperation(string,string)" path="/param[@name='message']" />
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrThrowArgument(string? message = null)
         {
@@ -175,7 +175,7 @@ public static class OrThrowExtensions
         }
 
         /// <summary>Returns the string when it is not null and not empty; otherwise throws <see cref="KeyNotFoundException" />.</summary>
-        /// <inheritdoc cref="OrThrowInvalidOperation(string?)" path="/param[@name='message']" />
+        /// <inheritdoc cref="OrThrowInvalidOperation(string,string)" path="/param[@name='message']" />
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrThrowKeyNotFound(string? message = null)
         {
@@ -186,7 +186,7 @@ public static class OrThrowExtensions
         }
 
         /// <summary>Returns the string when it is not null and not empty; otherwise throws <see cref="NotSupportedException" />.</summary>
-        /// <inheritdoc cref="OrThrowInvalidOperation(string?)" path="/param[@name='message']" />
+        /// <inheritdoc cref="OrThrowInvalidOperation(string,string)" path="/param[@name='message']" />
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string OrThrowNotSupported(string? message = null)
         {

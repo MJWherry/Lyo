@@ -220,12 +220,12 @@ public record HttpStatusCodeInfo(int Code, string Name, string Description, Http
         511, "Network Authentication Required", "The client needs to authenticate to gain network access", HttpStatusCodeCategory.ServerError, (HttpStatusCode)511);
 
     // Static registry with fast lookups
-    private static readonly Dictionary<int, HttpStatusCodeInfo> _byCode = new();
-    private static readonly Dictionary<HttpStatusCode, HttpStatusCodeInfo> _byHttpStatusCode = new();
-    private static readonly List<HttpStatusCodeInfo> _allCodes = new();
+    private static readonly Dictionary<int, HttpStatusCodeInfo> ByCode = new();
+    private static readonly Dictionary<HttpStatusCode, HttpStatusCodeInfo> ByHttpStatusCode = new();
+    private static readonly List<HttpStatusCodeInfo> AllCodes = [];
 
     /// <summary>Gets all registered HTTP status codes.</summary>
-    public static IReadOnlyList<HttpStatusCodeInfo> All => _allCodes;
+    public static IReadOnlyList<HttpStatusCodeInfo> All => AllCodes;
 
     /// <summary>Determines if the status code represents a successful response (2xx).</summary>
     public bool IsSuccess => Category == HttpStatusCodeCategory.Success;
@@ -252,26 +252,26 @@ public record HttpStatusCodeInfo(int Code, string Name, string Description, Http
             .ToList();
 
         foreach (var statusCode in fields) {
-            _allCodes.Add(statusCode);
-            _byCode[statusCode.Code] = statusCode;
-            _byHttpStatusCode[statusCode.HttpStatusCode] = statusCode;
+            AllCodes.Add(statusCode);
+            ByCode[statusCode.Code] = statusCode;
+            ByHttpStatusCode[statusCode.HttpStatusCode] = statusCode;
         }
     }
 
     /// <summary>Finds an HTTP status code by its numeric code.</summary>
     /// <param name="code">The HTTP status code (e.g., 200, 404, 500).</param>
     /// <returns>The status code info, or Unknown if not found.</returns>
-    public static HttpStatusCodeInfo FromCode(int code) => _byCode.TryGetValue(code, out var statusCode) ? statusCode : Unknown;
+    public static HttpStatusCodeInfo FromCode(int code) => ByCode.TryGetValue(code, out var statusCode) ? statusCode : Unknown;
 
     /// <summary>Finds an HTTP status code by System.Net.HttpStatusCode enum.</summary>
     /// <param name="httpStatusCode">The System.Net.HttpStatusCode enum value.</param>
     /// <returns>The status code info, or Unknown if not found.</returns>
-    public static HttpStatusCodeInfo FromHttpStatusCode(HttpStatusCode httpStatusCode) => _byHttpStatusCode.TryGetValue(httpStatusCode, out var statusCode) ? statusCode : Unknown;
+    public static HttpStatusCodeInfo FromHttpStatusCode(HttpStatusCode httpStatusCode) => ByHttpStatusCode.TryGetValue(httpStatusCode, out var statusCode) ? statusCode : Unknown;
 
     /// <summary>Gets HTTP status codes by category.</summary>
     /// <param name="category">The HTTP status code category.</param>
     /// <returns>An enumerable of status codes in the specified category.</returns>
-    public static IEnumerable<HttpStatusCodeInfo> ByCategory(HttpStatusCodeCategory category) => _allCodes.Where(c => c.Category == category);
+    public static IEnumerable<HttpStatusCodeInfo> ByCategory(HttpStatusCodeCategory category) => AllCodes.Where(c => c.Category == category);
 
     /// <summary>Implicit conversion to System.Net.HttpStatusCode for seamless integration.</summary>
     public static implicit operator HttpStatusCode(HttpStatusCodeInfo info) => info.HttpStatusCode;

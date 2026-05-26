@@ -42,7 +42,7 @@ public sealed class BlobFileStorageOptionsTests
         var opts = new BlobFileStorageOptions { ConnectionString = "x", ContainerName = "c", CustomerProvidedKeyBase64 = Convert.ToBase64String(keyBytes) };
         var cpk = opts.ResolveCustomerProvidedKey();
         Assert.NotNull(cpk);
-        Assert.Equal("Aes256", cpk!.Value.EncryptionAlgorithm.ToString());
+        Assert.Equal("Aes256", cpk.Value.EncryptionAlgorithm.ToString());
     }
 
     [Fact]
