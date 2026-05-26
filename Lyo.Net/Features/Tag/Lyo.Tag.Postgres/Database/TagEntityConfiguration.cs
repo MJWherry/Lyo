@@ -21,10 +21,18 @@ public sealed class TagEntityConfiguration : EntityRefConfiguration<TagEntity>
         builder.HasIndex(e => e.Name).HasDatabaseName("ix_tag_name");
         builder.HasIndex(e => e.TagType).HasDatabaseName("ix_tag_tag_type");
         builder.HasIndex(e => new { e.TenantId, e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_tag_tenant_for_entity");
-        builder.HasIndex(e => new { e.TenantId, e.ForEntityType, e.ForEntityId, e.TagType, e.Name, e.Slug })
+        builder.HasIndex(e => new {
+                e.TenantId,
+                e.ForEntityType,
+                e.ForEntityId,
+                e.TagType,
+                e.Name,
+                e.Slug
+            })
             .IsUnique()
             .HasDatabaseName("uq_tag_tenant_entity_name_slug_active")
             .HasFilter("\"deleted_at\" IS NULL");
+
         builder.HasIndex(e => new { e.TenantId, e.Context }).HasDatabaseName("ix_tag_tenant_context");
         builder.HasIndex(e => e.CreatedAt).HasDatabaseName("ix_tag_created_at");
         builder.HasIndex(e => e.ExpiresAt).HasDatabaseName("ix_tag_expires_at").HasFilter("\"expires_at\" IS NOT NULL");

@@ -8,7 +8,10 @@ public abstract class FileStorageServiceBaseOptions
     /// <summary>Chooses depth of periodic health probing. Defaults to full round-trip I/O.</summary>
     public FileStorageHealthCheckMode HealthCheckMode { get; set; } = FileStorageHealthCheckMode.Full;
 
-    /// <summary>Emit operation counters/histograms via the configured <see cref="Lyo.Metrics.IMetrics"/>. Defaults to <see langword="true"/>; when no metrics service is registered the implementation falls back to a no-op sink.</summary>
+    /// <summary>
+    /// Emit operation counters/histograms via the configured <see cref="Lyo.Metrics.IMetrics" />. Defaults to <see langword="true" />; when no metrics service is registered the
+    /// implementation falls back to a no-op sink.
+    /// </summary>
     public bool EnableMetrics { get; set; } = true;
 
     /// <summary>Hash algorithm used for file integrity verification and duplicate detection. Default: Sha256.</summary>
@@ -27,8 +30,8 @@ public abstract class FileStorageServiceBaseOptions
     public bool ThrowOnDeleteNotFound { get; set; } = true;
 
     /// <summary>
-    /// Maximum allowed decompressed file size in bytes. Prevents decompression bombs by terminating decompression once this many output bytes have been produced.
-    /// Default 10 GiB; set to <see langword="null" /> to bypass this guard and rely solely on <c>CompressionService</c> internal validation.
+    /// Maximum allowed decompressed file size in bytes. Prevents decompression bombs by terminating decompression once this many output bytes have been produced. Default 10 GiB;
+    /// set to <see langword="null" /> to bypass this guard and rely solely on <c>CompressionService</c> internal validation.
     /// </summary>
     public long? MaxDecompressedFileSize { get; set; } = 10L * 1024 * 1024 * 1024;
 

@@ -1,7 +1,7 @@
-using Lyo.EntityReference.Models;
 using Lyo.Config;
 using Lyo.Discord.Models;
 using Lyo.Discord.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 
 namespace Lyo.Discord.Postgres;

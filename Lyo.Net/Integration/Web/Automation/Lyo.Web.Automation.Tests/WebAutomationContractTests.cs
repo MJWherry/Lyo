@@ -224,10 +224,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
             .FindElement("trigger", ElementLocator.Id("customDropdownTrigger"))
             .ElementAction(
                 "trigger",
-                new DropdownElementAction(
-                    OptionLocator: ElementLocator.CssSelector("#customDropdownList [data-value=\"b\"]"),
-                    ClickTriggerFirst: true,
-                    ScopeParentRef: null))
+                new DropdownElementAction(OptionLocator: ElementLocator.CssSelector("#customDropdownList [data-value=\"b\"]"), ClickTriggerFirst: true, ScopeParentRef: null))
             .FindElement("echoEl", ElementLocator.Id("customDropdownEcho"))
             .ExtractElementData("echoEl", "picked", ElementDataExtractKind.Text)
             .Build();

@@ -2,6 +2,7 @@ using Lyo.Common.Enums;
 using Lyo.Exceptions;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
+
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
@@ -11,17 +12,15 @@ namespace Lyo.DateAndTime;
 /// <summary>US-state timezone conversions and day-of-week scheduling helpers anchored in each state’s local civil time.</summary>
 /// <remarks>
 /// <para>
-/// Time zones resolve through <see cref="Lyo.Common.Enums.GeographicInfo.FromState" /> (IANA ids such as <c>America/New_York</c>). When the OS cannot resolve an id,
-/// conversion members return <see langword="null" /> rather than throwing.
+/// Time zones resolve through <see cref="Lyo.Common.Enums.GeographicInfo.FromState" /> (IANA ids such as <c>America/New_York</c>). When the OS cannot resolve an id, conversion
+/// members return <see langword="null" /> rather than throwing.
 /// </para>
 /// <para>
 /// Scheduling interprets <see cref="DayFlags" /> with one bit per weekday. Next-run search scans at most seven local midnights ahead; discrete <c>IsPastDue</c> scans cap
-/// backward history similarly. The interval-based <c>IsPastDue</c> overload only evaluates <em>today’s</em> local window — unlike the discrete-times overload which walks
-/// multiple days.
+/// backward history similarly. The interval-based <c>IsPastDue</c> overload only evaluates <em>today’s</em> local window — unlike the discrete-times overload which walks multiple
+/// days.
 /// </para>
-/// <para>
-/// On .NET 6+, APIs use <see cref="TimeOnly" />; on .NET Standard 2.0 use <see cref="TimeOnlyModel" /> instead (this library aliases the type internally).
-/// </para>
+/// <para>On .NET 6+, APIs use <see cref="TimeOnly" />; on .NET Standard 2.0 use <see cref="TimeOnlyModel" /> instead (this library aliases the type internally).</para>
 /// </remarks>
 public static class DateAndTime
 {
@@ -204,8 +203,8 @@ public static class DateAndTime
     /// <summary>Interval-based past-due check that only inspects <em>today’s</em> local window in the given state.</summary>
     /// <remarks>
     /// Unlike the discrete-time overload, this method does not walk historical days: it returns <see langword="false" /> unless the current local day matches
-    /// <paramref name="scheduleFlags" />, the clock is inside <c>[startTime, endTime]</c>, and the latest completed tick strictly after
-    /// <paramref name="lastRunDateTime" /> (localized) is still in the past relative to “now”.
+    /// <paramref name="scheduleFlags" />, the clock is inside <c>[startTime, endTime]</c>, and the latest completed tick strictly after <paramref name="lastRunDateTime" /> (localized) is
+    /// still in the past relative to “now”.
     /// </remarks>
     /// <param name="usStateAbbreviation">State whose local civil time defines “today” and the window.</param>
     /// <param name="startTime">Inclusive window start.</param>

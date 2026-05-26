@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Electric potential stored in volts.</summary>
 /// <remarks>May be signed; must be finite.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Voltage
 {

@@ -1,6 +1,6 @@
 namespace Lyo.Images.Ocr.Tests;
 
-/// <summary>Guards Tesseract <c>--psm</c> numeric alignment documented on <see cref="OcrPageSegmentationMode"/>.</summary>
+/// <summary>Guards Tesseract <c>--psm</c> numeric alignment documented on <see cref="OcrPageSegmentationMode" />.</summary>
 public sealed class OcrPageSegmentationModeTests
 {
     [Fact]

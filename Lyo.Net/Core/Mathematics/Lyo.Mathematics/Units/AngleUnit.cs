@@ -5,6 +5,7 @@ public enum AngleUnit
 {
     /// <summary>SI radian.</summary>
     Radian = 0,
+
     /// <summary>Degree (π/180 rad).</summary>
     Degree = 1
 }

@@ -11,6 +11,9 @@ public sealed class TelegramUrlPayload : IQrPayload
 {
     private static readonly Regex UsernameRegex = new("^[a-zA-Z][a-zA-Z0-9_]{3,31}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>Username (no <c>@</c>).</summary>
+    public string Username { get; }
+
     /// <summary>Creates a Telegram link (without <c>@</c> prefix).</summary>
     public TelegramUrlPayload(string username)
     {
@@ -18,21 +21,18 @@ public sealed class TelegramUrlPayload : IQrPayload
         Username = username.Trim().TrimStart('@');
     }
 
-    /// <summary>Username (no <c>@</c>).</summary>
-    public string Username { get; }
-
-    /// <inheritdoc />
-    public override string ToString()
-        => $"TelegramUrlPayload @{Username}";
-
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(Username), "Username cannot be empty.", nameof(Username));
-
         if (!UsernameRegex.IsMatch(Username))
-            throw new InvalidFormatException("Telegram username must be 4–32 characters, start with a letter, and contain only letters, digits, and underscores.", nameof(Username), Username, "example_channel");
+            throw new InvalidFormatException(
+                "Telegram username must be 4–32 characters, start with a letter, and contain only letters, digits, and underscores.", nameof(Username), Username,
+                "example_channel");
 
         return "https://t.me/" + Username;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"TelegramUrlPayload @{Username}";
 }

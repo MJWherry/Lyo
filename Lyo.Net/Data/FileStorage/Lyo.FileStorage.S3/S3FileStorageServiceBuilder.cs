@@ -22,9 +22,9 @@ namespace Lyo.FileStorage.S3;
 /// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .UseEncryptionService("two-key-aws")
 /// .ConfigureS3FileStorage("S3FileStorageOptions") .Build(configuration); // Use factory functions: services.AddS3FileStorageServiceKeyed("client-files")
 /// .ConfigureFileMetadataStore(provider => new LocalFileMetadataStore("/path")) .ConfigureEncryptionService(provider => provider.GetRequiredService
-/// ConfigureEncryptionService(provider => provider.GetRequiredService&lt;ITwoKeyEncryptionService&gt;())ConfigureS3FileStorage(options => { options.BucketName = "my-bucket"; }) .Build(configuration); // Mix and match:
-/// services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore") .ConfigureEncryptionService(provider =>
-/// CreateEncryptionService(provider)) .ConfigureS3FileStorage() // Uses default config section .Build(configuration);
+/// ConfigureEncryptionService(provider => provider.GetRequiredService&lt;ITwoKeyEncryptionService&gt;())ConfigureS3FileStorage(options => { options.BucketName = "my-bucket"; })
+/// .Build(configuration); // Mix and match: services.AddS3FileStorageServiceKeyed("client-files") .UseFileMetadataStore("postgres-filemetadatastore")
+/// .ConfigureEncryptionService(provider => CreateEncryptionService(provider)) .ConfigureS3FileStorage() // Uses default config section .Build(configuration);
 /// </summary>
 public sealed class S3FileStorageServiceBuilder
 {
@@ -194,17 +194,19 @@ public sealed class S3FileStorageServiceBuilder
 
             encryptionServiceKeyToUse = _keyName;
         }
-        else if (!string.IsNullOrWhiteSpace(_encryptionServiceConfigSection))
+        else if (!string.IsNullOrWhiteSpace(_encryptionServiceConfigSection)) {
             throw new InvalidOperationException(
                 "WithEncryptionServiceFromConfigSection is not yet supported by S3FileStorageServiceBuilder. Register the ITwoKeyEncryptionService separately and reference it via WithEncryptionServiceKey.");
+        }
 
         // Configure File Metadata Store
         string? metadataStoreKeyToUse = null;
         if (!string.IsNullOrWhiteSpace(_metadataStoreKeyName))
             metadataStoreKeyToUse = _metadataStoreKeyName;
-        else if (!string.IsNullOrWhiteSpace(_metadataStoreConfigSection))
+        else if (!string.IsNullOrWhiteSpace(_metadataStoreConfigSection)) {
             throw new InvalidOperationException(
                 "WithMetadataStoreFromConfigSection is not yet supported by S3FileStorageServiceBuilder. Register the IFileMetadataStore separately and reference it via WithMetadataStoreKey.");
+        }
 
         // Register AWS File Storage Service as scoped to match the scoped metadata store
         _services.AddKeyedScoped<S3FileStorageService>(

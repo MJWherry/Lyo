@@ -22,8 +22,7 @@ internal static class BarcodeImageRenderer
         };
     }
 
-    internal static int GetBorderPixels(BarcodeOptions options)
-        => options.ShowBorder ? Math.Max(1, options.BorderWidthPixels) : 0;
+    internal static int GetBorderPixels(BarcodeOptions options) => options.ShowBorder ? Math.Max(1, options.BorderWidthPixels) : 0;
 
     internal static (int WidthPx, int HeightPx) MeasureDimensions(int moduleCount, string encodedData, BarcodeOptions options)
     {
@@ -33,10 +32,7 @@ internal static class BarcodeImageRenderer
         var fullModules = moduleCount + 2 * quiet;
         var innerW = fullModules * options.ModuleWidthPixels;
         var quietPx = quiet * options.ModuleWidthPixels;
-        var captionBand = hasCaption
-            ? options.HumanReadableMarginTopPixels + options.HumanReadableFontSizePixels + options.HumanReadableMarginBottomPixels
-            : 0;
-
+        var captionBand = hasCaption ? options.HumanReadableMarginTopPixels + options.HumanReadableFontSizePixels + options.HumanReadableMarginBottomPixels : 0;
         var innerH = options.BarHeightPixels + 2 * quietPx + captionBand;
         var b = GetBorderPixels(options);
         return (innerW + 2 * b, innerH + 2 * b);
@@ -59,10 +55,7 @@ internal static class BarcodeImageRenderer
         var barH = options.BarHeightPixels;
         var quietPx = quiet * moduleW;
         var innerW = fullModules * moduleW;
-        var captionBand = hasCaption
-            ? options.HumanReadableMarginTopPixels + options.HumanReadableFontSizePixels + options.HumanReadableMarginBottomPixels
-            : 0;
-
+        var captionBand = hasCaption ? options.HumanReadableMarginTopPixels + options.HumanReadableFontSizePixels + options.HumanReadableMarginBottomPixels : 0;
         var innerH = barH + 2 * quietPx + captionBand;
         var b = GetBorderPixels(options);
         var outerW = innerW + 2 * b;
@@ -90,6 +83,7 @@ internal static class BarcodeImageRenderer
             .Append("\" fill=\"")
             .Append(light)
             .Append("\"/>");
+
         var ox = b;
         var oy = b;
         var mx = 0;
@@ -197,7 +191,6 @@ internal static class BarcodeImageRenderer
         ms.Write(infoHeader);
         var padStart = widthPx * 3;
         var padLen = rowStride - padStart;
-
         var quietInner = new byte[innerW * 3];
         for (var x = 0; x < innerW; x++) {
             var o = x * 3;

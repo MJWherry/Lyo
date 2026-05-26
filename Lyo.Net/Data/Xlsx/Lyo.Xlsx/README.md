@@ -1,77 +1,140 @@
 # Lyo.Xlsx
 
-A production-ready Excel (XLSX) processing library for .NET using ClosedXML and ExcelDataReader.
+ClosedXML-and-ExcelDataReader-backed implementation of
+[`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md). `XlsxService` composes an
+`XlsxExporter` (ClosedXML) and an `XlsxImporter` (ExcelDataReader) to read and write
+XLSX workbooks from files, streams, and byte arrays, with helpers for converting to
+CSV, HTML, and `Lyo.DataTable`. Multi-targets `netstandard2.0;net10.0`; async,
+custom-header, and formatter export overloads are only available on `net10.0`.
 
 ## Features
 
-- ✅ **Export to Excel** - Export collections to XLSX files
-- ✅ **Parse Excel Files** - Read XLSX files into dictionaries or typed objects
-- ✅ **Multi-Sheet Support** - Export multiple data sets to separate worksheets
-- ✅ **Property Selection** - Export only specific properties
-- ✅ **CSV Conversion** - Convert XLSX files to CSV format
-- ✅ **Async Support** - Full async/await support with cancellation tokens
-- ✅ **Thread-Safe** - Safe for concurrent use
-- ✅ **Error Handling** - Comprehensive error handling and validation
-- ✅ **Logging** - Built-in logging support
+- Strongly-typed read/write via `IEnumerable<T>`.
+- Multi-sheet workbooks via `IReadOnlyDictionary<string, IEnumerable<T>>` (sheet
+  name → rows).
+- Selected-property export (`IReadOnlyList<PropertyInfo>`) and, on `net10.0`,
+  custom-header (`IReadOnlyDictionary<string, PropertyInfo>`) and formatter
+  (`IReadOnlyDictionary<string, Func<T, string>>`) exports.
+- Row/column dictionary (`IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>`)
+  read and write.
+- `Lyo.DataTable.Models.DataTable` round-trip and HTML table export
+  (`ExportToHtmlTable`).
+- XLSX → CSV conversion to file, stream, or byte array (`ConvertXlsxToCsv*`) with
+  optional `Encoding`.
+- Batch parse helpers (`BatchParseFilesAsDataTable` / `…Async`) returning one
+  `Result<DataTable>` per input path.
+- `XlsxErrorCodes` constants (`XLSX_EXPORT_FAILED`, `XLSX_PARSE_FAILED`,
+  `XLSX_OPERATION_CANCELLED`, `XLSX_FILE_OPERATION_FAILED`,
+  `XLSX_CONVERT_TO_CSV_FAILED`) used when wrapping failures in `Result<T>`.
 
-## Quick Start
+ClosedXML does not expose async APIs, so the async overloads dispatch CPU-bound work
+through `Task.Run` and observe the cancellation token at safe checkpoints. Treat
+single-call invocations as thread-safe; mutating the underlying configuration
+concurrently with calls is not.
+
+## Dependency injection
 
 ```csharp
 using Lyo.Xlsx;
 
-var service = new XlsxService();
-
-// Export to file
-var data = new[] { new Person { Name = "Alice", Age = 30 } };
-service.ExportToXlsx(data, "output.xlsx");
-
-// Parse from file
-var dictionary = service.ParseXlsxFileAsDictionary("input.xlsx");
-
-// Convert to CSV
-service.ConvertXlsxToCsv("input.xlsx", "output.csv");
-
-// Async operations with cancellation
-var cts = new CancellationTokenSource();
-await service.ExportToXlsxAsync(data, "output.xlsx", ct: cts.Token);
+services.AddXlsxService();
 ```
 
-## Production Ready
+`AddXlsxService` registers a singleton `XlsxService` and routes `IXlsxService`,
+`IXlsxExporter`, and `IXlsxImporter` to the same instance.
 
-This library has been reviewed for production use and includes:
+## Quick start
 
-- ✅ Thread-safe operations
-- ✅ Comprehensive error handling
-- ✅ Input validation
-- ✅ Cancellation token support throughout
-- ✅ Logging support
-- ✅ Memory-efficient operations
-- ✅ Detailed error messages
+```csharp
+public sealed class ReportingService(IXlsxService xlsx)
+{
+    public async Task<byte[]> ExportAsync(IEnumerable<Person> rows, CancellationToken ct)
+        => await xlsx.ExportToXlsxBytesAsync(rows, worksheetName: "People", ct: ct);
 
-## Error Handling
+    public async Task<Result<DataTable>> ImportAsync(string path, CancellationToken ct)
+        => await xlsx.ParseXlsxFileAsDataTableAsync(path, useHeaderRow: true, ct: ct);
+}
 
-The library provides detailed error messages:
+public sealed record Person(int Id, string Name, int Age);
+```
 
-- **Cancellation**: Operations respect cancellation tokens and provide clear cancellation messages
-- **File Errors**: Detailed messages when files cannot be read or written
-- **Data Errors**: Clear errors when data cannot be processed
+## Export targets
 
-## Thread Safety
+```csharp
+xlsx.ExportToXlsx(rows, "out.xlsx");
+xlsx.ExportToXlsx(rows, stream);
+byte[] bytes = xlsx.ExportToXlsxBytes(rows);
 
-The `XlsxService` class is thread-safe and can be used concurrently from multiple threads.
+await xlsx.ExportToXlsxAsync(rows, "out.xlsx", worksheetName: "Data", ct: ct);
+await xlsx.ExportToXlsxAsync(rows, stream, worksheetName: "Data", ct: ct);
+byte[] bytesAsync = await xlsx.ExportToXlsxBytesAsync(rows, "Data", ct);
+```
 
-## Important Notes
+## Column shaping
 
-### Async Operations
+```csharp
+IReadOnlyList<PropertyInfo> selected = [
+    typeof(Person).GetProperty(nameof(Person.Name))!,
+    typeof(Person).GetProperty(nameof(Person.Age))!,
+];
+xlsx.ExportToXlsx(rows, selected, "out.xlsx");
 
-Async methods use `Task.Run` for CPU-bound operations (ClosedXML doesn't provide async APIs). Cancellation tokens are checked at key points to ensure responsive cancellation.
+IReadOnlyDictionary<string, PropertyInfo> namedColumns = new Dictionary<string, PropertyInfo> {
+    ["Full Name"] = typeof(Person).GetProperty(nameof(Person.Name))!,
+    ["Years"]     = typeof(Person).GetProperty(nameof(Person.Age))!,
+};
+await xlsx.ExportToXlsxAsync(rows, namedColumns, stream, ct: ct);
 
-### Memory Usage
+IReadOnlyDictionary<string, Func<Person, string>> formatters = new Dictionary<string, Func<Person, string>> {
+    ["Display"] = p => $"{p.Name} ({p.Age})",
+    ["Id"]      = p => p.Id.ToString("D6"),
+};
+await xlsx.ExportToXlsxAsync(rows, formatters, stream, ct: ct);
+```
 
-For very large Excel files, consider using streaming operations or processing in batches to manage memory usage.
+## Multi-sheet workbooks
 
+```csharp
+var workbook = new Dictionary<string, IEnumerable<Person>> {
+    ["Active"]   = activePeople,
+    ["Archived"] = archivedPeople,
+};
+xlsx.ExportToXlsx(workbook, "people.xlsx");
+await xlsx.ExportToXlsxAsync(workbook, stream, ct);
+```
 
+## DataTable, dictionary, and HTML helpers
 
+```csharp
+Result<DataTable> parsed = xlsx.ParseXlsxFileAsDataTable("in.xlsx", useHeaderRow: true);
+xlsx.ExportToXlsxFromDataTable(parsed.ValueOrThrow(), "out.xlsx");
+
+var grid = xlsx.ParseXlsxFileAsDictionary("in.xlsx");
+xlsx.ExportToXlsxFromDictionary(grid, "out.xlsx", useHeaderRow: true);
+
+string html = xlsx.ExportToHtmlTable(File.ReadAllBytes("in.xlsx"), useHeaderRow: true);
+```
+
+## XLSX ↔ CSV
+
+```csharp
+xlsx.ConvertXlsxToCsv("in.xlsx", "out.csv");
+xlsx.ConvertXlsxToCsv(inputStream, outputStream, Encoding.UTF8);
+byte[] csv = xlsx.ConvertXlsxToCsvBytes(File.ReadAllBytes("in.xlsx"));
+
+await xlsx.ConvertXlsxToCsvAsync("in.xlsx", "out.csv", Encoding.UTF8, ct);
+byte[] csvAsync = await xlsx.ConvertXlsxToCsvBytesAsync(inputStream, Encoding.UTF8, ct);
+```
+
+## Batch parses
+
+```csharp
+IReadOnlyList<Result<DataTable>> sync =
+    xlsx.BatchParseFilesAsDataTable(paths, useHeaderRow: true);
+
+IReadOnlyList<Result<DataTable>> async =
+    await xlsx.BatchParseFilesAsDataTableAsync(paths, useHeaderRow: true, ct);
+```
 
 <!-- LYO_README_SYNC:BEGIN -->
 
@@ -109,5 +172,4 @@ Top-level `public` types in `*.cs` (*3*). Nested types and file-scoped namespace
 
 ## License
 
-[Your License Here]
-
+Copyright © Lyo

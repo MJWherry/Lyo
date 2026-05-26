@@ -66,6 +66,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 // ReSharper disable UnusedVariable
 #pragma warning disable CS8601 // Possible null reference assignment.
 
@@ -149,9 +150,7 @@ var host = Host.CreateDefaultBuilder(args)
             .Map(dest => dest.Body, src => src.Data != null ? src.Data.Body : null)
             .Map(
                 dest => dest.MediaUrlsJson,
-                src => src.Data != null && src.Data.MediaUrls.Count > 0
-                    ? JsonSerializer.Serialize(src.Data.MediaUrls.Select(u => u.ToString()).ToList())
-                    : null)
+                src => src.Data != null && src.Data.MediaUrls.Count > 0 ? JsonSerializer.Serialize(src.Data.MediaUrls.Select(u => u.ToString()).ToList()) : null)
             .Map(dest => dest.IsSuccess, src => src.IsSuccess)
             .Map(dest => dest.Message, _ => (string?)null)
             .Map(dest => dest.ErrorMessage, src => src.Errors != null && src.Errors.Count > 0 ? src.Errors[0].Message : null)

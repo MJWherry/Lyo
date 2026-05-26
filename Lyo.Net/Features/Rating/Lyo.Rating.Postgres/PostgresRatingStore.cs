@@ -16,6 +16,8 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
 
     private readonly IDbContextFactory<RatingDbContext> _contextFactory;
 
+    private Guid Tenant => ResolveTenant(null);
+
     public PostgresRatingStore(
         IDbContextFactory<RatingDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
@@ -26,7 +28,26 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         _contextFactory = contextFactory;
     }
 
-    private Guid Tenant => ResolveTenant(null);
+    /// <inheritdoc />
+    public string HealthCheckName => "rating-postgres";
+
+    /// <inheritdoc />
+    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var sw = Stopwatch.StartNew();
+        try {
+            await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            var canConnect = await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
+            sw.Stop();
+            return canConnect
+                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "rating" })
+                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
+        }
+        catch (Exception ex) {
+            sw.Stop();
+            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
+        }
+    }
 
     /// <inheritdoc />
     public async Task SaveAsync(RatingRecord rating, CancellationToken ct = default)
@@ -35,7 +56,9 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(rating.ForEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(rating.FromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = await context.Ratings.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(
+        var existing = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .FirstOrDefaultAsync(
                 r => r.ForEntityType == rating.ForEntityType && r.ForEntityId == forId && r.FromEntityType == rating.FromEntityType && r.FromEntityId == fromId &&
                     r.Subject == rating.Subject, ct)
             .ConfigureAwait(false);
@@ -89,7 +112,12 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Ratings.WhereActive().WhereTenant(Tenant).Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         return entities.Select(ToRecord).ToList();
     }
 
@@ -101,7 +129,9 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Ratings.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(
+        var entity = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .FirstOrDefaultAsync(
                 r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId &&
                     r.Subject == subject, ct)
             .ConfigureAwait(false);
@@ -116,7 +146,6 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var ratingId = EntityRefPersistedGuid.RequirePersistedGuid(ratingRef);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rating = await context.Ratings.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(r => r.Id == ratingId, ct).ConfigureAwait(false);
         if (rating == null)
@@ -177,6 +206,7 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
 
         if (existing == null)
             return;
+
         var rating = await context.Ratings.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(r => r.Id == ratingId, ct).ConfigureAwait(false);
         if (rating != null) {
             if (existing.ReactionType == (int)RatingReactionType.Like)
@@ -210,7 +240,12 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Ratings.WhereActive().WhereTenant(Tenant).Where(r => r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(r => r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         return entities.Select(ToRecord).ToList();
     }
 
@@ -251,8 +286,10 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Ratings.WhereActive().WhereTenant(Tenant)
-            .Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId && r.Subject == subject)
+        var entities = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId &&
+                r.Subject == subject)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -267,7 +304,6 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
             e.DeletedAt = utc;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
     }
@@ -278,7 +314,12 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Ratings.WhereActive().WhereTenant(Tenant).Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Ratings.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(r => r.ForEntityType == forEntity.EntityType && r.ForEntityId == forId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         var ratingIds = entities.Select(e => e.Id).ToHashSet();
         var reactions = await context.RatingReactions.Where(r => r.ForEntityType == "Rating" && ratingIds.Contains(r.ForEntityId)).ToListAsync(ct).ConfigureAwait(false);
         context.RatingReactions.RemoveRange(reactions);
@@ -290,30 +331,8 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
             e.DeletedAt = utc;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public string HealthCheckName => "rating-postgres";
-
-    /// <inheritdoc />
-    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-    {
-        var sw = Stopwatch.StartNew();
-        try {
-            await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            var canConnect = await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
-            sw.Stop();
-            return canConnect
-                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "rating" })
-                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
-        }
-        catch (Exception ex) {
-            sw.Stop();
-            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
-        }
     }
 
     private static RatingRecord ToRecord(RatingEntity e)

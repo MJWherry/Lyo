@@ -8,15 +8,6 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class MeCardPayload : IQrPayload
 {
-    /// <summary>Creates a meCard payload.</summary>
-    public MeCardPayload(string displayName, string? telephone = null, string? email = null)
-    {
-        ArgumentHelpers.ThrowIfNull(displayName);
-        DisplayName = displayName.Trim();
-        Telephone = telephone?.Trim();
-        Email = email?.Trim();
-    }
-
     /// <summary>Display name (<c>N:</c>).</summary>
     public string DisplayName { get; }
 
@@ -26,21 +17,24 @@ public sealed class MeCardPayload : IQrPayload
     /// <summary>Optional <c>EMAIL:</c>.</summary>
     public string? Email { get; }
 
-    /// <inheritdoc />
-    public override string ToString()
-        => $"MeCardPayload N={DisplayName}, TEL={Telephone ?? "(none)"}, EMAIL={Email ?? "(none)"}";
+    /// <summary>Creates a meCard payload.</summary>
+    public MeCardPayload(string displayName, string? telephone = null, string? email = null)
+    {
+        ArgumentHelpers.ThrowIfNull(displayName);
+        DisplayName = displayName.Trim();
+        Telephone = telephone?.Trim();
+        Email = email?.Trim();
+    }
 
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(DisplayName), "Display name cannot be empty.", nameof(DisplayName));
-
         if (DisplayName.Contains(';') || DisplayName.Contains('\r') || DisplayName.Contains('\n'))
             throw new InvalidFormatException("Display name cannot contain semicolons or newlines in meCard.", nameof(DisplayName), DisplayName, "Jane Doe");
 
         var sb = new StringBuilder("MECARD:");
         sb.Append("N:").Append(DisplayName).Append(';');
-
         if (!string.IsNullOrWhiteSpace(Telephone)) {
             if (Telephone.Contains(';'))
                 throw new InvalidFormatException("Telephone cannot contain ';' in meCard.", nameof(Telephone), Telephone);
@@ -59,4 +53,7 @@ public sealed class MeCardPayload : IQrPayload
         sb.Append(';');
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"MeCardPayload N={DisplayName}, TEL={Telephone ?? "(none)"}, EMAIL={Email ?? "(none)"}";
 }

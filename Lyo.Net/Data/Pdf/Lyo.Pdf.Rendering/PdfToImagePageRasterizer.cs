@@ -7,7 +7,7 @@ using SixLabors.ImageSharp;
 
 namespace Lyo.Pdf.Rendering;
 
-/// <summary><see cref="IPdfPageRasterizer"/> backed by PDFtoImage (PDFium + Skia).</summary>
+/// <summary><see cref="IPdfPageRasterizer" /> backed by PDFtoImage (PDFium + Skia).</summary>
 public sealed class PdfToImagePageRasterizer(ILogger<PdfToImagePageRasterizer>? logger = null) : IPdfPageRasterizer
 {
     private readonly ILogger _logger = logger ?? NullLogger<PdfToImagePageRasterizer>.Instance;
@@ -28,26 +28,26 @@ public sealed class PdfToImagePageRasterizer(ILogger<PdfToImagePageRasterizer>? 
                     var buffer = pdfBytes.ToArray();
                     var pageCount = Conversion.GetPageCount(buffer, password ?? "");
                     if (pageNumber1Based > pageCount)
-                        return Result<PdfRasterPage>.Failure(new Error($"Page {pageNumber1Based} is out of range (document has {pageCount} pages).", PdfRenderErrorCodes.PageOutOfRange));
+                        return Result<PdfRasterPage>.Failure(
+                            new Error($"Page {pageNumber1Based} is out of range (document has {pageCount} pages).", PdfRenderErrorCodes.PageOutOfRange));
 
                     var index = Index.FromStart(pageNumber1Based - 1);
                     using var pngStream = new MemoryStream();
-                    Conversion.SavePng(pngStream, buffer, index, password ?? "", new RenderOptions(Dpi: dpi));
+                    Conversion.SavePng(pngStream, buffer, index, password ?? "", new(dpi));
                     var pngBytes = pngStream.ToArray();
-                    using var probe = new MemoryStream(pngBytes, writable: false);
+                    using var probe = new MemoryStream(pngBytes, false);
                     var info = Image.Identify(probe);
                     if (info is null)
                         throw new InvalidOperationException("Rendered output is not a valid image.");
 
                     sw.Stop();
                     _logger.LogTrace("Rendered PDF page {Page} at {Dpi} dpi in {Ms} ms.", pageNumber1Based, dpi, sw.Elapsed.TotalMilliseconds);
-                    return Result<PdfRasterPage>.Success(new PdfRasterPage(pngBytes, info.Width, info.Height));
+                    return Result<PdfRasterPage>.Success(new(pngBytes, info.Width, info.Height));
                 }
                 catch (Exception ex) {
                     sw.Stop();
                     _logger.LogDebug(ex, "PDF rasterization failed for page {Page}.", pageNumber1Based);
                     return Result<PdfRasterPage>.Failure(ex, PdfRenderErrorCodes.RenderFailed);
                 }
-            },
-            cancellationToken);
+            }, cancellationToken);
 }

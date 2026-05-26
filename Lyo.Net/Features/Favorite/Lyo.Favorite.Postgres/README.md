@@ -1,7 +1,31 @@
 # Lyo.Favorite.Postgres
 
-PostgreSQL implementation of Lyo.Favorite using Entity Framework Core. Persists favorites to `favorite.favorite` table with migrations support. Favorites have **For** (what is
-being favorited) and **From** (who favorited it) entity references. A unique constraint prevents duplicate favorites for the same pair.
+PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core.
+Persists favorites to the `favorite.favorite` table (schema constant:
+`PostgresFavoriteOptions.Schema = "favorite"`) with migrations support.
+Favorites have **For** (what is being favorited) and **From** (who favorited it)
+entity references. Duplicate active rows for the same
+`(tenant, ForEntity, FromEntity, context)` tuple are prevented by the
+`SaveAsync` idempotency check.
+
+`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth`
+(`HealthCheckName = "favorite-postgres"`), so registering the store also exposes
+a database liveness probe.
+
+## DI extensions
+
+Defined in `Extensions.cs` as `IServiceCollection` extensions:
+
+- `AddFavoriteDbContextFactory(Action<PostgresFavoriteOptions>)` /
+  `AddFavoriteDbContextFactory(PostgresFavoriteOptions)` — register only the
+  `IDbContextFactory<FavoriteDbContext>`.
+- `AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)`
+  — same, bound from configuration (default section: `PostgresFavorite`).
+- `AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` /
+  `AddPostgresFavoriteStore(PostgresFavoriteOptions)` — register the DbContext
+  factory **and** the `IFavoriteStore` singleton.
+- `AddPostgresFavoriteStoreFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)`
+  — register the store using configuration binding.
 
 ## Usage
 
@@ -53,23 +77,32 @@ var fromEntity = EntityRef.ForKey("User", "123");
 ```csharp
 await favoriteStore.SaveAsync(new FavoriteRecord {
     ForEntityType = "Article",
-    ForEntityId = articleId.ToString(),
+    ForEntityId = articleId,
     FromEntityType = "User",
-    FromEntityId = userId.ToString()
+    FromEntityId = userId
 });
 
 var isFavorited = await favoriteStore.IsFavoritedAsync(
     EntityRef.ForGuid("Article", articleId),
-    EntityRef.ForKey("User", userId.ToString()));
+    EntityRef.ForGuid("User", userId));
 
 var count = await favoriteStore.GetCountForEntityAsync(
     EntityRef.ForGuid("Article", articleId));
+
+// Batch count multiple targets in one round-trip.
+var counts = await favoriteStore.GetFavoriteCountsForEntitiesAsync(
+    "Article", new[] { id1, id2, id3 });
 ```
 
 ## Schema
 
-- **favorite.favorite** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `created_timestamp`
-- Unique index on `(for_entity_type, for_entity_id, from_entity_type, from_entity_id)` prevents duplicate favorites.
+Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).
+
+- **favorite.favorite** — derived from `EntityRefRow`, so it includes
+  `id` (uuid), `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
+  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`,
+  `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
+  `deleted_by_id`, and `metadata` (jsonb).
 
 ## Dependencies
 

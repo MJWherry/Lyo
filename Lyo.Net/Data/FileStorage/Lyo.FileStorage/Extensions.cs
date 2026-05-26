@@ -10,6 +10,7 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage;
 
@@ -263,9 +264,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configureMetadataStore);
 
             // Configure options from configuration (if not already registered)
-            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions))) {
+            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions)))
                 services.AddSingleton(provider => DiskFileStorageConfigurationBinder.BindDiskFileStorage(provider, configSectionName));
-            }
 
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
                 services.AddKeyedScoped<LocalFileStorageService>(
@@ -308,9 +308,8 @@ public static class Extensions
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(ITwoKeyEncryptionService)))
                 services.AddKeyedSingleton<ITwoKeyEncryptionService>(keyName, (provider, _) => configEncryptionService(provider));
 
-            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions))) {
+            if (!services.Any(s => s.ServiceType == typeof(DiskFileStorageOptions)))
                 services.AddSingleton(provider => DiskFileStorageConfigurationBinder.BindDiskFileStorage(provider, configSectionName));
-            }
 
             // Register file storage service with keyName
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(LocalFileStorageService))) {
@@ -338,19 +337,19 @@ public static class Extensions
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
             var options = new DiskFileStorageOptions();
-            var lf = provider.GetService<Microsoft.Extensions.Logging.ILoggerFactory>();
-
+            var lf = provider.GetService<ILoggerFactory>();
             foreach (var name in OrderedSectionCandidates(preferredSection)) {
                 var section = configuration.GetSection(name);
                 if (!section.Exists())
                     continue;
 
                 section.Bind(options);
-                if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal))
-                    (lf ?? Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk").LogWarning(
-                        "Disk file storage options were loaded from legacy configuration section [{Legacy}]; migrate appsettings to [{Current}].",
-                        DiskFileStorageOptions.LegacySectionName,
-                        DiskFileStorageOptions.SectionName);
+                if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal)) {
+                    (lf ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk")
+                        .LogWarning(
+                            "Disk file storage options were loaded from legacy configuration section [{Legacy}]; migrate appsettings to [{Current}].",
+                            DiskFileStorageOptions.LegacySectionName, DiskFileStorageOptions.SectionName);
+                }
 
                 return options;
             }

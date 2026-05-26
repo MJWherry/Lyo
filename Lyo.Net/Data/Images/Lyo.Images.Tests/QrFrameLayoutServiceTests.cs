@@ -30,7 +30,6 @@ public class QrFrameLayoutServiceTests
         var result = await svc.CompositeQrFramePngAsync(qr, opts, CancellationToken.None);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
-
         await using var readMs = new MemoryStream(result.Data);
         using var img = await Image.LoadAsync<Rgba32>(readMs, CancellationToken.None);
         // Header grows to fit large type (old layout capped caption at 220px and header ~900px max).
@@ -54,7 +53,6 @@ public class QrFrameLayoutServiceTests
         var result = await svc.CompositeQrFramePngAsync(qr, opts, CancellationToken.None);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
-
         await using var readMs = new MemoryStream(result.Data);
         using var img = await Image.LoadAsync<Rgba32>(readMs, CancellationToken.None);
         // Card origin (margin, margin): axis-aligned fill paints #FFFFFF here; rounded path leaves default canvas (#FFF3F4F6) visible outside the arc.
@@ -79,7 +77,6 @@ public class QrFrameLayoutServiceTests
         var result = await svc.CompositeQrFramePngAsync(qr, opts, CancellationToken.None);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);
-
         await using var readMs = new MemoryStream(result.Data);
         using var img = await Image.LoadAsync<Rgba32>(readMs, CancellationToken.None);
         // Footer band must exceed a single 120px line estimate when wrapping adds height.

@@ -13,10 +13,10 @@ namespace Lyo.Exceptions;
 /// <see cref="OperationCanceledException" />, or <see cref="NotSupportedException" />.
 /// </summary>
 /// <remarks>
-/// Unlike <see cref="ArgumentHelpers" />, this type signals invalid runtime state with <see cref="InvalidOperationException" /> (including null references for most checks here).
-/// Numeric, range, and equality helpers mirror <see cref="ArgumentHelpers" /> in naming and comparisons; overloads optionally capture the caller&apos;s value expression
-/// (via <see cref="CallerArgumentExpressionAttribute" />), surfaced as a suffix on thrown messages rather than exception <c>ParamName</c>.
-/// Methods document every exception they throw, including those produced by other overloads in this class that they call.
+/// Unlike <see cref="ArgumentHelpers" />, this type signals invalid runtime state with <see cref="InvalidOperationException" /> (including null references for most checks
+/// here). Numeric, range, and equality helpers mirror <see cref="ArgumentHelpers" /> in naming and comparisons; overloads optionally capture the caller&apos;s value expression (via
+/// <see cref="CallerArgumentExpressionAttribute" />), surfaced as a suffix on thrown messages rather than exception <c>ParamName</c>. Methods document every exception they throw,
+/// including those produced by other overloads in this class that they call.
 /// </remarks>
 public static class OperationHelpers
 {
@@ -48,20 +48,13 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [DoesNotReturn]
-    private static void ThrowInvalidOperationOutsideRange(
-        string? paramName,
-        IConvertible? actualValue,
-        IConvertible? minValue,
-        IConvertible? maxValue,
-        string? message)
+    private static void ThrowInvalidOperationOutsideRange(string? paramName, IConvertible? actualValue, IConvertible? minValue, IConvertible? maxValue, string? message)
     {
-        var body = message
-            ?? $"Value ({actualValue ?? "NULL"}) is not in the allowed range [{minValue ?? "Unspecified"}, {maxValue ?? "Unspecified"}].";
+        var body = message ?? $"Value ({actualValue ?? "NULL"}) is not in the allowed range [{minValue ?? "Unspecified"}, {maxValue ?? "Unspecified"}].";
         ThrowInvalidOperation(WithParamHint(paramName, body));
     }
 
-    private static string WithParamHint(string? paramName, string text)
-        => string.IsNullOrEmpty(paramName) ? text : $"{text} ({paramName})";
+    private static string WithParamHint(string? paramName, string text) => string.IsNullOrEmpty(paramName) ? text : $"{text} ({paramName})";
 
     /// <summary>Throws an InvalidOperationException if the condition is true.</summary>
     /// <param name="condition">The condition to check. If true, an InvalidOperationException is thrown.</param>
@@ -285,9 +278,9 @@ public static class OperationHelpers
         [CallerArgumentExpression("value")] string? paramName = null,
         string? message = null)
     {
-        if (!value.HasValue)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required DateTime value is missing."));
+        if (!value.HasValue) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required DateTime value is missing."));
+        }
 
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
     }
@@ -320,9 +313,9 @@ public static class OperationHelpers
         [CallerArgumentExpression("value")] string? paramName = null,
         string? message = null)
     {
-        if (!value.HasValue)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required TimeSpan value is missing."));
+        if (!value.HasValue) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required TimeSpan value is missing."));
+        }
 
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
     }
@@ -369,13 +362,13 @@ public static class OperationHelpers
     public static void ThrowIfNegative<T>(T? value, string? message = null, [CallerArgumentExpression("value")] string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value is null)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        if (value is null) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        }
 
-        if (value.CompareTo(default(T)!) < 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, null, null,
-                message ?? $"Value cannot be negative. Actual value: {value}.");
+        if (value.CompareTo(default(T)!) < 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, null, null, message ?? $"Value cannot be negative. Actual value: {value}.");
+        }
     }
 
     /// <summary>
@@ -389,13 +382,13 @@ public static class OperationHelpers
     public static void ThrowIfNegativeOrZero<T>(T? value, string? message = null, [CallerArgumentExpression("value")] string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value is null)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        if (value is null) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        }
 
-        if (value.CompareTo(default(T)!) <= 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, 0, null,
-                message ?? $"Value must be greater than zero. Actual value: {value}.");
+        if (value.CompareTo(default(T)!) <= 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, 0, null, message ?? $"Value must be greater than zero. Actual value: {value}.");
+        }
     }
 
     /// <summary>
@@ -409,13 +402,13 @@ public static class OperationHelpers
     public static void ThrowIfPositive<T>(T? value, string? message = null, [CallerArgumentExpression("value")] string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value is null)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        if (value is null) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        }
 
-        if (value.CompareTo(default(T)!) > 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, null, 0,
-                message ?? $"Value cannot be positive. Actual value: {value}.");
+        if (value.CompareTo(default(T)!) > 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, null, 0, message ?? $"Value cannot be positive. Actual value: {value}.");
+        }
     }
 
     /// <summary>
@@ -429,13 +422,13 @@ public static class OperationHelpers
     public static void ThrowIfPositiveOrZero<T>(T? value, string? message = null, [CallerArgumentExpression("value")] string? paramName = null)
         where T : IComparable, IConvertible
     {
-        if (value is null)
-            ThrowInvalidOperation(
-                WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        if (value is null) {
+            ThrowInvalidOperation(WithParamHint(paramName, message ?? "Operation cannot be performed because a required value is null."));
+        }
 
-        if (value.CompareTo(default(T)!) >= 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, null, 0,
-                message ?? $"Value must be less than zero. Actual value: {value}.");
+        if (value.CompareTo(default(T)!) >= 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, null, 0, message ?? $"Value must be less than zero. Actual value: {value}.");
+        }
     }
 
     /// <summary>Throws an <see cref="InvalidOperationException" /> if the value is greater than the specified threshold.</summary>
@@ -443,16 +436,12 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfGreaterThan<T>(
-        T value,
-        T threshold,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfGreaterThan<T>(T value, T threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : IComparable<T>, IConvertible
     {
-        if (value.CompareTo(threshold) > 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, null, threshold,
-                message ?? $"Value must be less than or equal to {threshold}. Actual value: {value}.");
+        if (value.CompareTo(threshold) > 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, null, threshold, message ?? $"Value must be less than or equal to {threshold}. Actual value: {value}.");
+        }
     }
 
     /// <summary>Throws an <see cref="InvalidOperationException" /> if the value is greater than or equal to the specified threshold.</summary>
@@ -460,16 +449,12 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfGreaterThanOrEqual<T>(
-        T value,
-        T threshold,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfGreaterThanOrEqual<T>(T value, T threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : IComparable<T>, IConvertible
     {
-        if (value.CompareTo(threshold) >= 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, null, threshold,
-                message ?? $"Value must be strictly less than {threshold}. Actual value: {value}.");
+        if (value.CompareTo(threshold) >= 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, null, threshold, message ?? $"Value must be strictly less than {threshold}. Actual value: {value}.");
+        }
     }
 
     /// <summary>Throws an <see cref="InvalidOperationException" /> if the value is less than the specified threshold.</summary>
@@ -477,16 +462,12 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThan<T>(
-        T value,
-        T threshold,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfLessThan<T>(T value, T threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : IComparable<T>, IConvertible
     {
-        if (value.CompareTo(threshold) < 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, threshold, null,
-                message ?? $"Value must be greater than or equal to {threshold}. Actual value: {value}.");
+        if (value.CompareTo(threshold) < 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, threshold, null, message ?? $"Value must be greater than or equal to {threshold}. Actual value: {value}.");
+        }
     }
 
     /// <summary>Throws an <see cref="InvalidOperationException" /> if the value is less than or equal to the specified threshold.</summary>
@@ -494,16 +475,12 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThanOrEqual<T>(
-        T value,
-        T threshold,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfLessThanOrEqual<T>(T value, T threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
         where T : IComparable<T>, IConvertible
     {
-        if (value.CompareTo(threshold) <= 0)
-            ThrowInvalidOperationOutsideRange(paramName, value, threshold, null,
-                message ?? $"Value must be strictly greater than {threshold}. Actual value: {value}.");
+        if (value.CompareTo(threshold) <= 0) {
+            ThrowInvalidOperationOutsideRange(paramName, value, threshold, null, message ?? $"Value must be strictly greater than {threshold}. Actual value: {value}.");
+        }
     }
 
     /// <summary>When <paramref name="value" /> has a value, throws if it is less than or equal to <paramref name="threshold" />.</summary>
@@ -511,11 +488,7 @@ public static class OperationHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotNullAndLessThanOrEqual(
-        double? value,
-        double threshold,
-        [CallerArgumentExpression("value")] string? paramName = null,
-        string? message = null)
+    public static void ThrowIfNotNullAndLessThanOrEqual(double? value, double threshold, [CallerArgumentExpression("value")] string? paramName = null, string? message = null)
     {
         if (!value.HasValue)
             return;

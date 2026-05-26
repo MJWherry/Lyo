@@ -1,10 +1,10 @@
 using System.IO.Pipelines;
-using Lyo.Exceptions;
 using Lyo.Compression;
 using Lyo.Compression.Models;
 using Lyo.Encryption;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
+using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
@@ -15,17 +15,17 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Encapsulates encode/decode streaming stages shared by every storage backend—single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads.
-/// Persisted ciphertext dimensions and headers are read through <see cref="IFileStoragePhysicalIo"/>.
+/// Encapsulates encode/decode streaming stages shared by every storage backend—single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted
+/// ciphertext dimensions and headers are read through <see cref="IFileStoragePhysicalIo" />.
 /// </summary>
 internal sealed class FileStorageStreamingPipelines
 {
-    private readonly IFileStoragePhysicalIo _physicalIo;
     private readonly ICompressionService? _compressionService;
-    private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
-    private readonly FileStorageServiceBaseOptions _options;
-    private readonly ILogger _logger;
     private readonly int _copyToBufferSizeBytes;
+    private readonly ILogger _logger;
+    private readonly FileStorageServiceBaseOptions _options;
+    private readonly IFileStoragePhysicalIo _physicalIo;
+    private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
 
     /// <summary>Initializes pipelines with polymorphic blob I/O and optional crypto services.</summary>
     internal FileStorageStreamingPipelines(
@@ -44,7 +44,7 @@ internal sealed class FileStorageStreamingPipelines
         _copyToBufferSizeBytes = copyToBufferSizeBytes;
     }
 
-    /// <summary>Disposes <paramref name="stream"/> asynchronously when supported; otherwise synchronously.</summary>
+    /// <summary>Disposes <paramref name="stream" /> asynchronously when supported; otherwise synchronously.</summary>
     internal static Task DisposeStreamAsync(Stream? stream)
     {
         if (stream == null)
@@ -58,8 +58,8 @@ internal sealed class FileStorageStreamingPipelines
     }
 
     /// <summary>
-    /// Writes decrypted and/or decompressed plaintext into <paramref name="plainWriter"/> based on <paramref name="metadata"/> compression and encryption flags,
-    /// leveraging <see cref="Pipe"/> backpressure to avoid buffering entire files in memory.
+    /// Writes decrypted and/or decompressed plaintext into <paramref name="plainWriter" /> based on <paramref name="metadata" /> compression and encryption flags, leveraging
+    /// <see cref="Pipe" /> backpressure to avoid buffering entire files in memory.
     /// </summary>
     internal async Task RunStreamingDecodePipelineAsync(Stream storageStream, FileStoreResult metadata, PipeWriter plainWriter, int? chunkSize, CancellationToken ct)
     {
@@ -170,7 +170,6 @@ internal sealed class FileStorageStreamingPipelines
         using var encryptedHashAlgo = hashAlg.Create();
         using var encryptedHashStream = new HashingStream(outputStream, encryptedHashAlgo);
         var pipeReaderStream = pipe.Reader.AsStream(true);
-
         var compressionTask = RunCompressIntoPipeWriterAsync(_compressionService!, inputForHash, compressedHashStream, chunkSize, pipe, ct);
         var encryptionTask = RunEncryptFromPipeReaderAsync(_twoKeyEncryptionService!, pipeReaderStream, encryptedHashStream, keyId, chunkSize, ct);
         await Task.WhenAll(compressionTask, encryptionTask).ConfigureAwait(false);
@@ -257,7 +256,7 @@ internal sealed class FileStorageStreamingPipelines
         }
     }
 
-    /// <summary>Captured hashes, sizes, crypto metadata, and filenames produced by <see cref="SaveWithCompressEncryptPipelineAsync"/>.</summary>
+    /// <summary>Captured hashes, sizes, crypto metadata, and filenames produced by <see cref="SaveWithCompressEncryptPipelineAsync" />.</summary>
     internal sealed record CompressEncryptPipelineResult(
         byte[]? OriginalHash,
         string FileExtension,

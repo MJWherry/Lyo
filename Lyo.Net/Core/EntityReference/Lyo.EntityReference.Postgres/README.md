@@ -1,20 +1,23 @@
 # Lyo.EntityReference.Postgres
 
-Entity Framework Core building blocks for **tenant-scoped association rows** on PostgreSQL where **`for_entity_id`** and **`from_entity_id`** are stored as **`uuid`**, aligned with **`EntityRef`** Option A persistence in **`Lyo.EntityReference.Models`**.
+Entity Framework Core building blocks for **tenant-scoped association rows** on PostgreSQL where **`for_entity_id`** and **`from_entity_id`** are stored as **`uuid`**, aligned with
+**`EntityRef`** Option A persistence in **`Lyo.EntityReference.Models`**.
 
 ## When to use which base
 
-| Base | Use case |
-|------|-----------|
-| **`EntityRefEntityBase`** | Canonical association: tenant id, GUID targets, soft-delete, visibility, jsonb metadata. Subclass per module (`FavoriteEntity`, `TagEntity`, …). |
-| **`EntityRefOptionalFromStringAssociationBase`** | String ids (including composite text) and optional actor columns — for example change-tracker style rows. Not the uuid Option A layout. |
+| Base                                             | Use case                                                                                                                                         |
+|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`EntityRefEntityBase`**                        | Canonical association: tenant id, GUID targets, soft-delete, visibility, jsonb metadata. Subclass per module (`FavoriteEntity`, `TagEntity`, …). |
+| **`EntityRefOptionalFromStringAssociationBase`** | String ids (including composite text) and optional actor columns — for example change-tracker style rows. Not the uuid Option A layout.          |
 
 ## Types
 
-- **`EntityRefConfiguration<TEntity>`** — Shared column names/types (`uuid`, `timestamp with time zone`, `jsonb`) and indexes (partial unique on active rows, tenant lookups, expiry filter). Pass an **`indexPrefix`** (e.g. `tag`) for stable index names per module.
+- **`EntityRefConfiguration<TEntity>`** — Shared column names/types (`uuid`, `timestamp with time zone`, `jsonb`) and indexes (partial unique on active rows, tenant lookups, expiry
+  filter). Pass an **`indexPrefix`** (e.g. `tag`) for stable index names per module.
 - **`EntityRefOptionalFromStringAssociationExtensions.MapOptionalFromStringAssociationColumns`** — Maps the four string association columns with a configurable max length.
 - **`EntityRefModuleDbContext`** — Override `SaveChanges` / `SaveChangesAsync` to set **`CreatedAt`** to UTC for new **`EntityRefEntityBase`** entities when still default.
-- **`EntityRefPostgresStoreBase`** — DI-friendly base for stores: resolves **`EntityRefOptions`**, holds **`IEntityRefActionInterceptor`** pipeline, exposes **`ResolveTenant`** and **`RunInterceptorsAsync`**.
+- **`EntityRefPostgresStoreBase`** — DI-friendly base for stores: resolves **`EntityRefOptions`**, holds **`IEntityRefActionInterceptor`** pipeline, exposes **`ResolveTenant`** and
+  **`RunInterceptorsAsync`**.
 - **`EntityRefPostgresStoreHelpers`** — **`ResolveTenantId`**, **`WhereActive`**, **`WhereTenant`**, **`RunInterceptorsAsync`**.
 
 ## Typical module wiring
@@ -26,7 +29,8 @@ Entity Framework Core building blocks for **tenant-scoped association rows** on 
 
 ## Debugging
 
-**`EntityRefEntityBase`** and **`EntityRefOptionalFromStringAssociationBase`** implement **`[DebuggerDisplay(...)]`** and **`ToString()`** for quick inspection in the debugger and logs.
+**`EntityRefEntityBase`** and **`EntityRefOptionalFromStringAssociationBase`** implement **`[DebuggerDisplay(...)]`** and **`ToString()`** for quick inspection in the debugger and
+logs.
 
 ## See also
 

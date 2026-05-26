@@ -1,9 +1,36 @@
 # Lyo.Ffmpeg.Models
 
-Models and interfaces for Lyo.Ffmpeg: IAudioPlayer, IAudioProber, IAudioConverter, AudioConversionRequest, AudioConversionOptions, AudioProbeResult, FfmpegOptions.
+Engine-neutral **contracts and models** for [`Lyo.Ffmpeg`](../Lyo.Ffmpeg/README.md): the three service interfaces (`IAudioPlayer`, `IAudioProber`, `IAudioConverter`), their
+request/options shapes (`AudioConversionRequest`, `AudioConversionOptions`), the probe result type (`AudioProbeResult`), and global host configuration (`FfmpegOptions` +
+`FfmpegProcessOutputMode`).
 
-## Related projects
+This package has **no DI surface** — registration lives in `Lyo.Ffmpeg`. Reference it from libraries that only need the abstractions (mocking, custom backends, host bindings).
+
+## Public API
+
+| Type                              | Description                                                                                                                                                                                                                                                |
+|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`IAudioPlayer`**                | `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)` — each returns `Task<Result<bool>>`.                                                                                                                                             |
+| **`IAudioProber`**                | `ProbeAsync(filePath)`, `ProbeStreamAsync(stream)`, `ProbeBytesAsync(bytes)` → `Task<Result<AudioProbeResult>>`.                                                                                                                                          |
+| **`IAudioConverter`**             | Full file/stream/byte conversion matrix plus a request-shaped `ConvertAsync(AudioConversionRequest)`.                                                                                                                                                     |
+| **`AudioConversionRequest`**      | `InputPath`, `OutputPath`, `Codec` (default `pcm_s16le`), `SampleRate` (44100), `Channels` (2), `Format` (`wav`), `Overwrite` (true), `NoVideo` (true).                                                                                                  |
+| **`AudioConversionOptions`**      | Stream/byte-mode equivalent (no paths) — same fields, nullable defaults.                                                                                                                                                                                  |
+| **`AudioProbeResult`**            | `FilePath`, `DurationSeconds`, `Format`, `SampleRate`, `Channels`, `Codec`, `BitRate`, `FileSizeBytes`, `HasVideo`, `HasAudio`, `RawMetadata` (raw ffprobe key/value).                                                                                    |
+| **`FfmpegOptions`**               | Executable paths (`FfmpegPath`, `FfprobePath`, `FfplayPath`), defaults (`DefaultCodec`, `DefaultSampleRate`, `DefaultChannels`, `DefaultFormat`, `DefaultOverwrite`, `DefaultNoVideo`), `GlobalArguments`, `EnableMetrics`, `SuppressFfplayOutput`, `ProcessOutputMode`. `SectionName = "FfmpegOptions"`. |
+| **`FfmpegProcessOutputMode`**     | `Suppress` (default — capture stdout/stderr internally) or `Passthrough` (echo to console for debugging).                                                                                                                                                |
+
+## Dependencies
+
+*(Synchronized from `Lyo.Ffmpeg.Models.csproj`.)*
+
+**Target framework:** `net10.0`
+
+### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+
+## Related projects
+
+- [`Lyo.Ffmpeg`](../Lyo.Ffmpeg/README.md) — concrete implementations and DI extensions.

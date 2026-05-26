@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.EntityReference.Models;
 
-/// <summary>Lifecycle point for <see cref="IEntityRefActionInterceptor"/>.</summary>
+/// <summary>Lifecycle point for <see cref="IEntityRefActionInterceptor" />.</summary>
 public enum EntityRefActionKind
 {
     /// <summary>Before an entity is inserted or updated.</summary>

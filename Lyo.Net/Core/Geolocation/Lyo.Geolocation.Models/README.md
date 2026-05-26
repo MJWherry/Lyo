@@ -1,42 +1,95 @@
 # Lyo.Geolocation.Models
 
-Neutral data contracts shared by **`Lyo.Geolocation`** abstraction and concrete providers ([`Lyo.Geolocation.Google`](../Google/Lyo.Geolocation.Google/README.md)).
+Neutral data contracts shared by the **`Lyo.Geolocation`** abstraction and concrete providers (e.g. [`Lyo.Geolocation.Google`](../Lyo.Geolocation.Google/README.md)).
 
-**Core shapes**
+## DTO catalog
 
-| Type | Typical role |
-|------|---------------|
-| **`GeoCoordinate`** | Latitude/longitude pair with validation helpers ensuring ranges & precision expectations for mapping APIs. |
-| **`Address`** / nested components (`StreetAddress`, postal metadata, **`AddressNormalization` helpers`) | Canonical structured address graph returned by reverse-geocode or forwarded to providers. |
+**Coordinates & geometry**
 
-**Operational enums**
+| Type | Role |
+|------|------|
+| **`Coordinates.GeoCoordinate`** | Latitude / longitude (+ optional altitude, accuracy, timestamp). Validates lat in `[-90, 90]` and lon in `[-180, 180]` via property setters. |
+| **`BoundingBox`** | Southwest/Northeast pair with `Center`/`Northwest`/`Southeast` accessors, `Contains`, `Intersects`, `Expand(meters)`, `GetWidth/Height/Area`, and `FromCenterAndRadius` factory. |
 
-- **`DistanceUnit`**, **`TransportMode`** (driving/transit semantics depend on downstream provider fidelity).
-- Enums influencing batching, bounding boxes, locality filters—scan folder `Models/*` via IDE for exhaustive list (fast-moving during provider expansions).
+**Addresses**
 
-**Routing payloads**
+| Type | Role |
+|------|------|
+| **`Addresses.Address`** | Unified US + international address with structured street/unit/locality/postal/country fields, `GetFormattedAddress(AddressFormat)`, `Normalize()`, `IsValid()`, `IsComplete()`, `GetCanonicalForm()`, `IsSimilarTo(...)`, and `FromComponents` / `CreateUSAddress` / `CreateInternationalAddress` factories. |
+| **`Addresses.ContactAddress`** | Person ↔ address junction with `ContactAddressType`, primary flag, start/end dates. |
+| **`Extensions.AddressExtensions`** | `IsInUnitedStates`, `GetStateAbbreviation`, `ToMailingFormat`, `GetPostalCode`, `GetStateOrProvince`. |
+| **`AddressFormat`** / **`AddressType`** / **`AddressValidationStatus`** (in `Addresses.Address.cs`) | Formatting variant, classification, and validation lifecycle. |
 
-Types such as **`Route`**, **`RouteStep`**, **`RouteOptions`** articulate distance/duration aggregates and per-leg steps—fields may be partially populated when a provider returns degraded data (always null-check before UI binding).
+**Geocoding & places**
 
-### Why split models?
+| Type | Role |
+|------|------|
+| **`GeocodeOptions`** | Language, region bias, optional bounds, `MaxResults`, component restrictions. |
+| **`GeocodeResult`** / **`GeocodeResultItem`** / **`GeocodeMatchType`** | Single forward-geocode hit, batch row, and match-quality enum. |
+| **`ReverseGeocodeResult`** | Address(es) + confidence for a coordinate. |
+| **`BatchGeocodeResult`** | Aggregate totals + per-item results + processing time. |
+| **`Place`** / **`PlaceOpeningHours`** / **`PlaceHoursPeriod`** | POI with id, name, coordinate, address, rating, hours. |
+| **`ProximitySearchResult<T>`** | Wraps an arbitrary `T` with `DistanceMeters` and km/mile conversions. |
 
-Keeps **`IGeolocationService`** binary light for consumers referencing only data contracts (Blazor WASM clients can reference **Models** without dragging HTTP stacks).
+**Routing**
 
-Allows **serialization stability** (`System.Text.Json` attributes) centralized—providers reuse identically-shaped JSON bridging without duplicating DTO declarations.
+| Type | Role |
+|------|------|
+| **`Route`** | Route id, start/end, waypoints, steps, total distance, estimated duration (+ traffic), transport mode, bounding box, summary, warnings. |
+| **`RouteStep`** | Per-leg distance, duration, instructions, road name, `ManeuverType`. |
+| **`RouteOptions`** | Mode, avoid tolls/highways/ferries, waypoints + optimization, departure/arrival time, language, units. |
 
-When evolving:
+**Distance / time zones / IP**
 
-1. Prefer **additive fields** (`init`/`required` thoughtfully) across providers.
-2. Version breaking shape changes by introducing **`AddressV2`** rather than silently mutating meanings (parallel deploy safety).
+| Type | Role |
+|------|------|
+| **`DistanceResult`** | Source/destination coordinates + meters (with km/mile conversions) + `DistanceCalculationMethod`. |
+| **`GeoTimeZone`** | IANA `TimeZoneId`, display name, UTC offset, DST offset, DST start/end. |
+| **`IpGeolocationResult`** | IP-to-location payload (city/region/country, ISP, proxy/VPN flags, accuracy radius). |
+| **`ValidationIssue`** / **`ValidationWarning`** | Severity-tagged validation findings for address/geocoding flows. |
 
-### Geography utilities
+**Enums (under `Enums/`)**
 
-**Distance math**
+- **`DistanceUnit`** — `Meters`, `Kilometers`, `Miles`, `Feet`, `NauticalMiles`.
+- **`DistanceCalculationMethod`** — `Haversine`, `Vincenty`, `Driving`, `Walking`, `Bicycling`.
+- **`TransportMode`** — `Driving`, `Walking`, `Bicycling`, `Transit`, `Flying`.
+- **`ManeuverType`** — turn / ramp / merge / fork / roundabout / ferry / arrive set.
+- **`GeocodingAccuracy`** — `Rooftop`, `RangeInterpolated`, `GeometricCenter`, `Approximate`.
+- **`ContactAddressType`** — `Home`, `Work`, `Billing`, `Shipping`, `Mailing`, `Other`.
+- **`AddressType`** (in `Addresses/Address.cs`) — `Residential`, `Commercial`, `POBox`, `Military`, `Other`.
+- **`ValidationSeverity`** — `Info`, `Warning`, `Error`, `Critical`.
 
-- **`GeoCoordinate.DistanceTo`** uses **Haversine** great-circle geometry (units via **`DistanceUnit`**); **`BoundingBox`** helpers expand/measures using the same primitives.
-- **`DistanceResult`** exposes **`DistanceCalculationMethod`** (**Haversine / Vincenty / Driving**)—UI copy should cite the method so users know ellipsoidal vs road-network fidelity.
+## Geometry helpers
 
-Use provider routing payloads for turn-by-turn or pricing when liability matters; Haversine is fine for coarse proximity.
-### Testing
+- **`GeoCoordinate.DistanceTo(other, DistanceUnit unit = Meters)`** uses the **Haversine** great-circle formula with Earth radius 6 371 000 m; pick the desired unit via the
+  enum rather than dividing afterwards.
+- **`GeoCoordinate.IsWithinRadius(center, radiusMeters)`** and **`GeoCoordinate.Offset(metersNorth, metersEast)`** are built on the same primitive.
+- **`GeoCoordinate.ToDms()`** prints `D°M'S"N/S D°M'S"E/W`; `FromDms` is not yet implemented (`NotImplementedException`).
+- **`BoundingBox.Expand(meters)`** and **`BoundingBox.FromCenterAndRadius(center, radiusMeters)`** use the flat-Earth approximation (`111 320 m` per degree latitude, adjusted by
+  `cos(latitude)` for longitude); `GetWidth`/`GetHeight` delegate to `GeoCoordinate.DistanceTo` for actual measured values.
+- **`DistanceResult.Method`** records whether the number came from a geodesic formula or a routing provider so UI copy can disclose fidelity.
 
-Builders under test projects often spin synthetic **`GeoCoordinate`** + **`Address`** fixtures—keep them immutable records to exploit `with` cloning in assertions.
+## Why split models?
+
+Keeps **`IGeolocationService`** binary light for consumers that only need data contracts (e.g. Blazor WASM clients can reference the models without pulling HTTP stacks).
+
+Centralizes serialization stability so each provider reuses the same JSON shapes instead of re-declaring DTOs.
+
+When evolving the shapes:
+
+1. Prefer **additive fields** (`init`/`required` thoughtfully).
+2. For breaking changes, ship a parallel type (e.g. `AddressV2`) instead of silently changing semantics.
+
+## Dependencies
+
+*(Synchronized from `Lyo.Geolocation.Models.csproj`.)*
+
+**Target framework:** `netstandard2.0;net10.0`
+
+### NuGet packages
+
+*None declared in this project file.*
+
+### Project references
+
+- [`Lyo.Common`](../../Common/Lyo.Common/README.md)

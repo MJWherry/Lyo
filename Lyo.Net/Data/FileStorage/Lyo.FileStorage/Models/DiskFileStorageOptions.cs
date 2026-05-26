@@ -21,8 +21,8 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
     public string? DirectUploadReceiveBaseUri { get; set; }
 
     /// <summary>
-    /// Slash-separated route prefix (no leading slash) appended after <see cref="DirectUploadReceiveBaseUri"/> to form <c>PUT …/{{file-id}}/put</c>. Defaults to the Workbench route
-    /// group used by Test API (<c>Workbench/FileStorage/direct-upload</c>).
+    /// Slash-separated route prefix (no leading slash) appended after <see cref="DirectUploadReceiveBaseUri" /> to form <c>PUT …/{{file-id}}/put</c>. Defaults to the Workbench
+    /// route group used by Test API (<c>Workbench/FileStorage/direct-upload</c>).
     /// </summary>
     public string DirectUploadPutRouteRelativePath { get; set; } = "Workbench/FileStorage/direct-upload";
 }

@@ -69,7 +69,6 @@ public class PostgresFileMetadataStoreTests
         var result = await store.DeleteMetadataAsync(fileId, TestContext.Current.CancellationToken);
         Assert.True(result);
         await Assert.ThrowsAsync<FileNotFoundException>(() => store.GetMetadataAsync(fileId, TestContext.Current.CancellationToken));
-
         var entity = await context.FileMetadata.AsNoTracking().SingleAsync(e => e.Id == fileId.ToString(), TestContext.Current.CancellationToken);
         Assert.NotNull(entity.DeletedAt);
     }

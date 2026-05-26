@@ -12,21 +12,22 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Encapsulates the metadata side of plain-object direct uploads plus server-side copy bookkeeping so storage drivers delegate policy, auditing, and hash finalization uniformly.
+/// Encapsulates the metadata side of plain-object direct uploads plus server-side copy bookkeeping so storage drivers delegate policy, auditing, and hash finalization
+/// uniformly.
 /// </summary>
 internal sealed class PlainDirectUploadCoordinator
 {
+    private readonly IFileAuditPublisher _auditPublisher;
     private readonly IFileContentPolicy _contentPolicy;
+    private readonly int _copyToBufferSizeBytes;
+    private readonly ILogger _logger;
     private readonly IFileMalwareScanner _malwareScanner;
-    private readonly IFileMetadataStore _metadataService;
     private readonly IFileStorageMetadataLookup _metadataLookup;
+    private readonly IFileStorageMetadataNormalization _metadataNormalization;
+    private readonly IFileMetadataStore _metadataService;
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
-    private readonly ILogger _logger;
     private readonly IFileStoragePhysicalIo _physicalIo;
-    private readonly IFileAuditPublisher _auditPublisher;
-    private readonly IFileStorageMetadataNormalization _metadataNormalization;
-    private readonly int _copyToBufferSizeBytes;
 
     /// <summary>Creates a coordinator with shared policy services, metadata store, polymorphic blob I/O, auditing, and field normalization supplied by concrete storage backends.</summary>
     internal PlainDirectUploadCoordinator(
@@ -55,10 +56,8 @@ internal sealed class PlainDirectUploadCoordinator
         _copyToBufferSizeBytes = copyToBufferSizeBytes;
     }
 
-    /// <summary>
-    /// Derives trailing characters from <paramref name="sourceFileName"/> after stripping the GUID prefix so hashed storage layouts preserve extensions/extra suffix segments.
-    /// </summary>
-    /// <param name="id"><see cref="FileStoreResult.Id"/> used when matching prefixed filenames.</param>
+    /// <summary>Derives trailing characters from <paramref name="sourceFileName" /> after stripping the GUID prefix so hashed storage layouts preserve extensions/extra suffix segments.</summary>
+    /// <param name="id"><see cref="FileStoreResult.Id" /> used when matching prefixed filenames.</param>
     /// <param name="sourceFileName">Upstream filename optionally beginning with the file id in <c>N</c> (no hyphens) or default <c>D</c> (with hyphens) format.</param>
     /// <returns>Suffix following the GUID prefix, or an empty string when indeterminate.</returns>
     internal static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName)
@@ -72,13 +71,12 @@ internal sealed class PlainDirectUploadCoordinator
             return s[n.Length..];
 
         var dash = id.ToString();
-        return s.StartsWith(dash, StringComparison.OrdinalIgnoreCase)
-            ? s[dash.Length..]
-            : "";
+        return s.StartsWith(dash, StringComparison.OrdinalIgnoreCase) ? s[dash.Length..] : "";
     }
 
     /// <summary>
-    /// Validates declarative upload metadata, clamps tenant/content-type fields, persists a <see cref="FileAvailability.PendingDirectUpload"/> row, and emits a begin audit marker.
+    /// Validates declarative upload metadata, clamps tenant/content-type fields, persists a <see cref="FileAvailability.PendingDirectUpload" /> row, and emits a begin audit
+    /// marker.
     /// </summary>
     /// <param name="fileId">Identifier clients will finalize against.</param>
     /// <param name="request">Client supplied bounds and filenames.</param>
@@ -110,38 +108,13 @@ internal sealed class PlainDirectUploadCoordinator
 
         var ts = DateTime.UtcNow;
         var meta = new FileStoreResult(
-            Id: fileId,
-            OriginalFileName: request.OriginalFileName ?? fileId.ToString(),
-            OriginalFileSize: 0,
-            OriginalFileHash: Array.Empty<byte>(),
-            SourceFileName: fileId.ToString(),
-            SourceFileSize: 0,
-            SourceFileHash: Array.Empty<byte>(),
-            IsCompressed: false,
-            CompressionAlgorithm: null,
-            CompressedFileSize: null,
-            CompressedFileHash: null,
-            IsEncrypted: false,
-            DataEncryptionKeyAlgorithm: null,
-            KeyEncryptionKeyAlgorithm: null,
-            EncryptedFileSize: null,
-            EncryptedFileHash: null,
-            EncryptedDataEncryptionKey: null,
-            DataEncryptionKeyId: null,
-            DataEncryptionKeyVersion: null,
-            KeyEncryptionKeySalt: null,
-            Timestamp: ts,
-            PathPrefix: normalizedPathPrefix,
-            HashAlgorithm: _options.HashAlgorithm,
-            ContentType: ctResolved,
-            TenantId: resolvedTenant,
-            Availability: FileAvailability.PendingDirectUpload,
-            DekKeyMaterialBytes: null,
-            DeletedAt: null);
+            fileId, request.OriginalFileName ?? fileId.ToString(), 0, Array.Empty<byte>(), fileId.ToString(), 0, Array.Empty<byte>(), false, null, null, null, false, null, null,
+            null, null, null, null, null, null, ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, resolvedTenant, FileAvailability.PendingDirectUpload, null, null);
 
         await _metadataService.SaveMetadataAsync(fileId, meta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(
-                new(FileAuditEventType.DirectUploadBegin, DateTime.UtcNow, fileId, resolvedTenant, _operationContextAccessor.Current?.ActorId, null, null,
+                new(
+                    FileAuditEventType.DirectUploadBegin, DateTime.UtcNow, fileId, resolvedTenant, _operationContextAccessor.Current?.ActorId, null, null,
                     FileAuditOutcome.Success),
                 ct)
             .ConfigureAwait(false);
@@ -149,14 +122,15 @@ internal sealed class PlainDirectUploadCoordinator
         return meta;
     }
 
-    /// <summary>
-    /// Loads the provisional object bytes, verifies optional expected lengths, computes integrity hashes, runs malware gates when configured, and marks availability accordingly.
-    /// </summary>
+    /// <summary>Loads the provisional object bytes, verifies optional expected lengths, computes integrity hashes, runs malware gates when configured, and marks availability accordingly.</summary>
     /// <param name="fileId">Pending upload identifier.</param>
     /// <param name="completeRequest">Optional client overrides for filenames and asserted byte counts.</param>
     /// <param name="ct">Cancellation token propagated through hashing and scanning routines.</param>
     /// <returns>Updated metadata describing the persisted object plus availability outcome.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when metadata is not awaiting finalize, encryption unexpectedly enabled, payload empty, policy rejects size, or length mismatch occurs.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when metadata is not awaiting finalize, encryption unexpectedly enabled, payload empty, policy rejects size, or length mismatch
+    /// occurs.
+    /// </exception>
     /// <exception cref="FileNotFoundException">Thrown when the backing blob is absent.</exception>
     /// <exception cref="FilePolicyRejectedException">Thrown when scanning flags a definite threat.</exception>
     internal async Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
@@ -166,12 +140,10 @@ internal sealed class PlainDirectUploadCoordinator
             var meta = await _metadataLookup.GetMetadataForStorageAsync(fileId, ct).ConfigureAwait(false);
             metaForAudit = meta;
             OperationHelpers.ThrowIf(
-                meta.Availability != FileAvailability.PendingDirectUpload,
-                $"File {fileId} is not pending direct upload finalize (availability={meta.Availability}).");
+                meta.Availability != FileAvailability.PendingDirectUpload, $"File {fileId} is not pending direct upload finalize (availability={meta.Availability}).");
 
             OperationHelpers.ThrowIf(meta.IsEncrypted || meta.IsCompressed, "Direct finalize only supports uncompressed, unencrypted placeholder metadata.");
             EnsureScanRequirementSatisfied();
-
             var raw = await _physicalIo.ReadFromStorageAsync(fileId, meta.PathPrefix, ct).ConfigureAwait(false);
             if (raw == null)
                 throw new FileNotFoundException($"No backing object exists for pending direct upload {fileId}");
@@ -183,13 +155,14 @@ internal sealed class PlainDirectUploadCoordinator
             try {
                 using (raw)
 #if NETSTANDARD2_0
-                using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-                    await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+                {
+                    using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
+                        await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+                }
 #else
                 await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
                     await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
 #endif
-
                 observedLength = new FileInfo(spoolPath).Length;
                 OperationHelpers.ThrowIfLessThan(observedLength, 1, "Direct uploaded object was empty.");
                 OperationHelpers.ThrowIf(
@@ -203,13 +176,14 @@ internal sealed class PlainDirectUploadCoordinator
                 // Stream-hash from disk.
                 using (var ha = _options.HashAlgorithm.Create())
 #if NETSTANDARD2_0
-                using (var hashStream = File.OpenRead(spoolPath))
-                    plainHash = ha.ComputeHash(hashStream);
+                {
+                    using (var hashStream = File.OpenRead(spoolPath))
+                        plainHash = ha.ComputeHash(hashStream);
+                }
 #else
                 await using (var hashStream = File.OpenRead(spoolPath))
                     plainHash = await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false);
 #endif
-
                 FileAvailability availability;
                 if (_options.RequireScanBeforeAvailable) {
 #if NETSTANDARD2_0
@@ -237,8 +211,7 @@ internal sealed class PlainDirectUploadCoordinator
                 await _auditPublisher.PublishAuditAsync(
                         new(
                             FileAuditEventType.DirectUploadComplete, DateTime.UtcNow, fileId, finalized.TenantId, _operationContextAccessor.Current?.ActorId, null, null,
-                            FileAuditOutcome.Success),
-                        ct)
+                            FileAuditOutcome.Success), ct)
                     .ConfigureAwait(false);
 
                 return finalized;
@@ -257,8 +230,7 @@ internal sealed class PlainDirectUploadCoordinator
             await _auditPublisher.PublishAuditAsync(
                     new(
                         FileAuditEventType.DirectUploadFailed, DateTime.UtcNow, fileId, metaForAudit?.TenantId, _operationContextAccessor.Current?.ActorId, null, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    ct)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -273,7 +245,7 @@ internal sealed class PlainDirectUploadCoordinator
             FileScanThreatLevel.Suspect => FileAvailability.Quarantined,
             FileScanThreatLevel.Threat => throw new FilePolicyRejectedException(scan.Detail ?? "Malware scan rejected direct upload."),
             // Unknown / future enum values: fail closed to quarantine.
-            _ => FileAvailability.Quarantined
+            var _ => FileAvailability.Quarantined
         };
     }
 
@@ -297,8 +269,8 @@ internal sealed class PlainDirectUploadCoordinator
     }
 
     /// <summary>
-    /// Clones <paramref name="sourceMeta"/> into a destination identifier, applies optional path-prefix overrides via <paramref name="request"/>, preserves cryptographic hashes,
-    /// and logs a correlated copy audit anchored on <paramref name="sourceFileId"/>.
+    /// Clones <paramref name="sourceMeta" /> into a destination identifier, applies optional path-prefix overrides via <paramref name="request" />, preserves cryptographic
+    /// hashes, and logs a correlated copy audit anchored on <paramref name="sourceFileId" />.
     /// </summary>
     /// <param name="sourceFileId">Original object identifier used as audit correlation payload.</param>
     /// <param name="sourceMeta">Baseline metadata mirrored for the cloned record.</param>
@@ -312,7 +284,6 @@ internal sealed class PlainDirectUploadCoordinator
         var destPathPrefix = _metadataNormalization.NormalizePathPrefix(request?.PathPrefix ?? sourceMeta.PathPrefix);
         var destSourceName = $"{destId}{suffix}";
         var now = DateTime.UtcNow;
-
         var copyMeta = sourceMeta with {
             Id = destId,
             Timestamp = now,
@@ -328,8 +299,7 @@ internal sealed class PlainDirectUploadCoordinator
         await _auditPublisher.PublishAuditAsync(
                 new(
                     FileAuditEventType.Copy, DateTime.UtcNow, destId, copyMeta.TenantId, _operationContextAccessor.Current?.ActorId, sourceMeta.DataEncryptionKeyId,
-                    sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success, CorrelationId: sourceFileId),
-                ct)
+                    sourceMeta.DataEncryptionKeyVersion, FileAuditOutcome.Success, CorrelationId: sourceFileId), ct)
             .ConfigureAwait(false);
 
         return copyMeta;

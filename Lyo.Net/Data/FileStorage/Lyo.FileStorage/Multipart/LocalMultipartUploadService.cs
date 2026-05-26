@@ -77,8 +77,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
 
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
-                request.ContentType, MultipartSessionStatus.Active, MultipartUploadProviderKind.Local, JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }),
-                request.DeclaredContentLength, request.PartSizeBytes);
+                request.ContentType, MultipartSessionStatus.Active, MultipartUploadProviderKind.Local,
+                JsonSerializer.Serialize(new LocalProviderState { StagingDirectory = stagingDir }), request.DeclaredContentLength, request.PartSizeBytes);
 
             // Persist the session BEFORE creating the staging directory: a session-store failure should not leave an orphan staging dir.
             await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
@@ -99,8 +99,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
@@ -160,7 +160,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
 
             using var input = File.OpenRead(mergedPath);
             var result = await _storage.SaveFromStreamAsync(
-                    input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
+                    input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
+                    null,
                     session.ContentType, session.TenantId, availabilityOverride, session.TargetFileId, ct)
                 .ConfigureAwait(false);
 
@@ -187,9 +188,10 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             await FileAuditPublication.PublishAsync(
                     _auditHandlers, null, null,
                     new(
-                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId,
+                        null,
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
@@ -233,8 +235,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;

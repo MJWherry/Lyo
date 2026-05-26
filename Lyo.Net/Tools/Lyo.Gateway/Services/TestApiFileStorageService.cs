@@ -58,10 +58,7 @@ public sealed class TestApiFileStorageService : IFileStorageService
         return stream;
     }
 
-    public async Task<bool> DeleteFileAsync(
-        Guid fileId,
-        FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata,
-        CancellationToken ct = default)
+    public async Task<bool> DeleteFileAsync(Guid fileId, FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata, CancellationToken ct = default)
     {
         if (mode != FileDeletionMode.RemoveObjectAndTombstoneMetadata)
             throw new NotSupportedException("The Test API HTTP-backed file storage proxy only supports default deletion (object removed, metadata tombstoned).");
@@ -73,8 +70,8 @@ public sealed class TestApiFileStorageService : IFileStorageService
 
     public async Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default)
     {
-        var result = await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata"), ct: ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"Metadata endpoint returned no payload for file '{fileId}'.");
+        var result = await _apiClient.GetAsAsync<FileStoreResult>(BuildUri($"files/{fileId:D}/metadata"), ct: ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Metadata endpoint returned no payload for file '{fileId}'.");
 
         FileMetadataRetrieved?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result)));
         return result;
@@ -156,9 +153,7 @@ public sealed class TestApiFileStorageService : IFileStorageService
         _ = fileId;
         var uri = BuildSaveStreamUri(originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId);
         var result = await _apiClient.PostFileAsAsync<FileStoreResult>(uri, input, originalFileName ?? "upload", ct: ct).ConfigureAwait(false);
-        FileSaved?.Invoke(
-            this,
-            new(result.Id, FileStoreSnapshot.From(result), result.OriginalFileSize, result.SourceFileSize, result.IsCompressed, result.IsEncrypted));
+        FileSaved?.Invoke(this, new(result.Id, FileStoreSnapshot.From(result), result.OriginalFileSize, result.SourceFileSize, result.IsCompressed, result.IsEncrypted));
         return result;
     }
 
@@ -181,7 +176,6 @@ public sealed class TestApiFileStorageService : IFileStorageService
             parts.Add($"pathPrefix={Uri.EscapeDataString(pathPrefix)}");
 
         AppendPresignedReadQueryParams(parts, urlResponseOptions);
-
         var qs = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
         var response = await _apiClient.GetAsAsync<PresignedReadResponse>(BuildUri($"{path}{qs}"), ct: ct).ConfigureAwait(false);
         return response?.Url ?? throw new InvalidOperationException("Pre-signed read endpoint returned no payload.");
@@ -195,11 +189,7 @@ public sealed class TestApiFileStorageService : IFileStorageService
             .ConfigureAwait(false);
 
     public async Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
-        => await _apiClient.PostAsAsync<FileStorageCopyWorkbenchRequest, FileStoreResult>(
-                BuildUri("files/copy"),
-                new FileStorageCopyWorkbenchRequest(sourceFileId, request),
-                ct: ct)
-            .ConfigureAwait(false);
+        => await _apiClient.PostAsAsync<FileStorageCopyWorkbenchRequest, FileStoreResult>(BuildUri("files/copy"), new(sourceFileId, request), ct: ct).ConfigureAwait(false);
 
     private static void AppendPresignedReadQueryParams(List<string> parts, PreSignedReadUrlOptions? opts)
     {

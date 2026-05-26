@@ -9,7 +9,6 @@ internal static class Code128Encoder
     internal static bool[] EncodeCode128B(string contents)
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrEmpty(contents), "Barcode data cannot be empty.", nameof(contents));
-
         var patterns = new List<int[]>();
 
         void AddPattern(int patternIndex) => patterns.Add(Code128Patterns.Patterns[patternIndex]);
@@ -20,11 +19,7 @@ internal static class Code128Encoder
         var sum = Code128Patterns.CodeStartB;
         for (var i = 0; i < contents.Length; i++) {
             var c = contents[i];
-            ArgumentHelpers.ThrowIf(
-                c is < (char)32 or > (char)127,
-                $"Character U+{(int)c:X4} cannot be encoded in Code 128 B (use ASCII 32–127).",
-                nameof(contents));
-
+            ArgumentHelpers.ThrowIf(c is < (char)32 or > (char)127, $"Character U+{(int)c:X4} cannot be encoded in Code 128 B (use ASCII 32–127).", nameof(contents));
             var value = c - ' ';
             sum += value * (i + 1);
             AddPattern(value);

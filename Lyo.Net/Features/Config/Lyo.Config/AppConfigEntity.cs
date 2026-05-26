@@ -40,7 +40,7 @@ public static class AppConfigEntity
 
     private static string NormalizeSegment(string raw, string paramName)
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(raw,paramName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(raw, paramName);
         var s = raw.Trim().ToLowerInvariant();
         ValidateSlug(s, paramName);
         return s;
@@ -48,7 +48,7 @@ public static class AppConfigEntity
 
     private static void ValidateSlug(string value, string paramName)
     {
-        ArgumentHelpers.ThrowIfNotInRange(value.Length,0, 128, paramName);
+        ArgumentHelpers.ThrowIfNotInRange(value.Length, 0, 128, paramName);
         foreach (var c in value.AsSpan()) {
             var okLower = c >= 'a' && c <= 'z';
             var okDigit = c >= '0' && c <= '9';

@@ -1,7 +1,31 @@
 # Lyo.Tag.Postgres
 
-PostgreSQL implementation of Lyo.Tag using Entity Framework Core. Persists tags to `tag.tag` table with migrations support. Tags have **For** (what is tagged) and optional **From
-** (who applied the tag) entity references. Unique constraint on (for_entity_type, for_entity_id, tag).
+PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists
+tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`)
+with migrations support. Tags carry **For** (what is tagged) and optional **From**
+(who applied the tag) entity references and are uniquely keyed by
+`(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.
+
+`PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth`
+(`HealthCheckName = "tag-postgres"`), so registering the store also wires up a
+liveness probe.
+
+## DI extensions
+
+Defined in `Extensions.cs` as `IServiceCollection` extensions:
+
+- `AddTagDbContextFactory(Action<PostgresTagOptions>)` /
+  `AddTagDbContextFactory(PostgresTagOptions)` — register only the
+  `IDbContextFactory<TagDbContext>` (useful when consuming the schema directly
+  from migrations or another store).
+- `AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)`
+  — same, but bound from configuration.
+- `AddPostgresTagStore(Action<PostgresTagOptions>)` /
+  `AddPostgresTagStore(PostgresTagOptions)` — register the DbContext factory
+  **and** the `ITagStore` singleton.
+- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)`
+  — register the store using configuration binding. The default section name is
+  `PostgresTag`.
 
 ## Usage
 
@@ -24,7 +48,7 @@ Or with configuration:
 ```
 
 ```csharp
-services.AddPostgresTagStore(configuration);
+services.AddPostgresTagStoreFromConfiguration(configuration);
 ```
 
 ## Migrations

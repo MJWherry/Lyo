@@ -49,6 +49,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
                 _logger.LogWarning("Metadata is soft-deleted for {FileId}", fileId);
                 throw new FileNotFoundException($"Metadata for file {fileId} not found");
             }
+
             _logger.LogDebug("Retrieved metadata for file {FileId}", fileId);
             return metadata;
         }
@@ -171,8 +172,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
 #endif
                     var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
                     if (metadata?.DeletedAt != null || metadata?.Availability == FileAvailability.PendingDirectUpload ||
-                        metadata?.OriginalFileHash is not { Length: > 0 } storedHash ||
-                        !HashingService.Shared.FixedTimeEquals(storedHash.AsSpan(), hash.AsSpan()))
+                        metadata?.OriginalFileHash is not { Length: > 0 } storedHash || !HashingService.Shared.FixedTimeEquals(storedHash.AsSpan(), hash.AsSpan()))
                         continue;
 
                     _logger.LogDebug("Found metadata by hash for file {FileId}", metadata.Id);

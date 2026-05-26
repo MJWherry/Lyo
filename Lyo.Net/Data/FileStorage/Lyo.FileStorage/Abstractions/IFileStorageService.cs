@@ -94,35 +94,22 @@ public interface IFileStorageService : IHealth
     /// Returns a time-limited read URL when the backend supports direct browser access (e.g. S3/Azure presigned GET). The URL refers to the stored object (ciphertext if
     /// encrypted). For decrypted downloads use <see cref="GetFileStreamAsync" />. Key material is never embedded in the URL.
     /// </summary>
-    /// <remarks>
-    /// Overload without response header overrides. <paramref name="ct" /> may not cancel synchronous signing in some backends.
-    /// </remarks>
+    /// <remarks>Overload without response header overrides. <paramref name="ct" /> may not cancel synchronous signing in some backends.</remarks>
     Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default);
 
     /// <inheritdoc cref="GetPreSignedReadUrlAsync(Guid, TimeSpan?, string?, CancellationToken)" />
-    /// <remarks>
-    /// <paramref name="ct" /> may not cancel synchronous presigned-url construction in SDKs (<c>AWS</c> / <c>Azure</c>).
-    /// </remarks>
-    Task<string> GetPreSignedReadUrlAsync(
-        Guid fileId,
-        TimeSpan? expiration,
-        string? pathPrefix,
-        PreSignedReadUrlOptions? urlResponseOptions,
-        CancellationToken ct = default);
+    /// <remarks><paramref name="ct" /> may not cancel synchronous presigned-url construction in SDKs (<c>AWS</c> / <c>Azure</c>).</remarks>
+    Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration, string? pathPrefix, PreSignedReadUrlOptions? urlResponseOptions, CancellationToken ct = default);
 
     /// <summary>Allocates metadata and returns a URL for a single client PUT upload (plaintext, no compression/encryption). Backend-specific.</summary>
-    /// <remarks>
-    /// Persistence and URL construction cooperate with cancellation; synchronous signing phases in vendor SDKs may ignore <paramref name="ct" />.
-    /// </remarks>
+    /// <remarks>Persistence and URL construction cooperate with cancellation; synchronous signing phases in vendor SDKs may ignore <paramref name="ct" />.</remarks>
     Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default);
 
     /// <summary>Verifies backing bytes and finalizes metadata after a direct PUT.</summary>
     Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default);
 
     /// <summary>Server-local or server-side copy to a new file id (backing bytes reproduced; metadata duplicated with new identifiers).</summary>
-    /// <remarks>
-    /// Remote copies may incur long-lived SDK calls — treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.
-    /// </remarks>
+    /// <remarks>Remote copies may incur long-lived SDK calls — treat <paramref name="ct" /> as best-effort where the SDK does not propagate tokens.</remarks>
     Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default);
 
     /// <summary>Gets a file from storage.</summary>
@@ -146,13 +133,10 @@ public interface IFileStorageService : IHealth
     /// <returns>True when the backing object was removed from storage (the previous behavior). Metadata handling varies by mode.</returns>
     /// <exception cref="FileNotFoundException">Thrown when the file is not found and ThrowOnDeleteNotFound is true (default)</exception>
     /// <remarks>
-    /// <paramref name="mode"/> must reflect operator/retention governance. Do not derive <see cref="FileDeletionMode.RemoveObjectAndPurgeMetadata"/> from inbound HTTP/API client
-    /// input (queries, bodies, headers, etc.).
+    /// <paramref name="mode" /> must reflect operator/retention governance. Do not derive <see cref="FileDeletionMode.RemoveObjectAndPurgeMetadata" /> from inbound HTTP/API
+    /// client input (queries, bodies, headers, etc.).
     /// </remarks>
-    Task<bool> DeleteFileAsync(
-        Guid fileId,
-        FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata,
-        CancellationToken ct = default);
+    Task<bool> DeleteFileAsync(Guid fileId, FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata, CancellationToken ct = default);
 
     /// <summary>Gets metadata for a file by its ID.</summary>
     /// <param name="fileId">The unique identifier of the file.</param>

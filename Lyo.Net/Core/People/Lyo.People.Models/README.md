@@ -50,7 +50,6 @@ using Lyo.People.Models;
 using Lyo.People.Models.Contact;
 using Lyo.People.Models.Enum;
 using Lyo.People.Models.Extensions;
-using Lyo.People.Models.Models;
 
 var person = new Person
 {
@@ -72,10 +71,26 @@ var person = new Person
     }
 };
 
-// Use extension methods
-var homeAddress = person.GetHomeAddress();
-var mobilePhone = person.GetMobilePhone();
-var hasValidEmail = person.HasValidEmail();
+// Person instance helpers (primary / by-type / current selectors)
+var primaryAddr  = person.GetPrimaryAddress();
+var workAddr     = person.GetAddressByType(ContactAddressType.Work);
+var primaryPhone = person.GetPrimaryPhoneNumber();
+var mobilePhone  = person.GetPhoneNumberByType(ContactPhoneType.Mobile);
+var primaryEmail = person.GetPrimaryEmailAddress();
+
+// PersonExtensions (typed convenience wrappers + verification checks)
+var homeAddress  = person.GetHomeAddress();
+var workEmail    = person.GetWorkEmail();
+var personalMail = person.GetPersonalEmail();
+var hasValidMail = person.HasValidEmail();      // true when any current email has VerifiedAt set
+var hasValidTel  = person.HasValidPhone();      // true when any current phone has VerifiedAt set
+var currentJob   = person.GetCurrentEmployment();
+var activeRels   = person.GetActiveRelationships();
+
+// PersonName formatting
+var initials  = person.Name.GetInitials();
+var formatted = person.Name.GetFormattedName(NameFormat.Formal);
+var display   = person.Name.DisplayName;        // PreferredName ?? FullName
 ```
 
 ## Dependencies

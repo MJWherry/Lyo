@@ -1,4 +1,3 @@
-using System.Numerics;
 using Lyo.Images.Models;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -83,7 +82,6 @@ internal static class QrFrameLayoutCompositor
         var cardY = margin;
         var qx = cardX + pad;
         var qy = cardY + bodyTopOffset + pad;
-
         img.Mutate(ctx => {
             ctx.Fill(canvasBg);
             if (shadowOff > 0 && TryParseColor(o.ShadowHex, out var sh)) {
@@ -147,7 +145,6 @@ internal static class QrFrameLayoutCompositor
         var cardY = margin;
         var qx = cardX + pad;
         var qy = cardY + pad;
-
         img.Mutate(ctx => {
             ctx.Fill(canvasBg);
             if (shadowOff > 0 && TryParseColor(o.ShadowHex, out var sh)) {
@@ -209,9 +206,7 @@ internal static class QrFrameLayoutCompositor
                 var font = GetOrCreateFont(l.CaptionFontSizePx, o.FontFamily);
                 var cy = cardY + pad + s + footer + l.CaptionBlockHeightPx / 2f;
                 var textOpts = new RichTextOptions(font) {
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Origin = new PointF(cardX + cardW / 2f, cy)
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Origin = new PointF(cardX + cardW / 2f, cy)
                 };
 
                 ctx.DrawText(textOpts, caption!, Brushes.Solid(capCol), null);
@@ -249,15 +244,15 @@ internal static class QrFrameLayoutCompositor
 
         const float k = 0.5522847498f;
         var pb = new PathBuilder();
-        pb.MoveTo(new PointF(x + rr, y));
-        pb.LineTo(new PointF(x + w - rr, y));
-        pb.CubicBezierTo(new Vector2(x + w - rr + k * rr, y), new Vector2(x + w, y + rr - k * rr), new Vector2(x + w, y + rr));
-        pb.LineTo(new PointF(x + w, y + h - rr));
-        pb.CubicBezierTo(new Vector2(x + w, y + h - rr + k * rr), new Vector2(x + w - rr + k * rr, y + h), new Vector2(x + w - rr, y + h));
-        pb.LineTo(new PointF(x + rr, y + h));
-        pb.CubicBezierTo(new Vector2(x + rr - k * rr, y + h), new Vector2(x, y + h - rr + k * rr), new Vector2(x, y + h - rr));
-        pb.LineTo(new PointF(x, y + rr));
-        pb.CubicBezierTo(new Vector2(x, y + rr - k * rr), new Vector2(x + rr - k * rr, y), new Vector2(x + rr, y));
+        pb.MoveTo(new(x + rr, y));
+        pb.LineTo(new(x + w - rr, y));
+        pb.CubicBezierTo(new(x + w - rr + k * rr, y), new(x + w, y + rr - k * rr), new(x + w, y + rr));
+        pb.LineTo(new(x + w, y + h - rr));
+        pb.CubicBezierTo(new(x + w, y + h - rr + k * rr), new(x + w - rr + k * rr, y + h), new(x + w - rr, y + h));
+        pb.LineTo(new(x + rr, y + h));
+        pb.CubicBezierTo(new(x + rr - k * rr, y + h), new(x, y + h - rr + k * rr), new(x, y + h - rr));
+        pb.LineTo(new(x, y + rr));
+        pb.CubicBezierTo(new(x, y + rr - k * rr), new(x + rr - k * rr, y), new(x + rr, y));
         pb.CloseFigure();
         return pb.Build();
     }
@@ -274,13 +269,13 @@ internal static class QrFrameLayoutCompositor
 
         const float k = 0.5522847498f;
         var pb = new PathBuilder();
-        pb.MoveTo(new PointF(x + rr, y));
-        pb.LineTo(new PointF(x + w - rr, y));
-        pb.CubicBezierTo(new Vector2(x + w - rr + k * rr, y), new Vector2(x + w, y + rr - k * rr), new Vector2(x + w, y + rr));
-        pb.LineTo(new PointF(x + w, y + h));
-        pb.LineTo(new PointF(x, y + h));
-        pb.LineTo(new PointF(x, y + rr));
-        pb.CubicBezierTo(new Vector2(x, y + rr - k * rr), new Vector2(x + rr - k * rr, y), new Vector2(x + rr, y));
+        pb.MoveTo(new(x + rr, y));
+        pb.LineTo(new(x + w - rr, y));
+        pb.CubicBezierTo(new(x + w - rr + k * rr, y), new(x + w, y + rr - k * rr), new(x + w, y + rr));
+        pb.LineTo(new(x + w, y + h));
+        pb.LineTo(new(x, y + h));
+        pb.LineTo(new(x, y + rr));
+        pb.CubicBezierTo(new(x, y + rr - k * rr), new(x + rr - k * rr, y), new(x + rr, y));
         pb.CloseFigure();
         return pb.Build();
     }
@@ -348,21 +343,20 @@ internal static class QrFrameLayoutCompositor
 
     /// <summary>Pixel sizes derived from QR side length so chrome stays visible when the PNG is huge (e.g. 256 px per module).</summary>
     private readonly record struct ScaledChromeLayout(
-        int PaddingPx, 
-        int MarginPx, 
-        float CornerRadiusPx, 
+        int PaddingPx,
+        int MarginPx,
+        float CornerRadiusPx,
         int ShadowOffsetPx,
-        int HeaderHeightPx, 
+        int HeaderHeightPx,
         int NotchDepthPx,
-        int NotchWidthPx, 
+        int NotchWidthPx,
         float CardOutlineWidthPx,
-        float BorderStrokeWidthPx, 
-        float CaptionFontSizePx, 
-        int CaptionFooterPaddingPx 
-        ,int FooterCaptionGapPx, 
+        float BorderStrokeWidthPx,
+        float CaptionFontSizePx,
+        int CaptionFooterPaddingPx,
+        int FooterCaptionGapPx,
         int CaptionBlockHeightPx)
     {
-
         public static ScaledChromeLayout FromOptions(int s, QrFrameLayoutOptions o)
         {
             // Fractions of QR side — keeps header, borders, and text a stable share of the image when s is 500 or 8000 px.
@@ -400,8 +394,7 @@ internal static class QrFrameLayoutCompositor
                 headerH = Math.Clamp(Math.Max(headerScaled, headerForText), 32, headerMax);
             }
 
-            return new(pad, margin, r, shadowOff, headerH, notchD, 
-                notchW, outline, borderStroke, caption, footerPad, footerGap, captionBlockH);
+            return new(pad, margin, r, shadowOff, headerH, notchD, notchW, outline, borderStroke, caption, footerPad, footerGap, captionBlockH);
         }
     }
 }

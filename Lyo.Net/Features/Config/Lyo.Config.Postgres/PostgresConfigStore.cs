@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using Lyo.EntityReference.Models;
 using Lyo.Config.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;

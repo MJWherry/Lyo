@@ -6,10 +6,8 @@ namespace Lyo.EntityReference.Models;
 [DebuggerDisplay("DefaultTenantId={DefaultTenantId}")]
 public sealed class EntityRefOptions
 {
-    /// <summary>
-    /// Tenant identifier applied when store methods receive <see langword="null"/> or omit tenant context (single-tenant deployments).
-    /// </summary>
-    /// <remarks>Defaults to <see cref="EntityRefWellKnown.SingleTenantDefaultId"/>.</remarks>
+    /// <summary>Tenant identifier applied when store methods receive <see langword="null" /> or omit tenant context (single-tenant deployments).</summary>
+    /// <remarks>Defaults to <see cref="EntityRefWellKnown.SingleTenantDefaultId" />.</remarks>
     public Guid DefaultTenantId { get; set; } = EntityRefWellKnown.SingleTenantDefaultId;
 
     /// <inheritdoc />

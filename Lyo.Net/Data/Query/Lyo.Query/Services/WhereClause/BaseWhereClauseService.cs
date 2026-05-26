@@ -51,8 +51,8 @@ internal record PropertyPathMetadata(IReadOnlyList<PropertyInfo> Properties, Typ
 }
 
 /// <summary>
-/// Default <see cref="IWhereClauseService" />: builds LINQ expression trees for <see cref="Lyo.Query.Models.Common.WhereClause" />, caches predicates and matchers, and supports
-/// in-memory evaluation and <see cref="ExplainMatch{TEntity}" /> for loaded entities.
+/// Default <see cref="IWhereClauseService" />: builds LINQ expression trees for <see cref="Lyo.Query.Models.Common.WhereClause" />, caches predicates and matchers, and
+/// supports in-memory evaluation and <see cref="ExplainMatch{TEntity}" /> for loaded entities.
 /// </summary>
 /// <remarks>
 /// Requires <see cref="ICacheService" /> and <see cref="IValueConversionService" />. Uses <see cref="SharedEntityMetadataCache" /> for reflection metadata. Optional metrics

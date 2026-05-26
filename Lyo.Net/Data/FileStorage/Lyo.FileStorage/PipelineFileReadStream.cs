@@ -105,8 +105,7 @@ internal sealed class PipelineFileReadStream : Stream
 
     /// <summary>Unifies the patterns of cancellation-shaped exceptions that should be swallowed on stream teardown.</summary>
     private static bool IsExpectedPipelineTeardownException(Exception ex)
-        => ex is OperationCanceledException
-            || (ex is AggregateException agg && agg.InnerExceptions.All(inner => inner is OperationCanceledException));
+        => ex is OperationCanceledException || (ex is AggregateException agg && agg.InnerExceptions.All(inner => inner is OperationCanceledException));
 
     private void ThrowIfDisposed()
     {

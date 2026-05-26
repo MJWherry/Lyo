@@ -6,8 +6,8 @@ A production-ready email service library for .NET with SMTP support, built on Ma
 
 - ✅ **Clean API** - Fluent builder pattern for constructing emails
 - ✅ **SMTP Support** - Full SMTP support via MailKit
-- ✅ **Bulk Sending** - Efficient bulk email sending with progress tracking
-- ✅ **Attachments** - Support for file attachments, including ZIP compression
+- ✅ **Bulk Sending** - Sequential bulk send over a single SMTP connection with per-message results
+- ✅ **Attachments** - File attachments and a `ZipFileBuilder` for bundling multiple files into a single ZIP attachment
 - ✅ **HTML & Text** - Support for both HTML and plain text email bodies
 - ✅ **Error Handling** - Comprehensive error handling with detailed results
 - ✅ **Logging** - Built-in logging support via Microsoft.Extensions.Logging
@@ -60,7 +60,9 @@ var options = new EmailServiceOptions
 
 ```csharp
 // In ConfigureServices(context, services):
-services.AddEmailServiceViaConfiguration(context.Configuration);
+services.AddEmailServiceFromConfiguration(context.Configuration);
+// Override the configuration section name if needed (defaults to "EmailServiceOptions"):
+// services.AddEmailServiceFromConfiguration(context.Configuration, "MySection");
 ```
 
 #### Using Action
@@ -181,21 +183,27 @@ var result = await _emailService.SendEmailAsync(builder);
 
 ### Multiple Attachments as ZIP
 
+`ZipFileBuilder` packages multiple files into a single ZIP byte array that can be attached like any other file:
+
 ```csharp
-var files = new Dictionary<string, byte[]>
-{
-    { "file1.txt", Encoding.UTF8.GetBytes("Content 1") },
-    { "file2.txt", Encoding.UTF8.GetBytes("Content 2") }
-};
+var zipBytes = ZipFileBuilder.New()
+    .AddFile("file1.txt", Encoding.UTF8.GetBytes("Content 1"))
+    .AddFile("file2.txt", "Content 2")          // text overload (UTF-8 by default)
+    .AddFileFromPath("/path/to/report.pdf")     // from disk; entry name defaults to file name
+    .AddDirectory("/path/to/docs", "docs/")     // recurse a directory under a prefix
+    .Build();
 
 var builder = EmailRequestBuilder.New()
     .SetSubject("Files Attached")
     .SetTextBody("Please find the attached files.")
     .AddTo("recipient@example.com")
-    .AddAttachmentsAsZip("files.zip", files);
+    .AddAttachment("files.zip", zipBytes);
 
 var result = await _emailService.SendEmailAsync(builder);
 ```
+
+`ZipFileBuilder` is a one-shot builder. After calling `Build()`/`BuildToFile()`/`BuildToStream()` the
+archive is closed and the instance cannot be reused.
 
 ### Custom From Address
 
@@ -328,19 +336,33 @@ public class EmailServiceOptions
     
     /// <summary>Enable metrics collection. Default: false.</summary>
     public bool EnableMetrics { get; set; } = false;
+
+    /// <summary>Soft cap used by single-call bulk concurrency planning. Default: 10.</summary>
+    public int BulkEmailConcurrencyLimit { get; set; } = 10;
+
+    /// <summary>Maximum number of messages allowed per <c>SendBulkEmailAsync</c> call. Default: 1000.</summary>
+    public int MaxBulkEmailLimit { get; set; } = 1000;
+
+    /// <summary>Maximum number of attachments allowed per email. Default: 20.</summary>
+    public int MaxAttachmentCountPerEmail { get; set; } = 20;
 }
 ```
 
+The configuration section name defaults to `EmailServiceOptions` (exposed as `EmailServiceOptions.SectionName`).
+
 ### Validation
 
-The library automatically validates required options:
+The library automatically validates required options via `EmailServiceOptionsValidator`:
 
 - `Host` must not be null or empty
 - `Port` must be between 1 and 65535
 - `DefaultFromAddress` must not be null or empty
 - `DefaultFromName` must not be null or empty
+- `MaxAttachmentCountPerEmail` must be greater than 0
 
-Invalid options will throw `OptionsValidationException` at startup when using `AddEmailServiceViaConfiguration()`.
+Invalid options throw at startup: `AddEmailServiceFromConfiguration()` registers a validator and calls
+`ValidateOnStart()`, which surfaces an `OptionsValidationException`; the action/factory overloads of
+`AddEmailService()` validate inside the singleton factory and throw an exception when the options are first resolved.
 
 ## Error Handling
 
@@ -535,11 +557,20 @@ dotnet test
 - `SetTextBody(...)` - Set plain text body
 - `AppendHtmlBody(...)` - Append to HTML body
 - `AppendTextBody(...)` - Append to text body
-- `AddAttachment(...)` - Add file attachments
-- `AddAttachmentsAsZip(...)` - Add multiple files as ZIP
+- `AddAttachment(...)` - Add file attachments (use `ZipFileBuilder` first if you want a ZIP attachment)
 - `AddHeader(...)` - Add custom headers
 - `ClearTo()` / `ClearCc()` / `ClearBcc()` / `ClearAttachments()` - Clear collections
 - `Build()` - Build the MimeMessage
+
+### ZipFileBuilder
+
+Helper for assembling a ZIP archive in memory that can be attached via `AddAttachment(name, zipBytes)`:
+
+- `AddFile(name, byte[] | Stream | string)` - Add a single entry; the `string` overload uses UTF-8 by default
+- `AddFiles(Dictionary<string, byte[]>)` / `AddFiles(params string[] filePaths)` - Add multiple entries
+- `AddFileFromPath(path, entryName?)` - Add an entry from a file on disk
+- `AddDirectory(path, entryPrefix = "")` - Recursively add an entire directory tree
+- `Build()` / `BuildToFile(path)` / `BuildToStream()` - Materialise the archive (one-shot — the instance cannot be reused after building)
 
 ### BulkEmailRequestBuilder
 
@@ -582,8 +613,18 @@ Multiple threads can safely use the same instance concurrently.
 
 ### Bulk Email Processing
 
-Bulk emails are sent **sequentially**, not in parallel. Each email is sent one after another. If cancellation is
-requested, processing stops and partial results are returned.
+Bulk emails are sent **sequentially over a single SMTP connection**. The service opens one connection,
+sends each message one after another, then disconnects. If cancellation is requested, processing stops
+and partial results are returned.
+
+Limits enforced by `EmailServiceOptions`:
+
+- `MaxBulkEmailLimit` (default `1000`) — `SendBulkEmailAsync` throws `ArgumentOutsideRangeException` if the input
+  exceeds this count.
+- `MaxAttachmentCountPerEmail` (default `20`) — enforced per request on both single and bulk sends.
+- `BulkEmailConcurrencyLimit` (default `10`) — a soft cap used by callers planning concurrent bulk batches.
+  The current implementation processes messages sequentially within a single bulk call, so this value does
+  not change the in-call behaviour.
 
 ### Cancellation
 

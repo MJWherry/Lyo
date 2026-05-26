@@ -7,15 +7,35 @@ namespace Lyo.QRCode.Encoding.Iso;
 /// <summary>ISO/IEC 18004 QR symbol construction (internal use). Encoding logic derived from the MIT-licensed QRCoder project.</summary>
 internal sealed partial class QRIsoEncoder
 {
-    private static readonly BitArray RepeatingPattern = new([true, true, true, false, true, true, false, false, false, false, false, true, false, false, false, true]);
+    private static readonly BitArray RepeatingPattern = new(
+    [
+        true, true, true, false, true, true, false, false, false, false,
+        false, true, false, false, false, true
+    ]);
 
-    private static readonly BitArray GetFormatGenerator = new([true, false, true, false, false, true, true, false, true, true, true]);
+    private static readonly BitArray GetFormatGenerator = new(
+    [
+        true, false, true, false, false, true, true, false, true, true,
+        true
+    ]);
 
-    private static readonly BitArray GetFormatMask = new([true, false, true, false, true, false, false, false, false, false, true, false, false, true, false]);
+    private static readonly BitArray GetFormatMask = new(
+    [
+        true, false, true, false, true, false, false, false, false, false,
+        true, false, false, true, false
+    ]);
 
-    private static readonly BitArray GetFormatMicroMask = new([true, false, false, false, true, false, false, false, true, false, false, false, true, false, true]);
+    private static readonly BitArray GetFormatMicroMask = new(
+    [
+        true, false, false, false, true, false, false, false, true, false,
+        false, false, true, false, true
+    ]);
 
-    private static readonly BitArray GetVersionGenerator = new([true, true, true, true, true, false, false, true, false, false, true, false, true]);
+    private static readonly BitArray GetVersionGenerator = new(
+    [
+        true, true, true, true, true, false, false, true, false, false,
+        true, false, true
+    ]);
 
     private static readonly BitArray EmptyBitArray = new(0);
 
@@ -831,12 +851,13 @@ internal sealed partial class QRIsoEncoder
     }
 
     /// <summary>Checks if the given string can be accurately represented and retrieved in ISO-8859-1 encoding.</summary>
-    private static bool IsValidISO(string input) =>
-        // ISO-8859-1 contains the same characters as UTF-16 for the range 0x00-0xFF.
-        //   0x00-0x7F: ASCII (0-127)
-        //   0x80-0x9F: C1 control characters (128-159)
-        //   0xA0-0xFF: Extended Latin (160-255)
-        input.All(c => c <= 0xFF);
+    private static bool IsValidISO(string input)
+        =>
+            // ISO-8859-1 contains the same characters as UTF-16 for the range 0x00-0xFF.
+            //   0x00-0x7F: ASCII (0-127)
+            //   0x80-0x9F: C1 control characters (128-159)
+            //   0xA0-0xFF: Extended Latin (160-255)
+            input.All(c => c <= 0xFF);
 
     /// <summary>Converts plain text to a binary format suitable for QR code generation, based on the specified encoding mode.</summary>
     /// <param name="plainText">The text to be encoded.</param>

@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.EntityReference.Postgres.Database;
 
-/// <summary>Fluent mapping extensions for <see cref="EntityRefOptionalFromStringAssociationBase"/> columns.</summary>
+/// <summary>Fluent mapping extensions for <see cref="EntityRefOptionalFromStringAssociationBase" /> columns.</summary>
 public static class EntityRefOptionalFromStringAssociationExtensions
 {
     /// <summary>Maps for/from string columns with a shared max length (default 500, matching change-tracker conventions).</summary>
-    /// <typeparam name="TEntity">Entity deriving from <see cref="EntityRefOptionalFromStringAssociationBase"/>.</typeparam>
+    /// <typeparam name="TEntity">Entity deriving from <see cref="EntityRefOptionalFromStringAssociationBase" />.</typeparam>
     /// <param name="builder">EF Core entity type builder.</param>
     /// <param name="maxLength">Maximum length for all four string columns.</param>
     public static void MapOptionalFromStringAssociationColumns<TEntity>(this EntityTypeBuilder<TEntity> builder, int maxLength = 500)

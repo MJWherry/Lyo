@@ -31,6 +31,7 @@ public sealed class ConfigApiPollingOptions
     {
         if (!Enabled)
             return;
+
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppKind);
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppId);
     }

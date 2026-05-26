@@ -12,6 +12,36 @@ namespace Lyo.Web.Automation.Selenium.Service;
 /// <summary>Extension methods for Selenium browser automation registration.</summary>
 public static class Extensions
 {
+    private static void RegisterOptionsAndBrowser(IServiceCollection services, Action<SeleniumBrowserOptions>? configure)
+    {
+        services.AddSingleton(_ => {
+            var options = new SeleniumBrowserOptions();
+            configure?.Invoke(options);
+            return options;
+        });
+
+        services.AddScoped(RegisterSeleniumBrowser);
+    }
+
+    private static void RegisterSeleniumBrowserServiceSingleton(IServiceCollection services)
+        => services.AddSingleton<ISeleniumBrowserService>(sp => new SeleniumBrowserService(
+            sp.GetRequiredService<SeleniumBrowserOptions>(), sp.GetService<ILoggerFactory>(), sp.GetService<IMetrics>()));
+
+    private static SeleniumBrowserOptions CreateOptionsFromBuilder(Action<SeleniumBrowserOptionsBuilder> configure)
+    {
+        var b = SeleniumBrowserOptionsBuilder.New();
+        configure(b);
+        return b.Build();
+    }
+
+    private static SeleniumBrowser RegisterSeleniumBrowser(IServiceProvider sp)
+    {
+        var opts = sp.GetRequiredService<SeleniumBrowserOptions>();
+        var logger = sp.GetService<ILogger<SeleniumBrowser>>();
+        var metrics = sp.GetService<IMetrics>();
+        return new(opts, logger, metrics);
+    }
+
     extension(IServiceCollection services)
     {
         /// <summary>Registers <see cref="SeleniumBrowserOptions" /> and a scoped <see cref="SeleniumBrowser" /> for direct injection (legacy style).</summary>
@@ -94,35 +124,5 @@ public static class Extensions
             RegisterSeleniumBrowserServiceSingleton(services);
             return services;
         }
-    }
-
-    private static void RegisterOptionsAndBrowser(IServiceCollection services, Action<SeleniumBrowserOptions>? configure)
-    {
-        services.AddSingleton(_ => {
-            var options = new SeleniumBrowserOptions();
-            configure?.Invoke(options);
-            return options;
-        });
-
-        services.AddScoped(RegisterSeleniumBrowser);
-    }
-
-    private static void RegisterSeleniumBrowserServiceSingleton(IServiceCollection services)
-        => services.AddSingleton<ISeleniumBrowserService>(sp => new SeleniumBrowserService(
-            sp.GetRequiredService<SeleniumBrowserOptions>(), sp.GetService<ILoggerFactory>(), sp.GetService<IMetrics>()));
-
-    private static SeleniumBrowserOptions CreateOptionsFromBuilder(Action<SeleniumBrowserOptionsBuilder> configure)
-    {
-        var b = SeleniumBrowserOptionsBuilder.New();
-        configure(b);
-        return b.Build();
-    }
-
-    private static SeleniumBrowser RegisterSeleniumBrowser(IServiceProvider sp)
-    {
-        var opts = sp.GetRequiredService<SeleniumBrowserOptions>();
-        var logger = sp.GetService<ILogger<SeleniumBrowser>>();
-        var metrics = sp.GetService<IMetrics>();
-        return new(opts, logger, metrics);
     }
 }

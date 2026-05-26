@@ -83,11 +83,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddTagDbContextFactory(options);
-            services.AddSingleton<ITagStore>(
-                sp => new PostgresTagStore(
-                    sp.GetRequiredService<IDbContextFactory<TagDbContext>>(),
-                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
-                    sp.GetServices<IEntityRefActionInterceptor>()));
+            services.AddSingleton<ITagStore>(sp => new PostgresTagStore(
+                sp.GetRequiredService<IDbContextFactory<TagDbContext>>(), sp.GetRequiredService<IOptions<EntityRefOptions>>(), sp.GetServices<IEntityRefActionInterceptor>()));
+
             return services;
         }
     }

@@ -5,13 +5,13 @@ using Lyo.Common.Extensions;
 namespace Lyo.EntityReference.Models;
 
 /// <summary>
-/// JSON shape for <see cref="EntityRef"/>: <c>{"entityType":"…","entityId":"…"}</c> (camelCase property names).
-/// Register with <see cref="JsonSerializerOptions.Converters"/> for stable HTTP and storage contracts independent of global naming policy.
+/// JSON shape for <see cref="EntityRef" />: <c>{"entityType":"…","entityId":"…"}</c> (camelCase property names). Register with
+/// <see cref="JsonSerializerOptions.Converters" /> for stable HTTP and storage contracts independent of global naming policy.
 /// </summary>
 public sealed class EntityRefJsonConverter : JsonConverter<EntityRef>
 {
-    const string EntityTypeName = "entityType";
-    const string EntityIdName = "entityId";
+    private const string EntityTypeName = "entityType";
+    private const string EntityIdName = "entityId";
 
     /// <summary>Reads <c>entityType</c> and <c>entityId</c> from a JSON object.</summary>
     /// <exception cref="JsonException">The JSON is not an object or required properties are missing or blank.</exception>
@@ -22,7 +22,6 @@ public sealed class EntityRefJsonConverter : JsonConverter<EntityRef>
 
         string? entityType = null;
         string? entityId = null;
-
         while (reader.Read()) {
             if (reader.TokenType == JsonTokenType.EndObject)
                 break;
@@ -33,7 +32,6 @@ public sealed class EntityRefJsonConverter : JsonConverter<EntityRef>
             var prop = reader.GetString();
             reader.Read();
             var val = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
-
             if (string.Equals(prop, EntityTypeName, StringComparison.Ordinal) || string.Equals(prop, nameof(EntityRef.EntityType), StringComparison.Ordinal))
                 entityType = val;
             else if (string.Equals(prop, EntityIdName, StringComparison.Ordinal) || string.Equals(prop, nameof(EntityRef.EntityId), StringComparison.Ordinal))
@@ -41,7 +39,7 @@ public sealed class EntityRefJsonConverter : JsonConverter<EntityRef>
             else
                 reader.Skip();
         }
-        
+
         if (entityType.IsNullOrWhitespace() || entityId.IsNullOrWhitespace())
             throw new JsonException("EntityRef JSON must include non-empty entityType and entityId.");
 

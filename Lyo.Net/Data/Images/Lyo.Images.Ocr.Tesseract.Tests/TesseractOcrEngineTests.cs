@@ -44,7 +44,7 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
         var tess = fixture.GetTesseractOcrEngineOptions();
         if (string.IsNullOrWhiteSpace(tess.TessdataDirectory))
             tess.TessdataDirectory = tessDir;
-        
+
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var png = new MemoryStream(CreatePngWithText("HELLO"));
         var result = await engine.ReadAsync(png, cancellationToken: TestContext.Current.CancellationToken);
@@ -66,7 +66,7 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
         tessOpts.TessdataDirectory = string.IsNullOrWhiteSpace(tessOpts.TessdataDirectory) ? tessDir : tessOpts.TessdataDirectory;
         using var engine = new TesseractOcrEngine(shared, tessOpts);
         await using var png = new MemoryStream(CreatePngWithText("AB"));
-        var result = await engine.ReadAsync(png, new OcrReadRequest { PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(png, new() { PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess);
         foreach (var w in result.Data!.Words) {

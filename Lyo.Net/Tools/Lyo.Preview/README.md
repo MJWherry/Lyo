@@ -1,36 +1,87 @@
 # Lyo.Preview
 
-Cross-platform preview in the system default browser. Implementation: `BrowserPreview`.
+Cross-platform preview in the system default browser. The default implementation, `BrowserPreview`, spins up an `HttpListener` on `127.0.0.1` (random free port), registers one byte
+buffer per call under a `/p/{id}` path, opens the URL in the OS browser, and releases the entry as soon as the browser fetches it. CSV and XLSX content is converted to an HTML
+table before serving so the browser doesn't try to download it.
 
-Throws `NotSupportedException` for unsupported file types (e.g. XLSX, DOCX, ZIP).
-
-**Supported types:** PDF, HTML, PNG, JPEG, GIF, BMP, SVG, WebP, TIFF, TXT, JSON, XML, CSV.
+**Supported types:** PDF, HTML, PNG, JPEG, GIF, BMP, SVG, WebP, TIFF, TXT, JSON, XML, CSV, XLSX. Anything else throws `NotSupportedException`. XLSX additionally requires an
+`IXlsxService` to be available in DI (see [DI registration](#di-registration)).
 
 ## API
 
-- **PreviewFile(pathOrUrl)** – Local file or URL. Type from path/extension.
-- **Preview(stream, FileTypeInfo)** – Stream content. FileTypeInfo required.
-- **Preview(bytes, FileTypeInfo)** – Byte content. FileTypeInfo required.
+### `IPreviewService`
+
+```csharp
+Task<string?> PreviewFileAsync(string pathOrUrl, CancellationToken ct = default);
+Task<string?> PreviewAsync(Stream stream,  FileTypeInfo fileType, CancellationToken ct = default);
+Task<string?> PreviewAsync(byte[] bytes,   FileTypeInfo fileType, CancellationToken ct = default);
+```
+
+- `PreviewFileAsync` reads the file and infers `FileTypeInfo` from the extension via `FileTypeInfo.FromFilePath`. Throws if the extension maps to an unsupported type.
+- The stream/bytes overloads require an explicit `FileTypeInfo` since there's nothing to sniff.
+- All three return the served URL on success, or `null` if the input was empty.
+
+### Static convenience (`Preview`)
+
+```csharp
+static IPreviewService Default { get; }     // BrowserPreview built on first access (no DI, no XLSX)
+static Task<string?> FileAsync(string pathOrUrl, CancellationToken ct = default);
+static Task<string?> Async (Stream  stream, FileTypeInfo fileType, CancellationToken ct = default);
+static Task<string?> Async (byte[]  bytes,  FileTypeInfo fileType, CancellationToken ct = default);
+static void ResetDefault();                 // drops the cached instance (handy in tests)
+```
+
+## DI registration
+
+```csharp
+// Optional: needed for table rendering of XLSX (and to upgrade CSV from the built-in
+// minimal converter to the full Lyo.Csv path).
+services.AddCsvService();
+services.AddXlsxService();
+
+services.AddPreviewService();
+```
+
+`AddPreviewService` registers `IPreviewService` as a singleton constructed with `(ILogger<BrowserPreview>?, IServiceScopeFactory)`. The scope factory is used to resolve
+`ICsvService` / `IXlsxService` per call:
+
+- **CSV** — if `ICsvService` is registered, `ExportToHtmlTable(bytes)` is used. If not, `BrowserPreview` falls back to a built-in minimal CSV → `<table>` converter (
+  `ConvertCsvToHtml`) so CSV preview still works.
+- **XLSX** — `ExportToHtmlTable(bytes)` via `IXlsxService` is required. Without `IXlsxService`, `BrowserPreview` throws (`NotSupportedException` at validation time when used
+  through DI, or via `OperationHelpers.ThrowIf` if a scope factory is present but the service was not registered).
+
+The static `Preview.Default` constructs `new BrowserPreview()` with no scope factory, so CSV uses the fallback converter and XLSX throws.
 
 ## Usage
 
 ```csharp
-// File or URL – type from extension
+// File or URL — type from extension
 await preview.PreviewFileAsync("/path/to/image.png");
 await preview.PreviewFileAsync("https://example.com/doc.pdf");
 
-// Stream/bytes – caller must pass FileTypeInfo
+// Stream/bytes — caller must pass FileTypeInfo
 await preview.PreviewAsync(stream, FileTypeInfo.Pdf);
-await preview.PreviewAsync(bytes, FileTypeInfo.Png);
+await preview.PreviewAsync(bytes,  FileTypeInfo.Png);
 await preview.PreviewAsync(Encoding.UTF8.GetBytes("<h1>Hi</h1>"), FileTypeInfo.Html);
-```
 
-## Static
-
-```csharp
+// Static (no DI, no XLSX)
 await Preview.FileAsync("/path/to/file.pdf");
 await Preview.Async(bytes, FileTypeInfo.Png);
+Preview.ResetDefault();
 ```
+
+## How the server works
+
+`BrowserPreview` lazily starts a single `HttpListener` bound to `http://127.0.0.1:{free-port}/` on the first preview call (port chosen by binding a transient `TcpListener` to
+`IPAddress.Loopback, 0`). Each preview call:
+
+1. Encodes CSV/XLSX content to HTML if needed and tags it with the right `Content-Type` (`text/html; charset=utf-8` for tables, otherwise the `FileTypeInfo` MIME type).
+2. Increments `_requestId`, stores a `PendingContent(bytes, contentType)` under path `p/{id}`, and returns `http://127.0.0.1:{port}/p/{id}`.
+3. Calls `OpenBrowser(url)` — `ProcessStartInfo { UseShellExecute = true }` on Windows, `open` on macOS, `xdg-open` on Linux, with a `UseShellExecute = true` fallback if the
+   platform-specific command fails.
+4. The browser hits the URL, the request handler atomically `TryRemove`s the entry and writes the bytes — so each generated URL is single-use.
+
+Empty buffers log a warning and return `null` without contacting the listener.
 
 ## Dependencies
 

@@ -259,11 +259,16 @@ services.AddLyoMetrics((serviceProvider, options) =>
     options.SamplingRate = config.GetValue<double>("Metrics:SamplingRate");
 });
 
-// From configuration file (binds to "MetricsOptions" section by default)
-services.AddLyoMetricsViaConfiguration();
+// From configuration (binds to "MetricsOptions" section by default,
+// validating on start via Options.ValidateOnStart())
+services.AddLyoMetricsFromConfiguration(configuration);
 // Or custom section name:
-services.AddLyoMetricsViaConfiguration("MyMetrics");
+services.AddLyoMetricsFromConfiguration(configuration, configSectionName: "MyMetrics");
 ```
+
+The `IServiceCollection` registrations live in `Lyo.Metrics.Extensions` and cover: parameterless, `Action<MetricsOptions>`, `Action<IServiceProvider, MetricsOptions>`,
+`Func<IServiceProvider, MetricsOptions>`, and `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = "MetricsOptions")`. `AddNullMetrics()` registers
+`NullMetrics` for the same `IMetrics` contract.
 
 ## Implementations
 
@@ -329,17 +334,20 @@ See [Lyo.Metrics.OpenTelemetry README](../Lyo.Metrics.OpenTelemetry/README.md) f
 
 ### NullMetrics
 
-No-op implementation for testing or when metrics are optional.
+No-op implementation for testing or when metrics are optional. The class is a singleton (`NullMetrics.Instance`) with a private constructor; use the DI extension or
+the static instance directly.
 
 ```csharp
 services.AddNullMetrics();
+// or
+IMetrics metrics = NullMetrics.Instance;
 ```
 
 **Features:**
 
 - Zero overhead
 - No exceptions
-- Perfect for testing
+- `StartTimer` returns `default(MetricsTimer)` — disposal is a no-op, so `using (metrics.StartTimer(...))` allocates nothing
 
 **Use when:**
 
@@ -419,6 +427,38 @@ Console.WriteLine($"Histograms: {snapshot.Histograms.Count}");
 
 // Serialize to JSON
 var json = JsonSerializer.Serialize(snapshot);
+```
+
+## Statistics on histograms (`MathExtensions`)
+
+`Lyo.Metrics.MathExtensions` bridges recorded histogram values into [`Lyo.Mathematics.Functions`](../../Mathematics/Lyo.Mathematics.Functions/README.md)
+(`StatisticsFunctions`). The extensions hang off both `HistogramData?` (so they work on cached snapshots) and `MetricsService` (so they look up the histogram by name + tags), and
+return `null` / empty arrays for missing or empty histograms instead of throwing.
+
+```csharp
+// On a HistogramData? (e.g. from snapshot.Histograms.Values or MetricsService.GetHistogram(...))
+HistogramData? h = metrics.GetHistogram("latency.ms");
+var stats        = h.Describe(sample: true);              // DescriptiveStatisticsResult?
+var quartiles    = h.Quartiles();                         // QuartilesResult?
+var iqr          = h.InterquartileRange();
+var p95          = h.Percentile(0.95);
+var sma          = h.MovingAverage(windowSize: 30);
+var ema          = h.ExponentialMovingAverage(smoothingFactor: 0.2);
+var rollingStd   = h.RollingStandardDeviation(windowSize: 30);
+var rollingMed   = h.RollingMedian(windowSize: 30);
+var mad          = h.MedianAbsoluteDeviation();
+var z            = h.LatestZScore();
+var anomalousZ   = h.IsLatestValueAnomalous(threshold: 3d);
+var anomalousMad = h.IsLatestValueAnomalousByMad(threshold: 3.5d);
+var ci95         = h.MeanConfidenceInterval(confidenceLevel: 0.95);
+var pearson      = h.PearsonCorrelation(other);           // null if either is empty
+
+// Tag-aware lookups directly on MetricsService
+var p99   = metrics.GetHistogramPercentile("latency.ms", percentile: 0.99,
+                                           tags: new[] { ("endpoint", "/api/users") });
+var pcts  = snapshot.GetHistogramPercentiles("latency.ms", 0.5, 0.9, 0.99);
+var pearr = metrics.GetHistogramPearsonCorrelation(
+                "service_a.latency", "service_b.latency");
 ```
 
 ## Best Practices
@@ -521,11 +561,6 @@ Parallel.ForEach(items, item =>
 - **Tag Cardinality**: Limit the number of unique tag combinations
 - **Histogram Size**: Configure `MaxHistogramValues` appropriately
 - **Event Queue**: Limit `MaxEventQueueSize` based on memory constraints
-
-## Production Readiness
-
-See [PRODUCTION_READINESS.md](../PRODUCTION_READINESS.md) for detailed production readiness assessment, known
-limitations, and deployment recommendations.
 
 ## Examples
 

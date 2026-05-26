@@ -11,7 +11,6 @@ using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
@@ -66,6 +65,50 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
     }
 
+    /// <summary>Releases the S3 client when this service constructed it; otherwise same as <see cref="Dispose()" />.</summary>
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cap = Math.Min(maxKeys, 10_000);
+        ct.ThrowIfCancellationRequested();
+        var list = new List<string>();
+        var s3Prefix = BuildDiagnosticsCombinedPrefix(prefix);
+        string? token = null;
+        ListObjectsV2Response resp;
+        do {
+            var remaining = cap - list.Count;
+            var pageSize = remaining > 1000 ? 1000 : remaining;
+            if (pageSize <= 0)
+                break;
+
+            resp = await _s3Client.ListObjectsV2Async(
+                    new() {
+                        BucketName = _options.BucketName,
+                        Prefix = s3Prefix,
+                        MaxKeys = pageSize,
+                        ContinuationToken = token
+                    }, ct)
+                .ConfigureAwait(false);
+
+            foreach (var o in resp.S3Objects) {
+                list.Add(o.Key);
+                if (list.Count >= cap)
+                    return list;
+            }
+
+            token = resp.NextContinuationToken;
+        } while (resp.IsTruncated == true);
+
+        return list;
+    }
+
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
@@ -90,12 +133,10 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         ArgumentNullException.ThrowIfNull(request);
         var normalized = NormalizePathPrefix(request.PathPrefix) ?? "";
         var fileId = Guid.NewGuid();
-
         await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
         var storageKey = GetObjectKey(fileId, "", normalized);
         var expiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         ArgumentHelpers.ThrowIfNotInRange(expiry, TimeSpan.Zero, TimeSpan.FromDays(7));
-
         try {
             var presign = new GetPreSignedUrlRequest {
                 BucketName = _options.BucketName,
@@ -124,8 +165,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.DirectUploadFailed, DateTime.UtcNow, fileId, ResolveTenantId(request.TenantId), OperationContextAccessor.Current?.ActorId, null, null,
-                        FileAuditOutcome.Failure, ex.Message),
-                    ct)
+                        FileAuditOutcome.Failure, ex.Message), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -138,7 +178,6 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         var meta = await GetMetadataAsync(sourceFileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot copy file {sourceFileId}; it is awaiting direct-upload finalize.");
-
         var srcKey = await FindObjectKeyAsync(sourceFileId, meta.PathPrefix, ct).ConfigureAwait(false);
         if (srcKey == null)
             throw new FileNotFoundException($"Source object not found for id {sourceFileId}.");
@@ -147,7 +186,6 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         var destPrefix = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
         var destKey = GetObjectKey(destId, suffix, destPrefix);
-
         var copyCompleted = false;
         try {
             var copy = new CopyObjectRequest {
@@ -177,46 +215,11 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.Copy, DateTime.UtcNow, destId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
-                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, FileStorageServiceBase.SanitizeAuditError(ex.Message), CorrelationId: sourceFileId),
-                    ct)
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), sourceFileId), ct)
                 .ConfigureAwait(false);
 
             throw;
         }
-    }
-
-    /// <inheritdoc />
-    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
-        var cap = Math.Min(maxKeys, 10_000);
-        ct.ThrowIfCancellationRequested();
-
-        var list = new List<string>();
-        var s3Prefix = BuildDiagnosticsCombinedPrefix(prefix);
-        string? token = null;
-        ListObjectsV2Response resp;
-        do {
-            var remaining = cap - list.Count;
-            var pageSize = remaining > 1000 ? 1000 : remaining;
-            if (pageSize <= 0)
-                break;
-
-            resp = await _s3Client.ListObjectsV2Async(
-                    new ListObjectsV2Request { BucketName = _options.BucketName, Prefix = s3Prefix, MaxKeys = pageSize, ContinuationToken = token },
-                    ct)
-                .ConfigureAwait(false);
-
-            foreach (var o in resp.S3Objects) {
-                list.Add(o.Key);
-                if (list.Count >= cap)
-                    return list;
-            }
-
-            token = resp.NextContinuationToken;
-        } while (resp.IsTruncated == true);
-
-        return list;
     }
 
     protected override async Task<long> GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
@@ -275,12 +278,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         // Header is bounded (a few KiB even for max key-id/version + wrapped DEK), so a small range GET is enough — no need to download the entire ciphertext.
         const int rangeBytes = 8 * 1024;
         var objectKey = GetObjectKey(fileId, extension, pathPrefix);
-        var getRequest = new GetObjectRequest {
-            BucketName = _options.BucketName,
-            Key = objectKey,
-            ByteRange = new(0, rangeBytes - 1)
-        };
-
+        var getRequest = new GetObjectRequest { BucketName = _options.BucketName, Key = objectKey, ByteRange = new(0, rangeBytes - 1) };
         using var response = await _s3Client.GetObjectAsync(getRequest, ct).ConfigureAwait(false);
         using var bufferStream = new MemoryStream();
         await response.ResponseStream.CopyToAsync(bufferStream, ct).ConfigureAwait(false);
@@ -300,10 +298,12 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         try {
             var getRequest = new GetObjectRequest { BucketName = _options.BucketName, Key = objectKey };
             long objectLength;
-            await using (var spool = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose)) {
-                using (var getResponse = await _s3Client.GetObjectAsync(getRequest, ct).ConfigureAwait(false))
-                await using (var responseStream = getResponse.ResponseStream)
-                    await responseStream.CopyToAsync(spool, 81920, ct).ConfigureAwait(false);
+            await using (var spool = new FileStream(
+                spoolPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose)) {
+                using (var getResponse = await _s3Client.GetObjectAsync(getRequest, ct).ConfigureAwait(false)) {
+                    await using (var responseStream = getResponse.ResponseStream)
+                        await responseStream.CopyToAsync(spool, 81920, ct).ConfigureAwait(false);
+                }
 
                 await spool.FlushAsync(ct).ConfigureAwait(false);
                 objectLength = spool.Length;
@@ -313,10 +313,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
                 spool.Position = 0;
                 var oldHeader = EncryptionHeader.Read(spool);
                 var oldHeaderSize = (int)spool.Position;
-
                 var updatedHeader = oldHeader.With(targetKeyId, targetKeyVersion, newEncryptedDek);
                 var newHeaderBytes = SerializeHeaderToArray(updatedHeader);
-
                 if (newHeaderBytes.Length == oldHeaderSize) {
                     // Same-size header rewrite — patch in place.
                     spool.Position = 0;
@@ -327,7 +325,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
                 else {
                     // Header size changed — restage to a sibling temp file so we can swap atomically.
                     var staged = Path.Combine(Path.GetTempPath(), $"lyo-fs-s3-hdr-{fileId:N}-staged.tmp");
-                    await using (var stagedStream = new FileStream(staged, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose)) {
+                    await using (var stagedStream = new FileStream(
+                        staged, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose)) {
                         await stagedStream.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
                         spool.Position = oldHeaderSize;
                         await spool.CopyToAsync(stagedStream, 81920, ct).ConfigureAwait(false);
@@ -405,13 +404,6 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         base.Dispose();
     }
 
-    /// <summary>Releases the S3 client when this service constructed it; otherwise same as <see cref="Dispose()"/>.</summary>
-    public ValueTask DisposeAsync()
-    {
-        Dispose();
-        return ValueTask.CompletedTask;
-    }
-
     protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
         var objectKey = GetObjectKey(fileId, extension, pathPrefix);
@@ -420,8 +412,8 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
 
     /// <summary>
     /// Finalizes a multipart staging object in-place using S3 server-side <c>CopyObject</c> instead of round-tripping the bytes back through the client. Hash and (optional) scan
-    /// still require one download of the staging object into a local temp file; the upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is replaced
-    /// by an in-bucket copy. Only supports the no-compress/no-encrypt finalize path; callers must use the streaming pipeline when transforms are required.
+    /// still require one download of the staging object into a local temp file; the upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is replaced by
+    /// an in-bucket copy. Only supports the no-compress/no-encrypt finalize path; callers must use the streaming pipeline when transforms are required.
     /// </summary>
     internal async Task<FileStoreResult> FinalizeMultipartFromStagingAsync(
         string stagingKey,
@@ -441,12 +433,15 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         byte[] computedHash;
         try {
             await using (var spool = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)) {
-                using (var getResponse = await _s3Client.GetObjectAsync(new GetObjectRequest { BucketName = _options.BucketName, Key = stagingKey }, ct).ConfigureAwait(false))
-                await using (var responseStream = getResponse.ResponseStream)
-                using (var hasher = hashAlg.Create())
-                using (var hashing = new HashingStream(spool, hasher)) {
-                    await responseStream.CopyToAsync(hashing, 81920, ct).ConfigureAwait(false);
-                    computedHash = hashing.GetHash();
+                using (var getResponse = await _s3Client.GetObjectAsync(new() { BucketName = _options.BucketName, Key = stagingKey }, ct).ConfigureAwait(false)) {
+                    await using (var responseStream = getResponse.ResponseStream) {
+                        using (var hasher = hashAlg.Create()) {
+                            await using (var hashing = new HashingStream(spool, hasher)) {
+                                await responseStream.CopyToAsync(hashing, 81920, ct).ConfigureAwait(false);
+                                computedHash = hashing.GetHash();
+                            }
+                        }
+                    }
                 }
 
                 await spool.FlushAsync(ct).ConfigureAwait(false);
@@ -463,15 +458,13 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
 
             S3UploadServerSideEncryption.ApplyToCopyDestination(copyRequest, _options);
             await _s3Client.CopyObjectAsync(copyRequest, ct).ConfigureAwait(false);
-
             try {
                 var sourceFileName = originalFileName ?? targetFileId.ToString();
                 var resolvedContentType = string.IsNullOrWhiteSpace(contentType) ? FileTypeInfo.Unknown.MimeType : contentType;
                 var metadata = new FileStoreResult(
-                    targetFileId, originalFileName ?? sourceFileName, observedLength, computedHash, sourceFileName, observedLength, computedHash,
-                    false, null, null, null,
-                    false, null, null, null, null, null, null, null, null, DateTime.UtcNow, normalizedPathPrefix, hashAlg, resolvedContentType, tenantId,
-                    availabilityOverride ?? Options.DefaultAvailability, null);
+                    targetFileId, originalFileName ?? sourceFileName, observedLength, computedHash, sourceFileName, observedLength, computedHash, false, null, null, null, false,
+                    null, null, null, null, null, null, null, null, DateTime.UtcNow, normalizedPathPrefix, hashAlg, resolvedContentType, tenantId,
+                    availabilityOverride ?? Options.DefaultAvailability);
 
                 await MetadataService.SaveMetadataAsync(targetFileId, metadata, ct).ConfigureAwait(false);
                 RaiseFileSaved(targetFileId, FileStoreSnapshot.From(metadata), observedLength, observedLength, false, false);
@@ -480,7 +473,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             catch {
                 // Metadata save failed — roll back the destination object so the staging delete by the caller is the only side-effect.
                 try {
-                    await _s3Client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = _options.BucketName, Key = finalKey }, CancellationToken.None).ConfigureAwait(false);
+                    await _s3Client.DeleteObjectAsync(new() { BucketName = _options.BucketName, Key = finalKey }, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception cleanupEx) {
                     Logger.LogWarning(cleanupEx, "Failed to clean up destination key {Key} after metadata save failure", finalKey);
@@ -499,7 +492,6 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             }
         }
     }
-
 
     /// <inheritdoc />
     public override Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
@@ -534,11 +526,11 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
 
             var cd = urlResponseOptions?.ContentDisposition;
             var ctOverride = urlResponseOptions?.ContentType;
-            if (!string.IsNullOrWhiteSpace(cd) || !string.IsNullOrWhiteSpace(ctOverride))
-                request.ResponseHeaderOverrides = new ResponseHeaderOverrides {
-                    ContentDisposition = string.IsNullOrWhiteSpace(cd) ? null : cd,
-                    ContentType = string.IsNullOrWhiteSpace(ctOverride) ? null : ctOverride
+            if (!string.IsNullOrWhiteSpace(cd) || !string.IsNullOrWhiteSpace(ctOverride)) {
+                request.ResponseHeaderOverrides = new() {
+                    ContentDisposition = string.IsNullOrWhiteSpace(cd) ? null : cd, ContentType = string.IsNullOrWhiteSpace(ctOverride) ? null : ctOverride
                 };
+            }
 
             // GetPreSignedURL is synchronous, but the method is async to support cancellation token
             var url = await _s3Client.GetPreSignedURLAsync(request).ConfigureAwait(false);
@@ -567,8 +559,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
         }
     }
 
-    private string GetObjectKey(Guid fileId, string extension = "", string? pathPrefix = null)
-        => CloudObjectKeyBuilder.Build(fileId, extension, pathPrefix, _options.KeyPrefix);
+    private string GetObjectKey(Guid fileId, string extension = "", string? pathPrefix = null) => CloudObjectKeyBuilder.Build(fileId, extension, pathPrefix, _options.KeyPrefix);
 
     private async Task<string?> FindObjectKeyAsync(Guid fileId, string? pathPrefix = null, CancellationToken ct = default)
     {
@@ -639,9 +630,7 @@ public class S3FileStorageService : FileStorageServiceBase, IFileStorageDiagnost
             await _s3Client.GetObjectMetadataAsync(request, ct).ConfigureAwait(false);
             return true;
         }
-        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound ||
-            string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase))
-        {
+        catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound || string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase)) {
             return false;
         }
         catch (AmazonS3Exception ex) {

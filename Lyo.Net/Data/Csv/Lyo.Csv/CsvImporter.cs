@@ -467,7 +467,8 @@ internal sealed class CsvImporter : ICsvImporter
         OperationHelpers.ThrowIfNotReadable(csvStream, $"Stream '{nameof(csvStream)}' must be readable.");
         csvStream.MoveToStart();
         var stats = new CsvStatistics {
-            DetectedEncoding = Config.Encoding, DetectedDelimiter = !string.IsNullOrEmpty(Config.Delimiter) && Config.Delimiter.Length > 0 ? Config.Delimiter[0] : null,
+            DetectedEncoding = Config.Encoding,
+            DetectedDelimiter = !string.IsNullOrEmpty(Config.Delimiter) && Config.Delimiter.Length > 0 ? Config.Delimiter[0] : null,
             HasHeaderRow = Config.HasHeaderRecord
         };
 
@@ -567,7 +568,8 @@ internal sealed class CsvImporter : ICsvImporter
         return stats;
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvImporter.ProcessFileInChunksAsync``1(System.String,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvImporter.ProcessFileInChunksAsync``1(System.String,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task ProcessFileInChunksAsync<T>(
         string csvFilePath,
         int chunkSize,
@@ -582,7 +584,8 @@ internal sealed class CsvImporter : ICsvImporter
         await ProcessStreamInChunksAsync(stream, chunkSize, processChunk, options, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvImporter.ProcessStreamInChunksAsync``1(System.IO.Stream,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvImporter.ProcessStreamInChunksAsync``1(System.IO.Stream,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task ProcessStreamInChunksAsync<T>(
         Stream csvStream,
         int chunkSize,
@@ -691,7 +694,8 @@ internal sealed class CsvImporter : ICsvImporter
         return new(!errors.Any(), errors);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvImporter.ParseFileWithMappingAsync``1(System.String,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvImporter.ParseFileWithMappingAsync``1(System.String,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseFileWithMappingAsync<T>(string csvFilePath, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(csvFilePath);
@@ -701,7 +705,8 @@ internal sealed class CsvImporter : ICsvImporter
         return await ParseStreamWithMappingAsync<T>(stream, columnMappings, options, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvImporter.ParseStreamWithMappingAsync``1(System.IO.Stream,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvImporter.ParseStreamWithMappingAsync``1(System.IO.Stream,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public async Task<List<T>> ParseStreamWithMappingAsync<T>(Stream csvStream, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(csvStream);
@@ -762,7 +767,7 @@ internal sealed class CsvImporter : ICsvImporter
                     var finalValue = mapping.Transformer != null ? mapping.Transformer(value) : value;
                     if (prop.PropertyType.IsInstanceOfType(finalValue))
                         prop.SetValue(instance, finalValue);
-                    else{
+                    else {
                         try {
                             var converted = Convert.ChangeType(finalValue, prop.PropertyType);
                             prop.SetValue(instance, converted);

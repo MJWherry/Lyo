@@ -20,21 +20,35 @@ This package provides Entity Framework Core entities and DbContext for storing p
 
 ## Usage
 
-### Configuration
+### Registration
+
+Everything ships as extension methods on `IServiceCollection`; no people-domain service is registered — consumers resolve `PeopleDbContext` (scoped) or
+`IDbContextFactory<PeopleDbContext>` (singleton) and write their own repositories.
 
 ```csharp
-// From connection string
+// Connection string overload: registers IDbContextFactory<PeopleDbContext>
+// AND a scoped PeopleDbContext via factory.CreateDbContext()
 services.AddPeopleDbContext("Host=localhost;Database=lyo;Username=postgres;Password=...");
 
-// From configuration (PostgresPeople section)
-services.AddPeopleDbContextFactory(configuration);
+// DbContextOptionsBuilder overload: classic AddDbContext registration
+services.AddPeopleDbContext(opts => opts.UseNpgsql(connectionString));
 
-// With options
+// Options-action overload (registers IDbContextFactory<PeopleDbContext> only)
 services.AddPeopleDbContextFactory(opts => {
     opts.ConnectionString = "...";
     opts.EnableAutoMigrations = true;
 });
+
+// Pre-built options overload
+services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = "..." });
+
+// IConfiguration binding (defaults to the "PostgresPeople" section)
+services.AddPeopleDbContextFactoryFromConfiguration(configuration);
+services.AddPeopleDbContextFactoryFromConfiguration(configuration, configSectionName: "MyPeopleSection");
 ```
+
+The factory overloads also call `services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>()` from `Lyo.Postgres`, which honours
+`PostgresPeopleOptions.EnableAutoMigrations` and stamps the `__EFMigrationsHistory` table inside the `people` schema.
 
 ### Configuration section
 
@@ -46,6 +60,8 @@ services.AddPeopleDbContextFactory(opts => {
   }
 }
 ```
+
+The section name and schema are exposed as constants: `PostgresPeopleOptions.SectionName` (`"PostgresPeople"`) and `PostgresPeopleOptions.Schema` (`"people"`).
 
 ### Migrations
 

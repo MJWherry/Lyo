@@ -108,7 +108,6 @@ public class EntityRefTests
         Assert.Equal(@"a\:b:z", r.EntityId);
         var parts = EntityRefCompositeEncoding.SplitComposite(r.EntityId);
         Assert.Equal(new[] { "a:b", "z" }, parts);
-
         var joined = EntityRefCompositeEncoding.JoinComposite(parts.OrderBy(x => x, StringComparer.Ordinal).ToArray());
         Assert.Equal(r.EntityId, joined);
     }
@@ -144,8 +143,7 @@ public class EntityRefTests
     public void EntityRefTypeGuard_RejectsUnknown()
     {
         var allowed = new HashSet<string> { "A" };
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            EntityRefTypeGuard.EnsureKnown(EntityRef.ForKey("Z", "1"), allowed));
+        Assert.Throws<ArgumentOutOfRangeException>(() => EntityRefTypeGuard.EnsureKnown(EntityRef.ForKey("Z", "1"), allowed));
     }
 
     [EntityRefLogicalType("Stable.Order")]

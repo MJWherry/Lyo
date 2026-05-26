@@ -6,8 +6,8 @@ using Lyo.Exceptions;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>
-/// Buffered S3 write stream that spools to a temp file once it exceeds a memory threshold and uploads on <see cref="DisposeAsync" />. Sync <see cref="Dispose(bool)" /> will throw if
-/// unwritten data remains, because <c>PutObject</c> must run asynchronously. Use <c>await using</c> (or call <see cref="DisposeAsync" /> explicitly) to flush.
+/// Buffered S3 write stream that spools to a temp file once it exceeds a memory threshold and uploads on <see cref="DisposeAsync" />. Sync <see cref="Dispose(bool)" /> will
+/// throw if unwritten data remains, because <c>PutObject</c> must run asynchronously. Use <c>await using</c> (or call <see cref="DisposeAsync" /> explicitly) to flush.
 /// </summary>
 internal sealed class S3UploadStream : Stream
 {
@@ -72,9 +72,10 @@ internal sealed class S3UploadStream : Stream
 
         _disposed = true;
         if (disposing) {
-            if (!_uploaded && _innerStream.Length > 0)
+            if (!_uploaded && _innerStream.Length > 0) {
                 throw new InvalidOperationException(
                     $"{nameof(S3UploadStream)} requires async disposal to upload pending content. Call DisposeAsync (or use 'await using') instead of sync Dispose.");
+            }
 
             _innerStream.Dispose();
             CleanupSpoolFile();

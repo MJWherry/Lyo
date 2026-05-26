@@ -5,8 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Images.Ocr.Tesseract;
 
-/// <summary>Registers <see cref="TesseractOcrEngine"/> as <see cref="IOcrEngine"/>.</summary>
-/// <remarks>Not invoked by <c>Lyo.Images.Ocr.Tesseract.Tests</c>; tests use <c>TesseractOcrTestFixture</c> + manual engine constructors. Break here only when debugging host apps that call these extensions.</remarks>
+/// <summary>Registers <see cref="TesseractOcrEngine" /> as <see cref="IOcrEngine" />.</summary>
+/// <remarks>
+/// Not invoked by <c>Lyo.Images.Ocr.Tesseract.Tests</c>; tests use <c>TesseractOcrTestFixture</c> + manual engine constructors. Break here only when debugging host apps that
+/// call these extensions.
+/// </remarks>
 public static class TesseractOcrServiceCollectionExtensions
 {
     /// <param name="services">The service collection.</param>
@@ -41,7 +44,7 @@ public static class TesseractOcrServiceCollectionExtensions
             return services;
         }
 
-        /// <summary>Binds <see cref="OcrEngineOptions"/> and <see cref="TesseractOcrEngineOptions"/> from configuration (nested under <c>Tesseract</c>).</summary>
+        /// <summary>Binds <see cref="OcrEngineOptions" /> and <see cref="TesseractOcrEngineOptions" /> from configuration (nested under <c>Tesseract</c>).</summary>
         /// <remarks>
         /// Example:
         /// <code>

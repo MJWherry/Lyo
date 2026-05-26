@@ -1,6 +1,6 @@
 namespace Lyo.EntityReference.Models;
 
-/// <summary>Thrown when an <see cref="EntityRef"/> cannot be persisted under Option A (single <see cref="Guid"/> key).</summary>
+/// <summary>Thrown when an <see cref="EntityRef" /> cannot be persisted under Option A (single <see cref="Guid" /> key).</summary>
 public sealed class EntityRefPersistenceException : Exception
 {
     /// <summary>Creates an exception describing invalid persisted-ref input.</summary>

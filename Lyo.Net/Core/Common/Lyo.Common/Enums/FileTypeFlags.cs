@@ -253,7 +253,7 @@ public enum FileTypeFlags : long
     Audio = Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm,
     PackageManager = Nupkg | Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi,
 
-    All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Js | Graphql | Gql | UrlEncodedForm | Jpg | Jpeg | Png | Gif |
-        Bmp | Svg | Tif | Tiff | Webp | Zip | Rar | SevenZip | Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm | Nupkg |
-        Snupkg | Jar | War | Ear | Aar | Deb | Rpm | Msi
+    All = Pdf | Doc | Docx | Xls | Xlsx | Csv | Txt | Tex | Html | Htm | Json | Xml | Bin | Dump | Js | Graphql | Gql | UrlEncodedForm | Jpg | Jpeg | Png | Gif | Bmp | Svg | Tif |
+        Tiff | Webp | Zip | Rar | SevenZip | Tar | Gz | Bz2 | Xz | Enc | Gpg | Wav | Mp3 | Ogg | Flac | Aac | M4a | Opus | Pcm | Webm | Nupkg | Snupkg | Jar | War | Ear | Aar |
+        Deb | Rpm | Msi
 }

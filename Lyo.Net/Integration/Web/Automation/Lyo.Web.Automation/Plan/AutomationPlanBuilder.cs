@@ -108,9 +108,7 @@ public sealed class AutomationPlanBuilder
         return this;
     }
 
-    /// <summary>
-    /// Polls for a descendant of an existing element ref (see <see cref="FindDescendantAutomationStep" />). Locator <c>Value</c> may contain <c>{{var}}</c> placeholders.
-    /// </summary>
+    /// <summary>Polls for a descendant of an existing element ref (see <see cref="FindDescendantAutomationStep" />). Locator <c>Value</c> may contain <c>{{var}}</c> placeholders.</summary>
     public AutomationPlanBuilder FindDescendant(string parentRefName, string refName, ElementLocator locator, string? stepName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(parentRefName);

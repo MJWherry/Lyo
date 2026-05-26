@@ -9,7 +9,7 @@ public class QrPayloadTests
     [Fact]
     public void WifiQrPayload_Wpa2_escapes_special_chars()
     {
-        var p = new WifiQrPayload("a;b", "p\"d", QrWifiSecurityType.Wpa, hidden: true);
+        var p = new WifiQrPayload("a;b", "p\"d", QrWifiSecurityType.Wpa, true);
         Assert.Equal(@"WIFI:T:WPA;S:a\;b;P:p\""d;H:true;;", p.ToQrString());
     }
 
@@ -21,10 +21,7 @@ public class QrPayloadTests
     }
 
     [Fact]
-    public void WifiQrPayload_nopass_rejects_password()
-    {
-        Assert.Throws<InvalidFormatException>(() => new WifiQrPayload("Guest", "x", QrWifiSecurityType.Nopass).ToQrString());
-    }
+    public void WifiQrPayload_nopass_rejects_password() => Assert.Throws<InvalidFormatException>(() => new WifiQrPayload("Guest", "x", QrWifiSecurityType.Nopass).ToQrString());
 
     [Fact]
     public void WifiQrPayload_requires_password_for_wpa()
@@ -43,7 +40,7 @@ public class QrPayloadTests
     [Fact]
     public void WifiQrPayload_wpa_not_hidden_omits_H()
     {
-        var p = new WifiQrPayload("Net", "secret", QrWifiSecurityType.Wpa, hidden: false);
+        var p = new WifiQrPayload("Net", "secret", QrWifiSecurityType.Wpa, false);
         Assert.Equal("WIFI:T:WPA;S:Net;P:secret;;", p.ToQrString());
     }
 
@@ -58,20 +55,17 @@ public class QrPayloadTests
     [Fact]
     public void HttpUrlPayload_force_https()
     {
-        var p = new HttpUrlPayload("http://example.com/path?q=1", forceHttps: true);
+        var p = new HttpUrlPayload("http://example.com/path?q=1", true);
         Assert.Equal("https://example.com/path?q=1", p.ToQrString());
     }
 
     [Fact]
-    public void HttpUrlPayload_rejects_non_http()
-    {
-        Assert.Throws<InvalidFormatException>(() => new HttpUrlPayload("ftp://x").ToQrString());
-    }
+    public void HttpUrlPayload_rejects_non_http() => Assert.Throws<InvalidFormatException>(() => new HttpUrlPayload("ftp://x").ToQrString());
 
     [Fact]
     public void MailtoPayload_encodes_query()
     {
-        var p = new MailtoPayload("a@b.co", subject: "Hi & there", body: "Line1\nLine2");
+        var p = new MailtoPayload("a@b.co", "Hi & there", "Line1\nLine2");
         var s = p.ToQrString();
         Assert.StartsWith("mailto:", s);
         Assert.Contains("subject=", s);
@@ -96,21 +90,21 @@ public class QrPayloadTests
     [Fact]
     public void SmsPayload_smsto_scheme_opt_in()
     {
-        var p = new SmsPayload("+15551234567", "hi", useSmstoScheme: true);
+        var p = new SmsPayload("+15551234567", "hi", true);
         Assert.Equal("smsto:+15551234567?body=hi", p.ToQrString());
     }
 
     [Fact]
     public void GeoPayload_with_label()
     {
-        var p = new GeoPayload(37.78, -122.4, queryLabel: "SF & pier");
+        var p = new GeoPayload(37.78, -122.4, "SF & pier");
         Assert.Equal("geo:37.78,-122.4?q=SF%20%26%20pier", p.ToQrString());
     }
 
     [Fact]
     public void VCard3Payload_minimal()
     {
-        var p = new VCard3Payload("Jane Doe", telephone: "+1 555", email: "j@ex.com");
+        var p = new VCard3Payload("Jane Doe", "+1 555", "j@ex.com");
         var s = p.ToQrString();
         Assert.Contains("BEGIN:VCARD", s);
         Assert.Contains("VERSION:3.0", s);
@@ -130,7 +124,7 @@ public class QrPayloadTests
     [Fact]
     public void MeCardPayload_terminator()
     {
-        var p = new MeCardPayload("A", telephone: "1", email: "e@e");
+        var p = new MeCardPayload("A", "1", "e@e");
         Assert.Equal("MECARD:N:A;TEL:1;EMAIL:e@e;;", p.ToQrString());
     }
 
@@ -149,10 +143,7 @@ public class QrPayloadTests
     }
 
     [Fact]
-    public void TelegramUrlPayload_invalid()
-    {
-        Assert.Throws<InvalidFormatException>(() => new TelegramUrlPayload("1bad").ToQrString());
-    }
+    public void TelegramUrlPayload_invalid() => Assert.Throws<InvalidFormatException>(() => new TelegramUrlPayload("1bad").ToQrString());
 
     [Fact]
     public void SignalUrlPayload_requires_plus()
@@ -165,22 +156,14 @@ public class QrPayloadTests
     [Fact]
     public void QRCodeBuilder_WithPayload_sets_data()
     {
-        var (data, _) = QRCodeBuilder.New()
-            .WithPayload(new WifiQrPayload("x", "y", QrWifiSecurityType.Wpa))
-            .WithFormat(QRCodeFormat.Png)
-            .Build();
-
+        var (data, _) = QRCodeBuilder.New().WithPayload(new WifiQrPayload("x", "y", QrWifiSecurityType.Wpa)).WithFormat(QRCodeFormat.Png).Build();
         Assert.Equal("WIFI:T:WPA;S:x;P:y;;", data);
     }
 
     [Fact]
     public void QRCodeBuilder_WithPayload_after_with_data_last_wins()
     {
-        var (data, _) = QRCodeBuilder.New()
-            .WithData("first")
-            .WithPayload(new PlainTextQrPayload("second"))
-            .Build();
-
+        var (data, _) = QRCodeBuilder.New().WithData("first").WithPayload(new PlainTextQrPayload("second")).Build();
         Assert.Equal("second", data);
     }
 }

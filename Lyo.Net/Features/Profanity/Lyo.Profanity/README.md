@@ -6,9 +6,22 @@ strategies.
 ## Features
 
 - **Word sources** – JSON file, HTTP URL, or per-language `WordsByLanguage`
-- **Format support** – Structured JSON (`{ id, match, tags, severity, exceptions }`) or plain array `["word1", "word2"]`
-- **Replacement strategies** – Remove, ReplaceWithChar, ReplaceWithWord, Mask, PreserveBoundary, DetectOnly
+- **Format support** – Structured JSON (`[{ id, match, tags, severity, exceptions }]`), plain array `["word1", "word2"]`, or plain newline-separated text (one word per line)
+- **Replacement strategies** – `Remove`, `ReplaceWithChar`, `ReplaceWithWord`, `Mask`, `PreserveBoundary`, `DetectOnly`
 - **Per-language** – Load different word lists by BCP 47 / ISO 639-1 / ISO 639-3
+
+## DI registration
+
+`Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection` — pick exactly one when wiring up the host:
+
+| Entry point                                                                                                   | Behaviour                                                                                                                          |
+|---------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `services.AddProfanityFilterService()`                                                                        | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful for tests that just want the API surface. |
+| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)`                            | Same registration, with an inline options callback.                                                                                |
+| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | Same registration, binding options from the configuration section (default `"ProfanityFilter"`).                                   |
+
+`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an
+optional `HttpClient` (used when `WordsUrl` is configured).
 
 ## Usage
 
@@ -19,13 +32,23 @@ services.AddProfanityFilterService(options =>
     options.ReplacementStrategy = ProfanityReplacementStrategy.Mask;
 });
 
-// Or from configuration
-services.AddProfanityFilterService(configuration, "ProfanityFilter");
+// Or bind from configuration
+services.AddProfanityFilterServiceFromConfiguration(configuration, "ProfanityFilter");
 
 // In a service
 var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 // result.FilteredText, result.HasProfanity, result.Matches
 ```
+
+## `IProfanityFilterService` surface
+
+- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` — synchronous filtering; returns `ProfanityFilterResult`
+  (`FilteredText`, `HasProfanity`, `Matches`).
+- `FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` — same as above, async.
+- `ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` — fast boolean check, no replacement.
+- `ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` — async variants.
+- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` — reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source
+  doesn't support refresh.
 
 ## Configuration (appsettings.json)
 
@@ -36,6 +59,7 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
     "WordsUrl": "https://example.com/words.json",
     "ReplacementStrategy": "Mask",
     "Language": "en-US",
+    "AllowRefresh": true,
     "WordsByLanguage": {
       "en": { "WordsFilePath": "en.json" },
       "es": { "WordsFilePath": "es.json" }
@@ -46,8 +70,9 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 ## Word list formats
 
-- **Plain array**: `["word1", "word2"]` → default entries
-- **Structured**: `[{ "id": "x", "match": "regex|word", "tags": [], "severity": 1, "exceptions": [] }]`
+- **Plain JSON array** — `["word1", "word2"]` becomes default entries (`id == match == word`, `tags = []`, `severity = 1`, `exceptions = []`).
+- **Structured JSON** — `[{ "id": "x", "match": "regex|word", "tags": [], "severity": 1, "exceptions": [] }]`. `match` is compiled as a `Regex` and cached.
+- **Plain newline-separated text** — one word per line, same defaults as the plain JSON array.
 
 ## Replacement strategies
 

@@ -112,9 +112,9 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
 
         // Let PostgreSQL evaluate bytea equality so the database can use the hash index.
         var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(
-                e => e.OriginalFileHash == hash && e.DeletedAt == null &&
-                     (e.Availability == null || e.Availability != nameof(FileAvailability.PendingDirectUpload)), ct)
+                e => e.OriginalFileHash == hash && e.DeletedAt == null && (e.Availability == null || e.Availability != nameof(FileAvailability.PendingDirectUpload)), ct)
             .ConfigureAwait(false);
+
         if (entity == null) {
             _logger.LogDebug("No metadata found for hash");
             return null;

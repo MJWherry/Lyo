@@ -83,11 +83,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddCommentDbContextFactory(options);
-            services.AddSingleton<ICommentStore>(
-                sp => new PostgresCommentStore(
-                    sp.GetRequiredService<IDbContextFactory<CommentDbContext>>(),
-                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
-                    sp.GetServices<IEntityRefActionInterceptor>()));
+            services.AddSingleton<ICommentStore>(sp => new PostgresCommentStore(
+                sp.GetRequiredService<IDbContextFactory<CommentDbContext>>(), sp.GetRequiredService<IOptions<EntityRefOptions>>(), sp.GetServices<IEntityRefActionInterceptor>()));
+
             return services;
         }
     }

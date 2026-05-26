@@ -1,7 +1,31 @@
 # Lyo.Comment.Postgres
 
-PostgreSQL implementation of Lyo.Comment using Entity Framework Core. Persists comments to `comment.comment` table with migrations support. Comments have **For** (what the comment
-is about), **From** (who wrote it), optional **ReplyTo** (parent comment), and like/dislike counts.
+PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists
+comments to the `comment.comment` table and reactions to
+`comment.comment_reaction` (schema constant:
+`PostgresCommentOptions.Schema = "comment"`) with migrations support. Comments
+have **For** (what the comment is about), **From** (who wrote it), optional
+**ReplyToCommentId** (parent comment), and cached `LikeCount` / `DislikeCount`
+counters.
+
+`PostgresCommentStore` implements `ICommentStore` and `Lyo.Health.IHealth`
+(`HealthCheckName = "comment-postgres"`), so registering the store also wires
+up a liveness probe.
+
+## DI extensions
+
+Defined in `Extensions.cs` as `IServiceCollection` extensions:
+
+- `AddCommentDbContextFactory(Action<PostgresCommentOptions>)` /
+  `AddCommentDbContextFactory(PostgresCommentOptions)` — register only the
+  `IDbContextFactory<CommentDbContext>`.
+- `AddCommentDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)`
+  — same, bound from configuration (default section: `PostgresComment`).
+- `AddPostgresCommentStore(Action<PostgresCommentOptions>)` /
+  `AddPostgresCommentStore(PostgresCommentOptions)` — register the DbContext
+  factory **and** the `ICommentStore` singleton.
+- `AddPostgresCommentStoreFromConfiguration(IConfiguration, string sectionName = PostgresCommentOptions.SectionName)`
+  — register the store using configuration binding.
 
 ## Usage
 
@@ -23,6 +47,10 @@ Or with configuration:
 }
 ```
 
+```csharp
+services.AddPostgresCommentStoreFromConfiguration(configuration);
+```
+
 ## Migrations
 
 ```bash
@@ -32,52 +60,62 @@ dotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Po
 
 ## Features
 
-- **For/From entity refs** – Same dynamic entity structure as Rating and Note
-- **Reply threads** – `ReplyToCommentId` links to parent comment; `GetRepliesAsync(parentId)` fetches direct replies
-- **Reactions (like/dislike)** – Tracked per user via `comment_reaction` table; one reaction per user per comment. Use `AddReactionAsync`, `RemoveReactionAsync`, `GetReactionAsync`
-  with EntityRef for comment and reactor.
-- **IsEdited** – Set when content is updated
-- **Delete with replies** – `DeleteAsync(id, deleteReplies: true)` cascades to all nested replies and their reactions
+- **For/From entity refs** — same dynamic entity-ref structure used by Rating
+  and Note.
+- **Reply threads** — `ReplyToCommentId` points to the parent comment;
+  `GetRepliesAsync(parentId)` returns direct replies; `DeleteAsync(id,
+  deleteReplies: true)` walks the descendant tree and soft-deletes every
+  nested reply (plus their reactions).
+- **Reactions (like/dislike)** — tracked per user via the `comment_reaction`
+  table; exactly one reaction per user per comment. Flipping `Like` ↔ `Dislike`
+  mutates the existing row and adjusts the cached counters on the parent
+  comment.
+- **IsEdited** — automatically set to `true` by `SaveAsync` whenever an
+  existing row is updated.
 
 ## Example
 
 ```csharp
-// Top-level comment
 await commentStore.SaveAsync(new CommentRecord {
     ForEntityType = "Docket",
-    ForEntityId = docketId.ToString(),
+    ForEntityId = docketId,
     FromEntityType = "User",
-    FromEntityId = "123",
+    FromEntityId = userId,
     Content = "Great work on this case!"
 });
 
-// Reply
 await commentStore.SaveAsync(new CommentRecord {
     ForEntityType = "Docket",
-    ForEntityId = docketId.ToString(),
+    ForEntityId = docketId,
     FromEntityType = "User",
-    FromEntityId = "456",
+    FromEntityId = otherUserId,
     Content = "I agree!",
     ReplyToCommentId = parentCommentId
 });
 
-// Like a comment (uses EntityRef: comment ref + user ref)
 var commentRef = CommentRef.ForComment(commentId);
-var userRef = EntityRef.ForKey("User", "123");
-await commentStore.AddReactionAsync(commentRef, userRef, CommentReactionType.Like);
+var userRef = EntityRef.ForGuid("User", userId);
 
-// Check if user has reacted
+await commentStore.AddReactionAsync(commentRef, userRef, CommentReactionType.Like);
 var reaction = await commentStore.GetReactionAsync(commentRef, userRef);
-// Remove reaction
 await commentStore.RemoveReactionAsync(commentRef, userRef);
 ```
 
 ## Schema
 
-- **comment.comment** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `content`, `reply_to_comment_id`, `like_count`, `dislike_count`,
-  `is_edited`, `created_timestamp`, `updated_timestamp`
-- **comment.comment_reaction** – `id` (uuid), `for_entity_type`, `for_entity_id` (comment id), `from_entity_type`, `from_entity_id` (reactor), `reaction_type` (0=Like, 1=Dislike),
-  `created_timestamp`. Unique on (for_entity_type, for_entity_id, from_entity_type, from_entity_id)
+Schema name: `comment` (`PostgresCommentOptions.Schema`).
+
+- **comment.comment** — derived from `EntityRefRow`, so it includes
+  `id` (uuid), `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
+  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`,
+  `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
+  `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`,
+  `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`,
+  `is_edited`, and `updated_timestamp`.
+- **comment.comment_reaction** — `id` (uuid), `for_entity_type` (always
+  `"Comment"`), `for_entity_id` (the parent comment id), `from_entity_type`,
+  `from_entity_id` (uuid), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
+  `created_timestamp`.
 
 ## Dependencies
 

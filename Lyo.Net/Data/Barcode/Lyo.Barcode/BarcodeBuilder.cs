@@ -10,25 +10,25 @@ namespace Lyo.Barcode;
 public sealed class BarcodeBuilder
 {
     private int? _barHeightPixels;
+    private string? _borderColorHex;
+    private int? _borderWidthPixels;
     private string? _darkColor;
     private string? _data;
     private BarcodeFormat? _format;
+    private bool _hasBorderColorHex;
+    private bool _hasHumanReadableColorHex;
+    private bool _hasHumanReadableText;
+    private string? _humanReadableColorHex;
+    private int? _humanReadableFontSizePixels;
+    private int? _humanReadableMarginBottomPixels;
+    private int? _humanReadableMarginTopPixels;
+    private string? _humanReadableText;
     private string? _lightColor;
     private int? _moduleWidthPixels;
     private int? _quietZoneModules;
-    private BarcodeSymbology _symbology = BarcodeSymbology.Code128;
-    private bool? _showHumanReadableTextBelow;
-    private bool _hasHumanReadableText;
-    private string? _humanReadableText;
-    private int? _humanReadableFontSizePixels;
-    private int? _humanReadableMarginTopPixels;
-    private int? _humanReadableMarginBottomPixels;
-    private bool _hasHumanReadableColorHex;
-    private string? _humanReadableColorHex;
     private bool? _showBorder;
-    private int? _borderWidthPixels;
-    private bool _hasBorderColorHex;
-    private string? _borderColorHex;
+    private bool? _showHumanReadableTextBelow;
+    private BarcodeSymbology _symbology = BarcodeSymbology.Code128;
 
     /// <summary>Sets the payload string to encode.</summary>
     /// <returns>This builder for chaining.</returns>

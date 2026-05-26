@@ -1,106 +1,75 @@
 # Lyo.Common
 
-Common primitives and helpers shared across the Lyo library suite: result/error models, validation that returns results, extension methods, utility functions, enum/record metadata
-lookups, and JSON converters.
+Cross-cutting primitives shared across the Lyo library suite: ID generators, file/MIME/language/HTTP/file-size metadata, geometry, secure RNG, typed extension classes, and shared
+`System.Text.Json` options.
+
+> **Note** — earlier versions of this README also described `Ensure`, `Error`, `ErrorBuilder`, and `Result*` types. Those live in *
+*[`Lyo.Result`](../../Result/Lyo.Result/README.md)**, not here. `Lyo.Common` has **no** dependency on results — it sits below them and provides primitives that the rest of the
+> framework composes.
 
 ## Features
 
-- **Ensure** - Guard-style validators that return `Result`/`Result<T>` instead of throwing (`NotNull`, `NotEmpty`, `InRange`, `That`, etc.).
-- **Error and ErrorBuilder** - Structured error model with fluent construction APIs.
-- **Result models** - `Result`, `Result<T>`, `ResultVoid`, and `BulkResult<T>` for success/failure workflows.
-- **Result extensions** - Composition helpers such as combine, first-success selection, matching, and success/failure callbacks.
-- **Utility helpers** - Common routines like hashing, file size conversions, and expression-based property path extraction.
-- **CollectionExtensions** - Efficient collection/list/array helpers for null/empty checks and materialization/wrapping behavior.
-- **Typed extension classes** - Explicit `*Extensions` classes for stream/string/scalar/dictionary/enum/file metadata/language helpers.
-- **JSON converters** - `System.Text.Json` converters for package-specific serialization scenarios.
+- **ID generators** (`Identifiers/`) — `Ksuid`, `LyoGuid`, `NanoId`, `Snowflake`, `Ulid`, and `AutoIncrementIdGenerator` for thread-safe, sortable identifiers.
+- **Record metadata catalogs** (`Records/`) — `FileTypeInfo` (`.GetFileTypeFromExtension`, MIME mapping, two-key envelope suffix, common storage-resolution suffix list),
+  `FileSizeUnitInfo`, `HttpStatusCodeInfo`, `LanguageCodeInfo`, `ProgrammingLanguageInfo`, `BoundingBox2D`.
+- **Enum catalogs** (`Enums/`) — `FileTypeFlags`, `MimeType`, language and HTTP enums with metadata-attribute lookups.
+- **Typed extension classes** (`Extensions/`) — `StringExtensions` (truncate, ellipsis, case helpers), `ScalarExtensions` (`ToScalar<T>`, parsing helpers), `DictionaryExtensions` (
+  `GetValueAs<T>`), `StreamExtensions` (bounded reads, copy helpers), `EnumMetadataExtensions`, `LanguageExtensions`, `TypeInfoExtensions`.
+- **`CollectionExtensions`** — materialization helpers (`AsListOrToList`, `AsReadOnlyCollectionOrToList`) that avoid redundant copies when the source is already the right shape.
+- **`Utilities`** — small shared helpers (`SafeDispose`, file-size conversions, expression-based property-path extraction).
+- **Cryptographic random** (`Security/CryptographicRandom`) — `RandomNumberGenerator`-backed byte / int / string helpers, used by other Lyo packages instead of `System.Random` for
+  anything security-adjacent.
+- **`Disposable`** — convenience base / lambda disposable.
+- **`HashCodeHelpers`** — `HashCode.Combine`-style helpers for `netstandard2.0`.
+- **`LyoJsonSerializerOptions`** — shared `JsonSerializerOptions` (case-insensitive, ignore-null, enum-as-string) plus converters in `JsonConverters/` that other packages reuse.
 
 ## Quick Start
 
 ```csharp
-using Lyo.Common;
-using Lyo.Common.Builders;
-
-// Build a structured error object
-var error = ErrorBuilder.Create()
-    .WithCode("VALIDATION_ERROR")
-    .WithMessage("Invalid input")
-    .Build();
-
-// Result success/failure
-var ok = Result<string>.Success("value");
-var failed = Result<string>.Failure("Invalid request", "BAD_REQUEST");
-
-// Convert exceptions to Error/Result
-try {
-    throw new InvalidOperationException("Bad state");
-}
-catch (Exception ex) {
-    var asError = Error.FromException(ex);
-    var asResult = Result<string>.Failure(asError);
-}
-```
-
-```csharp
-using Lyo.Common;
-
-// Ensure returns Result instead of throwing
-var notNull = Ensure.NotNull(input, nameof(input));
-var inRange = Ensure.InRange(count, 1, 100, nameof(count));
-
-if (!notNull.IsSuccess) {
-    // work with error details from result
-}
-```
-
-```csharp
-using Lyo.Common;
-
-// String and scalar extensions
-var fallback = maybeNull.OrDefault("default");
-var compactId = id.Truncated(start: 6, end: 28);
-var parsed = "42".ToScalar<int>();
-
-// Dictionary conversion helper
-var payload = new Dictionary<string, object> { ["count"] = "3" };
-var count = payload.GetValueAs<int>("count");
-```
-
-```csharp
-using Lyo.Common;
+using Lyo.Common.Identifiers;
+using Lyo.Common.Records;
+using Lyo.Common.Extensions;
 using Lyo.Common.Enums;
 
-// File and MIME helpers
-var fileType = "report.pdf".GetFileTypeFromExtension();
-var mimeType = "photo.jpg".GetMimeTypeFromExtension();
-var mimeValue = mimeType.ToMimeString();
+// IDs
+string ksuid = Ksuid.NewId();          // sortable 27-char base62
+string nano  = NanoId.New(size: 21);   // url-safe random
+string ulid  = Ulid.NewUlid();
+Guid   guid  = LyoGuid.NewSequential();
 
-// Language and metadata lookups
-var language = "en".FromISO639_1();
-var statusInfo = 404.FromHttpStatusCode();
+// File metadata
+FileTypeInfo? type = "report.pdf".GetFileTypeFromExtension();
+MimeType?     mime = "photo.jpg".GetMimeTypeFromExtension();
+string?       mimeString = mime?.ToMimeString();
+
+// Strings / scalars
+string truncated = id.Truncated(start: 6, end: 28);
+int    parsed    = "42".ToScalar<int>();
+
+// JSON
+var options = LyoJsonSerializerOptions.Default;
 ```
 
-```csharp
-using Lyo.Common;
+## Identifier matrix
 
-// Collection helpers
-IEnumerable<int> numbers = GetNumbers();
-var list = numbers.AsListOrToList();
-var readOnly = numbers.AsReadOnlyCollectionOrToList();
-```
+| Generator                  | Sortable        | Length                      | Notes                                                   |
+|----------------------------|-----------------|-----------------------------|---------------------------------------------------------|
+| `Ksuid`                    | ✅ (time-prefix) | 27 chars (base62)           | Drop-in monotonic-ish id; good URL safety.              |
+| `LyoGuid`                  | ✅ (sequential)  | 36 chars (GUID)             | UUID v7-style for DB index locality.                    |
+| `NanoId`                   | ❌               | configurable (default 21)   | URL-safe random; collision rates documented per length. |
+| `Snowflake`                | ✅               | int64                       | Configurable worker + datacenter ids.                   |
+| `Ulid`                     | ✅               | 26 chars (Crockford base32) | ULID spec.                                              |
+| `AutoIncrementIdGenerator` | ✅               | int64                       | Pure in-process counter for tests / fixtures.           |
 
-## Main Areas
+## Records / metadata
 
-- **`Ensure`**: Validation API for result-driven flows.
-- **`Error` / `ErrorBuilder`**: Structured error payload construction and transport.
-- **`Result*` types**: Standardized operation contracts for success/failure.
-- **`CollectionExtensions`**: Materialization/wrapping helpers optimized to avoid unnecessary copies.
-- **Extension classes**: Organized by responsibility:
-    - stream and string helpers
-    - scalar and dictionary conversion helpers
-    - enum metadata helpers
-    - file/geographic/language/status lookup helpers
-- **`Utilities`**: Miscellaneous shared helper functions.
-- **JSON converters**: Serializer support types used by Lyo packages.
+`FileTypeInfo` is the canonical registry for Lyo file types: human-readable name, canonical extensions (e.g. `.ag`, `.chacha`, `.ag2k`), two-key envelope suffix (
+`TwoKeyEnvelopeSuffix = "2k"`), and `CommonStorageResolutionSuffixes` (used by `Lyo.FileStorage` to resolve persisted blobs when explicit metadata isn't present).
+
+## JSON
+
+`LyoJsonSerializerOptions` is the shared default `JsonSerializerOptions`. The converters under `JsonConverters/` (e.g. enum-as-string fallbacks, raw JSON pass-through) are
+pre-registered so other Lyo packages can reuse them without duplicating wiring.
 
 ## Dependencies
 

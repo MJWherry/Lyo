@@ -3,9 +3,9 @@ using Lyo.FileMetadataStore.Models;
 namespace Lyo.FileStorage.Models;
 
 /// <summary>
-/// Redacted projection of <see cref="FileStoreResult" /> safe to emit on public events.
-/// Excludes <see cref="FileStoreResult.EncryptedDataEncryptionKey" />, <see cref="FileStoreResult.KeyEncryptionKeySalt" />, and raw file hashes
-/// — fields an event subscriber typically should not see by default. Use <see cref="From" /> at the event-publication boundary.
+/// Redacted projection of <see cref="FileStoreResult" /> safe to emit on public events. Excludes <see cref="FileStoreResult.EncryptedDataEncryptionKey" />,
+/// <see cref="FileStoreResult.KeyEncryptionKeySalt" />, and raw file hashes — fields an event subscriber typically should not see by default. Use <see cref="From" /> at the
+/// event-publication boundary.
 /// </summary>
 /// <param name="Id">File identifier.</param>
 /// <param name="OriginalFileName">Filename supplied at save time.</param>
@@ -34,15 +34,6 @@ public sealed record FileStoreSnapshot(
     /// <summary>Builds a redacted snapshot from a full <see cref="FileStoreResult" />.</summary>
     public static FileStoreSnapshot From(FileStoreResult m)
         => new(
-            m.Id,
-            m.OriginalFileName ?? m.Id.ToString(),
-            m.OriginalFileSize,
-            m.SourceFileSize,
-            m.IsCompressed,
-            m.IsEncrypted,
-            m.ContentType,
-            m.TenantId,
-            m.Availability,
-            m.PathPrefix,
-            m.Timestamp);
+            m.Id, m.OriginalFileName ?? m.Id.ToString(), m.OriginalFileSize, m.SourceFileSize, m.IsCompressed, m.IsEncrypted, m.ContentType, m.TenantId, m.Availability,
+            m.PathPrefix, m.Timestamp);
 }

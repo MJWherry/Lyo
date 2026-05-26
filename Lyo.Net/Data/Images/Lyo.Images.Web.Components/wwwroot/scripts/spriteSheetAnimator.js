@@ -168,14 +168,22 @@ export function play(canvas) {
 }
 
 export function pause(canvas) {
-    const state = getState(canvas);
+    const state = states.get(canvas);
+    if (!state) {
+        return;
+    }
+
     state.isPlaying = false;
     cancelPlayback(state);
     render(state);
 }
 
 export function reset(canvas) {
-    const state = getState(canvas);
+    const state = states.get(canvas);
+    if (!state) {
+        return;
+    }
+
     state.isPlaying = false;
     state.currentFrame = 0;
     cancelPlayback(state);
@@ -183,7 +191,11 @@ export function reset(canvas) {
 }
 
 export function setFrame(canvas, frameIndex) {
-    const state = getState(canvas);
+    const state = states.get(canvas);
+    if (!state) {
+        return;
+    }
+
     if (state.frames.length === 0) {
         clearCanvas(state);
         return;
@@ -196,13 +208,17 @@ export function setFrame(canvas, frameIndex) {
 }
 
 export function setFps(canvas, fps) {
-    const state = getState(canvas);
+    const state = states.get(canvas);
+    if (!state) {
+        return;
+    }
+
     state.fps = Math.max(1, Math.min(60, fps ?? 12));
 }
 
 export function getCurrentFrame(canvas) {
-    const state = getState(canvas);
-    if (!state.frames || state.frames.length === 0) {
+    const state = states.get(canvas);
+    if (!state || !state.frames || state.frames.length === 0) {
         return 0;
     }
 
@@ -210,7 +226,11 @@ export function getCurrentFrame(canvas) {
 }
 
 export function dispose(canvas) {
-    const state = getState(canvas);
+    const state = states.get(canvas);
+    if (!state) {
+        return;
+    }
+
     state.isPlaying = false;
     cancelPlayback(state);
     states.delete(canvas);

@@ -59,10 +59,10 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         var actor = fromEntity ?? EntityRef.ForGuid(EntityRefWellKnown.SystemActorType, EntityRefWellKnown.SystemActorId);
         var fromEntityId = EntityRefPersistedGuid.RequirePersistedGuid(actor);
         var slugNormalized = NormalizeSlug(slug);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var exists = await context.Tags.WhereActive().WhereTenant(resolvedTenant).AnyAsync(
-                t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized, ct)
+        var exists = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
+            .AnyAsync(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized, ct)
             .ConfigureAwait(false);
 
         if (exists)
@@ -96,9 +96,9 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(null);
         var slugNormalized = NormalizeSlug(slug);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.WhereActive().WhereTenant(resolvedTenant)
+        var entities = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
             .Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId && t.Name == tag && t.TagType == tagType && t.Slug == slugNormalized)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -110,7 +110,6 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
             e.DeletedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
     }
@@ -121,7 +120,6 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(null);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId);
         if (!string.IsNullOrWhiteSpace(tagType))
@@ -136,7 +134,6 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         var resolvedTenant = ResolveTenant(null);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.Name == tag);
         if (!string.IsNullOrWhiteSpace(forEntityType))
@@ -154,7 +151,6 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var resolvedTenant = ResolveTenant(null);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(tagType))
@@ -169,9 +165,12 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(null);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Tags.WhereActive()
+            .WhereTenant(resolvedTenant)
+            .Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
@@ -180,7 +179,6 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
             e.DeletedAt = DateTime.UtcNow;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
     }

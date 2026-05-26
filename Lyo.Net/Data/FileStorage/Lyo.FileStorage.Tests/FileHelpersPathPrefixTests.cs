@@ -14,8 +14,7 @@ public sealed class FileHelpersPathPrefixTests
     [InlineData("   ", "")]
     [InlineData("/foo/bar/", "foo/bar")]
     [InlineData("\\foo\\bar\\", "foo\\bar")]
-    public void NormalizePathPrefix_StripsWhitespaceAndSlashes(string? input, string expected)
-        => Assert.Equal(expected, FileHelpers.NormalizePathPrefix(input));
+    public void NormalizePathPrefix_StripsWhitespaceAndSlashes(string? input, string expected) => Assert.Equal(expected, FileHelpers.NormalizePathPrefix(input));
 
     [Theory]
     [InlineData("foo/../bar")]
@@ -24,14 +23,10 @@ public sealed class FileHelpersPathPrefixTests
     [InlineData("a/..")]
     [InlineData("./../..")]
     [InlineData("ok//bad")]
-    public void ThrowIfPathPrefixTraversal_RejectsKnownPatterns(string input)
-        => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal(input));
+    public void ThrowIfPathPrefixTraversal_RejectsKnownPatterns(string input) => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal(input));
 
     [Fact]
-    public void ThrowIfPathPrefixTraversal_RejectsEmbeddedNull()
-    {
-        Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal("foo\0bar"));
-    }
+    public void ThrowIfPathPrefixTraversal_RejectsEmbeddedNull() => Assert.Throws<ArgumentException>(() => FileHelpers.ThrowIfPathPrefixTraversal("foo\0bar"));
 
     [Theory]
     [InlineData(null)]
@@ -40,10 +35,9 @@ public sealed class FileHelpersPathPrefixTests
     [InlineData("foo/bar/baz")]
     [InlineData("tenant_alpha/2024-05/uploads")]
     public void ThrowIfPathPrefixTraversal_AllowsLegitimateInputs(string? input)
-    {
-        // Helper is intentionally strict: any '..' substring is rejected (parity with FileStorageServiceBase.ValidatePathPrefix).
-        FileHelpers.ThrowIfPathPrefixTraversal(input);
-    }
+        =>
+            // Helper is intentionally strict: any '..' substring is rejected (parity with FileStorageServiceBase.ValidatePathPrefix).
+            FileHelpers.ThrowIfPathPrefixTraversal(input);
 
     [Fact]
     public void NormalizeAndValidatePathPrefix_AppliesBoth()

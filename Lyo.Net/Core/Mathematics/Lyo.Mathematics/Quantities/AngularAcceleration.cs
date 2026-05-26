@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Angular acceleration stored in radians per second squared.</summary>
 /// <remarks>May be signed; must be finite.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct AngularAcceleration
 {

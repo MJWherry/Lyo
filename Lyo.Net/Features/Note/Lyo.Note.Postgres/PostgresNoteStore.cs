@@ -16,6 +16,8 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
 
     private readonly IDbContextFactory<NoteDbContext> _contextFactory;
 
+    private Guid Tenant => ResolveTenant(null);
+
     public PostgresNoteStore(
         IDbContextFactory<NoteDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
@@ -25,8 +27,6 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
-
-    private Guid Tenant => ResolveTenant(null);
 
     /// <inheritdoc />
     public string HealthCheckName => "note-postgres";
@@ -103,7 +103,12 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.WhereActive().WhereTenant(Tenant).Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId).OrderBy(n => n.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Notes.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
+            .OrderBy(n => n.CreatedAt)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 
         return entities.Select(ToRecord).ToList();
     }
@@ -114,7 +119,12 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.WhereActive().WhereTenant(Tenant).Where(n => n.FromEntityType == fromEntity.EntityType && n.FromEntityId == fromId).OrderBy(n => n.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Notes.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(n => n.FromEntityType == fromEntity.EntityType && n.FromEntityId == fromId)
+            .OrderBy(n => n.CreatedAt)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 
         return entities.Select(ToRecord).ToList();
     }
@@ -151,7 +161,12 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.WhereActive().WhereTenant(Tenant).Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Notes.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         var utc = DateTime.UtcNow;
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
@@ -160,7 +175,6 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
             e.DeletedAt = utc;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var e in entities)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
     }

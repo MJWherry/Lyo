@@ -5,7 +5,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
-using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Compression;
 using Lyo.Encryption;
@@ -29,8 +28,8 @@ namespace Lyo.FileStorage.Blob;
 /// <summary><see cref="IFileStorageService" /> backed by Azure Blob Storage (package-level abstraction uses <c>Blob</c> naming).</summary>
 public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorageDiagnosticsService
 {
-    private readonly BlobContainerClient _containerClient;
     private readonly BlobFileStorageOptions _blobOptions;
+    private readonly BlobContainerClient _containerClient;
 
     public BlobFileStorageService(
         BlobFileStorageOptions options,
@@ -54,6 +53,23 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         Logger.LogInformation("Initialized blob file storage (Azure Blob) for container {Container}", options.ContainerName);
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerated)] = Constants.Metrics.FileStoragePreSignedUrlGenerated;
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
+    }
+
+    /// <inheritdoc />
+    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cap = Math.Min(maxKeys, 10_000);
+        var combined = DiagnosticsPrefix(FileHelpers.NormalizeAndValidatePathPrefix(prefix));
+        var list = new List<string>();
+        await foreach (var blob in _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, combined, ct).ConfigureAwait(false)) {
+            if (list.Count >= cap)
+                break;
+
+            list.Add(blob.Name);
+        }
+
+        return list;
     }
 
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
@@ -82,7 +98,6 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         var meta = await GetMetadataAsync(sourceFileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot copy file {sourceFileId}; it is awaiting direct-upload finalize.");
-
         var srcBlobName = await FindBlobNameAsync(sourceFileId, meta.PathPrefix, ct).ConfigureAwait(false);
         if (srcBlobName == null)
             throw new FileNotFoundException($"Source blob missing for id {sourceFileId}.");
@@ -91,7 +106,6 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         var destPrefixArg = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
         var destBlobName = GetBlobName(destId, suffix, destPrefixArg);
-
         var copyCompleted = false;
         try {
             var src = _containerClient.GetBlobClient(srcBlobName);
@@ -115,8 +129,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.Copy, DateTime.UtcNow, destId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
-                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, FileStorageServiceBase.SanitizeAuditError(ex.Message), CorrelationId: sourceFileId),
-                    ct)
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), sourceFileId), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -124,38 +137,18 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
     }
 
     /// <inheritdoc />
-    async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
-        var cap = Math.Min(maxKeys, 10_000);
-        var combined = DiagnosticsPrefix(FileHelpers.NormalizeAndValidatePathPrefix(prefix));
-        var list = new List<string>();
-
-        await foreach (var blob in _containerClient.GetBlobsAsync(BlobTraits.None, BlobStates.None, combined, ct).ConfigureAwait(false)) {
-            if (list.Count >= cap)
-                break;
-
-            list.Add(blob.Name);
-        }
-
-        return list;
-    }
-
-    /// <inheritdoc />
     public override async Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        OperationHelpers.ThrowIf(_blobOptions.UsesCustomerProvidedKey, "Direct upload presigned PUT is not compatible with SSE-C CustomerProvidedKey; remove it or disable direct uploads.");
+        OperationHelpers.ThrowIf(
+            _blobOptions.UsesCustomerProvidedKey, "Direct upload presigned PUT is not compatible with SSE-C CustomerProvidedKey; remove it or disable direct uploads.");
 
         var normalized = NormalizePathPrefix(request.PathPrefix) ?? "";
         var fileId = Guid.NewGuid();
-
         await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
-
         var blobName = GetBlobName(fileId, "", normalized);
         var expiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         ArgumentHelpers.ThrowIfNotInRange(expiry, TimeSpan.Zero, TimeSpan.FromDays(7));
-
         try {
             var blockBlob = _containerClient.GetBlockBlobClient(blobName);
             var sas = new BlobSasBuilder {
@@ -174,9 +167,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             // Parity with S3: surface required PUT headers so the client can set Content-Type / x-ms-blob-type at upload time.
             // Azure block blob PUT requires x-ms-blob-type: BlockBlob; the SAS does not sign Content-Type, but we still echo
             // the caller-requested content type so clients can apply x-ms-blob-content-type and have it persisted on the blob.
-            var requiredHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                ["x-ms-blob-type"] = "BlockBlob"
-            };
+            var requiredHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["x-ms-blob-type"] = "BlockBlob" };
             if (!string.IsNullOrWhiteSpace(request.ContentType)) {
                 var trimmed = request.ContentType.Trim();
                 requiredHeaders["x-ms-blob-content-type"] = trimmed;
@@ -198,8 +189,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.DirectUploadFailed, DateTime.UtcNow, fileId, ResolveTenantId(request.TenantId), OperationContextAccessor.Current?.ActorId, null, null,
-                        FileAuditOutcome.Failure, ex.Message),
-                    ct)
+                        FileAuditOutcome.Failure, ex.Message), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -226,8 +216,8 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
 
     /// <summary>
     /// Finalizes a multipart staging blob using Azure server-side <c>StartCopyFromUriAsync</c> instead of round-tripping the bytes back through the client. The local download is
-    /// still required for hash (and optional scan), but the upload step that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have performed is replaced by an
-    /// in-account copy. Only valid for no-compress/no-encrypt finalize paths.
+    /// still required for hash (and optional scan), but the upload step that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have performed is replaced by an in-account
+    /// copy. Only valid for no-compress/no-encrypt finalize paths.
     /// </summary>
     internal async Task<FileStoreResult> FinalizeMultipartFromStagingAsync(
         string stagingBlobName,
@@ -248,10 +238,11 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         try {
             var stagingClient = GetBlobClientWithEncryption(stagingBlobName);
             await using (var spool = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)) {
-                using (var hasher = hashAlg.Create())
-                using (var hashing = new HashingStream(spool, hasher)) {
-                    await stagingClient.DownloadToAsync(hashing, ct).ConfigureAwait(false);
-                    computedHash = hashing.GetHash();
+                using (var hasher = hashAlg.Create()) {
+                    using (var hashing = new HashingStream(spool, hasher)) {
+                        await stagingClient.DownloadToAsync(hashing, ct).ConfigureAwait(false);
+                        computedHash = hashing.GetHash();
+                    }
                 }
 
                 await spool.FlushAsync(ct).ConfigureAwait(false);
@@ -262,15 +253,13 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             var finalClient = GetBlobClientWithEncryption(finalBlobName);
             var copyOp = await finalClient.StartCopyFromUriAsync(stagingClient.Uri, cancellationToken: ct).ConfigureAwait(false);
             await copyOp.WaitForCompletionAsync(ct).ConfigureAwait(false);
-
             try {
                 var sourceFileName = originalFileName ?? targetFileId.ToString();
                 var resolvedContentType = string.IsNullOrWhiteSpace(contentType) ? FileTypeInfo.Unknown.MimeType : contentType;
                 var metadata = new FileStoreResult(
-                    targetFileId, originalFileName ?? sourceFileName, observedLength, computedHash, sourceFileName, observedLength, computedHash,
-                    false, null, null, null,
-                    false, null, null, null, null, null, null, null, null, DateTime.UtcNow, normalizedPathPrefix, hashAlg, resolvedContentType, tenantId,
-                    availabilityOverride ?? Options.DefaultAvailability, null);
+                    targetFileId, originalFileName ?? sourceFileName, observedLength, computedHash, sourceFileName, observedLength, computedHash, false, null, null, null, false,
+                    null, null, null, null, null, null, null, null, DateTime.UtcNow, normalizedPathPrefix, hashAlg, resolvedContentType, tenantId,
+                    availabilityOverride ?? Options.DefaultAvailability);
 
                 await MetadataService.SaveMetadataAsync(targetFileId, metadata, ct).ConfigureAwait(false);
                 RaiseFileSaved(targetFileId, FileStoreSnapshot.From(metadata), observedLength, observedLength, false, false);
@@ -380,7 +369,6 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         var oldHeaderSize = (int)spool.Position;
         var updatedHeader = oldHeader.With(targetKeyId, targetKeyVersion, newEncryptedDek);
         var newHeaderBytes = SerializeHeaderToArray(updatedHeader);
-
         if (newHeaderBytes.Length == oldHeaderSize) {
             spool.Position = 0;
             await spool.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
@@ -390,7 +378,9 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
         }
         else {
             var stagedPath = Path.Combine(Path.GetTempPath(), $"lyo-fs-blob-hdr-{fileId:N}-staged.tmp");
-            await using var staged = new FileStream(stagedPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose);
+            await using var staged = new FileStream(
+                stagedPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 81920, FileOptions.Asynchronous | FileOptions.DeleteOnClose);
+
             await staged.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
             spool.Position = oldHeaderSize;
             await spool.CopyToAsync(staged, 81920, ct).ConfigureAwait(false);
@@ -427,12 +417,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
     }
 
     /// <inheritdoc />
-    public override Task<string> GetPreSignedReadUrlAsync(
-        Guid fileId,
-        TimeSpan? expiration,
-        string? pathPrefix,
-        PreSignedReadUrlOptions? urlResponseOptions,
-        CancellationToken ct)
+    public override Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration, string? pathPrefix, PreSignedReadUrlOptions? urlResponseOptions, CancellationToken ct)
         => GeneratePresignedReadUrlCoreAsync(fileId, expiration ?? TimeSpan.FromHours(1), pathPrefix, urlResponseOptions, ct);
 
     private async Task<string> GeneratePresignedReadUrlCoreAsync(
@@ -474,8 +459,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.PresignedRead, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
-                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Success),
-                    ct)
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Success), ct)
                 .ConfigureAwait(false);
 
             return sasUri.ToString();
@@ -489,8 +473,7 @@ public sealed class BlobFileStorageService : FileStorageServiceBase, IFileStorag
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.PresignedRead, DateTime.UtcNow, fileId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
-                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, ex.Message),
-                    ct)
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, ex.Message), ct)
                 .ConfigureAwait(false);
 
             throw;

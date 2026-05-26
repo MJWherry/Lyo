@@ -5,16 +5,17 @@ namespace Lyo.Exceptions;
 internal enum StringOrMissingRule
 {
     NullOrEmpty,
-    NullOrWhitespace,
+    NullOrWhitespace
 }
 
 /// <summary>
-/// Fluent builder that picks the first non-missing candidate from a chain (nested null-coalescing style), then resolves with <see cref="OrDefault(string)" /> or an <c>OrThrow…</c> terminal.
+/// Fluent builder that picks the first non-missing candidate from a chain (nested null-coalescing style), then resolves with <see cref="OrDefault(string)" /> or an
+/// <c>OrThrow…</c> terminal.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <see cref="StringOrExtensions" /> overloads named <c>Or</c> treat <see cref="string.IsNullOrEmpty(string?)" /> as missing.
-/// Use <c>OrIfWhiteSpace</c> starters when <see cref="string.IsNullOrWhiteSpace(string?)" /> defines missing instead.
+/// <see cref="StringOrExtensions" /> overloads named <c>Or</c> treat <see cref="string.IsNullOrEmpty(string?)" /> as missing. Use <c>OrIfWhiteSpace</c> starters when
+/// <see cref="string.IsNullOrWhiteSpace(string?)" /> defines missing instead.
 /// </para>
 /// </remarks>
 public readonly struct StringOrChain
@@ -29,19 +30,13 @@ public readonly struct StringOrChain
         _value = value;
     }
 
-    private static bool IsMissing(StringOrMissingRule rule, string? s)
-        => rule == StringOrMissingRule.NullOrWhitespace ? string.IsNullOrWhiteSpace(s) : string.IsNullOrEmpty(s);
+    private static bool IsMissing(StringOrMissingRule rule, string? s) => rule == StringOrMissingRule.NullOrWhitespace ? string.IsNullOrWhiteSpace(s) : string.IsNullOrEmpty(s);
 
-    /// <summary>
-    /// If the current candidate is missing, replaces it with <paramref name="alternative" />; otherwise leaves the chain unchanged.
-    /// </summary>
+    /// <summary>If the current candidate is missing, replaces it with <paramref name="alternative" />; otherwise leaves the chain unchanged.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StringOrChain Or(string? alternative)
-        => IsMissing(_missing, _value) ? new(_missing, alternative) : this;
+    public StringOrChain Or(string? alternative) => IsMissing(_missing, _value) ? new(_missing, alternative) : this;
 
-    /// <summary>
-    /// If the current candidate is missing, invokes <paramref name="alternative" /> once and uses its result; otherwise leaves the chain unchanged.
-    /// </summary>
+    /// <summary>If the current candidate is missing, invokes <paramref name="alternative" /> once and uses its result; otherwise leaves the chain unchanged.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public StringOrChain Or(Func<string?> alternative)
     {
@@ -56,8 +51,7 @@ public readonly struct StringOrChain
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string OrDefault(string defaultValue = "")
     {
-        if (_missing == StringOrMissingRule.NullOrWhitespace)
-        {
+        if (_missing == StringOrMissingRule.NullOrWhitespace) {
             if (_value is string sw && !string.IsNullOrWhiteSpace(sw))
                 return sw;
 
@@ -70,50 +64,41 @@ public readonly struct StringOrChain
         return defaultValue;
     }
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrow(System.Func{System.Exception})"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrow(System.Func{System.Exception})" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrow(Func<Exception> createException)
-        => _value.OrThrow(createException);
+    public string OrThrow(Func<Exception> createException) => _value.OrThrow(createException);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrow(System.Func{System.String,System.Exception},System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrow(System.Func{System.String,System.Exception},System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrow(Func<string, Exception> createException, string? message = null)
-        => _value.OrThrow(createException, message);
+    public string OrThrow(Func<string, Exception> createException, string? message = null) => _value.OrThrow(createException, message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowIfWhiteSpace(System.Func{System.Exception})"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowIfWhiteSpace(System.Func{System.Exception})" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowIfWhiteSpace(Func<Exception> createException)
-        => _value.OrThrowIfWhiteSpace(createException);
+    public string OrThrowIfWhiteSpace(Func<Exception> createException) => _value.OrThrowIfWhiteSpace(createException);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowIfWhiteSpace(System.Func{System.String,System.Exception},System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowIfWhiteSpace(System.Func{System.String,System.Exception},System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowIfWhiteSpace(Func<string, Exception> createException, string? message = null)
-        => _value.OrThrowIfWhiteSpace(createException, message);
+    public string OrThrowIfWhiteSpace(Func<string, Exception> createException, string? message = null) => _value.OrThrowIfWhiteSpace(createException, message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperation(System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperation(System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowInvalidOperation(string? message = null)
-        => _value.OrThrowInvalidOperation(message);
+    public string OrThrowInvalidOperation(string? message = null) => _value.OrThrowInvalidOperation(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperationIfWhiteSpace(System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowInvalidOperationIfWhiteSpace(System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowInvalidOperationIfWhiteSpace(string? message = null)
-        => _value.OrThrowInvalidOperationIfWhiteSpace(message);
+    public string OrThrowInvalidOperationIfWhiteSpace(string? message = null) => _value.OrThrowInvalidOperationIfWhiteSpace(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowArgument(System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowArgument(System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowArgument(string? message = null)
-        => _value.OrThrowArgument(message);
+    public string OrThrowArgument(string? message = null) => _value.OrThrowArgument(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowKeyNotFound(System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowKeyNotFound(System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowKeyNotFound(string? message = null)
-        => _value.OrThrowKeyNotFound(message);
+    public string OrThrowKeyNotFound(string? message = null) => _value.OrThrowKeyNotFound(message);
 
-    /// <inheritdoc cref="OrThrowExtensions.OrThrowNotSupported(System.String)"/>
+    /// <inheritdoc cref="OrThrowExtensions.OrThrowNotSupported(System.String)" />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public string OrThrowNotSupported(string? message = null)
-        => _value.OrThrowNotSupported(message);
+    public string OrThrowNotSupported(string? message = null) => _value.OrThrowNotSupported(message);
 }
 
 /// <summary>Fluent entrypoints for building a <see cref="StringOrChain" />.</summary>
@@ -121,9 +106,7 @@ public static class StringOrExtensions
 {
     extension(string? first)
     {
-        /// <summary>
-        /// Starts a chain whose first resolved candidate is <paramref name="first" /> unless it is null or empty—in which case <paramref name="second" /> is tried.
-        /// </summary>
+        /// <summary>Starts a chain whose first resolved candidate is <paramref name="first" /> unless it is null or empty—in which case <paramref name="second" /> is tried.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringOrChain Or(string? second)
         {
@@ -131,9 +114,7 @@ public static class StringOrExtensions
             return new(StringOrMissingRule.NullOrEmpty, value);
         }
 
-        /// <summary>
-        /// Starts a chain whose first resolved candidate is <paramref name="first" /> unless it is null or whitespace—in which case <paramref name="second" /> is tried.
-        /// </summary>
+        /// <summary>Starts a chain whose first resolved candidate is <paramref name="first" /> unless it is null or whitespace—in which case <paramref name="second" /> is tried.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringOrChain OrIfWhiteSpace(string? second)
         {
@@ -142,7 +123,8 @@ public static class StringOrExtensions
         }
 
         /// <summary>
-        /// Starts a chain like <see cref="Or(System.String,System.String)" />, but when <paramref name="first" /> is missing the next candidate comes from invoking <paramref name="second" /> once.
+        /// Starts a chain like <see cref="Or(System.String,System.String)" />, but when <paramref name="first" /> is missing the next candidate comes from invoking
+        /// <paramref name="second" /> once.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringOrChain Or(Func<string?> second)
@@ -155,7 +137,8 @@ public static class StringOrExtensions
         }
 
         /// <summary>
-        /// Starts a chain like <see cref="OrIfWhiteSpace(System.String,System.String)" />, but when <paramref name="first" /> is missing the next candidate comes from invoking <paramref name="second" /> once.
+        /// Starts a chain like <see cref="OrIfWhiteSpace(System.String,System.String)" />, but when <paramref name="first" /> is missing the next candidate comes from invoking
+        /// <paramref name="second" /> once.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringOrChain OrIfWhiteSpace(Func<string?> second)

@@ -8,6 +8,9 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class SignalUrlPayload : IQrPayload
 {
+    /// <summary>Input phone (trimmed).</summary>
+    public string PhoneNumber { get; }
+
     /// <summary>Creates a Signal link from a phone number (normalized to E.164 with leading <c>+</c>).</summary>
     public SignalUrlPayload(string phoneNumber)
     {
@@ -15,18 +18,10 @@ public sealed class SignalUrlPayload : IQrPayload
         PhoneNumber = phoneNumber.Trim();
     }
 
-    /// <summary>Input phone (trimmed).</summary>
-    public string PhoneNumber { get; }
-
-    /// <inheritdoc />
-    public override string ToString()
-        => $"SignalUrlPayload {PhoneNumber}";
-
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(PhoneNumber), "Phone number cannot be empty.", nameof(PhoneNumber));
-
         var normalized = TelPayload.NormalizePhone(PhoneNumber);
         if (normalized.Length == 0)
             throw new InvalidFormatException("Phone number has no digits.", nameof(PhoneNumber), PhoneNumber, "+15551234567");
@@ -37,4 +32,7 @@ public sealed class SignalUrlPayload : IQrPayload
         // Fragment uses E.164 with literal + (digits and plus only).
         return "sgnl://signal.me/#p/" + normalized;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"SignalUrlPayload {PhoneNumber}";
 }

@@ -1,10 +1,11 @@
+using System.Security.Cryptography;
+using Lyo.Exceptions;
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 #endif
-using Lyo.Exceptions;
 
 namespace Lyo.Encryption.AesGcm;
 
@@ -46,7 +47,6 @@ public static class AesGcmHelper
 
         // ReSharper disable once RedundantAssignment
         tlen += cipher.DoFinal(outBuf, tlen);
-
         var ciphertext = new byte[plaintext.Length];
         var tag = new byte[TagSize];
         if (plaintext.Length > 0)
@@ -79,7 +79,7 @@ public static class AesGcmHelper
             return plaintext;
         }
         catch (InvalidCipherTextException ex) {
-            throw new System.Security.Cryptography.CryptographicException("AES-GCM authentication failed.", ex);
+            throw new CryptographicException("AES-GCM authentication failed.", ex);
         }
 #endif
     }

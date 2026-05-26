@@ -1,6 +1,7 @@
 # Lyo.Tts.AwsPolly
 
-[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.
+[Amazon Polly](https://docs.aws.amazon.com/polly/) integration: `AwsPollyTtsService` extends `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk
+synthesis, metrics, and DI helpers.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -35,22 +36,41 @@ Prefer **IAM roles**, environment credentials, or the shared credentials file in
 ```csharp
 using Lyo.Tts.AwsPolly;
 
-services.AddAmazonPollyFromConfiguration(configuration); // registers IAmazonPolly + AwsPollyOptions
+// Configuration-bound registration: registers IAmazonPolly + AwsPollyOptions if missing,
+// then registers AwsPollyTtsService, ITtsService<AwsPollyTtsRequest>, AwsPollyTtsAppService, ITtsService.
 services.AddAwsPollyTtsServiceFromConfiguration(configuration);
-// ITtsService<AwsPollyTtsRequest> and AwsPollyTtsService registered
+
+// Or with an inline configurator (also registers AwsPollyTtsAppService + ITtsService):
+services.AddAwsPollyTtsService(options =>
+{
+    options.Region = "us-east-1";
+    options.DefaultVoiceId = nameof(AwsPollyVoiceId.Joanna);
+});
+
+// AddAmazonPollyFromConfiguration is also exposed on its own for hosts that want to
+// register IAmazonPolly + AwsPollyOptions without the Lyo TTS surface.
+services.AddAmazonPollyFromConfiguration(configuration);
 ```
 
-For a minimal [`ITtsService`](../Lyo.Tts/README.md), register `AwsPollyTtsAppService` beside `AwsPollyTtsService` if your host only exposes the non-generic contract.
+`AddAwsPollyTtsService` and `AddAwsPollyTtsServiceFromConfiguration` both register:
+
+- `AwsPollyTtsService` (the singleton implementation, subclass of `TtsServiceBase<AwsPollyTtsRequest>`).
+- `ITtsService<AwsPollyTtsRequest>` resolved from the singleton above.
+- `AwsPollyTtsAppService` — a thin adapter that converts `TtsResult<AwsPollyTtsRequest>` into
+  `TtsSynthesisResult`.
+- `ITtsService` (non-generic) backed by `AwsPollyTtsAppService`, so callers that only need the simple
+  contract can resolve it directly without referencing the Polly-specific types.
 
 Example `appsettings.json` snippets appear in XML documentation on `AddAwsPollyTtsServiceFromConfiguration`.
 
 ## Behaviour notes
 
-| Area | Detail |
-|------|--------|
-| Voices | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values |
-| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language |
-| Metrics | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md)) |
+| Area     | Detail                                                                                                                                                                       |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Voices   | `AwsPollyVoiceId` maps to Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values                                                               |
+| Language | `LanguageCode` on `AwsPollyTtsRequest` is primarily for selection; a fixed `VoiceId` determines spoken language                                                              |
+| Metrics  | `Constants.Metrics` uses `tts.awspolly.*` keys (distinct from [`Lyo.Tts`](../Lyo.Tts/README.md))                                                                             |
+| Adapter  | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`, surfacing the first error message on failure and audio bytes on success |
 
 ## Dependencies
 
@@ -58,13 +78,13 @@ Example `appsettings.json` snippets appear in XML documentation on `AddAwsPollyT
 
 ### NuGet packages
 
-| Package | Version |
-|---------|---------|
-| `AWSSDK.Polly` | `[4.0,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options` | `[10,)` |
+| Package                                           | Version  |
+|---------------------------------------------------|----------|
+| `AWSSDK.Polly`                                    | `[4.0,)` |
+| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`  |
+| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`  |
+| `Microsoft.Extensions.Logging.Abstractions`       | `[10,)`  |
+| `Microsoft.Extensions.Options`                    | `[10,)`  |
 
 ### Project references
 

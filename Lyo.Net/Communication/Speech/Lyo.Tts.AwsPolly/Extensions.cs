@@ -115,6 +115,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ITtsService<AwsPollyTtsRequest>>(provider => provider.GetRequiredService<AwsPollyTtsService>());
+            services.AddSingleton<AwsPollyTtsAppService>(provider => new(provider.GetRequiredService<AwsPollyTtsService>()));
+            services.AddSingleton<ITtsService>(provider => provider.GetRequiredService<AwsPollyTtsAppService>());
             return services;
         }
 
@@ -141,6 +143,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ITtsService<AwsPollyTtsRequest>>(provider => provider.GetRequiredService<AwsPollyTtsService>());
+            services.AddSingleton<AwsPollyTtsAppService>(provider => new(provider.GetRequiredService<AwsPollyTtsService>()));
+            services.AddSingleton<ITtsService>(provider => provider.GetRequiredService<AwsPollyTtsAppService>());
             return services;
         }
     }

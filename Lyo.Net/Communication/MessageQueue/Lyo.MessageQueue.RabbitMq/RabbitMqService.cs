@@ -105,7 +105,7 @@ public sealed class RabbitMqService : IRabbitMqService
     {
         if (_disposed)
             return;
-        
+
         await _connectionLock.WaitAsync(ct).ConfigureAwait(false);
         try {
             await CancelAllConsumersAsync(ct).ConfigureAwait(false);

@@ -11,24 +11,21 @@ using static Lyo.Images.Ocr.OcrErrorCodes;
 
 namespace Lyo.Images.Ocr.Tesseract;
 
-/// <summary>Tesseract implementation of <see cref="IOcrEngine"/> (not thread-safe internally; serializes calls).</summary>
+/// <summary>Tesseract implementation of <see cref="IOcrEngine" /> (not thread-safe internally; serializes calls).</summary>
 public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
 {
     /// <summary>Ceiling on word iterator steps to avoid infinite native loops on pathological segmentation.</summary>
     internal const int MaxWordIteratorSteps = 200_000;
-    private readonly OcrEngineOptions _sharedOptions;
-    private readonly TesseractOcrEngineOptions _tesseractOptions;
+
+    private readonly ConcurrentDictionary<string, Lazy<TesseractEngine>> _engines = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly ILogger _logger;
     private readonly IMetrics _metrics;
-    private readonly SemaphoreSlim _gate = new(1, 1);
-    private readonly ConcurrentDictionary<string, Lazy<TesseractEngine>> _engines = new(StringComparer.Ordinal);
+    private readonly OcrEngineOptions _sharedOptions;
+    private readonly TesseractOcrEngineOptions _tesseractOptions;
     private bool _disposed;
 
-    public TesseractOcrEngine(
-        OcrEngineOptions sharedOptions,
-        TesseractOcrEngineOptions tesseractOptions,
-        ILogger<TesseractOcrEngine>? logger = null,
-        IMetrics? metrics = null)
+    public TesseractOcrEngine(OcrEngineOptions sharedOptions, TesseractOcrEngineOptions tesseractOptions, ILogger<TesseractOcrEngine>? logger = null, IMetrics? metrics = null)
     {
         ArgumentNullException.ThrowIfNull(sharedOptions);
         ArgumentNullException.ThrowIfNull(tesseractOptions);
@@ -36,6 +33,22 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
         _tesseractOptions = tesseractOptions;
         _logger = logger ?? NullLogger<TesseractOcrEngine>.Instance;
         _metrics = sharedOptions.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        _gate.Dispose();
+        foreach (var lazy in _engines.Values) {
+            if (lazy.IsValueCreated)
+                lazy.Value.Dispose();
+        }
+
+        _engines.Clear();
     }
 
     /// <inheritdoc />
@@ -54,7 +67,6 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
         var languages = string.IsNullOrWhiteSpace(request?.Languages) ? _sharedOptions.DefaultLanguages : request.Languages;
         var psm = request?.PageSegmentationMode ?? _sharedOptions.DefaultPageSegmentationMode;
         var minConf = request?.MinimumConfidencePercent;
-
         var sw = Stopwatch.StartNew();
         try {
             var result = ReadSync(bytes, languages, psm, minConf, cancellationToken);
@@ -86,7 +98,6 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
     private Result<OcrPageResult> ReadSync(byte[] bytes, string languages, OcrPageSegmentationMode psm, int? minConf, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
         _gate.Wait(cancellationToken);
         try {
             TesseractEngine engine;
@@ -95,10 +106,8 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
             }
             catch (Exception ex) when (TryUnwrapDllNotFound(ex, out var dllEx)) {
                 _logger.LogError(dllEx, "Native Leptonica/Tesseract library missing for languages {Languages}.", languages);
-                return Result<OcrPageResult>.Failure(new Error(
-                    $"{dllEx!.Message} See Lyo.Images.Ocr.Tesseract README (Linux Leptonica symlink).",
-                    NativeLibraryNotFound,
-                    exception: dllEx));
+                return Result<OcrPageResult>.Failure(
+                    new Error($"{dllEx!.Message} See Lyo.Images.Ocr.Tesseract README (Linux Leptonica symlink).", NativeLibraryNotFound, exception: dllEx));
             }
             catch (Exception ex) {
                 _logger.LogError(ex, "Failed to create Tesseract engine for languages {Languages}.", languages);
@@ -110,18 +119,13 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
             var imageHeight = pix.Height;
             using var page = engine.Process(pix, TesseractPageSegModeMapper.ToPageSegMode(psm));
             var fullText = page.GetText() ?? "";
-
             var words = new List<OcrWord>();
             using var iter = page.GetIterator();
             iter.Begin();
-
             var step = 0;
             do {
                 if (++step > MaxWordIteratorSteps) {
-                    _logger.LogWarning(
-                        "Stopped OCR word enumeration after {MaxSteps} iterations (languages {Languages}); FullText retained.",
-                        MaxWordIteratorSteps,
-                        languages);
+                    _logger.LogWarning("Stopped OCR word enumeration after {MaxSteps} iterations (languages {Languages}); FullText retained.", MaxWordIteratorSteps, languages);
                     break;
                 }
 
@@ -138,12 +142,12 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
                     continue;
 
                 var box = OcrCoordinateTransforms.FromTopLeftDownwardRect(rect.X1, rect.Y1, rect.Width, rect.Height, imageHeight);
-                words.Add(new OcrWord(text, box, confPercent));
+                words.Add(new(text, box, confPercent));
             } while (iter.Next(PageIteratorLevel.Word));
 
             var tolerance = ComputeLineTolerance(words);
             var lines = OcrLineGrouper.GroupIntoLines(words, tolerance);
-            return Result<OcrPageResult>.Success(new OcrPageResult(fullText.TrimEnd(), words, lines, imageWidth, imageHeight));
+            return Result<OcrPageResult>.Success(new(fullText.TrimEnd(), words, lines, imageWidth, imageHeight));
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Tesseract processing failed.");
@@ -160,10 +164,7 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
         if (!Directory.Exists(dataPath))
             throw new DirectoryNotFoundException($"Tessdata directory not found: {dataPath}");
 
-        var lazy = _engines.GetOrAdd(
-            languages,
-            lang => new(() => new TesseractEngine(dataPath, lang, EngineMode.Default), LazyThreadSafetyMode.ExecutionAndPublication));
-
+        var lazy = _engines.GetOrAdd(languages, lang => new(() => new(dataPath, lang, EngineMode.Default), LazyThreadSafetyMode.ExecutionAndPublication));
         return lazy.Value;
     }
 
@@ -180,21 +181,5 @@ public sealed class TesseractOcrEngine : IOcrEngine, IDisposable
 
         var maxH = words.Max(w => Math.Max(1, w.BoundingBoxPixels.Height));
         return Math.Max(8, maxH * 0.35);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        _gate.Dispose();
-        foreach (var lazy in _engines.Values) {
-            if (lazy.IsValueCreated)
-                lazy.Value.Dispose();
-        }
-
-        _engines.Clear();
     }
 }

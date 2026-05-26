@@ -5,8 +5,8 @@ namespace Lyo.EntityReference.Postgres.Database;
 
 /// <summary>EF entity base mapping the canonical association row (PostgreSQL).</summary>
 /// <remarks>
-/// Change-tracker and similar modules that keep arbitrary string keys (including composite ids) and optional actors
-/// should use <see cref="EntityRefOptionalFromStringAssociationBase"/> instead — they are not Option A uuid tenant rows.
+/// Change-tracker and similar modules that keep arbitrary string keys (including composite ids) and optional actors should use
+/// <see cref="EntityRefOptionalFromStringAssociationBase" /> instead — they are not Option A uuid tenant rows.
 /// </remarks>
 [DebuggerDisplay("{ForEntityType,nq}:{ForEntityId} | {FromEntityType,nq}:{FromEntityId} | Tenant={TenantId}")]
 public abstract class EntityRefEntityBase
@@ -17,13 +17,13 @@ public abstract class EntityRefEntityBase
     /// <summary>Type discriminator for the entity being referenced.</summary>
     public string ForEntityType { get; set; } = string.Empty;
 
-    /// <summary>Entity id for <see cref="ForEntityType"/> (PostgreSQL <c>uuid</c>).</summary>
+    /// <summary>Entity id for <see cref="ForEntityType" /> (PostgreSQL <c>uuid</c>).</summary>
     public Guid ForEntityId { get; set; }
 
     /// <summary>Type discriminator for the originating actor entity.</summary>
     public string FromEntityType { get; set; } = string.Empty;
 
-    /// <summary>Entity id for <see cref="FromEntityType"/> (PostgreSQL <c>uuid</c>).</summary>
+    /// <summary>Entity id for <see cref="FromEntityType" /> (PostgreSQL <c>uuid</c>).</summary>
     public Guid FromEntityId { get; set; }
 
     /// <summary>Tenant scope.</summary>
@@ -50,10 +50,10 @@ public abstract class EntityRefEntityBase
     /// <summary>JSON metadata (<c>jsonb</c>).</summary>
     public string? MetadataJson { get; set; }
 
-    /// <summary>Visibility label (defaults to <see cref="EntityRefVisibility.Private"/>).</summary>
+    /// <summary>Visibility label (defaults to <see cref="EntityRefVisibility.Private" />).</summary>
     public string Visibility { get; set; } = EntityRefVisibility.Private;
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{GetType().Name}: Id={Id}, Tenant={TenantId}, For={ForEntityType}/{ForEntityId}, From={FromEntityType}/{FromEntityId}, Visibility={Visibility}, DeletedAt={DeletedAt}";
+    public override string ToString()
+        => $"{GetType().Name}: Id={Id}, Tenant={TenantId}, For={ForEntityType}/{ForEntityId}, From={FromEntityType}/{FromEntityId}, Visibility={Visibility}, DeletedAt={DeletedAt}";
 }

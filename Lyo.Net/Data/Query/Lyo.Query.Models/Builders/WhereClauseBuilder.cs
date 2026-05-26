@@ -10,8 +10,8 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Query.Models.Builders;
 
 /// <summary>
-/// Fluent builder for <see cref="WhereClause" /> trees: combines <see cref="ConditionClause" /> leaves with <see cref="GroupOperatorEnum" />, supports nested groups, sub-clauses
-/// for two-phase filtering, and typed expression-based paths via <see cref="WhereClauseBuilderFor{T}" />.
+/// Fluent builder for <see cref="WhereClause" /> trees: combines <see cref="ConditionClause" /> leaves with <see cref="GroupOperatorEnum" />, supports nested groups,
+/// sub-clauses for two-phase filtering, and typed expression-based paths via <see cref="WhereClauseBuilderFor{T}" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class WhereClauseBuilder
@@ -352,7 +352,10 @@ public class WhereClauseBuilder
         return builder.Build();
     }
 
-    /// <summary>Builds a <see cref="WhereClause" /> from loose <see cref="ConditionClause" /> nodes. If <paramref name="searchProperty" /> and <paramref name="searchText" /> are provided, appends a Contains condition.</summary>
+    /// <summary>
+    /// Builds a <see cref="WhereClause" /> from loose <see cref="ConditionClause" /> nodes. If <paramref name="searchProperty" /> and <paramref name="searchText" /> are
+    /// provided, appends a Contains condition.
+    /// </summary>
     /// <returns>An AND group of all non-empty conditions, a single condition, or null when nothing remains.</returns>
     public static WhereClause? FromConditions(IEnumerable<ConditionClause> conditions, string? searchProperty = null, string? searchText = null)
     {

@@ -22,7 +22,7 @@ public abstract class EntityRefPostgresStoreBase
         Interceptors = interceptors?.ToArray() ?? [];
     }
 
-    /// <summary>Resolves a nullable caller tenant using <see cref="EntityRefOptions.DefaultTenantId"/> when omitted or empty.</summary>
+    /// <summary>Resolves a nullable caller tenant using <see cref="EntityRefOptions.DefaultTenantId" /> when omitted or empty.</summary>
     /// <param name="tenantId">Caller-supplied tenant, if any.</param>
     /// <returns>Concrete tenant id to persist.</returns>
     protected Guid ResolveTenant(Guid? tenantId) => EntityRefPostgresStoreHelpers.ResolveTenantId(tenantId, EntityRefOptions);
@@ -35,7 +35,10 @@ public abstract class EntityRefPostgresStoreBase
     /// <param name="ct">Cancellation token.</param>
     protected ValueTask RunInterceptorsAsync(string moduleKey, Guid tenantId, EntityRefActionKind kind, object? entity, CancellationToken ct)
         => EntityRefPostgresStoreHelpers.RunInterceptorsAsync(
-            Interceptors,
-            new EntityRefActionContext { Kind = kind, TenantId = tenantId, ModuleKey = moduleKey, Entity = entity },
-            ct);
+            Interceptors, new() {
+                Kind = kind,
+                TenantId = tenantId,
+                ModuleKey = moduleKey,
+                Entity = entity
+            }, ct);
 }

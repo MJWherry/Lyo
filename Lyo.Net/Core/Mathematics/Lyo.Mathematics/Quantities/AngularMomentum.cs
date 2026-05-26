@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Angular momentum stored in kilogram square meters per second.</summary>
 /// <remarks>May be signed; must be finite.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct AngularMomentum
 {

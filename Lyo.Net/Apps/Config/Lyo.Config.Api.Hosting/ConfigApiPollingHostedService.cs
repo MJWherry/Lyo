@@ -87,9 +87,8 @@ public sealed class ConfigApiPollingHostedService : BackgroundService
         var deadlineUtc = o.StartupTimeout is { TotalMilliseconds: > 0 } ? DateTime.UtcNow + o.StartupTimeout.Value : (DateTime?)null;
         while (!ct.IsCancellationRequested) {
             if (deadlineUtc is not null && DateTime.UtcNow > deadlineUtc.Value) {
-                if (o.RequireSuccessOnStartup) {
+                if (o.RequireSuccessOnStartup)
                     throw new TimeoutException($"Timed out resolving Config API snapshot before '{nameof(ConfigApiPollingOptions.StartupTimeout)}'.");
-                }
 
                 _log.LogWarning(
                     "{StartupTimeoutName} elapsed without a snapshot and {Require} is disabled; continuing without ledger data.", nameof(ConfigApiPollingOptions.StartupTimeout),

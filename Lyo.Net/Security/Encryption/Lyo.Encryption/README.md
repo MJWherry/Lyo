@@ -106,8 +106,35 @@ when both derive from **`IEncryptionService`** and are constructible from **`IKe
 ## Result and error types
 
 - **`Lyo.Encryption.Models.EncryptionResult`** / **`DecryptionResult`** – **`Result<byte[]>`** with key metadata for APIs that avoid exceptions
+- **`Lyo.Encryption.EncryptionErrorCodes`** – stable error-code constants paired with `EncryptionResult` / `DecryptionResult` (for example `KEY_NOT_FOUND`, `DECRYPTION_FAILED`,
+  `INVALID_HEADER`); use these instead of string-matching exception messages
 - **`DecryptionFailedException`**, **`EncryptionException`**, **`InvalidDataException`**, **`ArgumentOutsideRangeException`** – see **`IEncryptionService`** XML for which throws
   apply
+
+## Helpers and validation
+
+- **`Lyo.Encryption.TwoKey.TwoKeyDekValidation`** – validates `DekAlgorithm` + DEK key-material byte length for all supported symmetric algorithms; used on decrypt to reject
+  mismatched envelopes before any cryptographic call.
+- **`Lyo.Encryption.RsaKeyLoader`** – PEM/PFX RSA key loading helper. Uses BouncyCastle on `netstandard2.0` and `RSA.ImportFromPem` / `X509Certificate2` on `net10.0`. Invoked
+  transitively by `RsaEncryptionService` / `AesGcmRsaEncryptionService` constructors but exposed for callers that want to share a loaded key across services.
+- **`Lyo.Encryption.ISymmetricKeyMaterialSize`** – implemented by every symmetric `IEncryptionService` to advertise its accepted key-material sizes in bytes (e.g. AES-GCM =
+  `{16, 24, 32}`, XChaCha20-Poly1305 = `{32}`). `TwoKeyDekValidation` and key-store validators rely on this.
+- **`Encrypt` / `Decrypt` `ReadOnlySpan<byte>` overloads** on `IEncryptionService` — zero-copy entry points for callers that already hold a contiguous buffer; the legacy `byte[]`
+  overloads remain.
+- **`TwoKeyEncryptionResult`** fields — beyond the obvious ciphertext, the record carries `EncryptedDek`, `DekKeyMaterialBytes`, `KeyEncryptionKeySalt`, `KeyId`, `KeyVersion`, and
+  `TotalSize`. The legacy `Lyo.Encryption.Models.TwoKeyEncryptionResult` is preserved for callers that still consume the result-builder shape.
+
+### Streaming two-key
+
+`ITwoKeyEncryptionService` exposes two streaming pairs:
+
+- `EncryptStreamAsync(Stream input, Stream output, ...)` / `DecryptStreamAsync(Stream input, Stream output, TwoKeyEncryptionResult metadata, ...)` — operates on an existing
+  `TwoKeyEncryptionResult` (carries the wrapped DEK, key id/version, salt).
+- `EncryptToStreamAsync(...)` / `DecryptToStreamAsync(...)` — writes the combined wire format (encrypted-DEK header + chunked ciphertext) to a single output stream and reads it
+  back without external metadata.
+
+`ITwoKeyEncryptionService.GetKeyVersion(keyId)` returns the active KEK version string; `GetSaltForVersion(keyId, version)` is used by salted KEK derivations during rotation.
+`Decrypt` accepts an optional `salt` override for advanced rotation scenarios.
 
 ## Upgrade checklist (short)
 

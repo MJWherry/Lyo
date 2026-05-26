@@ -4,9 +4,20 @@ PostgreSQL implementation of Lyo.Audit using Entity Framework Core. Persists `Au
 
 ## Features
 
-- **PostgresAuditRecorder** – Implements `IAuditRecorder` with PostgreSQL persistence
-- **Migrations** – EF Core migrations with `audit` schema, `audit_changes` and `audit_events` tables
+- **PostgresAuditRecorder** – Implements `IAuditRecorder` and `Lyo.Health.IHealth` with PostgreSQL persistence
+- **Migrations** – EF Core migrations in the `audit` schema (`PostgresAuditOptions.Schema`) with `audit_changes` and `audit_events` tables
 - **Auto migrations** – Optional automatic migration on startup via `EnableAutoMigrations`
+
+## Registration
+
+| Extension                                                      | What it adds                                                                                                                        |
+|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `AddAuditDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<AuditDbContext>` and the migrations helper (`AddPostgresMigrations`).                                  |
+| `AddAuditDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresAuditOptions` from `"PostgresAudit"` (override section via the optional `configSectionName`) and registers as above. |
+| `AddAuditDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `AuditDbContext`.                          |
+| `AddAuditDbContext(Action<DbContextOptionsBuilder>)`           | Uses a caller-provided `DbContextOptionsBuilder` (useful for tests or shared connection multiplexing).                              |
+| `AddPostgresAuditRecorder(options)` / `(Action<…>)`            | Calls `AddAuditDbContextFactory` and registers `IAuditRecorder` → `PostgresAuditRecorder` as a singleton.                           |
+| `AddPostgresAuditRecorderFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration.                                                                           |
 
 ## Quick Start
 
@@ -15,15 +26,21 @@ services.AddPostgresAuditRecorder(new PostgresAuditOptions {
     ConnectionString = configuration.GetConnectionString("Audit")!,
     EnableAutoMigrations = true
 });
+
+services.AddPostgresAuditRecorderFromConfiguration(configuration);
 ```
 
-Or without auto-migrations (apply migrations separately):
+Need just the factory (e.g. to share with downstream services or run migrations explicitly)?
 
 ```csharp
-services.AddAuditDbContext(configuration.GetConnectionString("Audit")!);
-services.AddDbContextFactory<AuditDbContext>(/* ... */);
-services.AddSingleton<IAuditRecorder, PostgresAuditRecorder>();
+services.AddAuditDbContextFactory(configuration.GetSection("PostgresAudit").Get<PostgresAuditOptions>()!);
 ```
+
+## Health
+
+`PostgresAuditRecorder` implements `Lyo.Health.IHealth` with `HealthCheckName = "audit-postgres"`. The probe opens an `AuditDbContext` and runs
+`Database.CanConnectAsync`, surfacing connection failures through `HealthResult.Unhealthy` so the recorder contributes to host health endpoints that resolve
+`IEnumerable<IHealth>`.
 
 ## Migrations
 

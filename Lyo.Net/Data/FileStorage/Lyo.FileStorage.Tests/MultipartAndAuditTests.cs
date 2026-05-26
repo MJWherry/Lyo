@@ -1,8 +1,6 @@
 using Lyo.FileStorage.Audit;
-using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.Tests.Support;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -29,7 +27,7 @@ public class MultipartAndAuditTests
     public async Task SaveFileAsync_WithAuditHandler_AppendsSaveEvent()
     {
         var sink = new CaptureAuditHandler();
-        using var scope = LocalFileStorageTestScope.Create(builder: o => o, auditHandlers: new[] { sink });
+        using var scope = LocalFileStorageTestScope.Create(o => o, new[] { sink });
         var data = "audit-me"u8.ToArray();
         await scope.Storage.SaveFileAsync(data, "a.txt", ct: TestContext.Current.CancellationToken);
         Assert.Contains(sink.Events, e => e.EventType == FileAuditEventType.Save && e.Outcome == FileAuditOutcome.Success);
@@ -44,8 +42,8 @@ public class MultipartAndAuditTests
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestContext.Current.CancellationToken);
         await multipart.AbortAsync(begin.SessionId, TestContext.Current.CancellationToken);
         // After abort the session is removed; further uploads should fail.
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(new byte[] { 1, 2, 3 }), TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(
+            begin.SessionId, 1, new MemoryStream(new byte[] { 1, 2, 3 }), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -55,8 +53,8 @@ public class MultipartAndAuditTests
         var sessions = new InMemoryMultipartUploadSessionStore();
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await multipart.UploadPartAsync(begin.SessionId, 0, new MemoryStream(new byte[] { 1 }), TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(
+            begin.SessionId, 0, new MemoryStream(new byte[] { 1 }), TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -68,13 +66,10 @@ public class MultipartAndAuditTests
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestContext.Current.CancellationToken);
         await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream("part-1"u8.ToArray()), TestContext.Current.CancellationToken);
         // Complete claims part 2 exists even though only part 1 was uploaded.
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await multipart.CompleteAsync(
-                new() {
-                    SessionId = begin.SessionId,
-                    Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "p1" }, new() { PartNumber = 2, ETagOrBlockId = "p2" } }
-                },
-                TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.CompleteAsync(
+            new() {
+                SessionId = begin.SessionId, Parts = new List<CompletedPart> { new() { PartNumber = 1, ETagOrBlockId = "p1" }, new() { PartNumber = 2, ETagOrBlockId = "p2" } }
+            }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -83,8 +78,8 @@ public class MultipartAndAuditTests
         using var scope = LocalFileStorageTestScope.Create();
         var sessions = new InMemoryMultipartUploadSessionStore();
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024, Encrypt = true, KeyId = null }, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.BeginAsync(
+            new() { PartSizeBytes = 16 * 1024, Encrypt = true, KeyId = null }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -98,15 +93,13 @@ public class MultipartAndAuditTests
             return o;
         });
 
-        var begin = await scope.Storage.BeginDirectUploadAsync(
-            new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 8, OriginalFileName = "tiny.bin" },
-            TestContext.Current.CancellationToken);
+        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 8, OriginalFileName = "tiny.bin" }, TestContext.Current.CancellationToken);
 
         // 32 bytes > 8 byte upload cap
         var oversized = new byte[32];
         await using var ms = new MemoryStream(oversized);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(
-            async () => await scope.Storage.ReceiveWorkbenchDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(async ()
+            => await scope.Storage.ReceiveWorkbenchDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -118,16 +111,10 @@ public class MultipartAndAuditTests
                 o.DirectUploadReceiveBaseUri = "https://tests.invalid";
                 o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
                 return o;
-            },
-            auditHandlers: new[] { sink });
+            }, new[] { sink });
 
-        var begin = await scope.Storage.BeginDirectUploadAsync(
-            new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 1024, OriginalFileName = "missing.bin" },
-            TestContext.Current.CancellationToken);
-
-        await Assert.ThrowsAnyAsync<FileNotFoundException>(
-            () => scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
-
+        var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 1024, OriginalFileName = "missing.bin" }, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAnyAsync<FileNotFoundException>(() => scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
         Assert.Contains(
             sink.Events,
             e => (e.EventType == FileAuditEventType.DirectUploadFailed || e.EventType == FileAuditEventType.DirectUploadComplete) && e.Outcome == FileAuditOutcome.Failure);

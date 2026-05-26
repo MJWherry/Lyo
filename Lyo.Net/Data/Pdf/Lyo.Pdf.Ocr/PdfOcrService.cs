@@ -10,17 +10,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Pdf.Ocr;
 
-/// <summary>Renders a PDF page and runs <see cref="IOcrEngine"/>; maps word boxes to PDF coordinates.</summary>
-public sealed class PdfOcrService(
-    IOcrEngine ocrEngine,
-    IPdfPageRasterizer rasterizer,
-    ILogger<PdfOcrService>? logger = null)
+/// <summary>Renders a PDF page and runs <see cref="IOcrEngine" />; maps word boxes to PDF coordinates.</summary>
+public sealed class PdfOcrService(IOcrEngine ocrEngine, IPdfPageRasterizer rasterizer, ILogger<PdfOcrService>? logger = null)
 {
     private readonly ILogger _logger = logger ?? NullLogger<PdfOcrService>.Instance;
 
     /// <summary>
-    /// Rasterizes <paramref name="pageNumber1Based"/> at <paramref name="dpi"/>, runs OCR, and maps each <see cref="OcrWord"/> to <see cref="PdfWord"/> using
-    /// <see cref="OcrCoordinateTransforms.MapPixelBoxToPdfPoints"/>.
+    /// Rasterizes <paramref name="pageNumber1Based" /> at <paramref name="dpi" />, runs OCR, and maps each <see cref="OcrWord" /> to <see cref="PdfWord" /> using
+    /// <see cref="OcrCoordinateTransforms.MapPixelBoxToPdfPoints" />.
     /// </summary>
     public async Task<Result<PdfOcrDocumentPage>> ReadPageAsync(
         IPdfReader pdfReader,
@@ -33,35 +30,25 @@ public sealed class PdfOcrService(
         ArgumentHelpers.ThrowIfNull(pdfReader);
         ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber1Based, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(dpi, 1);
-
         try {
             var (pageWidthPts, pageHeightPts) = pdfReader.GetPageSizePoints(pageNumber1Based);
-            var rasterResult = await rasterizer
-                .RenderPageToPngAsync(pdfReader.SourceBytes, pageNumber1Based, dpi, pdfPassword, cancellationToken)
-                .ConfigureAwait(false);
-
+            var rasterResult = await rasterizer.RenderPageToPngAsync(pdfReader.SourceBytes, pageNumber1Based, dpi, pdfPassword, cancellationToken).ConfigureAwait(false);
             if (!rasterResult.IsSuccess || rasterResult.Data is null)
                 return Result<PdfOcrDocumentPage>.Failure(rasterResult.Errors ?? []);
 
             var png = rasterResult.Data;
-            await using var pngStream = new MemoryStream(png.PngBytes, writable: false);
+            await using var pngStream = new MemoryStream(png.PngBytes, false);
             var ocrResult = await ocrEngine.ReadAsync(pngStream, ocrRequest, cancellationToken).ConfigureAwait(false);
             if (!ocrResult.IsSuccess || ocrResult.Data is null)
                 return Result<PdfOcrDocumentPage>.Failure(ocrResult.Errors ?? []);
 
             var wordsPdf = new List<PdfWord>(ocrResult.Data.Words.Count);
             foreach (var w in ocrResult.Data.Words) {
-                var pdfBox = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(
-                    w.BoundingBoxPixels,
-                    pageWidthPts,
-                    pageHeightPts,
-                    png.WidthPx,
-                    png.HeightPx);
-
-                wordsPdf.Add(new PdfWord(w.Text, pdfBox, null));
+                var pdfBox = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(w.BoundingBoxPixels, pageWidthPts, pageHeightPts, png.WidthPx, png.HeightPx);
+                wordsPdf.Add(new(w.Text, pdfBox));
             }
 
-            return Result<PdfOcrDocumentPage>.Success(new PdfOcrDocumentPage(ocrResult.Data, wordsPdf, pageWidthPts, pageHeightPts));
+            return Result<PdfOcrDocumentPage>.Success(new(ocrResult.Data, wordsPdf, pageWidthPts, pageHeightPts));
         }
         catch (Exception ex) {
             _logger.LogError(ex, "PDF OCR failed for page {Page}.", pageNumber1Based);

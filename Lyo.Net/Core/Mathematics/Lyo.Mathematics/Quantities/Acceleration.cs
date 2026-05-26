@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Linear acceleration stored in meters per second squared.</summary>
 /// <remarks>May be negative (deceleration); must be finite.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Acceleration
 {

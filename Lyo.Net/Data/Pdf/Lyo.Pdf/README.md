@@ -1,65 +1,122 @@
 # Lyo.Pdf
 
-PDF loading, text extraction, and PDFsharp-backed editing for .NET.
+PdfPig-backed reading and PDFsharp-backed editing for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md).
+`PdfService` is the entry point; it returns disposable `IPdfReader` instances for
+read/extract workflows and `IPdfWriter` instances for structural edits and merges.
 
-- **`IPdfService`** (**`PdfService`**) is the façade for **`Open`** (**`IPdfReadLoader`**), **`CreateEmpty`** / **`OpenForEdit`**, and all **merge** helpers.
-- **`IPdfReadDocument`** exposes **`Text`** (**`ITextExtractor`**, which merges **`IPdfDocumentText`** and **`IPdfDocumentSections`**). **`IPdfReader`** from **`PdfService.Open`**
-  uses **`pdf.Text`** for layout, tables/key–values, **and** section navigation (`GetSection`, `GetLinesBetweenSections`) — same instance, no separate **`Sections`** property.
-- Layout types (`PdfWord`, `PdfTextLine`, `PdfBoundingBox`, `ColumnHeader`) and contracts live in **`Lyo.Pdf.Models`**.
+Multi-targets `netstandard2.0;net10.0`.
 
-## Loading and lifetime
+## Loading
 
-- Open from **file**, **bytes**, or **stream** synchronously (`Open.OpenFrom…`) or asynchronously (`Open.OpenFrom…Async`).
-- Opens from **URL** are **async only** (`OpenFromUrlAsync` / `OpenFromUrlsAsync`): the loader never blocks with sync-over-async.
-- Inject an **`HttpClient`** (from `IHttpClientFactory`) into **`PdfService`** / **`PdfReadLoader`** when fetching URLs so connection pooling and timeouts are consistent.
-- Each open returns **`IPdfReadDocument`**: disposable, caller-owned (PdfPig + byte snapshot). **`SourceBytes`** is the immutable buffer for merges and **`OpenForEdit`**. *
-  *`PdfService` itself does not implement `IDisposable`.**
-- Per-PDF size limits use **`PdfServiceOptions.MaxPdfSizeBytes`**.
+`IPdfService` exposes paired sync and async loaders for **file**, **bytes**, and
+**stream** (`OpenFromFile`, `OpenFromFileAsync`, `OpenFromBytes`,
+`OpenFromBytesAsync`, `OpenFromStream`, `OpenFromStreamAsync`) plus matching batch
+overloads (`OpenFromFiles`, `OpenFromFilesAsync`, `OpenFromBytesBatch`,
+`OpenFromBytesBatchAsync`, `OpenFromStreams`, `OpenFromStreamsAsync`).
 
-## Extraction and sections (**`IPdfDocumentText`**, **`IPdfDocumentSections`**)
+URL loaders are **async only** — `OpenFromUrlAsync` and `OpenFromUrlsAsync` — so the
+service never blocks on synchronous HTTP. Register an `HttpClient` via DI to share
+connection pooling and timeouts (see below); without one, a new `HttpClient` is
+created per call and disposed.
 
-Use **`pdf.Text`** (`ITextExtractor`) rather than threading the reader through unrelated APIs:
+Each loader returns an `IPdfReader` (PdfPig + immutable byte snapshot).
+**The caller owns the instance** and must dispose it (`using` /
+`await using`); `PdfService` itself does not implement `IDisposable`.
 
-- Words and lines, optional page and line tolerance (`pdf.Text.GetWords` / `GetLines`).
-- Anchors (`GetWordsBetween` / `GetLinesBetween`).
-- Regions (`GetLinesInBoundingBox`, columnar variants).
-- Key–value and tables (**`ExtractKeyValuePairs`**, **`ExtractTable`**, **`ExtractDataTable`**, inference helpers, **`ParseBytesAsDataTable`**) with **page** or **`PdfWord`**
-  overloads, plus **`PdfSection`** overloads, and combined **section + extract** overloads (**`ExtractTable`** / **`ExtractDataTable`** / **`ExtractKeyValuePairs`** plus async) that accept
-  the same **`startSection`**, ordered section labels (and optional **`defaultEndSection`**, page range, **`yTolerance`**) as **`GetSection`** — they return **`null`** when that
-  section is not found.
-- Section slicing (`GetSection`, `GetLinesBetweenSections`, …).
+```csharp
+await using var pdf = await pdfService.OpenFromFileAsync("invoice.pdf", ct);
+var info = pdf.GetInfo();
+(var width, var height) = pdf.GetPageSizePoints(1);
+```
 
-Word-only overloads on **`pdf.Text`** operate on **`PdfWord`** lists and ignore the PdfPig page content; options still reflect the **`PdfServiceOptions`** wired into that service
-instance.
+`PdfServiceOptions.MaxPdfSizeBytes` enforces a per-PDF byte cap (default
+`SuggestedMaxPdfSizeBytes = 25 MiB`).
 
-## Editing and merging (**`IPdfService`**)
+## Extraction (`pdf.Text`)
 
-- **`CreateEmpty`**, **`OpenForEdit`** (PdfSharp): import pages from another **`IPdfReadDocument`**, remove/insert/reorder pages, **`ToBytes`**, **`Save`**, **`CopyTo`** (+ async
-  counterparts).
-- Merge helpers produce bytes or write to paths/streams from **`byte[]`** buffers (typically **`document.SourceBytes.ToArray()`** from each reader).
+`IPdfReader.Text` returns an `ITextExtractor` that combines text/layout/table
+extraction (`IPdfDocumentText`) with multi-page section navigation
+(`IPdfDocumentSections`). Defaults follow the `PdfServiceOptions` bound at load
+time.
+
+- **Words and lines** — `GetWords` / `GetLines` (+ async) with optional page and
+  line tolerance.
+- **Anchored slices** — `GetWordsBetween` / `GetLinesBetween` (+ async).
+- **Regions** — `GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, and a
+  word-list overload `GetColumnarText(words, columnCount, yTolerance?)`.
+- **Key/value pairs** — `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`,
+  `PdfSection`, and section-name overloads (`startSection` + ordered
+  `sectionsInOrder` + optional `defaultEndSection`, page range, and `yTolerance`).
+  Section-name overloads return `null` when the requested section is not found.
+- **Tables** — `ExtractTable(headers, …)` returns
+  `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers,
+  …)` returns a `Lyo.DataTable`. Section-name overloads return `null` when the
+  section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot
+  extraction.
+- **Inference helpers** — `InferKeyValuePairsFromFormatting(words, yTolerance,
+  columnCount, inferFlags, keyValueDelimiters?)` and
+  `InferTableHeadersFromFormatting(words, …)` use `PdfInferFormattingFlags` (Bold,
+  Semicolon, Underline) and optional punctuation terminators.
+- **Sections** — `GetSection`, `GetWordsBetweenSections`,
+  `GetLinesBetweenSections` (+ async).
+
+`PdfWord` overloads operate on supplied `IReadOnlyList<PdfWord>` slices and skip the
+PdfPig page scan; option-derived defaults (`PdfServiceOptions`) still apply.
+
+## Editing and merging (`IPdfWriter`)
+
+`CreateEmpty()`, `OpenForEdit(bytes/file/stream)`, and `OpenForEditAsync` return an
+`IPdfWriter`:
+
+```csharp
+using var writer = pdfService.OpenForEdit(bytes);
+writer.ImportPagesFrom(otherReader);
+writer.InsertBlankPage(writer.PageCount);
+writer.ReorderPages([2, 0, 1]);
+await writer.SaveAsync("out.pdf", ct);
+```
+
+Merge helpers operate directly on `byte[]` buffers (typically
+`reader.SourceBytes.ToArray()`):
+
+- `MergePdfs` / `MergePdfsAsync` — return merged bytes.
+- `MergePdfsToFile` / `MergePdfsToFileAsync` — write merged bytes to a path.
+- `MergePdfsToStream` / `MergePdfsToStreamAsync` — write merged bytes to a stream.
+- `MergePdfFiles` / `MergePdfBytes` (+ async) — file-path or byte-array variants
+  with a designated initial PDF.
 
 ## Dependency injection
 
 ```csharp
 services.AddPdfService();
-// Optional: PdfService resolves HttpClient for URL loads if registered
-services.AddHttpClient(/* ... */);
+services.AddPdfService(options => options.DefaultYTolerance = 4.0);
+services.AddPdfServiceFromConfiguration(configuration); // section "PdfServiceOptions"
+services.AddPdfService(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("pdf"));
+services.AddPdfService(httpClientName: "pdf");
+services.AddPdfServiceKeyed("primary", configure: o => o.EnableMetrics = true);
 ```
 
-Scoped registration: **`IPdfService`** and **`PdfService`** share one instance.
+`PdfServiceOptions` is registered as a singleton; `PdfService` and `IPdfService`
+share the same scoped instance. When an `IHttpClientFactory` is available the
+default registrations create a named client (`nameof(PdfService)`) for URL loads;
+otherwise `HttpClient` is created per-call.
 
-## Blazor annotator
-
-**`Lyo.Pdf.Web.Components`** (MudBlazor under **`PdfAnnotator/`**) uses **`await using`** (or **`using`**) **`IPdfReadDocument`** from **`PdfService.Open`**, then **`pdf.Text.…`**
-for bounding-box and layout-derived extraction.
+`IMetrics` is optional — when present and `EnableMetrics = true`, PDF operations
+emit metrics through the registered implementation.
 
 ## Dependencies
 
-| Package / project                             | Role                        |
-|-----------------------------------------------|-----------------------------|
-| `UglyToad.PdfPig`                             | Read PDFs, text and layout  |
-| `PDFsharp`                                    | Structural edits and merges |
-| `Lyo.Pdf.Models`                              | Contracts and DTOs          |
-| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics` | Shared helpers and metrics  |
+| Package / project                                  | Role                                          |
+|----------------------------------------------------|-----------------------------------------------|
+| `UglyToad.PdfPig`                                  | Reading PDFs (text, layout)                   |
+| `PDFsharp`                                         | Structural edits / merges (`IPdfWriter`)      |
+| `Microsoft.Extensions.Configuration.Binder`        | `AddPdfServiceFromConfiguration`              |
+| `Microsoft.Extensions.Http`                        | URL loads via `IHttpClientFactory`            |
+| `Lyo.Pdf.Models`                                   | Contracts and DTOs                            |
+| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics`, `Lyo.Result` | Shared helpers, validation, metrics, results |
 
-Target frameworks: **`netstandard2.0`**, **`net10.0`**.
+## Related projects
+
+- [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md), [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md),
+  [`Lyo.Pdf.Rendering`](../Lyo.Pdf.Rendering/README.md),
+  [`Lyo.Pdf.Web.Components`](../Lyo.Pdf.Web.Components/README.md).

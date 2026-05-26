@@ -48,13 +48,13 @@ internal static class QrCodeIconComposer
                 BorderColorHex = lightColorHex,
                 OverlayBorderStrokeHex = darkColorHex
             };
+
             var result = await images.CompositeCenterOverlayPngAsync(qrPngBytes, rawIcon, overlayOpts, ct).ConfigureAwait(false);
             if (result.IsSuccess && result.Data != null)
                 return result.Data;
 
             logger.LogWarning("Failed to apply QR icon: {Errors}", result.Errors);
             return qrPngBytes;
-
         }
         catch (Exception ex) {
             logger.LogWarning(ex, "Failed to apply QR icon; returning QR without icon.");

@@ -284,15 +284,17 @@ public partial class LyoDataGridProjected
     private async Task OnVisibilityChanged(ColumnVisibilityBinder binder)
     {
         await SaveClientState(true);
-        if(_visibilityReloadTimer is not null)
+        if (_visibilityReloadTimer is not null)
             await _visibilityReloadTimer.DisposeAsync().ConfigureAwait(false);
+
         _visibilityReloadTimer = new(_ => _ = InvokeAsync(CheckAndReloadForVisibilityChange), null, VisibilityReloadDebounceMs, Timeout.Infinite);
     }
 
     private async Task CheckAndReloadForVisibilityChange()
     {
-        if(_visibilityReloadTimer is not null)
+        if (_visibilityReloadTimer is not null)
             await _visibilityReloadTimer.DisposeAsync().ConfigureAwait(false);
+
         _visibilityReloadTimer = null;
         if (_dataGrid == null || _loading)
             return;
@@ -307,6 +309,7 @@ public partial class LyoDataGridProjected
     {
         if (_dataGrid is null)
             return;
+
         try {
             var savedState = await ClientStore.GetGridStateAsync<object?>($"{GridKey}_proj");
             if (savedState == null || _dataGrid == null)

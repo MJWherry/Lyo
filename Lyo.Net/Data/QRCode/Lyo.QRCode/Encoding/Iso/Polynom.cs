@@ -47,7 +47,7 @@ internal sealed partial class QRIsoEncoder
                 _polyItems[index] = value;
             }
         }
-        
+
         /// <summary>Gets the number of polynomial terms in the polynomial.</summary>
         public int Count { get; private set; }
 

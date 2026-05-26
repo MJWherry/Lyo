@@ -10,8 +10,10 @@ namespace Lyo.DateAndTime;
 
 /// <summary>Immutable metadata for a U.S. civic or federal holiday, including rules for computing calendar dates and optional weekend observance shifts.</summary>
 /// <remarks>
-/// <para>Static instances self-register into lookup dictionaries (by slug, name, and aliases) during the static constructor. Use <see cref="FromSlug" />,
-/// <see cref="FromName" />, or <see cref="FromAlias" /> for tolerant user input.</para>
+/// <para>
+/// Static instances self-register into lookup dictionaries (by slug, name, and aliases) during the static constructor. Use <see cref="FromSlug" />, <see cref="FromName" />, or
+/// <see cref="FromAlias" /> for tolerant user input.
+/// </para>
 /// <para>Easter uses the Gregorian Meeus/Jones/Butcher algorithm via <see cref="GetDate" />.</para>
 /// </remarks>
 /// <param name="Name">Canonical English display name.</param>

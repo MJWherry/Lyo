@@ -217,7 +217,6 @@ public sealed class ObjectGraphDiffService : IObjectGraphDiffService
 
         //if (leftType.IsArray && rightType.IsArray && options.CompareArrayElements)
         //    return false;
-
         return false;
     }
 

@@ -279,11 +279,7 @@ public sealed class ComicEnrichmentService
         return favorited;
     }
 
-    private async Task<List<TEntity>> QueryChunksAsync<TEntity>(
-        string dimensionLabel,
-        Guid[] distinctIds,
-        Func<Guid[], Task<QueryRes<TEntity>>> queryChunk,
-        CancellationToken ct)
+    private async Task<List<TEntity>> QueryChunksAsync<TEntity>(string dimensionLabel, Guid[] distinctIds, Func<Guid[], Task<QueryRes<TEntity>>> queryChunk, CancellationToken ct)
         where TEntity : class
     {
         var combined = new List<TEntity>();

@@ -17,6 +17,5 @@ public class QRCodeRequest
     public string? Id { get; set; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{Data.Truncated(50)}, Options: {Options?.ToString() ?? "(default)"}";
+    public override string ToString() => $"Id: {Id ?? "(none)"}, Data: {Data[..Math.Min(Data.Length, 50)]}{Data.Truncated(50)}, Options: {Options?.ToString() ?? "(default)"}";
 }

@@ -9,15 +9,45 @@ Clients depend on **`IFileMetadataStore`** only where they manipulate **canonica
 
 ## Methods
 
-| Operation                                                          | Responsibility                                                                                                                                                  |
-|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`GetMetadataAsync(Guid fileId)`**                                | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing or logically deleted (**soft delete** hides tombstones here).                                                    |
-| **`SaveMetadataAsync(Guid, FileStoreResult)`**                     | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns).                                 |
-| **`DeleteMetadataAsync(Guid)`**                                    | **Soft-delete** (sets **`DeletedAt`**, row retained): **`false`** if missing or already deleted; **`GetMetadataAsync`** / **`FindByHashAsync`** omit tombstones.                               |
-| **`FindByHashAsync(byte[] hash)`**                                 | Duplicate detection shortcut — ignores soft-deleted rows (often combined with **`Lyo.Hashing`**).                                                                                             |
-| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits — active (non–soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair.                                                                                 |
+| Operation                                                          | Responsibility                                                                                                                                                                                                                                             |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`GetMetadataAsync(Guid fileId)`**                                | Hydrates **`FileStoreResult`**; **`FileNotFoundException`** when row missing or logically deleted (**soft delete** hides tombstones here).                                                                                                                 |
+| **`SaveMetadataAsync(Guid, FileStoreResult)`**                     | Insert or overwrite row keyed by **`fileId`**. Implementations enforce uniqueness on hash/external keys (`PostgresFileMetadataStore` maps fields into columns).                                                                                            |
+| **`DeleteMetadataAsync(Guid)`**                                    | **Soft-delete** (sets **`DeletedAt`**, row retained): **`false`** if missing or already deleted; **`GetMetadataAsync`** / **`FindByHashAsync`** omit tombstones.                                                                                           |
+| **`PurgeMetadataAsync(Guid)`**                                     | **Hard-delete** the metadata row (or `.meta` JSON for the local store). Idempotent — returns `false` when there was no record. Used by **`Lyo.FileStorage.DeleteFileAsync(..., FileDeletionMode.RemoveObjectAndPurgeMetadata)`** for retention/governance. |
+| **`FindByHashAsync(byte[] hash)`**                                 | Duplicate detection shortcut — ignores soft-deleted rows (often combined with **`Lyo.Hashing`**).                                                                                                                                                          |
+| **`FindByKeyIdAndVersionAsync(string keyId, string? keyVersion)`** | Key rotation audits — active (non–soft-deleted) metadata only, referencing a KMS/KEK logical key/version pair.                                                                                                                                             |
 
 `FileStoreResult` exposes optional **`DeletedAt`** (UTC) when present in storage; callers treat metadata without it as active.
+
+### `FileAvailability` states
+
+`FileStoreResult.Availability` propagates content gating decisions from the storage pipeline:
+
+| State                     | Meaning                                                                                                                     |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| **`Available`**           | Default; reads / presigned URLs / direct downloads are permitted.                                                           |
+| **`PendingScan`**         | Saved but awaiting a malware/policy scan; `FileNotAvailableException` on read unless `AllowReadQuarantinedForAdmin` is set. |
+| **`PendingDirectUpload`** | Direct-upload `BeginDirectUploadAsync` has issued a PUT URL but `CompleteDirectUploadAsync` has not finalized.              |
+| **`Quarantined`**         | A scan flagged the content. Admin-only read may be allowed by storage policy.                                               |
+| **`Rejected`**            | A scan or policy hard-rejected the content; reads always fail.                                                              |
+
+### `DekMigrationResult`
+
+Returned by **`MigrateDeksAsync`** / **`RotateDeksAsync`** in **`Lyo.FileStorage`**. Records per-file outcomes including `Updated`, `Skipped`, and `Failed` counts plus the failure
+list, so operators can re-run a key rotation against only the failing subset.
+
+## Local file metadata store DI
+
+`Lyo.FileMetadataStore.LocalFileMetadataStore` is a JSON-backed implementation for single-host scenarios. Registered through `Extensions`:
+
+| Extension                                                                                                                      | Notes                                                                                                                          |
+|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `services.AddLocalFileMetadataStore(string rootDirectoryPath)`                                                                 | Direct path.                                                                                                                   |
+| `services.AddLocalFileMetadataStore(Func<IServiceProvider, string> resolveRoot)`                                               | Lazy path resolution (useful for tests or DI-derived paths).                                                                   |
+| `services.AddLocalFileMetadataStoreFromConfiguration(IConfiguration, sectionName = LocalFileMetadataStoreOptions.SectionName)` | Bind `LocalFileMetadataStoreOptions` (`RootDirectoryPath`).                                                                    |
+| `services.AddLocalFileMetadataStoreKeyed(string keyName, string rootDirectoryPath)`                                            | Keyed registration with both `LocalFileMetadataStore` and `IFileMetadataStore` exposed.                                        |
+| `services.AddLocalFileMetadataStoreKeyed(string keyName)`                                                                      | Returns a `LocalFileMetadataStoreBuilder` for fluent options/section-based wiring (`ConfigureLocalFileStore(...)`, `Build()`). |
 
 ## Architectural guidance
 

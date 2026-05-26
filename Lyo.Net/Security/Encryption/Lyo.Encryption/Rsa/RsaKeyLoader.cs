@@ -1,12 +1,12 @@
-﻿#if !NET10_0_OR_GREATER
+﻿using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+#if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 #else
 using System.Text.RegularExpressions;
 #endif
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Lyo.Encryption.Rsa;
 
@@ -55,8 +55,9 @@ public static class RsaKeyLoader
         var obj = reader.ReadObject() ?? throw new InvalidOperationException("Invalid PEM public key.");
         var rsaParams = obj switch {
             RsaKeyParameters rp => ToPublicParameters(rp),
-            _ => throw new NotSupportedException("PEM does not contain an RSA public key.")
+            var _ => throw new NotSupportedException("PEM does not contain an RSA public key.")
         };
+
         rsa.ImportParameters(rsaParams);
     }
 
@@ -67,22 +68,16 @@ public static class RsaKeyLoader
         var rsaParams = obj switch {
             RsaPrivateCrtKeyParameters crt => ToPrivateParameters(crt),
             AsymmetricCipherKeyPair pair when pair.Private is RsaPrivateCrtKeyParameters crt => ToPrivateParameters(crt),
-            _ => throw new NotSupportedException("PEM does not contain an RSA private key.")
+            var _ => throw new NotSupportedException("PEM does not contain an RSA private key.")
         };
+
         rsa.ImportParameters(rsaParams);
     }
 
-    private static RSAParameters ToPublicParameters(RsaKeyParameters pub)
-    {
-        return new RSAParameters {
-            Modulus = pub.Modulus.ToByteArrayUnsigned(),
-            Exponent = pub.Exponent.ToByteArrayUnsigned()
-        };
-    }
+    private static RSAParameters ToPublicParameters(RsaKeyParameters pub) => new() { Modulus = pub.Modulus.ToByteArrayUnsigned(), Exponent = pub.Exponent.ToByteArrayUnsigned() };
 
     private static RSAParameters ToPrivateParameters(RsaPrivateCrtKeyParameters crt)
-    {
-        return new RSAParameters {
+        => new() {
             Modulus = crt.Modulus.ToByteArrayUnsigned(),
             Exponent = crt.PublicExponent.ToByteArrayUnsigned(),
             D = crt.Exponent.ToByteArrayUnsigned(),
@@ -92,7 +87,6 @@ public static class RsaKeyLoader
             DQ = crt.DQ.ToByteArrayUnsigned(),
             InverseQ = crt.QInv.ToByteArrayUnsigned()
         };
-    }
 #else
     private static byte[] ReadPem(string pem, string section)
     {

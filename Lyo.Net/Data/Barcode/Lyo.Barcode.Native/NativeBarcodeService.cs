@@ -105,23 +105,6 @@ public class NativeBarcodeService : IBarcodeService
         }
     }
 
-    private static bool IsValidHexColor(string color)
-    {
-        var s = color.Trim();
-        if (s.StartsWith('#'))
-            s = s.Substring(1);
-
-        if (s.Length != 3 && s.Length != 6)
-            return false;
-
-        foreach (var c in s) {
-            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')))
-                return false;
-        }
-
-        return true;
-    }
-
     public async Task<Result<bool>> GenerateToStreamAsync(
         string data,
         BarcodeSymbology symbology,
@@ -199,5 +182,22 @@ public class NativeBarcodeService : IBarcodeService
     {
         ArgumentHelpers.ThrowIfNull(imageBytes);
         return Task.Run(() => BarcodeZxingRead.Decode(imageBytes), ct);
+    }
+
+    private static bool IsValidHexColor(string color)
+    {
+        var s = color.Trim();
+        if (s.StartsWith('#'))
+            s = s.Substring(1);
+
+        if (s.Length != 3 && s.Length != 6)
+            return false;
+
+        foreach (var c in s) {
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')))
+                return false;
+        }
+
+        return true;
     }
 }

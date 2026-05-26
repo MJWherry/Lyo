@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Absolute temperature stored in kelvin.</summary>
 /// <remarks>Kelvin must be strictly positive (above absolute zero). Celsius and Fahrenheit are derived for display.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Temperature
 {

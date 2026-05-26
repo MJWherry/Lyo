@@ -27,8 +27,8 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
                 return dt;
         }
 
-        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback) 
-            ? fallback 
+        return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback)
+            ? fallback
             : throw new JsonException($"Could not parse DateTime: '{str}'");
 #else
         var str = reader.GetString();
@@ -43,7 +43,6 @@ public class StringDateTimeConverter(params string[] formats) : JsonConverter<Da
         return DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var fallback)
             ? fallback
             : throw new JsonException($"Could not parse DateTime: '{str}'");
-
 #endif
     }
 

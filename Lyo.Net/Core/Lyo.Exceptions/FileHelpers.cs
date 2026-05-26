@@ -74,8 +74,7 @@ public static class FileHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string NormalizePathPrefix(string? value)
-        => string.IsNullOrWhiteSpace(value) ? "" : value!.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
+    public static string NormalizePathPrefix(string? value) => string.IsNullOrWhiteSpace(value) ? "" : value!.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
 
     /// <summary>
     /// Throws <see cref="ArgumentException" /> when <paramref name="value" /> contains a path-traversal pattern when interpreted as a multi-segment path prefix. Rejects any
@@ -95,20 +94,16 @@ public static class FileHelpers
 
         ArgumentHelpers.ThrowIf(
             value!.Contains("..") || value.Contains("//") || value.Contains("\\\\") || value.IndexOf('\0') >= 0,
-            $"Path prefix '{value}' contains a traversal pattern ('..', '//', '\\\\', or NULL).",
-            paramName);
+            $"Path prefix '{value}' contains a traversal pattern ('..', '//', '\\\\', or NULL).", paramName);
 
         foreach (var segment in value.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)) {
-            ArgumentHelpers.ThrowIf(
-                string.Equals(segment, "..", StringComparison.Ordinal),
-                $"Path prefix '{value}' has a segment equal to '..'.",
-                paramName);
+            ArgumentHelpers.ThrowIf(string.Equals(segment, "..", StringComparison.Ordinal), $"Path prefix '{value}' has a segment equal to '..'.", paramName);
         }
     }
 
     /// <summary>
-    /// Combines <see cref="NormalizePathPrefix" /> and <see cref="ThrowIfPathPrefixTraversal" />: returns the trimmed prefix on success, throws <see cref="ArgumentException" /> when
-    /// the (normalized) value contains a traversal pattern.
+    /// Combines <see cref="NormalizePathPrefix" /> and <see cref="ThrowIfPathPrefixTraversal" />: returns the trimmed prefix on success, throws <see cref="ArgumentException" />
+    /// when the (normalized) value contains a traversal pattern.
     /// </summary>
     /// <param name="value">Optional path-prefix.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>

@@ -111,7 +111,6 @@ public class BuiltInQRCodeService : IQRCodeService
 
             await outputStream.WriteAsync(qrResult.ImageBytes.AsMemory(0, qrResult.ImageBytes.Length), ct).ConfigureAwait(false);
             return Result<bool>.Success(true);
-
         }
         catch (Exception ex) {
             return Result<bool>.Failure(Error.FromException(ex, StreamOperationFailed));
@@ -196,18 +195,18 @@ public class BuiltInQRCodeService : IQRCodeService
                 bytes = await QrCodeIconComposer.ApplyIconToPngAsync(_imageService, bytes, options.Icon, options.LightColor, options.DarkColor, _logger, ct).ConfigureAwait(false);
             else if (options.Format == QRCodeFormat.Svg) {
                 var svg = System.Text.Encoding.UTF8.GetString(bytes);
-                var withIcon = await QrCodeIconComposer.ApplyIconToSvgAsync(_imageService, svg, options.Icon, options.Size, options.LightColor, options.DarkColor, _logger, ct).ConfigureAwait(false);
+                var withIcon = await QrCodeIconComposer.ApplyIconToSvgAsync(_imageService, svg, options.Icon, options.Size, options.LightColor, options.DarkColor, _logger, ct)
+                    .ConfigureAwait(false);
+
                 bytes = System.Text.Encoding.UTF8.GetBytes(withIcon);
             }
         }
 
         if (options.Format == QRCodeFormat.Png && options.Frame is { Style: not QrFrameStyle.None }) {
-            var framed = _qrFrameLayout != null
-                ? await _qrFrameLayout.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false)
-                : _imageService != null
-                    ? await _imageService.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false)
-                    : throw new InvalidOperationException(
-                        "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
+            var framed = _qrFrameLayout != null ? await _qrFrameLayout.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false) :
+                _imageService != null ? await _imageService.CompositeQrFramePngAsync(bytes, options.Frame, ct).ConfigureAwait(false) :
+                throw new InvalidOperationException(
+                    "Decorative QR frames require IQrFrameLayoutService (registered with AddQRCodeService) or IImageService, or set Frame to none.");
 
             OperationHelpers.ThrowIf(
                 !framed.IsSuccess || framed.Data is null,

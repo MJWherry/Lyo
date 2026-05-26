@@ -15,14 +15,14 @@ public class HkdfKeyDerivationService : IKeyDerivationService
     private const string DefaultInfo = "Lyo.KeyDerivation.HKDF"; // Context string for key binding
 
 #if NET10_0_OR_GREATER
-private readonly HashAlgorithmName _hashAlgorithm;
+    private readonly HashAlgorithmName _hashAlgorithm;
 #endif
 
     public HkdfKeyDerivationService(HashAlgorithmName? hashAlgorithm = null)
     {
         hashAlgorithm ??= HashAlgorithmName.SHA256;
 #if NET10_0_OR_GREATER
-    _hashAlgorithm = hashAlgorithm.Value;
+        _hashAlgorithm = hashAlgorithm.Value;
 #else
         if (hashAlgorithm != HashAlgorithmName.SHA256)
             throw new PlatformNotSupportedException("HKDF on this target framework only supports SHA-256. Use .NET 10+ for other hash algorithms.");

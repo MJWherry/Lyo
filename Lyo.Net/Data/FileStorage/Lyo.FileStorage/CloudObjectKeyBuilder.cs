@@ -4,8 +4,8 @@ namespace Lyo.FileStorage;
 
 /// <summary>
 /// Builds canonical cloud storage object/blob keys shared by <see cref="LocalFileStorageService" />, the S3 backend, and the Azure Blob backend. The key layout is
-/// <c>[storagePrefix/][pathPrefix or shard]/{fileId:N}{extension}</c>, where <c>shard</c> is <c>{fileId[..2]}/{fileId[2..4]}</c> when no explicit <paramref name="pathPrefix"/>
-/// is supplied.
+/// <c>[storagePrefix/][pathPrefix or shard]/{fileId:N}{extension}</c>, where <c>shard</c> is <c>{fileId[..2]}/{fileId[2..4]}</c> when no explicit <paramref name="pathPrefix" /> is
+/// supplied.
 /// </summary>
 public static class CloudObjectKeyBuilder
 {

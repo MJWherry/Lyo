@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-
 #if NETSTANDARD2_0
 #pragma warning disable CS8604 // Possible null reference argument.
 #endif
@@ -152,7 +151,6 @@ public sealed class BulkEmailRequestBuilder
     public IEnumerable<EmailRequestBuilder> Build()
     {
         OperationHelpers.ThrowIfZero(_messages.Count, "No messages have been added to the bulk send");
-
         foreach (var message in _messages) {
             var builder = EmailRequestBuilder.New().SetSubject(message.Subject).AddTo(message.To);
 

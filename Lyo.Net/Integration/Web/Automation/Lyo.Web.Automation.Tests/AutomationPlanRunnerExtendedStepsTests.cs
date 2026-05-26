@@ -35,9 +35,9 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
             plan.Steps, step => Assert.IsType<HttpRequestAutomationStep>(step), step => Assert.IsType<DownloadFileAutomationStep>(step),
             step => Assert.IsType<ExtractSourcesAutomationStep>(step), step => Assert.IsType<UpsertJsonRecordsAutomationStep>(step),
             step => Assert.IsType<UploadDirectoryToFileStorageAutomationStep>(step), step => Assert.IsType<StoreStringListFromTemplateAutomationStep>(step),
-            step => Assert.IsType<InvokeDiMethodAutomationStep>(step),
-            step => Assert.IsType<FindDescendantAutomationStep>(step),
+            step => Assert.IsType<InvokeDiMethodAutomationStep>(step), step => Assert.IsType<FindDescendantAutomationStep>(step),
             step => Assert.IsType<ElementActionAutomationStep>(step));
+
         var elementActionStep = (ElementActionAutomationStep)plan.Steps[8];
         Assert.IsType<DropdownElementAction>(elementActionStep.Action);
     }

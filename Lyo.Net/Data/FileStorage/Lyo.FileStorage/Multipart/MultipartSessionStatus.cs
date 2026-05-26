@@ -12,7 +12,6 @@ public enum MultipartSessionStatus
     /// <summary>Session was explicitly aborted by the caller.</summary>
     Aborted = 2,
 
-    /// <summary>Session failed mid-completion (staging exists or was deleted, but final metadata did not commit).
-    /// Operators may inspect, retry, or clean up sessions in this state.</summary>
+    /// <summary>Session failed mid-completion (staging exists or was deleted, but final metadata did not commit). Operators may inspect, retry, or clean up sessions in this state.</summary>
     Failed = 3
 }

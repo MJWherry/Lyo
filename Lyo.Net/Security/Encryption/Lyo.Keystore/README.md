@@ -32,6 +32,22 @@ never log raw key bytes); pair with metrics so silent misconfiguration does not 
 HKDF (RFC 5869), PBKDF2-SHA256 helpers, and Argon2 adapters live in this assembly so onboarding UIs can derive stable bytes from passphrases consistently with **`AddKeyFromString`
 **. Prefer **`SecureKeyGenerator`** when generating random material instead of ad-hoc RNG.
 
+Implementations of **`IKeyDerivationService`**:
+
+| Service                          | Notes                                                                                                                      |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| **`Pbkdf2KeyDerivationService`** | PBKDF2 (SHA-256 by default); iteration count and output length configurable.                                               |
+| **`HkdfKeyDerivationService`**   | HKDF-Extract + HKDF-Expand (SHA-256 by default); ideal for deriving sub-keys from existing key material.                   |
+| **`Argon2KeyDerivationService`** | Argon2id with configurable memory / parallelism / time-cost via constructor parameters (BouncyCastle on `netstandard2.0`). |
+
+## Key validation (`KeyValidator`)
+
+**`Lyo.Keystore.KeyValidator`** centralizes the size and basic-strength checks used by encryption services and key stores:
+
+- `ValidateKeyOrThrow(byte[] keyMaterial, ISymmetricKeyMaterialSize spec)` — rejects null/empty buffers and key lengths that aren't in the algorithm's accepted set.
+- `IsValid(...)` / `TryValidate(...)` — non-throwing variants for UIs that report validation failures inline.
+- Optional entropy/heuristic checks (e.g. all-zero buffers, repeating patterns) so that obviously bad imports fail early.
+
 ## Inventory (`IKeyInventoryStore`)
 
 Optional capability for admin UIs and audits: enumerate logical **`keyId`**s and versions. Not every production store implements full listing—probe for **`IKeyInventoryStore`** (or
@@ -54,6 +70,9 @@ services.AddLocalKeyStore(ks =>
 
 **`AddKeyedLocalKeyStore`** registers **distinct** **`LocalKeyStore`** instances per DI key—useful when a single process hosts multiple logical tenants **if** you are careful about
 keyed resolution and never cross-wire **`IKeyStore`** instances.
+
+**`LocalKeyStore.RemoveKey(string keyId, string version)`** retires a non-current version (returns `false` when the version doesn't exist or matches `GetCurrentVersion`). Combine
+with `SetCurrentVersion` before pruning the previous current.
 
 **Production:** **`LocalKeyStore`** is not durable and not audited—swap for **`Lyo.Keystore.Aws`**, Azure Key Vault, PKCS#11, or another **`IKeyStore`** that meets your retention
 and access policies.

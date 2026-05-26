@@ -12,21 +12,43 @@ projection DTOs).
 
 Builders follow **method-chaining** ergonomics so gateways/tests avoid object initializer noise.
 
-## Responses & metadata
+## Response envelopes
+
+Concrete result records emitted by `Lyo.Api` endpoints (see [`Common/Response/Result.cs`](Common/Response/Result.cs) and [`Common/Response/ResultFactory.cs`](Common/Response/ResultFactory.cs)). There is no generic `ApiResponse<T>` / `BulkApiResponse<T>` — each operation has its own typed envelope:
+
+| Envelope                       | Returned by                                       | Notable fields                                                                                                  |
+|--------------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| **`QueryRes<T>`**              | `POST {route}/Query`                              | `IsSuccess`, `Items`, `Start`, `Amount`, `Total`, `HasMore`, `QueryScore`, `Error` (echoes `QueryRequest`).     |
+| **`ProjectedQueryRes<T>`**     | `POST {route}/QueryProject`                       | Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`.   |
+| **`QueryHistoryResults<T>`**   | `POST {route}/QueryHistory`                       | Wraps an ordered list of `HistoryResult<T>` items with `Start`, `Amount`, `Total`.                              |
+| **`HistoryResult<T>`**         | per-row history slice                             | `Value`, `StartTimestamp`, `EndTimestamp`, optional `Error`.                                                    |
+| **`CreateResult<T>`** / **`CreateBulkResult<T>`** | Create + Bulk create                  | `IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`.                              |
+| **`UpdateResult<T>`** / **`UpdateBulkResult<T>`** | Update + Bulk update                  | `Result` enum (`Updated`/`NoChange`/`Failed`), `Keys`, `OldData`/`NewData`; bulk adds `NoChangeCount`.          |
+| **`PatchResult<T>`** / **`PatchBulkResult<T>`** | Patch + Bulk patch                      | `Result` enum, `OldData`/`NewData`, `UpdatedProperties`; `IsSuccess` derived from `Updated`/`NoChange`.         |
+| **`UpsertResult<T>`** / **`UpsertBulkResult<T>`** | Upsert + Bulk upsert                  | `Result` enum (`Created`/`Updated`/`NoChange`/`Failed`); bulk includes `Created/Updated/NoChange/FailedCount`.  |
+| **`DeleteResult<T>`** / **`DeleteBulkResult<T>`** | Delete + Bulk delete                  | `IsSuccess`, `Data` (deleted row), `Error`.                                                                     |
+
+Use **`ResultFactory.QuerySuccess` / `ProjectedQuerySuccess` / `CreateBulk` / `UpdateBulk` / …`** to build envelopes from CRUD service code — they pre-compute counts, query scores, and split success vs failure paths.
+
+## Other models & metadata
 
 - **`CrudMetadata`** — standardized success payload fragments (timestamps, concurrency tokens if host sets them).
 - **`FileUpload` / `FileUploadRes`** — bridge file pipeline results.
-- **`Constants`** — shared header names, discriminator strings, etc.—**check before duplicating** literals in clients.
+- **`CacheItem`** (record + **`CacheItemTypeEnum`** `Key` / `Tag`) — describes server cache entries surfaced by introspection endpoints; helpers `CacheItem.Key(name)` / `CacheItem.Tag(name)` build instances and the record’s `GetHashCode` / `ToString` are stable for set membership.
+- **`Constants.ApiErrorCodes`** — single source of truth for stable `errors[].code` strings on problem responses (`Unknown`, `InvalidQuery`, `InvalidField`, `InvalidPaging`, `NotFound`, `Forbidden`, `Cancelled`, `SqlException`, `MessageQueueConnectionIssue`, `Conflict`, `ExceedMaxBulkSize`, etc.). **Check before duplicating** literals in clients.
 
 ## Errors & Problem Details
 
 Rather than per-app ad-hoc exceptions, this package standardizes:
 
-**`LyoProblemDetails` / `ILyoProblemDetails`**, **`LFException`**, **`ApiError*` / `ApiErrorException`**
+- **`LyoProblemDetails`** (record) / **`ILyoProblemDetails`** — RFC 9457 problem details serialized with the default JSON contract; carries `Detail`, `Status`, `Timestamp`, `Errors` (array of **`ApiError`**), `Title`, `Type`, `Instance`, `TraceId`, `SpanId`, optional `Stacktrace`, and bag-of-extensions. Helpers: `MapErrorCodeToHttpStatus(code)` (uses **`Constants.ApiErrorCodes`**), `FromCode(errorCode, detail, …)`, and `HttpStatusTitle(statusCode)` (used by export wrapping).
+- **`ApiError`** (record) — single entry in `errors[]`: `Code`, `Description`, optional `Stacktrace`.
+- **`ApiErrorException`** — sealed `Exception` carrying a `LyoProblemDetails`; thrown when an operation fails with a structured problem (e.g. export over a failed projected query).
+- **`InvalidPropertyNameException`** — thrown when patch keys do not exist on the target type (surfaced as `InvalidPatchRequest`).
+- **`LFException`** ([`Error/LFException.cs`](Error/LFException.cs)) — domain-level Lyo exception carrying a stable `ErrorCode`; hosts (e.g. `Lyo.Api`'s `LoggingMiddleware`) translate it into warning-level `LyoProblemDetails`.
+- **`LyoProblemDetailsBuilder`** — fluent builder for trace/span/route fields, message and error-code overrides, and `AddApiError` / `FromException` shortcuts.
 
-…so both **server ProblemDetails serializer** and **`ApiClient`** can parse consistent JSON (`type/title/status/detail/extensions` mapping—see source for versioned fields).
-
-`LyoProblemDetailsBuilder` simplifies constructing rich machine-readable errors (field-level validation arrays, trace ids).
+The same JSON shape round-trips through `ApiClient`'s `ApiException` so error handling stays symmetric on both ends.
 
 ## Caching & diagnostics
 

@@ -7,7 +7,8 @@ namespace Lyo.Query.Services.ValueConversion;
 internal record TypeConversionMetadata(Type UnderlyingType, bool IsEnum, bool IsNullable, Type? EnumType);
 
 /// <summary>
-/// Converts filter literal values to CLR types for query parsing. Caches per-type metadata in <see cref="ICacheService" /> using <see cref="CacheOptions.TypeMetadataExpiration" />.
+/// Converts filter literal values to CLR types for query parsing. Caches per-type metadata in <see cref="ICacheService" /> using
+/// <see cref="CacheOptions.TypeMetadataExpiration" />.
 /// </summary>
 /// <param name="cache">Cache used for type conversion metadata.</param>
 /// <param name="cacheOptions">Expiration for cached metadata entries.</param>

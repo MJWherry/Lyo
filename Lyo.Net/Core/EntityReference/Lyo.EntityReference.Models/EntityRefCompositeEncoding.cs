@@ -4,16 +4,16 @@ using Lyo.Exceptions;
 namespace Lyo.EntityReference.Models;
 
 /// <summary>
-/// Escape and join rules for multi-part <see cref="EntityRef.EntityId"/> values produced by <see cref="EntityRef.For{T}(object[])"/>.
-/// The delimiter is an unescaped <c>:</c>; literal backslashes and colons inside a segment are escaped for round-trip safety.
+/// Escape and join rules for multi-part <see cref="EntityRef.EntityId" /> values produced by <see cref="EntityRef.For{T}(object[])" />. The delimiter is an unescaped
+/// <c>:</c>; literal backslashes and colons inside a segment are escaped for round-trip safety.
 /// </summary>
 public static class EntityRefCompositeEncoding
 {
     /// <summary>Joins ordered segments into a single composite id (multi-part keys only).</summary>
     /// <param name="orderedSegments">Non-empty list of segments already in canonical order.</param>
     /// <returns>A string containing escaped segments separated by unescaped <c>:</c>.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="orderedSegments"/> is null.</exception>
-    /// <exception cref="ArgumentException"><paramref name="orderedSegments"/> is empty.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="orderedSegments" /> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="orderedSegments" /> is empty.</exception>
     public static string JoinComposite(IReadOnlyList<string> orderedSegments)
     {
         ArgumentHelpers.ThrowIfNull(orderedSegments);
@@ -23,10 +23,10 @@ public static class EntityRefCompositeEncoding
         return string.Join(":", orderedSegments.Select(EscapeSegment));
     }
 
-    /// <summary>Splits a composite id produced by <see cref="JoinComposite"/> back into segments.</summary>
+    /// <summary>Splits a composite id produced by <see cref="JoinComposite" /> back into segments.</summary>
     /// <param name="composite">Full composite string including delimiters and escapes.</param>
     /// <returns>The ordered segments as originally joined (after unescaping).</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="composite"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="composite" /> is null.</exception>
     public static IReadOnlyList<string> SplitComposite(string composite)
     {
         ArgumentHelpers.ThrowIfNull(composite);
@@ -56,7 +56,6 @@ public static class EntityRefCompositeEncoding
         return segments;
     }
 
-    /// <summary>Escapes <c>\</c> and <c>:</c> inside a single segment so <see cref="JoinComposite"/> remains reversible.</summary>
-    internal static string EscapeSegment(string segment)
-        => segment.Replace("\\", "\\\\").Replace(":", "\\:");
+    /// <summary>Escapes <c>\</c> and <c>:</c> inside a single segment so <see cref="JoinComposite" /> remains reversible.</summary>
+    internal static string EscapeSegment(string segment) => segment.Replace("\\", "\\\\").Replace(":", "\\:");
 }

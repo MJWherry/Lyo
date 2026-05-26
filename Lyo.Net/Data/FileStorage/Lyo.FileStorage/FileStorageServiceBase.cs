@@ -1,13 +1,16 @@
+using System.Diagnostics;
+using System.IO.Pipelines;
 using Lyo.Common.Extensions;
 using Lyo.Common.Records;
-using Lyo.Compression.Models;
 using Lyo.Compression;
+using Lyo.Compression.Models;
+using Lyo.Encryption;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
-using Lyo.Encryption;
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore;
+using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.OperationContext;
@@ -16,32 +19,31 @@ using Lyo.Hashing;
 using Lyo.Health;
 using Lyo.Metrics;
 using Lyo.Streams;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.IO.Pipelines;
-using Lyo.FileStorage.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 using HashAlgorithm = Lyo.FileMetadataStore.Models.HashAlgorithm;
 using static Lyo.Compression.Constants.Data;
 
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Base class for filesystem, object-storage, or blob-backed file operations. Implements <see cref="IFileStorageService"/> with shared pipelines for compression,
-/// encryption, malware policy, auditing, metrics, and DEK maintenance. Derived types supply storage I/O via <see cref="CreateOutputStreamAsync"/>,
-/// <see cref="ReadFromStorageAsync"/>, and related abstract members.
+/// Base class for filesystem, object-storage, or blob-backed file operations. Implements <see cref="IFileStorageService" /> with shared pipelines for compression,
+/// encryption, malware policy, auditing, metrics, and DEK maintenance. Derived types supply storage I/O via <see cref="CreateOutputStreamAsync" />,
+/// <see cref="ReadFromStorageAsync" />, and related abstract members.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Members are grouped with <c>#region</c> slices (core wiring, save, retrieve, delete/metadata, DEK, direct upload/copy façade) within this single compilation unit.
-/// Heavy logic delegates to internal types wired in the ctor: <see cref="FileStorageStreamingPipelines"/>, <see cref="FileStorageDekOperations"/>, and <see cref="PlainDirectUploadCoordinator"/>,
-/// which depend on narrow internal interfaces implemented explicitly by this class (<see cref="IFileStoragePhysicalIo"/>, <see cref="IFileAuditPublisher"/>, etc.).
+/// Members are grouped with <c>#region</c> slices (core wiring, save, retrieve, delete/metadata, DEK, direct upload/copy façade) within this single compilation unit. Heavy
+/// logic delegates to internal types wired in the ctor: <see cref="FileStorageStreamingPipelines" />, <see cref="FileStorageDekOperations" />, and
+/// <see cref="PlainDirectUploadCoordinator" />, which depend on narrow internal interfaces implemented explicitly by this class (<see cref="IFileStoragePhysicalIo" />,
+/// <see cref="IFileAuditPublisher" />, etc.).
 /// </para>
 /// </remarks>
-public abstract class FileStorageServiceBase : IFileStorageService, IDisposable, IFileStoragePhysicalIo, IFileAuditPublisher,
-    IFileStorageMetadataNormalization, IFileStorageMetadataLookup
+public abstract class FileStorageServiceBase
+    : IFileStorageService, IDisposable, IFileStoragePhysicalIo, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
 {
-    #region Core
+#region Core
+
     private const int CopyToBufferSizeBytes = 81920;
 
     private readonly FileStorageStreamingPipelines _streamingPipelines;
@@ -66,15 +68,15 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
 
     /// <summary>Initializes a new instance with optional compression, encryption, metrics, auditing, and content-policy collaborators.</summary>
     /// <param name="options">Baseline configuration such as hashing, quotas, duplicate handling, and health-check mode.</param>
-    /// <param name="metadataService">Backing store for <see cref="FileStoreResult"/> persistence.</param>
+    /// <param name="metadataService">Backing store for <see cref="FileStoreResult" /> persistence.</param>
     /// <param name="logger">Optional logger for operational diagnostics.</param>
     /// <param name="compressionService">Optional service when saves may compress payloads.</param>
     /// <param name="twoKeyEncryptionService">Optional service when saves may encrypt payloads.</param>
     /// <param name="metrics">Optional metrics sink; defaults to null metrics.</param>
     /// <param name="operationContextAccessor">Optional ambient tenant / actor resolution for auditing.</param>
-    /// <param name="auditHandlers">Optional handlers subscribed through the publication pipeline alongside <see cref="FileAuditOccurred"/>.</param>
-    /// <param name="contentPolicy">Optional content policy validator; defaults to <see cref="DefaultFileContentPolicy"/>.</param>
-    /// <param name="malwareScanner">Optional scanner when <see cref="FileStorageServiceBaseOptions.RequireScanBeforeAvailable"/> is enforced.</param>
+    /// <param name="auditHandlers">Optional handlers subscribed through the publication pipeline alongside <see cref="FileAuditOccurred" />.</param>
+    /// <param name="contentPolicy">Optional content policy validator; defaults to <see cref="DefaultFileContentPolicy" />.</param>
+    /// <param name="malwareScanner">Optional scanner when <see cref="FileStorageServiceBaseOptions.RequireScanBeforeAvailable" /> is enforced.</param>
     protected FileStorageServiceBase(
         FileStorageServiceBaseOptions options,
         IFileMetadataStore metadataService,
@@ -100,37 +102,9 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         ContentPolicy = contentPolicy ?? new DefaultFileContentPolicy(options);
         MalwareScanner = malwareScanner ?? NullFileMalwareScanner.Instance;
         MetricNames = CreateMetricNamesDictionary();
-
-        _streamingPipelines = new FileStorageStreamingPipelines(
-            this,
-            CompressionService,
-            TwoKeyEncryptionService,
-            Options,
-            Logger,
-            CopyToBufferSizeBytes);
-
-        _dekOperations = new FileStorageDekOperations(
-            MetadataService,
-            TwoKeyEncryptionService,
-            OperationContextAccessor,
-            Logger,
-            Options,
-            this,
-            this,
-            CopyToBufferSizeBytes);
-
-        _plainDirectUpload = new PlainDirectUploadCoordinator(
-            ContentPolicy,
-            MalwareScanner,
-            MetadataService,
-            OperationContextAccessor,
-            Options,
-            Logger,
-            this,
-            this,
-            this,
-            this,
-            CopyToBufferSizeBytes);
+        _streamingPipelines = new(this, CompressionService, TwoKeyEncryptionService, Options, Logger, CopyToBufferSizeBytes);
+        _dekOperations = new(MetadataService, TwoKeyEncryptionService, OperationContextAccessor, Logger, Options, this, this, CopyToBufferSizeBytes);
+        _plainDirectUpload = new(ContentPolicy, MalwareScanner, MetadataService, OperationContextAccessor, Options, Logger, this, this, this, this, CopyToBufferSizeBytes);
     }
 
     /// <summary>Connectivity-only probe implementations call when options use lightweight health-check mode.</summary>
@@ -183,45 +157,38 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     protected void RaiseFileSaved(Guid fileId, FileStoreSnapshot snapshot, long originalSize, long finalSize, bool compress, bool encrypt)
         => FileSaved?.Invoke(this, new(fileId, snapshot, originalSize, finalSize, compress, encrypt));
 
-    /// <summary>Raises <see cref="FileMetadataRetrieved"/> from subclasses (e.g. override of <c>GetFileMetadataAsync</c>) so listeners observe both metadata-only and payload-bearing reads.</summary>
-    protected void RaiseFileMetadataRetrieved(Guid fileId, FileStoreSnapshot snapshot)
-        => FileMetadataRetrieved?.Invoke(this, new(fileId, snapshot));
+    /// <summary>
+    /// Raises <see cref="FileMetadataRetrieved" /> from subclasses (e.g. override of <c>GetFileMetadataAsync</c>) so listeners observe both metadata-only and payload-bearing
+    /// reads.
+    /// </summary>
+    protected void RaiseFileMetadataRetrieved(Guid fileId, FileStoreSnapshot snapshot) => FileMetadataRetrieved?.Invoke(this, new(fileId, snapshot));
 
     public virtual Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
         => GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, null, ct);
 
-    public virtual Task<string> GetPreSignedReadUrlAsync(
-        Guid fileId,
-        TimeSpan? expiration,
-        string? pathPrefix,
-        PreSignedReadUrlOptions? urlResponseOptions,
-        CancellationToken ct)
+    public virtual Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration, string? pathPrefix, PreSignedReadUrlOptions? urlResponseOptions, CancellationToken ct)
         => Task.FromException<string>(
             new NotSupportedException("Pre-signed read URLs are not supported by this storage backend. Use Blob or AWS S3 file storage implementations."));
 
     public virtual Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default)
-        => Task.FromException<DirectUploadBeginResult>(
-            new NotSupportedException("Direct uploads are not supported by this backend."));
+        => Task.FromException<DirectUploadBeginResult>(new NotSupportedException("Direct uploads are not supported by this backend."));
 
     public virtual Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
-        => Task.FromException<FileStoreResult>(
-            new NotSupportedException("Direct uploads are not supported by this backend."));
+        => Task.FromException<FileStoreResult>(new NotSupportedException("Direct uploads are not supported by this backend."));
 
     public virtual Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
-        => Task.FromException<FileStoreResult>(
-            new NotSupportedException("Server-side copies are not supported by this backend."));
+        => Task.FromException<FileStoreResult>(new NotSupportedException("Server-side copies are not supported by this backend."));
 
-    /// <summary>Async-disposes a stream using <see cref="Stream.DisposeAsync"/> when available, otherwise synchronously disposes.</summary>
-    internal static Task DisposeStreamAsync(Stream? stream)
-        => FileStorageStreamingPipelines.DisposeStreamAsync(stream);
+    /// <summary>Async-disposes a stream using <see cref="Stream.DisposeAsync" /> when available, otherwise synchronously disposes.</summary>
+    internal static Task DisposeStreamAsync(Stream? stream) => FileStorageStreamingPipelines.DisposeStreamAsync(stream);
 
-    /// <summary>Returns <paramref name="explicitTenantId"/> when set; otherwise resolves tenant from operation context.</summary>
+    /// <summary>Returns <paramref name="explicitTenantId" /> when set; otherwise resolves tenant from operation context.</summary>
     protected string? ResolveTenantId(string? explicitTenantId) => explicitTenantId ?? OperationContextAccessor.Current?.TenantId;
 
     /// <summary>
-    /// Publishes a file audit event to registered handlers and the <see cref="FileAuditOccurred"/> event. <see cref="FileAuditEvent.Error" /> is sanitized via
-    /// <see cref="SanitizeAuditError" />, and the operation-context correlation id is back-filled when the caller did not provide one, so unstructured exception text never leaks
-    /// newlines or oversized payloads into audit sinks and downstream consumers always see a correlation id when one is in scope.
+    /// Publishes a file audit event to registered handlers and the <see cref="FileAuditOccurred" /> event. <see cref="FileAuditEvent.Error" /> is sanitized via
+    /// <see cref="SanitizeAuditError" />, and the operation-context correlation id is back-filled when the caller did not provide one, so unstructured exception text never leaks newlines
+    /// or oversized payloads into audit sinks and downstream consumers always see a correlation id when one is in scope.
     /// </summary>
     protected Task RaiseFileAuditAsync(FileAuditEvent auditEvent, CancellationToken ct)
     {
@@ -259,13 +226,13 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
             { nameof(Constants.Metrics.AuditAppendFailed), Constants.Metrics.AuditAppendFailed }
         };
 
-    /// <summary>Opens a writable stream for persisting ciphertext or compressed payloads for <paramref name="fileId"/>.</summary>
+    /// <summary>Opens a writable stream for persisting ciphertext or compressed payloads for <paramref name="fileId" />.</summary>
     protected abstract Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct);
 
     /// <summary>Returns the persisted byte length including format-specific headers or wrappers.</summary>
     protected abstract Task<long> GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct);
 
-    /// <summary>Reads raw storage bytes associated with metadata; implementations return <see langword="null"/> when the blob is absent.</summary>
+    /// <summary>Reads raw storage bytes associated with metadata; implementations return <see langword="null" /> when the blob is absent.</summary>
     protected abstract Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
 
     /// <summary>Deletes the backing object referenced by metadata and returns whether an object was removed.</summary>
@@ -278,8 +245,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     protected abstract Task UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct);
 
     /// <summary>
-    /// Sanitizes a tenant or logical prefix for storage keys: delegates to <see cref="FileHelpers.NormalizePathPrefix" /> and collapses an empty result back to <see langword="null" />
-    /// so persisted metadata distinguishes "no prefix supplied" from "explicit empty string".
+    /// Sanitizes a tenant or logical prefix for storage keys: delegates to <see cref="FileHelpers.NormalizePathPrefix" /> and collapses an empty result back to
+    /// <see langword="null" /> so persisted metadata distinguishes "no prefix supplied" from "explicit empty string".
     /// </summary>
     protected static string? NormalizePathPrefix(string? pathPrefix)
     {
@@ -292,7 +259,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     /// traversal rejection rules (segments equal to <c>..</c>, doubled separators, embedded <c>\0</c>) without each backend re-implementing them.
     /// </summary>
     /// <exception cref="ArgumentException">When the prefix contains a traversal pattern.</exception>
-    public static void ValidatePathPrefix(string? pathPrefix) => FileHelpers.ThrowIfPathPrefixTraversal(pathPrefix, nameof(pathPrefix));
+    public static void ValidatePathPrefix(string? pathPrefix) => FileHelpers.ThrowIfPathPrefixTraversal(pathPrefix);
 
     /// <summary>Deletes partially written payloads when uploads fail before metadata commit succeeds.</summary>
     protected abstract Task CleanupPartialFileAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
@@ -311,7 +278,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         return !declaredContentType.IsNullOrWhitespace() ? declaredContentType.Trim() : FileTypeInfo.Unknown.MimeType;
     }
 
-    /// <summary>Maps compressor file extensions to enumeration values used in <see cref="FileStoreResult"/>.</summary>
+    /// <summary>Maps compressor file extensions to enumeration values used in <see cref="FileStoreResult" />.</summary>
     protected internal static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)
         => fileExtension switch {
             var _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
@@ -325,7 +292,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
             var _ => null
         };
 
-    /// <summary>Computes a cryptographic digest for byte arrays using the configured <see cref="Lyo.FileMetadataStore.Models.HashAlgorithm"/>.</summary>
+    /// <summary>Computes a cryptographic digest for byte arrays using the configured <see cref="Lyo.FileMetadataStore.Models.HashAlgorithm" />.</summary>
     protected static byte[] ComputeHash(byte[] data, HashAlgorithm algorithm = HashAlgorithm.Sha256)
     {
         using var algo = algorithm.Create();
@@ -352,9 +319,13 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     /// <summary>Dek-material and key-identifying fields read from freshly written ciphertext headers.</summary>
     /// <param name="EncryptedDataEncryptionKey">Envelope-encrypted plaintext DEK bytes from the serialized header.</param>
     /// <param name="DataEncryptionKeyId">Logical KMS or keystore identifier associated with encryption.</param>
-    /// <param name="DataEncryptionKeyVersion">Key version paired with <paramref name="DataEncryptionKeyId"/>.</param>
+    /// <param name="DataEncryptionKeyVersion">Key version paired with <paramref name="DataEncryptionKeyId" />.</param>
     /// <param name="DekKeyMaterialBytes">DEK-material width metadata required by the installed encryption codec.</param>
-    protected internal sealed record EncryptionHeaderInfo(byte[]? EncryptedDataEncryptionKey, string? DataEncryptionKeyId, string? DataEncryptionKeyVersion, byte DekKeyMaterialBytes);
+    protected internal sealed record EncryptionHeaderInfo(
+        byte[]? EncryptedDataEncryptionKey,
+        string? DataEncryptionKeyId,
+        string? DataEncryptionKeyVersion,
+        byte DekKeyMaterialBytes);
 
     Task<Stream?> IFileStoragePhysicalIo.ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct) => ReadFromStorageAsync(fileId, pathPrefix, ct);
 
@@ -367,13 +338,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     Task<EncryptionHeaderInfo> IFileStoragePhysicalIo.ExtractEncryptionHeaderAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
         => ExtractEncryptionHeaderAsync(fileId, extension, pathPrefix, ct);
 
-    Task IFileStoragePhysicalIo.UpdateFileHeaderAsync(
-        Guid fileId,
-        string? pathPrefix,
-        string targetKeyId,
-        string targetKeyVersion,
-        byte[] newEncryptedDek,
-        CancellationToken ct)
+    Task IFileStoragePhysicalIo.UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct)
         => UpdateFileHeaderAsync(fileId, pathPrefix, targetKeyId, targetKeyVersion, newEncryptedDek, ct);
 
     Task IFileAuditPublisher.PublishAuditAsync(FileAuditEvent auditEvent, CancellationToken ct) => RaiseFileAuditAsync(auditEvent, ct);
@@ -386,13 +351,15 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     string? IFileStorageMetadataNormalization.NormalizePathPrefix(string? pathPrefix) => NormalizePathPrefix(pathPrefix);
 
     Task<FileStoreResult> IFileStorageMetadataLookup.GetMetadataForStorageAsync(Guid fileId, CancellationToken ct) => GetMetadataAsync(fileId, ct);
-    #endregion
 
-    #region Save
+#endregion
+
+#region Save
+
     /// <inheritdoc />
     /// <remarks>
-    /// Thin wrapper around <see cref="SaveFromStreamAsync" /> that exposes the byte[] surface for legacy callers and tests. All hashing, scanning, dedup, compression, encryption, audit,
-    /// and cleanup logic lives in the stream path so the two entry points cannot diverge.
+    /// Thin wrapper around <see cref="SaveFromStreamAsync" /> that exposes the byte[] surface for legacy callers and tests. All hashing, scanning, dedup, compression,
+    /// encryption, audit, and cleanup logic lives in the stream path so the two entry points cannot diverge.
     /// </remarks>
     public async Task<FileStoreResult> SaveFileAsync(
         byte[] data,
@@ -407,9 +374,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(data);
-        using var ms = new MemoryStream(data, writable: false);
-        return await SaveFromStreamAsync(
-                ms, data.LongLength, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, availabilityOverride: null, fileId: null, ct)
+        using var ms = new MemoryStream(data, false);
+        return await SaveFromStreamAsync(ms, data.LongLength, originalFileName, compress, encrypt, keyId, pathPrefix, chunkSize, contentType, tenantId, null, null, ct)
             .ConfigureAwait(false);
     }
 
@@ -488,8 +454,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.Save, DateTime.UtcNow, createdFileId, resolvedTenant, OperationContextAccessor.Current?.ActorId, keyId, null, FileAuditOutcome.Failure,
-                        ex.Message),
-                    ct)
+                        ex.Message), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -551,7 +516,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
                 if (!Options.RequireScanBeforeAvailable) {
                     availability = Options.DefaultAvailability;
                     result = await ProcessAndSaveStreamAsync(
-                            input, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
+                            input, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize,
+                            contentType,
                             resolvedTenant, availability, ct)
                         .ConfigureAwait(false);
                 }
@@ -566,7 +532,6 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
                         await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
                             await input.CopyToAsync(spoolWrite, CopyToBufferSizeBytes, ct).ConfigureAwait(false);
 #endif
-
                         availability = await DetermineAvailabilityAfterScanningFileAsync(spoolPath, new FileInfo(spoolPath).Length, resolvedContentType, originalFileName, ct)
                             .ConfigureAwait(false);
 #if NETSTANDARD2_0
@@ -607,15 +572,17 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.Save, DateTime.UtcNow, createdFileId, resolvedTenant, OperationContextAccessor.Current?.ActorId, keyId, null, FileAuditOutcome.Failure,
-                        ex.Message),
-                    ct)
+                        ex.Message), ct)
                 .ConfigureAwait(false);
 
             throw;
         }
     }
 
-    /// <summary>Runs configured malware scanners against an in-memory plaintext buffer and translates results into availability policy. Fails closed when scanning is required but no scanner is configured.</summary>
+    /// <summary>
+    /// Runs configured malware scanners against an in-memory plaintext buffer and translates results into availability policy. Fails closed when scanning is required but no
+    /// scanner is configured.
+    /// </summary>
     protected async Task<FileAvailability> DetermineAvailabilityAfterScanningPlaintextAsync(byte[] data, string? contentType, string? originalFileName, CancellationToken ct)
     {
         EnsureScanRequirementSatisfied();
@@ -659,7 +626,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         };
     }
 
-    /// <summary>Fails closed when <see cref="FileStorageServiceBaseOptions.RequireScanBeforeAvailable"/> is set but no real scanner is wired.</summary>
+    /// <summary>Fails closed when <see cref="FileStorageServiceBaseOptions.RequireScanBeforeAvailable" /> is set but no real scanner is wired.</summary>
     protected internal void EnsureScanRequirementSatisfied()
     {
         if (Options.RequireScanBeforeAvailable && MalwareScanner is NullFileMalwareScanner) {
@@ -746,14 +713,14 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
             OperationHelpers.ThrowIfNullOrWhiteSpace(
                 keyId, "Encryption was requested but no keyId was provided. When encrypting files, you must provide a keyId parameter to identify the encryption key to use.");
 
-            Stream? pipelineOutputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
+            var pipelineOutputStream = await CreateOutputStreamAsync(fileId, fileExtension, normalizedPathPrefix, ct).ConfigureAwait(false);
             try {
-                var pipelineResult = await _streamingPipelines.SaveWithCompressEncryptPipelineAsync(inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, ct)
+                var pipelineResult = await _streamingPipelines.SaveWithCompressEncryptPipelineAsync(
+                        inputStream, pipelineOutputStream, fileId, keyId, normalizedPathPrefix, chunkSize, originalSize, ct)
                     .ConfigureAwait(false);
 
                 // SaveWithCompressEncryptPipelineAsync flushes and disposes the output stream as part of its commit; avoid a double dispose in the finally below.
                 pipelineOutputStream = null;
-
                 originalHash = pipelineResult.OriginalHash;
                 fileExtension = pipelineResult.FileExtension;
                 sourceFileName = pipelineResult.SourceFileName;
@@ -898,7 +865,6 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
 
             // Save metadata using metadata service
             await MetadataService.SaveMetadataAsync(fileId, metadata, ct).ConfigureAwait(false);
-
             FileSaved?.Invoke(this, new(fileId, FileStoreSnapshot.From(metadata), originalSize, finalSize, compress, encrypt));
             return metadata;
         }
@@ -932,7 +898,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         }
     }
 
-    /// <summary>Best-effort cleanup when <see cref="FileStream"/> construction fails for temporary staging files.</summary>
+    /// <summary>Best-effort cleanup when <see cref="FileStream" /> construction fails for temporary staging files.</summary>
     private static void TryDeleteStagingFile(string path)
     {
         try {
@@ -957,16 +923,18 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
     /// <summary>Single-line, length-capped, audit-safe sanitization for failure messages emitted in audit events.</summary>
     public static string SanitizeAuditError(string? message)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsNullOrEmpty())
             return string.Empty;
 
         const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
-        return s.Length > max ? s.Substring(0, max) : s;
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
     }
-    #endregion
 
-    #region Retrieve
+#endregion
+
+#region Retrieve
+
     /// <inheritdoc />
     public async Task<byte[]> GetFileAsync(Guid fileId, CancellationToken ct = default)
     {
@@ -1198,14 +1166,13 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         FileRetrieved?.Invoke(this, new(fileId, metadata.OriginalFileSize, metadata.IsCompressed, metadata.IsEncrypted));
         return new HashVerifyingReadStream(decoded, verifyHashAlgo, metadata.OriginalFileHash, Options.ThrowOnHashMismatch, Logger, fileId);
     }
-    #endregion
 
-    #region Delete.Metadata
+#endregion
+
+#region Delete.Metadata
+
     /// <inheritdoc />
-    public async Task<bool> DeleteFileAsync(
-        Guid fileId,
-        FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata,
-        CancellationToken ct = default)
+    public async Task<bool> DeleteFileAsync(Guid fileId, FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata, CancellationToken ct = default)
     {
         using var timer = Metrics.StartTimer(MetricNames[nameof(Constants.Metrics.DeleteDuration)]);
         var sw = Stopwatch.StartNew();
@@ -1232,7 +1199,6 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
                 await MetadataService.DeleteMetadataAsync(fileId, ct).ConfigureAwait(false);
 
             var deleted = await DeleteFromStorageAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
-
             sw.Stop();
             Logger.LogInformation("Successfully deleted file {FileId} (mode {Mode})", fileId, mode);
             FileDeleted?.Invoke(this, new(fileId, deleted));
@@ -1284,7 +1250,7 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         return metadata;
     }
 
-    /// <summary>Throws <see cref="FileNotAvailableException"/> when metadata indicates the payload is not readable for the current policy.</summary>
+    /// <summary>Throws <see cref="FileNotAvailableException" /> when metadata indicates the payload is not readable for the current policy.</summary>
     protected void EnsureReadableAvailability(FileStoreResult metadata)
     {
         if (metadata.Availability == FileAvailability.Available)
@@ -1296,8 +1262,8 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         throw new FileNotAvailableException(metadata.Id, metadata.Availability);
     }
 
-    /// <summary>Applies <see cref="FileStorageServiceBaseOptions.DuplicateStrategy"/> after computing the canonical hash for a new upload.</summary>
-    /// <returns>Existing metadata to short-circuit the save, or <see langword="null"/> to continue writing a new object.</returns>
+    /// <summary>Applies <see cref="FileStorageServiceBaseOptions.DuplicateStrategy" /> after computing the canonical hash for a new upload.</summary>
+    /// <returns>Existing metadata to short-circuit the save, or <see langword="null" /> to continue writing a new object.</returns>
     protected async Task<FileStoreResult?> HandleDuplicateAsync(
         FileStoreResult existingMetadata,
         Guid newFileId,
@@ -1332,9 +1298,11 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
                 return null;
         }
     }
-    #endregion
 
-    #region Dek
+#endregion
+
+#region Dek
+
     /// <inheritdoc />
     public virtual Task<DekMigrationResult> MigrateDeksAsync(
         string sourceKeyId,
@@ -1353,15 +1321,13 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         int batchSize = 100,
         CancellationToken ct = default)
         => _dekOperations.RotateDeksAsync(fileIds, targetKeyId, targetKeyVersion, batchSize, ct);
-    #endregion
 
-    #region DirectUpload.Copy
+#endregion
+
+#region DirectUpload.Copy
+
     /// <inheritdoc cref="PlainDirectUploadCoordinator.PersistPendingPlainDirectUploadMetadataAsync" />
-    protected Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(
-        Guid fileId,
-        DirectUploadBeginRequest request,
-        string normalizedPathPrefix,
-        CancellationToken ct)
+    protected Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(Guid fileId, DirectUploadBeginRequest request, string normalizedPathPrefix, CancellationToken ct)
         => _plainDirectUpload.PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalizedPathPrefix, ct);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.FinalizePendingPlainDirectUploadCoreAsync" />
@@ -1369,11 +1335,11 @@ public abstract class FileStorageServiceBase : IFileStorageService, IDisposable,
         => _plainDirectUpload.FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
 
     /// <summary>Matches stored <see cref="FileStoreResult.SourceFileName" /> suffix conventions (plaintext uses <see cref="Guid.ToString()" />, hashed paths append extensions).</summary>
-    protected static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName)
-        => PlainDirectUploadCoordinator.InferTrailingSuffixAfterFileId(id, sourceFileName);
+    protected static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName) => PlainDirectUploadCoordinator.InferTrailingSuffixAfterFileId(id, sourceFileName);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordCopyMetadataAsync" />
     protected Task<FileStoreResult> RecordCopyMetadataAsync(Guid sourceFileId, FileStoreResult sourceMeta, Guid destId, CopyFileRequest? request, CancellationToken ct)
         => _plainDirectUpload.RecordCopyMetadataAsync(sourceFileId, sourceMeta, destId, request, ct);
-    #endregion
+
+#endregion
 }

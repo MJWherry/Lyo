@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Lyo.Common.Records;
 using Lyo.IO.Temp.Enums;
 
@@ -10,8 +12,27 @@ namespace Lyo.IO.Temp.Models;
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempSessionOptions
 {
-    /// <summary>Parent directory under which the session folder is created.</summary>
-    public string RootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-io-temp");
+    /// <summary>
+    /// Default parent directory for standalone sessions. Suffixed with the current process id so two test runners (or two production processes) on the same host don't
+    /// share a cleanup root by accident, while still being grouped under a well-known <c>lyo-io-temp</c> folder for discovery.
+    /// </summary>
+    private static readonly string DefaultRootDirectory = Path.Combine(
+        Path.GetTempPath(),
+        "lyo-io-temp",
+#if NET5_0_OR_GREATER
+        Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+#else
+        Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture));
+#endif
+
+    /// <summary>Parent directory under which the session folder is created. Defaults to a per-process subfolder of <see cref="Path.GetTempPath" />.</summary>
+    public string RootDirectory { get; set; } = DefaultRootDirectory;
+
+    /// <summary>
+    /// When true (default), <see cref="RootDirectory" /> is created on session construction if missing; otherwise a missing root throws. Mirrors the equivalent flag on
+    /// <see cref="Lyo.IO.Temp.Models.IOTempServiceOptions" /> so standalone sessions and service-created sessions have the same bootstrapping ergonomics.
+    /// </summary>
+    public bool CreateRootDirectoryIfNotExists { get; set; } = true;
 
     /// <summary>When true and metrics are supplied to the session, operations emit timings and counters.</summary>
     public bool EnableMetrics { get; init; } = true;

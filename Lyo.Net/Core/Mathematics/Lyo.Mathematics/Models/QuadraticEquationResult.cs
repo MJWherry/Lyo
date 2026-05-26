@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Models;
 
 /// <summary>Result values returned from mathematics routines (<c>QuadraticEquationResult</c>).</summary>
 /// <remarks>Immutable contract; safe to cache or serialize alongside the originating computation metadata.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct QuadraticEquationResult(double Discriminant, double? Root1, double? Root2, bool HasRealRoots)
 {

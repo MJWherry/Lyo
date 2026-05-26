@@ -1,5 +1,5 @@
-using Lyo.EntityReference.Models;
 using Lyo.Config.Api.Infrastructure;
+using Lyo.EntityReference.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Lyo.Config.Api.Endpoints;

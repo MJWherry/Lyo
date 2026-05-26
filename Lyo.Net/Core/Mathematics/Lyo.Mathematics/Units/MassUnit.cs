@@ -5,8 +5,10 @@ public enum MassUnit
 {
     /// <summary>SI kilogram.</summary>
     Kilogram = 0,
+
     /// <summary>Gram (10⁻³ kg).</summary>
     Gram = 1,
+
     /// <summary>Avoirdupois pound (≈0.45359237 kg).</summary>
     Pound = 2
 }

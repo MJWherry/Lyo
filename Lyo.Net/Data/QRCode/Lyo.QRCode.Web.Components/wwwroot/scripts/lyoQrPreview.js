@@ -10,7 +10,7 @@ export function createBlobUrlFromBase64(base64, mimeType) {
         bytes[i] = binary.charCodeAt(i);
 
     const type = mimeType && mimeType.length > 0 ? mimeType : "application/octet-stream";
-    return URL.createObjectURL(new Blob([bytes], { type }));
+    return URL.createObjectURL(new Blob([bytes], {type}));
 }
 
 export function revokeBlobUrl(url) {

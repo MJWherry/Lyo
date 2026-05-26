@@ -1,4 +1,3 @@
-using Lyo.Images.Ocr;
 using Lyo.Images.Ocr.Models;
 using Lyo.Result;
 using SixLabors.Fonts;
@@ -12,24 +11,12 @@ namespace Lyo.Images.Ocr.Tesseract.Tests;
 /// <summary>Japanese OCR requires <c>jpn.traineddata</c> alongside <c>eng.traineddata</c> in tessdata and a Japanese-capable font for raster synthesis.</summary>
 public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixture)
 {
-    private readonly TesseractOcrTestFixture _fixture = fixture;
-
     private static readonly string[] JapaneseFontCandidates = [
-        "Noto Sans CJK JP",
-        "Noto Serif CJK JP",
-        "Noto Sans JP",
-        "Noto Serif JP",
-        "IPAPGothic",
-        "IPAexGothic",
-        "IPAexMincho",
-        "Yu Gothic",
-        "YuMincho",
-        "Meiryo",
-        "MS Gothic",
-        "Hiragino Sans",
-        "PingFang SC",
-        "Microsoft YaHei"
+        "Noto Sans CJK JP", "Noto Serif CJK JP", "Noto Sans JP", "Noto Serif JP", "IPAPGothic", "IPAexGothic", "IPAexMincho", "Yu Gothic", "YuMincho", "Meiryo",
+        "MS Gothic", "Hiragino Sans", "PingFang SC", "Microsoft YaHei"
     ];
+
+    private readonly TesseractOcrTestFixture _fixture = fixture;
 
     [Fact]
     public async Task ReadAsync_jpn_language_recognizes_rendered_japanese()
@@ -38,12 +25,8 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
         var tessDir = _fixture.ResolveTessdataDirectory();
         Assert.SkipWhen(string.IsNullOrEmpty(tessDir), TesseractOcrTestFixture.TessdataResolutionHint);
         Assert.SkipUnless(TesseractOcrTestFixture.HasLanguageModel(tessDir, "jpn"), TesseractOcrTestFixture.JapaneseModelMissingHint);
-
         var png = TryCreatePngWithJapaneseText("日本語");
-
-        Assert.SkipWhen(png == null,
-            "No Japanese-capable font found for ImageSharp rendering (install fonts-noto-cjk or fonts-ipafont).");
-
+        Assert.SkipWhen(png == null, "No Japanese-capable font found for ImageSharp rendering (install fonts-noto-cjk or fonts-ipafont).");
         var shared = _fixture.GetOcrEngineOptions();
         var tess = _fixture.GetTesseractOcrEngineOptions();
         if (string.IsNullOrWhiteSpace(tess.TessdataDirectory))
@@ -51,14 +34,13 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
 
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var ms = new MemoryStream(png);
-        var result = await engine.ReadAsync(ms, new OcrReadRequest { Languages = "jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock },
-            TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(ms, new() { Languages = "jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess, result.Errors is { } e ? string.Join("; ", e.Select(x => x.Message)) : "");
         Assert.NotNull(result.Data);
-
         var compact = WhitespaceRemoved(result.Data!.FullText);
-        Assert.True(compact.Contains("日本語", StringComparison.Ordinal) || compact.Contains("日本", StringComparison.Ordinal),
+        Assert.True(
+            compact.Contains("日本語", StringComparison.Ordinal) || compact.Contains("日本", StringComparison.Ordinal),
             $"Expected Japanese glyphs in OCR text; got: {result.Data.FullText}");
     }
 
@@ -69,12 +51,8 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
         var tessDir = _fixture.ResolveTessdataDirectory();
         Assert.SkipWhen(string.IsNullOrEmpty(tessDir), TesseractOcrTestFixture.TessdataResolutionHint);
         Assert.SkipUnless(TesseractOcrTestFixture.HasLanguageModel(tessDir, "jpn"), TesseractOcrTestFixture.JapaneseModelMissingHint);
-
         var png = TryCreatePngWithJapaneseText("テスト");
-
-        Assert.SkipWhen(png == null,
-            "No Japanese-capable font found for ImageSharp rendering (install fonts-noto-cjk or fonts-ipafont).");
-
+        Assert.SkipWhen(png == null, "No Japanese-capable font found for ImageSharp rendering (install fonts-noto-cjk or fonts-ipafont).");
         var shared = _fixture.GetOcrEngineOptions();
         var tess = _fixture.GetTesseractOcrEngineOptions();
         if (string.IsNullOrWhiteSpace(tess.TessdataDirectory))
@@ -82,18 +60,16 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
 
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var ms = new MemoryStream(png);
-        var result = await engine.ReadAsync(ms, new OcrReadRequest { Languages = "eng+jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock },
-            TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(ms, new() { Languages = "eng+jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess, result.Errors is { } e ? string.Join("; ", e.Select(x => x.Message)) : "");
         Assert.NotNull(result.Data);
-
         var compact = WhitespaceRemoved(result.Data!.FullText);
         Assert.Contains("テスト", compact, StringComparison.Ordinal);
     }
 
-    private static string WhitespaceRemoved(string text) =>
-        text.Replace(" ", "", StringComparison.Ordinal).Replace("\n", "", StringComparison.Ordinal).Replace("\r", "", StringComparison.Ordinal);
+    private static string WhitespaceRemoved(string text)
+        => text.Replace(" ", "", StringComparison.Ordinal).Replace("\n", "", StringComparison.Ordinal).Replace("\r", "", StringComparison.Ordinal);
 
     private static byte[]? TryCreatePngWithJapaneseText(string text)
     {

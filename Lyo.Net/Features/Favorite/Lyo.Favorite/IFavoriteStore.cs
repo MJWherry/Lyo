@@ -4,8 +4,8 @@ namespace Lyo.Favorite;
 
 /// <summary>Interface for storing and retrieving favorites.</summary>
 /// <remarks>
-/// Stores accept <see cref="EntityRef"/> at the API boundary but persist <c>EntityId</c> as a single Guid per Option A.
-/// Pass null for <c>tenantId</c> on methods in single-tenant deployments (resolved via <see cref="EntityRefOptions.DefaultTenantId"/>).
+/// Stores accept <see cref="EntityRef" /> at the API boundary but persist <c>EntityId</c> as a single Guid per Option A. Pass null for <c>tenantId</c> on methods in
+/// single-tenant deployments (resolved via <see cref="EntityRefOptions.DefaultTenantId" />).
 /// </remarks>
 public interface IFavoriteStore
 {
@@ -34,7 +34,11 @@ public interface IFavoriteStore
     Task<int> GetCountForEntityAsync(EntityRef forEntity, Guid? tenantId = null, string? context = null, CancellationToken ct = default);
 
     /// <summary>Gets favorite counts keyed by for-entity id. Missing ids are omitted (treat as zero).</summary>
-    Task<IReadOnlyDictionary<Guid, int>> GetFavoriteCountsForEntitiesAsync(string forEntityType, IReadOnlyList<Guid> forEntityIds, Guid? tenantId = null, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<Guid, int>> GetFavoriteCountsForEntitiesAsync(
+        string forEntityType,
+        IReadOnlyList<Guid> forEntityIds,
+        Guid? tenantId = null,
+        CancellationToken ct = default);
 
     /// <summary>Soft-deletes a favorite by id.</summary>
     Task DeleteAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default);

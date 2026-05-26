@@ -77,7 +77,8 @@ public sealed record SelectByIndexElementAction(int Index) : ElementAction
 }
 
 /// <summary>
-/// Generic dropdown: native <c>&lt;select&gt;</c> or custom menu. Default <see cref="DropdownElementAction.Mode" /> is <see cref="DropdownSelectionMode.Auto" /> (uses tag name).
+/// Generic dropdown: native <c>&lt;select&gt;</c> or custom menu. Default <see cref="DropdownElementAction.Mode" /> is <see cref="DropdownSelectionMode.Auto" /> (uses tag
+/// name).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record DropdownElementAction(
@@ -90,6 +91,5 @@ public sealed record DropdownElementAction(
     string? ScopeParentRef = null) : ElementAction
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"dropdown (mode: {Mode})";
+    public override string ToString() => $"dropdown (mode: {Mode})";
 }

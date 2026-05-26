@@ -1,4 +1,3 @@
-using Lyo.Images.OpenCv;
 using Microsoft.Extensions.DependencyInjection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -28,20 +27,17 @@ public sealed class OpenCvRoiInpaintTests
         await using var ms = new MemoryStream();
         await img.SaveAsPngAsync(ms, TestContext.Current.CancellationToken);
         var png = ms.ToArray();
-
         var r = OpenCvRoiInpaint.InpaintTelea(png, 16, 16, 16, 16, 5);
         Assert.True(r.IsSuccess, r.Errors is { Count: > 0 } ? r.Errors[0].Message : "expected success");
         Assert.NotNull(r.Data);
-
         using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestContext.Current.CancellationToken);
         Assert.Equal(48, outImg.Width);
         Assert.Equal(48, outImg.Height);
-
         var before = img[24, 24];
         var after = outImg[24, 24];
         Assert.True(before.R > 240 && before.G < 20);
-        var sumBefore = (int)before.R + before.G + before.B;
-        var sumAfter = (int)after.R + after.G + after.B;
+        var sumBefore = before.R + before.G + before.B;
+        var sumAfter = after.R + after.G + after.B;
         Assert.True(sumAfter > sumBefore + 80, $"expected inpaint to pull toward surrounding white, before={sumBefore} after={sumAfter}");
     }
 
@@ -57,19 +53,16 @@ public sealed class OpenCvRoiInpaintTests
         await using var ms = new MemoryStream();
         await img.SaveAsPngAsync(ms, TestContext.Current.CancellationToken);
         var png = ms.ToArray();
-
         var r = OpenCvRoiInpaint.InpaintColorRoiPng(png, 16, 16, 16, 16, 5, OpenCvInpaintAlgorithm.NavierStokes);
         Assert.True(r.IsSuccess, r.Errors is { Count: > 0 } ? r.Errors[0].Message : "expected success");
         Assert.NotNull(r.Data);
-
         using var outImg = await Image.LoadAsync<Rgba32>(new MemoryStream(r.Data), TestContext.Current.CancellationToken);
         Assert.Equal(48, outImg.Width);
         Assert.Equal(48, outImg.Height);
-
         var before = img[24, 24];
         var after = outImg[24, 24];
-        var sumBefore = (int)before.R + before.G + before.B;
-        var sumAfter = (int)after.R + after.G + after.B;
+        var sumBefore = before.R + before.G + before.B;
+        var sumAfter = after.R + after.G + after.B;
         Assert.True(sumAfter > sumBefore + 80);
     }
 
@@ -80,7 +73,6 @@ public sealed class OpenCvRoiInpaintTests
         using var ms = new MemoryStream();
         img.SaveAsPng(ms);
         var png = ms.ToArray();
-
         var r = OpenCvRoiInpaint.InpaintTelea(png, -5, -5, 100, 100, 2);
         Assert.True(r.IsSuccess, r.Errors is { Count: > 0 } ? r.Errors[0].Message : "");
         Assert.NotNull(r.Data);

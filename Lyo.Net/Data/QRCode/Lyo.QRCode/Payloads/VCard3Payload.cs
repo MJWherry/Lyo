@@ -8,17 +8,6 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class VCard3Payload : IQrPayload
 {
-    /// <summary>Creates a vCard with at least a formatted name.</summary>
-    public VCard3Payload(string fullName, string? telephone = null, string? email = null, string? organization = null, string? url = null)
-    {
-        ArgumentHelpers.ThrowIfNull(fullName);
-        FullName = fullName.Trim();
-        Telephone = telephone?.Trim();
-        Email = email?.Trim();
-        Organization = organization?.Trim();
-        Url = url?.Trim();
-    }
-
     /// <summary><c>FN</c> property (required).</summary>
     public string FullName { get; }
 
@@ -34,15 +23,21 @@ public sealed class VCard3Payload : IQrPayload
     /// <summary>Optional <c>URL</c> (http(s) recommended).</summary>
     public string? Url { get; }
 
-    /// <inheritdoc />
-    public override string ToString()
-        => $"VCard3Payload FN={FullName}, TEL={Telephone ?? "(none)"}, EMAIL={Email ?? "(none)"}, ORG={Organization ?? "(none)"}, URL={Url ?? "(none)"}";
+    /// <summary>Creates a vCard with at least a formatted name.</summary>
+    public VCard3Payload(string fullName, string? telephone = null, string? email = null, string? organization = null, string? url = null)
+    {
+        ArgumentHelpers.ThrowIfNull(fullName);
+        FullName = fullName.Trim();
+        Telephone = telephone?.Trim();
+        Email = email?.Trim();
+        Organization = organization?.Trim();
+        Url = url?.Trim();
+    }
 
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(FullName), "Full name (FN) cannot be empty.", nameof(FullName));
-
         if (!string.IsNullOrEmpty(Url)) {
             if (!Uri.TryCreate(Url, UriKind.Absolute, out var u))
                 throw new InvalidFormatException("URL must be absolute when provided.", nameof(Url), Url, "https://example.com");
@@ -54,7 +49,6 @@ public sealed class VCard3Payload : IQrPayload
         var sb = new StringBuilder(128);
         sb.Append("BEGIN:VCARD\r\nVERSION:3.0\r\n");
         sb.Append("FN:").Append(QrVCardTextEscape.Escape(FullName)).Append("\r\n");
-
         if (!string.IsNullOrWhiteSpace(Telephone))
             sb.Append("TEL:").Append(QrVCardTextEscape.Escape(Telephone)).Append("\r\n");
 
@@ -70,4 +64,8 @@ public sealed class VCard3Payload : IQrPayload
         sb.Append("END:VCARD");
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"VCard3Payload FN={FullName}, TEL={Telephone ?? "(none)"}, EMAIL={Email ?? "(none)"}, ORG={Organization ?? "(none)"}, URL={Url ?? "(none)"}";
 }

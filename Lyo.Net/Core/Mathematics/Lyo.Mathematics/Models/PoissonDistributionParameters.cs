@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Models;
 
 /// <summary>Parameter bundle for probability or statistics routines (<c>PoissonDistributionParameters</c>).</summary>
 /// <remarks>Used with <c>DistributionsFunctions</c> and related helpers.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct PoissonDistributionParameters
 {

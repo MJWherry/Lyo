@@ -1,3 +1,16 @@
 # Lyo.DataTable
 
-Mutable data table with per-cell and per-row formatting. Used for CSV, XLSX, PDF tabular data and programmatic table construction.
+Empty package placeholder reserving the `Lyo.DataTable` name. The runtime types
+(`DataTable`, `DataTableRow`, `DataTableBuilder`, cell types, HTML renderer) all live
+in [`Lyo.DataTable.Models`](../Lyo.DataTable.Models/README.md).
+
+If you need the data-table API, reference `Lyo.DataTable.Models` directly.
+
+## Targeting
+
+`netstandard2.0;net10.0`. No source files, no project references, no NuGet
+dependencies.
+
+## Related projects
+
+- [`Lyo.DataTable.Models`](../Lyo.DataTable.Models/README.md) — actual implementation.

@@ -1,17 +1,17 @@
-using Lyo.Images.Ocr.Models;
 using Lyo.Exceptions;
+using Lyo.Images.Ocr.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Images.Ocr;
 
-/// <summary>Registers shared OCR configuration types (provider implementations register <see cref="IOcrEngine"/>).</summary>
+/// <summary>Registers shared OCR configuration types (provider implementations register <see cref="IOcrEngine" />).</summary>
 public static class OcrServiceCollectionExtensions
 {
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Binds <see cref="OcrEngineOptions"/> from configuration.</summary>
+        /// <summary>Binds <see cref="OcrEngineOptions" /> from configuration.</summary>
         public IServiceCollection AddOcrEngineOptionsFromConfiguration(IConfiguration configuration, string sectionName = OcrEngineOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -29,7 +29,7 @@ public static class OcrServiceCollectionExtensions
             return services;
         }
 
-        /// <summary>Registers <see cref="OcrEngineOptions"/> with optional setup.</summary>
+        /// <summary>Registers <see cref="OcrEngineOptions" /> with optional setup.</summary>
         public IServiceCollection AddOcrEngineOptions(Action<OcrEngineOptions>? configure = null)
         {
             ArgumentHelpers.ThrowIfNull(services);

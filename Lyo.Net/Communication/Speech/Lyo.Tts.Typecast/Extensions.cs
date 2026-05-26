@@ -42,6 +42,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ITtsService<TypecastTtsRequest>>(provider => provider.GetRequiredService<TypecastTtsService>());
+            services.AddSingleton<TypecastTtsAppService>(provider => new(provider.GetRequiredService<TypecastTtsService>()));
+            services.AddSingleton<ITtsService>(provider => provider.GetRequiredService<TypecastTtsAppService>());
             return services;
         }
 
@@ -95,6 +97,8 @@ public static class Extensions
             });
 
             services.AddSingleton<ITtsService<TypecastTtsRequest>>(provider => provider.GetRequiredService<TypecastTtsService>());
+            services.AddSingleton<TypecastTtsAppService>(provider => new(provider.GetRequiredService<TypecastTtsService>()));
+            services.AddSingleton<ITtsService>(provider => provider.GetRequiredService<TypecastTtsAppService>());
             return services;
         }
     }

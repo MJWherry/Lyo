@@ -24,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Adds the PostgreSQL comic DbContextFactory by binding from configuration.</summary>
-        public IServiceCollection AddComicDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresComicOptions.SectionName)
+        public IServiceCollection AddComicDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresComicOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -64,9 +62,7 @@ public static class Extensions
         }
 
         /// <summary>Adds the PostgreSQL comic DbContextFactory and <see cref="IComicStore" /> by binding from configuration.</summary>
-        public IServiceCollection AddPostgresComicStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresComicOptions.SectionName)
+        public IServiceCollection AddPostgresComicStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresComicOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

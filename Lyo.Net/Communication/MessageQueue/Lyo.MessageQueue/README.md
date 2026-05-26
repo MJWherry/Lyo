@@ -29,6 +29,12 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 **Publishing**
 
 - **`SendToQueue`** sends raw **`byte[]`** payloads—serialization policy lives in your worker (`System.Text.Json`, protobuf, compressed blobs, …).
+- **
+  `QueueMessageExtensions.SendToQueueWithEnvelopeAsync<T>(this IMqService, string queueName, T payload, JsonSerializerOptions?, string? messageId, DateTime? enqueuedAt, string? traceId)`
+  **
+  is a typed publish helper that wraps `payload` in a fresh `QueueMessageEnvelope<T>` (requeue count `0`,
+  generated `MessageId`, `EnqueuedAt = UtcNow`) and forwards the JSON bytes to `SendToQueue`. Use it when
+  publishing to queues consumed by `QueueWorkerBase` so requeue tracking starts on the first hop.
 
 **Topics / exchanges**
 
@@ -37,25 +43,50 @@ Implements **`Lyo.Health.IHealth`** so dashboards can ping broker connectivity a
 
 ## Messaging envelopes (`QueueMessageEnvelope<T>`)
 
-Higher-level helpers (see `QueueWorkerHelpers`) detect JSON shaped like **`{ Payload, RequeueCount, … }`** vs raw DTO JSON so you can:
+`QueueMessageEnvelope<T>` carries `Payload`, `RequeueCount`, `MessageId`, `EnqueuedAt`, `TraceId`, and
+`Version` alongside the payload. The internal `QueueWorkerHelpers.DeserializeMessage<T>` detects JSON
+shaped like `{ Payload, RequeueCount, … }` vs raw DTO JSON so you can:
 
-- Attach **`RequeueCount`** / identifiers / timestamps without wrapping every caller manually.
-- Migrate legacy producers that still emit bare JSON objects.
+- Attach `RequeueCount` / identifiers / timestamps without wrapping every caller manually.
+- Migrate legacy producers that still emit bare JSON objects — the first requeue from a legacy message
+  is automatically wrapped in an envelope by `QueueWorkerBase` so subsequent requeues count correctly.
 
-Workers can **`WrapInEnvelope`** when publishing retries.
+`MessageProcessingExceptionHandling` (`IgnoreAndRemoveFromQueue`, `ThrowAndRemoveFromQueue`,
+`RequeueOnException`) is the shared enum implementations expose for tuning how thrown exceptions in
+message handlers are mapped to ack/nack/requeue semantics.
 
-## Hosted worker pattern (`QueueWorkerBase<TRequest,TResult>`)
+## Hosted worker pattern (`QueueWorkerBase<TRequest, TResult>` where `TResult : ResultBase`)
 
 Subclass for **typed JSON consumers**:
 
-- Implements **`IHostedService`** — starts **`SubscribeToQueue`** during host startup.
-- Parses messages via **`DeserializeMessage`** (envelope-aware).
-- Executes your abstract **`Process`** returning **`TResult : ResultBase` (`Lyo.Result`)**.
-- Applies **requeue heuristics**: optional **`Metadata["requeue"]` bool** overrides automatic **`!isSuccess` requeue**.
-- Supports **`maxRequeueCount`** + optional **DLQ publish** when poison messages exceed thresholds.
-- Tracks **`InFlightCount`**, respects **`DrainTimeoutMs`** on shutdown, emits metrics via **`IMetrics`**.
+- Implements `IHostedService` + `IDisposable` + `IHealth` — `StartAsync` connects (if needed) and calls
+  `SubscribeToQueue`; `StopAsync` cancels and waits up to `DrainTimeoutMs` (default `30_000` ms) for in-flight
+  messages before returning.
+- Parses messages via the envelope-aware `DeserializeMessage` helper.
+- Executes your abstract `DoWorkAsync(TRequest, CancellationToken) → Task<TResult>`.
+- Applies requeue heuristics: an optional `Metadata["requeue"]` bool on the result overrides the default
+  `!IsSuccess` requeue.
+- Supports `maxRequeueCount` + optional DLQ publish (`dlqName`); when the count is exceeded, the original
+  message bytes are forwarded to the DLQ if configured, otherwise the message is dropped at Error level.
+- Tracks `InFlightCount`, exposes a `queue-worker:{QueueName}` health probe via `CheckHealthAsync`, and
+  emits metrics via the injected `IMetrics`:
+    - `queue.worker.message.processing.duration` (timer; tag `queue`)
+    - `queue.worker.messages.received` / `processed` / `requeued` / `deserialization.failed` / `dropped.max_requeue` / `dlq`
+    - `queue.worker.started` / `start.failed` / `stopped`
+    - `queue.worker.running` (gauge; `1` while running, `0` after stop)
+    - Error records on `queue.worker.message.processing.error` and `queue.worker.message.deserialization.error`
 
 This is the **production-grade** path for long-running consumers in Lyo’s own job/email stacks.
+
+### Health and diagnostics surface
+
+`IMqService` itself extends `IHealth` (broker reachability). Implementations also publish broker-level
+diagnostics through these neutral record types so dashboards can render the same shape across providers:
+
+- `MqServiceHealth` — `Queues` and `Connections` collections.
+- `MessageQueueInfo(Name, State?, Type?, Messages, MessagesReady, MessagesUnacknowledged, Consumers, AdditionalProperties)` — generic per-queue snapshot.
+- `ConnectionInfo(User, UserProvidedName?, State, VHost)` — generic connection snapshot.
+- `QueuePeekMessage(Payload, PayloadEncoding?, Exchange?, RoutingKey?, MessageCount?, Redelivered)` — what `PeekQueueMessages` returns.
 
 ## Operational guidance
 

@@ -42,9 +42,19 @@ Optional presence without conflating “failed operation” with “no value”.
 - **`BulkResultBuilder`** — accumulate many item-level outcomes into **`BulkResult`**.
 - **`ErrorBuilder`** — compose complex **`Error`** graphs (nested inner errors, metadata).
 
+### Request-paired results
+
+- **`Result<TRequest, TResult>`** — extends `Result<TResult>` with the original `TRequest` payload, so failure paths can echo back the input that produced the error. Adds
+  `TryGetRequest`, a four-tuple `Deconstruct`, and request-aware `Success` / `Failure(Exception, …)` factories.
+- **`BulkResult<TRequest, TResult>`** — bulk variant whose `Results`, `SuccessfulResults`, and `FailedResults` collections are paired (`Result<TRequest, TResult>`), plus
+  `SuccessfulRequests` / `FailedRequests` projections for re-driving partial failures.
+- **`BulkResultFromRequest<TRequest, TResult>`** — a single request that expands into many per-item results (e.g. one upload → many row outcomes), with `FromData`,
+  `FromResults`, `FromErrors`, and `FromException` helpers.
+
 ### Lists and paging
 
-- **`BulkResult`** — many operations in one round-trip; per-item success flags + shared errors.
+- **`BulkResult<T>`** — many operations in one round-trip with cached `SuccessCount` / `FailureCount`, `IsCompleteSuccess` / `IsCompleteFailure` / `HasPartialSuccess` flags,
+  `ErrorCodes` / `ErrorMessages` (flattened over inner errors), `SuccessfulData` / `FailedData`, and `FromResults` / `FromData` / `FromErrors` factories.
 - **`PagedResult`** — page metadata + items as a **`Result`** envelope.
 
 ### Async composition
@@ -57,6 +67,16 @@ Use these to keep **async pipelines** linear without nested `if (!result.IsSucce
 ### Guards and validation
 
 **`Ensure`** and **`ValidationHelpers`** express preconditions and collect validation failures into **`Error`** / **`Result`** shapes (see XML docs on each file).
+
+### Exception → Result adapters
+
+**`ExceptionExtensions`** provides drop-in adapters for exception-throwing code:
+
+| Extension                                 | Purpose                                                                                  |
+|-------------------------------------------|------------------------------------------------------------------------------------------|
+| `Exception.ToResult<T>(code?)`            | Wraps an exception as `Result<T>.Failure(exception, code)`.                              |
+| `Task<T>.ToResultAsync<T>(code?)`         | Awaits the task; success → `Result<T>.Success`, exception → `Result<T>.Failure`.         |
+| `Task<Result<T>>.ToResultAsync<T>(code?)` | Awaits a result-returning task and converts thrown exceptions into a failed `Result<T>`. |
 
 ### Logging
 

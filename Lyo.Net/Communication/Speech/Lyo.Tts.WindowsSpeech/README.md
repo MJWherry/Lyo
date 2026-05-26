@@ -23,51 +23,61 @@ Windows Speech Synthesis Text-to-Speech service implementation for the Lyo frame
 ### Basic Usage
 
 ```csharp
+using Lyo.Tts;
+using Lyo.Tts.Models;
 using Lyo.Tts.WindowsSpeech;
 using Microsoft.Extensions.DependencyInjection;
 
-// Register the service
 var services = new ServiceCollection();
 services.AddWindowsSpeechTtsService(options =>
 {
     options.DefaultVoiceId = "Microsoft Zira Desktop";
-    options.DefaultLanguageCode = "en-US";
-    options.DefaultOutputFormat = "wav";
+    options.DefaultOutputFormat = AudioFormat.Wav;
+    options.MaxTextLength = 5000;
     options.EnableMetrics = true;
 });
 
-var serviceProvider = services.BuildServiceProvider();
-var ttsService = serviceProvider.GetRequiredService<ITtsService>();
+await using var serviceProvider = services.BuildServiceProvider();
+var ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();
 
-// Synthesize text to speech
 var result = await ttsService.SynthesizeAsync("Hello, world!");
-
-if (result.IsSuccess && result.AudioData != null)
-{
+if (result.IsSuccess && result.AudioData is { Length: > 0 })
     await File.WriteAllBytesAsync("output.wav", result.AudioData);
-}
 ```
 
-### Using with Configuration
+### Using with an explicit options instance
 
 ```csharp
-services.AddWindowsSpeechTtsService(options =>
+services.AddWindowsSpeechTtsService(new TtsServiceOptions
 {
-    options.DefaultVoiceId = "Microsoft Zira Desktop";
-    options.DefaultLanguageCode = "en-US";
-    options.DefaultOutputFormat = "wav";
-    options.MaxTextLength = 5000;
-    options.EnableMetrics = true;
+    DefaultVoiceId = "Microsoft Zira Desktop",
+    DefaultOutputFormat = AudioFormat.Wav,
+    MaxTextLength = 5000,
+    EnableMetrics = true,
 });
 ```
 
 ### List Available Voices
 
 ```csharp
-var ttsService = new WindowsSpeechTtsService(options);
-var testResult = await ttsService.TestConnectionAsync();
-// This will log available voices
+var ttsService = serviceProvider.GetRequiredService<ITtsService<WindowsTtsRequest>>();
+var ok = await ttsService.TestConnectionAsync();
+// TestConnectionAsync logs every installed SAPI voice via the registered ILogger.
 ```
+
+## Registered services
+
+`AddWindowsSpeechTtsService` (`Action<TtsServiceOptions>?` or `TtsServiceOptions`) registers:
+
+- `TtsServiceOptions` (singleton).
+- `WindowsSpeechTtsService` (singleton; subclass of `TtsServiceBase<WindowsTtsRequest>`).
+- `ITtsService<WindowsTtsRequest>` resolved from the singleton above.
+
+It does **not** register the non-generic `ITtsService` — there is no `WindowsSpeechTtsAppService`
+adapter in this package today, so callers that depend on `ITtsService` should depend on
+`ITtsService<WindowsTtsRequest>` instead (or wire up their own adapter). The other Lyo TTS providers
+([`Lyo.Tts.AwsPolly`](../Lyo.Tts.AwsPolly/README.md), [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md))
+register both interfaces because they ship an `*TtsAppService` adapter.
 
 ## Requirements
 

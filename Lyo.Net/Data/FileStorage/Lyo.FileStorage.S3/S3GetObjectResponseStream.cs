@@ -3,20 +3,14 @@ using Amazon.S3.Model;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>
-/// Owning wrapper around a <see cref="GetObjectResponse" />'s <c>ResponseStream</c> that disposes the response (and its underlying HTTP handle) when the returned stream is disposed.
-/// Without this, callers reading <c>response.ResponseStream</c> directly leak the HTTP connection back to the S3 SDK pool.
+/// Owning wrapper around a <see cref="GetObjectResponse" />'s <c>ResponseStream</c> that disposes the response (and its underlying HTTP handle) when the returned stream is
+/// disposed. Without this, callers reading <c>response.ResponseStream</c> directly leak the HTTP connection back to the S3 SDK pool.
 /// </summary>
 internal sealed class S3GetObjectResponseStream : Stream
 {
     private readonly GetObjectResponse _response;
     private readonly Stream _stream;
     private bool _disposed;
-
-    public S3GetObjectResponseStream(GetObjectResponse response)
-    {
-        _response = response ?? throw new ArgumentNullException(nameof(response));
-        _stream = response.ResponseStream ?? throw new InvalidOperationException("GetObjectResponse has no ResponseStream.");
-    }
 
     public override bool CanRead => _stream.CanRead;
 
@@ -29,6 +23,12 @@ internal sealed class S3GetObjectResponseStream : Stream
     public override long Position {
         get => _stream.Position;
         set => _stream.Position = value;
+    }
+
+    public S3GetObjectResponseStream(GetObjectResponse response)
+    {
+        _response = response ?? throw new ArgumentNullException(nameof(response));
+        _stream = response.ResponseStream ?? throw new InvalidOperationException("GetObjectResponse has no ResponseStream.");
     }
 
     public override void Flush() => _stream.Flush();

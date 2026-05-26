@@ -21,7 +21,7 @@ public sealed class OcrCoordinateTransformsTests
     public void MapPixelBoxToPdfPoints_scales_uniformly()
     {
         var pixelBox = new BoundingBox2D(0, 100, 200, 0);
-        var pdf = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, pageWidthPts: 612, pageHeightPts: 792, rasterWidthPx: 100, rasterHeightPx: 200);
+        var pdf = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, 612, 792, 100, 200);
         Assert.Equal(0, pdf.Left);
         Assert.Equal(612, pdf.Right);
         Assert.Equal(792, pdf.Top);
@@ -44,7 +44,7 @@ public sealed class OcrCoordinateTransformsTests
     public void MapPixelBoxToPdfPoints_non_square_raster_scales_xy_independently()
     {
         var pixelBox = new BoundingBox2D(10, 20, 100, 50);
-        var pdf = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, pageWidthPts: 300, pageHeightPts: 400, rasterWidthPx: 100, rasterHeightPx: 200);
+        var pdf = OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, 300, 400, 100, 200);
         Assert.Equal(30, pdf.Left);
         Assert.Equal(60, pdf.Right);
         Assert.Equal(200, pdf.Top);
@@ -55,7 +55,6 @@ public sealed class OcrCoordinateTransformsTests
     public void MapPixelBoxToPdfPoints_zero_width_raster_throws()
     {
         var pixelBox = new BoundingBox2D(0, 1, 1, 0);
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, 100, 100, rasterWidthPx: 0, rasterHeightPx: 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => OcrCoordinateTransforms.MapPixelBoxToPdfPoints(pixelBox, 100, 100, 0, 10));
     }
 }

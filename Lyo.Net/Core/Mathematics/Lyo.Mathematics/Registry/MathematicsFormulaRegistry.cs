@@ -2,8 +2,8 @@ namespace Lyo.Mathematics.Registry;
 
 /// <summary>Curated catalog of representative mathematics formulas implemented in <c>Lyo.Mathematics.Functions</c>.</summary>
 /// <remarks>
-/// <see cref="All" /> is intentionally small — use it for discovery, documentation, or capability flags rather than as an exhaustive API index. Prefer IDE metadata on
-/// the concrete <c>*Functions</c> types for the full surface area.
+/// <see cref="All" /> is intentionally small — use it for discovery, documentation, or capability flags rather than as an exhaustive API index. Prefer IDE metadata on the
+/// concrete <c>*Functions</c> types for the full surface area.
 /// </remarks>
 public static class MathematicsFormulaRegistry
 {

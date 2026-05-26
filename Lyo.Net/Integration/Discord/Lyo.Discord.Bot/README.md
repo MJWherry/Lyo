@@ -51,6 +51,26 @@ Ensure `Token` is set; otherwise skip starting the bot.
 
 Logging uses `ILogger` with scopes and Information-level lines around upserts.
 
+## Slash commands
+
+The package ships a built-in slash-command tree under [`Commands/Settings/`](Commands/Settings) that drives per-guild bot configuration through the Lyo API and the
+`DiscordGuildSettings` config-store document. Discord/DSharpPlus do not allow a slash group to mix direct subcommands and nested subgroups, so everything hangs off subgroups:
+
+| Command                                       | Description                                                                  |
+|-----------------------------------------------|------------------------------------------------------------------------------|
+| `/settings channels setcommandchannel`        | Set the channel where the bot accepts commands (defaults to current channel).|
+| `/settings channels setlogchannel`            | Set the channel where the bot posts errors and operational notices.          |
+| `/settings roles setmodrole`                  | Set the moderator role used by bot permission checks.                        |
+| `/settings roles setadminrole`                | Set the admin role used by bot permission checks.                            |
+| `/settings info …`                            | Display effective guild settings (subgroup defined in `GuildSlashSettings`). |
+
+Centralized name/description constants live in [`GuildSlashSettings.cs`](Commands/Settings/GuildSlashSettings.cs); error responses are normalized via
+[`SlashCommandErrorResponder`](Commands/SlashCommandErrorResponder.cs) and `DiscordCommandException`. Register the command module on your DSharpPlus client in
+`ConfigureDiscordClient` (e.g. via `client.UseSlashCommands().RegisterCommands<GuildSettingsSlashCommands>(guildId)`).
+
+Slash command handlers update settings via `LyoApi.Guilds.GetSettingsAsync` / `PutSettingsAsync` and then push the new document into the local cache (`Cache.SetGuildSettings`)
+so the in-process bot reads the latest values without an extra API round-trip.
+
 ## Extending the base bot
 
 Derive from `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.

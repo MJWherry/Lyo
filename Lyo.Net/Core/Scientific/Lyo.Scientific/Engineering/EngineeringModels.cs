@@ -7,7 +7,6 @@ namespace Lyo.Scientific.Engineering;
 
 /// <summary>Engineering thermodynamics, fluid flow, heat transfer, and solid-mechanics contracts built on <c>Lyo.Mathematics.Quantities</c>.</summary>
 /// <remarks>Heavy numerical evaluation is implemented in <c>Lyo.Scientific.Functions</c>; this file holds typed inputs and small reference catalogs.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record MaterialProperty
 {
@@ -86,6 +85,7 @@ public readonly record struct ThermodynamicState
     {
         if (moles.HasValue)
             ArgumentHelpers.ThrowIfLessThan(moles.Value, 0d, nameof(moles));
+
         Temperature = temperature;
         Pressure = pressure;
         Volume = volume;

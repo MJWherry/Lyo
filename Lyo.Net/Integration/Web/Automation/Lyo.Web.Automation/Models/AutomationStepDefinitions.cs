@@ -81,8 +81,8 @@ public sealed record FindElementAutomationStep(string RefName, ElementLocator Lo
 }
 
 /// <summary>
-/// Polls for a descendant under a previously stored parent element ref (<c>PollForDescendantAsync</c>), then stores it as <see cref="RefName" /> (for example options inside a
-/// custom listbox).
+/// Polls for a descendant under a previously stored parent element ref (<c>PollForDescendantAsync</c>), then stores it as <see cref="RefName" /> (for example options inside
+/// a custom listbox).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record FindDescendantAutomationStep(string ParentRefName, string RefName, ElementLocator Locator, string? Name = null)

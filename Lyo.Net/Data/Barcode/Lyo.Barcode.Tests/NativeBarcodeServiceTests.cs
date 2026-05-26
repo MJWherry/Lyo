@@ -77,7 +77,6 @@ public class NativeBarcodeServiceTests
         var baseQuietPx = quiet * moduleW;
         var baseH = barH + 2 * baseQuietPx;
         var captionBand = 6 + 14 + 4;
-
         var without = await service.GenerateAsync(
             "TEST1234", BarcodeSymbology.Code128, new() {
                 Format = BarcodeFormat.Bmp,
@@ -133,7 +132,6 @@ public class NativeBarcodeServiceTests
         const int moduleW = 2;
         const int barH = 40;
         const int border = 5;
-
         var plain = await service.GenerateAsync(
             "X", BarcodeSymbology.Code128, new() {
                 Format = BarcodeFormat.Bmp,

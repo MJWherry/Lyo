@@ -24,19 +24,20 @@ so tests can substitute in-memory mocks.
 
 ## Layering map
 
-| Assembly                        | Responsibility                                                                |
-|---------------------------------|-------------------------------------------------------------------------------|
-| **`Lyo.Comic`** *(this)*        | POCOs + **`IComicStore`**.                                                    |
-| **`Lyo.Comic.Postgres`**        | EF **`ComicDbContext`**, migrations, **`PostgresComicStore`**, DI extensions. |
-| **`Lyo.Comic.Web.Components`**  | Blazor grid/detail experiences.                                               |
-| **`Apps/Comic/Lyo.Comic.Api*`** | Reference ASP.NET minimal API exposing Lyo mapper + enrichment services.      |
+| Assembly                        | Responsibility                                                                                                |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------|
+| **`Lyo.Comic`** *(this)*        | POCOs + **`IComicStore`** (`netstandard2.0;net10.0`).                                                         |
+| **`Lyo.Comic.Postgres`**        | EF **`ComicDbContext`**, migrations, **`PostgresComicStore`**, DI extensions.                                 |
+| **`Lyo.Comic.Web.Components`**  | Reusable Blazor browse/search/reader components (cards, grid/list layouts, MangaFire-style tap-to-page).      |
+| **`Apps/Comic/Lyo.Comic.Api*`** | Reference ASP.NET minimal API + client + DTO assemblies exposing this store over HTTP.                        |
 
 ## Testing strategy
 
-Implement **`IComicStore`** as an in-memory double for unit tests validating slug uniqueness rules, cascading deletes—without spinning Postgres—then rely on *
-*`Lyo.Comic.Postgres.Tests`** integration for mapping correctness.
+Implement **`IComicStore`** as an in-memory double for unit tests validating slug uniqueness rules and cascading deletes without spinning up Postgres. The Postgres
+mapping is covered indirectly via host application integration tests; no dedicated `Lyo.Comic.Postgres.Tests` project ships in this repo today.
 
 ## See also
 
-- [`Lyo.Comic.Postgres`](../Comic.Postgres/README.md) — concrete store + EF schema.
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md) — shared identifiers such as **`EntityRef`** reused in enrichment flows (`Comic.Api` binds HTTP ↔ domain).
+- [`Lyo.Comic.Postgres`](../Lyo.Comic.Postgres/README.md) — concrete `PostgresComicStore` + EF schema.
+- [`Lyo.Comic.Web.Components`](../Lyo.Comic.Web.Components/README.md) — reusable Blazor browse/search/reader components built on this domain.
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md) — shared utilities used by enrichment flows (`Comic.Api` binds HTTP ↔ domain).

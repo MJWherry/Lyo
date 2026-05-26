@@ -29,7 +29,7 @@ public static class Hasher
             256 => SHA256.HashData(data),
             384 => SHA384.HashData(data),
             512 => SHA512.HashData(data),
-            var _ => throw new ArgumentOutOfRangeException(nameof(digestBits), digestBits, "Supported values: 256, 384, 512."),
+            var _ => throw new ArgumentOutOfRangeException(nameof(digestBits), digestBits, "Supported values: 256, 384, 512.")
         };
 #else
         using var alg = CreateSha2Streaming(digestBits);

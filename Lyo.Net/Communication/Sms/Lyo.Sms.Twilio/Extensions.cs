@@ -37,7 +37,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
 #if NET6_0_OR_GREATER
-        services.AddHttpClient(TwilioHttpClientName);
+            services.AddHttpClient(TwilioHttpClientName);
 #endif
             services.AddSingleton<IValidateOptions<TwilioOptions>, TwilioOptionsValidator>();
             services.AddOptions<TwilioOptions>().Bind(configuration.GetSection(configSectionName)).ValidateOnStart();
@@ -47,10 +47,10 @@ public static class Extensions
                 var logger = sp.GetService<ILogger<TwilioSmsService>>();
                 var metrics = sp.GetService<IMetrics>();
 #if NET6_0_OR_GREATER
-            var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            var httpClient = httpClientFactory.CreateClient(TwilioHttpClientName);
-            var twilioHttpClient = new SystemNetHttpClient(httpClient);
-            var restClient = new TwilioRestClient(options.AccountSid, options.AuthToken, options.AccountSid, null, twilioHttpClient);
+                var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient(TwilioHttpClientName);
+                var twilioHttpClient = new SystemNetHttpClient(httpClient);
+                var restClient = new TwilioRestClient(options.AccountSid, options.AuthToken, options.AccountSid, null, twilioHttpClient);
 #else
                 var restClient = new TwilioRestClient(options.AccountSid, options.AuthToken);
 #endif

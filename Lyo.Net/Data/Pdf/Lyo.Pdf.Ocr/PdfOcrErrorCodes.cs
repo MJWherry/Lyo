@@ -1,6 +1,6 @@
 namespace Lyo.Pdf.Ocr;
 
-/// <summary>Error codes for <see cref="PdfOcrService"/>.</summary>
+/// <summary>Error codes for <see cref="PdfOcrService" />.</summary>
 public static class PdfOcrErrorCodes
 {
     /// <summary>Combined rasterize + OCR pipeline failed.</summary>

@@ -5,12 +5,53 @@ encryption on .NET 10+), and round-tripping without Fusion’s default CLR binar
 
 ## Registration
 
-- **`AddLocalCache`** / **`AddLocalCacheFromConfiguration`** — in-process cache; wires **`ICachePayloadCodec`**, **`ICachePayloadSerializer`**, and payload-aware **`ICacheService`
-  **.
-- **`AddFusionCache`** (in **`Lyo.Cache.Fusion`**) — same payload services; **`FusionCacheService`** implements **`GetOrSetPayloadAsync`** and typed **`GetOrSetPayloadAsync<T>`**.
+- **`AddLocalCache`** / **`AddLocalCacheFromConfiguration`** — in-process cache backed by `IMemoryCache`; wires **`ICachePayloadCodec`**, **`ICachePayloadSerializer`**, and the
+  payload-aware **`ICacheService`** (singleton **`LocalCacheService`**). The serializer is registered with **`TryAddSingleton`** so hosts can pre-register their own
+  **`ICachePayloadSerializer`** (e.g. one bound to the host's `JsonOptions`) before calling `AddLocalCache*`.
+- **`AddFusionCache`** (in **`Lyo.Cache.Fusion`**) — same payload services; **`FusionCacheService`** implements the byte and typed **`GetOrSetPayloadAsync`** / *
+  *`GetOrSetPayloadAsync<T>`** overloads.
 
-Configure via **`CacheOptions`** (`"CacheOptions"` section): **`DefaultExpiration`**, **`EnableMetrics`**, type expiration maps, **`QueryCacheTagGranularity`**, and **`Payload`** (
-see below).
+Configure via **`CacheOptions`** (`"CacheOptions"` section): **`Enabled`**, **`DefaultExpiration`**, **`EnableMetrics`**, type expiration maps, reflection TTLs,
+**`QueryCacheTagGranularity`**, **`MaxBulkQueryInvalidationByIdCount`**, and **`Payload`** (see below).
+
+### Bypass behavior
+
+When **`CacheOptions.Enabled`** is **`false`**, **`LocalCacheService`** skips storage entirely: factories run on every call, **`Set`** / **`SetPayload`** are no-ops, and
+**`TryGetValue`** / **`TryGetPayload`** return false. Invalidation calls return immediately. This is intended for tests, local diagnostics, and dynamic cache-off toggles.
+
+### Reflection / metadata TTLs
+
+`CacheOptions` exposes dedicated lifetimes used by reflection-heavy helpers in other Lyo packages so they can share a single cache instance:
+
+| Option                         | Default | Purpose                                                           |
+|--------------------------------|---------|-------------------------------------------------------------------|
+| **`PropertyInfoExpiration`**   | 1 hour  | Reflected `PropertyInfo` lookups (e.g. query comparison helpers). |
+| **`TypeMetadataExpiration`**   | 4 hours | Type metadata used by conversion and comparison.                  |
+| **`PropertyGetterExpiration`** | 4 hours | Compiled property-getter delegates.                               |
+| **`ComparisonInfoExpiration`** | 1 hour  | Property-difference plan metadata.                                |
+
+### Invalidation surface
+
+`ICacheService` (which extends **`IHealth`**) exposes the following invalidation entry points used by Lyo.Api and downstream CRUD plumbing:
+
+| Method                                                                         | Effect                                                                                          |
+|--------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| **`InvalidateCacheItem(string key)`**                                          | Removes a single entry (key is normalized lower-invariant) and drops its tag index entries.     |
+| **`InvalidateCacheItemByTag(string tag)`**                                     | Removes every entry tagged with `tag`.                                                          |
+| **`InvalidateCacheByTypeAsync(string fullTypeName)`**                          | Removes entries tagged for a CLR type name (typical tag shape `type:<full name>`).              |
+| **`InvalidateCacheByTypeAsync(Type)`** / **`InvalidateCacheByTypeAsync<T>()`** | Type-based overloads of the above.                                                              |
+| **`InvalidateQueryCacheAsync<TDb>()`**                                         | Invalidates cached queries tagged for entity type `TDb` (typically `entity:<name>`).            |
+| **`InvalidateAllCachedQueriesAsync()`**                                        | Drops all entries tagged for general list/query caching (implementation-defined `queries` tag). |
+
+`MaxBulkQueryInvalidationByIdCount` (default `20`) controls when CRUD invalidation helpers in Lyo.Api fall back from per-PK tags to a single type-wide
+`entity:<type>` tag during bulk mutations. It is ignored when `QueryCacheTagGranularity` is `Broad` (which is always type-wide anyway).
+
+### Health
+
+Both `ICacheService` implementations (**`LocalCacheService`** and Fusion's `FusionCacheService`) implement **`IHealth`** with **`HealthCheckName = "cache"`**. The probe round-trips
+a
+short-lived test key tagged `lyo-health-check` and reports timing through **`HealthResult.Healthy`** / **`HealthResult.Unhealthy`** — so registering the cache automatically
+contributes to host health endpoints that resolve **`IEnumerable<IHealth>`**.
 
 ### Query cache tag granularity (`QueryCacheTagGranularity`)
 

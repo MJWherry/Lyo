@@ -5,7 +5,6 @@ using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Blob.Multipart;
-using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
@@ -19,6 +18,25 @@ namespace Lyo.FileStorage.Blob;
 
 public static class Extensions
 {
+    private static void RegisterBlobService(IServiceCollection services)
+    {
+        services.AddScoped<BlobFileStorageService>(sp => {
+            var opts = sp.GetRequiredService<BlobFileStorageOptions>();
+            var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
+            var loggerFactory = sp.GetService<ILoggerFactory>();
+            var compression = sp.GetService<ICompressionService>();
+            var encryption = sp.GetService<ITwoKeyEncryptionService>();
+            var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+            var op = sp.GetService<IFileOperationContextAccessor>();
+            var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
+            var policy = sp.GetService<IFileContentPolicy>();
+            var scan = sp.GetService<IFileMalwareScanner>();
+            return new(opts, metadataStore, loggerFactory, compression, encryption, null, metrics, op, auditHandlers, policy, scan);
+        });
+
+        services.AddScoped<IFileStorageService>(sp => sp.GetRequiredService<BlobFileStorageService>());
+    }
+
     extension(IServiceCollection services)
     {
         /// <summary>Adds Azure Blob–backed <see cref="BlobFileStorageService" />.</summary>
@@ -36,26 +54,26 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-            services.AddSingleton(
-                provider => {
-                    var config = provider.GetRequiredService<IConfiguration>();
-                    var options = new BlobFileStorageOptions();
-                    var section = config.GetSection(configSectionName);
-                    if (section.Exists())
-                        section.Bind(options);
-                    else {
-                        var legacy = config.GetSection(BlobFileStorageOptions.LegacyAzureConfigurationSectionName);
-                        if (!legacy.Exists())
-                            return options;
+            services.AddSingleton(provider => {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var options = new BlobFileStorageOptions();
+                var section = config.GetSection(configSectionName);
+                if (section.Exists())
+                    section.Bind(options);
+                else {
+                    var legacy = config.GetSection(BlobFileStorageOptions.LegacyAzureConfigurationSectionName);
+                    if (!legacy.Exists())
+                        return options;
 
-                        legacy.Bind(options);
-                        (provider.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Blob").LogWarning(
-                            "Loaded blob file storage configuration from obsolete section [{Legacy}]. Migrate to [{Current}] in appsettings.", BlobFileStorageOptions.LegacyAzureConfigurationSectionName,
-                            BlobFileStorageOptions.SectionName);
-                    }
+                    legacy.Bind(options);
+                    (provider.GetService<ILoggerFactory>() ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Blob")
+                        .LogWarning(
+                            "Loaded blob file storage configuration from obsolete section [{Legacy}]. Migrate to [{Current}] in appsettings.",
+                            BlobFileStorageOptions.LegacyAzureConfigurationSectionName, BlobFileStorageOptions.SectionName);
+                }
 
-                    return options;
-                });
+                return options;
+            });
 
             RegisterBlobService(services);
             return services;
@@ -66,39 +84,17 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
-            services.AddScoped<BlobMultipartUploadService>(
-                sp => {
-                    var opts = sp.GetRequiredService<BlobFileStorageOptions>();
-                    var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                    return new(
-                        sp.GetRequiredService<BlobFileStorageService>(), opts, sp.GetRequiredService<IMultipartUploadSessionStore>(), sp.GetService<IFileMalwareScanner>(),
-                        sp.GetService<IFileContentPolicy>(), sp.GetServices<IFileAuditEventHandler>(), sp.GetService<IFileOperationContextAccessor>(),
-                        sp.GetService<ILoggerFactory>(), metrics);
-                });
+            services.AddScoped<BlobMultipartUploadService>(sp => {
+                var opts = sp.GetRequiredService<BlobFileStorageOptions>();
+                var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                return new(
+                    sp.GetRequiredService<BlobFileStorageService>(), opts, sp.GetRequiredService<IMultipartUploadSessionStore>(), sp.GetService<IFileMalwareScanner>(),
+                    sp.GetService<IFileContentPolicy>(), sp.GetServices<IFileAuditEventHandler>(), sp.GetService<IFileOperationContextAccessor>(), sp.GetService<ILoggerFactory>(),
+                    metrics);
+            });
 
             services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<BlobMultipartUploadService>());
             return services;
         }
-    }
-
-    private static void RegisterBlobService(IServiceCollection services)
-    {
-        services.AddScoped<BlobFileStorageService>(
-            sp => {
-                var opts = sp.GetRequiredService<BlobFileStorageOptions>();
-                var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
-                var loggerFactory = sp.GetService<ILoggerFactory>();
-                var compression = sp.GetService<ICompressionService>();
-                var encryption = sp.GetService<ITwoKeyEncryptionService>();
-                var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                var op = sp.GetService<IFileOperationContextAccessor>();
-                var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
-                var policy = sp.GetService<IFileContentPolicy>();
-                var scan = sp.GetService<IFileMalwareScanner>();
-
-                return new(opts, metadataStore, loggerFactory, compression, encryption, null, metrics, op, auditHandlers, policy, scan);
-            });
-
-        services.AddScoped<IFileStorageService>(sp => sp.GetRequiredService<BlobFileStorageService>());
     }
 }

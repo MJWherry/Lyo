@@ -34,18 +34,12 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
 
     private LocalFileStorageService CreateService(Action<DiskFileStorageOptions>? configure = null)
     {
-        var options = new DiskFileStorageOptions {
-            RootDirectoryPath = _tempSession.SessionDirectory,
-            ThrowOnDeleteNotFound = true,
-            ThrowOnFileNotFound = true
-        };
-
+        var options = new DiskFileStorageOptions { RootDirectoryPath = _tempSession.SessionDirectory, ThrowOnDeleteNotFound = true, ThrowOnFileNotFound = true };
         configure?.Invoke(options);
         return new(options, _loggerFactory);
     }
 
-    private static IFileStorageDiagnosticsService AsDiagnostics(LocalFileStorageService s)
-        => s;
+    private static IFileStorageDiagnosticsService AsDiagnostics(LocalFileStorageService s) => s;
 
     [Fact]
     public async Task CopyFileAsync_CopiesBackingBytes_NewIdPreservesHashes()
@@ -54,11 +48,9 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         var plain = "copy-me-bytes"u8.ToArray();
         var saved = await service.SaveFileAsync(plain, "doc.txt", ct: TestContext.Current.CancellationToken);
         var copy = await service.CopyFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
-
         Assert.NotEqual(saved.Id, copy.Id);
         Assert.Equal(saved.OriginalFileHash, copy.OriginalFileHash);
         Assert.Equal(plain, await service.GetFileAsync(copy.Id, TestContext.Current.CancellationToken));
-
         var copyMeta = await service.GetMetadataAsync(copy.Id, TestContext.Current.CancellationToken);
         Assert.Equal(saved.SourceFileHash, copyMeta.SourceFileHash);
     }
@@ -68,9 +60,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService();
         var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.bin", pathPrefix: "incoming", ct: TestContext.Current.CancellationToken);
-
-        var copy = await service.CopyFileAsync(saved.Id, new CopyFileRequest { PathPrefix = "archive" }, TestContext.Current.CancellationToken);
-
+        var copy = await service.CopyFileAsync(saved.Id, new() { PathPrefix = "archive" }, TestContext.Current.CancellationToken);
         var copyMeta = await service.GetMetadataAsync(copy.Id, TestContext.Current.CancellationToken);
         Assert.Equal("archive", copyMeta.PathPrefix);
         Assert.Equal("x"u8.ToArray(), await service.GetFileAsync(copy.Id, TestContext.Current.CancellationToken));
@@ -84,9 +74,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
             o.DirectUploadPutRouteRelativePath = "Workbench/FileStorage/direct-upload";
         });
 
-        var begin = await service.BeginDirectUploadAsync(
-                new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
-
+        var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 100, OriginalFileName = "partial.bin" }, TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<FileNotAvailableException>(() => service.CopyFileAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
     }
 
@@ -95,7 +83,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService();
         await Assert.ThrowsAsync<NotSupportedException>(() => service.BeginDirectUploadAsync(
-                new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 10, OriginalFileName = "n.bin" }, TestContext.Current.CancellationToken));
+            new() { DeclaredMaxSizeBytes = 10, OriginalFileName = "n.bin" }, TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -108,20 +96,18 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         });
 
         var begin = await service.BeginDirectUploadAsync(
-                new DirectUploadBeginRequest {
-                    DeclaredMaxSizeBytes = 4096,
-                    OriginalFileName = "up.bin",
-                    PathPrefix = "upload-here",
-                    ContentType = "application/octet-stream"
-                },
-                TestContext.Current.CancellationToken);
+            new() {
+                DeclaredMaxSizeBytes = 4096,
+                OriginalFileName = "up.bin",
+                PathPrefix = "upload-here",
+                ContentType = "application/octet-stream"
+            }, TestContext.Current.CancellationToken);
 
         Assert.StartsWith($"{apiBase}/Workbench/FileStorage/direct-upload/", begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.Contains(begin.FileId.ToString("D"), begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.EndsWith("/put", begin.PresignedPutUrl, StringComparison.Ordinal);
         Assert.False(string.IsNullOrEmpty(begin.StorageLocation));
         Assert.DoesNotContain('\\', begin.StorageLocation);
-
         var pending = await service.GetMetadataAsync(begin.FileId, TestContext.Current.CancellationToken);
         Assert.Equal(FileAvailability.PendingDirectUpload, pending.Availability);
     }
@@ -135,8 +121,12 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         });
 
         var begin = await service.BeginDirectUploadAsync(
-                new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 50_000, OriginalFileName = "final.txt", ContentType = "text/plain", PathPrefix = "du" },
-                TestContext.Current.CancellationToken);
+            new() {
+                DeclaredMaxSizeBytes = 50_000,
+                OriginalFileName = "final.txt",
+                ContentType = "text/plain",
+                PathPrefix = "du"
+            }, TestContext.Current.CancellationToken);
 
         var payload = "hello-direct-upload-plain"u8.ToArray();
         await using (var ms = new MemoryStream(payload))
@@ -181,8 +171,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         using var service = CreateService();
         var DX = AsDiagnostics(service);
         await service.SaveFileAsync("k"u8.ToArray(), "keyed.bin", ct: TestContext.Current.CancellationToken);
-
-        var keys = await DX.ListStorageKeysAsync(null, maxKeys: 500, TestContext.Current.CancellationToken);
+        var keys = await DX.ListStorageKeysAsync(null, 500, TestContext.Current.CancellationToken);
         Assert.NotEmpty(keys);
         Assert.All(keys, k => Assert.False(k.Contains('\\', StringComparison.Ordinal)));
     }
@@ -192,12 +181,10 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService();
         await service.SaveFileAsync([1], "under.bin", pathPrefix: "trees/a", ct: TestContext.Current.CancellationToken);
-
         var dx = AsDiagnostics(service);
-        var withPrefix = await dx.ListStorageKeysAsync("trees", maxKeys: 50, TestContext.Current.CancellationToken);
+        var withPrefix = await dx.ListStorageKeysAsync("trees", 50, TestContext.Current.CancellationToken);
         Assert.Contains(withPrefix, k => k.StartsWith("trees/", StringComparison.OrdinalIgnoreCase));
-
-        var unrelated = await dx.ListStorageKeysAsync("other-branch", maxKeys: 50, TestContext.Current.CancellationToken);
+        var unrelated = await dx.ListStorageKeysAsync("other-branch", 50, TestContext.Current.CancellationToken);
         Assert.Empty(unrelated);
     }
 
@@ -206,12 +193,8 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => o.AllowFileUriPresignedUrls = true);
         var id = (await service.SaveFileAsync([9, 8, 7], "signed.dat", ct: TestContext.Current.CancellationToken)).Id;
-
         var url = await service.GetPreSignedReadUrlAsync(
-            id,
-            TimeSpan.FromHours(1),
-            null,
-            new PreSignedReadUrlOptions { ContentDisposition = "attachment; filename=a.dat", ContentType = "application/octet-stream" },
+            id, TimeSpan.FromHours(1), null, new() { ContentDisposition = "attachment; filename=a.dat", ContentType = "application/octet-stream" },
             TestContext.Current.CancellationToken);
 
         Assert.StartsWith("file:", url, StringComparison.Ordinal);
@@ -225,8 +208,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
             o.DirectUploadReceiveBaseUri = "https://tests.invalid/";
         });
 
-        var begin = await service.BeginDirectUploadAsync(new DirectUploadBeginRequest { DeclaredMaxSizeBytes = 10, OriginalFileName = "missing-body.bin" }, TestContext.Current.CancellationToken);
+        var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 10, OriginalFileName = "missing-body.bin" }, TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<FileNotFoundException>(() => service.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken));
     }
 }
-

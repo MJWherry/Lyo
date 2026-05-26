@@ -15,18 +15,20 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Implements batch-oriented DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, re-encrypt ciphertext) using <see cref="IFileStoragePhysicalIo"/>.
+/// Implements batch-oriented DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, re-encrypt ciphertext) using <see cref="IFileStoragePhysicalIo" />
+/// .
 /// </summary>
 internal sealed class FileStorageDekOperations
 {
-    private readonly IFileMetadataStore _metadataService;
-    private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
-    private readonly IFileOperationContextAccessor _operationContextAccessor;
-    private readonly ILogger _logger;
-    private readonly FileStorageServiceBaseOptions _options;
-    private readonly IFileStoragePhysicalIo _physicalIo;
+    private const long LargePayloadSpillThresholdBytes = 32L * 1024 * 1024;
     private readonly IFileAuditPublisher _auditPublisher;
     private readonly int _copyToBufferSizeBytes;
+    private readonly ILogger _logger;
+    private readonly IFileMetadataStore _metadataService;
+    private readonly IFileOperationContextAccessor _operationContextAccessor;
+    private readonly FileStorageServiceBaseOptions _options;
+    private readonly IFileStoragePhysicalIo _physicalIo;
+    private readonly ITwoKeyEncryptionService? _twoKeyEncryptionService;
 
     /// <summary>Initializes helpers with metadata services, optional encryption, storage I/O, and auditing facade.</summary>
     internal FileStorageDekOperations(
@@ -50,12 +52,13 @@ internal sealed class FileStorageDekOperations
     }
 
     /// <summary>
-    /// Finds files whose metadata references the supplied KEK/key version, re-wraps wrapped DEKs in storage headers to a target KEK/version, updates metadata inline, and emits an audit aggregate.
+    /// Finds files whose metadata references the supplied KEK/key version, re-wraps wrapped DEKs in storage headers to a target KEK/version, updates metadata inline, and emits
+    /// an audit aggregate.
     /// </summary>
     /// <remarks>Does not re-encrypt ciphertext; only the enveloped DEK blob and header salt fields change.</remarks>
     /// <param name="sourceKeyId">Key identifier currently protecting DEKs prior to migration.</param>
     /// <param name="sourceKeyVersion">Optional specific source version filter; omit to include all recorded versions.</param>
-    /// <param name="targetKeyId">Destination KEK id; defaults to <paramref name="sourceKeyId"/> when omitted.</param>
+    /// <param name="targetKeyId">Destination KEK id; defaults to <paramref name="sourceKeyId" /> when omitted.</param>
     /// <param name="targetKeyVersion">Explicit destination version; when omitted resolves the current library version for the target key.</param>
     /// <param name="batchSize">Fan-in size applied when iterating metadata rows for logging granularity.</param>
     /// <param name="ct">Cancellation token forwarded to downstream IO.</param>
@@ -76,7 +79,6 @@ internal sealed class FileStorageDekOperations
             sourceKeyId, sourceKeyVersion ?? "all", targetKeyId ?? sourceKeyId, targetKeyVersion ?? "current");
 
         var actualTargetKeyId = targetKeyId ?? sourceKeyId;
-
         string actualTargetVersion;
         if (!targetKeyVersion.IsNullOrWhitespace())
             actualTargetVersion = targetKeyVersion;
@@ -98,7 +100,6 @@ internal sealed class FileStorageDekOperations
         var skipped = 0;
         var failedFileIds = new List<Guid>();
         var errors = new List<string>();
-
         for (var i = 0; i < filesList.Count; i += batchSize) {
             ct.ThrowIfCancellationRequested();
             var batch = filesList.Skip(i).Take(batchSize).ToList();
@@ -128,10 +129,11 @@ internal sealed class FileStorageDekOperations
                             actualTargetVersion, ct)
                         .ConfigureAwait(false);
 
-                    byte[]? newSalt = _twoKeyEncryptionService!.GetSaltForVersion(actualTargetKeyId, actualTargetVersion);
+                    var newSalt = _twoKeyEncryptionService!.GetSaltForVersion(actualTargetKeyId, actualTargetVersion);
 
                     // If the blob is missing (or has a truncated header) the underlying UpdateFileHeaderAsync now throws; surface it as a failure rather than a silent skip.
-                    await _physicalIo.UpdateFileHeaderAsync(fileMetadata.Id, fileMetadata.PathPrefix, actualTargetKeyId, actualTargetVersion, newEncryptedDek, ct).ConfigureAwait(false);
+                    await _physicalIo.UpdateFileHeaderAsync(fileMetadata.Id, fileMetadata.PathPrefix, actualTargetKeyId, actualTargetVersion, newEncryptedDek, ct)
+                        .ConfigureAwait(false);
 
                     var updatedMetadata = fileMetadata with {
                         EncryptedDataEncryptionKey = newEncryptedDek,
@@ -154,8 +156,8 @@ internal sealed class FileStorageDekOperations
         }
 
         _logger.LogInformation(
-            "DEK migration completed: {SuccessfullyMigrated} succeeded, {Skipped} skipped, {Failed} failed out of {Total} files", successfullyMigrated, skipped, failedFileIds.Count,
-            filesList.Count);
+            "DEK migration completed: {SuccessfullyMigrated} succeeded, {Skipped} skipped, {Failed} failed out of {Total} files", successfullyMigrated, skipped,
+            failedFileIds.Count, filesList.Count);
 
         var migResult = new DekMigrationResult(filesList.Count, successfullyMigrated, failedFileIds.Count, failedFileIds, errors, skipped);
         await _auditPublisher.PublishAuditAsync(
@@ -168,22 +170,15 @@ internal sealed class FileStorageDekOperations
         return migResult;
     }
 
-    /// <summary>
-    /// Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and persists updated metadata hashes.
-    /// </summary>
+    /// <summary>Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and persists updated metadata hashes.</summary>
     /// <remarks>Rotates payloads end-to-end; failures are accumulated per-file while others continue processing.</remarks>
     /// <param name="fileIds">Concrete file identifiers slated for cryptographic rotation.</param>
     /// <param name="targetKeyId">Optional override KEK identifier; omit to derive per-record defaults.</param>
-    /// <param name="targetKeyVersion">Optional override KEK version; omit alongside <paramref name="targetKeyId"/> to retain recorded versions unless a new KEK mandates fresh versions.</param>
+    /// <param name="targetKeyVersion">Optional override KEK version; omit alongside <paramref name="targetKeyId" /> to retain recorded versions unless a new KEK mandates fresh versions.</param>
     /// <param name="batchSize">Chunk size controlling batch logging boundaries.</param>
     /// <param name="ct">Cancellation token propagated through storage pipelines.</param>
     /// <returns>Aggregate success/failure statistics mirroring migrate semantics.</returns>
-    internal async Task<DekMigrationResult> RotateDeksAsync(
-        IReadOnlyCollection<Guid> fileIds,
-        string? targetKeyId,
-        string? targetKeyVersion,
-        int batchSize,
-        CancellationToken ct)
+    internal async Task<DekMigrationResult> RotateDeksAsync(IReadOnlyCollection<Guid> fileIds, string? targetKeyId, string? targetKeyVersion, int batchSize, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(fileIds);
         ArgumentHelpers.ThrowIfNotInRange(batchSize, 1, int.MaxValue);
@@ -270,8 +265,8 @@ internal sealed class FileStorageDekOperations
     }
 
     /// <summary>
-    /// Returns a seekable stream positioned at 0 containing the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized
-    /// <see cref="MemoryStream" />; payloads exceeding <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
+    /// Returns a seekable stream positioned at 0 containing the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized <see cref="MemoryStream" />
+    /// ; payloads exceeding <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
     /// </summary>
     private async Task<Stream> ReadEncryptedPayloadAsync(FileStoreResult metadata, CancellationToken ct)
     {
@@ -306,8 +301,6 @@ internal sealed class FileStorageDekOperations
             bufferedStream?.Dispose();
         }
     }
-
-    private const long LargePayloadSpillThresholdBytes = 32L * 1024 * 1024;
 
     /// <summary>Creates the seekable destination buffer for the DEK rotate decrypt pass. Spills to a temp file (DeleteOnClose) past <see cref="LargePayloadSpillThresholdBytes" />.</summary>
     private static Stream CreateDecryptedSpillStream(long originalSize)

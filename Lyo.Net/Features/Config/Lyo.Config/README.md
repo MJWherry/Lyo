@@ -72,10 +72,46 @@ PostgreSQL stores **append-only revisions** in **`config.config_binding_revision
 Deleting a binding (or its definition) cascades and removes revision rows. The initial migration seeds revision **1** from each existing binding’s current value so history starts
 at deploy time.
 
+## `IConfigStore` at a glance
+
+Definitions (per `ForEntityType` × `Key`):
+
+- `SaveDefinitionAsync(ConfigDefinitionRecord)` — upsert.
+- `GetDefinitionByIdAsync(Guid)` / `GetDefinitionAsync(string forEntityType, string key)` — single lookups.
+- `GetDefinitionsAsync(string forEntityType)` — enumerate definitions for a type.
+- `DeleteDefinitionAsync(Guid)` — Postgres cascades to `config_binding` rows.
+
+Bindings (per `Definition` × `EntityRef`):
+
+- `SaveBindingAsync(ConfigBindingRecord)` — upsert; Postgres also appends a new `config_binding_revision` row.
+- `GetBindingByIdAsync(Guid)` / `GetBindingAsync(EntityRef, string key)` — single lookups.
+- `GetBindingsAsync(EntityRef)` — all bindings for one entity.
+- `DeleteBindingAsync(Guid)` / `DeleteBindingsAsync(EntityRef)` — refuse when removal would violate `IsRequired` + no default.
+
+Resolved view:
+
+- `LoadConfigAsync(EntityRef)` returns a `ResolvedConfigRecord` (every definition for the entity type, each with `binding ?? default`) and calls `ValidateRequired()` before
+  returning. `ResolvedConfigRecord` also exposes `TryGetValue`, `GetValue<T>`, and `AsDictionary()`.
+
+Binding revisions:
+
+- `GetBindingRevisionsAsync(Guid bindingId)` / `GetBindingRevisionsAsync(EntityRef, string key)` — history, newest first.
+- `GetBindingRevisionAsync(Guid bindingId, int revision)` — single snapshot.
+- `RevertBindingToRevisionAsync(Guid bindingId, int revision)` / `RevertBindingToRevisionAsync(EntityRef, string key, int revision)` — copies the snapshot back onto the
+  binding **and** appends a new revision so the timeline stays linear.
+
+## API routing helper — `AppConfigEntity`
+
+For the reference Config app, routes look like `/api/config/{appKind}/{appId}`. `AppConfigEntity` maps those URL segments to an `EntityRef`:
+
+- `AppEntityType = "App"` (the stored `EntityRef.EntityType` for app-scoped definitions and bindings).
+- `ToEntityRef(string appKind, string appId)` / `TryCreate(...)` — URI-decode each segment, lowercase, validate the slug character set (`a-z`, `0-9`, `-`, `_`, `.`, length
+  ≤ 128), and produce `new EntityRef("App", $"{kindNorm}:{idNorm}")`. This is the compound-id shape that `ConfigBindingRecord.ForEntityId` is sized for (string, not `Guid`).
+
 ## See also
 
-- **`IConfigStore`** — full API surface.
-- **`Lyo.Config.Postgres`** — EF Core schema (`config` schema), **`PostgresConfigStore`**, migrations.
+- [`Lyo.Config.Postgres`](../Lyo.Config.Postgres/README.md) — EF Core schema (`config` schema), `PostgresConfigStore`, migrations.
+- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md) — `EntityRef` used throughout the binding APIs.
 
 ## Dependencies
 
@@ -85,10 +121,11 @@ at deploy time.
 
 ### NuGet packages
 
-| Package            | Version |
-|--------------------|---------|
-| `System.Text.Json` | `[10,)` |
+| Package            | Version | Notes                                          |
+|--------------------|---------|------------------------------------------------|
+| `System.Text.Json` | `[10,)` | Added only for the `netstandard2.0` target.    |
 
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)

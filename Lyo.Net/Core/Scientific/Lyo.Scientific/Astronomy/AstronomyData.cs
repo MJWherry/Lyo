@@ -82,12 +82,16 @@ public static class AstronomyReferenceValues
 {
     /// <summary>IAU astronomical unit (exact meters per definition).</summary>
     public static readonly Length AstronomicalUnit = Length.FromMeters(149_597_870_700d);
+
     /// <summary>Light-year in meters using the IAU Julian year convention.</summary>
     public static readonly Length LightYear = Length.FromMeters(9.4607304725808e15d);
+
     /// <summary>Parsec expressed in meters.</summary>
     public static readonly Length Parsec = Length.FromMeters(3.08567758149137e16d);
+
     /// <summary>Solar mass reference value in kilograms.</summary>
     public static readonly Mass SolarMass = Mass.FromKilograms(1.98847e30d);
+
     /// <summary>Solar photospheric radius reference value.</summary>
     public static readonly Length SolarRadius = Length.FromMeters(695_700_000d);
 }

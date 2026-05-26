@@ -5,7 +5,6 @@ namespace Lyo.Mathematics.Models;
 
 /// <summary>Cartesian complex number used by transforms, linear algebra, and signal helpers.</summary>
 /// <remarks>Components must be finite. Polar construction enforces a non-negative magnitude.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ComplexNumber
 {

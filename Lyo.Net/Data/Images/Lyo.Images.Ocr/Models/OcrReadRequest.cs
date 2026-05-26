@@ -1,6 +1,6 @@
 namespace Lyo.Images.Ocr.Models;
 
-/// <summary>Per-call OCR parameters; null properties fall back to <see cref="OcrEngineOptions"/> defaults.</summary>
+/// <summary>Per-call OCR parameters; null properties fall back to <see cref="OcrEngineOptions" /> defaults.</summary>
 public sealed class OcrReadRequest
 {
     /// <summary>Override languages (e.g. <c>eng+jpn</c>).</summary>

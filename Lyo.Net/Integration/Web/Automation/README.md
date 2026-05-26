@@ -323,7 +323,7 @@ await runner.RunWithResultAsync(
 | `Reload`                       | `reload`                                                  | Full document reload                                                                                                     |
 | `Delay`                        | `delay`                                                   | Milliseconds                                                                                                             |
 | `FindElement`                  | `findElement` (one segment) or `findElementChain` (multi) | Stores **element ref**                                                                                                   |
-| `FindDescendant`             | `findDescendant`                                          | Polls **under a stored parent ref** (`PollForDescendantAsync`); locator `value` supports `{{vars}}`                      |
+| `FindDescendant`               | `findDescendant`                                          | Polls **under a stored parent ref** (`PollForDescendantAsync`); locator `value` supports `{{vars}}`                      |
 | `FindElements`                 | `findElementsChain`                                       | Stores **element list ref**                                                                                              |
 | `ElementAction`                | `elementAction`                                           | Click, input, select, …                                                                                                  |
 | `FindAndAct`                   | `findAndAct`                                              | Single locator                                                                                                           |
@@ -348,17 +348,22 @@ await runner.RunWithResultAsync(
 
 ### `dropdown` (native and custom)
 
-Use a single **`dropdown`** action for both **`<select>`** and **custom** menus. The default **`mode`** is **`auto`**: the runner inspects the target element’s tag name—**`select`** uses native selection; anything else uses the custom path.
+Use a single **`dropdown`** action for both **`<select>`** and **custom** menus. The default **`mode`** is **`auto`**: the runner inspects the target element’s tag name—**`select`
+** uses native selection; anything else uses the custom path.
 
 - **`mode`**: **`auto`** (default), **`native`**, or **`custom`**. With **`auto`**, you do not need to know the widget type in advance.
-- **Native (`<select>`)**: set exactly one of **`selectByText`**, **`selectByValue`**, or **`selectByIndex`** (same semantics as the standalone `selectBy*` actions). With **`mode: auto`**, these fields are used when the target resolves to a `<select>`.
-- **Custom widgets** (button opens a list, React Select, etc.): set **`optionLocator`** for one option row; do **not** set the native fields. With **`mode: auto`**, this applies when the target is not a `<select>`.
-  - The step’s **element ref** is usually the **trigger** that opens the list.
-  - **`optionLocator`**: often **`CssSelector`**, e.g. `[role=listbox] [data-value="x"]` or `#panel [role=option]:has-text("Beta")`.
-  - **`clickTriggerFirst`** (default **`true`**): scroll into view and click the trigger before resolving the option.
-  - **`scopeParentRef`**: optional stored ref for an **ancestor** of the options; the option is found with **`PollForDescendantAsync`** from that parent. If omitted, the option is resolved at **page scope** after the list opens (typical for portaled menus when a unique selector identifies the open list).
+- **Native (`<select>`)**: set exactly one of **`selectByText`**, **`selectByValue`**, or **`selectByIndex`** (same semantics as the standalone `selectBy*` actions). With *
+  *`mode: auto`**, these fields are used when the target resolves to a `<select>`.
+- **Custom widgets** (button opens a list, React Select, etc.): set **`optionLocator`** for one option row; do **not** set the native fields. With **`mode: auto`**, this applies
+  when the target is not a `<select>`.
+    - The step’s **element ref** is usually the **trigger** that opens the list.
+    - **`optionLocator`**: often **`CssSelector`**, e.g. `[role=listbox] [data-value="x"]` or `#panel [role=option]:has-text("Beta")`.
+    - **`clickTriggerFirst`** (default **`true`**): scroll into view and click the trigger before resolving the option.
+    - **`scopeParentRef`**: optional stored ref for an **ancestor** of the options; the option is found with **`PollForDescendantAsync`** from that parent. If omitted, the option
+      is resolved at **page scope** after the list opens (typical for portaled menus when a unique selector identifies the open list).
 
-You can still use the standalone **`selectByText`** / **`selectByValue`** / **`selectByIndex`** actions on `<select>` elements, or compose **`click`** / **`findDescendant`** steps manually when **`dropdown`** is not enough.
+You can still use the standalone **`selectByText`** / **`selectByValue`** / **`selectByIndex`** actions on `<select>` elements, or compose **`click`** / **`findDescendant`** steps
+manually when **`dropdown`** is not enough.
 
 ---
 

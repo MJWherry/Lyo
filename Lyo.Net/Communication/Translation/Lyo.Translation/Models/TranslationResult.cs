@@ -46,7 +46,7 @@ public sealed record TranslationResult : Result<TranslationRequest>
     /// <param name="exception">Cause of failure.</param>
     /// <param name="request">Associated request.</param>
     /// <param name="elapsedTime">Time spent before failing.</param>
-    /// <param name="errorCode">Optional stable code (see <see cref="TranslationErrorCodes"/>).</param>
+    /// <param name="errorCode">Optional stable code (see <see cref="TranslationErrorCodes" />).</param>
     public static TranslationResult FromException(Exception exception, TranslationRequest request, TimeSpan elapsedTime, string? errorCode = null)
     {
         var error = Error.FromException(exception, errorCode);

@@ -1,5 +1,4 @@
 using Amazon.S3.Model;
-using Lyo.FileStorage.S3;
 
 namespace Lyo.FileStorage.S3.Tests;
 
@@ -11,13 +10,10 @@ public sealed class S3GetObjectResponseStreamTests
     {
         var (inner, response) = CreatePayload([1, 2, 3, 4]);
         var wrapper = new S3GetObjectResponseStream(response);
-
         var buffer = new byte[4];
         var read = wrapper.Read(buffer, 0, buffer.Length);
-
         Assert.Equal(4, read);
         Assert.Equal([1, 2, 3, 4], buffer);
-
         wrapper.Dispose();
         Assert.Throws<ObjectDisposedException>(() => inner.ReadByte());
 
@@ -30,15 +26,11 @@ public sealed class S3GetObjectResponseStreamTests
     {
         var (inner, response) = CreatePayload([7, 8, 9]);
         var wrapper = new S3GetObjectResponseStream(response);
-
         var buffer = new byte[3];
-        await wrapper.ReadAsync(buffer);
-
+        await wrapper.ReadAsync(buffer, TestContext.Current.CancellationToken);
         Assert.Equal([7, 8, 9], buffer);
-
         await wrapper.DisposeAsync();
         Assert.Throws<ObjectDisposedException>(() => inner.ReadByte());
-
         await wrapper.DisposeAsync();
     }
 
@@ -60,7 +52,7 @@ public sealed class S3GetObjectResponseStreamTests
 
     private static (MemoryStream Inner, GetObjectResponse Response) CreatePayload(byte[] payload)
     {
-        var inner = new MemoryStream(payload, writable: false);
+        var inner = new MemoryStream(payload, false);
         var response = new GetObjectResponse { ResponseStream = inner };
         return (inner, response);
     }

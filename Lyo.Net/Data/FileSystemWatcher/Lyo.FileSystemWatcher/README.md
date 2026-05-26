@@ -488,21 +488,23 @@ directly.
 
 ### Project references
 
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 
 <!-- LYO_README_SYNC:BEGIN -->
 
-## Public API (generated)
+## Public surface
 
-Top-level `public` types in `*.cs` (*8*). Nested types and file-scoped namespaces may omit some entries.
-
-- `ChangeTypeEnum`
-- `Constants`
-- `FileSystemWatcher`
-- `FileSystemWatcherOptions`
-- `IsExternalInit`
-- `Metrics`
-- `Tags`
-- `Utilities`
+| Type                                       | Description                                                                                                                              |
+|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **`FileSystemWatcher`**                    | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
+| **`FileSystemWatcherOptions`**             | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`.                                  |
+| **`FileSystemChangeInfo`**                 | `record` payload emitted by every change event.                                                                                          |
+| **`ChangeTypeEnum`**                       | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`.                                                                    |
+| **`DirectorySnapshotEntry`**               | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`).                                                          |
+| **`SnapshotTree`** / **`SnapshotDirectoryNode`** | In-memory snapshot of the watched tree used for diffing.                                                                          |
+| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above).                                                              |
+| **`Utilities`**                            | Helpers shared by the watcher implementation.                                                                                            |
 
 <!-- LYO_README_SYNC:END -->

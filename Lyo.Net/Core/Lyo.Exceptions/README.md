@@ -7,12 +7,16 @@ Custom exception types and argument validation helpers for the Lyo library suite
 - **ArgumentHelpers** – Argument validation with `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, `ThrowIfNullOrEmpty`, `ThrowIf`, `ThrowIfNotInRange`, `ThrowIfFileNotFound`,
   `ThrowIfNullReturn` (for constructor chaining)
 - **UriHelpers** – URI validation with `GetValidWebUri`, `ThrowIfInvalidUri`, `ThrowIfInvalidAbsoluteUri`
-- **OperationHelpers** – Operation/state validation (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, stream checks, disposition/cancellation/not-supported) plus numeric parity with
-  `ArgumentHelpers`: `ThrowIfNotInRange` (scalar, `DateTime`, `TimeSpan`, array lengths), `ThrowIfGreaterThan`, `ThrowIfGreaterThanOrEqual`, `ThrowIfLessThan`, `ThrowIfLessThanOrEqual`,
+- **OperationHelpers** – Operation/state validation (`ThrowIf`, `ThrowIfNull`, `ThrowIfNullOrWhiteSpace`, stream checks, disposition/cancellation/not-supported) plus numeric parity
+  with
+  `ArgumentHelpers`: `ThrowIfNotInRange` (scalar, `DateTime`, `TimeSpan`, array lengths), `ThrowIfGreaterThan`, `ThrowIfGreaterThanOrEqual`, `ThrowIfLessThan`,
+  `ThrowIfLessThanOrEqual`,
   `ThrowIfZero`, sign helpers, `ThrowIfEqual`, `ThrowIfNotEqual`
-- **OrThrow / StringOr** – Fluent `string?.Or` / `.OrIfWhiteSpace` chains and terminals (`OrThrowInvalidOperation`, `OrThrow(Func<…>)`, etc.) plus generic `OrThrowInvalidOperation`/`OrThrow`
+- **OrThrow / StringOr** – Fluent `string?.Or` / `.OrIfWhiteSpace` chains and terminals (`OrThrowInvalidOperation`, `OrThrow(Func<…>)`, etc.) plus generic
+  `OrThrowInvalidOperation`/`OrThrow`
   unwraps—implemented here so callers do not pull in `Lyo.Common` for throw-only ergonomics
-- **FileHelpers** – File name validation with `ThrowIfFileNameInvalid`, `GetValidFileName`, and path-prefix safety helpers `NormalizePathPrefix`, `ThrowIfPathPrefixTraversal`, `NormalizeAndValidatePathPrefix` (shared by every Lyo.FileStorage backend's save/direct-upload/diagnostics paths)
+- **FileHelpers** – File name validation with `ThrowIfFileNameInvalid`, `GetValidFileName`, and path-prefix safety helpers `NormalizePathPrefix`, `ThrowIfPathPrefixTraversal`,
+  `NormalizeAndValidatePathPrefix` (shared by every Lyo.FileStorage backend's save/direct-upload/diagnostics paths)
 - **FormatHelpers** – Format validation throwing `InvalidFormatException` (`ThrowIfInvalidGuid`, `GetValidGuid`, hex color, `ThrowIfInvalidFormat` with custom regex, etc.)
 - **ExceptionThrower** – File/directory existence and accessibility (`ThrowIfDirectoryNotFound`, `ThrowIfFileNotAccessible`, `ThrowIfDirectoryNotAccessible`)
 - **Custom exceptions** – `ArgumentOutsideRangeException`, `InvalidFormatException`, `NotFoundException`, `HttpException` (base for `UnauthorizedException`, `ForbiddenException`,

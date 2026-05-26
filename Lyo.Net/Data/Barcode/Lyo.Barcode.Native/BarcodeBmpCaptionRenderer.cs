@@ -27,7 +27,6 @@ internal static class BarcodeBmpCaptionRenderer
         var b = BarcodeImageRenderer.GetBorderPixels(options);
         var width = innerW + 2 * b;
         var height = innerH + 2 * b;
-
         BarcodeImageRenderer.ParseRgb(options.LightColor, out var lr, out var lg, out var lb);
         BarcodeImageRenderer.ParseRgb(options.DarkColor, out var dr, out var dg, out var db);
         BarcodeImageRenderer.ParseRgb(options.BorderColorHex, out var borR, out var borG, out var borB);
@@ -37,7 +36,6 @@ internal static class BarcodeBmpCaptionRenderer
         var capHex = string.IsNullOrWhiteSpace(options.HumanReadableColorHex) ? options.DarkColor : options.HumanReadableColorHex!;
         BarcodeImageRenderer.ParseRgb(capHex, out var cr, out var cg, out var cb);
         var ink = Color.FromRgb(cr, cg, cb);
-
         using var img = new Image<Rgba32>(width, height);
         img.Mutate(ctx => {
             ctx.Fill(borderCol);
@@ -71,9 +69,7 @@ internal static class BarcodeBmpCaptionRenderer
 
             var font = CreateFont(fontPx);
             var textOpts = new RichTextOptions(font) {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Top,
-                Origin = new PointF(width / 2f, oy + quietPx + barH + marginTop)
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, Origin = new PointF(width / 2f, oy + quietPx + barH + marginTop)
             };
 
             ctx.DrawText(textOpts, caption, Brushes.Solid(ink), null);

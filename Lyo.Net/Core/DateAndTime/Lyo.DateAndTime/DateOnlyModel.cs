@@ -4,12 +4,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.DateAndTime;
 
-/// <summary>
-/// .NET Standard 2.0–compatible calendar date without a time-of-day component, modeled after the BCL <c>System.DateOnly</c> type introduced in .NET 6.
-/// </summary>
+/// <summary>.NET Standard 2.0–compatible calendar date without a time-of-day component, modeled after the BCL <c>System.DateOnly</c> type introduced in .NET 6.</summary>
 /// <remarks>
-/// Values are stored as a day offset from 0001-01-01, mirroring the BCL behavior closely enough for scheduling and persistence scenarios where
-/// <see cref="DateTime" /> would introduce unwanted time zones. On .NET 6+, prefer the built-in <c>System.DateOnly</c> type when you can target it directly.
+/// Values are stored as a day offset from 0001-01-01, mirroring the BCL behavior closely enough for scheduling and persistence scenarios where <see cref="DateTime" /> would
+/// introduce unwanted time zones. On .NET 6+, prefer the built-in <c>System.DateOnly</c> type when you can target it directly.
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class DateOnlyModel : IComparable<DateOnlyModel>, IEquatable<DateOnlyModel>

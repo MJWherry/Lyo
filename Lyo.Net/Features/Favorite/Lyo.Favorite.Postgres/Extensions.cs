@@ -87,11 +87,9 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(options);
         services.AddFavoriteDbContextFactory(options);
-        services.AddSingleton<IFavoriteStore>(
-            sp => new PostgresFavoriteStore(
-                sp.GetRequiredService<IDbContextFactory<FavoriteDbContext>>(),
-                sp.GetRequiredService<IOptions<EntityRefOptions>>(),
-                sp.GetServices<IEntityRefActionInterceptor>()));
+        services.AddSingleton<IFavoriteStore>(sp => new PostgresFavoriteStore(
+            sp.GetRequiredService<IDbContextFactory<FavoriteDbContext>>(), sp.GetRequiredService<IOptions<EntityRefOptions>>(), sp.GetServices<IEntityRefActionInterceptor>()));
+
         return services;
     }
 }

@@ -16,6 +16,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
 
     private readonly IDbContextFactory<CommentDbContext> _contextFactory;
 
+    private Guid Tenant => ResolveTenant(null);
+
     public PostgresCommentStore(
         IDbContextFactory<CommentDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
@@ -25,8 +27,6 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
-
-    private Guid Tenant => ResolveTenant(null);
 
     /// <inheritdoc />
     public async Task SaveAsync(CommentRecord comment, CancellationToken ct = default)
@@ -100,7 +100,13 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     public async Task<IReadOnlyList<CommentRecord>> GetRepliesAsync(Guid replyToCommentId, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.ReplyToCommentId == replyToCommentId).OrderBy(c => c.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Comments.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(c => c.ReplyToCommentId == replyToCommentId)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         return entities.Select(ToRecord).ToList();
     }
 
@@ -110,7 +116,12 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.FromEntityType == fromEntity.EntityType && c.FromEntityId == fromId).OrderBy(c => c.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Comments.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(c => c.FromEntityType == fromEntity.EntityType && c.FromEntityId == fromId)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
 
         return entities.Select(ToRecord).ToList();
     }
@@ -135,7 +146,6 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var comment = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
         if (comment == null)
@@ -196,6 +206,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
 
         if (existing == null)
             return;
+
         var comment = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
         if (comment != null) {
             if (existing.ReactionType == (int)CommentReactionType.Like)
@@ -251,7 +262,6 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var reactionsToDelete = await context.CommentReactions.Where(r => r.ForEntityType == "Comment" && idSet.Contains(r.ForEntityId)).ToListAsync(ct).ConfigureAwait(false);
         context.CommentReactions.RemoveRange(reactionsToDelete);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var c in toSoftDelete)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
     }
@@ -262,7 +272,12 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var comments = await context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId).ToListAsync(ct).ConfigureAwait(false);
+        var comments = await context.Comments.WhereActive()
+            .WhereTenant(Tenant)
+            .Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         var utc = DateTime.UtcNow;
         foreach (var c in comments)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, c, ct).ConfigureAwait(false);
@@ -274,7 +289,6 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var reactions = await context.CommentReactions.Where(r => r.ForEntityType == "Comment" && commentIds.Contains(r.ForEntityId)).ToListAsync(ct).ConfigureAwait(false);
         context.CommentReactions.RemoveRange(reactions);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         foreach (var c in comments)
             await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
     }
@@ -305,7 +319,13 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var all = new List<Guid> { rootId };
         var frontier = new List<Guid> { rootId };
         while (frontier.Count > 0) {
-            var next = await context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.ReplyToCommentId != null && frontier.Contains(c.ReplyToCommentId.Value)).Select(c => c.Id).ToListAsync(ct).ConfigureAwait(false);
+            var next = await context.Comments.WhereActive()
+                .WhereTenant(Tenant)
+                .Where(c => c.ReplyToCommentId != null && frontier.Contains(c.ReplyToCommentId.Value))
+                .Select(c => c.Id)
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+
             all.AddRange(next);
             frontier = next;
         }

@@ -13,7 +13,7 @@ internal static class SpanRedaction
         input.CopyTo(arr);
         return new(arr);
 #else
-        return new string(input);
+        return new(input);
 #endif
     }
 }

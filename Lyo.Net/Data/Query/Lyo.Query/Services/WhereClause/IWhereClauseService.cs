@@ -19,8 +19,8 @@ public interface IWhereClauseService
     /// <param name="source">The queryable to filter.</param>
     /// <param name="whereClause">The filter tree, or <c>null</c> to return <paramref name="source" /> unchanged.</param>
     /// <param name="includeSubClauses">
-    /// When <c>false</c>, nested <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> nodes are omitted from the expression (e.g. root-only database phase). When
-    /// <c>true</c> (default), the full tree is translated.
+    /// When <c>false</c>, nested <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> nodes are omitted from the expression (e.g. root-only
+    /// database phase). When <c>true</c> (default), the full tree is translated.
     /// </param>
     /// <returns><paramref name="source" /> with <c>Where</c> applied when <paramref name="whereClause" /> is non-null; otherwise <paramref name="source" />.</returns>
     /// <exception cref="Lyo.Query.Models.Exceptions.InvalidQueryException">Thrown when the clause references invalid paths or unsupported operators for the entity type.</exception>
@@ -35,9 +35,7 @@ public interface IWhereClauseService
     /// <exception cref="Lyo.Query.Models.Exceptions.InvalidQueryException">Thrown when <paramref name="propertyName" /> is invalid for <typeparamref name="TEntity" />.</exception>
     IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null);
 
-    /// <summary>
-    /// Applies multiple <see cref="SortBy" /> entries in priority order, or uses <paramref name="defaultOrder" /> when no explicit sorts are provided.
-    /// </summary>
+    /// <summary>Applies multiple <see cref="SortBy" /> entries in priority order, or uses <paramref name="defaultOrder" /> when no explicit sorts are provided.</summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
     /// <param name="queryable">The queryable to order.</param>
     /// <param name="sortByProps">Zero or more <see cref="SortBy" /> entries. Order within the list is overridden by each item's <see cref="SortBy.Priority" /> when set.</param>
@@ -75,9 +73,7 @@ public interface IWhereClauseService
     /// </summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
     /// <param name="whereClause">The filter tree, or <c>null</c> (returns an empty sequence).</param>
-    /// <returns>
-    /// Distinct include path strings (e.g. navigation names) needed for fields that traverse collections, ordered case-insensitively.
-    /// </returns>
+    /// <returns>Distinct include path strings (e.g. navigation names) needed for fields that traverse collections, ordered case-insensitively.</returns>
     IEnumerable<string> GetCollectionIncludePathsForWhereClause<TEntity>(Models.Common.WhereClause? whereClause);
 
     /// <summary>Whether <paramref name="propertyName" /> is a valid dotted path for <see cref="SortBy" /> and where-clause fields on <typeparamref name="TEntity" />.</summary>

@@ -6,9 +6,4 @@ namespace Lyo.Images.Ocr.Models;
 /// <param name="Lines">Line-level grouping derived from words.</param>
 /// <param name="ImageWidth">Width of the analyzed bitmap in pixels.</param>
 /// <param name="ImageHeight">Height of the analyzed bitmap in pixels.</param>
-public sealed record OcrPageResult(
-    string FullText,
-    IReadOnlyList<OcrWord> Words,
-    IReadOnlyList<OcrLine> Lines,
-    int ImageWidth,
-    int ImageHeight);
+public sealed record OcrPageResult(string FullText, IReadOnlyList<OcrWord> Words, IReadOnlyList<OcrLine> Lines, int ImageWidth, int ImageHeight);

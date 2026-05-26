@@ -40,7 +40,7 @@ public sealed class ComicDbSeeder
             _logger.LogInformation("Comic DB already has data — skipping seed.");
             return;
         }
-        
+
         _logger.LogInformation("Seeding {Count} comic series...", seriesCount);
         var series = BuildSeries(seed, seriesCount);
         var faker = seed.HasValue ? new Faker { Random = new(seed.Value) } : new Faker();
@@ -93,14 +93,14 @@ public sealed class ComicDbSeeder
             var tagCount = faker.Random.Int(2, 5);
             var picked = faker.Random.ArrayElements(GenreTags, tagCount);
             foreach (var tag in picked) {
-                var exists = await tagDb.Tags.AnyAsync(
-                        t => t.ForEntityType == SeriesEntityType && t.ForEntityId == s.Id && t.Name == tag && t.DeletedAt == null, ct)
+                var exists = await tagDb.Tags.AnyAsync(t => t.ForEntityType == SeriesEntityType && t.ForEntityId == s.Id && t.Name == tag && t.DeletedAt == null, ct)
                     .ConfigureAwait(false);
+
                 if (exists)
                     continue;
 
                 tagDb.Tags.Add(
-                    new TagEntity {
+                    new() {
                         Id = Guid.NewGuid(),
                         ForEntityType = SeriesEntityType,
                         ForEntityId = s.Id,
@@ -128,6 +128,7 @@ public sealed class ComicDbSeeder
         var seriesFaker = new Faker<SeriesEntity>();
         if (seed.HasValue)
             seriesFaker.UseSeed(seed.Value);
+
         seriesFaker.RuleFor(s => s.Id, _ => Guid.NewGuid())
             .RuleFor(s => s.Title, f => f.Lorem.Sentence(f.Random.Int(1, 4)).TrimEnd('.'))
             .RuleFor(s => s.Slug, (_, s) => UniqueSlug(SlugOf(s.Title), usedSlugs))

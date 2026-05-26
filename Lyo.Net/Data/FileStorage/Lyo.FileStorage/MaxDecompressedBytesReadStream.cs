@@ -17,7 +17,10 @@ internal sealed class MaxBytesWriteStream : Stream
 
     public override long Length => throw new NotSupportedException();
 
-    public override long Position { get => _totalWritten; set => throw new NotSupportedException(); }
+    public override long Position {
+        get => _totalWritten;
+        set => throw new NotSupportedException();
+    }
 
     public MaxBytesWriteStream(Stream inner, long maxBytes, Guid fileId)
     {

@@ -57,8 +57,17 @@ var options = new TwilioOptions
 
 ```csharp
 // In ConfigureServices(context, services):
-services.AddTwilioSmsServiceViaConfiguration(context.Configuration);
+services.AddTwilioSmsServiceFromConfiguration(context.Configuration);
+// Override the configuration section name (default: "TwilioOptions"):
+// services.AddTwilioSmsServiceFromConfiguration(context.Configuration, "MyTwilio");
 ```
+
+`AddTwilioSmsService(IConfiguration, string)` is an alias kept for callers that prefer the shorter name;
+both register the same singletons: `TwilioOptions`, `TwilioOptionsValidator`, `TwilioSmsService`, plus
+the cross-typed `ISmsService` and `ISmsService<TwilioSmsResult>` interfaces backed by the same instance.
+On `net6.0`+ targets an `IHttpClient` keyed `"lyo-twilio-sms"` is also registered so Twilio reuses the
+shared `IHttpClientFactory` pool (resilient policies layered via the application's `IHttpClientFactory`
+configuration apply automatically).
 
 ### 3. Use the Service
 
@@ -373,20 +382,24 @@ if (result is TwilioSmsResult twilioResult)
 
 ### Error Codes
 
-Twilio-specific error codes are included in the result:
+Twilio-specific error codes are included in the result via `TwilioSmsResult.TwilioErrorCode`:
 
 ```csharp
 if (!result.IsSuccess && result is TwilioSmsResult twilioResult)
 {
-    if (twilioResult.ErrorCode.HasValue)
+    if (twilioResult.TwilioErrorCode.HasValue)
     {
-        Console.WriteLine($"Twilio Error Code: {twilioResult.ErrorCode}");
+        Console.WriteLine($"Twilio Error Code: {twilioResult.TwilioErrorCode}");
         // Common error codes:
         // 20003 - Unreachable destination handset
         // 20429 - Too Many Requests (rate limit)
         // 30001 - Queue overflow
         // 30008 - Unknown destination handset
     }
+
+    // The Errors collection (inherited from Result<SmsRequest>) carries human-readable messages and codes
+    var firstError = twilioResult.Errors?.FirstOrDefault();
+    Console.WriteLine($"Error: {firstError?.Message} ({firstError?.Code})");
 }
 ```
 
@@ -502,13 +515,15 @@ Metrics tracked:
 
 ## Validation
 
-Options are automatically validated on startup:
+Options are automatically validated on startup via `TwilioOptionsValidator` (registered as
+`IValidateOptions<TwilioOptions>`):
 
 - `AccountSid` is required
 - `AuthToken` is required
-- Validation occurs when using `AddTwilioSmsServiceViaConfiguration()` or during service creation
+- Validation runs via `services.AddOptions<TwilioOptions>().ValidateOnStart()` when using
+  `AddTwilioSmsServiceFromConfiguration()` / `AddTwilioSmsService(IConfiguration, ...)`.
 
-If validation fails, an `OptionsValidationException` or `InvalidOperationException` is thrown.
+If validation fails, an `OptionsValidationException` is thrown during application startup.
 
 ## Dependencies
 

@@ -178,7 +178,7 @@ public static class SeriesEndpoints
             FromEntityId = Guid.Parse(req.FromEntityId)
         };
 
-        await favoriteStore.SaveAsync(record, tenantId: null, context: null, ct: ct);
+        await favoriteStore.SaveAsync(record, null, null, ct);
         return Results.NoContent();
     }
 

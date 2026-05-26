@@ -17,7 +17,6 @@ public static class OcrLineGrouper
         var lines = new List<List<OcrWord>>();
         List<OcrWord>? current = null;
         double? lineMidY = null;
-
         foreach (var w in sorted) {
             var midY = (w.BoundingBoxPixels.Top + w.BoundingBoxPixels.Bottom) / 2;
             if (current == null) {
@@ -45,7 +44,7 @@ public static class OcrLineGrouper
             var ordered = group.OrderBy(w => w.BoundingBoxPixels.Left).ToList();
             var text = string.Join(" ", ordered.Select(x => x.Text).Where(t => !string.IsNullOrWhiteSpace(t))).Trim();
             var union = UnionBoxes(ordered.Select(w => w.BoundingBoxPixels));
-            result.Add(new OcrLine(text, union, ordered));
+            result.Add(new(text, union, ordered));
         }
 
         return result.OrderByDescending(l => l.BoundingBoxPixels.Top).ToList();

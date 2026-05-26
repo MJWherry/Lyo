@@ -603,7 +603,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         await using var pdf = await _service.OpenFromFileAsync(paths[0], TestContext.Current.CancellationToken);
         ColumnHeader[] headers = [new("A"), new("B")];
         var sections = new[] { "NO_SUCH_SECTION_FOR_EXTRACT" };
-        var rows = await pdf.Text.ExtractTableAsync("NO_SUCH_SECTION_FOR_EXTRACT", headers, sections, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var rows = await pdf.Text.ExtractTableAsync("NO_SUCH_SECTION_FOR_EXTRACT", headers, sections, ct: TestContext.Current.CancellationToken);
         Assert.Null(rows);
     }
 
@@ -664,14 +664,12 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         Assert.NotNull(oneShot);
         AssertTableRowsEqual(chainedTable, fromSectionRecord);
         AssertTableRowsEqual(chainedTable, oneShot);
-
         var chainedKv = pdf.Text.ExtractKeyValuePairs(section.Words, []);
         var fromSecKv = pdf.Text.ExtractKeyValuePairs(section, []);
         AssertKvColumnResultsEqual(chainedKv, fromSecKv);
         var oneShotKv = pdf.Text.ExtractKeyValuePairs(sectionName, [], sections);
         Assert.NotNull(oneShotKv);
         AssertKvColumnResultsEqual(chainedKv, oneShotKv);
-
         var chainedDt = pdf.Text.ExtractDataTable(section.Words, headers);
         var fromSecDt = pdf.Text.ExtractDataTable(section, headers);
         var oneShotDt = pdf.Text.ExtractDataTable(sectionName, headers, sections);
@@ -680,9 +678,7 @@ public class PdfServiceTests : IDisposable, IAsyncDisposable
         Assert.Equal(chainedDt.Rows.Count, oneShotDt.Rows.Count);
     }
 
-    private static void AssertTableRowsEqual(
-        IReadOnlyList<IReadOnlyDictionary<string, string?>> expected,
-        IReadOnlyList<IReadOnlyDictionary<string, string?>> actual)
+    private static void AssertTableRowsEqual(IReadOnlyList<IReadOnlyDictionary<string, string?>> expected, IReadOnlyList<IReadOnlyDictionary<string, string?>> actual)
     {
         Assert.Equal(expected.Count, actual.Count);
         for (var i = 0; i < expected.Count; i++) {

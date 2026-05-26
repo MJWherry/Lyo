@@ -31,17 +31,17 @@ summaries below; this README stays the long-form guide (examples, security, conf
 
 ## 🚀 Features
 
-- **Multiple Compression Algorithms**
+- **Multiple Compression Algorithms** (matches the `CompressionAlgorithm` enum)
     - GZip (default for .NET Standard 2.0)
-    - Brotli (default for .NET 6+)
+    - Brotli (default for net10.0+; not available on `netstandard2.0`)
     - Deflate
-    - ZLib
+    - ZLib (not available on `netstandard2.0`)
     - Snappier (Snappy)
     - ZstdSharp (Zstandard)
     - LZ4
     - LZMA
-    - BZip2
-    - XZ
+    - BZip2 (via SharpZipLib)
+    - XZ (via `Joveler.Compression.XZ`; native `liblzma` required on Linux: `apt install liblzma5`)
 
 - **Comprehensive API**
     - Byte array compression/decompression
@@ -487,6 +487,11 @@ service.CompressFile("file\0name.txt", "output.br"); // Invalid characters
 
 ## 📚 API Reference
 
+### Service properties
+
+- `string FileExtension { get; }` — Extension associated with this instance's algorithm (`Constants.Data.AlgorithmExtensions`), e.g. `.gz`, `.br`, `.zst`.
+- `CompressionAlgorithm Algorithm { get; }` — Algorithm bound to this service instance at construction time.
+
 ### Core Methods
 
 #### Compression/Decompression
@@ -541,18 +546,21 @@ service.CompressFile("file\0name.txt", "output.br"); // Invalid characters
 ```csharp
 public enum CompressionAlgorithm
 {
-    GZip,      // .gz extension
-    Brotli,    // .br extension (.NET 6+ only)
-    Deflate,   // .deflate extension
-    ZLib,      // .zlib extension (.NET 6+ only)
-    Snappier,  // .snappy extension
-    ZstdSharp, // .zst extension
-    LZ4,       // .lz4 extension
-    LZMA,      // .lzma extension
-    BZip2,     // .bz2 extension
-    XZ         // .xz extension
+    Brotli,    // not available on netstandard2.0
+    BZip2,
+    Deflate,
+    GZip,
+    LZ4,
+    LZMA,
+    Snappier,
+    XZ,
+    ZLib,      // not available on netstandard2.0
+    ZstdSharp
 }
 ```
+
+File extensions are sourced from `Lyo.Common.Records.FileTypeInfo` via `Constants.Data.AlgorithmExtensions` (e.g. `.gz`, `.br`, `.zst`, `.lz4`, `.lzma`, `.bz2`, `.xz`,
+`.snappy`, `.deflate`, `.zlib`).
 
 ### Information Types
 
@@ -697,13 +705,10 @@ The library throws specific exceptions for different error conditions:
 
 ## 📚 Additional Resources
 
-- [EasyCompressor Library](https://github.com/neil-yang/EasyCompressor) - Underlying compression library
+- [`EasyCompressor`](https://www.nuget.org/packages/EasyCompressor) — underlying compressor abstraction backing GZip/Brotli/Deflate/ZLib/Snappier/Zstd/LZ4/LZMA paths.
+- [`Joveler.Compression.XZ`](https://www.nuget.org/packages/Joveler.Compression.XZ) — XZ (LZMA2) implementation (requires native `liblzma` on Linux).
+- [`SharpZipLib`](https://www.nuget.org/packages/SharpZipLib) — used for BZip2.
 - [.NET Compression Documentation](https://docs.microsoft.com/en-us/dotnet/api/system.io.compression)
-- [Compression Algorithms Comparison](https://en.wikipedia.org/wiki/Comparison_of_archive_formats)
-
-## 📝 License
-
-[Your License Here]
 
 ---
 
@@ -751,19 +756,19 @@ The library throws specific exceptions for different error conditions:
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Streams`](../../../Core/Streams/Lyo.Streams/README.md)
 
-## Public API (generated)
+## Public surface
 
-Top-level `public` types in `*.cs` (*11*). Nested types and file-scoped namespaces may omit some entries.
+| Type                                                                       | Description                                                                                                                          |
+|----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| **`ICompressionService`** / **`CompressionService`**                       | Main contract + implementation. `FileExtension`, `Algorithm`, full byte/string/stream/file/batch/base64 API (sync + async + `Try*`). |
+| **`CompressionServiceOptions`**                                            | `DefaultAlgorithm`, `DefaultCompressionLevel`, `MaxInputSize`, `MaxParallelFileOperations`, buffer sizes, `EnableMetrics`. `SectionName = "CompressionOptions"`. |
+| **`CompressionAlgorithm`**                                                 | Enum: `GZip`, `Brotli`*, `Deflate`, `ZLib`*, `Snappier`, `ZstdSharp`, `LZ4`, `LZMA`, `BZip2`, `XZ`. (*Brotli/ZLib require net10.0; unavailable on `netstandard2.0`.) |
+| **`CompressionInfo` / `DecompressionInfo`**                                | In-memory operation metadata.                                                                                                        |
+| **`FileCompressionInfo` / `FileDecompressionInfo`**                        | File-level operation metadata (input/output paths, sizes, timings).                                                                  |
+| **`BatchFileCompressionResult` / `BatchFileDecompressionResult`**          | Batch metadata + per-file failures (`FailedFiles`).                                                                                 |
+| **`CompressionFileInfo` / `DecompressionFileInfo` / `FileCompressionInfo` / `FileDecompressionInfo` / `FailedFileOperation` / `BatchCompressionResult` / `BatchDecompressionResult` / `CompressionProgress`** | Supporting models in `Lyo.Compression.Models`. |
+| **`Extensions`**                                                           | DI: `AddCompressionService()`, `AddCompressionService(Action<CompressionServiceOptions>)`, `AddCompressionServiceFromConfiguration(IConfiguration, sectionName?)`, `AddCompressionServiceKeyed(string key, Action<CompressionServiceOptions>?)`. |
+| **`CompressionErrorCodes`**                                                | Stable error code strings.                                                                                                           |
 
-- `CompressionAlgorithm`
-- `CompressionErrorCodes`
-- `CompressionProgress`
-- `CompressionService`
-- `CompressionServiceOptions`
-- `Constants`
-- `Data`
-- `Extensions`
-- `ICompressionService`
-- `IsExternalInit`
-- `Metrics`
+The `Compressors/` folder (`BZip2Compressor`, `XZCompressor`) contains internal helpers backing those two algorithms; consumers should go through `ICompressionService`.
 

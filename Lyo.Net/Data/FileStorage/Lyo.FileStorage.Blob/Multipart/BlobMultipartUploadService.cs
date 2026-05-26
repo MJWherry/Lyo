@@ -6,7 +6,6 @@ using Azure.Storage.Sas;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
-using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
@@ -16,9 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage.Blob.Multipart;
 
-/// <summary>
-/// Multipart uploads using Azure block staging under <c>.multipart/{sessionId}/staging</c>, then streaming through <see cref="BlobFileStorageService.SaveFromStreamAsync" />.
-/// </summary>
+/// <summary>Multipart uploads using Azure block staging under <c>.multipart/{sessionId}/staging</c>, then streaming through <see cref="BlobFileStorageService.SaveFromStreamAsync" />.</summary>
 public sealed class BlobMultipartUploadService : IMultipartUploadService
 {
     private readonly IReadOnlyList<IFileAuditEventHandler> _auditHandlers;
@@ -103,8 +100,8 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
@@ -133,7 +130,6 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
         OperationHelpers.ThrowIf(ordered.Count == 0, "At least one part is required.");
         var blockIds = ordered.Select(p => ToBlockId(p.PartNumber)).ToList();
         var blockBlob = GetBlockBlobClient(state.StagingBlobName);
-
         var stagingCommitted = false;
         try {
             try {
@@ -149,10 +145,11 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
             var tempPath = Path.Combine(Path.GetTempPath(), $"lyo-blob-mpu-{request.SessionId:N}.bin");
             try {
                 // No-transform fast path: server-side StartCopyFromUri from staging → final blob, skipping the SaveFromStreamAsync re-upload.
-                if (!session.Compress && !session.Encrypt && !(_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner))
+                if (!session.Compress && !session.Encrypt && !(_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner)) {
                     result = await _storage.FinalizeMultipartFromStagingAsync(
                             state.StagingBlobName, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, null, ct)
                         .ConfigureAwait(false);
+                }
                 else if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
                     using (var read = await blockBlob.OpenReadAsync(cancellationToken: ct).ConfigureAwait(false)) {
                         await using var fs = File.Create(tempPath);
@@ -171,10 +168,13 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
                         };
                     }
 
-                    if (!session.Compress && !session.Encrypt)
+                    if (!session.Compress && !session.Encrypt) {
                         result = await _storage.FinalizeMultipartFromStagingAsync(
-                                state.StagingBlobName, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, availabilityOverride, ct)
+                                state.StagingBlobName, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId,
+                                availabilityOverride,
+                                ct)
                             .ConfigureAwait(false);
+                    }
                     else {
                         await using var input = File.OpenRead(tempPath);
                         result = await _storage.SaveFromStreamAsync(
@@ -188,7 +188,8 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
                     var len = readStream.Length;
                     result = await _storage.SaveFromStreamAsync(
                             readStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
-                            null, session.ContentType, session.TenantId, null, session.TargetFileId, ct)
+                            null,
+                            session.ContentType, session.TenantId, null, session.TargetFileId, ct)
                         .ConfigureAwait(false);
                 }
             }
@@ -235,23 +236,14 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
             await FileAuditPublication.PublishAsync(
                     _auditHandlers, null, null,
                     new(
-                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId, null,
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId,
+                        null,
                         FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
                     _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
         }
-    }
-
-    private static string SanitizeAuditError(string? message)
-    {
-        if (string.IsNullOrEmpty(message))
-            return string.Empty;
-
-        const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
-        return s.Length > max ? s[..max] : s;
     }
 
     /// <inheritdoc />
@@ -295,12 +287,22 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics,
-                    FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
         }
+    }
+
+    private static string SanitizeAuditError(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return string.Empty;
+
+        const int max = 512;
+        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
     }
 
     private async Task<MultipartPartDescriptor> GetPresignedPartUploadCoreAsync(Guid sessionId, int partNumber, CancellationToken ct)
@@ -318,9 +320,7 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
         };
 
         sasBuilder.SetPermissions(BlobSasPermissions.Write | BlobSasPermissions.Create);
-
         AddSasEncryptionOverrides(sasBuilder);
-
         var sasUri = blockBlob.GenerateSasUri(sasBuilder);
         var baseUrl = sasUri.ToString();
         var joiner = baseUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
@@ -333,9 +333,10 @@ public sealed class BlobMultipartUploadService : IMultipartUploadService
         if (!string.IsNullOrWhiteSpace(_options.EncryptionScope))
             sasBuilder.EncryptionScope = _options.EncryptionScope;
 
-        if (_options.ResolveCustomerProvidedKey().HasValue)
+        if (_options.ResolveCustomerProvidedKey().HasValue) {
             throw new NotSupportedException(
                 "Customer-provided key (SSE-C) multipart part URLs cannot be reliably presigned via BlobSAS; omit CustomerProvidedKey or use uploads without SSE-C.");
+        }
     }
 
     private static void TryDeleteFile(string path)

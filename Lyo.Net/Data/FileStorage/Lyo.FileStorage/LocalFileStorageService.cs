@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Lyo.Common.Records;
 using Lyo.Compression;
@@ -56,6 +55,21 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         Logger.LogInformation("Created root directory: {RootPath}", _options.RootDirectoryPath);
     }
 
+    /// <inheritdoc />
+    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cap = Math.Min(maxKeys, 10_000);
+        var storageRootFull = NormalizeStorageRootFullPath();
+        var startDir = ResolveListingDirectory(storageRootFull, prefix);
+        var list = new List<string>();
+        foreach (var absolute in EnumerateLimitedFilesUnderDirectory(storageRootFull, startDir, cap, ct))
+            list.Add(ToStorageKeyRelativeToRoot(storageRootFull, absolute));
+
+        return Task.FromResult<IReadOnlyList<string>>(list);
+    }
+
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
@@ -79,22 +93,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     }
 
     /// <inheritdoc />
-    Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix = null, int maxKeys = 1000, CancellationToken ct = default)
-    {
-        ct.ThrowIfCancellationRequested();
-        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
-        var cap = Math.Min(maxKeys, 10_000);
-        var storageRootFull = NormalizeStorageRootFullPath();
-        var startDir = ResolveListingDirectory(storageRootFull, prefix);
-
-        var list = new List<string>();
-        foreach (var absolute in EnumerateLimitedFilesUnderDirectory(storageRootFull, startDir, cap, ct))
-            list.Add(ToStorageKeyRelativeToRoot(storageRootFull, absolute));
-
-        return Task.FromResult<IReadOnlyList<string>>(list);
-    }
-
-    /// <inheritdoc />
     public override Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
 
@@ -107,9 +105,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         ArgumentHelpers.ThrowIfNull(request);
         var normalized = NormalizePathPrefix(request.PathPrefix) ?? "";
         var fileId = Guid.NewGuid();
-
         await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
-
         var trimmedBase = _options.DirectUploadReceiveBaseUri!.Trim().TrimEnd('/');
         var routeTrim = (_options.DirectUploadPutRouteRelativePath ?? "").Trim().Trim('/');
         var putUrl = $"{trimmedBase}/{routeTrim}/{fileId:D}/put";
@@ -118,7 +114,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var fullPathForId = TrimEnds(Path.GetFullPath(GetFilePath(fileId, "", normalized)));
         EnsurePathUnder(storageRootFull, fullPathForId);
         var storageRelative = ToStorageKeyRelativeToRoot(storageRootFull, fullPathForId);
-
         return new() {
             FileId = fileId,
             PresignedPutUrl = putUrl,
@@ -129,9 +124,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     }
 
     /// <summary>Accepts a raw HTTP PUT body for a pending plaintext direct upload. Use with a trusted host (e.g. <c>Lyo.TestApi</c> Workbench).</summary>
-    /// <remarks>
-    /// Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes"/> during the copy so an attacker cannot exhaust disk before finalize re-checks the size.
-    /// </remarks>
+    /// <remarks>Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot exhaust disk before finalize re-checks the size.</remarks>
     public async Task ReceiveWorkbenchDirectPutAsync(Guid fileId, Stream body, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(body);
@@ -144,7 +137,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
 #else
         await using var output = await CreateOutputStreamAsync(fileId, "", meta.PathPrefix, ct).ConfigureAwait(false);
 #endif
-
         var max = Options.MaxUploadSizeBytes;
         if (max is null) {
             await body.CopyToAsync(output, 81920, ct).ConfigureAwait(false);
@@ -159,8 +151,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
                 total += read;
                 if (total > max.Value) {
-                    throw new InvalidOperationException(
-                        $"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
+                    throw new InvalidOperationException($"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
                 }
 
                 await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
@@ -177,7 +168,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var meta = await GetMetadataAsync(sourceFileId, ct).ConfigureAwait(false);
         EnsureReadableAvailability(meta);
         OperationHelpers.ThrowIf(meta.Availability == FileAvailability.PendingDirectUpload, $"Cannot copy file {sourceFileId} pending direct upload.");
-
         var srcPath = FindFilePath(sourceFileId, meta.PathPrefix);
         if (srcPath == null || !File.Exists(srcPath))
             throw new FileNotFoundException($"Source file path not found for id {sourceFileId}");
@@ -185,22 +175,20 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var destId = Guid.NewGuid();
         var destPrefix = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
-
         try {
             var destPath = GetFilePath(destId, suffix, destPrefix);
             var destDir = Path.GetDirectoryName(destPath);
             if (!string.IsNullOrEmpty(destDir))
                 Directory.CreateDirectory(destDir);
 
-            File.Copy(srcPath, destPath, overwrite: true);
+            File.Copy(srcPath, destPath, true);
             return await RecordCopyMetadataAsync(sourceFileId, meta, destId, request, ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
             await RaiseFileAuditAsync(
                     new(
                         FileAuditEventType.Copy, DateTime.UtcNow, destId, meta.TenantId, OperationContextAccessor.Current?.ActorId, meta.DataEncryptionKeyId,
-                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, FileStorageServiceBase.SanitizeAuditError(ex.Message), CorrelationId: sourceFileId),
-                    ct)
+                        meta.DataEncryptionKeyVersion, FileAuditOutcome.Failure, SanitizeAuditError(ex.Message), sourceFileId), ct)
                 .ConfigureAwait(false);
 
             throw;
@@ -317,18 +305,21 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
             var tempPath = filePath + ".dek-rotate-" + Guid.NewGuid().ToString("N") + ".tmp";
             try {
 #if NETSTANDARD2_0
-                using (var src = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous))
-                using (var dst = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
+                using (var src = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous)) {
+                    using (var dst = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
 #else
                 await using (var src = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous))
                 await using (var dst = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
 #endif
-                {
-                    await dst.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
-                    src.Position = oldHeaderSize;
-                    await src.CopyToAsync(dst, 81920, ct).ConfigureAwait(false);
-                    await dst.FlushAsync(ct).ConfigureAwait(false);
+                    {
+                        await dst.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
+                        src.Position = oldHeaderSize;
+                        await src.CopyToAsync(dst, 81920, ct).ConfigureAwait(false);
+                        await dst.FlushAsync(ct).ConfigureAwait(false);
+                    }
+#if NETSTANDARD2_0
                 }
+#endif
 
                 File.Replace(tempPath, filePath, null);
             }
@@ -495,7 +486,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
     private static string NormalizeDiagnosticListingPrefix(string? prefix)
         => prefix == null || string.IsNullOrWhiteSpace(prefix) ? "" : prefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
 
-    /// <exception cref="UnauthorizedAccessException">When <paramref name="extendedPrefix"/> attempts to escape storage root.</exception>
+    /// <exception cref="UnauthorizedAccessException">When <paramref name="extendedPrefix" /> attempts to escape storage root.</exception>
     private static string ResolveListingDirectory(string storageRootFull, string? extendedPrefix)
     {
         var trimmed = NormalizeDiagnosticListingPrefix(extendedPrefix);
@@ -507,7 +498,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
 
         var relative = trimmed.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         var resolved = TrimEnds(Path.Combine(storageRootFull, relative));
-
         EnsurePathUnder(storageRootFull, resolved);
         return resolved;
     }
@@ -518,7 +508,6 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var rootTrim = TrimEnds(storageRootFull);
         var candTrim = TrimEnds(resolvedPathAbsolute);
         var rootWithSep = rootTrim + Path.DirectorySeparatorChar;
-
         if (!(candTrim.Equals(rootTrim, cmp) || candTrim.StartsWith(rootWithSep, cmp)))
             throw new UnauthorizedAccessException($"Path '{resolvedPathAbsolute}' is outside storage root.");
     }
@@ -532,10 +521,8 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var dirs = new Queue<string>();
         dirs.Enqueue(startDirectory);
         var counted = 0;
-
         while (dirs.Count > 0 && counted < maxEntries) {
             ct.ThrowIfCancellationRequested();
-
             string dir;
             try {
                 dir = dirs.Dequeue();
@@ -562,6 +549,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
                     EnsurePathUnder(storageRootFull, full);
                     counted++;
                     yield return full;
+
                     if (counted >= maxEntries)
                         yield break;
                 }
@@ -591,9 +579,7 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         var rootTrim = TrimEnds(storageRootFull);
         var candTrim = TrimEnds(Path.GetFullPath(absoluteFile));
         EnsurePathUnder(storageRootFull, candTrim);
-
         var rootWithSep = rootTrim + Path.DirectorySeparatorChar;
-
         if (candTrim.Equals(rootTrim, cmp))
             return "";
 

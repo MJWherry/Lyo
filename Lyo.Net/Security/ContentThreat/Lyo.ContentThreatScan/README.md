@@ -4,13 +4,20 @@ Heuristic scanning and numeric disposition scoring for **readable text** payload
 
 ## Pieces
 
-| Type                                                    | Role                                                                       |
-|---------------------------------------------------------|----------------------------------------------------------------------------|
-| `IContentThreatScanner` / `DefaultContentThreatScanner` | UTF-8–bounded sample rules and per-category scoring                        |
-| `ContentThreatAssessment`                               | Summed disposition score + `IntelConfirmedMalicious` flag                  |
-| `ContentThreatAssessmentOptions`                        | Suspect/threat thresholds, disposition cap, `ForceThreatOnConfirmedIntel`  |
-| `IContentThreatReputationPipeline`                      | Optional lookups (implementations live in **Lyo.ContentThreatScan.Intel**) |
-| `ContentThreatAssessmentComposer`                       | Merges heuristic contributions with external envelope                      |
+| Type                                                          | Role                                                                                                                                                                          |
+|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `IContentThreatScanner` / `DefaultContentThreatScanner`       | UTF-8–bounded sample rules and per-category scoring. Required ctor arg: `ContentThreatHeuristicOptions`.                                                                      |
+| `ContentThreatAssessment`                                     | Aggregate result. Exposes `HeuristicScore`, `ExternalScore`, total `Score`, `IntelConfirmedMalicious`, and the `IReadOnlyList<ContentThreatContribution>` that produced them. |
+| `ContentThreatAssessmentOptions`                              | Suspect/threat thresholds, disposition cap, `ForceThreatOnConfirmedIntel`, plus `FailureBumpPoints` / `FailureContributionRuleId` for provider-failure scoring.               |
+| `ContentThreatHeuristicOptions`                               | Eligibility (default text extensions / content-types, MIME-sniffing flags), `MaxBytesToAnalyze`, per-category score caps, binary-skip toggle.                                 |
+| `ContentThreatScanContext`                                    | Per-call metadata passed into heuristic and reputation probes: filename, content-type, correlation id, optional caller fields.                                                |
+| `ContentThreatCategory`                                       | Enum of rule families that produce hits (`SqlInjection`, `Script`, `Reputation`, `AntiVirus`, etc.).                                                                          |
+| `ContentThreatContribution`                                   | One rule hit: category, weighted points, rule id, optional snippet. Build aggregate scores via `ContentThreatAssessment.FromContributions`.                                   |
+| `ContentThreatDisposition` / `ContentThreatDispositionMapper` | Maps a numeric score to `Clean` / `Suspect` / `Threat` bands using `ContentThreatAssessmentOptions` thresholds.                                                               |
+| `ExternalReputationEnvelope`                                  | Result returned by `IContentThreatReputationPipeline`: per-provider scores, intel-confirmed flag, failures.                                                                   |
+| `ContentThreatReputationRequest`                              | Input to reputation pipelines: 32-byte SHA-256 digest, optional `LimitedSamplePrefix`, file-type hint, `ContentThreatScanContext`.                                            |
+| `IContentThreatReputationPipeline`                            | Optional lookups (implementations live in **Lyo.ContentThreatScan.Intel**).                                                                                                   |
+| `ContentThreatAssessmentComposer`                             | Merges heuristic contributions with the external reputation envelope, applies thresholds, returns the final `ContentThreatAssessment` + disposition.                          |
 
 ## Sampling and digests
 

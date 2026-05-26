@@ -8,6 +8,9 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class WhatsAppUrlPayload : IQrPayload
 {
+    /// <summary>Input phone (trimmed).</summary>
+    public string PhoneNumber { get; }
+
     /// <summary>Creates a WhatsApp deep link from a phone string (digits and optional leading <c>+</c>).</summary>
     public WhatsAppUrlPayload(string phoneNumber)
     {
@@ -15,18 +18,10 @@ public sealed class WhatsAppUrlPayload : IQrPayload
         PhoneNumber = phoneNumber.Trim();
     }
 
-    /// <summary>Input phone (trimmed).</summary>
-    public string PhoneNumber { get; }
-
-    /// <inheritdoc />
-    public override string ToString()
-        => $"WhatsAppUrlPayload {PhoneNumber}";
-
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(PhoneNumber), "Phone number cannot be empty.", nameof(PhoneNumber));
-
         var digits = new StringBuilder(PhoneNumber.Length);
         foreach (var c in PhoneNumber) {
             if (char.IsAsciiDigit(c))
@@ -38,4 +33,7 @@ public sealed class WhatsAppUrlPayload : IQrPayload
 
         return "https://wa.me/" + digits;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"WhatsAppUrlPayload {PhoneNumber}";
 }

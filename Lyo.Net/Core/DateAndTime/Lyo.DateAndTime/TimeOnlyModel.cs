@@ -4,12 +4,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.DateAndTime;
 
-/// <summary>
-/// .NET Standard 2.0–compatible time-of-day value (no calendar), modeled after the BCL <c>System.TimeOnly</c> type introduced in .NET 6.
-/// </summary>
+/// <summary>.NET Standard 2.0–compatible time-of-day value (no calendar), modeled after the BCL <c>System.TimeOnly</c> type introduced in .NET 6.</summary>
 /// <remarks>
-/// Values are stored as ticks within a single 24-hour day <c>[0, TimeSpan.TicksPerDay)</c>. Arithmetic wraps modulo one day, mirroring the BCL semantics closely enough
-/// for scheduling alongside <see cref="DateOnlyModel" />.
+/// Values are stored as ticks within a single 24-hour day <c>[0, TimeSpan.TicksPerDay)</c>. Arithmetic wraps modulo one day, mirroring the BCL semantics closely enough for
+/// scheduling alongside <see cref="DateOnlyModel" />.
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class TimeOnlyModel : IComparable<TimeOnlyModel>, IEquatable<TimeOnlyModel>

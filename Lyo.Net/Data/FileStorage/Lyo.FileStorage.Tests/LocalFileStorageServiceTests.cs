@@ -30,7 +30,7 @@ public class LocalFileStorageServiceTests : IDisposable
             builder.SetMinimumLevel(LogLevel.Debug);
         });
 
-        _tempSession = new IOTempSession(new(), _loggerFactory.CreateLogger<IOTempSession>());
+        _tempSession = IOTempSession.CreateForTests(nameof(LocalFileStorageServiceTests), _loggerFactory.CreateLogger<IOTempSession>());
     }
 
     public void Dispose()
@@ -128,8 +128,7 @@ public class LocalFileStorageServiceTests : IDisposable
         var saveResult = await service.SaveFileAsync(testData, ct: TestContext.Current.CancellationToken);
         var metaPath = Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ".meta"));
         Assert.True(File.Exists(metaPath));
-        var deleted = await service.DeleteFileAsync(
-            saveResult.Id, FileDeletionMode.RemoveObjectAndPurgeMetadata, TestContext.Current.CancellationToken);
+        var deleted = await service.DeleteFileAsync(saveResult.Id, FileDeletionMode.RemoveObjectAndPurgeMetadata, TestContext.Current.CancellationToken);
         Assert.True(deleted);
         Assert.False(File.Exists(Path.Combine(_tempSession.SessionDirectory, GetSubPath(saveResult.Id, ""))));
         Assert.False(File.Exists(metaPath));

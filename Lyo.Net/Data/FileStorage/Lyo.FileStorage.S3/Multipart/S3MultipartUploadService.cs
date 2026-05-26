@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Lyo.Common.Extensions;
 using Lyo.Common.Records;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
@@ -93,7 +94,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                 var initiate = new InitiateMultipartUploadRequest { BucketName = _options.BucketName, Key = stagingKey, ContentType = FileTypeInfo.Unknown.MimeType };
                 S3UploadServerSideEncryption.ApplyToInitiateMultipart(initiate, _options);
                 var init = await _s3.InitiateMultipartUploadAsync(initiate, ct).ConfigureAwait(false);
-
                 OperationHelpers.ThrowIf(string.IsNullOrWhiteSpace(init.UploadId), "S3 InitiateMultipartUpload returned no UploadId.");
                 uploadId = init.UploadId;
             }
@@ -129,8 +129,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartBegin, DateTime.UtcNow, targetFileId, tenant, _operationContextAccessor.Current?.ActorId, request.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)),
-                    CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
@@ -159,7 +159,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         var orderedParts = request.Parts.OrderBy(p => p.PartNumber).ToList();
         OperationHelpers.ThrowIf(orderedParts.Count == 0, "At least one part is required.");
         var partEtags = orderedParts.Select(p => new PartETag(p.PartNumber, NormalizeS3Etag(p.ETagOrBlockId))).ToList();
-
         var stagingCommitted = false;
         try {
             try {
@@ -183,10 +182,11 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             var tempPath = Path.Combine(Path.GetTempPath(), $"lyo-mpu-{request.SessionId:N}.bin");
             try {
                 // No-transform fast path: server-side CopyObject from staging → final key, skipping the SaveFromStreamAsync re-upload (saves ~one full payload of upload bandwidth).
-                if (!session.Compress && !session.Encrypt && !(_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner))
+                if (!session.Compress && !session.Encrypt && !(_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner)) {
                     result = await _storage.FinalizeMultipartFromStagingAsync(
                             state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, null, ct)
                         .ConfigureAwait(false);
+                }
                 else if (_options.RequireScanBeforeAvailable && _malwareScanner is not NullFileMalwareScanner) {
                     using (var getResponse = await _s3.GetObjectAsync(new() { BucketName = _options.BucketName, Key = state.StagingKey }, ct).ConfigureAwait(false)) {
                         await using var fs = File.Create(tempPath);
@@ -205,10 +205,12 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                         };
                     }
 
-                    if (!session.Compress && !session.Encrypt)
+                    if (!session.Compress && !session.Encrypt) {
                         result = await _storage.FinalizeMultipartFromStagingAsync(
-                                state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, availabilityOverride, ct)
+                                state.StagingKey, session.TargetFileId, session.OriginalFileName, session.ContentType, session.PathPrefix, session.TenantId, availabilityOverride,
+                                ct)
                             .ConfigureAwait(false);
+                    }
                     else {
                         await using var input = File.OpenRead(tempPath);
                         result = await _storage.SaveFromStreamAsync(
@@ -275,23 +277,14 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             await FileAuditPublication.PublishAsync(
                     _auditHandlers, null, null,
                     new(
-                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId, null,
+                        FileAuditEventType.MultipartComplete, DateTime.UtcNow, session.TargetFileId, session.TenantId, _operationContextAccessor.Current?.ActorId, session.KeyId,
+                        null,
                         FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
                     _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
         }
-    }
-
-    private static string SanitizeAuditError(string? message)
-    {
-        if (string.IsNullOrEmpty(message))
-            return string.Empty;
-
-        const int max = 512;
-        var s = message!.Replace('\r', ' ').Replace('\n', ' ').Trim();
-        return s.Length > max ? s[..max] : s;
     }
 
     /// <inheritdoc />
@@ -329,12 +322,22 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
                     _auditHandlers, null, null,
                     new(
                         FileAuditEventType.MultipartAbort, DateTime.UtcNow, s.TargetFileId, s.TenantId, _operationContextAccessor.Current?.ActorId, s.KeyId, null,
-                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics,
-                    FileStorage.Constants.Metrics.AuditAppendFailed, _options.ThrowOnAuditFailure)
+                        FileAuditOutcome.Failure, SanitizeAuditError(ex.Message)), CancellationToken.None, _logger, _metrics, FileStorage.Constants.Metrics.AuditAppendFailed,
+                    _options.ThrowOnAuditFailure)
                 .ConfigureAwait(false);
 
             throw;
         }
+    }
+
+    private static string SanitizeAuditError(string? message)
+    {
+        if (message.IsNullOrEmpty())
+            return string.Empty;
+
+        const int max = 512;
+        var s = message.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return s.Length > max ? s[..max] : s;
     }
 
     private async Task<MultipartPartDescriptor> GetPresignedPartUploadCoreAsync(Guid sessionId, int partNumber, CancellationToken ct)
@@ -353,7 +356,6 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
         };
 
         S3UploadServerSideEncryption.ApplyToPresignedPut(request, _options);
-
         var url = await _s3.GetPreSignedURLAsync(request).ConfigureAwait(false);
         return new(partNumber, url);
     }

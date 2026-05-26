@@ -5,8 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Images.Ocr.Tesseract.Tests;
 
 /// <summary>
-/// Always-on tests that exercise JSON load + <see cref="ConfigurationBinder"/> (<c>Get&lt;T&gt;()</c>) and DI registration. Integration OCR tests skip unless <c>OcrTesseractTests:RunIntegration</c> is true.
-/// Library DI helpers (<c>AddTesseractOcrEngineFromConfiguration</c> in <c>Lyo.Images.Ocr.Tesseract</c>) are not used by this project; break there only when debugging host apps that register OCR via DI.
+/// Always-on tests that exercise JSON load + <see cref="ConfigurationBinder" /> (<c>Get&lt;T&gt;()</c>) and DI registration. Integration OCR tests skip unless
+/// <c>OcrTesseractTests:RunIntegration</c> is true. Library DI helpers (<c>AddTesseractOcrEngineFromConfiguration</c> in <c>Lyo.Images.Ocr.Tesseract</c>) are not used by this
+/// project; break there only when debugging host apps that register OCR via DI.
 /// </summary>
 public sealed class TesseractOcrConfigurationTests(TesseractOcrTestFixture fixture)
 {
@@ -18,7 +19,9 @@ public sealed class TesseractOcrConfigurationTests(TesseractOcrTestFixture fixtu
         var cfg = _fixture.Services.GetRequiredService<IConfiguration>();
         Assert.NotNull(cfg);
         var section = cfg.GetSection(OcrEngineOptions.SectionName);
-        Assert.True(section.Exists(), $"Missing JSON section '{OcrEngineOptions.SectionName}'. Ensure appsettings.json is copied to output (see csproj CopyToOutputDirectory). BaseDirectory={AppContext.BaseDirectory}");
+        Assert.True(
+            section.Exists(),
+            $"Missing JSON section '{OcrEngineOptions.SectionName}'. Ensure appsettings.json is copied to output (see csproj CopyToOutputDirectory). BaseDirectory={AppContext.BaseDirectory}");
     }
 
     [Fact]

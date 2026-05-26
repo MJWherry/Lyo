@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Capacitance stored in farads.</summary>
 /// <remarks>Non-negative finite magnitude.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Capacitance
 {

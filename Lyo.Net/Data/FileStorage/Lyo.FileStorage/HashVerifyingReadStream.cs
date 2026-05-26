@@ -1,16 +1,16 @@
-using Lyo.Hashing;
-using Microsoft.Extensions.Logging;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 using System.Security.Cryptography;
 #endif
+using Lyo.Hashing;
+using Microsoft.Extensions.Logging;
 using SysCryptoHashAlgorithm = System.Security.Cryptography.HashAlgorithm;
 
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Wraps a source stream and computes a hash inline as data is read. On dispose, verifies the computed hash against the expected hash — but only when the stream
-/// was fully consumed to EOF; partial reads (early dispose) skip verification to avoid spurious mismatches. Owns and disposes any additional inner streams supplied
-/// via <see cref="WithAdditionalDisposable" />.
+/// Wraps a source stream and computes a hash inline as data is read. On dispose, verifies the computed hash against the expected hash — but only when the stream was fully
+/// consumed to EOF; partial reads (early dispose) skip verification to avoid spurious mismatches. Owns and disposes any additional inner streams supplied via
+/// <see cref="WithAdditionalDisposable" />.
 /// </summary>
 internal sealed class HashVerifyingReadStream : Stream
 {

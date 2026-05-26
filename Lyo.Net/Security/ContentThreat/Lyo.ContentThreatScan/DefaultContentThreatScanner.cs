@@ -78,7 +78,7 @@ public sealed class DefaultContentThreatScanner : IContentThreatScanner
 #if NETSTANDARD2_0
                 new(p, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled)
 #else
-                new Regex(p, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled, TimeSpan.FromMilliseconds(80))
+                new(p, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled, TimeSpan.FromMilliseconds(80))
 #endif
         );
 

@@ -1,8 +1,6 @@
-@using System.Text
 @using Lyo.Images
 @using Lyo.QRCode.Models
 @using Lyo.QRCode.Payloads
-@using MudBlazor.Utilities
 @inject IQRCodeService QrCodeService
 @inject IQrFrameLayoutService QrFrameLayout
 @inject IImageService? ImageService
@@ -36,7 +34,8 @@
                                 </MudSelect>
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudSelect T="QRCodeErrorCorrectionLevel" Label="Error correction" @bind-Value="_errorCorrectionLevel" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense">
+                                <MudSelect T="QRCodeErrorCorrectionLevel" Label="Error correction" @bind-Value="_errorCorrectionLevel" Variant="Variant.Outlined" dense="true"
+                                           Margin="Margin.Dense">
                                     @foreach (var level in Enum.GetValues<QRCodeErrorCorrectionLevel>()) {
                                         <MudSelectItem Value="@level">@level</MudSelectItem>
                                     }
@@ -101,6 +100,7 @@
                                                    OnClientFileRemoved="OnLogoClientFileRemovedAsync"/>
                                 </MudItem>
                             </MudGrid>
+
                             @* Row: logo size slider + border *@
                             <MudGrid Spacing="1">
                                 <MudItem xs="12" sm="8">
@@ -191,7 +191,8 @@
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                             Encoded string only; format/size use the left column.
                         </MudText>
-                        <MudSelect T="QrPayloadKind" Label="Payload type" Value="_payloadKind" ValueChanged="OnQrPayloadKindChangedAsync" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense">
+                        <MudSelect T="QrPayloadKind" Label="Payload type" Value="_payloadKind" ValueChanged="OnQrPayloadKindChangedAsync" Variant="Variant.Outlined" dense="true"
+                                   Margin="Margin.Dense">
                             @foreach (var k in Enum.GetValues<QrPayloadKind>()) {
                                 <MudSelectItem Value="@k">@PayloadKindLabel(k)</MudSelectItem>
                             }
@@ -199,73 +200,118 @@
 
                         @switch (_payloadKind) {
                             case QrPayloadKind.PlainText:
-                                <MudTextField T="string" Label="Text" Variant="Variant.Outlined" Lines="5" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_plainText"/>
+                                <MudTextField T="string" Label="Text" Variant="Variant.Outlined" Lines="5" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_plainText"/>
+
                                 break;
                             case QrPayloadKind.Url:
                                 <MudTextField T="string" Label="URL" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_urlText"/>
+
                                 <MudCheckBox T="bool" Label="Force https" Value="_urlForceHttps" ValueChanged="OnUrlForceHttpsChanged" dense="true" Size="Size.Small"/>
+
                                 break;
                             case QrPayloadKind.Wifi:
                                 <MudTextField T="string" Label="SSID" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_wifiSsid"/>
-                                <MudTextField T="string" Label="Password" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" InputType="InputType.Password" @bind-Value="_wifiPassword"/>
-                                <MudSelect T="QrWifiSecurityType" Label="Security" Value="_wifiSecurity" ValueChanged="OnWifiSecurityChangedAsync" Variant="Variant.Outlined" dense="true" Margin="Margin.Dense">
+
+                                <MudTextField T="string" Label="Password" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              InputType="InputType.Password" @bind-Value="_wifiPassword"/>
+
+                                <MudSelect T="QrWifiSecurityType" Label="Security" Value="_wifiSecurity" ValueChanged="OnWifiSecurityChangedAsync" Variant="Variant.Outlined"
+                                           dense="true" Margin="Margin.Dense">
                                     @foreach (var s in Enum.GetValues<QrWifiSecurityType>()) {
                                         <MudSelectItem Value="@s">@s</MudSelectItem>
                                     }
                                 </MudSelect>
+
                                 <MudCheckBox T="bool" Label="Hidden SSID" Value="_wifiHidden" ValueChanged="OnWifiHiddenChanged" dense="true" Size="Size.Small"/>
+
                                 break;
                             case QrPayloadKind.Mailto:
                                 <MudTextField T="string" Label="To" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_mailtoTo"/>
-                                <MudTextField T="string" Label="Subject" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_mailtoSubject"/>
-                                <MudTextField T="string" Label="Body" Variant="Variant.Outlined" Lines="3" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_mailtoBody"/>
+
+                                <MudTextField T="string" Label="Subject" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_mailtoSubject"/>
+
+                                <MudTextField T="string" Label="Body" Variant="Variant.Outlined" Lines="3" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_mailtoBody"/>
+
                                 break;
                             case QrPayloadKind.Tel:
-                                <MudTextField T="string" Label="Phone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" HelperText="Digits; + kept for E.164" @bind-Value="_telNumber"/>
+                                <MudTextField T="string" Label="Phone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              HelperText="Digits; + kept for E.164" @bind-Value="_telNumber"/>
+
                                 break;
                             case QrPayloadKind.Sms:
                                 <MudTextField T="string" Label="Phone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_smsNumber"/>
-                                <MudTextField T="string" Label="Message" Variant="Variant.Outlined" Lines="2" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_smsBody"/>
-                                <MudCheckBox T="bool" Label="Use smsto: (Messages can crash with long body)" Value="_smsUseSmsto" ValueChanged="OnSmsUseSmstoChanged" dense="true" Size="Size.Small"/>
+
+                                <MudTextField T="string" Label="Message" Variant="Variant.Outlined" Lines="2" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_smsBody"/>
+
+                                <MudCheckBox T="bool" Label="Use smsto: (Messages can crash with long body)" Value="_smsUseSmsto" ValueChanged="OnSmsUseSmstoChanged" dense="true"
+                                             Size="Size.Small"/>
+
                                 break;
                             case QrPayloadKind.Geo:
                                 <MudGrid Spacing="1">
                                     <MudItem xs="12">
-                                        <MudTextField T="string" Label="Latitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_geoLat"/>
+                                        <MudTextField T="string" Label="Latitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLat"/>
                                     </MudItem>
                                     <MudItem xs="12">
-                                        <MudTextField T="string" Label="Longitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_geoLon"/>
+                                        <MudTextField T="string" Label="Longitude" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLon"/>
                                     </MudItem>
                                     <MudItem xs="12">
-                                        <MudTextField T="string" Label="Map label" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_geoLabel"/>
+                                        <MudTextField T="string" Label="Map label" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                                      @bind-Value="_geoLabel"/>
                                     </MudItem>
                                 </MudGrid>
+
                                 break;
                             case QrPayloadKind.VCard3:
                                 <MudTextField T="string" Label="Full name" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcFn"/>
+
                                 <MudTextField T="string" Label="Telephone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcTel"/>
+
                                 <MudTextField T="string" Label="Email" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcEmail"/>
+
                                 <MudTextField T="string" Label="Organization" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcOrg"/>
+
                                 <MudTextField T="string" Label="URL" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_vcUrl"/>
+
                                 break;
                             case QrPayloadKind.MeCard:
                                 <MudTextField T="string" Label="Display name" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meName"/>
+
                                 <MudTextField T="string" Label="Telephone" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meTel"/>
+
                                 <MudTextField T="string" Label="Email" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_meEmail"/>
+
                                 break;
                             case QrPayloadKind.WhatsApp:
-                                <MudTextField T="string" Label="Phone (digits)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_waPhone"/>
+                                <MudTextField T="string" Label="Phone (digits)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_waPhone"/>
+
                                 break;
                             case QrPayloadKind.Telegram:
-                                <MudTextField T="string" Label="Username" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" HelperText="No leading at-sign; 4-32 chars" @bind-Value="_tgUsername"/>
+                                <MudTextField T="string" Label="Username" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              HelperText="No leading at-sign; 4-32 chars" @bind-Value="_tgUsername"/>
+
                                 break;
                             case QrPayloadKind.Signal:
-                                <MudTextField T="string" Label="E.164 (+required)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense" @bind-Value="_signalPhone"/>
+                                <MudTextField T="string" Label="E.164 (+required)" Variant="Variant.Outlined" FullWidth="true" dense="true" Margin="Margin.Dense"
+                                              @bind-Value="_signalPhone"/>
+
                                 break;
                         }
 
-                        <MudTextField T="string" Label="Encoded preview" Variant="Variant.Outlined" Lines="3" FullWidth="true" ReadOnly="true" dense="true" Margin="Margin.Dense" Value="@_encodedPreview"/>
-                        <MudButton Variant="Variant.Text" Size="Size.Small" dense="true" OnClick="@(() => { RefreshEncodedPreview(); StateHasChanged(); })">Refresh preview</MudButton>
+                        <MudTextField T="string" Label="Encoded preview" Variant="Variant.Outlined" Lines="3" FullWidth="true" ReadOnly="true" dense="true" Margin="Margin.Dense"
+                                      Value="@_encodedPreview"/>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" dense="true" OnClick="@(() => {
+                                                                                                      RefreshEncodedPreview();
+                                                                                                      StateHasChanged();
+                                                                                                  })">Refresh preview
+                        </MudButton>
 
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="GenerateAsync" Disabled="@_busy" FullWidth="true">Generate</MudButton>
 
@@ -321,6 +367,7 @@
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">Dimensions</MudText>
                                         @if (_lastOutputWidth is > 0 && _lastOutputHeight is > 0) {
                                             <MudText Typo="Typo.body2">@_lastOutputWidth × @_lastOutputHeight px</MudText>
+
                                             @if (_format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None) {
                                                 <MudText Typo="Typo.caption" Color="Color.Secondary">Includes frame.</MudText>
                                             }
@@ -337,7 +384,8 @@
                             @if (ResultPreviewHref != null && ResultThumbnailSrc != null) {
                                 <MudPaper Class="pa-2 d-flex justify-center" Outlined="true">
                                     <a href="@ResultPreviewHref" target="_blank" rel="noopener noreferrer" class="d-flex justify-center mud-width-full" style="cursor: zoom-in;">
-                                        <img src="@ResultThumbnailSrc" alt="Generated QR code (open in new tab)" style="max-width: 100%; max-height: 260px; width: 100%; object-fit: contain;"/>
+                                        <img src="@ResultThumbnailSrc" alt="Generated QR code (open in new tab)"
+                                             style="max-width: 100%; max-height: 260px; width: 100%; object-fit: contain;"/>
                                     </a>
                                 </MudPaper>
                             }

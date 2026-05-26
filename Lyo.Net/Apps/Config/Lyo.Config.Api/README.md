@@ -7,6 +7,61 @@ Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Conf
 *`AddConfigApiClientFromConfiguration`** live in **`Lyo.Config.Api.Client`** ([readme](../Lyo.Config.Api.Client/README.md)). Route slug → **`EntityRef`** mapping uses *
 *`AppConfigEntity`** from **`Lyo.Config`**. Polling plus **`IOptionsMonitor<T>`** is **[`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md)**.
 
+## Host embedding (DI + middleware pipeline)
+
+`Lyo.Config.Api` is structured so it can run standalone (see `Program.cs`) **or** be embedded into another host that already owns the WebApplication pipeline. The full surface is
+two extensions plus one middleware, all in `Lyo.Config.Api`:
+
+| Member                                                  | Defined in                                                                                 | Purpose                                                                                                                                                                                            |
+|---------------------------------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`services.AddConfigApi(IConfiguration)`**             | [`Extensions.cs`](./Extensions.cs)                                                         | Registers `IConfigStore` via `AddPostgresConfigStoreFromConfiguration`, binds `ConfigApiSecurityOptions` (section `ConfigApiSecurity`) and `ConfigApiHostingOptions` (section `ConfigApiHosting`). |
+| **`app.MapConfigApiEndpoints(prefix = "/api/config")`** | [`Extensions.cs`](./Extensions.cs)                                                         | Returns a `RouteGroupBuilder` and mounts the `manage/*` and `{appKind}/{appId}` route groups under `prefix`. The default prefix is `/api/config`; pass another value to relocate the whole API.    |
+| **`UseMiddleware<RequireConfigApiKeyMiddleware>()`**    | [`Security/RequireConfigApiKeyMiddleware.cs`](./Security/RequireConfigApiKeyMiddleware.cs) | Path-scoped API-key gate (see below). **Must run before `MapConfigApiEndpoints`** in the request pipeline.                                                                                         |
+
+Composition in the standalone `Program.cs` (and the pattern any embedding host should follow):
+
+```csharp
+using Lyo.Config.Api;
+using Lyo.Config.Api.Security;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddConfigApi(builder.Configuration);
+
+var app = builder.Build();
+app.UseMiddleware<RequireConfigApiKeyMiddleware>(); // BEFORE MapConfigApiEndpoints
+app.MapConfigApiEndpoints();                        // default prefix /api/config
+app.Run();
+```
+
+### `RequireConfigApiKeyMiddleware` ordering and behavior
+
+- Registered as a **pipeline middleware** (not an authorization filter). It checks `HttpContext.Request.Path.StartsWithSegments("/api/config", …)` and **silently passes through
+  any request outside that prefix**. If you relocate the API by passing a non-default prefix to `MapConfigApiEndpoints`, the middleware will not match it — `/api/config` is the
+  hard-coded path check.
+- When `ConfigApiSecurity.RequireApiKey == false`, the middleware short-circuits to `_next` without inspecting headers. Toggling `RequireApiKey` to `true` requires the host to
+  configure a non-empty `ApiKey`; otherwise matching requests get **`500 Internal Server Error`** with
+  `{ "detail": "API key enforcement is enabled but no server key has been configured." }`.
+- When enabled, the middleware accepts the secret via **`X-Api-Key: <value>`** *or* **`Authorization: Bearer <value>`** (other schemes are rejected). Comparison uses
+  `CryptographicOperations.FixedTimeEquals` over UTF-8 bytes; missing / empty / mismatching credentials produce **`401 Unauthorized`** with no body.
+- Place this middleware **after** any TLS termination / proxy header middleware and **before** any logging that might leak request bodies, since it always returns before the
+  endpoint runs on rejection.
+
+### Security options (`ConfigApiSecurityOptions`, section `ConfigApiSecurity`)
+
+| Key                                   | Type     | Default | Purpose                                                                                  |
+|---------------------------------------|----------|---------|------------------------------------------------------------------------------------------|
+| **`ConfigApiSecurity:RequireApiKey`** | `bool`   | `false` | Master switch. When `false`, all routes are anonymous and the middleware is a no-op.     |
+| **`ConfigApiSecurity:ApiKey`**        | `string` | `""`    | Shared secret compared in constant time. Must be non-empty when `RequireApiKey == true`. |
+
+> **Note:** there is no authorization policy or scopes/role check inside this project — only the constant-time secret comparison above. If you need finer-grained access control,
+> register your own auth middleware **before** `RequireConfigApiKeyMiddleware`, or replace it entirely.
+
+### Hosting options (`ConfigApiHostingOptions`, section `ConfigApiHosting`)
+
+| Key                                                     | Type   | Default | Purpose                                                                                                                                     |
+|---------------------------------------------------------|--------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| **`ConfigApiHosting:PollIntervalAdvisoryMilliseconds`** | `int?` | `null`  | When > 0, emitted on every resolve response as the **`X-Config-Poll-Interval-Ms`** header. Purely advisory — clients are free to ignore it. |
+
 ## How routes map to `Lyo.Config`
 
 All API traffic for app config uses a single store entity type **`App`** (`AppConfigEntity.AppEntityType`).
@@ -92,9 +147,9 @@ Requires the same auth as the rest of **`/api/config`** when **`ConfigApiSecurit
 
 ## Configuration (`appsettings`)
 
-- **`PostgresConfig`**: connection string and migrations (`Lyo.Config.Postgres`).
-- **`ConfigApiHosting`**: optional **`PollIntervalAdvisoryMilliseconds`**.
-- **`ConfigApiSecurity`**: **`RequireApiKey`**, **`ApiKey`**.
+- **`PostgresConfig`**: connection string and migrations for [`Lyo.Config.Postgres`](../../../Features/Config/Lyo.Config.Postgres/README.md).
+- **`ConfigApiHosting`**: optional **`PollIntervalAdvisoryMilliseconds`** (see *Host embedding → Hosting options* above).
+- **`ConfigApiSecurity`**: **`RequireApiKey`**, **`ApiKey`** (see *Host embedding → Security options* above).
 
 See [`appsettings.json`](./appsettings.json).
 

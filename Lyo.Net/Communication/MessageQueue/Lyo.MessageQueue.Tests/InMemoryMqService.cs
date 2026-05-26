@@ -52,6 +52,7 @@ public sealed class InMemoryMqService : IMqService, IDisposable
             return Task.FromResult(false);
 
         while (queue.TryDequeue(out var _)) { }
+
         return Task.FromResult(true);
     }
 

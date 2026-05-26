@@ -23,9 +23,7 @@ public sealed class BlobFileStorageOptions : FileStorageServiceBaseOptions
     /// <summary>Azure Blobs encryption scope (server-side).</summary>
     public string? EncryptionScope { get; set; }
 
-    /// <summary>
-    /// Base64-encoded 256-bit AES key for customer-provided key (SSE-C). Applies to SDK uploads. Presigned/direct PUT uploads with SSE-C are not supported and will fail fast.
-    /// </summary>
+    /// <summary>Base64-encoded 256-bit AES key for customer-provided key (SSE-C). Applies to SDK uploads. Presigned/direct PUT uploads with SSE-C are not supported and will fail fast.</summary>
     public string? CustomerProvidedKeyBase64 { get; set; }
 
     public bool UsesCustomerProvidedKey => !string.IsNullOrWhiteSpace(CustomerProvidedKeyBase64);

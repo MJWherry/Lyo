@@ -120,11 +120,17 @@ public partial class SpriteSheetWorkbench : IAsyncDisposable
             return;
 
         try {
-            await _module.InvokeVoidAsync("dispose", _previewCanvas);
+            if (_previewReady)
+                await _module.InvokeVoidAsync("dispose", _previewCanvas);
+
             await _module.DisposeAsync();
         }
         catch (JSDisconnectedException) {
             // Ignore disposal failures when the circuit is already gone.
+        }
+        catch (JSException) {
+            // The canvas element may already be detached from the DOM by the time disposal runs;
+            // the JS module's per-canvas state is held in a WeakMap and will be reclaimed automatically.
         }
     }
 

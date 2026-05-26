@@ -19,7 +19,8 @@ public class QRCodeServiceOptions
     public QRCodeFormat DefaultFormat { get; set; } = QRCodeFormat.Png;
 
     /// <summary>
-    /// Minimum allowed <see cref="QRCodeOptions.Size" /> (pixels per module), not total image width/height. Default: 1. Hosts may raise this (e.g. 50) to block tiny raster outputs.
+    /// Minimum allowed <see cref="QRCodeOptions.Size" /> (pixels per module), not total image width/height. Default: 1. Hosts may raise this (e.g. 50) to block tiny raster
+    /// outputs.
     /// </summary>
     public int MinSize { get; set; } = 1;
 

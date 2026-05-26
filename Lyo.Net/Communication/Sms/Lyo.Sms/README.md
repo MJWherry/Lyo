@@ -326,7 +326,16 @@ The library supports multiple phone number formats and automatically normalizes 
 The stack surfaces structured **`Result`** errors and validates inputs early (builders / normalization). Providers may attach error codes on specialized result types.
 
 - **No built-in retries**: callers or HTTP layers should implement policy if needed
-- **Error codes**: Provider-specific codes appear on derived result types (e.g. Twilio)
+- **Error codes**: `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
+
+  | Constant            | Value                  | Raised when                                       |
+    |---------------------|------------------------|---------------------------------------------------|
+  | `BuildFailed`       | `BUILD_FAILED`         | A builder threw while constructing the request.   |
+  | `MessageNotBuilt`   | `MESSAGE_NOT_BUILT`    | The bulk pipeline reached the send step with no built request. |
+  | `OperationCancelled`| `OPERATION_CANCELLED`  | The bulk send was cancelled via `CancellationToken`. |
+  | `MissingFromNumber` | `MISSING_FROM_NUMBER`  | No `From` number was provided or configured.      |
+
+  Providers attach their own codes on derived result types (e.g. `TwilioSmsResult.TwilioErrorCode`).
 - **Exception Details**: Full exception information available in results
 - **Logging**: All operations are logged for debugging
 - **Custom Exceptions**:
@@ -413,6 +422,42 @@ Log levels:
 - **Information**: Successful operations, message details
 - **Warning**: Retries, long messages
 - **Error**: Failures, exceptions
+
+## Metrics
+
+`SmsServiceBase` emits its counters/timers under the keys exposed by `Constants.Metrics`. Providers override
+`CreateMetricNamesDictionary()` to prefix these with their own namespace (Twilio uses `sms.twilio.*`).
+
+| Constant key (`Lyo.Sms.Constants.Metrics`) | Metric name                      | Kind    |
+|--------------------------------------------|----------------------------------|---------|
+| `SendDuration`                             | `sms.send.duration`              | Timer   |
+| `SendSuccess`                              | `sms.send.success`               | Counter |
+| `SendFailure`                              | `sms.send.failure`               | Counter |
+| `BulkSendDuration`                         | `sms.bulk.send.duration`         | Timer   |
+| `BulkSendTotal`                            | `sms.bulk.send.total`            | Counter |
+| `BulkSendSuccess`                          | `sms.bulk.send.success`          | Counter |
+| `BulkSendFailure`                          | `sms.bulk.send.failure`          | Counter |
+| `BulkSendLastDurationMs`                   | `sms.bulk.send.last_duration_ms` | Gauge   |
+
+## Convenience MMS overloads
+
+`ISmsService<TResult>` exposes typed MMS convenience methods that wrap the builder:
+
+```csharp
+// Pass URLs as strings (validated/converted to Uri internally)
+await _smsService.SendMmsAsync(
+    to: "+1234567890",
+    mediaUrls: ["https://example.com/image.jpg"],
+    body: "Check this out");
+
+// Or as System.Uri instances
+await _smsService.SendMmsAsync(
+    to: "+1234567890",
+    mediaUrls: [new Uri("https://example.com/image.jpg")]);
+```
+
+Both overloads enforce `to`/`mediaUrls` (must not be null/empty), apply `DefaultFromPhoneNumber` when `from`
+is omitted, and route through the same `SendCoreAsync` path as `SendSmsAsync`.
 
 ## Testing
 

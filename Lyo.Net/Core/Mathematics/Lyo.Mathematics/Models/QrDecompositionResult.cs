@@ -5,7 +5,6 @@ namespace Lyo.Mathematics.Models;
 
 /// <summary>Result values returned from mathematics routines (<c>QrDecompositionResult</c>).</summary>
 /// <remarks>Immutable contract; safe to cache or serialize alongside the originating computation metadata.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record QrDecompositionResult
 {

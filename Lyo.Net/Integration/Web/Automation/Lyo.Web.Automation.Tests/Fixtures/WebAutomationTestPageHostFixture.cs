@@ -101,7 +101,6 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
         var rawBody = await reader.ReadToEndAsync();
         var payload = JsonSerializer.Serialize(new { ok = true, method = "POST", body = rawBody });
         return ($"{FileTypeInfo.Json.MimeType}; charset=utf-8", payload, HttpStatusCode.Accepted);
-
     }
 
     private static int GetAvailablePort()

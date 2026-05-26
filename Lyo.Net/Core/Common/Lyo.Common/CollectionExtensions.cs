@@ -30,7 +30,7 @@ public static class CollectionExtensions
     {
         ArgumentHelpers.ThrowIfNull(source);
         // ReSharper disable once PossibleMultipleEnumeration - Does not actually enumerate, tries casting
-        return tryExisting(source) 
+        return tryExisting(source)
             // ReSharper disable once PossibleMultipleEnumeration
             ?? (TValue)(object)source.ToList();
     }
@@ -151,16 +151,15 @@ public static class CollectionExtensions
         }
 #else
         /// <summary>Returns distinct elements by a key selector.</summary>
-        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector"/>.</typeparam>
+        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector" />.</typeparam>
         /// <param name="keySelector">A function to extract the comparison key from each element.</param>
         public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector) => Enumerable.DistinctBy(source, keySelector);
 
-        /// <inheritdoc cref="Enumerable.DistinctBy{TSource, TKey}(IEnumerable{TSource}, Func{TSource, TKey}, IEqualityComparer{TKey}?)"/>
-        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector"/>.</typeparam>
+        /// <inheritdoc cref="Enumerable.DistinctBy{TSource, TKey}(IEnumerable{TSource}, Func{TSource, TKey}, IEqualityComparer{TKey}?)" />
+        /// <typeparam name="TKey">The type of key produced by <paramref name="keySelector" />.</typeparam>
         /// <param name="keySelector">A function to extract the comparison key from each element.</param>
-        /// <param name="comparer">An <see cref="IEqualityComparer{T}"/> to compare keys.</param>
-        public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector, IEqualityComparer<TKey>? comparer)
-            => Enumerable.DistinctBy(source, keySelector, comparer);
+        /// <param name="comparer">An <see cref="IEqualityComparer{T}" /> to compare keys.</param>
+        public IEnumerable<TSource> DistinctBy<TKey>(Func<TSource, TKey> keySelector, IEqualityComparer<TKey>? comparer) => Enumerable.DistinctBy(source, keySelector, comparer);
 #endif
     }
 

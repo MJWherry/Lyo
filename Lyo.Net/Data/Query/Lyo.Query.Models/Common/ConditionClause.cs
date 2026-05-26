@@ -15,7 +15,10 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
     /// <summary>Comparison operator applied to the field and value.</summary>
     public ComparisonOperatorEnum Comparison { get; set; }
 
-    /// <summary>Right-hand value: type depends on <see cref="Comparison" /> (CSV strings allowed for <see cref="ComparisonOperatorEnum.In" /> / <see cref="ComparisonOperatorEnum.NotIn" />).</summary>
+    /// <summary>
+    /// Right-hand value: type depends on <see cref="Comparison" /> (CSV strings allowed for <see cref="ComparisonOperatorEnum.In" /> /
+    /// <see cref="ComparisonOperatorEnum.NotIn" />).
+    /// </summary>
     public object? Value { get; set; }
 
     /// <summary>Initializes a condition with empty field and default <see cref="ComparisonOperatorEnum.Equals" />.</summary>
@@ -51,7 +54,7 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
             return items.Count switch {
                 0 => $"{pad}{Field} {Comparison} []",
                 1 => $"{pad}{Field} {Comparison} '{items[0]}'",
-                _ => $"{pad}{Field} {Comparison} [\n{string.Join("\n", items.Select(i => $"{(' ', (indent + 1) * 2)}- {i ?? "NULL"}"))}\n{pad}]"
+                var _ => $"{pad}{Field} {Comparison} [\n{string.Join("\n", items.Select(i => $"{(' ', (indent + 1) * 2)}- {i ?? "NULL"}"))}\n{pad}]"
             };
         }
 

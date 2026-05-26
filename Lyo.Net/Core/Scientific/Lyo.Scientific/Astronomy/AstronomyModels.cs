@@ -6,12 +6,12 @@ namespace Lyo.Scientific.Astronomy;
 
 /// <summary>Solar-system planet and dwarf-planet records with bulk physical parameters.</summary>
 /// <remarks>Masses, radii, and orbits are reference values for demos and calculators; consult mission data for precision work.</remarks>
-
 /// <summary>High-level classification for entries in <see cref="PlanetaryBodies" />.</summary>
 public enum PlanetaryBodyKind
 {
     /// <summary>Classical planet (cleared neighborhood definition not enforced here).</summary>
     Planet,
+
     /// <summary>Dwarf planet catalog entry.</summary>
     DwarfPlanet
 }

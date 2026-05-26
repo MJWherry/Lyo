@@ -64,7 +64,9 @@ if (!t.TryValidateContext(out var ctxErr))
 var text = t.Format();
 ```
 
-Use **`AddContext`** on the template to layer **`IContextBuilder`** steps without allocating a full dictionary at the call site.
+Use **`AddContext`** on the template to layer **`IContextBuilder`** steps without allocating a full dictionary at the call site. **`Format(additionalContext)`** merges a one-off context (dictionary or object) on top of the accumulated state for a single render.
+
+`ITemplate.TryValidateContext` succeeds when the accumulated context keys cover every placeholder name (or supply a parent path like `Order` for `{Order.Total}`). Bare CLR objects passed via `WithContext(object?)` do not participate in this check (only the merged dictionary and dictionary-shaped extras do), so call `WithValue`/`AddContext` or supply a dictionary when you want the validator to confirm coverage.
 
 ## SmartFormat behavior
 

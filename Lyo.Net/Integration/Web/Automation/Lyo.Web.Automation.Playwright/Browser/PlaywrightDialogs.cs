@@ -20,6 +20,7 @@ public sealed class PlaywrightDialogs
         var page = _browser.GetRequiredPage();
         page.Dialog += Handler;
         return new ActionDisposable(() => page.Dialog -= Handler);
+
         void Handler(object? _, IDialog d) => d.AcceptAsync();
     }
 

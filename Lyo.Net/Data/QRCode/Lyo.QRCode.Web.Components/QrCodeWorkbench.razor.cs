@@ -11,25 +11,147 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Utilities;
+using SixLabors.ImageSharp;
 
 namespace Lyo.QRCode.Web.Components;
 
 /// <summary>
-/// Blazor workbench for QR generation: three columns (output and styling, typed payloads, result). PNG decorative frames are composited after rasterization using <see cref="QrFrameLayoutOptions"/>; MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp.
+/// Blazor workbench for QR generation: three columns (output and styling, typed payloads, result). PNG decorative frames are composited after rasterization using
+/// <see cref="QrFrameLayoutOptions" />; MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp.
 /// </summary>
 public partial class QrCodeWorkbench : IAsyncDisposable
 {
+    private const long MaxLogoFileBytes = 2 * 1024 * 1024;
+
+    private static readonly QRCodeFormat[] AllQrFormats = Enum.GetValues<QRCodeFormat>();
+
+    private static readonly string ModulePresetHelper =
+        "Pick a preset instead of raw pixels-per-module: total width/height ≈ (QR modules per side, often ~33–55 for URLs) × module scale. Hi‑DPI screen use is usually Web small–Web default.";
+
+    private static readonly FileTypeFlags LogoValidFileTypes =
+        FileTypeFlags.Png | FileTypeFlags.Jpeg | FileTypeFlags.Jpg | FileTypeFlags.Gif | FileTypeFlags.Webp | FileTypeFlags.Svg;
+
+    private static readonly LyoFileUpload.UploadProgressViewType LogoUploadProgressView = LyoFileUpload.UploadProgressViewType.None;
+
+    private bool _busy;
+
+    private MudColor _darkColor = new("#000000");
+    private bool _drawIconBorder = true;
+    private bool _drawQuietZones = true;
+    private string _encodedPreview = string.Empty;
+    private QRCodeErrorCorrectionLevel _errorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium;
+    private QRCodeFormat _format = QRCodeFormat.Png;
+    private bool _frameAutoSizeHeader = true;
+    private string _frameCaption = "Scan Me";
+    private MudColor _frameCaptionColor = new("#FFFFFF");
+    private int _frameCaptionFontSize;
+    private MudColor _frameHeaderBg = new("#1e293b");
+    private int _frameHeaderMinPx;
+    private MudColor _framePanelBg = new("#FFFFFF");
+    private int _frameStyleInt;
+    private string _geoLabel = string.Empty;
+
+    private string _geoLat = "37.8199";
+    private string _geoLon = "-122.4783";
+    private int _iconSizePercent = 15;
+    private byte[]? _imageBytes;
+    private string? _imageSource;
+    private int? _lastOutputHeight;
+    private int? _lastOutputWidth;
+    private MudColor _lightColor = new("#FFFFFF");
+    private byte[]? _logoBytes;
+    private LocalBrowserFile? _logoClientFile;
+    private string? _logoFileName;
+
+    private LyoFileUpload? _logoFileUpload;
+    private string _mailtoBody = string.Empty;
+    private string _mailtoSubject = string.Empty;
+
+    private string _mailtoTo = string.Empty;
+    private string _meEmail = string.Empty;
+
+    private string _meName = string.Empty;
+    private string _meTel = string.Empty;
+    private QrWorkbenchModulePreset _modulePreset = QrWorkbenchModulePreset.WebDefault;
+    private QrPayloadKind _payloadKind = QrPayloadKind.Url;
+
+    private string _plainText = "Hello, QR";
+
+    private IJSObjectReference? _previewModule;
+    private string _signalPhone = string.Empty;
+    private int _size = 16;
+    private string _smsBody = string.Empty;
+
+    private string _smsNumber = string.Empty;
+    private bool _smsUseSmsto;
+    private string _statusMessage = string.Empty;
+    private Severity _statusSeverity = Severity.Info;
+    private int _statusVersion;
+
+    /// <summary>Object URL for SVG full-tab preview (data: SVG navigation is often blocked).</summary>
+    private string? _svgPreviewObjectUrl;
+
+    private string _telNumber = string.Empty;
+    private string _tgUsername = string.Empty;
+    private bool _urlForceHttps;
+
+    private string _urlText = "https://example.com";
+    private string _vcEmail = string.Empty;
+
+    private string _vcFn = string.Empty;
+    private string _vcOrg = string.Empty;
+    private string _vcTel = string.Empty;
+    private string _vcUrl = string.Empty;
+
+    private string _waPhone = string.Empty;
+    private bool _wifiHidden;
+    private string _wifiPassword = string.Empty;
+    private QrWifiSecurityType _wifiSecurity = QrWifiSecurityType.Wpa;
+
+    private string _wifiSsid = string.Empty;
+
     /// <summary>
-    /// When set (non-empty), the Format control lists only these <see cref="QRCodeFormat"/> values (e.g. PNG and SVG for hosts that register only the built-in encoder). When null or empty, every enum value is listed.
+    /// When set (non-empty), the Format control lists only these <see cref="QRCodeFormat" /> values (e.g. PNG and SVG for hosts that register only the built-in encoder). When
+    /// null or empty, every enum value is listed.
     /// </summary>
     [Parameter]
     public IReadOnlyList<QRCodeFormat>? AllowedFormats { get; set; }
 
-    private static readonly QRCodeFormat[] AllQrFormats = Enum.GetValues<QRCodeFormat>();
-
     /// <summary>Formats shown in the workbench Format dropdown.</summary>
-    protected IReadOnlyList<QRCodeFormat> SelectableFormats =>
-        AllowedFormats is { Count: > 0 } ? AllowedFormats : AllQrFormats;
+    protected IReadOnlyList<QRCodeFormat> SelectableFormats => AllowedFormats is { Count: > 0 } ? AllowedFormats : AllQrFormats;
+
+    private bool LogoSupported => _format is QRCodeFormat.Png or QRCodeFormat.Svg;
+
+    private QrFrameStyle SelectedFrameStyle => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
+
+    /// <summary>PNG frame modes that can render optional caption text (header or footer band).</summary>
+    private bool FrameShowsCaptionField => _format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None;
+
+    /// <summary>Data URL fallback for SVG thumbnail when blob URL is unavailable.</summary>
+    private string? SvgBytesDataUrl
+        => _format == QRCodeFormat.Svg && _imageBytes is { Length: > 0 } ? $"data:{FileTypeInfo.Svg.MimeType};base64,{Convert.ToBase64String(_imageBytes)}" : null;
+
+    /// <summary>Raster or SVG thumbnail source (SVG uses blob URL when possible so &lt;img&gt; scales like PNG).</summary>
+    private string? ResultThumbnailSrc => _imageBytes is not { Length: > 0 } ? null : _format == QRCodeFormat.Svg ? _svgPreviewObjectUrl ?? SvgBytesDataUrl : _imageSource;
+
+    /// <summary>Href for full-size preview (new tab). SVG prefers blob: because navigations to data:image/svg+xml are often blocked.</summary>
+    private string? ResultPreviewHref => _imageBytes is not { Length: > 0 } ? null : _format == QRCodeFormat.Svg ? _svgPreviewObjectUrl ?? SvgBytesDataUrl : _imageSource;
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        await RevokeSvgPreviewObjectUrlAsync();
+        if (_previewModule is not null) {
+            try {
+                await _previewModule.DisposeAsync();
+            }
+            catch {
+                /* ignore */
+            }
+
+            _previewModule = null;
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnInitialized()
@@ -59,111 +181,6 @@ public partial class QrCodeWorkbench : IAsyncDisposable
 
         _format = list[0];
     }
-
-    /// <summary>Dashboard-friendly buckets for <see cref="QRCodeOptions.Size" /> (pixels per module). Total image side ≈ module count × this value.</summary>
-    private enum QrWorkbenchModulePreset
-    {
-        Thumb,
-        WebSmall,
-        WebDefault,
-        WebLarge,
-        PrintHd,
-        Custom
-    }
-
-    private static readonly string ModulePresetHelper =
-        "Pick a preset instead of raw pixels-per-module: total width/height ≈ (QR modules per side, often ~33–55 for URLs) × module scale. Hi‑DPI screen use is usually Web small–Web default.";
-
-    private bool _busy;
-    private QrPayloadKind _payloadKind = QrPayloadKind.Url;
-    private string _encodedPreview = string.Empty;
-
-    private string _plainText = "Hello, QR";
-
-    private string _urlText = "https://example.com";
-    private bool _urlForceHttps;
-
-    private string _wifiSsid = string.Empty;
-    private string _wifiPassword = string.Empty;
-    private QrWifiSecurityType _wifiSecurity = QrWifiSecurityType.Wpa;
-    private bool _wifiHidden;
-
-    private string _mailtoTo = string.Empty;
-    private string _mailtoSubject = string.Empty;
-    private string _mailtoBody = string.Empty;
-
-    private string _telNumber = string.Empty;
-
-    private string _smsNumber = string.Empty;
-    private string _smsBody = string.Empty;
-    private bool _smsUseSmsto;
-
-    private string _geoLat = "37.8199";
-    private string _geoLon = "-122.4783";
-    private string _geoLabel = string.Empty;
-
-    private string _vcFn = string.Empty;
-    private string _vcTel = string.Empty;
-    private string _vcEmail = string.Empty;
-    private string _vcOrg = string.Empty;
-    private string _vcUrl = string.Empty;
-
-    private string _meName = string.Empty;
-    private string _meTel = string.Empty;
-    private string _meEmail = string.Empty;
-
-    private string _waPhone = string.Empty;
-    private string _tgUsername = string.Empty;
-    private string _signalPhone = string.Empty;
-
-    private MudColor _darkColor = new("#000000");
-    private bool _drawIconBorder = true;
-    private bool _drawQuietZones = true;
-    private QRCodeErrorCorrectionLevel _errorCorrectionLevel = QRCodeErrorCorrectionLevel.Medium;
-    private QRCodeFormat _format = QRCodeFormat.Png;
-    private int _iconSizePercent = 15;
-    private string _frameCaption = "Scan Me";
-    private int _frameCaptionFontSize;
-    private int _frameHeaderMinPx;
-    private bool _frameAutoSizeHeader = true;
-    private MudColor _frameCaptionColor = new("#FFFFFF");
-    private MudColor _frameHeaderBg = new("#1e293b");
-    private MudColor _framePanelBg = new("#FFFFFF");
-    private int _frameStyleInt;
-    private byte[]? _imageBytes;
-    private string? _imageSource;
-    private byte[]? _logoBytes;
-    private string? _logoFileName;
-    private MudColor _lightColor = new("#FFFFFF");
-    private QrWorkbenchModulePreset _modulePreset = QrWorkbenchModulePreset.WebDefault;
-    private int _size = 16;
-    private int? _lastOutputWidth;
-    private int? _lastOutputHeight;
-    private string _statusMessage = string.Empty;
-    private Severity _statusSeverity = Severity.Info;
-    private int _statusVersion;
-
-    /// <summary>Object URL for SVG full-tab preview (data: SVG navigation is often blocked).</summary>
-    private string? _svgPreviewObjectUrl;
-
-    private IJSObjectReference? _previewModule;
-
-    private static readonly FileTypeFlags LogoValidFileTypes =
-        FileTypeFlags.Png | FileTypeFlags.Jpeg | FileTypeFlags.Jpg | FileTypeFlags.Gif | FileTypeFlags.Webp | FileTypeFlags.Svg;
-
-    private const long MaxLogoFileBytes = 2 * 1024 * 1024;
-
-    private static readonly LyoFileUpload.UploadProgressViewType LogoUploadProgressView = LyoFileUpload.UploadProgressViewType.None;
-
-    private bool LogoSupported => _format is QRCodeFormat.Png or QRCodeFormat.Svg;
-
-    private QrFrameStyle SelectedFrameStyle => Enum.IsDefined(typeof(QrFrameStyle), _frameStyleInt) ? (QrFrameStyle)_frameStyleInt : QrFrameStyle.None;
-
-    /// <summary>PNG frame modes that can render optional caption text (header or footer band).</summary>
-    private bool FrameShowsCaptionField => _format == QRCodeFormat.Png && SelectedFrameStyle != QrFrameStyle.None;
-
-    private LyoFileUpload? _logoFileUpload;
-    private LocalBrowserFile? _logoClientFile;
 
     private Task OnFrameStyleChangedAsync(QrFrameStyle style)
     {
@@ -275,7 +292,7 @@ public partial class QrCodeWorkbench : IAsyncDisposable
 
     private void RefreshEncodedPreview()
     {
-        if (TryBuildQrData(out var data, out _))
+        if (TryBuildQrData(out var data, out var _))
             _encodedPreview = data;
         else
             _encodedPreview = string.Empty;
@@ -317,7 +334,10 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         return Task.CompletedTask;
     }
 
-    /// <summary>6-digit <c>#RRGGBB</c> for <see cref="QrFrameLayoutOptions"/> / ImageSharp (never truncate <see cref="MudColor"/> strings — length-9 forms are not always <c>#RRGGBBAA</c>).</summary>
+    /// <summary>
+    /// 6-digit <c>#RRGGBB</c> for <see cref="QrFrameLayoutOptions" /> / ImageSharp (never truncate <see cref="MudColor" /> strings — length-9 forms are not always
+    /// <c>#RRGGBBAA</c>).
+    /// </summary>
     private static string ToOpaqueRgbHex(MudColor c)
     {
         c.Deconstruct(out var r, out var g, out var b);
@@ -375,6 +395,7 @@ public partial class QrCodeWorkbench : IAsyncDisposable
                 QrPayloadKind.Signal => new SignalUrlPayload(_signalPhone).ToQrString(),
                 var x => throw new ArgumentOutOfRangeException(nameof(_payloadKind), x, null)
             };
+
             return true;
         }
         catch (Exception ex) {
@@ -391,7 +412,7 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         if (!double.TryParse(_geoLon.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var lon))
             throw new FormatException("Longitude must be a number (e.g. -122.4783).");
 
-        return new GeoPayload(lat, lon, string.IsNullOrWhiteSpace(_geoLabel) ? null : _geoLabel);
+        return new(lat, lon, string.IsNullOrWhiteSpace(_geoLabel) ? null : _geoLabel);
     }
 
     private async Task GenerateAsync()
@@ -403,7 +424,6 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         }
 
         _encodedPreview = data;
-
         _busy = true;
         try {
             var options = new QRCodeOptions {
@@ -449,12 +469,11 @@ public partial class QrCodeWorkbench : IAsyncDisposable
             }
 
             await RevokeSvgPreviewObjectUrlAsync();
-
             _imageBytes = imageBytes;
             if (_format == QRCodeFormat.Png) {
                 try {
                     await using var dimMs = new MemoryStream(imageBytes);
-                    var info = await SixLabors.ImageSharp.Image.IdentifyAsync(dimMs);
+                    var info = await Image.IdentifyAsync(dimMs);
                     _lastOutputWidth = info.Width;
                     _lastOutputHeight = info.Height;
                 }
@@ -533,33 +552,13 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>Data URL fallback for SVG thumbnail when blob URL is unavailable.</summary>
-    private string? SvgBytesDataUrl =>
-        _format == QRCodeFormat.Svg && _imageBytes is { Length: > 0 }
-            ? $"data:{FileTypeInfo.Svg.MimeType};base64,{Convert.ToBase64String(_imageBytes)}"
-            : null;
-
-    /// <summary>Raster or SVG thumbnail source (SVG uses blob URL when possible so &lt;img&gt; scales like PNG).</summary>
-    private string? ResultThumbnailSrc =>
-        _imageBytes is not { Length: > 0 }
-            ? null
-            : _format == QRCodeFormat.Svg ? (_svgPreviewObjectUrl ?? SvgBytesDataUrl) : _imageSource;
-
-    /// <summary>Href for full-size preview (new tab). SVG prefers blob: because navigations to data:image/svg+xml are often blocked.</summary>
-    private string? ResultPreviewHref =>
-        _imageBytes is not { Length: > 0 }
-            ? null
-            : _format == QRCodeFormat.Svg ? (_svgPreviewObjectUrl ?? SvgBytesDataUrl) : _imageSource;
-
     private async Task EnsurePreviewModuleAsync()
     {
         if (_previewModule != null)
             return;
 
         try {
-            _previewModule = await JsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./_content/Lyo.QRCode.Web.Components/scripts/lyoQrPreview.js");
+            _previewModule = await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/Lyo.QRCode.Web.Components/scripts/lyoQrPreview.js");
         }
         catch {
             _previewModule = null;
@@ -584,19 +583,14 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         }
     }
 
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    /// <summary>Dashboard-friendly buckets for <see cref="QRCodeOptions.Size" /> (pixels per module). Total image side ≈ module count × this value.</summary>
+    private enum QrWorkbenchModulePreset
     {
-        await RevokeSvgPreviewObjectUrlAsync();
-        if (_previewModule is not null) {
-            try {
-                await _previewModule.DisposeAsync();
-            }
-            catch {
-                /* ignore */
-            }
-
-            _previewModule = null;
-        }
+        Thumb,
+        WebSmall,
+        WebDefault,
+        WebLarge,
+        PrintHd,
+        Custom
     }
 }

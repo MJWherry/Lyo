@@ -1,5 +1,7 @@
 #if NET10_0_OR_GREATER
 #endif
+
+using System.Security.Cryptography;
 #if !NET10_0_OR_GREATER
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -26,7 +28,6 @@ public static class ChaCha20Poly1305Helper
 #else
         var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
         chacha.Init(true, new AeadParameters(new(key), 128, nonce, null));
-
         var outBuf = new byte[chacha.GetOutputSize(plaintext.Length)];
         var tlen = 0;
         if (plaintext.Length > 0) {
@@ -37,7 +38,6 @@ public static class ChaCha20Poly1305Helper
 
         // ReSharper disable once RedundantAssignment
         tlen += chacha.DoFinal(outBuf, tlen);
-
         var ciphertext = new byte[plaintext.Length];
         var tag = new byte[TagSize];
         if (plaintext.Length > 0)
@@ -59,11 +59,9 @@ public static class ChaCha20Poly1305Helper
         var combined = new byte[ciphertext.Length + TagSize];
         Buffer.BlockCopy(ciphertext, 0, combined, 0, ciphertext.Length);
         Buffer.BlockCopy(tag, 0, combined, ciphertext.Length, TagSize);
-
         try {
             var chacha = new Org.BouncyCastle.Crypto.Modes.ChaCha20Poly1305();
             chacha.Init(false, new AeadParameters(new(key), 128, nonce, null));
-
             var outBuf = new byte[chacha.GetOutputSize(combined.Length)];
             var len = chacha.ProcessBytes(combined, 0, combined.Length, outBuf, 0);
             len += chacha.DoFinal(outBuf, len);
@@ -72,7 +70,7 @@ public static class ChaCha20Poly1305Helper
             return plaintext;
         }
         catch (InvalidCipherTextException ex) {
-            throw new System.Security.Cryptography.CryptographicException("ChaCha20-Poly1305 authentication failed.", ex);
+            throw new CryptographicException("ChaCha20-Poly1305 authentication failed.", ex);
         }
 #endif
     }

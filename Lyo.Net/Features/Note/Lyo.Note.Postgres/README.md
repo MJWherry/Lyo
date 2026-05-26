@@ -1,7 +1,28 @@
 # Lyo.Note.Postgres
 
-PostgreSQL implementation of Lyo.Note using Entity Framework Core. Persists notes to `note.note` table with migrations support. Notes have **For** (what the note is about) and *
-*From** (who wrote it) entity references.
+PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists
+notes to the `note.note` table (schema constant:
+`PostgresNoteOptions.Schema = "note"`) with migrations support. Notes have
+**For** (what the note is about) and **From** (who wrote it) entity references.
+
+`PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth`
+(`HealthCheckName = "note-postgres"`), so registering the store also wires up a
+liveness probe.
+
+## DI extensions
+
+Defined in `Extensions.cs` as `IServiceCollection` extensions:
+
+- `AddNoteDbContextFactory(Action<PostgresNoteOptions>)` /
+  `AddNoteDbContextFactory(PostgresNoteOptions)` — register only the
+  `IDbContextFactory<NoteDbContext>`.
+- `AddNoteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)`
+  — same, bound from configuration (default section: `PostgresNote`).
+- `AddPostgresNoteStore(Action<PostgresNoteOptions>)` /
+  `AddPostgresNoteStore(PostgresNoteOptions)` — register the DbContext factory
+  **and** the `INoteStore` singleton.
+- `AddPostgresNoteStoreFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)`
+  — register the store using configuration binding.
 
 ## Usage
 
@@ -24,7 +45,7 @@ Or with configuration:
 ```
 
 ```csharp
-services.AddPostgresNoteStore(configuration);
+services.AddPostgresNoteStoreFromConfiguration(configuration);
 ```
 
 ## Migrations
@@ -49,21 +70,32 @@ var forEntity = EntityRef.ForGuid("Docket", docketGuid);
 var fromEntity = EntityRef.ForKey("User", "123");
 ```
 
-## Example: User 123 creates note for Docket
+## Example: a user writes a note about a docket
 
 ```csharp
 await noteStore.SaveAsync(new NoteRecord {
     ForEntityType = "Docket",
-    ForEntityId = docketId.ToString(),
+    ForEntityId = docketId,
     FromEntityType = "User",
-    FromEntityId = "123",
+    FromEntityId = userId,
     Content = "Follow up next week"
 });
+
+// Update by passing the same Id back through SaveAsync.
+var existing = await noteStore.GetByIdAsync(noteId);
+existing!.Content = "Follow up tomorrow";
+await noteStore.SaveAsync(existing);
 ```
 
 ## Schema
 
-- **note.note** – `id` (uuid), `for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, `content`, `created_timestamp`, `updated_timestamp`
+Schema name: `note` (`PostgresNoteOptions.Schema`).
+
+- **note.note** — derived from `EntityRefRow`, so it includes `id` (uuid),
+  `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
+  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`, `created_at`,
+  `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`,
+  `metadata` (jsonb), plus note-specific `content` and `updated_timestamp`.
 
 ## Dependencies
 

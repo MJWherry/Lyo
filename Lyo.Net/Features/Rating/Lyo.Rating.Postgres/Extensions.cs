@@ -83,11 +83,9 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddRatingDbContextFactory(options);
-            services.AddSingleton<IRatingStore>(
-                sp => new PostgresRatingStore(
-                    sp.GetRequiredService<IDbContextFactory<RatingDbContext>>(),
-                    sp.GetRequiredService<IOptions<EntityRefOptions>>(),
-                    sp.GetServices<IEntityRefActionInterceptor>()));
+            services.AddSingleton<IRatingStore>(sp => new PostgresRatingStore(
+                sp.GetRequiredService<IDbContextFactory<RatingDbContext>>(), sp.GetRequiredService<IOptions<EntityRefOptions>>(), sp.GetServices<IEntityRefActionInterceptor>()));
+
             return services;
         }
     }

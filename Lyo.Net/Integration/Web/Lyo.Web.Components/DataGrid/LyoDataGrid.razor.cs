@@ -21,9 +21,9 @@ using Lyo.Web.Components.Models;
 using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using MudBlazor.Extensions;
 using SortDirection = MudBlazor.SortDirection;
 using LyoQueryReqBuilder = Lyo.Query.Models.Builders.QueryReqBuilder;
-using MudBlazor.Extensions;
 
 namespace Lyo.Web.Components.DataGrid;
 
@@ -379,6 +379,7 @@ public partial class LyoDataGrid<T>
     {
         if (_dataGrid is null)
             return;
+
         try {
             // Convert SortDefinitions to serializable format
             List<SavedSort>? sorts = null;
@@ -762,7 +763,7 @@ public partial class LyoDataGrid<T>
                 Logger.LogInformation("Result is null");
                 return;
             }
-            
+
             if (result.Canceled) {
                 Logger.LogInformation("Export canceled by user");
                 return;
@@ -826,12 +827,11 @@ public partial class LyoDataGrid<T>
 
             var dialog = await DialogService.ShowAsync<ExportColumnSelectorDialog>("Select Fields to Export", parameters, dialogOptions);
             var result = await dialog.Result;
-
             if (result is null) {
                 Logger.LogInformation("Result is null");
                 return;
             }
-            
+
             if (result.Canceled) {
                 Logger.LogInformation("Export canceled by user");
                 return;

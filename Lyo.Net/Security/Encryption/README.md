@@ -47,6 +47,9 @@ Start here for narrative and threat-modeling context; use the per-project README
 - **Modern Authenticated Encryption**
     - AES-GCM (256-bit keys)
     - ChaCha20Poly1305
+    - AES-CCM (12-byte nonce, 16-byte tag)
+    - AES-SIV (RFC 5297, 256/384/512-bit key material)
+    - XChaCha20-Poly1305 (extended 24-byte nonce)
     - RSA (with OAEP padding)
     - AES-GCM-RSA (hybrid encryption)
 
@@ -536,14 +539,14 @@ public class AzureKeyVaultKeyStore : IKeyStore
     
     public byte[]? GetCurrentKey(string keyId)
     {
-        var version = GetCurrentVersion(keyId);
-        return GetKey(keyId, version);
+        var version = GetCurrentVersion(keyId); // string?
+        return version is null ? null : GetKey(keyId, version);
     }
-    
-    public byte[]? GetKey(string keyId, int version)
+
+    public byte[]? GetKey(string keyId, string version)
     {
-        // Retrieve key from Azure Key Vault
-        var secret = _client.GetSecretAsync(_vaultUrl, $"{keyId}/v{version}").Result;
+        // Retrieve key from Azure Key Vault (versions are arbitrary strings, not integers)
+        var secret = _client.GetSecretAsync(_vaultUrl, $"{keyId}/{version}").Result;
         return Convert.FromBase64String(secret.Value);
     }
     
@@ -676,53 +679,56 @@ catch (OperationCanceledException ex)
 
 ### 12. Dependency Injection (ASP.NET Core)
 
+The Lyo encryption stack always registers a **two-key** envelope (DEK + KEK) through one of the keyed `AddEncryptionServiceKeyed` overloads in [
+`Lyo.Encryption.Extensions.EncryptionServiceExtensions`](Lyo.Encryption/Extensions/EncryptionServiceExtensions.cs). The legacy `AddAesGcmEncryption<TKeyStore>` and
+`AddTwoKeyEncryption<TKeyStore>` helpers shown in earlier docs do not exist; use the keyed pattern below.
+
 ```csharp
-using Lyo.Encryption.Extensions;
+using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.Extensions;
+using Lyo.Encryption.Symmetric.Aes.AesCcm;
+using Lyo.Encryption.Symmetric.Aes.AesSiv;
+using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
+using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
-using Lyo.Keystore.Extensions;
 
-// In Program.cs or Startup.cs
+const string keyName = "primary";
 
-// Option 1: Register LocalKeyStore and AES-GCM encryption
-services.AddLocalKeyStore(configure: keyStore =>
+// 1) Register a keyed key store. LocalKeyStore is dev-only.
+services.AddLocalKeyStoreKeyed(keyName, store =>
 {
-    keyStore.UpdateKeyFromString("default-key", "production-key");
+    store.UpdateKeyFromString("default-key", "production-key");
 });
-services.AddAesGcmEncryption<LocalKeyStore>();
 
-// Option 2: Register with custom KeyStore
-services.AddSingleton<IKeyStore>(provider => 
-{
-    var keyStore = new LocalKeyStore();
-    keyStore.UpdateKeyFromString("default-key", "production-key");
-    return keyStore;
-});
-services.AddAesGcmEncryption<LocalKeyStore>();
+// 2) Register the keyed two-key envelope. Defaults to AES-GCM for both DEK and KEK.
+services.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);
 
-// Option 3: Register Two-Key encryption (envelope encryption)
-services.AddLocalKeyStore(configure: keyStore =>
-{
-    keyStore.UpdateKeyFromString("default-key", "master-key");
-});
-services.AddTwoKeyEncryption<LocalKeyStore>();
+// Alternatives — pick the DEK/KEK algorithms explicitly:
+services.AddEncryptionServiceKeyed<AesGcmEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-GCM/AES-GCM
+services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);    // XChaCha DEK + AES-GCM KEK
+services.AddEncryptionServiceKeyed<AesCcmEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-CCM DEK + AES-GCM KEK
+services.AddEncryptionServiceKeyed<AesSivEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-SIV DEK + AES-GCM KEK
 
-// In your service
-public class MyService
+// RSA / AES-GCM+RSA hybrid (asymmetric KEK at the application boundary):
+services.AddRsaEncryption(publicPemPath: "/secrets/public.pem", privatePemPath: "/secrets/private.pem");
+services.AddAesGcmRsaEncryption(publicPemPath: "/secrets/public.pem", privatePemPath: "/secrets/private.pem");
+
+// 3) Consume the keyed two-key service.
+public sealed class MyService
 {
-    private readonly AesGcmEncryptionService _encryption;
-    
-    public MyService(AesGcmEncryptionService encryption)
-    {
-        _encryption = encryption;
-    }
-    
-    public byte[] EncryptData(byte[] data, string keyId = "default-key")
-    {
-        return _encryption.Encrypt(data, keyId: keyId);
-    }
+    private readonly ITwoKeyEncryptionService _envelope;
+
+    public MyService([FromKeyedServices("primary")] ITwoKeyEncryptionService envelope) => _envelope = envelope;
+
+    public TwoKeyEncryptionResult Protect(byte[] payload, string keyId = "default-key")
+        => _envelope.Encrypt(payload, kekKeyId: keyId);
 }
 ```
+
+The generic helpers branch over the algorithm types listed in `EncryptionAlgorithm`: `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, `AesCcmEncryptionService`,
+`AesSivEncryptionService`, and `XChaCha20Poly1305EncryptionService`. Any other DEK/KEK combination must be registered manually (the generic registration throws
+`InvalidOperationException` to make that explicit).
 
 ## 🔐 Security Best Practices
 
@@ -818,11 +824,14 @@ Those defaults are not interchangeable with arbitrary third-party “`.aes`” o
 
 All encryption services implement `IEncryptionService`:
 
-- `AesGcmEncryptionService` - AES-GCM authenticated encryption
-- `ChaCha20Poly1305EncryptionService` - ChaCha20Poly1305 authenticated encryption
+- `AesGcmEncryptionService` - AES-GCM authenticated encryption (`Lyo.Encryption.AesGcm`)
+- `ChaCha20Poly1305EncryptionService` - ChaCha20Poly1305 authenticated encryption (`Lyo.Encryption.ChaCha20Poly1305`)
+- `AesCcmEncryptionService` - AES-CCM authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesCcm`)
+- `AesSivEncryptionService` - AES-SIV deterministic authenticated encryption (`Lyo.Encryption.Symmetric.Aes.AesSiv`)
+- `XChaCha20Poly1305EncryptionService` - XChaCha20-Poly1305 with 24-byte nonces (`Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305`)
 - `RsaEncryptionService` - RSA asymmetric encryption
 - `AesGcmRsaEncryptionService` - Hybrid AES-GCM + RSA
-- `TwoKeyEncryptionService` - Envelope encryption pattern
+- `TwoKeyEncryptionService` - Envelope encryption pattern (composes any of the above as DEK and KEK)
 
 ### Key Management
 
@@ -841,24 +850,39 @@ Encryption services use optimized single-pass streaming formats with structured 
 Stream format: `[FormatVersion: 1 byte][AlgorithmId: 1 byte][Reserved: 2 bytes][Chunks...]`
 
 - **FormatVersion**: `StreamFormatVersion` enum value (currently `V1 = 1`)
-- **AlgorithmId**: Algorithm identifier (0=AES-GCM, 1=ChaCha20Poly1305, 2=RSA, 3=AES-GCM-RSA, 4=TwoKey)
+- **AlgorithmId**: Algorithm identifier — see the table below
 - **Reserved**: 2 bytes reserved for future use
 - **Chunks**: `[Length: 4 bytes][EncryptedChunk]...` (encrypted data chunks)
+
+##### `EncryptionAlgorithm` enum IDs
+
+| Value | Name                | Notes                                              |
+|------:|---------------------|----------------------------------------------------|
+|     0 | `AesGcm`            | Default DEK algorithm; `.ag` extension.            |
+|     1 | `ChaCha20Poly1305`  | `.chacha`.                                         |
+|     2 | `AesGcmRsa`         | Hybrid: AES-GCM payload + RSA-wrapped DEK; `.agr`. |
+|     3 | `Rsa`               | Pure RSA-OAEP; `.rsa`.                             |
+|     4 | `AesCcm`            | AES-CCM authenticated encryption.                  |
+|     5 | `AesSiv`            | AES-SIV (RFC 5297).                                |
+|     6 | `XChaCha20Poly1305` | Extended 24-byte nonce variant.                    |
 
 #### Two-Key Encryption Service
 
 Stream format:
-`[FormatVersion: 1 byte][DEKAlgorithmId: 1 byte][KEKAlgorithmId: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][EncryptedDEKLength: 4 bytes][EncryptedDEK][Chunks...]`
+`[FormatVersion: 1 byte][DEKAlgorithmId: 1 byte][KEKAlgorithmId: 1 byte][KeyIdLength: 4 bytes][KeyId][KeyVersionLength: 4 bytes][KeyVersion][KeyEncryptionKeySaltLength: 4 bytes][KeyEncryptionKeySalt][EncryptedDEKLength: 4 bytes][EncryptedDEK][DekKeyMaterialBytes: 1 byte][Chunks...]`
 
 - **FormatVersion**: `StreamFormatVersion` enum value (currently `V1 = 1`)
-- **DEKAlgorithmId**: Algorithm ID for Data Encryption Key encryption
-- **KEKAlgorithmId**: Algorithm ID for Key Encryption Key encryption
+- **DEKAlgorithmId**: `EncryptionAlgorithm` ID used for the Data Encryption Key payload (see table above)
+- **KEKAlgorithmId**: `EncryptionAlgorithm` ID used to wrap the DEK
 - **KeyIdLength**: Length of the KeyId string in bytes
 - **KeyId**: UTF-8 encoded key identifier (variable length)
 - **KeyVersionLength**: Length of the KeyVersion string in bytes
-- **KeyVersion**: String version of the Key Encryption Key (KEK)
-- **EncryptedDEKLength**: Length of the encrypted Data Encryption Key
-- **EncryptedDEK**: The encrypted DEK (variable length)
+- **KeyVersion**: String version of the Key Encryption Key (KEK) — versions are arbitrary strings, not integers
+- **KeyEncryptionKeySaltLength**: Length of the KEK-derivation salt (0 when not derived)
+- **KeyEncryptionKeySalt**: Salt used to derive the KEK (variable length)
+- **EncryptedDEKLength**: Length of the wrapped DEK ciphertext
+- **EncryptedDEK**: The wrapped DEK (variable length)
+- **DekKeyMaterialBytes**: 1 byte declaring the symmetric key-material size used for the DEK (validated against `TwoKeyDekValidation` on decrypt)
 - **Chunks**: `[Length: 4 bytes][EncryptedChunk]...` (encrypted data chunks)
 
 #### Byte Array Format (AES-GCM, ChaCha20Poly1305)

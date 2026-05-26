@@ -49,7 +49,7 @@ public static class StringExtensions
             var endPart = value[endIdx..];
             return $"{startPart}{ellipses}{endPart}";
         }
-        
+
         /// <summary>Truncates <paramref name="s" /> to at most <paramref name="maxLength" /> characters, appending an ellipsis when shortened.</summary>
         /// <param name="maxLength">Maximum length of the returned string (including the ellipsis suffix).</param>
         /// <returns>
@@ -71,8 +71,7 @@ public static class StringExtensions
         /// <param name="values">The candidate strings.</param>
         /// <param name="comparison">The string comparison to apply.</param>
         /// <returns><see langword="true" /> if any element equals <paramref name="value" />; otherwise <see langword="false" />.</returns>
-        public bool In(in IEnumerable<string> values, StringComparison comparison = StringComparison.CurrentCulture)
-            => values.Any(v => v.Equals(value, comparison));
+        public bool In(in IEnumerable<string> values, StringComparison comparison = StringComparison.CurrentCulture) => values.Any(v => v.Equals(value, comparison));
 
         /// <summary>Concatenates <paramref name="value" /> to itself <paramref name="amount" /> times.</summary>
         /// <param name="amount">The repeat count. Non-positive values yield <see cref="string.Empty" />.</param>
@@ -89,7 +88,7 @@ public static class StringExtensions
             if (value.Length == 1)
                 return new(value[0], amount);
 
-    #if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER
             // Use string.Create for .NET 6+
             return string.Create(
                 value.Length * amount, (value, amount), (span, state) => {
@@ -97,14 +96,14 @@ public static class StringExtensions
                     for (var i = 0; i < count; i++)
                         str.AsSpan().CopyTo(span[(i * str.Length)..]);
                 });
-    #else
+#else
             // Use StringBuilder for .NET Standard 2.0 and earlier
             var sb = new StringBuilder(value.Length * amount);
             for (var i = 0; i < amount; i++)
                 sb.Append(value);
 
             return sb.ToString();
-    #endif
+#endif
         }
     }
 

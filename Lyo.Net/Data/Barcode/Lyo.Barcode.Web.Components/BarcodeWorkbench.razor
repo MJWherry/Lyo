@@ -206,11 +206,7 @@
                 HumanReadableFontSizePixels = _humanReadableFontPx,
                 HumanReadableMarginTopPixels = _humanReadableMarginTopPx,
                 HumanReadableMarginBottomPixels = _humanReadableMarginBottomPx,
-                HumanReadableColorHex = !_showHumanReadable
-                    ? null
-                    : string.Equals(_humanReadableColor.ToString(MudColorOutputFormats.Hex), _darkColor.ToString(MudColorOutputFormats.Hex), StringComparison.OrdinalIgnoreCase)
-                        ? null
-                        : _humanReadableColor.ToString(MudColorOutputFormats.Hex)
+                HumanReadableColorHex = !_showHumanReadable ? null : string.Equals(_humanReadableColor.ToString(MudColorOutputFormats.Hex), _darkColor.ToString(MudColorOutputFormats.Hex), StringComparison.OrdinalIgnoreCase) ? null : _humanReadableColor.ToString(MudColorOutputFormats.Hex)
             };
 
             var result = await BarcodeService.GenerateAsync(_data, BarcodeSymbology.Code128, options);

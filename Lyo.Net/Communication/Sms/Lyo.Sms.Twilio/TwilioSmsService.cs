@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010;
 using Twilio.Rest.Api.V2010.Account;
-
 #if NETSTANDARD2_0
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #endif
@@ -384,7 +383,7 @@ public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsServ
     {
         if (mediaUrls.Count == 0)
             return;
-        
+
         ArgumentHelpers.ThrowIfLessThan(mediaUrls.Count, MaxMediaAttachmentsPerMessage);
         Logger.LogDebug("Validated {Count} media URLs", mediaUrls.Count);
     }

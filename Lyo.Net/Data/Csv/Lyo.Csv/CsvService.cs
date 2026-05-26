@@ -290,35 +290,43 @@ public sealed class CsvService : ICsvService
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Threading.CancellationToken)' />
     public Task<byte[]> ExportToCsvBytesAsync<T>(IEnumerable<T> data, CancellationToken ct = default) => _exporter.ExportToCsvBytesAsync(data, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.String,System.Threading.CancellationToken)' />
     public Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, string csvFilePath, CancellationToken ct = default)
         => _exporter.ExportToCsvAsync(data, selectedProperties, csvFilePath, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
     public Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, Stream csvStream, CancellationToken ct = default)
         => _exporter.ExportToCsvStreamAsync(data, selectedProperties, csvStream, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Reflection.PropertyInfo},System.IO.Stream,System.Threading.CancellationToken)' />
     public Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, PropertyInfo> columns, Stream csvStream, CancellationToken ct = default)
         => _exporter.ExportToCsvStreamAsync(data, columns, csvStream, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Func{``0,System.String}},System.IO.Stream,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyDictionary{System.String,System.Func{``0,System.String}},System.IO.Stream,System.Threading.CancellationToken)' />
     public Task ExportToCsvStreamAsync<T>(IEnumerable<T> data, IReadOnlyDictionary<string, Func<T, string>> columnFormatters, Stream csvStream, CancellationToken ct = default)
         => _exporter.ExportToCsvStreamAsync(data, columnFormatters, csvStream, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.TextWriter,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.IO.TextWriter,System.Threading.CancellationToken)' />
     public Task ExportToCsvAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, TextWriter writer, CancellationToken ct = default)
         => _exporter.ExportToCsvAsync(data, selectedProperties, writer, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStringAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStringAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
     public Task<string> ExportToCsvStringAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, CancellationToken ct = default)
         => _exporter.ExportToCsvStringAsync(data, selectedProperties, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvBytesAsync``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IReadOnlyList{System.Reflection.PropertyInfo},System.Threading.CancellationToken)' />
     public Task<byte[]> ExportToCsvBytesAsync<T>(IEnumerable<T> data, IReadOnlyList<PropertyInfo> selectedProperties, CancellationToken ct = default)
         => _exporter.ExportToCsvBytesAsync(data, selectedProperties, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.String,System.Boolean,System.Threading.CancellationToken)' />
     public Task ExportToCsvFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         string csvFilePath,
@@ -326,7 +334,8 @@ public sealed class CsvService : ICsvService
         CancellationToken ct = default)
         => _exporter.ExportToCsvFromDictionaryAsync(data, csvFilePath, hasHeaderRow, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.IO.Stream,System.Boolean,System.Threading.CancellationToken)' />
     public Task ExportToCsvStreamFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         Stream csvStream,
@@ -334,14 +343,16 @@ public sealed class CsvService : ICsvService
         CancellationToken ct = default)
         => _exporter.ExportToCsvStreamFromDictionaryAsync(data, csvStream, hasHeaderRow, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStringFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStringFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
     public Task<string> ExportToCsvStringFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         bool hasHeaderRow = true,
         CancellationToken ct = default)
         => _exporter.ExportToCsvStringFromDictionaryAsync(data, hasHeaderRow, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvBytesFromDictionaryAsync(System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.Collections.Generic.IReadOnlyDictionary{System.Int32,System.String}},System.Boolean,System.Threading.CancellationToken)' />
     public Task<byte[]> ExportToCsvBytesFromDictionaryAsync(
         IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
         bool hasHeaderRow = true,
@@ -364,11 +375,13 @@ public sealed class CsvService : ICsvService
     public Task<byte[]> ExportToCsvBytesFromDataTableAsync(DataTable.Models.DataTable dataTable, CancellationToken ct = default)
         => _exporter.ExportToCsvBytesFromDataTableAsync(dataTable, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.String,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
     public Task ExportToCsvWithProgressAsync<T>(IEnumerable<T> data, string csvFilePath, IProgress<CsvProgress>? progress, CancellationToken ct = default)
         => _exporter.ExportToCsvWithProgressAsync(data, csvFilePath, progress, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ExportToCsvStreamWithProgressAsync``1(System.Collections.Generic.IEnumerable{``0},System.IO.Stream,System.IProgress{Lyo.Csv.Models.CsvProgress},System.Threading.CancellationToken)' />
     public Task ExportToCsvStreamWithProgressAsync<T>(IEnumerable<T> data, Stream csvStream, IProgress<CsvProgress>? progress, CancellationToken ct = default)
         => _exporter.ExportToCsvStreamWithProgressAsync(data, csvStream, progress, ct);
 
@@ -438,7 +451,8 @@ public sealed class CsvService : ICsvService
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.GetStatisticsAsync(System.IO.Stream,System.Threading.CancellationToken)' />
     public Task<CsvStatistics> GetStatisticsAsync(Stream csvStream, CancellationToken ct = default) => _importer.GetStatisticsAsync(csvStream, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ProcessFileInChunksAsync``1(System.String,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ProcessFileInChunksAsync``1(System.String,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public Task ProcessFileInChunksAsync<T>(
         string csvFilePath,
         int chunkSize,
@@ -447,7 +461,8 @@ public sealed class CsvService : ICsvService
         CancellationToken ct = default)
         => _importer.ProcessFileInChunksAsync(csvFilePath, chunkSize, processChunk, options, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ProcessStreamInChunksAsync``1(System.IO.Stream,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ProcessStreamInChunksAsync``1(System.IO.Stream,System.Int32,System.Func{System.Collections.Generic.IEnumerable{``0},System.Threading.Tasks.Task},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public Task ProcessStreamInChunksAsync<T>(
         Stream csvStream,
         int chunkSize,
@@ -462,11 +477,13 @@ public sealed class CsvService : ICsvService
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ValidateAsync(System.IO.Stream,Lyo.Csv.Models.CsvSchema,System.Threading.CancellationToken)' />
     public Task<ValidationResult> ValidateAsync(Stream csvStream, CsvSchema schema, CancellationToken ct = default) => _importer.ValidateAsync(csvStream, schema, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseFileWithMappingAsync``1(System.String,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ParseFileWithMappingAsync``1(System.String,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public Task<List<T>> ParseFileWithMappingAsync<T>(string csvFilePath, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
         => _importer.ParseFileWithMappingAsync<T>(csvFilePath, columnMappings, options, ct);
 
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ParseStreamWithMappingAsync``1(System.IO.Stream,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.ParseStreamWithMappingAsync``1(System.IO.Stream,System.Collections.Generic.List{Lyo.Csv.Models.ColumnMapping},Lyo.Csv.Models.CsvParseOptions,System.Threading.CancellationToken)' />
     public Task<List<T>> ParseStreamWithMappingAsync<T>(Stream csvStream, List<ColumnMapping> columnMappings, CsvParseOptions? options = null, CancellationToken ct = default)
         => _importer.ParseStreamWithMappingAsync<T>(csvStream, columnMappings, options, ct);
 
@@ -475,7 +492,8 @@ public sealed class CsvService : ICsvService
         => _importer.CompareFilesAsync(file1, file2, keyColumn, ct);
 
     // Composite operations (use both reader and writer)
-    /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.CombineCsvFilesAsync(System.Collections.Generic.IEnumerable{System.String},System.String,System.Boolean,System.Threading.CancellationToken)' />
+    /// <inheritdoc
+    ///     cref='M:Lyo.Csv.Models.ICsvService.CombineCsvFilesAsync(System.Collections.Generic.IEnumerable{System.String},System.String,System.Boolean,System.Threading.CancellationToken)' />
     public async Task CombineCsvFilesAsync(IEnumerable<string> inputFiles, string outputFile, bool includeHeaders = true, CancellationToken ct = default)
     {
         var fileList = inputFiles.ToList();

@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Entropy stored in joules per kelvin.</summary>
 /// <remarks>Non-negative finite magnitude.</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Entropy
 {

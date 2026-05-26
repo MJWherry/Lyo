@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Favorite.Postgres;
 
-/// <summary>PostgreSQL implementation of <see cref="IFavoriteStore"/>.</summary>
+/// <summary>PostgreSQL implementation of <see cref="IFavoriteStore" />.</summary>
 public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavoriteStore, IHealth
 {
     private const int BatchQueryChunkSize = 500;
@@ -33,12 +33,11 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
     {
         ArgumentHelpers.ThrowIfNull(favorite);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var targetId = favorite.ForEntityId != default ? favorite.ForEntityId : throw new ArgumentException("FavoriteRecord.ForEntityId is required.", nameof(favorite));
         var appliedId = favorite.FromEntityId != default ? favorite.FromEntityId : throw new ArgumentException("FavoriteRecord.FromEntityId is required.", nameof(favorite));
-
-        var existing = await contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant)
+        var existing = await contextDb.Favorites.WhereActive()
+            .WhereTenant(resolvedTenant)
             .FirstOrDefaultAsync(
                 f => f.ForEntityType == favorite.ForEntityType && f.ForEntityId == targetId && f.FromEntityType == favorite.FromEntityType && f.FromEntityId == appliedId &&
                     (context == null ? f.Context == null : f.Context == context), ct)
@@ -62,10 +61,8 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         };
 
         await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
-
         contextDb.Favorites.Add(entity);
         await contextDb.SaveChangesAsync(ct).ConfigureAwait(false);
-
         await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
     }
 
@@ -86,9 +83,9 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant)
+        var entity = await contextDb.Favorites.WhereActive()
+            .WhereTenant(resolvedTenant)
             .FirstOrDefaultAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId && f.FromEntityType == fromEntity.EntityType && f.FromEntityId == appliedId &&
                     (context == null ? f.Context == null : f.Context == context), ct)
@@ -105,9 +102,9 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        return await contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant)
+        return await contextDb.Favorites.WhereActive()
+            .WhereTenant(resolvedTenant)
             .AnyAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId && f.FromEntityType == fromEntity.EntityType && f.FromEntityId == appliedId &&
                     (context == null ? f.Context == null : f.Context == context), ct)
@@ -120,7 +117,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(forEntity);
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId);
         if (context != null)
@@ -136,7 +132,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == appliedId);
         if (context != null)
@@ -151,7 +146,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.ForEntityType == forEntityType);
         if (forEntityId.HasValue)
@@ -167,7 +161,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(forEntity);
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId);
         if (context != null)
@@ -177,7 +170,11 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<Guid, int>> GetFavoriteCountsForEntitiesAsync(string forEntityType, IReadOnlyList<Guid> forEntityIds, Guid? tenantId = null, CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<Guid, int>> GetFavoriteCountsForEntitiesAsync(
+        string forEntityType,
+        IReadOnlyList<Guid> forEntityIds,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         ArgumentHelpers.ThrowIfNull(forEntityIds);
@@ -186,13 +183,14 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
 
         var distinctIds = forEntityIds.Distinct().ToArray();
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         contextDb.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         var result = new Dictionary<Guid, int>();
         foreach (var chunk in distinctIds.Chunk(BatchQueryChunkSize)) {
             var ids = chunk.ToArray();
-            var rows = await contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.ForEntityType == forEntityType && ids.Contains(f.ForEntityId))
+            var rows = await contextDb.Favorites.WhereActive()
+                .WhereTenant(resolvedTenant)
+                .Where(f => f.ForEntityType == forEntityType && ids.Contains(f.ForEntityId))
                 .GroupBy(f => f.ForEntityId)
                 .Select(g => new { ForEntityId = g.Key, Count = g.Count() })
                 .ToListAsync(ct)
@@ -225,9 +223,9 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant)
+        var entity = await contextDb.Favorites.WhereActive()
+            .WhereTenant(resolvedTenant)
             .FirstOrDefaultAsync(
                 f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId && f.FromEntityType == fromEntity.EntityType && f.FromEntityId == appliedId &&
                     (context == null ? f.Context == null : f.Context == context), ct)
@@ -245,7 +243,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(forEntity);
         var targetId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.ForEntityType == forEntity.EntityType && f.ForEntityId == targetId);
         if (context != null)
@@ -262,7 +259,6 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         var resolvedTenant = ResolveTenant(tenantId);
-
         await using var contextDb = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = contextDb.Favorites.WhereActive().WhereTenant(resolvedTenant).Where(f => f.FromEntityType == fromEntity.EntityType && f.FromEntityId == appliedId);
         if (context != null)
@@ -297,10 +293,8 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
     private async Task SoftDeleteAsync(FavoriteDbContext contextDb, FavoriteEntity entity, Guid resolvedTenant, CancellationToken ct)
     {
         await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.BeforeSoftDelete, entity, ct).ConfigureAwait(false);
-
         entity.DeletedAt = DateTime.UtcNow;
         await contextDb.SaveChangesAsync(ct).ConfigureAwait(false);
-
         await RunInterceptorsAsync(ModuleKey, resolvedTenant, EntityRefActionKind.AfterSoftDelete, entity, ct).ConfigureAwait(false);
     }
 

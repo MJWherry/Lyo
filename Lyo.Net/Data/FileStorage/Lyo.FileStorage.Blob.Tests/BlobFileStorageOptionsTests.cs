@@ -1,5 +1,3 @@
-using Lyo.FileStorage.Blob;
-
 namespace Lyo.FileStorage.Blob.Tests;
 
 /// <summary>Pure-data coverage for the BlobFileStorageOptions surface (CPK detection, SectionName invariants).</summary>
@@ -8,24 +6,14 @@ public sealed class BlobFileStorageOptionsTests
     [Fact]
     public void UsesCustomerProvidedKey_TrueWhenKeyPresent()
     {
-        var opts = new BlobFileStorageOptions {
-            ConnectionString = "x",
-            ContainerName = "c",
-            CustomerProvidedKeyBase64 = Convert.ToBase64String(new byte[32])
-        };
-
+        var opts = new BlobFileStorageOptions { ConnectionString = "x", ContainerName = "c", CustomerProvidedKeyBase64 = Convert.ToBase64String(new byte[32]) };
         Assert.True(opts.UsesCustomerProvidedKey);
     }
 
     [Fact]
     public void UsesCustomerProvidedKey_FalseWhenNullOrWhitespace()
     {
-        var opts = new BlobFileStorageOptions {
-            ConnectionString = "x",
-            ContainerName = "c",
-            CustomerProvidedKeyBase64 = "   "
-        };
-
+        var opts = new BlobFileStorageOptions { ConnectionString = "x", ContainerName = "c", CustomerProvidedKeyBase64 = "   " };
         Assert.False(opts.UsesCustomerProvidedKey);
     }
 
@@ -51,12 +39,7 @@ public sealed class BlobFileStorageOptionsTests
         for (var i = 0; i < keyBytes.Length; i++)
             keyBytes[i] = (byte)i;
 
-        var opts = new BlobFileStorageOptions {
-            ConnectionString = "x",
-            ContainerName = "c",
-            CustomerProvidedKeyBase64 = Convert.ToBase64String(keyBytes)
-        };
-
+        var opts = new BlobFileStorageOptions { ConnectionString = "x", ContainerName = "c", CustomerProvidedKeyBase64 = Convert.ToBase64String(keyBytes) };
         var cpk = opts.ResolveCustomerProvidedKey();
         Assert.NotNull(cpk);
         Assert.Equal("Aes256", cpk!.Value.EncryptionAlgorithm.ToString());

@@ -8,22 +8,6 @@ namespace Lyo.QRCode.Payloads;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class WifiQrPayload : IQrPayload
 {
-    /// <summary>Initializes a Wi‑Fi QR payload.</summary>
-    /// <param name="ssid">Network name (required).</param>
-    /// <param name="password">Pre-shared key (empty for open networks when <paramref name="security" /> is <see cref="QrWifiSecurityType.Nopass" />).</param>
-    /// <param name="security">Security type for the <c>T:</c> field.</param>
-    /// <param name="hidden">Whether the SSID is hidden.</param>
-    public WifiQrPayload(string ssid, string? password, QrWifiSecurityType security, bool hidden = false)
-    {
-        ArgumentHelpers.ThrowIfNull(ssid);
-        if (security != QrWifiSecurityType.Nopass && password is not null)
-            ArgumentHelpers.ThrowIfWhiteSpaceOrEmpty(password, nameof(password));
-        Ssid = ssid;
-        Password = password ?? string.Empty;
-        Security = security;
-        Hidden = hidden;
-    }
-
     /// <summary>Network SSID.</summary>
     public string Ssid { get; }
 
@@ -36,15 +20,27 @@ public sealed class WifiQrPayload : IQrPayload
     /// <summary>Whether the SSID is not broadcast.</summary>
     public bool Hidden { get; }
 
-    /// <inheritdoc />
-    public override string ToString()
-        => $"WifiQrPayload ssid={Ssid}, {Security}, hidden={Hidden}, passwordLength={Password.Length}";
+    /// <summary>Initializes a Wi‑Fi QR payload.</summary>
+    /// <param name="ssid">Network name (required).</param>
+    /// <param name="password">Pre-shared key (empty for open networks when <paramref name="security" /> is <see cref="QrWifiSecurityType.Nopass" />).</param>
+    /// <param name="security">Security type for the <c>T:</c> field.</param>
+    /// <param name="hidden">Whether the SSID is hidden.</param>
+    public WifiQrPayload(string ssid, string? password, QrWifiSecurityType security, bool hidden = false)
+    {
+        ArgumentHelpers.ThrowIfNull(ssid);
+        if (security != QrWifiSecurityType.Nopass && password is not null)
+            ArgumentHelpers.ThrowIfWhiteSpaceOrEmpty(password);
+
+        Ssid = ssid;
+        Password = password ?? string.Empty;
+        Security = security;
+        Hidden = hidden;
+    }
 
     /// <inheritdoc />
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(Ssid), "SSID cannot be empty.", nameof(Ssid));
-
         if (Security != QrWifiSecurityType.Nopass && string.IsNullOrEmpty(Password))
             throw new InvalidFormatException("Password is required for this security type.", nameof(Password), null, "non-empty PSK");
 
@@ -62,7 +58,6 @@ public sealed class WifiQrPayload : IQrPayload
         var sb = new StringBuilder(32 + Ssid.Length + Password.Length);
         sb.Append("WIFI:T:").Append(t).Append(';');
         sb.Append("S:").Append(QrPayloadWifiEscape.EscapeFieldValue(Ssid)).Append(';');
-
         if (Security != QrWifiSecurityType.Nopass)
             sb.Append("P:").Append(QrPayloadWifiEscape.EscapeFieldValue(Password)).Append(';');
 
@@ -72,4 +67,7 @@ public sealed class WifiQrPayload : IQrPayload
         sb.Append(';');
         return sb.ToString();
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"WifiQrPayload ssid={Ssid}, {Security}, hidden={Hidden}, passwordLength={Password.Length}";
 }

@@ -1,29 +1,109 @@
 # Lyo.Query.Models
 
-DTOs and builders for **query** requests (`QueryReq`, `ProjectionQueryReq`) and the **`WhereClause`** filter tree used by the API and Blazor tooling.
+Filter / sort / projection DTOs and fluent builders for query requests. The same
+`WhereClause` tree is consumed by [`Lyo.Query`](../Lyo.Query/README.md) (turns it into
+LINQ on `IQueryable`) and by `Lyo.Api` endpoints, so HTTP clients and in-process tests
+build queries the same way.
 
-**Caching:** Result caching for **`POST …/Query`** and **`POST …/QueryProject`** is configured on the API host (**`QueryOptions.CacheQueryResultsAsUtf8Payload`**, **`CacheOptions`
-**) — not on these DTOs. Both endpoints share the same option; see the *Query result caching* section in
-the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
+> **Caching:** Result caching for `POST …/Query` and `POST …/QueryProject` is configured
+> on the API host (`QueryOptions.CacheQueryResultsAsUtf8Payload`, `CacheOptions`), not
+> on these DTOs. Both endpoints share the same option; see the *Query result caching*
+> section in the [Lyo.Api README](../../../Integration/Api/Lyo.Api/README.md#query-result-caching).
 
-## Where-clause model
+Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
 
-| Type                         | Role                                                                                                     |
-|------------------------------|----------------------------------------------------------------------------------------------------------|
-| **`WhereClause`** (abstract) | Root of the polymorphic filter tree. JSON discriminators: **`condition`** / **`group`** (`GroupClause`). |
-| **`ConditionClause`**        | Leaf: **field** + **comparison** + **value**.                                                            |
-| **`GroupClause`**            | Branch: **operator** (AND/OR) + **children**.                                                            |
+## Where-clause AST
+
+| Type                       | Role                                                                                              |
+|----------------------------|---------------------------------------------------------------------------------------------------|
+| `WhereClause` (abstract)   | Root of the polymorphic filter tree. `[JsonDerivedType]` discriminators are `condition` / `group`. Carries optional `Description` and `SubClause` (two-phase filter chain). |
+| `ConditionClause`          | Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Implements `IEquatable<ConditionClause>` and `Print(indent)`. |
+| `GroupClause`              | Branch: `Operator` (`GroupOperatorEnum`) + `List<WhereClause> Children`; structural `Equals` / `GetHashCode` and `Print(indent)`. |
+
+Polymorphic JSON shape produced by `System.Text.Json`:
+
+```json
+{
+  "$type": "group",
+  "operator": "And",
+  "children": [
+    { "$type": "condition", "field": "Status", "comparison": "Equals", "value": "Open" },
+    { "$type": "condition", "field": "Lines.Quantity", "comparison": "GreaterThan", "value": 0 }
+  ]
+}
+```
+
+JSON property names match the C# property names under the default camelCase policy
+(`condition`/`group` come from `[JsonDerivedType]`); the model classes do **not** use
+`[JsonPropertyName]`.
 
 ## Enums
 
-- **`ComparisonOperatorEnum`** — how a value is compared to a field (Equals, Contains, In, Regex, …). The JSON property name for this value on a condition is **`comparator`** (see
-  `[JsonPropertyName]` on `ConditionClause.Comparison`).
-- **`GroupOperatorEnum`** — `And` / `Or` for grouping. Serialized as **`operatorEnum`** on `GroupClause` (see `[JsonPropertyName]` on `GroupClause.Operator`).
+- `ComparisonOperatorEnum` — `Unknown`, `Equals`, `NotEquals`, `Contains`,
+  `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`,
+  `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`,
+  `Regex`, `NotRegex`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for
+  UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the
+  collection's count.
+- `GroupOperatorEnum` — `And`, `Or`.
+- `QueryTotalCountMode` — `Exact`, `None`, `HasMore`.
+- `QueryIncludeFilterMode` — `Full`, `MatchedOnly`.
+
+## Request DTOs (`Common/Request`)
+
+- `QueryRequestBase` — shared fields: `Start`, `Amount` (paging), `Keys`
+  (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation
+  paths for eager load), `SortBy` (`List<SortBy>`).
+- `QueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for `/Query`
+  (full entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).
+- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest` — request body for
+  `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`.
+  `Include` is ignored — navigations are derived from `Select` and any collection
+  paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds
+  `ZipSiblingCollectionSelections` (default `true`).
+- `ComputedField(Name, Template)` — adds a column derived from a SmartFormat template
+  evaluated against the projected row (requires `IFormatterService` in the host).
+- `IQueryExecutionRequest` — common execution surface for `QueryReq` and projection.
+
+## Sort
+
+- `SortBy(PropertyName, Direction?, Priority?)` — dotted property path with an
+  optional explicit `Priority`. When omitted the list order in the request
+  determines tie-break order.
+
+## Explain results
+
+`WhereClauseExplainResult`, `WhereClauseExplainNode`, `WhereClauseExplainKind`, and
+`ExplainOrBranchOutcome` — produced by
+`IWhereClauseService.ExplainMatch<TEntity>(...)` in `Lyo.Query`. Each node tracks
+`Passed`, AST `Path`, optional `Description`, group `Operator`, condition `Field` /
+`Comparison` / `FilterValue` / `ActualValueSummary`, and `SubClause` chains. The
+top-level result also carries `BlockingPath`, `FailureSummary`, and per-branch
+detail for failed `Or` groups.
 
 ## Builders
 
-Use **`WhereClauseBuilder`** (and `WhereClauseBuilder.For<T>()` for typed paths) to construct trees in code. Factory helpers include `WhereClauseBuilder.Condition(...)` and
-`WhereClauseBuilder.ConditionWithSubClause(...)`.
+| Builder                       | Produces                | Notes                                                                                  |
+|-------------------------------|-------------------------|----------------------------------------------------------------------------------------|
+| `WhereClauseBuilder`          | `WhereClause`           | `WhereClauseBuilder.And()` / `Or()` start a group; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `GreaterThan`, `LessThan`, …); `AddCondition`, `AddConditionWithSubClause`; nested `And()` / `Or()` for groups; static `Condition(...)` and `ConditionWithSubClause(...)` factories. |
+| `WhereClauseBuilderFor<T>`    | `WhereClause`           | Returned by `WhereClauseBuilder.For<T>()`; resolves property paths from `Expression<Func<T, …>>` lambdas. |
+| `QueryReqBuilder`             | `QueryReq`              | `AddIncludes`, `AddWhere(WhereClause)` / `AddWhere(Action<WhereClauseBuilder>)`, `AddSort`, `SetPagination(start, amount)`, `First()`, `SetTotalCountMode`, `SetIncludeFilterMode`, `For<T>()`. |
+| `ProjectionQueryReqBuilder`   | `ProjectionQueryReq`    | Same shape as `QueryReqBuilder` plus `AddSelect`, `AddComputedField`, and projection options. |
 
-For full **`QueryReq`** / **`ProjectionQueryReq`** objects, use **`QueryReqBuilder`** and **`ProjectionQueryReqBuilder`** (and their **`For<T>()`** nested builders). Attach a
-filter tree with **`AddWhere`** (overload with a built **`WhereClause`** or a configure action on **`WhereClauseBuilder`**).
+## Attributes and exceptions
+
+- `[QueryPropertyName("CanonicalName")]` — overrides the serialized / query path name
+  when the C# property differs from the canonical query path (useful when EF scaffolding
+  or DTOs rename a column).
+- `InvalidQueryException : InvalidOperationException` — thrown by `Lyo.Query` for
+  invalid paths or unsupported operators.
+
+## Related projects
+
+- [`Lyo.Query`](../Lyo.Query/README.md) — AST → LINQ on `IQueryable`.
+- [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) — Blazor query
+  workbench.
+- [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md) — production query
+  endpoints and projection.
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md),
+  [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md).

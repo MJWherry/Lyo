@@ -4,7 +4,6 @@ namespace Lyo.Mathematics.Quantities;
 
 /// <summary>Plane angle stored in radians.</summary>
 /// <remarks>Any finite radian measure is allowed (may represent rotations beyond one full turn).</remarks>
-
 [DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Angle
 {

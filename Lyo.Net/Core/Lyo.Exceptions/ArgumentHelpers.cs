@@ -13,9 +13,9 @@ namespace Lyo.Exceptions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Optional name parameters follow the same pattern as <see cref="M:System.ArgumentNullException.ThrowIfNull(System.Object,System.String)" />: when you omit them at the call site, the compiler supplies the caller's
-/// argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass <c>nameof(...)</c> explicitly when you
-/// want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
+/// Optional name parameters follow the same pattern as <see cref="M:System.ArgumentNullException.ThrowIfNull(System.Object,System.String)" />: when you omit them at the call
+/// site, the compiler supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass
+/// <c>nameof(...)</c> explicitly when you want a stable parameter name instead of an expression (e.g. <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
 /// </para>
 /// <para>
 /// <b>Exceptions:</b> null object references use <see cref="ArgumentNullException" />; failed string or logical constraints on non-null arguments use

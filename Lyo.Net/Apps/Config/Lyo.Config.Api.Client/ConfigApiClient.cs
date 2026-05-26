@@ -75,9 +75,8 @@ public sealed class ConfigApiClient : ApiClient, IConfigApiClient
 
 #if NETSTANDARD2_0
         ResolvedConfigRecord? resolvedDeserialized;
-        using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false)) {
+        using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
             resolvedDeserialized = await JsonSerializer.DeserializeAsync<ResolvedConfigRecord>(stream, ConfigDeserialize).ConfigureAwait(false);
-        }
 #else
         await using var stream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         var resolvedDeserialized =
@@ -114,7 +113,7 @@ public static class ConfigApiHttpClientRegistration
                     client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
 
                 ConfigApiClient.ApplyApiKey(client.DefaultRequestHeaders, options.ApiKey);
-                foreach (var enc in (options.AcceptEncodings).Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
+                foreach (var enc in options.AcceptEncodings.Select(e => e.Trim().ToLowerInvariant()).Where(e => e is "gzip" or "deflate" or "br").Distinct()) {
                     if (client.DefaultRequestHeaders.AcceptEncoding.All(h => !string.Equals(h.Value, enc, StringComparison.OrdinalIgnoreCase)))
                         client.DefaultRequestHeaders.AcceptEncoding.Add(new(enc));
                 }

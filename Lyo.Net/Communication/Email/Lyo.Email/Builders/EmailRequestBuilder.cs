@@ -13,7 +13,7 @@ namespace Lyo.Email.Builders;
 public sealed class EmailRequestBuilder
 {
     private readonly List<EmailAttachment> _attachmentMetadata = [];
-    
+
     private readonly BodyBuilder _bodyBuilder = new();
 
     private readonly MimeMessage _message = new();

@@ -84,13 +84,13 @@ public class QRCoderQRCodeService : IQRCodeService
             // Validate size
             ArgumentHelpers.ThrowIfNotInRange(qrOptions.Size, _options.MinSize, _options.MaxSize, nameof(options.Size));
             byte[] imageBytes;
-            if (ShouldOffloadQrRasterization(data, qrOptions)) {
+            if (ShouldOffloadQrRasterization(data, qrOptions))
                 imageBytes = await Task.Run(() => GenerateQRCodeBytes(data, qrOptions), ct).ConfigureAwait(false);
-            }
             else {
                 ct.ThrowIfCancellationRequested();
                 imageBytes = GenerateQRCodeBytes(data, qrOptions);
             }
+
             imageBytes = await ApplyQrFrameIfNeededAsync(imageBytes, qrOptions, ct).ConfigureAwait(false);
             sw.Stop();
             _metrics.IncrementCounter(_metricNames[nameof(QRCode.Constants.Metrics.GenerateSuccess)]);
@@ -197,12 +197,9 @@ public class QRCoderQRCodeService : IQRCodeService
         if (options.Format != QRCodeFormat.Png || options.Frame is null or { Style: QrFrameStyle.None })
             return imageBytes;
 
-        var apply = _qrFrameLayout != null
-            ? _qrFrameLayout.CompositeQrFramePngAsync(imageBytes, options.Frame, ct)
-            : _imageService != null
-                ? _imageService.CompositeQrFramePngAsync(imageBytes, options.Frame, ct)
-                : throw new InvalidOperationException(
-                    "Decorative QR frames require IQrFrameLayoutService (AddQRCoderQrCodeService registers it) or IImageService when using Frame, or set Frame.Style to None.");
+        var apply = _qrFrameLayout != null ? _qrFrameLayout.CompositeQrFramePngAsync(imageBytes, options.Frame, ct) :
+            _imageService != null ? _imageService.CompositeQrFramePngAsync(imageBytes, options.Frame, ct) : throw new InvalidOperationException(
+                "Decorative QR frames require IQrFrameLayoutService (AddQRCoderQrCodeService registers it) or IImageService when using Frame, or set Frame.Style to None.");
 
         var result = await apply.ConfigureAwait(false);
         OperationHelpers.ThrowIf(

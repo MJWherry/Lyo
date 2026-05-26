@@ -5,33 +5,41 @@ using Amazon.S3.Model;
 namespace Lyo.FileStorage.S3.Tests.Support;
 
 /// <summary>
-/// Lightweight <see cref="DispatchProxy" />-based stub for <see cref="IAmazonS3" />. Records the requests issued by
-/// <c>S3UploadStream</c>-style call sites and lets each handler return a custom response without pulling in a mocking framework.
-/// Any method not explicitly handled returns a default-shaped <see cref="Task" />/<see cref="Task{TResult}" /> instead of throwing,
-/// so tests stay focused on the methods that matter.
+/// Lightweight <see cref="DispatchProxy" />-based stub for <see cref="IAmazonS3" />. Records the requests issued by <c>S3UploadStream</c>-style call sites and lets each
+/// handler return a custom response without pulling in a mocking framework. Any method not explicitly handled returns a default-shaped <see cref="Task" />/
+/// <see cref="Task{TResult}" /> instead of throwing, so tests stay focused on the methods that matter.
 /// </summary>
 public class FakeAmazonS3 : DispatchProxy
 {
     public List<PutObjectRequest> PutObjectRequests { get; } = [];
+
     public List<InitiateMultipartUploadRequest> InitiateRequests { get; } = [];
+
     public List<UploadPartRequest> UploadPartRequests { get; } = [];
+
     public List<CompleteMultipartUploadRequest> CompleteRequests { get; } = [];
+
     public List<AbortMultipartUploadRequest> AbortRequests { get; } = [];
 
     public Func<PutObjectRequest, PutObjectResponse>? OnPutObject { get; set; }
+
     public Func<InitiateMultipartUploadRequest, InitiateMultipartUploadResponse>? OnInitiateMultipart { get; set; }
+
     public Func<UploadPartRequest, UploadPartResponse>? OnUploadPart { get; set; }
+
     public Func<CompleteMultipartUploadRequest, CompleteMultipartUploadResponse>? OnCompleteMultipart { get; set; }
+
     public Func<AbortMultipartUploadRequest, AbortMultipartUploadResponse>? OnAbortMultipart { get; set; }
 
     /// <summary>If non-null, the next call to the matching <c>On*</c> handler throws this exception (and is then cleared).</summary>
     public Exception? ThrowOnNextUploadPart { get; set; }
+
     public Exception? ThrowOnNextComplete { get; set; }
 
     public static IAmazonS3 Create(out FakeAmazonS3 fake)
     {
         var proxy = Create<IAmazonS3, FakeAmazonS3>();
-        fake = (FakeAmazonS3)(object)proxy;
+        fake = (FakeAmazonS3)proxy;
         return proxy;
     }
 
@@ -57,6 +65,7 @@ public class FakeAmazonS3 : DispatchProxy
                     ThrowOnNextUploadPart = null;
                     return Task.FromException<UploadPartResponse>(ex);
                 }
+
                 UploadPartRequests.Add(part);
                 var response = OnUploadPart?.Invoke(part) ?? new UploadPartResponse { ETag = $"\"etag-{part.PartNumber}\"" };
                 return Task.FromResult(response);
@@ -66,6 +75,7 @@ public class FakeAmazonS3 : DispatchProxy
                     ThrowOnNextComplete = null;
                     return Task.FromException<CompleteMultipartUploadResponse>(ex);
                 }
+
                 CompleteRequests.Add(complete);
                 var response = OnCompleteMultipart?.Invoke(complete) ?? new CompleteMultipartUploadResponse();
                 return Task.FromResult(response);
@@ -81,16 +91,18 @@ public class FakeAmazonS3 : DispatchProxy
     }
 
     /// <summary>
-    /// Default fallback: returns a <see cref="Task" />-shaped value for async methods, a default-constructed response otherwise.
-    /// Tests should override <c>OnX</c> for any method whose behavior matters.
+    /// Default fallback: returns a <see cref="Task" />-shaped value for async methods, a default-constructed response otherwise. Tests should override <c>OnX</c> for any method
+    /// whose behavior matters.
     /// </summary>
     private static object? DefaultReturnValue(MethodInfo method)
     {
         var rt = method.ReturnType;
         if (rt == typeof(Task))
             return Task.CompletedTask;
+
         if (rt == typeof(ValueTask))
             return ValueTask.CompletedTask;
+
         if (rt.IsGenericType) {
             var def = rt.GetGenericTypeDefinition();
             if (def == typeof(Task<>) || def == typeof(ValueTask<>)) {
@@ -98,6 +110,7 @@ public class FakeAmazonS3 : DispatchProxy
                 var defaultValue = inner.IsValueType ? Activator.CreateInstance(inner) : null;
                 if (inner == typeof(string))
                     defaultValue = "";
+
                 if (def == typeof(Task<>))
                     return typeof(Task).GetMethod(nameof(Task.FromResult))!.MakeGenericMethod(inner).Invoke(null, [defaultValue]);
             }
@@ -105,6 +118,7 @@ public class FakeAmazonS3 : DispatchProxy
 
         if (rt == typeof(void))
             return null;
+
         return rt.IsValueType ? Activator.CreateInstance(rt) : null;
     }
 }

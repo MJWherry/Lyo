@@ -7,7 +7,6 @@ namespace Lyo.Privacy.Metrics;
 
 internal static class PrivacyMetricsRecorder
 {
-
     public static void RecordTextRedactionResult(IMetrics metrics, RedactionResult result, string? policyName)
     {
         if (result.TotalRuns > 0)

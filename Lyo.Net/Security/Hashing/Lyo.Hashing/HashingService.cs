@@ -9,10 +9,10 @@ namespace Lyo.Hashing;
 /// <seealso cref="Shared" />
 public sealed class HashingService(HashingOptions? options = null) : IHashingService
 {
+    private readonly HashingOptions _options = options ?? HashingOptions.Default;
+
     /// <summary>Singleton with <see cref="HashingOptions.Default" /></summary>
     public static HashingService Shared { get; } = new(HashingOptions.Default);
-
-    private readonly HashingOptions _options = options ?? HashingOptions.Default;
 
     /// <inheritdoc />
     public byte[] Hash(ContentDigestAlgorithm algorithm, byte[] data)
@@ -56,7 +56,7 @@ public sealed class HashingService(HashingOptions? options = null) : IHashingSer
             ContentDigestAlgorithm.Sha384 => await SHA384.HashDataAsync(fs, ct).ConfigureAwait(false),
             ContentDigestAlgorithm.Sha512 => await SHA512.HashDataAsync(fs, ct).ConfigureAwait(false),
             ContentDigestAlgorithm.Md5 => await ComputeMd5Async(fs, ct).ConfigureAwait(false),
-            _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null),
+            var _ => throw new ArgumentOutOfRangeException(nameof(algorithm), algorithm, null)
         };
 #else
 #pragma warning disable CA5394 // synchronous file hash on netstandard2.x
@@ -64,16 +64,6 @@ public sealed class HashingService(HashingOptions? options = null) : IHashingSer
 #pragma warning restore CA5394
 #endif
     }
-
-#if NET5_0_OR_GREATER
-    private static async Task<byte[]> ComputeMd5Async(Stream stream, CancellationToken ct)
-    {
-        using var md5 = MD5.Create();
-#pragma warning disable CA5351 // MD5 — non-security hashing service surface
-        return await md5.ComputeHashAsync(stream, ct).ConfigureAwait(false);
-#pragma warning restore CA5351
-    }
-#endif
 
     /// <inheritdoc />
     public string ToHex(ReadOnlySpan<byte> digest, TextLetterCase? letterCase = null) => HexEncoding.ToHexString(digest, letterCase ?? _options.DefaultHexLetterCase);
@@ -158,4 +148,14 @@ public sealed class HashingService(HashingOptions? options = null) : IHashingSer
         };
 #pragma warning restore CA5351
     }
+
+#if NET5_0_OR_GREATER
+    private static async Task<byte[]> ComputeMd5Async(Stream stream, CancellationToken ct)
+    {
+        using var md5 = MD5.Create();
+#pragma warning disable CA5351 // MD5 — non-security hashing service surface
+        return await md5.ComputeHashAsync(stream, ct).ConfigureAwait(false);
+#pragma warning restore CA5351
+    }
+#endif
 }

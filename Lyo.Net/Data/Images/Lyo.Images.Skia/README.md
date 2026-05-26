@@ -1,22 +1,23 @@
 # Lyo.Images.Skia
 
-**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression, metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.
+**SkiaSharp** implementation of **`IImageService`** from [`Lyo.Images`](../Lyo.Images/README.md): resize, crop, rotate, watermark, format conversion, thumbnails, compression,
+metadata (with optional **MetadataExtractor**-based EXIF in the Skia pipeline), palette extraction, and batch processing.
 
 ## When to use Skia vs ImageSharp
 
-| | **Lyo.Images.Skia** | **Lyo.Images (ImageSharp)** |
-|--|---------------------|-----------------------------|
-| **Platforms** | Strong on Linux/mobile; native Skia assets. | Pure managed; broad format support. |
-| **EXIF** | Extended EXIF via MetadataExtractor where wired. | Rich EXIF via ImageSharp metadata APIs. |
+|               | **Lyo.Images.Skia**                                                                                                                                                                                         | **Lyo.Images (ImageSharp)**                                                    |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| **Platforms** | Strong on Linux/mobile; native Skia assets.                                                                                                                                                                 | Pure managed; broad format support.                                            |
+| **EXIF**      | Extended EXIF via MetadataExtractor where wired.                                                                                                                                                            | Rich EXIF via ImageSharp metadata APIs.                                        |
 | **QR frames** | `AddSkiaImageService` does **not** auto-register **`IQrFrameLayoutService`**. Register **`QrFrameLayoutService`** (or ImageSharp + `AddImageSharpImageService`) if you need **`CompositeQrFramePngAsync`**. | `AddImageSharpImageService` registers **`IQrFrameLayoutService`** when absent. |
 
 ## Public API
 
-| Type | Description |
-|------|-------------|
-| **`SkiaImageService`** | `IImageService` implementation using SkiaSharp bitmap decode/encode. |
-| **`Extensions`** | **`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `"ImageService"` section as ImageSharp. |
-| **`Constants.Metrics`** | Metric name strings for Skia operation timings. |
+| Type                    | Description                                                                                                                                      |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`SkiaImageService`**  | `IImageService` implementation using SkiaSharp bitmap decode/encode.                                                                             |
+| **`Extensions`**        | **`AddSkiaImageService`**, **`AddSkiaImageServiceFromConfiguration`** — same **`ImageServiceOptions`** / `"ImageService"` section as ImageSharp. |
+| **`Constants.Metrics`** | Metric name strings for Skia operation timings.                                                                                                  |
 
 Internal helpers (**`SkiaExifExtractor`**, etc.) are not part of the supported public contract.
 
@@ -80,3 +81,4 @@ services.AddSkiaImageService();
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Images`](../Lyo.Images/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)

@@ -11,16 +11,13 @@ public static class ComponentTypeElementId
         return Build(componentType.Name, extraParts);
     }
 
-    public static string FromComponentType(string? componentTypeName, params string[] extraParts)
-        => Build(componentTypeName, extraParts);
+    public static string FromComponentType(string? componentTypeName, params string[] extraParts) => Build(componentTypeName, extraParts);
 
     private static string Build(string? componentTypeName, IReadOnlyList<string> extraParts)
     {
         var typeSegment = ElementIdSegmentNormalizer.NormalizeOrDefault(componentTypeName);
         var suffix = BuildSuffix(extraParts);
-        return string.IsNullOrEmpty(suffix)
-            ? $"lyo-component-{typeSegment}"
-            : $"lyo-component-{typeSegment}-{suffix}";
+        return string.IsNullOrEmpty(suffix) ? $"lyo-component-{typeSegment}" : $"lyo-component-{typeSegment}-{suffix}";
     }
 
     private static string BuildSuffix(IReadOnlyList<string> extraParts)

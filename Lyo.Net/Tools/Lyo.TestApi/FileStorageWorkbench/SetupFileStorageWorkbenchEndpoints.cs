@@ -178,14 +178,14 @@ public static class SetupFileStorageWorkbenchEndpoints
             group.MapPut(
                     "direct-upload/{fileId:guid}/put", async (Guid fileId, HttpContext http, IServiceProvider services, CancellationToken ct) => {
                         var fileStorage = GetFileStorage(services);
-                        if (fileStorage is not LocalFileStorageService local)
+                        if (fileStorage is not LocalFileStorageService local) {
                             return Results.Json(
                                 new ProblemDetails {
                                     Title = "Direct upload PUT not supported",
                                     Detail = "PUT receiver is only available when the keyed IFileStorageService is LocalFileStorageService.",
                                     Status = StatusCodes.Status501NotImplemented
-                                },
-                                statusCode: StatusCodes.Status501NotImplemented);
+                                }, statusCode: StatusCodes.Status501NotImplemented);
+                        }
 
                         await local.ReceiveWorkbenchDirectPutAsync(fileId, http.Request.Body, ct).ConfigureAwait(false);
                         return Results.NoContent();
@@ -203,14 +203,14 @@ public static class SetupFileStorageWorkbenchEndpoints
             group.MapGet(
                 "diagnostics/keys", async (string? prefix, int? maxKeys, IServiceProvider services, CancellationToken ct) => {
                     var fileStorage = GetFileStorage(services);
-                    if (fileStorage is not IFileStorageDiagnosticsService dx)
+                    if (fileStorage is not IFileStorageDiagnosticsService dx) {
                         return Results.Json(
                             new ProblemDetails {
                                 Title = "Diagnostics not supported",
                                 Detail = "The registered IFileStorageService does not implement IFileStorageDiagnosticsService.",
                                 Status = StatusCodes.Status501NotImplemented
-                            },
-                            statusCode: StatusCodes.Status501NotImplemented);
+                            }, statusCode: StatusCodes.Status501NotImplemented);
+                    }
 
                     var cap = Math.Clamp(maxKeys ?? 1000, 1, 10_000);
                     var keys = await dx.ListStorageKeysAsync(prefix, cap, ct);
@@ -405,8 +405,9 @@ public static class SetupFileStorageWorkbenchEndpoints
                 "keys/search", async (string? searchText, int? take, IDbContextFactory<FileMetadataStoreDbContext> dbFactory, IServiceProvider services, CancellationToken ct) => {
                     await using var db = await dbFactory.CreateDbContextAsync(ct);
                     var keyStore = GetKeyStore(services);
-                    var query = db.FileMetadata.AsNoTracking().Where(e
-                        => e.IsEncrypted && e.DataEncryptionKeyId != null && e.DataEncryptionKeyVersion != null && e.DeletedAt == null);
+                    var query = db.FileMetadata.AsNoTracking()
+                        .Where(e => e.IsEncrypted && e.DataEncryptionKeyId != null && e.DataEncryptionKeyVersion != null && e.DeletedAt == null);
+
                     if (!string.IsNullOrWhiteSpace(searchText)) {
                         var term = searchText.Trim();
                         query = query.Where(e => e.DataEncryptionKeyId != null && EF.Functions.ILike(e.DataEncryptionKeyId, $"%{term}%"));
