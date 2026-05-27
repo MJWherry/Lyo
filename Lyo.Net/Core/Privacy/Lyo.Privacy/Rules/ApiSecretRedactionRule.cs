@@ -12,6 +12,11 @@ public sealed class ApiSecretRedactionRule : IRedactionRule
 
     private static readonly Regex GitHubPat = new(@"\bgh[psuro]_[A-Za-z0-9_]{36,255}\b", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>Format-B Lyo opaque token: <c>lyo_&lt;kind&gt;_&lt;ring&gt;_&lt;id&gt;_&lt;secret&gt;</c>. Kind and ring use lowercase ASCII letters/digits; id is Crockford-Base32 (11 chars); secret is Base64Url (≥ 22 chars).</summary>
+    private static readonly Regex LyoToken = new(
+        @"\blyo_[a-z][a-z0-9]{1,15}_[a-z][a-z0-9]{1,15}_[0-9A-HJKMNP-TV-Z]{11}_[A-Za-z0-9_\-]{22,}\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private static readonly Regex Assignment = new(
         @"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]{0,63})\s*=\s*([A-Za-z0-9+/=_\-]{16,2048})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
@@ -51,6 +56,13 @@ public sealed class ApiSecretRedactionRule : IRedactionRule
         if ((Patterns & ApiSecretPatterns.GitHubPersonalAccessToken) != 0) {
             foreach (Match m in GitHubPat.Matches(input)) {
                 if (m.Success && PassesEntropy(m.Value))
+                    yield return new(m.Index, m.Length, Kind);
+            }
+        }
+
+        if ((Patterns & ApiSecretPatterns.LyoToken) != 0) {
+            foreach (Match m in LyoToken.Matches(input)) {
+                if (m.Success)
                     yield return new(m.Index, m.Length, Kind);
             }
         }

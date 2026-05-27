@@ -1,0 +1,132 @@
+@page "/account/tokens"
+@using Lyo.Api.Client
+@inject IApiClient ApiClient
+@inject ISnackbar Snackbar
+
+<PageTitle>Manage API tokens</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
+    <MudStack Spacing="3">
+        <MudText Typo="Typo.h5">API tokens</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Personal access tokens issued by the Test API. The plaintext is shown once at creation time.</MudText>
+
+        <MudPaper Class="pa-4" Elevation="0" Outlined>
+            <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="_newName" Label="Display name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_newScopes" Label="Scopes (space-separated)" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAsync" Disabled="_busy">Issue</MudButton>
+            </MudStack>
+            @if (!string.IsNullOrEmpty(_lastPlaintext)) {
+                <MudAlert Severity="Severity.Warning" Class="mt-3">
+                    Save this token — it will not be shown again:
+                    <MudPaper Class="pa-2 mt-2" Elevation="0" Outlined Style="font-family: monospace; word-break: break-all;">@_lastPlaintext</MudPaper>
+                </MudAlert>
+            }
+        </MudPaper>
+
+        <MudTable Items="_tokens" Hover Dense Loading="_loading">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>Scopes</MudTh>
+                <MudTh>Created</MudTh>
+                <MudTh>Last used</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Id</MudTd>
+                <MudTd>@context.DisplayName</MudTd>
+                <MudTd>@string.Join(' ', context.Scopes ?? Array.Empty<string>())</MudTd>
+                <MudTd>@context.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
+                <MudTd>@(context.LastUsedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
+                <MudTd>@(context.RevokedAt is null ? "Active" : "Revoked")</MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" OnClick="@(() => RevokeAsync(context.Id))" Disabled="context.RevokedAt is not null">Revoke</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudContainer>
+
+@code {
+    private TokenDto[] _tokens = Array.Empty<TokenDto>();
+    private string? _lastPlaintext;
+    private string _newName = string.Empty;
+    private string _newScopes = string.Empty;
+    private bool _loading;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        _loading = true;
+        try {
+            _tokens = await ApiClient.GetAsAsync<TokenDto[]>("tokens").ConfigureAwait(true) ?? Array.Empty<TokenDto>();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to load tokens: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newName)) {
+            Snackbar.Add("Display name is required.", Severity.Warning);
+            return;
+        }
+
+        _busy = true;
+        try {
+            var scopes = (_newScopes ?? string.Empty)
+                .Split(new[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
+            var resp = await ApiClient.PostAsAsync<CreateTokenRequest, CreateTokenResponse>(
+                "tokens",
+                new CreateTokenRequest(_newName, scopes, null, null)).ConfigureAwait(true);
+            _lastPlaintext = resp?.Plaintext;
+            _newName = string.Empty;
+            _newScopes = string.Empty;
+            await RefreshAsync();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to create token: {ex.Message}", Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task RevokeAsync(string id)
+    {
+        try {
+            await ApiClient.DeleteAsAsync<bool>($"tokens/{Uri.EscapeDataString(id)}").ConfigureAwait(true);
+            await RefreshAsync();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Failed to revoke token: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private sealed record TokenDto(
+        string Id,
+        string Kind,
+        string Ring,
+        string DisplayName,
+        string[] Scopes,
+        DateTime CreatedAt,
+        DateTime? ExpiresAt,
+        DateTime? LastUsedAt,
+        DateTime? RevokedAt,
+        string? RevokedReason);
+
+    private sealed record CreateTokenRequest(string DisplayName, string[] Scopes, int? LifetimeSeconds, System.Collections.Generic.IReadOnlyDictionary<string, object?>? Metadata);
+
+    private sealed record CreateTokenResponse(string Plaintext, TokenDto Record);
+}

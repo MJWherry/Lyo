@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Lyo.EntityReference.Postgres.Database;
 
 namespace Lyo.Audit.Postgres.Database;
 
 /// <summary>Entity for storing audit events in PostgreSQL.</summary>
-public sealed class AuditEventEntity
+public sealed class AuditEventEntity : EntityRefOptionalFromStringAssociationBase
 {
     /// <summary>Gets or sets the unique identifier (UUID).</summary>
     [Key]
@@ -22,10 +23,6 @@ public sealed class AuditEventEntity
     /// <summary>Gets or sets the optional human-readable message.</summary>
     [MaxLength(4000)]
     public string? Message { get; set; }
-
-    /// <summary>Gets or sets the optional actor identifier.</summary>
-    [MaxLength(500)]
-    public string? Actor { get; set; }
 
     /// <summary>Gets or sets the optional metadata as JSON.</summary>
     [Column(TypeName = "jsonb")]

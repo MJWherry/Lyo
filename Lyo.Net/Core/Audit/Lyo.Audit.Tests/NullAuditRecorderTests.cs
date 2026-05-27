@@ -1,3 +1,5 @@
+using Lyo.EntityReference.Models;
+
 namespace Lyo.Audit.Tests;
 
 public class NullAuditRecorderTests
@@ -14,7 +16,11 @@ public class NullAuditRecorderTests
     public void RecordChange_DoesNotThrow()
     {
         var recorder = NullAuditRecorder.Instance;
-        var change = new AuditChange("Test.MyEntity, Test", new Dictionary<string, object?> { ["Name"] = "old" }, new Dictionary<string, object?> { ["Name"] = "new" });
+        var change = new AuditChange(
+            EntityRef.ForKey("Test.MyEntity", "1"),
+            new Dictionary<string, object?> { ["Name"] = "old" },
+            new Dictionary<string, object?> { ["Name"] = "new" });
+
         recorder.RecordChange(change);
     }
 
@@ -22,7 +28,7 @@ public class NullAuditRecorderTests
     public void RecordEvent_DoesNotThrow()
     {
         var recorder = NullAuditRecorder.Instance;
-        var evt = new AuditEvent("UserLogin", "User signed in", "user-1");
+        var evt = new AuditEvent(EntityRef.ForKey("User", "u1"), "UserLogin", "User signed in", EntityRef.ForKey("User", "u1"));
         recorder.RecordEvent(evt);
     }
 
@@ -31,8 +37,8 @@ public class NullAuditRecorderTests
     {
         var recorder = NullAuditRecorder.Instance;
         var changes = new[] {
-            new AuditChange("T1", new Dictionary<string, object?>(), new Dictionary<string, object?>()),
-            new AuditChange("T2", new Dictionary<string, object?>(), new Dictionary<string, object?>())
+            new AuditChange(EntityRef.ForKey("T1", "1"), new Dictionary<string, object?>(), new Dictionary<string, object?>()),
+            new AuditChange(EntityRef.ForKey("T2", "2"), new Dictionary<string, object?>(), new Dictionary<string, object?>())
         };
 
         recorder.RecordChanges(changes);
@@ -42,7 +48,11 @@ public class NullAuditRecorderTests
     public void RecordEvents_DoesNotThrow()
     {
         var recorder = NullAuditRecorder.Instance;
-        var events = new[] { new AuditEvent("E1"), new AuditEvent("E2") };
+        var events = new[] {
+            new AuditEvent(EntityRef.ForKey("E", "1"), "E1"),
+            new AuditEvent(EntityRef.ForKey("E", "2"), "E2")
+        };
+
         recorder.RecordEvents(events);
     }
 }

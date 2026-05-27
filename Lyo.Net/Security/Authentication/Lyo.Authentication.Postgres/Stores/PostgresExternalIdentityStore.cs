@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Lyo.Authentication.Postgres.Database;
+using Lyo.Authentication.Records;
+using Lyo.Authentication.Services.Users;
+using Lyo.Exceptions;
+using Microsoft.EntityFrameworkCore;
+
+namespace Lyo.Authentication.Postgres.Stores;
+
+/// <summary>PostgreSQL implementation of <see cref="IExternalIdentityStore"/>. Persists OIDC identity links to <c>[user].[linked_identity]</c>.</summary>
+public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
+{
+    private readonly IDbContextFactory<UserDbContext> _contextFactory;
+
+    /// <summary>Creates a new store.</summary>
+    public PostgresExternalIdentityStore(IDbContextFactory<UserDbContext> contextFactory)
+    {
+        ArgumentHelpers.ThrowIfNull(contextFactory);
+        _contextFactory = contextFactory;
+    }
+
+    /// <inheritdoc/>
+    public async Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await context.LinkedIdentities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                l => l.Provider == provider
+                    && l.Subject == subject
+                    && l.UnlinkedTimestamp == null,
+                ct)
+            .ConfigureAwait(false);
+
+        return entity is null ? null : ToRecord(entity);
+    }
+
+    /// <inheritdoc/>
+    public async Task<LinkedIdentity> LinkAsync(
+        Guid userId,
+        string provider,
+        string subject,
+        string? emailAtLink,
+        IReadOnlyList<string> scopes,
+        IReadOnlyDictionary<string, object?>? rawClaims,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
+        ArgumentHelpers.ThrowIfNull(scopes);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var existing = await context.LinkedIdentities
+            .FirstOrDefaultAsync(
+                l => l.Provider == provider
+                    && l.Subject == subject
+                    && l.UnlinkedTimestamp == null,
+                ct)
+            .ConfigureAwait(false);
+
+        var now = DateTime.UtcNow;
+        var scopesJson = JsonHelper.SerializeStringList(scopes);
+        var rawClaimsJson = JsonHelper.SerializeMetadata(rawClaims);
+        if (existing is not null) {
+            if (existing.UserId != userId)
+                throw new InvalidOperationException($"({provider}, {subject}) is already linked to a different Lyo user.");
+
+            existing.EmailAtLink = emailAtLink ?? existing.EmailAtLink;
+            existing.ScopesJson = scopesJson;
+            existing.RawClaimsJson = rawClaimsJson;
+            existing.UpdatedTimestamp = now;
+            existing.LastUsedTimestamp = now;
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            return ToRecord(existing);
+        }
+
+        var entity = new LinkedIdentityEntity {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Provider = provider,
+            Subject = subject,
+            EmailAtLink = emailAtLink,
+            ScopesJson = scopesJson,
+            RawClaimsJson = rawClaimsJson,
+            LinkedTimestamp = now,
+            UpdatedTimestamp = now,
+            LastUsedTimestamp = now,
+            UnlinkedTimestamp = null
+        };
+
+        context.LinkedIdentities.Add(entity);
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        return ToRecord(entity);
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, CancellationToken ct = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var rows = await context.LinkedIdentities
+            .AsNoTracking()
+            .Where(l => l.UserId == userId && l.UnlinkedTimestamp == null)
+            .OrderBy(l => l.LinkedTimestamp)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return rows.Select(ToRecord).ToArray();
+    }
+
+    /// <inheritdoc/>
+    public async Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, CancellationToken ct = default)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var rows = await context.LinkedIdentities
+            .Where(l => l.Id == linkedIdentityId)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(l => l.UnlinkedTimestamp, utcNow)
+                    .SetProperty(l => l.UpdatedTimestamp, utcNow),
+                ct)
+            .ConfigureAwait(false);
+
+        if (rows == 0)
+            throw new InvalidOperationException($"Linked identity '{linkedIdentityId}' not found.");
+    }
+
+    private static LinkedIdentity ToRecord(LinkedIdentityEntity entity) =>
+        new(
+            Id: entity.Id,
+            UserId: entity.UserId,
+            Provider: entity.Provider,
+            Subject: entity.Subject,
+            EmailAtLink: entity.EmailAtLink,
+            Scopes: JsonHelper.DeserializeStringList(entity.ScopesJson),
+            RawClaims: JsonHelper.DeserializeMetadata(entity.RawClaimsJson),
+            LinkedAt: entity.LinkedTimestamp,
+            UpdatedAt: entity.UpdatedTimestamp,
+            LastUsedAt: entity.LastUsedTimestamp,
+            UnlinkedAt: entity.UnlinkedTimestamp);
+}

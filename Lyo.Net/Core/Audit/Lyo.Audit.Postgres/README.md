@@ -53,8 +53,14 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 ## Schema
 
-- **audit.audit_changes** – `id` (uuid), `timestamp`, `type_assembly_full_name`, `old_values_json` (jsonb), `changed_properties_json` (jsonb)
-- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `message`, `actor`, `metadata_json` (jsonb)
+Both tables follow the `EntityRefOptionalFromStringAssociationBase` shape from `Lyo.EntityReference.Postgres`:
+
+- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `old_values_json` (jsonb),
+  `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
+- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `message?`, `metadata_json?` (jsonb),
+  `created_timestamp`, `updated_timestamp?`
+
+`for_entity_*` columns hold the subject of the change/event; `from_entity_*` columns hold the optional actor that caused it.
 
 ## Dependencies
 
@@ -72,6 +78,7 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 ### Project references
 
 - [`Lyo.Audit`](../Lyo.Audit/README.md)
+- [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
 - [`Lyo.Health`](../../Health/Lyo.Health/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Audit;
 
 /// <summary>Represents a recorded change to an entity (property-level before/after diff). Immutable once created.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public record AuditChange(string TypeAssemblyFullName, IReadOnlyDictionary<string, object?> OldValues, IReadOnlyDictionary<string, object?> ChangedProperties)
+public sealed record AuditChange(EntityRef Entity, IReadOnlyDictionary<string, object?> OldValues, IReadOnlyDictionary<string, object?> ChangedProperties)
 {
     /// <summary>Gets the unique identifier for this audit change.</summary>
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -12,5 +13,9 @@ public record AuditChange(string TypeAssemblyFullName, IReadOnlyDictionary<strin
     /// <summary>Gets the timestamp when the change was recorded.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
-    public override string ToString() => $"AuditChange: {TypeAssemblyFullName}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}";
+    /// <summary>Gets the actor that performed the change, if known.</summary>
+    public EntityRef? Actor { get; init; }
+
+    public override string ToString()
+        => $"AuditChange: {Entity.EntityType}/{Entity.EntityId}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}";
 }

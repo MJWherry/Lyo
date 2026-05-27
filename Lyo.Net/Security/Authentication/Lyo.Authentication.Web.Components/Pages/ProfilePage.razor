@@ -1,0 +1,178 @@
+@page "/auth/profile"
+@page "/auth/profile/{UserId:guid}"
+
+@inject IAuthUserClient UserClient
+
+<PageTitle>Profile</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthProfilePage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4 mb-6">
+        @if (_loading) {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+                <MudProgressCircular Indeterminate="true"/>
+            </MudStack>
+        }
+        else if (_error is not null) {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@_error</MudAlert>
+        }
+        else if (_snapshot is null) {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                @(UserId is null
+                    ? "No active session. Sign in to view your profile."
+                    : "User not found, or you do not have permission to view this user.")
+            </MudAlert>
+        }
+        else {
+            var user = _snapshot.User;
+            <MudPaper Class="pa-6" Elevation="3">
+                <MudStack Spacing="4">
+                    @if (user.IsDisabled) {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Block">
+                            <strong>Account disabled.</strong>
+                            @if (!string.IsNullOrWhiteSpace(user.DisabledReason)) {
+                                <text> Reason: @user.DisabledReason.</text>
+                            }
+                            @if (user.DisabledAt is not null) {
+                                <text> Disabled at @user.DisabledAt.Value.ToString("u").</text>
+                            }
+                        </MudAlert>
+                    }
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+                        <MudAvatar Size="Size.Large" Style="width: 96px; height: 96px;">
+                            @if (!string.IsNullOrWhiteSpace(user.AvatarUrl)) {
+                                <MudImage Src="@user.AvatarUrl" Alt="@user.DisplayName" Fluid="true"/>
+                            }
+                            else {
+                                @(InitialsOf(user.DisplayName))
+                            }
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h5">@user.DisplayName</MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Color="Color.Secondary"/>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@user.Email</MudText>
+                                @if (user.EmailVerified) {
+                                    <MudTooltip Text="Verified">
+                                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small"/>
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                            @if (UserId is null) {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Class="mt-1">You</MudChip>
+                            }
+                        </div>
+                    </MudStack>
+
+                    <MudDivider/>
+
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">User id</MudText>
+                            <MudText Typo="Typo.body2" Style="font-family: monospace;">@user.Id.ToString("D")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Preferred language</MudText>
+                            <MudText Typo="Typo.body2">@(user.PreferredLanguageBcp47 ?? "(unset)")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Created</MudText>
+                            <MudText Typo="Typo.body2">@user.CreatedAt.ToString("u")</MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.overline" Color="Color.Secondary">Last login</MudText>
+                            <MudText Typo="Typo.body2">@(user.LastLoginAt?.ToString("u") ?? "(never)")</MudText>
+                        </MudItem>
+                    </MudGrid>
+
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Scopes</MudText>
+                        @if (_snapshot.Scopes.Length == 0) {
+                            <MudText Color="Color.Secondary" Typo="Typo.body2">No scopes granted.</MudText>
+                        }
+                        else {
+                            <MudChipSet T="string" ReadOnly="true">
+                                @foreach (var scope in _snapshot.Scopes) {
+                                    <MudChip T="string" Value="@scope" Color="Color.Primary" Size="Size.Small">@scope</MudChip>
+                                }
+                            </MudChipSet>
+                        }
+                    </div>
+
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Linked identities</MudText>
+                        @if (_snapshot.LinkedIdentities.Length == 0) {
+                            <MudText Color="Color.Secondary" Typo="Typo.body2">No external identities linked.</MudText>
+                        }
+                        else {
+                            <MudSimpleTable Dense="true" Hover="true">
+                                <thead>
+                                <tr><th>Provider</th><th>Subject</th><th>Email at link</th><th>Linked at</th><th>Last used</th></tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var link in _snapshot.LinkedIdentities) {
+                                    <tr>
+                                        <td>@link.Provider</td>
+                                        <td><code>@link.Subject</code></td>
+                                        <td>@(link.EmailAtLink ?? "—")</td>
+                                        <td>@link.LinkedAt.ToString("u")</td>
+                                        <td>@(link.LastUsedAt?.ToString("u") ?? "—")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </MudSimpleTable>
+                        }
+                    </div>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudContainer>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>When set, the page renders that user (requires the <c>auth.users.read</c> scope). When <c>null</c>, the page renders the current user via <c>/auth/me</c>.</summary>
+    [Parameter]
+    public Guid? UserId { get; set; }
+
+    /// <summary>Optional override for the root element id used by the element-id scheme.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private AuthMeSnapshot? _snapshot;
+
+    private bool _loading = true;
+
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _snapshot = null;
+        try {
+            _snapshot = UserId is { } id
+                ? await UserClient.GetUserAsync(id)
+                : await UserClient.GetMeAsync();
+        }
+        catch (Exception ex) {
+            _error = ex.Message;
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private static string InitialsOf(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "?";
+
+        var parts = name!.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+            return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+
+        return ($"{parts[0][0]}{parts[^1][0]}").ToUpperInvariant();
+    }
+
+}

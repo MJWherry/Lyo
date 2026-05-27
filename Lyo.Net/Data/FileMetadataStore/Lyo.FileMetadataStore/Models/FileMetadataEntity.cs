@@ -64,6 +64,9 @@ public sealed class FileMetadataEntity
     /// <summary>When set (UTC), logical delete — row kept for auditing; omitted from reads and duplicate detection.</summary>
     public DateTime? DeletedAt { get; set; }
 
+    /// <summary>Identifier of the principal that uploaded or owns this file (a user id, group id, or other domain owner). Nullable for system-uploaded files and rows created before ownership tracking. Indexed for ownership lookups and future file-sharing scenarios.</summary>
+    public Guid? OwnerId { get; set; }
+
     public FileStoreResult ToFileStoreResult()
     {
         CompressionAlgorithm? compressionAlgorithm = null;
@@ -89,7 +92,7 @@ public sealed class FileMetadataEntity
         return new(
             Guid.Parse(Id), OriginalFileName, OriginalFileSize, OriginalFileHash, SourceFileName, SourceFileSize, SourceFileHash, IsCompressed, compressionAlgorithm,
             CompressedFileSize, CompressedFileHash, IsEncrypted, dekAlgorithm, kekAlgorithm, EncryptedFileSize, EncryptedFileHash, EncryptedDataEncryptionKey, DataEncryptionKeyId,
-            DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, TenantId, availability, DekKeyMaterialBytes, DeletedAt);
+            DataEncryptionKeyVersion, KeyEncryptionKeySalt, Timestamp, PathPrefix, hashAlgorithm, ContentType, TenantId, availability, DekKeyMaterialBytes, DeletedAt, OwnerId);
     }
 
     public static FileMetadataEntity FromFileStoreResult(FileStoreResult result)
@@ -121,6 +124,7 @@ public sealed class FileMetadataEntity
             ContentType = result.ContentType,
             TenantId = result.TenantId,
             Availability = result.Availability.ToString(),
-            DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null
+            DeletedAt = result.DeletedAt.HasValue ? DateTime.SpecifyKind(result.DeletedAt.Value, DateTimeKind.Utc) : null,
+            OwnerId = result.OwnerId
         };
 }

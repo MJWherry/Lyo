@@ -1,6 +1,7 @@
+using Lyo.Authentication.AspNetCore.Endpoints;
+using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Common;
 using Lyo.Config.Api;
-using Lyo.Config.Api.Security;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,10 @@ if (application.Environment.IsDevelopment()) {
     application.MapScalarApiReference();
 }
 
-application.UseMiddleware<RequireConfigApiKeyMiddleware>();
+application.UseAuthentication();
+application.UseAuthorization();
+application.MapLyoJwks();
+application.MapLyoAuthEndpoints();
+application.MapLyoTokenManagementEndpoints();
 application.MapConfigApiEndpoints();
 application.Run();

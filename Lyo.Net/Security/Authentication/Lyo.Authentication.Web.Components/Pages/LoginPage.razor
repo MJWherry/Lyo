@@ -1,0 +1,251 @@
+@page "/auth/login"
+@page "/auth/login/{*ReturnUrl}"
+
+@inject IAuthSignInLauncher SignInLauncher
+@inject IAuthProviderCatalog ProviderCatalog
+@inject AuthenticationStateProvider AuthState
+@inject IOptions<LyoAuthWebComponentsOptions> Options
+@inject IServiceProvider Services
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Sign in</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthLoginPage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8 mb-8">
+        <MudPaper Class="pa-6" Elevation="3">
+            @if (_loading) {
+                <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                    <MudProgressCircular Indeterminate="true"/>
+                </MudStack>
+            }
+            else if (_currentUser is not null) {
+                <MudStack Spacing="3">
+                    <MudText Typo="Typo.h5">Already signed in</MudText>
+                    <MudText Typo="Typo.body1">
+                        You're signed in as <strong>@ResolveDisplayName(_currentUser)</strong>.
+                    </MudText>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.ArrowForward"
+                                   OnClick="GoToReturnUrlAsync">
+                            Continue
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Logout"
+                                   OnClick="SignOutAsync">
+                            Sign out
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            }
+            else {
+                <MudStack Spacing="4">
+                    <div>
+                        <MudText Typo="Typo.h5" GutterBottom="true">Sign in</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Choose an identity provider to continue.
+                        </MudText>
+                    </div>
+
+                    @if (_providers.Count == 0) {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                            No identity providers are configured. Add entries under <code>LyoAuthWebComponents:Providers</code> in app configuration.
+                        </MudAlert>
+                    }
+                    else {
+                        <MudStack Spacing="2">
+                            @foreach (var provider in _providers) {
+                                <MudButton FullWidth="true"
+                                           Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           StartIcon="@(provider.IconKey ?? Icons.Material.Filled.AccountCircle)"
+                                           OnClick="@(() => StartProviderSignInAsync(provider.Name))">
+                                    @provider.DisplayName
+                                </MudButton>
+                            }
+                        </MudStack>
+                    }
+
+                    @if (_showPasswordCard) {
+                        <MudDivider Class="my-2"/>
+                        <MudText Typo="Typo.overline" Align="Align.Center" Color="Color.Secondary">or</MudText>
+
+                        <MudPaper Outlined="true" Class="pa-4">
+                            <EditForm Model="_passwordForm" OnValidSubmit="SubmitPasswordAsync">
+                                <MudStack Spacing="3">
+                                    <MudTextField @bind-Value="_passwordForm.Username"
+                                                  Label="Username or email"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Margin="Margin.Dense"
+                                                  Disabled="_passwordBusy"/>
+
+                                    <MudTextField @bind-Value="_passwordForm.Password"
+                                                  Label="Password"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@(_passwordVisible ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                                                  OnAdornmentClick="TogglePasswordVisibility"
+                                                  Required="true"
+                                                  Margin="Margin.Dense"
+                                                  Disabled="_passwordBusy"/>
+
+                                    @if (Options.Value.ShowRememberMe) {
+                                        <MudCheckBox @bind-Value="_passwordForm.RememberMe"
+                                                     Color="Color.Primary"
+                                                     Label="Remember me"
+                                                     Disabled="_passwordBusy"/>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(_passwordError)) {
+                                        <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">
+                                            @_passwordError
+                                        </MudAlert>
+                                    }
+
+                                    <MudButton ButtonType="ButtonType.Submit"
+                                               FullWidth="true"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.Login"
+                                               Disabled="_passwordBusy">
+                                        @(_passwordBusy ? "Signing in..." : "Sign in")
+                                    </MudButton>
+                                </MudStack>
+                            </EditForm>
+                        </MudPaper>
+                    }
+                </MudStack>
+            }
+        </MudPaper>
+    </MudContainer>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>Optional return URL. Bound from a catch-all route segment, so values may include slashes.</summary>
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    /// <summary>Optional override for the root element id used by the element-id scheme.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private IReadOnlyList<AuthProviderDescriptor> _providers = Array.Empty<AuthProviderDescriptor>();
+
+    private ClaimsPrincipal? _currentUser;
+
+    private bool _loading = true;
+
+    private bool _passwordVisible;
+
+    private bool _passwordBusy;
+
+    private string? _passwordError;
+
+    private readonly PasswordFormModel _passwordForm = new();
+
+    private IAuthPasswordSignIn? _passwordHandler;
+
+    private bool _showPasswordCard;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _providers = ProviderCatalog.List();
+        _passwordHandler = Services.GetService<IAuthPasswordSignIn>();
+        _showPasswordCard = _passwordHandler is not null && Options.Value.EnablePasswordSignIn;
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+            _currentUser = state.User;
+
+        _loading = false;
+    }
+
+    private Task StartProviderSignInAsync(string provider) => SignInLauncher.SignInAsync(provider, NormalizeReturnUrl(ReturnUrl));
+
+    private async Task SubmitPasswordAsync()
+    {
+        if (_passwordHandler is null)
+            return;
+
+        _passwordBusy = true;
+        _passwordError = null;
+        try {
+            var result = await _passwordHandler.SignInAsync(
+                _passwordForm.Username,
+                _passwordForm.Password,
+                _passwordForm.RememberMe,
+                NormalizeReturnUrl(ReturnUrl));
+
+            if (result.Succeeded) {
+                _passwordForm.Password = string.Empty;
+                Navigation.NavigateTo(result.ReturnUrl ?? NormalizeReturnUrl(ReturnUrl) ?? "/", forceLoad: false);
+                return;
+            }
+
+            _passwordError = result.FailureReason ?? "Sign-in failed.";
+        }
+        catch (Exception ex) {
+            _passwordError = ex.Message;
+        }
+        finally {
+            _passwordBusy = false;
+            _passwordForm.Password = string.Empty;
+        }
+    }
+
+    private void TogglePasswordVisibility() => _passwordVisible = !_passwordVisible;
+
+    private async Task SignOutAsync()
+    {
+        try {
+            await SignInLauncher.SignOutAsync();
+            _currentUser = null;
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Sign-out failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private Task GoToReturnUrlAsync()
+    {
+        Navigation.NavigateTo(NormalizeReturnUrl(ReturnUrl) ?? "/", forceLoad: false);
+        return Task.CompletedTask;
+    }
+
+    private static string ResolveDisplayName(ClaimsPrincipal principal)
+    {
+        if (!string.IsNullOrWhiteSpace(principal.Identity?.Name))
+            return principal.Identity!.Name!;
+
+        var subject = principal.FindFirst(LyoJwtClaims.Subject)?.Value
+                      ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
+
+        return string.IsNullOrWhiteSpace(subject) ? "this user" : subject!;
+    }
+
+    private static string? NormalizeReturnUrl(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        var trimmed = raw!.TrimStart('/');
+        return "/" + trimmed;
+    }
+
+    private sealed class PasswordFormModel
+    {
+        public string Username { get; set; } = string.Empty;
+
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+
+}

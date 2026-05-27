@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Lyo Project Graph</title>
+<script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+<style>
+  :root {
+    --bg: #1b1d22;
+    --bg-elev: #24272e;
+    --border: #3a3f48;
+    --text: #e6e8ec;
+    --text-dim: #9aa0a8;
+    --accent: #7aa2f7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column;
+  }
+  header {
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: center;
+    flex-wrap: wrap;
+  }
+  h1 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: 0.02em; }
+  .crumb { color: var(--text-dim); font-size: 13px; }
+  .crumb b { color: var(--text); }
+  button, select, input {
+    background: #2c3038; color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; font-size: 13px; font-family: inherit;
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  input { width: 220px; }
+  #status { color: var(--text-dim); font-size: 12px; margin-left: auto; }
+  #cy { flex: 1; min-height: 0; background: #15171b; }
+  #legend {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 6px 16px; background: var(--bg-elev);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .swatch {
+    display: inline-block; width: 10px; height: 10px;
+    border-radius: 2px; margin-right: 6px; vertical-align: middle;
+  }
+  #info {
+    position: absolute; right: 16px; bottom: 60px;
+    max-width: 360px;
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+    font-size: 12px; line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    display: none;
+  }
+  #info h3 { margin: 0 0 6px 0; font-size: 13px; color: var(--accent); }
+  #info ul { margin: 4px 0 0 16px; padding: 0; }
+  #info li { margin: 1px 0; }
+  .kbd { font-family: ui-monospace, monospace; background: #2c3038;
+         border: 1px solid var(--border); border-radius: 4px;
+         padding: 1px 5px; font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lyo Project Graph</h1>
+  <span class="crumb" id="crumb">Areas overview</span>
+  <button id="overview-btn">&larr; Overview</button>
+  <select id="area-select"><option value="">Jump to area...</option></select>
+  <input id="search" placeholder="filter projects..."/>
+  <button id="reset-btn">Reset highlight</button>
+  <span id="status"></span>
+</header>
+<div id="cy"></div>
+<div id="legend"></div>
+<div id="info"></div>
+<script>
+const DATA = {"projects":[{"name":"Lyo.Stt","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Tts.AwsPolly.Web.Components","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Tts.AwsPolly","Lyo.Web.Components"]},{"name":"Lyo.Tts.AwsPolly","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Exceptions","Lyo.Tts"]},{"name":"Lyo.Tts.Models","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Common","Lyo.Result"]},{"name":"Lyo.Tts.Typecast.Web.Components","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Tts.Typecast","Lyo.Web.Components"]},{"name":"Lyo.Tts.Typecast","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Exceptions","Lyo.Tts","Lyo.Typecast.Client"]},{"name":"Lyo.Tts.WindowsSpeech","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Tts","Lyo.Tts.Models"]},{"name":"Lyo.Tts","area":"Communication","folder":"Communication/Speech","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Tts.Models"]},{"name":"Lyo.Translation.Aws","area":"Communication","folder":"Communication/Translation","refs":["Lyo.Exceptions","Lyo.Translation"]},{"name":"Lyo.Translation.Google","area":"Communication","folder":"Communication/Translation","refs":["Lyo.Exceptions","Lyo.Translation"]},{"name":"Lyo.Translation.Web.Components","area":"Communication","folder":"Communication/Translation","refs":["Lyo.Translation"]},{"name":"Lyo.Translation","area":"Communication","folder":"Communication/Translation","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.Common","area":"Core","folder":"Core/Common","refs":["Lyo.Exceptions"]},{"name":"Lyo.Result","area":"Core","folder":"Core/Result","refs":["Lyo.Exceptions"]},{"name":"Lyo.Exceptions","area":"Core","folder":"Core","refs":[]},{"name":"Lyo.Testing","area":"Core","folder":"Core","refs":["Lyo.Exceptions","Lyo.IO.Temp"]},{"name":"Lyo.Testing.Containers","area":"Core","folder":"Core","refs":[]},{"name":"Lyo.Mathematics","area":"Core","folder":"Core/Mathematics","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.Mathematics.Functions","area":"Core","folder":"Core/Mathematics","refs":["Lyo.Mathematics","Lyo.Scientific"]},{"name":"Lyo.Scientific","area":"Core","folder":"Core/Scientific","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Mathematics"]},{"name":"Lyo.Scientific.Functions","area":"Core","folder":"Core/Scientific","refs":["Lyo.Scientific","Lyo.Mathematics"]},{"name":"Lyo.Audit.Postgres","area":"Core","folder":"Core/Audit","refs":["Lyo.Exceptions","Lyo.EntityReference.Postgres","Lyo.Health","Lyo.Postgres","Lyo.Audit"]},{"name":"Lyo.Audit","area":"Core","folder":"Core/Audit","refs":["Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.ChangeTracker.Postgres","area":"Core","folder":"Core/ChangeTracker","refs":["Lyo.EntityReference.Postgres","Lyo.EntityReference.Models","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.ChangeTracker"]},{"name":"Lyo.ChangeTracker","area":"Core","folder":"Core/ChangeTracker","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.Cache","area":"Core","folder":"Core/Cache","refs":["Lyo.Health","Lyo.Exceptions","Lyo.Metrics","Lyo.Compression","Lyo.Encryption","Lyo.Result"]},{"name":"Lyo.Cache.Fusion","area":"Core","folder":"Core/Cache","refs":["Lyo.Compression","Lyo.Exceptions","Lyo.Metrics","Lyo.Cache","Lyo.Encryption"]},{"name":"Lyo.Notification","area":"Core","folder":"Core/Notification","refs":["Lyo.Exceptions"]},{"name":"Lyo.Lock","area":"Core","folder":"Core/Lock","refs":["Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Lock.Redis","area":"Core","folder":"Core/Lock","refs":["Lyo.Exceptions","Lyo.Lock"]},{"name":"Lyo.DateAndTime","area":"Core","folder":"Core/DateAndTime","refs":["Lyo.Exceptions","Lyo.Common"]},{"name":"Lyo.Diagnostic","area":"Core","folder":"Core/Diagnostic","refs":["Lyo.Common","Lyo.Hashing","Lyo.Exceptions","Lyo.PackageMetadata"]},{"name":"Lyo.Diagnostic.Web.Components","area":"Core","folder":"Core/Diagnostic","refs":["Lyo.Diagnostic","Lyo.Web.Components"]},{"name":"Lyo.PackageMetadata.Postgres","area":"Core","folder":"Core/PackageMetadata","refs":["Lyo.Postgres","Lyo.Exceptions","Lyo.PackageMetadata"]},{"name":"Lyo.PackageMetadata","area":"Core","folder":"Core/PackageMetadata","refs":["Lyo.Common","Lyo.Hashing","Lyo.Exceptions"]},{"name":"Lyo.Privacy","area":"Core","folder":"Core/Privacy","refs":["Lyo.Metrics","Lyo.Hashing"]},{"name":"Lyo.Privacy.AspNetCore","area":"Core","folder":"Core/Privacy","refs":["Lyo.Metrics","Lyo.Privacy"]},{"name":"Lyo.Privacy.Web.Components","area":"Core","folder":"Core/Privacy","refs":["Lyo.Privacy","Lyo.Web.Components"]},{"name":"Lyo.Diff","area":"Core","folder":"Core/Diff","refs":["Lyo.Exceptions"]},{"name":"Lyo.Geolocation.Google","area":"Core","folder":"Core/Geolocation","refs":["Lyo.Geolocation","Lyo.Geolocation.Models","Lyo.Exceptions"]},{"name":"Lyo.Geolocation.Models","area":"Core","folder":"Core/Geolocation","refs":["Lyo.Common"]},{"name":"Lyo.Geolocation","area":"Core","folder":"Core/Geolocation","refs":["Lyo.Geolocation.Models"]},{"name":"Lyo.Metrics.OpenTelemetry","area":"Core","folder":"Core/Metrics","refs":["Lyo.Metrics","Lyo.Exceptions"]},{"name":"Lyo.Metrics","area":"Core","folder":"Core/Metrics","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Mathematics","Lyo.Mathematics.Functions"]},{"name":"Lyo.People.Models","area":"Core","folder":"Core/People","refs":["Lyo.DateAndTime","Lyo.Geolocation.Models","Lyo.Common"]},{"name":"Lyo.People.Postgres","area":"Core","folder":"Core/People","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.People.Models"]},{"name":"Lyo.EntityReference.Models","area":"Core","folder":"Core/EntityReference","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.EntityReference.Postgres","area":"Core","folder":"Core/EntityReference","refs":["Lyo.Postgres","Lyo.EntityReference.Models"]},{"name":"Lyo.Health","area":"Core","folder":"Core/Health","refs":["Lyo.Exceptions"]},{"name":"Lyo.Validation","area":"Core","folder":"Core/Validation","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result"]},{"name":"Lyo.Webhook","area":"Core","folder":"Core/Webhook","refs":["Lyo.Metrics"]},{"name":"Lyo.Webhook.Twilio","area":"Core","folder":"Core/Webhook","refs":["Lyo.Webhook"]},{"name":"Lyo.Resilience","area":"Core","folder":"Core/Resilience","refs":["Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Schedule.Models","area":"Core","folder":"Core/Schedule","refs":["Lyo.Common","Lyo.Exceptions","Lyo.DateAndTime"]},{"name":"Lyo.Schedule.Web.Components","area":"Core","folder":"Core/Schedule","refs":["Lyo.Scheduler","Lyo.Web.Components"]},{"name":"Lyo.Scheduler","area":"Core","folder":"Core/Scheduler","refs":["Lyo.Common","Lyo.Exceptions","Lyo.DateAndTime","Lyo.Metrics","Lyo.Schedule.Models"]},{"name":"Lyo.Scheduler.Cache","area":"Core","folder":"Core/Scheduler","refs":["Lyo.Exceptions","Lyo.Cache","Lyo.Scheduler"]},{"name":"Lyo.Compression","area":"Data","folder":"Data/Compression","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result","Lyo.Streams","Lyo.Metrics"]},{"name":"Lyo.Csv","area":"Data","folder":"Data/Csv","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result","Lyo.Csv.Models"]},{"name":"Lyo.Csv.Models","area":"Data","folder":"Data/Csv","refs":["Lyo.Common","Lyo.Result","Lyo.DataTable.Models"]},{"name":"Lyo.Images.Ocr.Tesseract","area":"Data","folder":"Data/Images","refs":["Lyo.Exceptions","Lyo.Metrics","Lyo.Images.Ocr"]},{"name":"Lyo.Images.Ocr","area":"Data","folder":"Data/Images","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.Images.OpenCv","area":"Data","folder":"Data/Images","refs":["Lyo.Exceptions","Lyo.Result"]},{"name":"Lyo.Images.Skia","area":"Data","folder":"Data/Images","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result","Lyo.Images"]},{"name":"Lyo.Images.Web.Components","area":"Data","folder":"Data/Images","refs":["Lyo.Images","Lyo.Web.Components"]},{"name":"Lyo.Images","area":"Data","folder":"Data/Images","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.IO.Temp","area":"Data","folder":"Data/IOTemp","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Pdf.Models","area":"Data","folder":"Data/Pdf","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result","Lyo.DataTable.Models"]},{"name":"Lyo.Pdf.Ocr","area":"Data","folder":"Data/Pdf","refs":["Lyo.Exceptions","Lyo.Images.Ocr","Lyo.Pdf.Models","Lyo.Pdf.Rendering"]},{"name":"Lyo.Pdf.Rendering","area":"Data","folder":"Data/Pdf","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result"]},{"name":"Lyo.Pdf.Web.Components","area":"Data","folder":"Data/Pdf","refs":["Lyo.Pdf","Lyo.Pdf.Models","Lyo.Web.Components","Lyo.Web.WebRenderer"]},{"name":"Lyo.Pdf","area":"Data","folder":"Data/Pdf","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result","Lyo.Pdf.Models"]},{"name":"Lyo.QRCode.QRCoder","area":"Data","folder":"Data/QRCode","refs":["Lyo.Result","Lyo.QRCode"]},{"name":"Lyo.QRCode.Web.Components","area":"Data","folder":"Data/QRCode","refs":["Lyo.Images","Lyo.QRCode","Lyo.Web.Components"]},{"name":"Lyo.QRCode","area":"Data","folder":"Data/QRCode","refs":["Lyo.Result","Lyo.Codes.ZXing","Lyo.Common","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Barcode.Native","area":"Data","folder":"Data/Barcode","refs":["Lyo.Exceptions","Lyo.Result","Lyo.Codes.ZXing","Lyo.Barcode"]},{"name":"Lyo.Barcode.TestWorkbench.Web.Components","area":"Data","folder":"Data/Barcode","refs":["Lyo.Barcode.Web.Components"]},{"name":"Lyo.Barcode.Web.Components","area":"Data","folder":"Data/Barcode","refs":["Lyo.Barcode","Lyo.Web.Components"]},{"name":"Lyo.Barcode","area":"Data","folder":"Data/Barcode","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.Codes.ZXing","area":"Data","folder":"Data/Codes","refs":["Lyo.Common","Lyo.Result"]},{"name":"Lyo.Query","area":"Data","folder":"Data/Query","refs":["Lyo.Cache","Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Query.Models"]},{"name":"Lyo.Query.Models","area":"Data","folder":"Data/Query","refs":["Lyo.Exceptions","Lyo.Common"]},{"name":"Lyo.Query.Web.Components","area":"Data","folder":"Data/Query","refs":["Lyo.Query.Models","Lyo.Web.Components"]},{"name":"Lyo.DataTable.Models","area":"Data","folder":"Data/DataTable","refs":["Lyo.Exceptions"]},{"name":"Lyo.Xlsx","area":"Data","folder":"Data/Xlsx","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result","Lyo.Xlsx.Models"]},{"name":"Lyo.Xlsx.Models","area":"Data","folder":"Data/Xlsx","refs":["Lyo.Common","Lyo.Result","Lyo.DataTable.Models"]},{"name":"Lyo.FileStorage.Blob","area":"Data","folder":"Data/FileStorage","refs":["Lyo.Common","Lyo.Exceptions","Lyo.FileStorage","Lyo.FileMetadataStore","Lyo.Compression","Lyo.Encryption"]},{"name":"Lyo.FileStorage.S3","area":"Data","folder":"Data/FileStorage","refs":["Lyo.Common","Lyo.Exceptions","Lyo.FileStorage","Lyo.FileMetadataStore","Lyo.Compression","Lyo.Encryption"]},{"name":"Lyo.FileStorage.Web.Components","area":"Data","folder":"Data/FileStorage","refs":["Lyo.Common","Lyo.Hashing","Lyo.Api.Client","Lyo.Web.Components","Lyo.IO.Temp","Lyo.FileStorage","Lyo.FileMetadataStore","Lyo.Keystore"]},{"name":"Lyo.FileStorage","area":"Data","folder":"Data/FileStorage","refs":["Lyo.Health","Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result","Lyo.Streams","Lyo.Hashing","Lyo.Encryption","Lyo.ContentThreatScan","Lyo.Compression","Lyo.FileMetadataStore"]},{"name":"Lyo.Postgres","area":"Data","folder":"Data/Postgres","refs":["Lyo.Exceptions"]},{"name":"Lyo.FileMetadataStore.Postgres","area":"Data","folder":"Data/FileMetadataStore","refs":["Lyo.Health","Lyo.Lock","Lyo.Exceptions","Lyo.Postgres","Lyo.FileMetadataStore","Lyo.FileStorage"]},{"name":"Lyo.FileMetadataStore.Sqlite","area":"Data","folder":"Data/FileMetadataStore","refs":[]},{"name":"Lyo.FileMetadataStore","area":"Data","folder":"Data/FileMetadataStore","refs":["Lyo.Common","Lyo.Encryption","Lyo.Hashing","Lyo.Compression"]},{"name":"Lyo.FileSystemWatcher","area":"Data","folder":"Data/FileSystemWatcher","refs":["Lyo.Common","Lyo.Metrics","Lyo.Hashing"]},{"name":"Lyo.Comic.Api.Client","area":"Apps","folder":"Apps/Comic","refs":["Lyo.Comic.Api.Models","Lyo.FileMetadataStore"]},{"name":"Lyo.Comic.Api","area":"Apps","folder":"Apps/Comic","refs":["Lyo.EntityReference.Models","Lyo.Comic.Api.Models","Lyo.Api","Lyo.Api.Models","Lyo.Cache","Lyo.Comic.Postgres","Lyo.Tag.Postgres","Lyo.Comment.Postgres","Lyo.Rating.Postgres","Lyo.Favorite.Postgres","Lyo.FileStorage","Lyo.FileMetadataStore.Postgres","Lyo.Keystore","Lyo.Encryption"]},{"name":"Lyo.Comic.Api.Models","area":"Apps","folder":"Apps/Comic","refs":["Lyo.Comic","Lyo.Api.Client"]},{"name":"Lyo.Config.Api.Client","area":"Apps","folder":"Apps/Config","refs":["Lyo.Config.Api.Models","Lyo.Api.Client"]},{"name":"Lyo.Config.Api.Hosting","area":"Apps","folder":"Apps/Config","refs":["Lyo.Config.Api.Client"]},{"name":"Lyo.Config.Api","area":"Apps","folder":"Apps/Config","refs":["Lyo.EntityReference.Models","Lyo.Config","Lyo.Config.Postgres","Lyo.Authentication","Lyo.Authentication.AspNetCore","Lyo.Authentication.Postgres","Lyo.Authentication.OpenIdConnect","Lyo.Authentication.Google","Lyo.Authentication.Keycloak"]},{"name":"Lyo.Config.Api.Models","area":"Apps","folder":"Apps/Config","refs":["Lyo.Config"]},{"name":"Lyo.Comic.Postgres","area":"Features","folder":"Features/Comic","refs":["Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Comic"]},{"name":"Lyo.Comic.Web.Components","area":"Features","folder":"Features/Comic","refs":["Lyo.Comic","Lyo.Query.Models","Lyo.Web.Components"]},{"name":"Lyo.Comic","area":"Features","folder":"Features/Comic","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.Comment.Postgres","area":"Features","folder":"Features/Comment","refs":["Lyo.EntityReference.Models","Lyo.EntityReference.Postgres","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Comment"]},{"name":"Lyo.Comment","area":"Features","folder":"Features/Comment","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.Favorite.Postgres","area":"Features","folder":"Features/Favorite","refs":["Lyo.EntityReference.Models","Lyo.EntityReference.Postgres","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Favorite"]},{"name":"Lyo.Favorite","area":"Features","folder":"Features/Favorite","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.HomeInventory.Postgres","area":"Features","folder":"Features/HomeInventory","refs":["Lyo.EntityReference.Models","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.HomeInventory"]},{"name":"Lyo.HomeInventory","area":"Features","folder":"Features/HomeInventory","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.Config.Postgres","area":"Features","folder":"Features/Config","refs":["Lyo.EntityReference.Models","Lyo.Health","Lyo.Postgres","Lyo.Config"]},{"name":"Lyo.Config","area":"Features","folder":"Features/Config","refs":["Lyo.Common","Lyo.EntityReference.Models"]},{"name":"Lyo.Note.Postgres","area":"Features","folder":"Features/Note","refs":["Lyo.EntityReference.Models","Lyo.EntityReference.Postgres","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Note"]},{"name":"Lyo.Note","area":"Features","folder":"Features/Note","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.Rating.Postgres","area":"Features","folder":"Features/Rating","refs":["Lyo.EntityReference.Models","Lyo.EntityReference.Postgres","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Rating"]},{"name":"Lyo.Rating","area":"Features","folder":"Features/Rating","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.Tag.Postgres","area":"Features","folder":"Features/Tag","refs":["Lyo.EntityReference.Models","Lyo.EntityReference.Postgres","Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Tag"]},{"name":"Lyo.Tag","area":"Features","folder":"Features/Tag","refs":["Lyo.Common","Lyo.EntityReference.Models","Lyo.Exceptions"]},{"name":"Lyo.ContactUs.Postgres","area":"Features","folder":"Features/ContactUs","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.ContactUs"]},{"name":"Lyo.ContactUs","area":"Features","folder":"Features/ContactUs","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result"]},{"name":"Lyo.Profanity","area":"Features","folder":"Features/Profanity","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.ShortUrl.Postgres","area":"Features","folder":"Features/ShortUrl","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.ShortUrl"]},{"name":"Lyo.ShortUrl","area":"Features","folder":"Features/ShortUrl","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.Ffmpeg.Models","area":"Data","folder":"Data/Ffmpeg","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result"]},{"name":"Lyo.Ffmpeg","area":"Data","folder":"Data/Ffmpeg","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result","Lyo.Ffmpeg.Models"]},{"name":"Lyo.Formatter","area":"Data","folder":"Data/Formatter","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.Portfolio","area":"Apps","folder":"Apps/Portfolio","refs":["Lyo.Web.Components","Lyo.Csv","Lyo.Xlsx","Lyo.Compression","Lyo.Encryption","Lyo.Hashing","Lyo.Keystore","Lyo.Schedule.Web.Components","Lyo.Diagnostic.Web.Components","Lyo.Privacy.Web.Components","Lyo.Scheduler","Lyo.DataTable.Models","Lyo.Query.Web.Components","Lyo.Cache","Lyo.Lock","Lyo.Metrics"]},{"name":"Lyo.Email.Models","area":"Communication","folder":"Communication/Email","refs":["Lyo.Common","Lyo.Result"]},{"name":"Lyo.Email.Postgres","area":"Communication","folder":"Communication/Email","refs":["Lyo.Exceptions","Lyo.Postgres"]},{"name":"Lyo.Email.Web.Components","area":"Communication","folder":"Communication/Email","refs":["Lyo.Email","Lyo.Web.Components"]},{"name":"Lyo.Email","area":"Communication","folder":"Communication/Email","refs":["Lyo.Common","Lyo.Result","Lyo.Email.Models","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Sms.Models","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Common","Lyo.Result"]},{"name":"Lyo.Sms","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Common","Lyo.Result","Lyo.Sms.Models","Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Sms.Postgres","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.Sms"]},{"name":"Lyo.Sms.Twilio.Postgres","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.Sms.Twilio"]},{"name":"Lyo.Sms.Twilio","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Exceptions","Lyo.Result","Lyo.Sms"]},{"name":"Lyo.Sms.Web.Components","area":"Communication","folder":"Communication/Sms","refs":["Lyo.Sms","Lyo.Web.Components"]},{"name":"Lyo.MessageQueue","area":"Communication","folder":"Communication/MessageQueue","refs":["Lyo.Health","Lyo.Common","Lyo.Exceptions","Lyo.Metrics","Lyo.Result"]},{"name":"Lyo.MessageQueue.RabbitMq","area":"Communication","folder":"Communication/MessageQueue","refs":["Lyo.Exceptions","Lyo.MessageQueue","Lyo.Metrics"]},{"name":"Lyo.MessageQueue.Web.Components","area":"Communication","folder":"Communication/MessageQueue","refs":["Lyo.MessageQueue"]},{"name":"Lyo.MessageQueue.RabbitMq.Web.Components","area":"Communication","folder":"Communication/MessageQueue","refs":["Lyo.MessageQueue","Lyo.MessageQueue.RabbitMq","Lyo.MessageQueue.Web.Components"]},{"name":"Lyo.Web.WebRenderer","area":"Integration","folder":"Integration/Web/Renderer","refs":["Lyo.Exceptions","Lyo.Metrics"]},{"name":"Lyo.Web.Reporting.Postgres","area":"Integration","folder":"Integration/Web/Reporting","refs":["Lyo.Exceptions","Lyo.Postgres","Lyo.Metrics"]},{"name":"Lyo.Web.Reporting","area":"Integration","folder":"Integration/Web/Reporting","refs":["Lyo.Metrics"]},{"name":"Lyo.Hashing","area":"Security","folder":"Security/Hashing","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.ContentThreatScan.Intel","area":"Security","folder":"Security/ContentThreat","refs":["Lyo.ContentThreatScan","Lyo.Exceptions"]},{"name":"Lyo.ContentThreatScan","area":"Security","folder":"Security/ContentThreat","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Hashing"]},{"name":"Lyo.Encryption","area":"Security","folder":"Security/Encryption","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Result","Lyo.Streams","Lyo.Hashing","Lyo.Keystore"]},{"name":"Lyo.Keystore.Aws","area":"Security","folder":"Security/Encryption","refs":["Lyo.Encryption","Lyo.Keystore"]},{"name":"Lyo.Keystore","area":"Security","folder":"Security/Encryption","refs":["Lyo.Common","Lyo.Exceptions"]},{"name":"Lyo.Authentication.Models","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions"]},{"name":"Lyo.Authentication","area":"Security","folder":"Security/Authentication","refs":["Lyo.Authentication.Models","Lyo.Common","Lyo.Exceptions","Lyo.Keystore","Lyo.Hashing"]},{"name":"Lyo.Authentication.AspNetCore","area":"Security","folder":"Security/Authentication","refs":["Lyo.Authentication","Lyo.Exceptions","Lyo.Diagnostic"]},{"name":"Lyo.Authentication.Postgres","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions","Lyo.Health","Lyo.Postgres","Lyo.Authentication"]},{"name":"Lyo.Authentication.OpenIdConnect","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions","Lyo.Authentication"]},{"name":"Lyo.Authentication.Google","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions","Lyo.Authentication.OpenIdConnect"]},{"name":"Lyo.Authentication.Keycloak","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions","Lyo.Authentication.OpenIdConnect"]},{"name":"Lyo.Authentication.Client","area":"Security","folder":"Security/Authentication","refs":["Lyo.Exceptions","Lyo.Authentication.Models"]},{"name":"Lyo.Authentication.Web.Components","area":"Security","folder":"Security/Authentication","refs":["Lyo.Authentication.Models","Lyo.Web.Components"]},{"name":"Lyo.Authentication.Web.Components.Server","area":"Security","folder":"Security/Authentication","refs":["Lyo.Authentication.Client","Lyo.Authentication.Web.Components"]},{"name":"Lyo.Authentication.Web.Components.Wasm","area":"Security","folder":"Security/Authentication","refs":["Lyo.Authentication.Models","Lyo.Authentication.Web.Components","Lyo.Diagnostic"]},{"name":"Lyo.Endato.Client","area":"Integration","folder":"Integration/Endato","refs":["Lyo.Api.Client"]},{"name":"Lyo.Endato.Postgres","area":"Integration","folder":"Integration/Endato","refs":["Lyo.Exceptions","Lyo.Postgres"]},{"name":"Lyo.Typecast.Client","area":"Integration","folder":"Integration/Typecast","refs":["Lyo.Tts.Models","Lyo.Api.Client"]},{"name":"Lyo.Web.Components","area":"Integration","folder":"Integration/Web","refs":["Lyo.Result","Lyo.Api.Client","Lyo.Query.Models","Lyo.Csv","Lyo.Encryption","Lyo.Xlsx","Lyo.Pdf","Lyo.Validation","Lyo.IO.Temp","Lyo.Common"]},{"name":"Lyo.Api.Client","area":"Integration","folder":"Integration/Api","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Diagnostic","Lyo.Api.Models"]},{"name":"Lyo.Api.Models","area":"Integration","folder":"Integration/Api","refs":["Lyo.Exceptions","Lyo.DateAndTime","Lyo.Common","Lyo.Query.Models"]},{"name":"Lyo.Api.Tests.Host","area":"Integration","folder":"Integration/Api","refs":["Lyo.Api","Lyo.Cache","Lyo.Csv","Lyo.Formatter","Lyo.Job.Models","Lyo.Job.Postgres","Lyo.Xlsx"]},{"name":"Lyo.Api","area":"Integration","folder":"Integration/Api","refs":["Lyo.Csv","Lyo.Formatter","Lyo.Query","Lyo.Xlsx","Lyo.Api.Models","Lyo.Cache","Lyo.Diff","Lyo.Hashing","Lyo.Metrics","Lyo.Validation"]},{"name":"Lyo.Web.Automation","area":"Integration","folder":"Integration/Web/Automation","refs":["Lyo.Formatter"]},{"name":"Lyo.Web.Automation.Selenium","area":"Integration","folder":"Integration/Web/Automation","refs":["Lyo.Web.Automation","Lyo.IO.Temp"]},{"name":"Lyo.Web.Automation.Playwright","area":"Integration","folder":"Integration/Web/Automation","refs":["Lyo.Web.Automation","Lyo.IO.Temp"]},{"name":"Lyo.Espn.Fantasy.Football","area":"Integration","folder":"Integration/Espn","refs":["Lyo.Api.Client"]},{"name":"Lyo.Job.Postgres","area":"Integration","folder":"Integration/Job","refs":["Lyo.Common","Lyo.Exceptions","Lyo.Postgres","Lyo.Api","Lyo.Job.Models","Lyo.MessageQueue"]},{"name":"Lyo.Job.Models","area":"Integration","folder":"Integration/Job","refs":["Lyo.Exceptions","Lyo.Api.Models","Lyo.Schedule.Models"]},{"name":"Lyo.Job.Scheduler","area":"Integration","folder":"Integration/Job","refs":["Lyo.Common","Lyo.Health","Lyo.Scheduler","Lyo.Formatter","Lyo.Query.Models","Lyo.Api.Client","Lyo.Api.Models","Lyo.Job.Models"]},{"name":"Lyo.Job.Web.Components","area":"Integration","folder":"Integration/Job","refs":["Lyo.Job.Models","Lyo.Api.Client","Lyo.Web.Components"]},{"name":"Lyo.Job.Worker","area":"Integration","folder":"Integration/Job","refs":["Lyo.MessageQueue","Lyo.Api.Client","Lyo.Job.Models"]},{"name":"Lyo.Discord.Models","area":"Integration","folder":"Integration/Discord","refs":["Lyo.Exceptions","Lyo.Api.Models"]},{"name":"Lyo.Discord.Postgres","area":"Integration","folder":"Integration/Discord","refs":["Lyo.EntityReference.Models","Lyo.Config","Lyo.Exceptions","Lyo.Postgres","Lyo.Api","Lyo.Discord.Models"]},{"name":"Lyo.Discord.Client","area":"Integration","folder":"Integration/Discord","refs":["Lyo.Api.Client","Lyo.Api.Models","Lyo.Query.Models","Lyo.Discord.Models"]},{"name":"Lyo.Discord.Bot","area":"Integration","folder":"Integration/Discord","refs":["Lyo.Common","Lyo.Cache","Lyo.Diff","Lyo.Notification","Lyo.Discord.Client"]},{"name":"Lyo.Streams","area":"Core","folder":"Core/Streams","refs":["Lyo.Exceptions"]},{"name":"Lyo.Gateway","area":"Tools","folder":"Tools","refs":["Lyo.Comic.Api.Client","Lyo.Comic.Api.Models","Lyo.Common","Lyo.Hashing","Lyo.Email","Lyo.Email.Web.Components","Lyo.MessageQueue","Lyo.MessageQueue.RabbitMq","Lyo.MessageQueue.RabbitMq.Web.Components","Lyo.MessageQueue.Web.Components","Lyo.Sms.Twilio","Lyo.Sms.Web.Components","Lyo.Tts.AwsPolly.Web.Components","Lyo.Tts.Typecast","Lyo.Tts.Typecast.Web.Components","Lyo.Translation.Aws","Lyo.Translation.Web.Components","Lyo.Cache","Lyo.Lock","Lyo.Metrics","Lyo.People.Models","Lyo.Result","Lyo.Csv","Lyo.Compression","Lyo.Images","Lyo.Images.Web.Components","Lyo.FileMetadataStore","Lyo.FileMetadataStore.Postgres","Lyo.FileStorage","Lyo.FileStorage.Web.Components","Lyo.IO.Temp","Lyo.FileStorage.S3","Lyo.Pdf","Lyo.Pdf.Web.Components","Lyo.Query.Web.Components","Lyo.Xlsx","Lyo.Barcode.Native","Lyo.Barcode.TestWorkbench.Web.Components","Lyo.QRCode","Lyo.QRCode.Web.Components","Lyo.Tag","Lyo.Api.Client","Lyo.Job.Web.Components","Lyo.Schedule.Web.Components","Lyo.Scheduler","Lyo.Diagnostic.Web.Components","Lyo.Privacy.Web.Components","Lyo.Web.Components","Lyo.Web.WebRenderer","Lyo.Comic.Postgres","Lyo.Comic.Web.Components","Lyo.Profanity","Lyo.Encryption","Lyo.Keystore","Lyo.Keystore.Aws","Lyo.Authentication.Client","Lyo.Authentication.Web.Components","Lyo.Authentication.Web.Components.Server"]},{"name":"Lyo.Preview","area":"Tools","folder":"Tools","refs":["Lyo.Csv.Models","Lyo.Common","Lyo.Exceptions","Lyo.Xlsx.Models"]},{"name":"Lyo.TestApi","area":"Tools","folder":"Tools","refs":["Lyo.Compression","Lyo.Email.Postgres","Lyo.Sms.Twilio.Postgres","Lyo.Audit.Postgres","Lyo.Comic.Postgres","Lyo.Comment.Postgres","Lyo.Note.Postgres","Lyo.People.Postgres","Lyo.Rating.Postgres","Lyo.Tag.Postgres","Lyo.FileMetadataStore.Postgres","Lyo.Config.Postgres","Lyo.ContactUs.Postgres","Lyo.Endato.Postgres","Lyo.Api","Lyo.Discord.Postgres","Lyo.Job.Postgres","Lyo.Job.Scheduler","Lyo.MessageQueue.RabbitMq","Lyo.ShortUrl.Postgres","Lyo.FileStorage","Lyo.FileStorage.S3","Lyo.Lock","Lyo.Lock.Redis","Lyo.Keystore","Lyo.Keystore.Aws","Lyo.Authentication","Lyo.Authentication.AspNetCore","Lyo.Authentication.Postgres","Lyo.Authentication.OpenIdConnect","Lyo.Authentication.Google","Lyo.Authentication.Keycloak"]},{"name":"Lyo.TestConsole","area":"Tools","folder":"Tools","refs":["Lyo.Email.Postgres","Lyo.Sms.Twilio.Postgres","Lyo.Tts.AwsPolly","Lyo.Tts.Typecast","Lyo.Translation.Aws","Lyo.Audit.Postgres","Lyo.Cache.Fusion","Lyo.Comment.Postgres","Lyo.HomeInventory.Postgres","Lyo.People.Postgres","Lyo.Profanity","Lyo.Scheduler","Lyo.Ffmpeg","Lyo.FileStorage.S3","Lyo.FileMetadataStore.Postgres","Lyo.IO.Temp","Lyo.Pdf","Lyo.Formatter","Lyo.Endato.Postgres","Lyo.Espn.Fantasy.Football","Lyo.Job.Models","Lyo.Job.Postgres","Lyo.Api.Client","Lyo.Api.Models","Lyo.Api","Lyo.Discord.Bot","Lyo.Compression","Lyo.Csv","Lyo.Email","Lyo.Job.Scheduler","Lyo.ShortUrl.Postgres","Lyo.ShortUrl","Lyo.Web.Automation.Playwright","Lyo.Web.Automation.Selenium","Lyo.Web.WebRenderer","Lyo.Web.Reporting.Postgres","Lyo.Web.Reporting","Lyo.Encryption","Lyo.FileMetadataStore","Lyo.FileSystemWatcher","Lyo.Common","Lyo.MessageQueue.RabbitMq","Lyo.MessageQueue","Lyo.Sms.Twilio","Lyo.Xlsx","Lyo.QRCode","Lyo.Keystore.Aws","Lyo.Images.Skia","Lyo.Pdf.Web.Components","Lyo.Preview","Lyo.Comic.Postgres","Lyo.Tag.Postgres"]},{"name":"Lyo.Tools.Postgres","area":"Tools","folder":"Tools","refs":["Lyo.Postgres","Lyo.Audit.Postgres","Lyo.ChangeTracker.Postgres","Lyo.People.Postgres","Lyo.Email.Postgres","Lyo.Sms.Postgres","Lyo.Sms.Twilio.Postgres","Lyo.Comic.Postgres","Lyo.Comment.Postgres","Lyo.Config.Postgres","Lyo.ContactUs.Postgres","Lyo.Favorite.Postgres","Lyo.HomeInventory.Postgres","Lyo.Note.Postgres","Lyo.Rating.Postgres","Lyo.ShortUrl.Postgres","Lyo.Tag.Postgres","Lyo.FileMetadataStore.Postgres","Lyo.Discord.Postgres","Lyo.Endato.Postgres","Lyo.Job.Postgres","Lyo.Web.Reporting.Postgres"]}],"areas":["Core","Data","Security","Communication","Integration","Features","Apps","Tools"],"byArea":{"Core":46,"Data":41,"Security":17,"Communication":26,"Integration":24,"Features":22,"Apps":8,"Tools":5},"areaEdges":[["Apps","Core",10],["Apps","Data",8],["Apps","Features",9],["Apps","Integration",5],["Apps","Security",11],["Communication","Core",42],["Communication","Data",3],["Communication","Integration",5],["Core","Data",8],["Core","Integration",3],["Core","Security",5],["Data","Core",93],["Data","Integration",8],["Data","Security",10],["Features","Core",61],["Features","Data",11],["Features","Integration",1],["Integration","Communication",3],["Integration","Core",34],["Integration","Data",23],["Integration","Features",1],["Integration","Security",2],["Security","Core",23],["Security","Data",1],["Security","Integration",1],["Tools","Apps",2],["Tools","Communication",28],["Tools","Core",24],["Tools","Data",40],["Tools","Features",29],["Tools","Integration",27],["Tools","Security",17]],"colors":{"Core":"#6C8EBF","Data":"#82B366","Security":"#B85450","Communication":"#D79B00","Integration":"#9673A6","Features":"#7A95C8","Apps":"#D6B656","Tools":"#666666"},"fills":{"Core":"#DAE8FC","Data":"#D5E8D4","Security":"#F8CECC","Communication":"#FFE6CC","Integration":"#E1D5E7","Features":"#D4E1F5","Apps":"#FFF2CC","Tools":"#F5F5F5"}};
+const COLORS = DATA.colors;
+const FILLS = DATA.fills;
+
+const projectByName = {};
+for (const p of DATA.projects) projectByName[p.name] = p;
+
+// ----- Element builders ----------------------------------------------------
+function buildOverviewElements() {
+  const nodes = DATA.areas.map(a => ({
+    data: { id: 'A:' + a, label: a + '\n' + DATA.byArea[a] + ' projects',
+            area: a, kind: 'area' }
+  }));
+  const edges = DATA.areaEdges.map(([s, t, w], i) => ({
+    data: { id: 'AE:' + i, source: 'A:' + s, target: 'A:' + t,
+            weight: w, label: String(w), kind: 'aedge' }
+  }));
+  return nodes.concat(edges);
+}
+
+function buildAreaElements(area) {
+  const projects = DATA.projects.filter(p => p.area === area);
+  const internal = new Set(projects.map(p => p.name));
+  const externals = new Set();
+  for (const p of projects) {
+    for (const r of p.refs) {
+      if (!internal.has(r) && projectByName[r]) externals.add(r);
+    }
+  }
+  const nodes = [];
+  for (const p of projects) {
+    nodes.push({ data: {
+      id: p.name, label: p.name,
+      area: p.area, folder: p.folder, kind: 'project'
+    }});
+  }
+  for (const n of externals) {
+    const p = projectByName[n];
+    nodes.push({ data: {
+      id: n, label: n, area: p.area, folder: p.folder, kind: 'external'
+    }});
+  }
+  const edges = [];
+  for (const p of projects) {
+    for (const r of p.refs) {
+      if (internal.has(r) || externals.has(r)) {
+        edges.push({ data: {
+          id: p.name + '->' + r,
+          source: p.name, target: r,
+          external: !internal.has(r), kind: 'pedge'
+        }});
+      }
+    }
+  }
+  return nodes.concat(edges);
+}
+
+// ----- Cytoscape -----------------------------------------------------------
+const cy = cytoscape({
+  container: document.getElementById('cy'),
+  wheelSensitivity: 0.2,
+  style: [
+    { selector: 'node', style: {
+        'label': 'data(label)',
+        'text-wrap': 'wrap',
+        'color': '#1a1d22',
+        'font-size': 12,
+        'font-family': 'inherit',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'border-width': 2,
+        'shape': 'round-rectangle',
+    }},
+    { selector: 'node[kind="area"]', style: {
+        'background-color': function(e) { return FILLS[e.data('area')] || '#888'; },
+        'border-color':     function(e) { return COLORS[e.data('area')] || '#444'; },
+        'width': 200, 'height': 70,
+        'font-size': 14, 'font-weight': 'bold',
+    }},
+    { selector: 'node[kind="project"]', style: {
+        'background-color': function(e) { return FILLS[e.data('area')] || '#fff'; },
+        'border-color':     function(e) { return COLORS[e.data('area')] || '#444'; },
+        'width': 220, 'height': 36,
+    }},
+    { selector: 'node[kind="external"]', style: {
+        'background-color': '#2c3038',
+        'color': '#cfd3da',
+        'border-color': function(e) { return COLORS[e.data('area')] || '#666'; },
+        'border-style': 'dashed',
+        'width': 220, 'height': 36,
+    }},
+    { selector: 'edge', style: {
+        'curve-style': 'bezier',
+        'target-arrow-shape': 'triangle',
+        'arrow-scale': 0.9,
+        'width': 1.4,
+        'line-color': '#5a606a',
+        'target-arrow-color': '#5a606a',
+        'opacity': 0.85,
+    }},
+    { selector: 'edge[kind="aedge"]', style: {
+        'curve-style': 'bezier',
+        'width': function(e) { return Math.min(8, 1 + Math.log2(e.data('weight') + 1)); },
+        'label': 'data(label)',
+        'font-size': 11, 'color': '#cfd3da',
+        'text-background-color': '#1b1d22',
+        'text-background-opacity': 0.9,
+        'text-background-padding': 2,
+        'line-color': '#7a8290',
+        'target-arrow-color': '#7a8290',
+    }},
+    { selector: 'edge[external]', style: {
+        'line-style': 'dashed',
+        'opacity': 0.7,
+    }},
+    { selector: '.dim', style: { 'opacity': 0.10 } },
+    { selector: 'node.hi', style: {
+        'opacity': 1.0,
+        'border-color': '#f7c948', 'border-width': 3,
+    }},
+    { selector: 'edge.hi', style: {
+        'opacity': 1.0,
+        'line-color': '#f7c948', 'target-arrow-color': '#f7c948',
+        'width': 2.5,
+    }},
+    { selector: 'node.hi-down', style: {
+        'border-color': '#7aa2f7', 'border-width': 3,
+    }},
+    { selector: 'edge.hi-down', style: {
+        'line-color': '#7aa2f7', 'target-arrow-color': '#7aa2f7',
+        'width': 2.0,
+    }},
+    { selector: 'node.hi-up', style: {
+        'border-color': '#79c98e', 'border-width': 3,
+    }},
+    { selector: 'edge.hi-up', style: {
+        'line-color': '#79c98e', 'target-arrow-color': '#79c98e',
+        'width': 2.0,
+    }},
+  ],
+  elements: [],
+});
+
+const layoutOpts = {
+  overview: { name: 'dagre', rankDir: 'TB', nodeSep: 60, rankSep: 110, edgeSep: 30, animate: false },
+  area:     { name: 'dagre', rankDir: 'TB', nodeSep: 22, rankSep: 70,  edgeSep: 14, animate: false },
+};
+
+let mode = 'overview';
+let currentArea = null;
+let focused = false;
+
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
+function setCrumb(msg)  { document.getElementById('crumb').innerHTML = msg; }
+
+function savePositions() {
+  cy.nodes().forEach(n => n.scratch('_pos', Object.assign({}, n.position())));
+}
+
+let savedView = null;
+function saveView() {
+  savedView = { zoom: cy.zoom(), pan: Object.assign({}, cy.pan()) };
+}
+
+function loadOverview() {
+  cy.elements().remove();
+  cy.add(buildOverviewElements());
+  cy.layout(layoutOpts.overview).run();
+  cy.fit(undefined, 40);
+  savePositions();
+  savedView = null;
+  mode = 'overview'; currentArea = null; focused = false;
+  setCrumb('<b>Areas overview</b> &mdash; click an area to drill in');
+  setStatus(DATA.areas.length + ' areas');
+  hideInfo();
+}
+
+function loadArea(area) {
+  cy.elements().remove();
+  cy.add(buildAreaElements(area));
+  cy.layout(layoutOpts.area).run();
+  cy.fit(undefined, 40);
+  savePositions();
+  savedView = null;
+  mode = 'area'; currentArea = area; focused = false;
+  const n = cy.nodes().length, e = cy.edges().length;
+  setCrumb('<b>' + area + '</b> &mdash; click a project to focus on it');
+  setStatus(n + ' nodes, ' + e + ' edges');
+  hideInfo();
+}
+
+// ----- Interactions --------------------------------------------------------
+cy.on('tap', 'node[kind="area"]', evt => loadArea(evt.target.data('area')));
+
+cy.on('tap', 'node[kind="project"], node[kind="external"]', evt => {
+  const node = evt.target;
+  highlightNeighborhood(node);
+  showInfo(node);
+  focusOnNode(node);
+});
+
+cy.on('tap', evt => {
+  if (evt.target === cy) { unfocus(); clearHighlight(); hideInfo(); }
+});
+
+function highlightNeighborhood(node) {
+  cy.elements().removeClass('hi hi-down hi-up').addClass('dim');
+  node.removeClass('dim').addClass('hi');
+  const downstream = node.successors();
+  downstream.removeClass('dim').addClass('hi-down');
+  const upstream = node.predecessors();
+  upstream.removeClass('dim').addClass('hi-up');
+}
+
+function clearHighlight() {
+  cy.elements().removeClass('dim hi hi-down hi-up');
+}
+
+// ----- Focus / unfocus -----------------------------------------------------
+function focusOnNode(node) {
+  // Save layout positions and camera state the first time we focus
+  // from a fresh view.
+  if (!focused) {
+    savePositions();
+    saveView();
+    focused = true;
+  }
+
+  const related = node.successors().union(node.predecessors()).add(node);
+  const relatedNodes = related.nodes();
+  const others = cy.elements().difference(related);
+
+  // BFS distance (treating the graph as undirected within the related set)
+  // so the clicked node ends up at the centre and each ring is a hop further.
+  const dist = {};
+  dist[node.id()] = 0;
+  let frontier = [node];
+  while (frontier.length) {
+    const next = [];
+    for (const n of frontier) {
+      n.connectedEdges().connectedNodes().forEach(m => {
+        if (relatedNodes.contains(m) && !(m.id() in dist)) {
+          dist[m.id()] = dist[n.id()] + 1;
+          next.push(m);
+        }
+      });
+    }
+    frontier = next;
+  }
+  const maxDist = Math.max(0, ...Object.values(dist));
+
+  others.style('display', 'none');
+  related.style('display', 'element');
+
+  relatedNodes.layout({
+    name: 'concentric',
+    concentric: n => maxDist - (dist[n.id()] || 0),
+    levelWidth: () => 1,
+    minNodeSpacing: 40,
+    spacingFactor: 1.1,
+    animate: true,
+    animationDuration: 450,
+    animationEasing: 'ease-out',
+    fit: true,
+    padding: 80,
+  }).run();
+}
+
+function unfocus() {
+  if (!focused) return;
+  cy.elements().style('display', 'element');
+  cy.nodes().forEach(n => {
+    const p = n.scratch('_pos');
+    if (p) {
+      n.animation({
+        position: { x: p.x, y: p.y },
+        duration: 450,
+        easing: 'ease-out',
+      }).play();
+    }
+  });
+  if (savedView) {
+    cy.animate({
+      zoom: savedView.zoom,
+      pan:  savedView.pan,
+    }, {
+      duration: 450,
+      easing: 'ease-out',
+    });
+  }
+  focused = false;
+}
+
+function showInfo(node) {
+  const info = document.getElementById('info');
+  const name = node.id();
+  const p = projectByName[name];
+  if (!p) { info.style.display = 'none'; return; }
+  const directRefs = p.refs;
+  const directDeps = DATA.projects.filter(q => q.refs.includes(name)).map(q => q.name);
+  info.innerHTML =
+    '<h3>' + escapeHtml(name) + '</h3>' +
+    '<div style="color:var(--text-dim)">' + escapeHtml(p.folder) + ' &middot; ' + escapeHtml(p.area) + '</div>' +
+    '<div style="margin-top:8px;"><b>Depends on (' + directRefs.length + ')</b>' +
+      (directRefs.length ? ('<ul>' + directRefs.map(r => '<li>' + escapeHtml(r) + '</li>').join('') + '</ul>') : '') +
+    '</div>' +
+    '<div style="margin-top:8px;"><b>Depended on by (' + directDeps.length + ')</b>' +
+      (directDeps.length ? ('<ul>' + directDeps.map(r => '<li>' + escapeHtml(r) + '</li>').join('') + '</ul>') : '') +
+    '</div>';
+  info.style.display = 'block';
+}
+
+function hideInfo() { document.getElementById('info').style.display = 'none'; }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ----- Header controls -----------------------------------------------------
+const sel = document.getElementById('area-select');
+for (const a of DATA.areas) {
+  const o = document.createElement('option');
+  o.value = a; o.textContent = a + ' (' + DATA.byArea[a] + ')';
+  sel.appendChild(o);
+}
+sel.addEventListener('change', () => { if (sel.value) loadArea(sel.value); sel.value = ''; });
+
+document.getElementById('overview-btn').onclick = loadOverview;
+document.getElementById('reset-btn').onclick = () => {
+  unfocus(); clearHighlight(); hideInfo();
+};
+
+const search = document.getElementById('search');
+search.addEventListener('input', () => {
+  const q = search.value.trim().toLowerCase();
+  if (!q) { clearHighlight(); return; }
+  cy.elements().addClass('dim').removeClass('hi');
+  const matches = cy.nodes().filter(n => n.id().toLowerCase().includes(q));
+  matches.removeClass('dim').addClass('hi');
+  matches.connectedEdges().forEach(e => {
+    const o = e.source().hasClass('hi') ? e.target() : e.source();
+    if (matches.contains(o) || matches.contains(e.source()) && matches.contains(e.target())) {
+      e.removeClass('dim');
+    }
+  });
+});
+
+// ----- Legend --------------------------------------------------------------
+const legend = document.getElementById('legend');
+for (const a of DATA.areas) {
+  const span = document.createElement('span');
+  span.innerHTML = '<span class="swatch" style="background:' +
+    FILLS[a] + ';border:1px solid ' + COLORS[a] + '"></span>' + a;
+  legend.appendChild(span);
+}
+const tip = document.createElement('span');
+tip.style.marginLeft = 'auto';
+tip.style.color = 'var(--text-dim)';
+tip.innerHTML = 'Tip: <span class="kbd">click</span> = drill / highlight &middot; ' +
+                '<span class="kbd">scroll</span> = zoom &middot; <span class="kbd">drag</span> = pan';
+legend.appendChild(tip);
+
+loadOverview();
+</script>
+</body>
+</html>

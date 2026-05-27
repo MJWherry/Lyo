@@ -3,8 +3,6 @@ using System;
 using Lyo.Audit.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -33,37 +31,59 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("changed_properties_json");
 
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
+
+                    b.Property<string>("ForEntityId")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("for_entity_id");
+
+                    b.Property<string>("ForEntityType")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("for_entity_type");
+
+                    b.Property<string>("FromEntityId")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("from_entity_id");
+
+                    b.Property<string>("FromEntityType")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("from_entity_type");
+
                     b.Property<string>("OldValuesJson")
                         .IsRequired()
                         .HasMaxLength(32768)
                         .HasColumnType("jsonb")
                         .HasColumnName("old_values_json");
 
-                    b.Property<DateTime>("CreatedTimestamp")
+                    b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
+                        .HasColumnName("timestamp");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
-
-                    b.Property<string>("TypeAssemblyFullName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("type_assembly_full_name");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ForEntityType")
+                        .HasDatabaseName("ix_audit_changes_for_entity_type");
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_audit_changes_timestamp");
 
-                    b.HasIndex("TypeAssemblyFullName")
-                        .HasDatabaseName("ix_audit_changes_type");
+                    b.HasIndex("ForEntityType", "ForEntityId", "Timestamp")
+                        .HasDatabaseName("ix_audit_changes_for_entity_timestamp");
+
+                    b.HasIndex("FromEntityType", "FromEntityId")
+                        .HasDatabaseName("ix_audit_changes_from_entity");
 
                     b.ToTable("audit_changes", "audit");
                 });
@@ -74,16 +94,37 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Actor")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("actor");
+                    b.Property<DateTime>("CreatedTimestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_timestamp");
 
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("event_type");
+
+                    b.Property<string>("ForEntityId")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("for_entity_id");
+
+                    b.Property<string>("ForEntityType")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("for_entity_type");
+
+                    b.Property<string>("FromEntityId")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("from_entity_id");
+
+                    b.Property<string>("FromEntityType")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("from_entity_type");
 
                     b.Property<string>("Message")
                         .HasMaxLength(4000)
@@ -95,17 +136,13 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata_json");
 
-                    b.Property<DateTime>("CreatedTimestamp")
+                    b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
+                        .HasColumnName("timestamp");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("timestamp");
 
                     b.HasKey("Id");
 
@@ -117,6 +154,12 @@ namespace Lyo.Audit.Postgres.Migrations
 
                     b.HasIndex("EventType", "Timestamp")
                         .HasDatabaseName("ix_audit_events_event_type_timestamp");
+
+                    b.HasIndex("ForEntityType", "ForEntityId", "Timestamp")
+                        .HasDatabaseName("ix_audit_events_for_entity_timestamp");
+
+                    b.HasIndex("FromEntityType", "FromEntityId")
+                        .HasDatabaseName("ix_audit_events_from_entity");
 
                     b.ToTable("audit_events", "audit");
                 });

@@ -124,6 +124,10 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("original_file_size");
 
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<string>("PathPrefix")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -165,6 +169,9 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
 
                     b.HasIndex("OriginalFileName")
                         .HasDatabaseName("ix_file_metadata_original_file_name");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_file_metadata_owner_id");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_file_metadata_tenant_id");

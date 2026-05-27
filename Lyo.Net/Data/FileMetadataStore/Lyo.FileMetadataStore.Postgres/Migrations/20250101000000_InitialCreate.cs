@@ -46,7 +46,8 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                     availability = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
                     content_type = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     tenant_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    owner_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -163,6 +164,12 @@ namespace Lyo.FileMetadataStore.Postgres.Migrations
                 schema: "filestore",
                 table: "file_metadata",
                 column: "tenant_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_file_metadata_owner_id",
+                schema: "filestore",
+                table: "file_metadata",
+                column: "owner_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_file_data_file_id",

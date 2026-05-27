@@ -7,7 +7,6 @@
 
     <ItemGroup>
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="[10,)"/>
         <PackageReference Include="MudBlazor" Version="[9.3,)"/>
     </ItemGroup>
 
@@ -67,6 +66,9 @@
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Client\Lyo.Authentication.Client.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components\Lyo.Authentication.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Web.Components.Server\Lyo.Authentication.Web.Components.Server.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

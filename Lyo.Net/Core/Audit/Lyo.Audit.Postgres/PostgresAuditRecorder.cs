@@ -42,17 +42,8 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
         if (list.Count == 0)
             return;
 
-        var entities = list.Select(c => new AuditChangeEntity {
-                Id = c.Id,
-                Timestamp = c.Timestamp,
-                TypeAssemblyFullName = c.TypeAssemblyFullName,
-                OldValuesJson = SerializeDict(c.OldValues),
-                ChangedPropertiesJson = SerializeDict(c.ChangedProperties)
-            })
-            .ToList();
-
         using var context = _contextFactory.CreateDbContext();
-        context.AuditChanges.AddRange(entities);
+        context.AuditChanges.AddRange(list.Select(ToEntity));
         context.SaveChanges();
     }
 
@@ -64,17 +55,8 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
         if (list.Count == 0)
             return;
 
-        var entities = list.Select(c => new AuditChangeEntity {
-                Id = c.Id,
-                Timestamp = c.Timestamp,
-                TypeAssemblyFullName = c.TypeAssemblyFullName,
-                OldValuesJson = SerializeDict(c.OldValues),
-                ChangedPropertiesJson = SerializeDict(c.ChangedProperties)
-            })
-            .ToList();
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        context.AuditChanges.AddRange(entities);
+        context.AuditChanges.AddRange(list.Select(ToEntity));
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -100,18 +82,8 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
         if (list.Count == 0)
             return;
 
-        var entities = list.Select(e => new AuditEventEntity {
-                Id = e.Id,
-                EventType = e.EventType,
-                Timestamp = e.Timestamp,
-                Message = e.Message,
-                Actor = e.Actor,
-                MetadataJson = e.Metadata != null && e.Metadata.Count > 0 ? SerializeDict(e.Metadata) : null
-            })
-            .ToList();
-
         using var context = _contextFactory.CreateDbContext();
-        context.AuditEvents.AddRange(entities);
+        context.AuditEvents.AddRange(list.Select(ToEntity));
         context.SaveChanges();
     }
 
@@ -123,18 +95,8 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
         if (list.Count == 0)
             return;
 
-        var entities = list.Select(e => new AuditEventEntity {
-                Id = e.Id,
-                EventType = e.EventType,
-                Timestamp = e.Timestamp,
-                Message = e.Message,
-                Actor = e.Actor,
-                MetadataJson = e.Metadata != null && e.Metadata.Count > 0 ? SerializeDict(e.Metadata) : null
-            })
-            .ToList();
-
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        context.AuditEvents.AddRange(entities);
+        context.AuditEvents.AddRange(list.Select(ToEntity));
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -158,6 +120,31 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
             return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
         }
     }
+
+    private static AuditChangeEntity ToEntity(AuditChange change)
+        => new() {
+            Id = change.Id,
+            Timestamp = change.Timestamp,
+            ForEntityType = change.Entity.EntityType,
+            ForEntityId = change.Entity.EntityId,
+            FromEntityType = change.Actor?.EntityType,
+            FromEntityId = change.Actor?.EntityId,
+            OldValuesJson = SerializeDict(change.OldValues),
+            ChangedPropertiesJson = SerializeDict(change.ChangedProperties)
+        };
+
+    private static AuditEventEntity ToEntity(AuditEvent evt)
+        => new() {
+            Id = evt.Id,
+            EventType = evt.EventType,
+            Timestamp = evt.Timestamp,
+            ForEntityType = evt.Subject.EntityType,
+            ForEntityId = evt.Subject.EntityId,
+            FromEntityType = evt.Actor?.EntityType,
+            FromEntityId = evt.Actor?.EntityId,
+            Message = evt.Message,
+            MetadataJson = evt.Metadata is { Count: > 0 } ? SerializeDict(evt.Metadata) : null
+        };
 
     private static string SerializeDict(IReadOnlyDictionary<string, object?>? dict)
     {

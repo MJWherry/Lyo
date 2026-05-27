@@ -1,6 +1,10 @@
 using System.Globalization;
 using Blazored.LocalStorage;
 using Lyo.Api.Client;
+using Lyo.Authentication.Client;
+using Lyo.Authentication.Web.Components;
+using Lyo.Authentication.Web.Components.Abstractions;
+using Lyo.Authentication.Web.Components.Server;
 using Lyo.Barcode.Native;
 using Lyo.Cache;
 using Lyo.Comic.Api.Client;
@@ -17,6 +21,7 @@ using Lyo.Gateway.Services;
 using Lyo.Gateway.Stores;
 using Lyo.Images;
 using Lyo.IO.Temp;
+using Lyo.Keystore;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
@@ -69,7 +74,19 @@ builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
 builder.Services.AddSingleton<IIOTempService>(new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
-builder.Services.AddLyoApiClient();
+builder.Services.AddLyoAuthClient(builder.Configuration);
+builder.Services.AddLyoAuthBlazorStateProvider();
+builder.Services.AddLyoApiClient(httpClientBuilderOverride: clientBuilder => clientBuilder.AddLyoAuthHandler());
+builder.Services.AddAuthorization();
+builder.Services.AddLyoAuthWebComponents(builder.Configuration);
+builder.Services.PostConfigure<Lyo.Authentication.Web.Components.Options.LyoAuthWebComponentsOptions>(opts => {
+    if (opts.Providers.Count == 0) {
+        opts.Providers.Add(new("google", "Sign in with Google", Icons.Material.Filled.AccountCircle));
+        opts.Providers.Add(new("keycloak", "Sign in with Keycloak", Icons.Material.Filled.Shield));
+    }
+});
+builder.Services.AddLyoAuthWebComponentsServer();
+builder.Services.AddScoped<IAuthPasswordSignIn, GatewayPlaceholderPasswordSignIn>();
 builder.Services.AddSingleton(_ => {
     var options = LyoJsonSerializerOptions.Create();
     options.AddLyoDateOnlyModelConverters();
@@ -118,8 +135,13 @@ if (!app.Environment.IsDevelopment()) {
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 app.MapStaticAssets();
+app.MapLyoAuthSignIn();
+app.MapLyoAuthHandoffCallback();
+app.MapLyoAuthSignOut();
 
 // File Storage Workbench download: asks Test API for a time-limited storage URL when safe (plain files → e.g. S3 presigned), redirects the browser there so bytes never cross Gateway; otherwise streams decrypted output from Test API.
 app.MapGet(

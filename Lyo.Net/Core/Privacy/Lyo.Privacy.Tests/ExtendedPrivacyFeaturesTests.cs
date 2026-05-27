@@ -77,6 +77,26 @@ public sealed class ExtendedPrivacyFeaturesTests
     }
 
     [Fact]
+    public void ApiSecret_lyo_token_redacts_format_b()
+    {
+        var rule = new ApiSecretRedactionRule(ApiSecretPatterns.LyoToken);
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(rule)));
+        var token = "lyo_pat_live_01HXY8K2QF9_" + new string('A', 32);
+        var res = r.Redact($"bearer {token} end");
+        Assert.DoesNotContain(token, res.Text);
+        Assert.Equal(1, res.CountsByKind[RedactionKind.ApiSecret]);
+    }
+
+    [Fact]
+    public void ApiSecret_lyo_token_ignores_non_matching_prefix()
+    {
+        var rule = new ApiSecretRedactionRule(ApiSecretPatterns.LyoToken);
+        var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(rule)));
+        var res = r.Redact("lyo_something or LYO_PAT_LIVE_xxx_yyy");
+        Assert.Contains("lyo_something", res.Text);
+    }
+
+    [Fact]
     public void National_id_US_pack_matches_ssn_shape()
     {
         var r = new TextRedactor(PrivacyPolicies.Minimal(b => b.AddRule(new NationalIdRedactionRule(NationalIdPacks.UnitedStatesSsn))));

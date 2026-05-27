@@ -1,9 +1,14 @@
 @using System.Security.Claims
+@using Lyo.Authentication.Records
+@using Lyo.Authentication.Web.Components.Abstractions
 @using Lyo.Web.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @using Constants = Constants
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthSignInLauncher SignInLauncher
+@inject ISnackbar Snackbar
 @inject ClientStore ClientStore
 @inject NavigationManager NavigationManager
 
@@ -24,14 +29,27 @@
                    Class="mud-width-260">
             <div>
                 <MudPaper Class="pa-4" Square="true" Style="min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <MudAvatar Size="Size.Large"/>
-                    <MudText Typo="Typo.subtitle1" Class="mt-2">@user?.Identity?.Name</MudText>
-                    <MudText Typo="Typo.caption">@user?.Claims.FirstOrDefault(i => i.Type == ClaimTypes.Email)?.Value</MudText>
-                    <MudLink Href="/Account" Class="mt-2">
-                        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountCircle">
-                            Account
-                        </MudButton>
-                    </MudLink>
+                    <MudAvatar Size="Size.Large">@_initials</MudAvatar>
+                    <MudText Typo="Typo.subtitle1" Class="mt-2">@(_displayName ?? "Not signed in")</MudText>
+                    @if (!string.IsNullOrWhiteSpace(_email)) {
+                        <MudText Typo="Typo.caption">@_email</MudText>
+                    }
+                    <AuthorizeView>
+                        <Authorized>
+                            <MudLink Href="auth/profile" Class="mt-2">
+                                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.AccountCircle">
+                                    Profile
+                                </MudButton>
+                            </MudLink>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudLink Href="auth/login" Class="mt-2">
+                                <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Login">
+                                    Sign in
+                                </MudButton>
+                            </MudLink>
+                        </NotAuthorized>
+                    </AuthorizeView>
                 </MudPaper>
                 <MudDivider/>
                 <MudNavMenu Dense="true" Class="mt-2">
@@ -39,6 +57,16 @@
                     <MudNavLink Href="AdminDashboard" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudNavLink>
                     <!--</AuthorizeView>-->
                     <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All">Home</MudNavLink>
+                    <AuthorizeView>
+                        <Authorized>
+                            <MudNavLink Href="auth/profile" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
+                            <MudNavLink Href="auth/tokens" Icon="@Icons.Material.Filled.VpnKey">API tokens</MudNavLink>
+                            <MudNavLink Href="auth/debug" Icon="@Icons.Material.Filled.BugReport">Auth debug</MudNavLink>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudNavLink Href="auth/login" Icon="@Icons.Material.Filled.Login">Sign in</MudNavLink>
+                        </NotAuthorized>
+                    </AuthorizeView>
                     <MudNavLink Href="PeopleManagement" Icon="@Icons.Material.Filled.Contacts">People</MudNavLink>
                     <MudNavLink Href="@Constants.Page.Comics" Icon="@Icons.Material.Filled.AutoStories">Comics</MudNavLink>
                     <MudNavLink Href="@Constants.Page.QueryBuilder" Icon="@Icons.Material.Filled.QueryBuilder">Query Builder</MudNavLink>
@@ -88,6 +116,35 @@
                 </MudButton>
                 <MudSpacer/>
                 <MudSwitch T="bool" Value="_isDarkMode" ValueChanged="Callback" Color="Color.Default" Label="Dark Mode"/>
+                <AuthorizeView>
+                    <Authorized>
+                        <MudMenu Icon="@Icons.Material.Filled.AccountCircle"
+                                 Color="Color.Inherit"
+                                 AnchorOrigin="Origin.BottomRight"
+                                 TransformOrigin="Origin.TopRight"
+                                 Class="ml-2">
+                            <ActivatorContent Context="_">
+                                <MudAvatar Size="Size.Small" Color="Color.Secondary" Class="ml-2">@_initials</MudAvatar>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Href="auth/profile" Icon="@Icons.Material.Filled.Person">Profile</MudMenuItem>
+                                <MudMenuItem Href="auth/tokens" Icon="@Icons.Material.Filled.VpnKey">API tokens</MudMenuItem>
+                                <MudMenuItem Href="auth/debug" Icon="@Icons.Material.Filled.BugReport">Auth debug</MudMenuItem>
+                                <MudDivider/>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="SignOutAsync">Sign out</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudButton Href="auth/login"
+                                   Variant="Variant.Text"
+                                   Color="Color.Inherit"
+                                   StartIcon="@Icons.Material.Filled.Login"
+                                   Class="ml-2">
+                            Sign in
+                        </MudButton>
+                    </NotAuthorized>
+                </AuthorizeView>
             </MudAppBar>
             <CascadingValue Value="this">
                 @Body
@@ -107,14 +164,72 @@ else {
     private ClaimsPrincipal? user;
     private bool _isDarkMode;
     private bool _initialized;
+    private string? _displayName;
+    private string? _email;
+    private string _initials = string.Empty;
 
     public string PageName { get; set; } = "";
 
     protected override async Task OnInitializedAsync()
     {
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        user = authState.User;
+        ApplyUser(authState.User);
     }
+
+    private void OnAuthStateChanged(Task<AuthenticationState> task) =>
+        _ = task.ContinueWith(t => InvokeAsync(() => {
+            ApplyUser(t.Result.User);
+            StateHasChanged();
+        }), TaskScheduler.Default);
+
+    private void ApplyUser(ClaimsPrincipal principal)
+    {
+        user = principal;
+        if (principal.Identity?.IsAuthenticated != true) {
+            _displayName = null;
+            _email = null;
+            _initials = string.Empty;
+            return;
+        }
+
+        _displayName = principal.Identity!.Name
+                       ?? principal.FindFirst(LyoJwtClaims.Subject)?.Value
+                       ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
+
+        _email = principal.FindFirst(ClaimTypes.Email)?.Value
+                 ?? principal.FindFirst("email")?.Value;
+
+        _initials = BuildInitials(_displayName ?? _email);
+    }
+
+    private static string BuildInitials(string? source)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+            return string.Empty;
+
+        var trimmed = source!.Trim();
+        var atIdx = trimmed.IndexOf('@');
+        var basis = atIdx > 0 ? trimmed[..atIdx] : trimmed;
+        var parts = basis.Split(new[] { ' ', '.', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length switch {
+            0 => trimmed[..1].ToUpperInvariant(),
+            1 => parts[0][..1].ToUpperInvariant(),
+            var _ => (parts[0][..1] + parts[^1][..1]).ToUpperInvariant()
+        };
+    }
+
+    private async Task SignOutAsync()
+    {
+        try {
+            await SignInLauncher.SignOutAsync();
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Sign-out failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public void Dispose() => AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

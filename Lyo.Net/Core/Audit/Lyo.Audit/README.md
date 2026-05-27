@@ -1,13 +1,14 @@
 # Lyo.Audit
 
 Audit trail library with two distinct concepts: **AuditChange** (entity change tracking) and **AuditEvent** (events to log). `AuditChange` and `AuditEvent` are immutable
-records—once created they do not change. Includes `IAuditRecorder` for pluggable storage.
+records—once created they do not change. Both carry an `EntityRef` for the thing they are about plus an optional `EntityRef` for the actor that caused them. Includes
+`IAuditRecorder` for pluggable storage.
 
 ## Features
 
-- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `TypeAssemblyFullName`, `OldValues` (property → old value), `ChangedProperties` (property → new
-  value)
-- **AuditEvent** (record) – An event to log: `Id` (Guid), `EventType`, `Timestamp`, optional `Message`, `Actor`, and `Metadata`
+- **AuditChange** (record) – Entity/property change: `Id` (Guid), `Timestamp`, `Entity` (`EntityRef`), `OldValues` (property → old value), `ChangedProperties` (property → new
+  value), optional `Actor` (`EntityRef?`)
+- **AuditEvent** (record) – An event to log: `Id` (Guid), `Subject` (`EntityRef`), `EventType`, `Timestamp`, optional `Message`, `Actor` (`EntityRef?`), and `Metadata`
 - **IAuditRecorder** – Interface with sync and async methods: `RecordChange`/`RecordChangeAsync`, `RecordChanges`/`RecordChangesAsync`, `RecordEvent`/`RecordEventAsync`,
   `RecordEvents`/`RecordEventsAsync` (implement to persist to database, log sink, etc.)
 - **NullAuditRecorder** – No-op implementation when auditing is not needed
@@ -18,9 +19,10 @@ records—once created they do not change. Includes `IAuditRecorder` for pluggab
 
 ```csharp
 using Lyo.Audit;
+using Lyo.EntityReference.Models;
 
 var change = new AuditChange(
-    typeof(Order).AssemblyQualifiedName ?? "MyApp.Models.Order, MyApp",
+    EntityRef.For<Order>(order.Id),
     new Dictionary<string, object?> {
         ["Name"] = "Old Name",
         ["Status"] = "Draft"
@@ -28,21 +30,27 @@ var change = new AuditChange(
     new Dictionary<string, object?> {
         ["Name"] = "New Name",
         ["Status"] = "Submitted"
-    });
+    }) {
+    Actor = EntityRef.ForKey("User", currentUserId.ToString())
+};
 
 auditRecorder.RecordChange(change);
 ```
+
+Decorate domain types with `[EntityRefLogicalType("MyApp.Order")]` to keep the persisted `EntityType` stable across CLR renames.
 
 ### AuditEvent (events to log)
 
 ```csharp
 using Lyo.Audit;
+using Lyo.EntityReference.Models;
 
 var evt = new AuditEvent(
-    "UserLogin",
-    "User signed in successfully",
-    "user-123",
-    new Dictionary<string, object?> {
+    Subject: EntityRef.ForKey("User", "user-123"),
+    EventType: "UserLogin",
+    Message: "User signed in successfully",
+    Actor: EntityRef.ForKey("User", "user-123"),
+    Metadata: new Dictionary<string, object?> {
         ["IpAddress"] = "192.168.1.1",
         ["UserAgent"] = "Mozilla/5.0..."
     });
@@ -92,4 +100,5 @@ When `EnableAutoMigrations` is true, migrations run at **host startup** (via `IH
 
 ### Project references
 
+- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

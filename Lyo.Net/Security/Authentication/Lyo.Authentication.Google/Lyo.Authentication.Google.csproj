@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Google OpenID Connect provider profile for Lyo.Authentication. Adds AddGoogleProvider to wire Google as a registered IdP for the BFF login flow, with optional Google Workspace hosted-domain enforcement (the hd claim).</Description>
+        <PackageTags>authentication openidconnect oidc google bff</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+</Project>

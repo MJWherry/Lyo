@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Consumer-side runtime for Lyo.Authentication. Used by Gateway / web hosts that need to redeem a Lyo handoff code, maintain a server-side session keyed by an HttpOnly cookie, project the signed-in Lyo user into Blazor's AuthenticationStateProvider, and inject a Bearer header on outbound API calls (with automatic refresh on 401). Pairs with the Lyo.Authentication.OpenIdConnect endpoints on the API side.</Description>
+        <PackageTags>authentication bff client cookie blazor delegating-handler</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic.AspNetCore\Lyo.Diagnostic.AspNetCore.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+</Project>

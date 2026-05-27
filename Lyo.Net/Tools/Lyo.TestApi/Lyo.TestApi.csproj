@@ -46,6 +46,12 @@
         <ProjectReference Include="..\..\Core\Lock\Lyo.Lock.Redis\Lyo.Lock.Redis.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore\Lyo.Keystore.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Keystore.Aws\Lyo.Keystore.Aws.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Google\Lyo.Authentication.Google.csproj"/>
+        <ProjectReference Include="..\..\Security\Authentication\Lyo.Authentication.Keycloak\Lyo.Authentication.Keycloak.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -14,6 +14,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Postgres\Lyo.EntityReference.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.Audit\Lyo.Audit.csproj"/>

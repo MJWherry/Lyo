@@ -1,3 +1,4 @@
+using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Config.Api.Infrastructure;
 using Lyo.EntityReference.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -142,7 +143,7 @@ internal static class ConfigEndpoints
 
         private RouteGroupBuilder MapManageEndpoints()
         {
-            var manage = group.MapGroup("/manage");
+            var manage = group.MapGroup("/manage").RequireScope("config.write");
             manage.MapGet(
                 "/definitions", async Task<Ok<IReadOnlyList<ConfigDefinitionRecord>>> (IConfigStore store, CancellationToken ct) => {
                     var defs = await store.GetDefinitionsAsync(AppConfigEntity.AppEntityType, ct).ConfigureAwait(false);
@@ -170,7 +171,7 @@ internal static class ConfigEndpoints
 
                     await store.DeleteDefinitionAsync(definitionId, ct).ConfigureAwait(false);
                     return TypedResults.NoContent();
-                });
+                }).RequireScope("config.admin");
 
             manage.MapPut(
                 "/bindings", async Task<Results<NoContent, ProblemHttpResult>> (ConfigBindingRecord binding, IConfigStore store, CancellationToken ct) => {
@@ -198,7 +199,7 @@ internal static class ConfigEndpoints
                     }
 
                     return TypedResults.NoContent();
-                });
+                }).RequireScope("config.admin");
 
             manage.MapGet(
                 "/bindings/{bindingId:guid}/revisions",
@@ -216,7 +217,7 @@ internal static class ConfigEndpoints
                     }
 
                     return TypedResults.NoContent();
-                });
+                }).RequireScope("config.admin");
 
             manage.MapGet(
                 "/apps/{appKind}/{appId}/bindings",
@@ -266,7 +267,7 @@ internal static class ConfigEndpoints
                     }
 
                     return TypedResults.NoContent();
-                });
+                }).RequireScope("config.admin");
 
             return manage;
         }

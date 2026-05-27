@@ -21,7 +21,10 @@ namespace Lyo.Audit.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    type_assembly_full_name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    for_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    from_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    from_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     old_values_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
                     changed_properties_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
@@ -40,8 +43,11 @@ namespace Lyo.Audit.Postgres.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     event_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    for_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    from_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    from_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     message = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    actor = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     metadata_json = table.Column<string>(type: "jsonb", nullable: true, maxLength: 8192),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -58,10 +64,22 @@ namespace Lyo.Audit.Postgres.Migrations
                 column: "timestamp");
 
             migrationBuilder.CreateIndex(
-                name: "ix_audit_changes_type",
+                name: "ix_audit_changes_for_entity_timestamp",
                 schema: "audit",
                 table: "audit_changes",
-                column: "type_assembly_full_name");
+                columns: new[] { "for_entity_type", "for_entity_id", "timestamp" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_audit_changes_for_entity_type",
+                schema: "audit",
+                table: "audit_changes",
+                column: "for_entity_type");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_audit_changes_from_entity",
+                schema: "audit",
+                table: "audit_changes",
+                columns: new[] { "from_entity_type", "from_entity_id" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_audit_events_event_type",
@@ -80,6 +98,18 @@ namespace Lyo.Audit.Postgres.Migrations
                 schema: "audit",
                 table: "audit_events",
                 column: "timestamp");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_audit_events_for_entity_timestamp",
+                schema: "audit",
+                table: "audit_events",
+                columns: new[] { "for_entity_type", "for_entity_id", "timestamp" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_audit_events_from_entity",
+                schema: "audit",
+                table: "audit_events",
+                columns: new[] { "from_entity_type", "from_entity_id" });
         }
 
         /// <inheritdoc />

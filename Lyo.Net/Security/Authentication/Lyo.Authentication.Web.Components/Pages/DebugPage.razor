@@ -1,0 +1,270 @@
+@page "/auth/debug"
+
+@using System.Text
+@using System.Text.Json
+@using Lyo.Authentication.Format
+
+@inject IAuthSessionAccessor SessionAccessor
+@inject IJsInterop JsInterop
+@inject ISnackbar Snackbar
+
+<PageTitle>Auth debug</PageTitle>
+
+<LyoElementRoot DefaultId="LyoAuthDebugPage" ElementId="@ElementId">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-6">
+        <MudPaper Class="pa-4">
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.h5">Auth debug</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Inspect the active session, the projected claims, and the decoded JWT header / payload. Refresh tokens are intentionally not shown.
+                    </MudText>
+                </div>
+
+                @if (_loading) {
+                    <MudStack AlignItems="AlignItems.Center"><MudProgressCircular Indeterminate="true"/></MudStack>
+                }
+                else if (_snapshot is null) {
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                        No active session. <MudLink Href="/auth/login">Sign in</MudLink> to populate this page.
+                    </MudAlert>
+                }
+                else {
+                    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true">
+                        <MudTabPanel Text="Session" Class="pa-2">
+                            <MudStack Spacing="2">
+                                <MudSimpleTable Dense="true" Hover="true" Style="width: 100%;">
+                                    <tbody>
+                                    <tr>
+                                        <td style="width:30%;"><strong>Access token expires</strong></td>
+                                        <td>
+                                            @_snapshot.AccessTokenExpiresAt.ToString("u")
+                                            <MudText HtmlTag="span" Color="@(IsExpired ? Color.Error : Color.Success)" Typo="Typo.body2" Class="ml-2">
+                                                (@DescribeRemaining(_snapshot.AccessTokenExpiresAt))
+                                            </MudText>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Refresh token</strong></td>
+                                        <td>@(_snapshot.HasRefreshToken ? "present" : "not held")</td>
+                                    </tr>
+                                    @if (_snapshot.RefreshTokenExpiresAt is not null) {
+                                        <tr>
+                                            <td><strong>Refresh expires</strong></td>
+                                            <td>@_snapshot.RefreshTokenExpiresAt.Value.ToString("u")</td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <td><strong>Scopes</strong></td>
+                                        <td>
+                                            @if (_snapshot.Scopes.Count == 0) {
+                                                <MudText Color="Color.Secondary" Typo="Typo.body2">(none)</MudText>
+                                            }
+                                            else {
+                                                <MudChipSet T="string" ReadOnly="true">
+                                                    @foreach (var scope in _snapshot.Scopes) {
+                                                        <MudChip T="string" Value="@scope" Size="Size.Small" Color="Color.Primary">@scope</MudChip>
+                                                    }
+                                                </MudChipSet>
+                                            }
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </MudSimpleTable>
+
+                                <MudStack Row="true" Spacing="2">
+                                    <MudButton StartIcon="@Icons.Material.Filled.Refresh"
+                                               Variant="Variant.Outlined"
+                                               Color="Color.Primary"
+                                               OnClick="ReloadAsync"
+                                               Disabled="_busy">
+                                        Reload
+                                    </MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.Autorenew"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               OnClick="RefreshTokenAsync"
+                                               Disabled="@(_busy || !_snapshot.HasRefreshToken)">
+                                        Refresh token
+                                    </MudButton>
+                                </MudStack>
+                            </MudStack>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Claims" Class="pa-2">
+                            @if (_snapshot.Claims.Count == 0) {
+                                <MudText Color="Color.Secondary">No claims projected.</MudText>
+                            }
+                            else {
+                                <MudSimpleTable Dense="true" Hover="true">
+                                    <thead>
+                                    <tr><th>Type</th><th>Value</th></tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var claim in _snapshot.Claims) {
+                                        <tr>
+                                            <td><code>@claim.Type</code></td>
+                                            <td><code>@claim.Value</code></td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </MudSimpleTable>
+                            }
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Decoded JWT" Class="pa-2">
+                            <MudStack Spacing="3">
+                                <div>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
+                                        <MudText Typo="Typo.subtitle2">Header</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyAsync(_headerJson))"/>
+                                    </MudStack>
+                                    <MudPaper Outlined="true" Class="pa-3" Style="white-space: pre-wrap; font-family: monospace; overflow-x:auto;">@_headerJson</MudPaper>
+                                </div>
+                                <div>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
+                                        <MudText Typo="Typo.subtitle2">Payload</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyAsync(_payloadJson))"/>
+                                    </MudStack>
+                                    <MudPaper Outlined="true" Class="pa-3" Style="white-space: pre-wrap; font-family: monospace; overflow-x:auto;">@_payloadJson</MudPaper>
+                                </div>
+                                <div>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
+                                        <MudText Typo="Typo.subtitle2">Signature (base64url)</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyAsync(_signatureSegment))"/>
+                                    </MudStack>
+                                    <MudPaper Outlined="true" Class="pa-3" Style="word-break: break-all; font-family: monospace;">@_signatureSegment</MudPaper>
+                                </div>
+                                <div>
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
+                                        <MudText Typo="Typo.subtitle2">Raw JWT</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small" OnClick="@(() => CopyAsync(_snapshot.AccessToken))"/>
+                                    </MudStack>
+                                    <MudPaper Outlined="true" Class="pa-3" Style="word-break: break-all; font-family: monospace;">@_snapshot.AccessToken</MudPaper>
+                                </div>
+                            </MudStack>
+                        </MudTabPanel>
+                    </MudTabs>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudContainer>
+</LyoElementRoot>
+
+@code {
+
+    /// <summary>Optional override for the root element id used by the element-id scheme.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
+    private AuthSessionSnapshot? _snapshot;
+
+    private bool _loading = true;
+
+    private bool _busy;
+
+    private string _headerJson = string.Empty;
+
+    private string _payloadJson = string.Empty;
+
+    private string _signatureSegment = string.Empty;
+
+    private bool IsExpired => _snapshot is not null && _snapshot.AccessTokenExpiresAt <= DateTime.UtcNow;
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try {
+            _snapshot = await SessionAccessor.GetCurrentAsync();
+            DecodeJwt();
+        }
+        finally {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshTokenAsync()
+    {
+        _busy = true;
+        try {
+            if (await SessionAccessor.RefreshAsync()) {
+                Snackbar.Add("Token refreshed.", Severity.Success);
+                _snapshot = await SessionAccessor.GetCurrentAsync();
+                DecodeJwt();
+            }
+            else {
+                Snackbar.Add("Refresh failed.", Severity.Warning);
+            }
+        }
+        catch (Exception ex) {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyAsync(string value)
+    {
+        try {
+            await JsInterop.SendToClipboard(value);
+            Snackbar.Add("Copied.", Severity.Success);
+        }
+        catch (Exception ex) {
+            Snackbar.Add($"Copy failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void DecodeJwt()
+    {
+        if (_snapshot is null || string.IsNullOrWhiteSpace(_snapshot.AccessToken)) {
+            _headerJson = _payloadJson = _signatureSegment = string.Empty;
+            return;
+        }
+
+        var parts = _snapshot.AccessToken.Split('.');
+        _headerJson = parts.Length > 0 ? PrettyJsonOrRaw(parts[0]) : string.Empty;
+        _payloadJson = parts.Length > 1 ? PrettyJsonOrRaw(parts[1]) : string.Empty;
+        _signatureSegment = parts.Length > 2 ? parts[2] : string.Empty;
+    }
+
+    private static string PrettyJsonOrRaw(string segment)
+    {
+        try {
+            var bytes = Base64Url.Decode(segment);
+            using var doc = JsonDocument.Parse(bytes);
+            return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (Exception) {
+            return Encoding.UTF8.GetString(SafeDecode(segment));
+        }
+    }
+
+    private static byte[] SafeDecode(string segment)
+    {
+        try {
+            return Base64Url.Decode(segment);
+        }
+        catch (FormatException) {
+            return Array.Empty<byte>();
+        }
+    }
+
+    private static string DescribeRemaining(DateTime expiresAt)
+    {
+        var remaining = expiresAt - DateTime.UtcNow;
+        if (remaining <= TimeSpan.Zero)
+            return "expired";
+
+        if (remaining.TotalMinutes < 1)
+            return $"{(int)remaining.TotalSeconds}s remaining";
+
+        if (remaining.TotalHours < 1)
+            return $"{(int)remaining.TotalMinutes}m remaining";
+
+        return $"{(int)remaining.TotalHours}h remaining";
+    }
+
+}
