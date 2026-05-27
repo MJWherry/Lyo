@@ -66,6 +66,16 @@ public class AuthAuditEventTests
     }
 
     [Fact]
+    public async Task RecordAsync_PropagatesTenantId()
+    {
+        var recorder = new CapturingRecorder();
+        var tenant = Guid.NewGuid();
+        await recorder.RecordAsync(context: null, logger: null, AuthAuditEventKind.JwtIssued, tenantId: tenant, ct: TestContext.Current.CancellationToken);
+        var evt = Assert.Single(recorder.Events);
+        Assert.Equal(tenant, evt.TenantId);
+    }
+
+    [Fact]
     public async Task RecordAsync_PropagatesMetadata()
     {
         var recorder = new CapturingRecorder();

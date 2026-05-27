@@ -23,5 +23,6 @@ public sealed class AuditEventEntityConfiguration : IEntityTypeConfiguration<Aud
         builder.HasIndex(e => new { e.EventType, e.Timestamp }).HasDatabaseName("ix_audit_events_event_type_timestamp");
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId, e.Timestamp }).HasDatabaseName("ix_audit_events_for_entity_timestamp");
         builder.HasIndex(e => new { e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_audit_events_from_entity");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_audit_events_tenant");
     }
 }

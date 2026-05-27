@@ -36,6 +36,30 @@ All entry points are exposed as `IServiceCollection` extensions:
 `SaveBindingAsync` writes the current value to `config_binding` **and** appends a new `config_binding_revision` row inside the same `SaveChangesAsync`, so revision history
 stays in lock-step with the latest binding value. The seeded initial migration writes revision `1` from each existing binding so history starts at deploy time.
 
+## Tenancy
+
+Bindings (and their revisions) carry a nullable `tenant_id` column; definitions do not — schema is deployment-global. The `config_binding` unique constraint includes
+`tenant_id`, so the same definition can be bound per tenant without collision. Filtered tenant indexes (`ix_config_binding_tenant`, `ix_config_binding_revision_tenant`)
+back lookups.
+
+`IConfigStore` binding methods (not definition methods) accept an explicit `Guid? tenantId` and run it through `TenancyResolver.Resolve` using the policy configured in
+`PostgresConfigOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset):
+
+- `SystemOnly` — bindings are persisted with `tenant_id = NULL`.
+- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
+- `MultiTenantStrict` — caller must supply a non-empty `tenantId` or the store throws.
+
+See [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the full matrix.
+
+```json
+{
+  "PostgresConfig": {
+    "ConnectionString": "Host=localhost;Database=config;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
+
 ## Dependencies
 
 *(Synchronized from `Lyo.Config.Postgres.csproj`.)*

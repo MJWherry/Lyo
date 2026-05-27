@@ -15,6 +15,8 @@ public sealed class RatingReactionRecord
 
     public Guid FromEntityId { get; set; }
 
+    public Guid? TenantId { get; set; }
+
     public RatingReactionType ReactionType { get; set; }
 
     public DateTime CreatedTimestamp { get; set; }

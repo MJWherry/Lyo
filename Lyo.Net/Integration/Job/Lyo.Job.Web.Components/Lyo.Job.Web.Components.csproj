@@ -8,8 +8,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
-        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

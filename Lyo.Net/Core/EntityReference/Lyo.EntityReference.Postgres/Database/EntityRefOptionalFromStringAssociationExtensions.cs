@@ -17,5 +17,6 @@ public static class EntityRefOptionalFromStringAssociationExtensions
         builder.Property(e => e.ForEntityId).HasMaxLength(maxLength).IsRequired().HasColumnName("for_entity_id");
         builder.Property(e => e.FromEntityType).HasMaxLength(maxLength).HasColumnName("from_entity_type");
         builder.Property(e => e.FromEntityId).HasMaxLength(maxLength).HasColumnName("from_entity_id");
+        builder.Property(e => e.TenantId).HasColumnName("tenant_id").HasColumnType("uuid");
     }
 }

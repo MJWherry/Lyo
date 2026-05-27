@@ -2,9 +2,11 @@ using System.Diagnostics;
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.ChangeTracker.Postgres;
 
@@ -12,11 +14,20 @@ namespace Lyo.ChangeTracker.Postgres;
 public sealed class PostgresChangeTracker : IChangeTracker, IHealth
 {
     private readonly IDbContextFactory<ChangeTrackerDbContext> _contextFactory;
+    private readonly EntityRefOptions _entityRefOptions;
+    private readonly TenancyOptions _featureTenancy;
 
-    public PostgresChangeTracker(IDbContextFactory<ChangeTrackerDbContext> contextFactory)
+    public PostgresChangeTracker(
+        IDbContextFactory<ChangeTrackerDbContext> contextFactory,
+        IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresChangeTrackerOptions> changeTrackerOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
+        ArgumentHelpers.ThrowIfNull(entityRefOptions);
+        ArgumentHelpers.ThrowIfNull(changeTrackerOptions);
         _contextFactory = contextFactory;
+        _entityRefOptions = entityRefOptions.Value;
+        _featureTenancy = changeTrackerOptions.Value.Tenancy;
     }
 
     /// <inheritdoc />
@@ -127,7 +138,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
         }
     }
 
-    private static ChangeEntryEntity ToEntity(ChangeRecord record)
+    private ChangeEntryEntity ToEntity(ChangeRecord record)
     {
         ArgumentHelpers.ThrowIfNull(record.ForEntity, nameof(record.ForEntity));
         return new() {
@@ -137,6 +148,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
             ForEntityId = record.ForEntity.EntityId,
             FromEntityType = record.FromEntity?.EntityType,
             FromEntityId = record.FromEntity?.EntityId,
+            TenantId = TenancyResolver.Resolve(record.TenantId, _featureTenancy, _entityRefOptions),
             ChangeType = record.ChangeType,
             Message = record.Message,
             OldValuesJson = SerializeDict(record.OldValues),
@@ -151,6 +163,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
             FromEntity = !string.IsNullOrWhiteSpace(entity.FromEntityType) && !string.IsNullOrWhiteSpace(entity.FromEntityId)
                 ? new EntityRef(entity.FromEntityType, entity.FromEntityId)
                 : null,
+            TenantId = entity.TenantId,
             ChangeType = entity.ChangeType,
             Message = entity.Message
         };

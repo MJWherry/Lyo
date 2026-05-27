@@ -97,6 +97,27 @@ Schema name: `note` (`PostgresNoteOptions.Schema`).
   `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`,
   `metadata` (jsonb), plus note-specific `content` and `updated_timestamp`.
 
+## Tenancy
+
+`PostgresNoteStore` accepts an optional `Guid? tenantId` on every read/write
+method and resolves it through `TenancyResolver` under the policy configured in
+`PostgresNoteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
+unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
+`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store
+construction. The store applies a `WhereTenant` filter on every query so notes
+from one tenant cannot leak into another. See
+[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
+for the full policy matrix and `appsettings.json` snippet.
+
+```json
+{
+  "PostgresNote": {
+    "ConnectionString": "Host=localhost;Database=lyo;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
+
 ## Dependencies
 
 *(Synchronized from `Lyo.Note.Postgres.csproj`.)*

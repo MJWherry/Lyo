@@ -17,6 +17,7 @@ namespace Lyo.Authentication.Models.Audit;
 /// <param name="UserAgent">Caller User-Agent at the moment of the event, when one exists.</param>
 /// <param name="CorrelationId">Trace/request id (W3C traceparent or otherwise) that the event participates in.</param>
 /// <param name="Metadata">Open-ended extra context. Recorders typically persist as <c>jsonb</c>.</param>
+/// <param name="TenantId">Optional tenant scope. <c>null</c> means system / no tenant; non-null indicates a tenant-scoped event.</param>
 public sealed record AuthAuditEvent(
     Guid Id,
     DateTime Timestamp,
@@ -29,4 +30,5 @@ public sealed record AuthAuditEvent(
     string? IpAddress = null,
     string? UserAgent = null,
     string? CorrelationId = null,
-    IReadOnlyDictionary<string, object?>? Metadata = null);
+    IReadOnlyDictionary<string, object?>? Metadata = null,
+    Guid? TenantId = null);

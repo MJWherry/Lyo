@@ -31,6 +31,7 @@ namespace Lyo.Authentication.Postgres.Migrations
                     scopes_json = table.Column<string>(type: "jsonb", nullable: false),
                     metadata_json = table.Column<string>(type: "jsonb", nullable: true),
                     person_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     last_login_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -49,6 +50,7 @@ namespace Lyo.Authentication.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     provider = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     subject = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     email_at_link = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: true),
@@ -81,6 +83,7 @@ namespace Lyo.Authentication.Postgres.Migrations
                     kind = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     ring = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     display_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     scopes_json = table.Column<string>(type: "jsonb", nullable: false),
                     metadata_json = table.Column<string>(type: "jsonb", nullable: true),
@@ -124,10 +127,17 @@ namespace Lyo.Authentication.Postgres.Migrations
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "ux_linked_identity_provider_subject",
+                name: "ix_linked_identity_tenant_id",
                 schema: "user",
                 table: "linked_identity",
-                columns: new[] { "provider", "subject" },
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_linked_identity_tenant_provider_subject",
+                schema: "user",
+                table: "linked_identity",
+                columns: new[] { "tenant_id", "provider", "subject" },
                 unique: true,
                 filter: "\"unlinked_timestamp\" IS NULL");
 
@@ -157,6 +167,13 @@ namespace Lyo.Authentication.Postgres.Migrations
                 columns: new[] { "user_id", "revoked_timestamp" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_token_tenant_id",
+                schema: "user",
+                table: "token",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_user_disabled_timestamp",
                 schema: "user",
                 table: "user",
@@ -178,10 +195,17 @@ namespace Lyo.Authentication.Postgres.Migrations
                 filter: "\"person_id\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "ux_user_email",
+                name: "ix_user_tenant_id",
                 schema: "user",
                 table: "user",
-                column: "email",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_user_tenant_email",
+                schema: "user",
+                table: "user",
+                columns: new[] { "tenant_id", "email" },
                 unique: true);
 
             migrationBuilder.CreateTable(
@@ -193,6 +217,7 @@ namespace Lyo.Authentication.Postgres.Migrations
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     kind = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     subject = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     provider = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     outcome = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
@@ -233,6 +258,13 @@ namespace Lyo.Authentication.Postgres.Migrations
                 table: "event",
                 column: "user_id",
                 filter: "\"user_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_user_event_tenant_id",
+                schema: "user",
+                table: "event",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
         }
 
         /// <inheritdoc />

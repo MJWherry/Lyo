@@ -14,9 +14,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Data\Csv\Lyo.Csv.Models\Lyo.Csv.Models.csproj"/>
+        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
         <ProjectReference Include="..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
-        <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
     </ItemGroup>
 
 </Project>

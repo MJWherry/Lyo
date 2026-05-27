@@ -55,12 +55,33 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 Both tables follow the `EntityRefOptionalFromStringAssociationBase` shape from `Lyo.EntityReference.Postgres`:
 
-- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `old_values_json` (jsonb),
+- **audit.audit_changes** – `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `tenant_id?` (uuid), `old_values_json` (jsonb),
   `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
-- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `message?`, `metadata_json?` (jsonb),
-  `created_timestamp`, `updated_timestamp?`
+- **audit.audit_events** – `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id`, `from_entity_type?`, `from_entity_id?`, `tenant_id?` (uuid), `message?`,
+  `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
 
 `for_entity_*` columns hold the subject of the change/event; `from_entity_*` columns hold the optional actor that caused it.
+
+## Tenancy
+
+`AuditChange` and `AuditEvent` records carry an optional `TenantId` (mapped to the `tenant_id` column). `PostgresAuditRecorder` runs every record through
+`TenancyResolver.Resolve` using the policy configured in `PostgresAuditOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:
+
+- `SystemOnly` — caller `TenantId` is ignored and the row stores `null` (system-level audit).
+- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
+- `MultiTenantStrict` — caller must supply a non-empty `TenantId` or persistence throws.
+
+Each table has an `ix_<table>_tenant` index for filtered scans. Use `WhereTenant(tenantId)` to scope queries to a single tenant (or `null` for system rows) and
+`WhereTenantOrSystem(tenantId)` to include both. See [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the policy matrix.
+
+```json
+{
+  "PostgresAudit": {
+    "ConnectionString": "Host=localhost;Database=audit;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
 
 ## Dependencies
 

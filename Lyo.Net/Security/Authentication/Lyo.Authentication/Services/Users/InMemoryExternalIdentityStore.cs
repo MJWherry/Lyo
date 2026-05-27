@@ -10,12 +10,13 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Services.Users;
 
 /// <summary>In-memory <see cref="IExternalIdentityStore"/>. Used by default until <c>Lyo.Authentication.Postgres</c> overrides it. Thread-safe.</summary>
+/// <remarks>The in-memory store does not enforce tenant filtering — the <c>tenantId</c> parameter is accepted for interface compatibility but ignored.</remarks>
 public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
 {
     private readonly ConcurrentDictionary<Guid, LinkedIdentity> _byId = new();
 
     /// <inheritdoc/>
-    public Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, CancellationToken ct = default)
+    public Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
@@ -35,6 +36,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
         string? emailAtLink,
         IReadOnlyList<string> scopes,
         IReadOnlyDictionary<string, object?>? rawClaims,
+        Guid? tenantId,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
@@ -81,7 +83,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
     }
 
     /// <inheritdoc/>
-    public Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, CancellationToken ct = default)
+    public Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default)
     {
         IReadOnlyList<LinkedIdentity> snapshot = _byId.Values
             .Where(l => l.UserId == userId && l.IsActive)
@@ -92,7 +94,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
     }
 
     /// <inheritdoc/>
-    public Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, CancellationToken ct = default)
+    public Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         _byId.AddOrUpdate(
             linkedIdentityId, _ => throw new InvalidOperationException($"Linked identity '{linkedIdentityId}' not found."),

@@ -22,6 +22,9 @@ public sealed class RatingReactionEntity
 
     public int ReactionType { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped reaction (inherits from the parent rating at write time).</summary>
+    public Guid? TenantId { get; set; }
+
     [Required]
     public DateTime CreatedTimestamp { get; set; }
 }

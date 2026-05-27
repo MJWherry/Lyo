@@ -32,6 +32,9 @@ public sealed class UserEntity
     /// <summary>Soft pointer to a <c>Lyo.People.Person</c> record. No cross-schema FK.</summary>
     public Guid? PersonId { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> permits cross-tenant SSO-style users; non-null binds the user to a specific tenant.</summary>
+    public Guid? TenantId { get; set; }
+
     /// <summary>When the row was first written.</summary>
     public DateTime CreatedTimestamp { get; set; }
 

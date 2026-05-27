@@ -22,5 +22,9 @@ public sealed record ChangeRecord(EntityRef ForEntity, IReadOnlyDictionary<strin
     /// <summary>Gets an optional human-readable description of the change.</summary>
     public string? Message { get; init; }
 
-    public override string ToString() => $"ChangeRecord: {ForEntity.EntityType}/{ForEntity.EntityId}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}";
+    /// <summary>Gets the tenant the change is scoped to. <see langword="null" /> means system / no tenant.</summary>
+    public Guid? TenantId { get; init; }
+
+    public override string ToString()
+        => $"ChangeRecord: {ForEntity.EntityType}/{ForEntity.EntityId}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}, Tenant: {TenantId}";
 }

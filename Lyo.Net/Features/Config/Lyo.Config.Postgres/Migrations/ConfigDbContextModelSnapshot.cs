@@ -56,6 +56,10 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("key");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -71,7 +75,11 @@ namespace Lyo.Config.Postgres.Migrations
                     b.HasIndex("ForEntityType", "ForEntityId")
                         .HasDatabaseName("ix_config_binding_entity");
 
-                    b.HasIndex("DefinitionId", "ForEntityType", "ForEntityId")
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_config_binding_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
+
+                    b.HasIndex("DefinitionId", "ForEntityType", "ForEntityId", "TenantId")
                         .IsUnique()
                         .HasDatabaseName("ux_config_binding_definition_entity");
 
@@ -92,6 +100,10 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("revision");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("ValueJson")
                         .IsRequired()
                         .HasMaxLength(8192)
@@ -99,6 +111,10 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnName("value_json");
 
                     b.HasKey("BindingId", "Revision");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_config_binding_revision_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.ToTable("config_binding_revision", "config");
                 });

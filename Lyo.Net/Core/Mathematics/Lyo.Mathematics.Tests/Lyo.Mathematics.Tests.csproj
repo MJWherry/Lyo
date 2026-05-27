@@ -11,8 +11,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
         <ProjectReference Include="..\Lyo.Mathematics.Functions\Lyo.Mathematics.Functions.fsproj"/>
-        <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
     </ItemGroup>
 </Project>

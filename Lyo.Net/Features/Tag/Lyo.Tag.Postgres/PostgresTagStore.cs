@@ -20,8 +20,9 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     public PostgresTagStore(
         IDbContextFactory<TagDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresTagOptions> tagOptions,
         IEnumerable<IEntityRefActionInterceptor>? interceptors = null)
-        : base(entityRefOptions, interceptors)
+        : base(entityRefOptions, tagOptions?.Value.Tenancy ?? throw new ArgumentNullException(nameof(tagOptions)), interceptors)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
@@ -49,13 +50,20 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task AddTagAsync(EntityRef forEntity, string tag, string tagType = "tag", EntityRef? fromEntity = null, string? slug = null, CancellationToken ct = default)
+    public async Task AddTagAsync(
+        EntityRef forEntity,
+        string tag,
+        string tagType = "tag",
+        EntityRef? fromEntity = null,
+        string? slug = null,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         var actor = fromEntity ?? EntityRef.ForGuid(EntityRefWellKnown.SystemActorType, EntityRefWellKnown.SystemActorId);
         var fromEntityId = EntityRefPersistedGuid.RequirePersistedGuid(actor);
         var slugNormalized = NormalizeSlug(slug);
@@ -88,13 +96,13 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", string? slug = null, CancellationToken ct = default)
+    public async Task RemoveTagAsync(EntityRef forEntity, string tag, string tagType = "tag", string? slug = null, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tagType);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         var slugNormalized = NormalizeSlug(slug);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Tags.WhereActive()
@@ -115,11 +123,11 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.ForEntityType == forEntity.EntityType && t.ForEntityId == forEntityId);
         if (!string.IsNullOrWhiteSpace(tagType))
@@ -130,10 +138,15 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(string tag, string? forEntityType = null, string? tagType = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(
+        string tag,
+        string? forEntityType = null,
+        string? tagType = null,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tag);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.Name == tag);
         if (!string.IsNullOrWhiteSpace(forEntityType))
@@ -147,10 +160,10 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var query = context.Tags.WhereActive().WhereTenant(resolvedTenant).Where(t => t.ForEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(tagType))
@@ -160,11 +173,11 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     }
 
     /// <inheritdoc />
-    public async Task RemoveAllTagsForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
+    public async Task RemoveAllTagsForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var forEntityId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
-        var resolvedTenant = ResolveTenant(null);
+        var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Tags.WhereActive()
             .WhereTenant(resolvedTenant)

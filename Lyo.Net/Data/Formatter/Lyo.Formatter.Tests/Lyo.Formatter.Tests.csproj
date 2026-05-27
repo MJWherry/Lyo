@@ -12,8 +12,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\..\..\Data\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
         <ProjectReference Include="..\Lyo.Formatter\Lyo.Formatter.csproj"/>
+        <ProjectReference Include="..\..\IOTemp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
     </ItemGroup>
 
 </Project>

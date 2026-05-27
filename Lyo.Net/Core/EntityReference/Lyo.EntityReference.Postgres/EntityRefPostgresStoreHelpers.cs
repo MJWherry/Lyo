@@ -3,23 +3,10 @@ using Lyo.EntityReference.Postgres.Database;
 
 namespace Lyo.EntityReference.Postgres;
 
-/// <summary>Shared helpers for Postgres association stores (tenant resolution, soft-delete filtering, interceptors).</summary>
+/// <summary>Shared helpers for Postgres association stores (soft-delete filtering, tenant filtering, interceptors).</summary>
+/// <remarks>Tenant resolution lives in <see cref="TenancyResolver" /> and the per-store base; this class only owns query-time helpers.</remarks>
 public static class EntityRefPostgresStoreHelpers
 {
-    /// <summary>Resolves nullable caller tenant to a concrete id using <see cref="EntityRefOptions.DefaultTenantId" />.</summary>
-    /// <param name="tenantId">Explicit tenant when provided.</param>
-    /// <param name="options">Host options supplying the fallback tenant.</param>
-    /// <returns><paramref name="tenantId" /> when non-null and non-empty; otherwise <see cref="EntityRefOptions.DefaultTenantId" />.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="options" /> is null.</exception>
-    public static Guid ResolveTenantId(Guid? tenantId, EntityRefOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        if (tenantId is { } t && t != Guid.Empty)
-            return t;
-
-        return options.DefaultTenantId;
-    }
-
     /// <summary>Restricts a query to rows that are not soft-deleted (<see cref="EntityRefEntityBase.DeletedAt" /> is null).</summary>
     /// <typeparam name="T">Association entity deriving from <see cref="EntityRefEntityBase" />.</typeparam>
     /// <param name="query">Queryable source.</param>

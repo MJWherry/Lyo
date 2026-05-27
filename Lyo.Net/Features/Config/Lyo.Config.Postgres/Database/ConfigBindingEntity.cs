@@ -32,6 +32,9 @@ public sealed class ConfigBindingEntity
     [MaxLength(1024)]
     public string ValueType { get; set; } = string.Empty;
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped binding.</summary>
+    public Guid? TenantId { get; set; }
+
     [Required]
     public DateTime CreatedTimestamp { get; set; }
 

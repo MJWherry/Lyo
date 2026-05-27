@@ -25,6 +25,7 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                     for_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     from_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     from_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     change_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     message = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     old_values_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 32768),
@@ -54,6 +55,12 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                 schema: "change_tracker",
                 table: "changes",
                 columns: new[] { "from_entity_type", "from_entity_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_changes_tenant",
+                schema: "change_tracker",
+                table: "changes",
+                column: "tenant_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_changes_timestamp",

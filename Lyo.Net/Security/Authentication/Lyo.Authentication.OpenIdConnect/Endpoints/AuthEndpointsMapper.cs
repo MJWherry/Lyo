@@ -217,9 +217,9 @@ public static class AuthEndpointsMapper
             && string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
             Guid? ownerUserId = null;
             try {
-                var record = await store.GetByIdAsync(parsed.Id, ctx.RequestAborted).ConfigureAwait(false);
+                var record = await store.GetByIdAsync(parsed.Id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
                 ownerUserId = record?.UserId;
-                await store.RevokeAsync(parsed.Id, DateTime.UtcNow, "logout", ctx.RequestAborted).ConfigureAwait(false);
+                await store.RevokeAsync(parsed.Id, DateTime.UtcNow, "logout", tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
                 await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.TokenRevoked, userId: ownerUserId, subject: parsed.Id, outcome: "success", reason: "logout", ct: ctx.RequestAborted).ConfigureAwait(false);
             }
             catch (Exception ex) {
@@ -246,11 +246,11 @@ public static class AuthEndpointsMapper
         if (string.IsNullOrEmpty(lyoUserClaim) || !TryExtractUserId(lyoUserClaim, out var userId))
             return Results.Unauthorized();
 
-        var user = await users.GetByIdAsync(userId, ctx.RequestAborted).ConfigureAwait(false);
+        var user = await users.GetByIdAsync(userId, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
             return Results.NotFound();
 
-        var links = await identities.ListForUserAsync(userId, ctx.RequestAborted).ConfigureAwait(false);
+        var links = await identities.ListForUserAsync(userId, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         var scopes = ctx.User.FindAll("scope")
             .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             .Distinct()
@@ -268,11 +268,11 @@ public static class AuthEndpointsMapper
         IUserStore users,
         IExternalIdentityStore identities)
     {
-        var user = await users.GetByIdAsync(id, ctx.RequestAborted).ConfigureAwait(false);
+        var user = await users.GetByIdAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
             return Results.NotFound();
 
-        var links = await identities.ListForUserAsync(id, ctx.RequestAborted).ConfigureAwait(false);
+        var links = await identities.ListForUserAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.Json(new MeResponse(
             User: user,
             Scopes: user.Scopes.ToArray(),

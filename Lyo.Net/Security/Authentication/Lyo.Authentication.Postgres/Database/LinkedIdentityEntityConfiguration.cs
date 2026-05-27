@@ -13,6 +13,7 @@ public sealed class LinkedIdentityEntityConfiguration : IEntityTypeConfiguration
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.UserId).HasColumnName("user_id").HasColumnType("uuid").IsRequired();
+        builder.Property(e => e.TenantId).HasColumnName("tenant_id").HasColumnType("uuid");
         builder.Property(e => e.Provider).HasColumnName("provider").HasMaxLength(100).IsRequired();
         builder.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(255).IsRequired();
         builder.Property(e => e.EmailAtLink).HasColumnName("email_at_link").HasMaxLength(320);
@@ -26,11 +27,14 @@ public sealed class LinkedIdentityEntityConfiguration : IEntityTypeConfiguration
             .WithMany()
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-        builder.HasIndex(e => new { e.Provider, e.Subject })
+        builder.HasIndex(e => new { e.TenantId, e.Provider, e.Subject })
             .IsUnique()
-            .HasDatabaseName("ux_linked_identity_provider_subject")
+            .HasDatabaseName("ux_linked_identity_tenant_provider_subject")
             .HasFilter("\"unlinked_timestamp\" IS NULL");
         builder.HasIndex(e => e.UserId).HasDatabaseName("ix_linked_identity_user_id");
         builder.HasIndex(e => e.Provider).HasDatabaseName("ix_linked_identity_provider");
+        builder.HasIndex(e => e.TenantId)
+            .HasDatabaseName("ix_linked_identity_tenant_id")
+            .HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

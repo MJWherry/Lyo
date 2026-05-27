@@ -20,15 +20,15 @@ public class InMemoryStoreTests
             CreatedAt: DateTime.UtcNow, UpdatedAt: null, ExpiresAt: null, LastUsedAt: null,
             RevokedAt: null, RevokedReason: null, RotatedFromId: null);
 
-        await store.InsertAsync(record);
-        var fetched = await store.GetByIdAsync(id);
+        await store.InsertAsync(record, tenantId: null);
+        var fetched = await store.GetByIdAsync(id, tenantId: null);
         Assert.NotNull(fetched);
         Assert.Equal(id, fetched!.Id);
-        await store.TouchLastUsedAsync(id, DateTime.UtcNow);
-        fetched = await store.GetByIdAsync(id);
+        await store.TouchLastUsedAsync(id, DateTime.UtcNow, tenantId: null);
+        fetched = await store.GetByIdAsync(id, tenantId: null);
         Assert.NotNull(fetched!.LastUsedAt);
-        await store.RevokeAsync(id, DateTime.UtcNow, "test");
-        fetched = await store.GetByIdAsync(id);
+        await store.RevokeAsync(id, DateTime.UtcNow, "test", tenantId: null);
+        fetched = await store.GetByIdAsync(id, tenantId: null);
         Assert.NotNull(fetched!.RevokedAt);
         Assert.Equal("test", fetched.RevokedReason);
         Assert.NotNull(plaintext);
@@ -39,8 +39,8 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryApiTokenStore();
         var record = NewTokenRecord();
-        await store.InsertAsync(record);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record));
+        await store.InsertAsync(record, tenantId: null);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, tenantId: null));
     }
 
     [Fact]
@@ -49,10 +49,10 @@ public class InMemoryStoreTests
         var store = new InMemoryApiTokenStore();
         var u1 = Guid.NewGuid();
         var u2 = Guid.NewGuid();
-        await store.InsertAsync(NewTokenRecord(u1));
-        await store.InsertAsync(NewTokenRecord(u1));
-        await store.InsertAsync(NewTokenRecord(u2));
-        var list = await store.ListForUserAsync(u1, includeRevoked: false);
+        await store.InsertAsync(NewTokenRecord(u1), tenantId: null);
+        await store.InsertAsync(NewTokenRecord(u1), tenantId: null);
+        await store.InsertAsync(NewTokenRecord(u2), tenantId: null);
+        var list = await store.ListForUserAsync(u1, includeRevoked: false, tenantId: null);
         Assert.Equal(2, list.Count);
     }
 
@@ -61,10 +61,10 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var user = NewUser();
-        await store.CreateAsync(user);
-        Assert.Equal(user.Id, (await store.GetByIdAsync(user.Id))!.Id);
-        Assert.Equal(user.Id, (await store.GetByEmailAsync(user.Email))!.Id);
-        Assert.Null(await store.GetByEmailAsync("ghost@example.com"));
+        await store.CreateAsync(user, tenantId: null);
+        Assert.Equal(user.Id, (await store.GetByIdAsync(user.Id, tenantId: null))!.Id);
+        Assert.Equal(user.Id, (await store.GetByEmailAsync(user.Email, tenantId: null))!.Id);
+        Assert.Null(await store.GetByEmailAsync("ghost@example.com", tenantId: null));
     }
 
     [Fact]
@@ -73,8 +73,8 @@ public class InMemoryStoreTests
         var store = new InMemoryUserStore();
         var a = NewUser();
         var b = NewUser() with { Email = a.Email };
-        await store.CreateAsync(a);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b));
+        await store.CreateAsync(a, tenantId: null);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, tenantId: null));
     }
 
     [Fact]
@@ -82,9 +82,9 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var u = NewUser();
-        await store.CreateAsync(u);
-        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked");
-        var disabled = await store.GetByIdAsync(u.Id);
+        await store.CreateAsync(u, tenantId: null);
+        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked", tenantId: null);
+        var disabled = await store.GetByIdAsync(u.Id, tenantId: null);
         Assert.True(disabled!.IsDisabled);
         Assert.Equal("kicked", disabled.DisabledReason);
     }
@@ -94,13 +94,13 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryExternalIdentityStore();
         var userId = Guid.NewGuid();
-        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", new[] { "admin" }, null);
+        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", new[] { "admin" }, null, tenantId: null);
         Assert.NotEqual(Guid.Empty, link.Id);
-        var found = await store.FindByProviderSubjectAsync("google", "sub-1");
+        var found = await store.FindByProviderSubjectAsync("google", "sub-1", tenantId: null);
         Assert.NotNull(found);
-        await store.UnlinkAsync(link.Id, DateTime.UtcNow);
-        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1"));
-        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", System.Array.Empty<string>(), null);
+        await store.UnlinkAsync(link.Id, DateTime.UtcNow, tenantId: null);
+        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1", tenantId: null));
+        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", System.Array.Empty<string>(), null, tenantId: null);
         Assert.NotEqual(link.Id, relink.Id);
     }
 

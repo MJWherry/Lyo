@@ -21,44 +21,44 @@ public interface IConfigStore
     Task DeleteDefinitionAsync(Guid id, CancellationToken ct = default);
 
     /// <summary>Adds or updates an entity-specific binding.</summary>
-    Task SaveBindingAsync(ConfigBindingRecord binding, CancellationToken ct = default);
+    Task SaveBindingAsync(ConfigBindingRecord binding, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Gets a binding by id.</summary>
-    Task<ConfigBindingRecord?> GetBindingByIdAsync(Guid id, CancellationToken ct = default);
+    Task<ConfigBindingRecord?> GetBindingByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Gets a binding by target entity and key.</summary>
-    Task<ConfigBindingRecord?> GetBindingAsync(EntityRef forEntity, string key, CancellationToken ct = default);
+    Task<ConfigBindingRecord?> GetBindingAsync(EntityRef forEntity, string key, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Gets all bindings for an entity.</summary>
-    Task<IReadOnlyList<ConfigBindingRecord>> GetBindingsAsync(EntityRef forEntity, CancellationToken ct = default);
+    Task<IReadOnlyList<ConfigBindingRecord>> GetBindingsAsync(EntityRef forEntity, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Deletes a binding by id. Fails when the definition is <see cref="ConfigDefinitionRecord.IsRequired" /> and has no default (a binding must remain).</summary>
-    Task DeleteBindingAsync(Guid id, CancellationToken ct = default);
+    Task DeleteBindingAsync(Guid id, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Deletes all bindings for an entity. Fails if any binding removed is for a required definition without a default.</summary>
-    Task DeleteBindingsAsync(EntityRef forEntity, CancellationToken ct = default);
+    Task DeleteBindingsAsync(EntityRef forEntity, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
     /// Loads the resolved config for an entity, merging definitions with bindings and defaults. Throws when a definition has <see cref="ConfigDefinitionRecord.IsRequired" /> and
     /// the resolved value is missing (no binding and no default).
     /// </summary>
-    Task<ResolvedConfigRecord> LoadConfigAsync(EntityRef forEntity, CancellationToken ct = default);
+    Task<ResolvedConfigRecord> LoadConfigAsync(EntityRef forEntity, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Lists value revisions for a binding, newest first.</summary>
-    Task<IReadOnlyList<ConfigBindingRevisionRecord>> GetBindingRevisionsAsync(Guid bindingId, CancellationToken ct = default);
+    Task<IReadOnlyList<ConfigBindingRevisionRecord>> GetBindingRevisionsAsync(Guid bindingId, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Lists value revisions for the binding matching <paramref name="forEntity" /> and <paramref name="key" />, newest first.</summary>
-    Task<IReadOnlyList<ConfigBindingRevisionRecord>> GetBindingRevisionsAsync(EntityRef forEntity, string key, CancellationToken ct = default);
+    Task<IReadOnlyList<ConfigBindingRevisionRecord>> GetBindingRevisionsAsync(EntityRef forEntity, string key, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Gets a single revision by number, or null if missing.</summary>
-    Task<ConfigBindingRevisionRecord?> GetBindingRevisionAsync(Guid bindingId, int revision, CancellationToken ct = default);
+    Task<ConfigBindingRevisionRecord?> GetBindingRevisionAsync(Guid bindingId, int revision, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Sets the binding&apos;s current value to the snapshot at <paramref name="revision" /> and appends a new revision row (so history stays linear).</summary>
-    Task RevertBindingToRevisionAsync(Guid bindingId, int revision, CancellationToken ct = default);
+    Task RevertBindingToRevisionAsync(Guid bindingId, int revision, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
-    /// Same as <see cref="RevertBindingToRevisionAsync(System.Guid,int,System.Threading.CancellationToken)" /> for the binding resolved from <paramref name="forEntity" /> and
+    /// Same as <see cref="RevertBindingToRevisionAsync(System.Guid,int,System.Guid?,System.Threading.CancellationToken)" /> for the binding resolved from <paramref name="forEntity" /> and
     /// <paramref name="key" />.
     /// </summary>
-    Task RevertBindingToRevisionAsync(EntityRef forEntity, string key, int revision, CancellationToken ct = default);
+    Task RevertBindingToRevisionAsync(EntityRef forEntity, string key, int revision, Guid? tenantId, CancellationToken ct = default);
 }

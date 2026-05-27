@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Note.Postgres;
@@ -13,6 +14,10 @@ public sealed class PostgresNoteOptions : IPostgresMigrationConfig
 
     /// <summary>Gets or sets whether to enable automatic database migrations on startup.</summary>
     public bool EnableAutoMigrations { get; set; } = false;
+
+    /// <summary>Per-feature tenancy policy. Unset properties inherit from <see cref="EntityRefOptions" />.</summary>
+    /// <remarks>The note store is backed by a non-null <c>tenant_id</c> column; <see cref="TenancyMode.SystemOnly" /> is rejected at store-construction time.</remarks>
+    public TenancyOptions Tenancy { get; set; } = new();
 
     /// <inheritdoc />
     string IPostgresMigrationConfig.Schema => Schema;

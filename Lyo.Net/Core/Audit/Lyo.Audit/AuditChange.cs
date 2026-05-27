@@ -16,6 +16,9 @@ public sealed record AuditChange(EntityRef Entity, IReadOnlyDictionary<string, o
     /// <summary>Gets the actor that performed the change, if known.</summary>
     public EntityRef? Actor { get; init; }
 
+    /// <summary>Gets the tenant the change is scoped to. <see langword="null" /> means system / no tenant.</summary>
+    public Guid? TenantId { get; init; }
+
     public override string ToString()
-        => $"AuditChange: {Entity.EntityType}/{Entity.EntityId}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}";
+        => $"AuditChange: {Entity.EntityType}/{Entity.EntityId}, OldValues: {OldValues.Count}, Changed: {ChangedProperties.Count}, Tenant: {TenantId}";
 }

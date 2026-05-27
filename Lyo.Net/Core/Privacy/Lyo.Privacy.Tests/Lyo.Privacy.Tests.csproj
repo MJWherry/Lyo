@@ -29,8 +29,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Lyo.Privacy\Lyo.Privacy.csproj"/>
         <ProjectReference Include="..\Lyo.Privacy.AspNetCore\Lyo.Privacy.AspNetCore.csproj"/>
+        <ProjectReference Include="..\Lyo.Privacy\Lyo.Privacy.csproj"/>
     </ItemGroup>
 
 </Project>

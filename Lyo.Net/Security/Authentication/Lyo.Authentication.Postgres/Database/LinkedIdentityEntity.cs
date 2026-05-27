@@ -11,6 +11,9 @@ public sealed class LinkedIdentityEntity
     /// <summary>FK to <c>[user].[user].id</c>.</summary>
     public Guid UserId { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> permits cross-tenant linking; non-null binds the link to a specific tenant.</summary>
+    public Guid? TenantId { get; set; }
+
     /// <summary>Provider name (e.g. <c>google</c>, <c>keycloak:my-realm</c>).</summary>
     public string Provider { get; set; } = string.Empty;
 

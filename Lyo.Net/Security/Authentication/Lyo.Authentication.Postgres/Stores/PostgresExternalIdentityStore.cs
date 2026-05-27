@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Records;
 using Lyo.Authentication.Services.Users;
+using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -15,24 +18,35 @@ namespace Lyo.Authentication.Postgres.Stores;
 public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
 {
     private readonly IDbContextFactory<UserDbContext> _contextFactory;
+    private readonly EntityRefOptions _entityRefOptions;
+    private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new store.</summary>
-    public PostgresExternalIdentityStore(IDbContextFactory<UserDbContext> contextFactory)
+    public PostgresExternalIdentityStore(
+        IDbContextFactory<UserDbContext> contextFactory,
+        IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresUserOptions> userOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
+        ArgumentHelpers.ThrowIfNull(entityRefOptions);
+        ArgumentHelpers.ThrowIfNull(userOptions);
         _contextFactory = contextFactory;
+        _entityRefOptions = entityRefOptions.Value;
+        _featureTenancy = userOptions.Value.Tenancy;
     }
 
     /// <inheritdoc/>
-    public async Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, CancellationToken ct = default)
+    public async Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.LinkedIdentities
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                l => l.Provider == provider
+                l => l.TenantId == resolvedTenant
+                    && l.Provider == provider
                     && l.Subject == subject
                     && l.UnlinkedTimestamp == null,
                 ct)
@@ -49,15 +63,18 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         string? emailAtLink,
         IReadOnlyList<string> scopes,
         IReadOnlyDictionary<string, object?>? rawClaims,
+        Guid? tenantId,
         CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
         ArgumentHelpers.ThrowIfNull(scopes);
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = await context.LinkedIdentities
             .FirstOrDefaultAsync(
-                l => l.Provider == provider
+                l => l.TenantId == resolvedTenant
+                    && l.Provider == provider
                     && l.Subject == subject
                     && l.UnlinkedTimestamp == null,
                 ct)
@@ -82,6 +99,7 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         var entity = new LinkedIdentityEntity {
             Id = Guid.NewGuid(),
             UserId = userId,
+            TenantId = resolvedTenant,
             Provider = provider,
             Subject = subject,
             EmailAtLink = emailAtLink,
@@ -99,12 +117,13 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default)
     {
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await context.LinkedIdentities
             .AsNoTracking()
-            .Where(l => l.UserId == userId && l.UnlinkedTimestamp == null)
+            .Where(l => l.UserId == userId && l.TenantId == resolvedTenant && l.UnlinkedTimestamp == null)
             .OrderBy(l => l.LinkedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -113,11 +132,12 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
     }
 
     /// <inheritdoc/>
-    public async Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, CancellationToken ct = default)
+    public async Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await context.LinkedIdentities
-            .Where(l => l.Id == linkedIdentityId)
+            .Where(l => l.Id == linkedIdentityId && l.TenantId == resolvedTenant)
             .ExecuteUpdateAsync(
                 setters => setters
                     .SetProperty(l => l.UnlinkedTimestamp, utcNow)

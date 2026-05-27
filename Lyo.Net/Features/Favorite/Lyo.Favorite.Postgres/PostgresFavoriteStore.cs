@@ -21,8 +21,9 @@ public sealed class PostgresFavoriteStore : EntityRefPostgresStoreBase, IFavorit
     public PostgresFavoriteStore(
         IDbContextFactory<FavoriteDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresFavoriteOptions> favoriteOptions,
         IEnumerable<IEntityRefActionInterceptor>? interceptors = null)
-        : base(entityRefOptions, interceptors)
+        : base(entityRefOptions, favoriteOptions?.Value.Tenancy ?? throw new ArgumentNullException(nameof(favoriteOptions)), interceptors)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;

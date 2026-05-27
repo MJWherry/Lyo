@@ -13,8 +13,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

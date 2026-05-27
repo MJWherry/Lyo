@@ -17,6 +17,9 @@ public sealed class ConfigBindingRevisionEntity
     [MaxLength(8192)]
     public string ValueJson { get; set; } = "null";
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped revision.</summary>
+    public Guid? TenantId { get; set; }
+
     [Required]
     public DateTime CreatedTimestamp { get; set; }
 

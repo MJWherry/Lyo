@@ -20,6 +20,9 @@ public sealed class TokenEntity
     /// <summary>Owning user (null for unowned <c>svc</c>/<c>internal</c> tokens).</summary>
     public Guid? UserId { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> denotes a system/service token; non-null binds the token to a specific tenant.</summary>
+    public Guid? TenantId { get; set; }
+
     /// <summary>User-facing label.</summary>
     public string DisplayName { get; set; } = string.Empty;
 

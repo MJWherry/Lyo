@@ -72,7 +72,7 @@ public sealed class LyoJwtAuthenticationTests
             UpdatedAt: null,
             LastLoginAt: null,
             DisabledAt: null,
-            DisabledReason: null));
+            DisabledReason: null), tenantId: null);
         var issuer = harness.Services.GetRequiredService<ILyoJwtIssuer>();
         var issued = await issuer.IssueAsync(user, scopes, provider: "local", externalSubject: null, includeRefresh: false);
         return issued.AccessToken;

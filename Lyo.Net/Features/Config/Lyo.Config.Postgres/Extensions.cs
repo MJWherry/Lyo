@@ -1,4 +1,5 @@
 using Lyo.Config.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddOptions<EntityRefOptions>();
             services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<ConfigDbContext, PostgresConfigOptions>();
             services.AddDbContextFactory<ConfigDbContext>(dbOpts => dbOpts.UseNpgsql(

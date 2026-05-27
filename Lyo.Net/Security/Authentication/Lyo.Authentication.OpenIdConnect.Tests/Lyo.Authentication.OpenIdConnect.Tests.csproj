@@ -20,9 +20,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
         <ProjectReference Include="..\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
         <ProjectReference Include="..\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
     </ItemGroup>
 
 </Project>

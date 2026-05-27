@@ -1,4 +1,5 @@
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -101,6 +102,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddChangeTrackerDbContextFactory(options);
+            services.AddOptions<EntityRefOptions>();
             services.AddSingleton<IChangeTracker, PostgresChangeTracker>();
             return services;
         }

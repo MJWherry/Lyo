@@ -1,8 +1,10 @@
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.ChangeTracker.Postgres.Tests;
 
@@ -29,7 +31,10 @@ public sealed class ChangeTrackerPostgresFixture : PostgresContainerFixtureBase
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
         var trackerFactory = ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        ChangeTracker = new PostgresChangeTracker(trackerFactory);
+        ChangeTracker = new PostgresChangeTracker(
+            trackerFactory,
+            Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresChangeTrackerOptions()));
     }
 
     protected override ValueTask OnContainerDisposingAsync(CancellationToken cancellationToken)

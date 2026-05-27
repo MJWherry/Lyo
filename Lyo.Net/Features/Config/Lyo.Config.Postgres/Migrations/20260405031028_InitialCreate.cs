@@ -45,6 +45,7 @@ namespace Lyo.Config.Postgres.Migrations
                     for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     for_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     value_type = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -70,8 +71,15 @@ namespace Lyo.Config.Postgres.Migrations
                 name: "ux_config_binding_definition_entity",
                 schema: "config",
                 table: "config_binding",
-                columns: new[] { "definition_id", "for_entity_type", "for_entity_id" },
+                columns: new[] { "definition_id", "for_entity_type", "for_entity_id", "tenant_id" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_config_binding_tenant",
+                schema: "config",
+                table: "config_binding",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
 
             migrationBuilder.CreateTable(
                 name: "config_binding_revision",
@@ -81,6 +89,7 @@ namespace Lyo.Config.Postgres.Migrations
                     binding_id = table.Column<Guid>(type: "uuid", nullable: false),
                     revision = table.Column<int>(type: "integer", nullable: false),
                     value_json = table.Column<string>(type: "jsonb", nullable: false, maxLength: 8192),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -94,6 +103,13 @@ namespace Lyo.Config.Postgres.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_config_binding_revision_tenant",
+                schema: "config",
+                table: "config_binding_revision",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_config_definition_entity_type",

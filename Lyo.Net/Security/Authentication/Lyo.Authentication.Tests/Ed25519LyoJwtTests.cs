@@ -18,7 +18,7 @@ public class Ed25519LyoJwtTests
     public async Task IssueThenValidate_RoundTrips()
     {
         var (issuer, validator, users, _) = await Build();
-        var user = await users.CreateAsync(NewUser());
+        var user = await users.CreateAsync(NewUser(), tenantId: null);
         var issued = await issuer.IssueAsync(user, new[] { "people.read" }, "google", externalSubject: "g-sub-1", includeRefresh: false);
         Assert.False(string.IsNullOrEmpty(issued.AccessToken));
         Assert.NotEqual(default, issued.AccessTokenExpiresAt);
@@ -33,7 +33,7 @@ public class Ed25519LyoJwtTests
     public async Task Validate_RejectsForgedAlgorithm()
     {
         var (issuer, validator, users, _) = await Build();
-        var user = await users.CreateAsync(NewUser());
+        var user = await users.CreateAsync(NewUser(), tenantId: null);
         var issued = await issuer.IssueAsync(user, System.Array.Empty<string>(), "local", null, includeRefresh: false);
         var parts = issued.AccessToken.Split('.');
         var forgedHeader = Base64Url.Encode(System.Text.Encoding.UTF8.GetBytes("""{"alg":"none","kid":"lyo-sig:v1","typ":"JWT"}"""));
@@ -52,7 +52,7 @@ public class Ed25519LyoJwtTests
         var validateOpts = MsOptions.Create(new LyoJwtOptions { Issuer = "https://auth.lyo", Audience = "lyo-api" });
         var issuer = new Ed25519LyoJwtIssuer(keys, issueOpts, NullLogger<Ed25519LyoJwtIssuer>.Instance);
         var validator = new Ed25519LyoJwtValidator(keys, users, validateOpts, MsOptions.Create(new AuthenticationOptions()), NullLogger<Ed25519LyoJwtValidator>.Instance);
-        var user = await users.CreateAsync(NewUser());
+        var user = await users.CreateAsync(NewUser(), tenantId: null);
         var issued = await issuer.IssueAsync(user, System.Array.Empty<string>(), "local", null, includeRefresh: false);
         Assert.Null(await validator.ValidateAsync(issued.AccessToken));
     }
@@ -67,7 +67,7 @@ public class Ed25519LyoJwtTests
         var jwtOpts = MsOptions.Create(new LyoJwtOptions { AccessTokenLifetime = TimeSpan.FromMilliseconds(1), ClockSkew = TimeSpan.Zero });
         var issuer = new Ed25519LyoJwtIssuer(keys, jwtOpts, NullLogger<Ed25519LyoJwtIssuer>.Instance);
         var validator = new Ed25519LyoJwtValidator(keys, users, jwtOpts, MsOptions.Create(new AuthenticationOptions()), NullLogger<Ed25519LyoJwtValidator>.Instance);
-        var user = await users.CreateAsync(NewUser());
+        var user = await users.CreateAsync(NewUser(), tenantId: null);
         var issued = await issuer.IssueAsync(user, System.Array.Empty<string>(), "local", null, includeRefresh: false);
         await Task.Delay(1100);
         Assert.Null(await validator.ValidateAsync(issued.AccessToken));
@@ -77,10 +77,10 @@ public class Ed25519LyoJwtTests
     public async Task Validate_DisabledUser_ReturnsNull()
     {
         var (issuer, validator, users, _) = await Build();
-        var user = await users.CreateAsync(NewUser());
+        var user = await users.CreateAsync(NewUser(), tenantId: null);
         var issued = await issuer.IssueAsync(user, System.Array.Empty<string>(), "local", null, includeRefresh: false);
         Assert.NotNull(await validator.ValidateAsync(issued.AccessToken));
-        await users.SetDisabledAsync(user.Id, DateTime.UtcNow, "no");
+        await users.SetDisabledAsync(user.Id, DateTime.UtcNow, "no", tenantId: null);
         Assert.Null(await validator.ValidateAsync(issued.AccessToken));
     }
 

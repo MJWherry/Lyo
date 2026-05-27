@@ -133,8 +133,30 @@ Schema name: `rating` (`PostgresRatingOptions.Schema`).
   `like_count`, `dislike_count`, and `updated_timestamp`.
 - **rating.rating_reaction** — `id` (uuid), `for_entity_type` (always
   `"Rating"`), `for_entity_id` (the parent rating id), `from_entity_type`,
-  `from_entity_id` (uuid), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
+  `from_entity_id` (uuid), `tenant_id` (nullable uuid, inherited from the parent
+  rating at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
   `created_timestamp`.
+
+## Tenancy
+
+`PostgresRatingStore` accepts an optional `Guid? tenantId` on every read/write
+method and resolves it through `TenancyResolver` under the policy configured in
+`PostgresRatingOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
+unset). The rating `tenant_id` column is non-null, so only `SingleTenantDefault`
+and `MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store
+construction. Reactions inherit the parent rating's `TenantId` on insert so the
+reaction sub-table stays consistent with its parent. See
+[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
+for the full policy matrix and `appsettings.json` snippet.
+
+```json
+{
+  "PostgresRating": {
+    "ConnectionString": "Host=localhost;Database=lyo;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
 
 ## Dependencies
 

@@ -14,7 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Authentication.Web.Components\Lyo.Authentication.Web.Components.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
     </ItemGroup>

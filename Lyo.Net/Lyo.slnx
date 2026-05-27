@@ -105,6 +105,7 @@
         <Project Path="Core/EntityReference/Lyo.EntityReference.Models/Lyo.EntityReference.Models.csproj" />
         <Project Path="Core/EntityReference/Lyo.EntityReference.Models.Tests/Lyo.EntityReference.Models.Tests.csproj" />
         <Project Path="Core/EntityReference/Lyo.EntityReference.Postgres/Lyo.EntityReference.Postgres.csproj" />
+        <Project Path="Core/EntityReference/Lyo.EntityReference.Postgres.Tests/Lyo.EntityReference.Postgres.Tests.csproj" />
     </Folder>
     <Folder Name="/Core/Health/">
         <Project Path="Core/Health/Lyo.Health/Lyo.Health.csproj" />

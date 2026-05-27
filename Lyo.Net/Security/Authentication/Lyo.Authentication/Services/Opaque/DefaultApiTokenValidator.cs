@@ -57,7 +57,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
             return null;
         }
 
-        var record = await _store.GetByIdAsync(parsed.Id, ct).ConfigureAwait(false);
+        var record = await _store.GetByIdAsync(parsed.Id, tenantId: null, ct).ConfigureAwait(false);
         if (record is null) {
             _logger.LogDebug("Token rejected: UnknownToken (id={TokenId})", parsed.Id);
             return null;
@@ -94,7 +94,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
 
         var scopes = (IReadOnlyList<string>)record.Scopes;
         if (record.UserId.HasValue) {
-            var user = await _users.GetByIdAsync(record.UserId.Value, ct).ConfigureAwait(false);
+            var user = await _users.GetByIdAsync(record.UserId.Value, tenantId: null, ct).ConfigureAwait(false);
             if (user is null) {
                 _logger.LogDebug("Token {TokenId} rejected: owning user {UserId} not found", parsed.Id, record.UserId);
                 await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, userId: record.UserId, subject: record.Id, outcome: "failure", reason: "OwnerMissing", ct: ct).ConfigureAwait(false);
@@ -133,7 +133,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
     private async Task TouchLastUsedAsync(string id, DateTime now)
     {
         try {
-            await _store.TouchLastUsedAsync(id, now, CancellationToken.None).ConfigureAwait(false);
+            await _store.TouchLastUsedAsync(id, now, tenantId: null, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, "Best-effort touch of last_used_at failed for token {TokenId}", id);

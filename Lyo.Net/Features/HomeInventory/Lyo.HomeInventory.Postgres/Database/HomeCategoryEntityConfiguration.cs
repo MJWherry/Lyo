@@ -10,6 +10,7 @@ public sealed class HomeCategoryEntityConfiguration : IEntityTypeConfiguration<H
         builder.ToTable("category");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.ParentCategoryId).HasColumnName("parent_category_id").HasColumnType("uuid");
         builder.Property(e => e.Name).HasMaxLength(300).IsRequired().HasColumnName("name");
         builder.Property(e => e.Slug).HasMaxLength(200).HasColumnName("slug");
@@ -20,5 +21,6 @@ public sealed class HomeCategoryEntityConfiguration : IEntityTypeConfiguration<H
         builder.HasOne(e => e.Parent).WithMany(e => e.Children).HasForeignKey(e => e.ParentCategoryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(e => e.ParentCategoryId).HasDatabaseName("ix_home_inv_category_parent");
         builder.HasIndex(e => new { e.Name, e.ParentCategoryId }).HasDatabaseName("ix_home_inv_category_name_parent");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_home_inv_category_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

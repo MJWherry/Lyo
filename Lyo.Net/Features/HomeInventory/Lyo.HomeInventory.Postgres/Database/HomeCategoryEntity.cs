@@ -7,6 +7,9 @@ public sealed class HomeCategoryEntity
     [Key]
     public Guid Id { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped category.</summary>
+    public Guid? TenantId { get; set; }
+
     public Guid? ParentCategoryId { get; set; }
 
     [Required]

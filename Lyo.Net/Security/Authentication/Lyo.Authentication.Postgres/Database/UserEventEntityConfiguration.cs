@@ -15,6 +15,7 @@ public sealed class UserEventEntityConfiguration : IEntityTypeConfiguration<User
         builder.Property(e => e.Timestamp).HasColumnName("timestamp").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(e => e.Kind).HasColumnName("kind").HasConversion<string>().HasMaxLength(64).IsRequired();
         builder.Property(e => e.UserId).HasColumnName("user_id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnName("tenant_id").HasColumnType("uuid");
         builder.Property(e => e.Subject).HasColumnName("subject").HasMaxLength(255);
         builder.Property(e => e.Provider).HasColumnName("provider").HasMaxLength(100);
         builder.Property(e => e.Outcome).HasColumnName("outcome").HasMaxLength(20);
@@ -28,6 +29,9 @@ public sealed class UserEventEntityConfiguration : IEntityTypeConfiguration<User
         builder.HasIndex(e => e.UserId)
             .HasDatabaseName("ix_user_event_user_id")
             .HasFilter("\"user_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId)
+            .HasDatabaseName("ix_user_event_tenant_id")
+            .HasFilter("\"tenant_id\" IS NOT NULL");
 
         builder.HasOne<UserEntity>()
             .WithMany()

@@ -83,7 +83,10 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddNoteDbContextFactory(options);
             services.AddSingleton<INoteStore>(sp => new PostgresNoteStore(
-                sp.GetRequiredService<IDbContextFactory<NoteDbContext>>(), sp.GetRequiredService<IOptions<EntityRefOptions>>(), sp.GetServices<IEntityRefActionInterceptor>()));
+                sp.GetRequiredService<IDbContextFactory<NoteDbContext>>(),
+                sp.GetRequiredService<IOptions<EntityRefOptions>>(),
+                sp.GetRequiredService<IOptions<PostgresNoteOptions>>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
 
             return services;
         }

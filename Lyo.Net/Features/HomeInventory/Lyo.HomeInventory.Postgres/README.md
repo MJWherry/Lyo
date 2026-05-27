@@ -68,6 +68,31 @@ on stock (which must stay aligned with `UpsertStockAsync` semantics). Avoid
 editing historical migrations retroactively unless you intentionally squash,
 because that breaks checksums already deployed in production CI.
 
+## Tenancy
+
+All five entities (`HomeItemEntity`, `HomeCategoryEntity`, `HomeLocationEntity`, `HomeItemStockEntity`, `HomeItemMovementEntity`) carry a nullable `tenant_id` (uuid)
+column with a filtered `ix_home_inv_<entity>_tenant` index. `OwnerEntityType` / `OwnerEntityId` on items still describe which user/household owns the item *within* a
+tenant — they're orthogonal concepts.
+
+`IHomeInventoryStore` accepts an explicit `Guid? tenantId` on every method and runs it through `TenancyResolver.Resolve` using the policy configured in
+`PostgresHomeInventoryOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). Stock and movement transactional methods (`AdjustStockAsync`,
+`TransferStockAsync`) resolve the tenant once and stamp it on every row written in the transaction:
+
+- `SystemOnly` — every row is persisted with `tenant_id = NULL`.
+- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
+- `MultiTenantStrict` — caller must supply a non-empty `tenantId` or the store throws.
+
+See [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) for the full matrix.
+
+```json
+{
+  "PostgresHomeInventory": {
+    "ConnectionString": "Host=localhost;Database=home_inventory;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
+
 ## Error model
 
 `Lyo.Exceptions` argument helpers (`ArgumentHelpers.ThrowIfNull`,

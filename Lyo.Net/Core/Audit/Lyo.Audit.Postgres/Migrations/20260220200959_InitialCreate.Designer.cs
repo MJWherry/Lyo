@@ -66,6 +66,10 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("old_values_json");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
@@ -78,6 +82,9 @@ namespace Lyo.Audit.Postgres.Migrations
 
                     b.HasIndex("ForEntityType")
                         .HasDatabaseName("ix_audit_changes_for_entity_type");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_audit_changes_tenant");
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_audit_changes_timestamp");
@@ -139,6 +146,10 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("metadata_json");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
@@ -151,6 +162,9 @@ namespace Lyo.Audit.Postgres.Migrations
 
                     b.HasIndex("EventType")
                         .HasDatabaseName("ix_audit_events_event_type");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_audit_events_tenant");
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_audit_events_timestamp");

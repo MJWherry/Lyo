@@ -10,6 +10,7 @@ public sealed class HomeItemEntityConfiguration : IEntityTypeConfiguration<HomeI
         builder.ToTable("item");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.OwnerEntityType).HasMaxLength(200).HasColumnName("owner_entity_type");
         builder.Property(e => e.OwnerEntityId).HasMaxLength(200).HasColumnName("owner_entity_id");
         builder.Property(e => e.CategoryId).HasColumnName("category_id").HasColumnType("uuid");
@@ -61,5 +62,6 @@ public sealed class HomeItemEntityConfiguration : IEntityTypeConfiguration<HomeI
         builder.HasIndex(e => e.EthernetMacAddress).HasDatabaseName("ix_home_inv_item_eth_mac");
         builder.HasIndex(e => e.BluetoothMacAddress).HasDatabaseName("ix_home_inv_item_bt_mac");
         builder.HasIndex(e => e.Sku).IsUnique().HasDatabaseName("ux_home_inv_item_sku").HasFilter("sku IS NOT NULL");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_home_inv_item_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

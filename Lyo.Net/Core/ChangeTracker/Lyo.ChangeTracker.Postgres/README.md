@@ -53,8 +53,29 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 ## Schema
 
 - All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes` stores target `EntityRef` (`ForEntityType` / `ForEntityId`), optional actor `EntityRef` (`FromEntityType` / `FromEntityId`), JSON `OldValues`, JSON
-  `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+- `change_tracker.changes` stores target `EntityRef` (`ForEntityType` / `ForEntityId`), optional actor `EntityRef` (`FromEntityType` / `FromEntityId`), nullable `tenant_id`
+  (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+
+## Tenancy
+
+`ChangeRecord` carries an optional `TenantId`; `null` denotes a system / untenanted row. `PostgresChangeTracker` runs every record through `TenancyResolver.Resolve` using the
+policy configured in `PostgresChangeTrackerOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset) before persisting:
+
+- `SystemOnly` — caller `TenantId` is ignored; the row stores `null`.
+- `SingleTenantDefault` *(default)* — caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.
+- `MultiTenantStrict` — caller must supply a non-empty `TenantId` or persistence throws.
+
+The `ix_changes_tenant` index supports per-tenant lookups. Use the
+`WhereTenant` / `WhereTenantOrSystem` helpers from [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy) to query the table.
+
+```json
+{
+  "PostgresChangeTracker": {
+    "ConnectionString": "Host=localhost;Database=change_tracker;...",
+    "Tenancy": { "Mode": "SystemOnly" }
+  }
+}
+```
 
 ## Dependencies
 

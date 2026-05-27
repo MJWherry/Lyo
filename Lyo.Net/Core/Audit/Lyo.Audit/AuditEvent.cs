@@ -18,6 +18,9 @@ public record AuditEvent(
     /// <summary>Gets the timestamp when the event occurred.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
+    /// <summary>Gets the tenant the event is scoped to. <see langword="null" /> means system / no tenant.</summary>
+    public Guid? TenantId { get; init; }
+
     public override string ToString()
-        => $"AuditEvent: {EventType} @ {Timestamp:O}, Subject: {Subject.EntityType}/{Subject.EntityId}, Actor: {(Actor is { } a ? $"{a.EntityType}/{a.EntityId}" : "(none)")}";
+        => $"AuditEvent: {EventType} @ {Timestamp:O}, Subject: {Subject.EntityType}/{Subject.EntityId}, Actor: {(Actor is { } a ? $"{a.EntityType}/{a.EntityId}" : "(none)")}, Tenant: {TenantId}";
 }

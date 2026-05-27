@@ -94,6 +94,27 @@ var counts = await favoriteStore.GetFavoriteCountsForEntitiesAsync(
     "Article", new[] { id1, id2, id3 });
 ```
 
+## Tenancy
+
+`PostgresFavoriteStore` accepts an optional `Guid? tenantId` on every read/write
+method and resolves it through `TenancyResolver` under the policy configured in
+`PostgresFavoriteOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
+unset). The `tenant_id` column is non-null, so only `SingleTenantDefault` and
+`MultiTenantStrict` modes are valid — `SystemOnly` is rejected at store
+construction. The store applies a `WhereTenant` filter on every query so
+favorites from one tenant cannot leak into another. See
+[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
+for the full policy matrix and `appsettings.json` snippet.
+
+```json
+{
+  "PostgresFavorite": {
+    "ConnectionString": "Host=localhost;Database=lyo;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
+
 ## Schema
 
 Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).

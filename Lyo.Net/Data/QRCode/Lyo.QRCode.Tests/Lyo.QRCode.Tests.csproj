@@ -12,8 +12,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\Lyo.QRCode\Lyo.QRCode.csproj"/>
         <ProjectReference Include="..\Lyo.QRCode.QRCoder\Lyo.QRCode.QRCoder.csproj"/>
+        <ProjectReference Include="..\Lyo.QRCode\Lyo.QRCode.csproj"/>
     </ItemGroup>
 
 </Project>

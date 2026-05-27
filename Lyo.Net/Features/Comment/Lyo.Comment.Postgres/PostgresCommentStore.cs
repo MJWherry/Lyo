@@ -16,27 +16,27 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
 
     private readonly IDbContextFactory<CommentDbContext> _contextFactory;
 
-    private Guid Tenant => ResolveTenant(null);
-
     public PostgresCommentStore(
         IDbContextFactory<CommentDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresCommentOptions> commentOptions,
         IEnumerable<IEntityRefActionInterceptor>? interceptors = null)
-        : base(entityRefOptions, interceptors)
+        : base(entityRefOptions, commentOptions?.Value.Tenancy ?? throw new ArgumentNullException(nameof(commentOptions)), interceptors)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
     }
 
     /// <inheritdoc />
-    public async Task SaveAsync(CommentRecord comment, CancellationToken ct = default)
+    public async Task SaveAsync(CommentRecord comment, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(comment);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(comment.ForEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(comment.FromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (comment.Id != default) {
-            var existing = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == comment.Id, ct).ConfigureAwait(false);
+            var existing = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == comment.Id, ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.ForEntityType = comment.ForEntityType;
                 existing.ForEntityId = forId;
@@ -45,9 +45,9 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
                 existing.Content = comment.Content;
                 existing.ReplyToCommentId = comment.ReplyToCommentId;
                 existing.IsEdited = true;
-                await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforePersist, existing, ct).ConfigureAwait(false);
+                await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforePersist, existing, ct).ConfigureAwait(false);
                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterPersist, existing, ct).ConfigureAwait(false);
+                await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterPersist, existing, ct).ConfigureAwait(false);
                 return;
             }
         }
@@ -58,7 +58,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             ForEntityId = forId,
             FromEntityType = comment.FromEntityType,
             FromEntityId = fromId,
-            TenantId = Tenant,
+            TenantId = tenant,
             Content = comment.Content,
             ReplyToCommentId = comment.ReplyToCommentId,
             LikeCount = comment.LikeCount,
@@ -68,27 +68,29 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             CreatedAt = comment.CreatedAt == default ? DateTime.UtcNow : comment.CreatedAt
         };
 
-        await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
+        await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
         context.Comments.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
+        await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<CommentRecord?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<CommentRecord?> GetByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
     {
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CommentRecord>> GetForEntityAsync(EntityRef forEntity, bool includeReplies = true, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CommentRecord>> GetForEntityAsync(EntityRef forEntity, bool includeReplies = true, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId);
+        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId);
         if (!includeReplies)
             query = query.Where(c => c.ReplyToCommentId == null);
 
@@ -97,11 +99,12 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CommentRecord>> GetRepliesAsync(Guid replyToCommentId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CommentRecord>> GetRepliesAsync(Guid replyToCommentId, Guid? tenantId = null, CancellationToken ct = default)
     {
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Comments.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(c => c.ReplyToCommentId == replyToCommentId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(ct)
@@ -111,13 +114,14 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CommentRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CommentRecord>> GetFromEntityAsync(EntityRef fromEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(fromEntity);
+        var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Comments.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(c => c.FromEntityType == fromEntity.EntityType && c.FromEntityId == fromId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(ct)
@@ -127,11 +131,12 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CommentRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<CommentRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(Tenant).Where(c => c.ForEntityType == forEntityType);
+        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.ForEntityType == forEntityType);
         if (forEntityId.HasValue)
             query = query.Where(c => c.ForEntityId == forEntityId.Value);
 
@@ -140,14 +145,15 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task AddReactionAsync(EntityRef commentRef, EntityRef fromEntity, CommentReactionType reactionType, CancellationToken ct = default)
+    public async Task AddReactionAsync(EntityRef commentRef, EntityRef fromEntity, CommentReactionType reactionType, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(commentRef);
         ArgumentHelpers.ThrowIfNull(fromEntity);
+        var tenant = ResolveTenant(tenantId);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var comment = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
+        var comment = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
         if (comment == null)
             return;
 
@@ -170,6 +176,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             }
 
             existing.ReactionType = reactionTypeInt;
+            existing.TenantId = comment.TenantId;
         }
         else {
             var reaction = new CommentReactionEntity {
@@ -179,6 +186,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
                 FromEntityType = fromEntity.EntityType,
                 FromEntityId = fromId,
                 ReactionType = reactionTypeInt,
+                TenantId = comment.TenantId,
                 CreatedTimestamp = DateTime.UtcNow
             };
 
@@ -193,10 +201,11 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task RemoveReactionAsync(EntityRef commentRef, EntityRef fromEntity, CancellationToken ct = default)
+    public async Task RemoveReactionAsync(EntityRef commentRef, EntityRef fromEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(commentRef);
         ArgumentHelpers.ThrowIfNull(fromEntity);
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
@@ -207,7 +216,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         if (existing == null)
             return;
 
-        var comment = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
+        var comment = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
         if (comment != null) {
             if (existing.ReactionType == (int)CommentReactionType.Like)
                 comment.LikeCount = Math.Max(0, comment.LikeCount - 1);
@@ -220,10 +229,11 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task<CommentReactionRecord?> GetReactionAsync(EntityRef commentRef, EntityRef fromEntity, CancellationToken ct = default)
+    public async Task<CommentReactionRecord?> GetReactionAsync(EntityRef commentRef, EntityRef fromEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(commentRef);
         ArgumentHelpers.ThrowIfNull(fromEntity);
+        _ = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
@@ -235,25 +245,26 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(Guid id, bool deleteReplies = false, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid id, bool deleteReplies = false, Guid? tenantId = null, CancellationToken ct = default)
     {
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var ids = new List<Guid>();
         if (deleteReplies)
-            ids.AddRange(await CollectDescendantIdsAsync(context, id, ct).ConfigureAwait(false));
+            ids.AddRange(await CollectDescendantIdsAsync(context, id, tenant, ct).ConfigureAwait(false));
         else
             ids.Add(id);
 
         var utc = DateTime.UtcNow;
         var toSoftDelete = new List<CommentEntity>();
         foreach (var cid in ids) {
-            var c = await context.Comments.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(x => x.Id == cid, ct).ConfigureAwait(false);
+            var c = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(x => x.Id == cid, ct).ConfigureAwait(false);
             if (c != null)
                 toSoftDelete.Add(c);
         }
 
         foreach (var c in toSoftDelete)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, c, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforeSoftDelete, c, ct).ConfigureAwait(false);
 
         foreach (var c in toSoftDelete)
             c.DeletedAt = utc;
@@ -263,24 +274,25 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         context.CommentReactions.RemoveRange(reactionsToDelete);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in toSoftDelete)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
+    public async Task DeleteForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var comments = await context.Comments.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
         var utc = DateTime.UtcNow;
         foreach (var c in comments)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, c, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforeSoftDelete, c, ct).ConfigureAwait(false);
 
         foreach (var c in comments)
             c.DeletedAt = utc;
@@ -290,7 +302,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         context.CommentReactions.RemoveRange(reactions);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in comments)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterSoftDelete, c, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -314,13 +326,13 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         }
     }
 
-    private async Task<List<Guid>> CollectDescendantIdsAsync(CommentDbContext context, Guid rootId, CancellationToken ct)
+    private static async Task<List<Guid>> CollectDescendantIdsAsync(CommentDbContext context, Guid rootId, Guid tenant, CancellationToken ct)
     {
         var all = new List<Guid> { rootId };
         var frontier = new List<Guid> { rootId };
         while (frontier.Count > 0) {
             var next = await context.Comments.WhereActive()
-                .WhereTenant(Tenant)
+                .WhereTenant(tenant)
                 .Where(c => c.ReplyToCommentId != null && frontier.Contains(c.ReplyToCommentId.Value))
                 .Select(c => c.Id)
                 .ToListAsync(ct)
@@ -340,6 +352,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
             ForEntityId = e.ForEntityId,
             FromEntityType = e.FromEntityType,
             FromEntityId = e.FromEntityId,
+            TenantId = e.TenantId,
             ReactionType = (CommentReactionType)e.ReactionType,
             CreatedTimestamp = e.CreatedTimestamp
         };

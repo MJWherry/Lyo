@@ -76,6 +76,10 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("old_values_json");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
@@ -88,6 +92,9 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
 
                     b.HasIndex("ForEntityType")
                         .HasDatabaseName("ix_changes_for_entity_type");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_changes_tenant");
 
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_changes_timestamp");

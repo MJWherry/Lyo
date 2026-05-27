@@ -143,7 +143,7 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
             return null;
         }
 
-        var user = await _users.GetByIdAsync(userId, ct).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId, tenantId: null, ct).ConfigureAwait(false);
         if (user is null) {
             _logger.LogDebug("JWT rejected: user {UserId} not found", userId);
             return null;

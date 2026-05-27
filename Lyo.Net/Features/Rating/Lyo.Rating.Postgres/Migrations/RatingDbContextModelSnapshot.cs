@@ -182,6 +182,10 @@ namespace Lyo.Rating.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("reaction_type");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ForEntityType", "ForEntityId")
@@ -190,6 +194,10 @@ namespace Lyo.Rating.Postgres.Migrations
                     b.HasIndex("ForEntityType", "ForEntityId", "FromEntityType", "FromEntityId")
                         .IsUnique()
                         .HasDatabaseName("ix_rating_reaction_for_from");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_rating_reaction_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.ToTable("rating_reaction", "rating");
                 });

@@ -23,7 +23,7 @@ public static class DiscordGuildSettingsHelper
     {
         ArgumentHelpers.ThrowIfNull(store);
         var r = GuildRef(guildId);
-        if (await store.GetBindingAsync(r, Key, ct).ConfigureAwait(false) != null)
+        if (await store.GetBindingAsync(r, Key, tenantId: null, ct).ConfigureAwait(false) != null)
             return;
 
         var defaults = new DiscordGuildSettings();
@@ -34,7 +34,7 @@ public static class DiscordGuildSettingsHelper
                     ForEntityType = r.EntityType,
                     ForEntityId = r.EntityId,
                     Value = ConfigValue.From(defaults)
-                }, ct)
+                }, tenantId: null, ct)
             .ConfigureAwait(false);
     }
 
@@ -43,13 +43,13 @@ public static class DiscordGuildSettingsHelper
     {
         ArgumentHelpers.ThrowIfNull(store);
         await EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
-        var resolved = await store.LoadConfigAsync(GuildRef(guildId), ct).ConfigureAwait(false);
+        var resolved = await store.LoadConfigAsync(GuildRef(guildId), tenantId: null, ct).ConfigureAwait(false);
         var item = resolved.Items.FirstOrDefault(i => string.Equals(i.Definition.Key, Key, StringComparison.Ordinal));
         var settings = item?.Value?.GetValue<DiscordGuildSettings>() ?? new DiscordGuildSettings();
         settings.NormalizeForRead();
-        var binding = await store.GetBindingAsync(GuildRef(guildId), Key, ct).ConfigureAwait(false);
+        var binding = await store.GetBindingAsync(GuildRef(guildId), Key, tenantId: null, ct).ConfigureAwait(false);
         if (binding != null) {
-            var revisions = await store.GetBindingRevisionsAsync(binding.Id, ct).ConfigureAwait(false);
+            var revisions = await store.GetBindingRevisionsAsync(binding.Id, tenantId: null, ct).ConfigureAwait(false);
             if (revisions.Count > 0)
                 settings.Revision = revisions[0].Revision;
         }

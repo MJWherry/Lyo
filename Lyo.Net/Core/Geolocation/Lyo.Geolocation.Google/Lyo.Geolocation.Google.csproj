@@ -11,8 +11,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Geolocation\Lyo.Geolocation.csproj"/>
-        <ProjectReference Include="..\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
         <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
     </ItemGroup>
 
 </Project>

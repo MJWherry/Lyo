@@ -54,7 +54,7 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.Kind);
         ArgumentHelpers.ThrowIfNull(request.Scopes);
         if (request.UserId.HasValue) {
-            var user = await _users.GetByIdAsync(request.UserId.Value, ct).ConfigureAwait(false);
+            var user = await _users.GetByIdAsync(request.UserId.Value, tenantId: null, ct).ConfigureAwait(false);
             if (user is null)
                 throw new InvalidOperationException($"Cannot issue token for unknown user '{request.UserId.Value}'.");
 
@@ -94,7 +94,7 @@ public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
                 RotatedFromId: request.RotatedFromId);
 
             try {
-                await _store.InsertAsync(record, ct).ConfigureAwait(false);
+                await _store.InsertAsync(record, tenantId: null, ct).ConfigureAwait(false);
                 _logger.LogInformation(
                     "Issued Lyo {Kind}/{Ring} token {TokenId} for user {UserId}",
                     request.Kind, ring, id, request.UserId);

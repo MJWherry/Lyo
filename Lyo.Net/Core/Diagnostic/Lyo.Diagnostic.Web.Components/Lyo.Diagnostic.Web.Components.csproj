@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\Lyo.Diagnostic\Lyo.Diagnostic.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

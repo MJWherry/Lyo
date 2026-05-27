@@ -98,17 +98,17 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
             return null;
         }
 
-        var user = await _users.GetByIdAsync(principal.OwnerUserId.Value, ct).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(principal.OwnerUserId.Value, tenantId: null, ct).ConfigureAwait(false);
         if (user is null || user.IsDisabled) {
             _logger.LogDebug("Refresh exchange rejected: owner user disabled or missing");
             await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, userId: principal.OwnerUserId, subject: parsed.Id, outcome: "failure", reason: user is null ? "UserNotFound" : "UserDisabled", ct: ct).ConfigureAwait(false);
             return null;
         }
 
-        var record = await _store.GetByIdAsync(parsed.Id, ct).ConfigureAwait(false);
+        var record = await _store.GetByIdAsync(parsed.Id, tenantId: null, ct).ConfigureAwait(false);
         var (provider, externalSubject) = ExtractProvider(record);
         var effectiveScopes = await ResolveEffectiveScopesAsync(user, provider, externalSubject, ct).ConfigureAwait(false);
-        await _store.RevokeAsync(parsed.Id, DateTime.UtcNow, "rotated", ct).ConfigureAwait(false);
+        await _store.RevokeAsync(parsed.Id, DateTime.UtcNow, "rotated", tenantId: null, ct).ConfigureAwait(false);
         await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRevoked, userId: user.Id, subject: parsed.Id, provider: provider, outcome: "success", reason: "rotated", ct: ct).ConfigureAwait(false);
         var issued = await _jwtIssuer.IssueAsync(
                 user: user,
@@ -129,7 +129,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
             return user.Scopes;
 
         try {
-            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject!, ct).ConfigureAwait(false);
+            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject!, tenantId: null, ct).ConfigureAwait(false);
             if (link is null || link.UserId != user.Id || !link.IsActive)
                 return user.Scopes;
 
@@ -164,7 +164,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
     private async Task HandlePossibleTheftAsync(string tokenId, CancellationToken ct)
     {
         try {
-            var record = await _store.GetByIdAsync(tokenId, ct).ConfigureAwait(false);
+            var record = await _store.GetByIdAsync(tokenId, tenantId: null, ct).ConfigureAwait(false);
             if (record is null || !record.RevokedAt.HasValue)
                 return;
 

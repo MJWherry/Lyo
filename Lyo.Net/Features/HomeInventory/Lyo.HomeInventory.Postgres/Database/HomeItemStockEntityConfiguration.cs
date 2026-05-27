@@ -11,6 +11,7 @@ public sealed class HomeItemStockEntityConfiguration : IEntityTypeConfiguration<
         builder.HasKey(e => new { e.ItemId, e.LocationId });
         builder.Property(e => e.ItemId).HasColumnName("item_id").HasColumnType("uuid");
         builder.Property(e => e.LocationId).HasColumnName("location_id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.QuantityOnHand).HasColumnType("decimal(18,4)").HasColumnName("quantity_on_hand");
         builder.Property(e => e.QuantityReserved).HasColumnType("decimal(18,4)").HasColumnName("quantity_reserved");
         builder.Property(e => e.ReorderPoint).HasColumnType("decimal(18,4)").HasColumnName("reorder_point");
@@ -18,5 +19,6 @@ public sealed class HomeItemStockEntityConfiguration : IEntityTypeConfiguration<
         builder.HasOne(e => e.Item).WithMany(e => e.StockRows).HasForeignKey(e => e.ItemId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(e => e.Location).WithMany(e => e.StockRows).HasForeignKey(e => e.LocationId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(e => e.LocationId).HasDatabaseName("ix_home_inv_stock_location");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_home_inv_stock_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

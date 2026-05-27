@@ -5,9 +5,12 @@ using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Postgres.Database;
+using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -19,14 +22,24 @@ public sealed class PostgresAuthAuditRecorder : IAuthAuditRecorder
 {
     private readonly IDbContextFactory<UserDbContext> _contextFactory;
     private readonly ILogger<PostgresAuthAuditRecorder> _logger;
+    private readonly EntityRefOptions _entityRefOptions;
+    private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new recorder.</summary>
-    public PostgresAuthAuditRecorder(IDbContextFactory<UserDbContext> contextFactory, ILogger<PostgresAuthAuditRecorder> logger)
+    public PostgresAuthAuditRecorder(
+        IDbContextFactory<UserDbContext> contextFactory,
+        ILogger<PostgresAuthAuditRecorder> logger,
+        IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresUserOptions> userOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(logger);
+        ArgumentHelpers.ThrowIfNull(entityRefOptions);
+        ArgumentHelpers.ThrowIfNull(userOptions);
         _contextFactory = contextFactory;
         _logger = logger;
+        _entityRefOptions = entityRefOptions.Value;
+        _featureTenancy = userOptions.Value.Tenancy;
     }
 
     /// <inheritdoc/>
@@ -34,12 +47,14 @@ public sealed class PostgresAuthAuditRecorder : IAuthAuditRecorder
     {
         ArgumentHelpers.ThrowIfNull(evt);
         try {
+            var resolvedTenant = TenancyResolver.Resolve(evt.TenantId, _featureTenancy, _entityRefOptions);
             await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             context.Events.Add(new UserEventEntity {
                 Id = evt.Id,
                 Timestamp = evt.Timestamp,
                 Kind = evt.Kind,
                 UserId = evt.UserId,
+                TenantId = resolvedTenant,
                 Subject = evt.Subject,
                 Provider = evt.Provider,
                 Outcome = evt.Outcome,

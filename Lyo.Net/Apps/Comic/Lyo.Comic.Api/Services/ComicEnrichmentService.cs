@@ -69,8 +69,8 @@ public sealed class ComicEnrichmentService
     {
         var entityRef = EntityRef.ForGuid(SeriesEntityType, series.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
-        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
-        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
+        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
+        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct: ct);
         var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
             ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
@@ -86,8 +86,8 @@ public sealed class ComicEnrichmentService
     {
         var entityRef = EntityRef.ForGuid(VolumeEntityType, volume.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
-        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
-        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
+        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
+        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct: ct);
         var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
             ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)
@@ -119,8 +119,8 @@ public sealed class ComicEnrichmentService
     {
         var entityRef = EntityRef.ForGuid(ChapterEntityType, chapter.Id);
         var tagsTask = _tagStore.GetTagsForEntityAsync(entityRef, ct: ct);
-        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct);
-        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct);
+        var ratingsTask = _ratingStore.GetForEntityAsync(entityRef, ct: ct);
+        var commentsTask = _commentStore.GetForEntityAsync(entityRef, false, ct: ct);
         var favoriteCountTask = _favoriteStore.GetCountForEntityAsync(entityRef, ct: ct);
         var isFavoritedTask = callerRef.HasValue
             ? _favoriteStore.IsFavoritedAsync(entityRef, callerRef.Value, ct: ct).ContinueWith(t => (bool?)t.Result, TaskContinuationOptions.ExecuteSynchronously)

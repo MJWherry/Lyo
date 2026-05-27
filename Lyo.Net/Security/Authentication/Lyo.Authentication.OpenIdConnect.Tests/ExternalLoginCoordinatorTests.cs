@@ -29,9 +29,9 @@ public sealed class ExternalLoginCoordinatorTests
         Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
         Assert.False(string.IsNullOrEmpty(result.Issued.RefreshToken));
 
-        var user = await fx.UserStore.GetByEmailAsync("alice@example.com");
+        var user = await fx.UserStore.GetByEmailAsync("alice@example.com", tenantId: null);
         Assert.NotNull(user);
-        var links = await fx.IdentityStore.ListForUserAsync(user!.Id);
+        var links = await fx.IdentityStore.ListForUserAsync(user!.Id, tenantId: null);
         Assert.Single(links);
         Assert.Equal("user-1", links[0].Subject);
     }
@@ -66,13 +66,13 @@ public sealed class ExternalLoginCoordinatorTests
             DisabledAt: null,
             DisabledReason: null);
 
-        await fx.UserStore.CreateAsync(preExisting);
+        await fx.UserStore.CreateAsync(preExisting, tenantId: null);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-3", "carol@example.com", nonce);
         var result = await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state);
         Assert.NotNull(result);
         Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
-        var links = await fx.IdentityStore.ListForUserAsync(preExisting.Id);
+        var links = await fx.IdentityStore.ListForUserAsync(preExisting.Id, tenantId: null);
         Assert.Single(links);
     }
 
@@ -158,9 +158,9 @@ public sealed class ExternalLoginCoordinatorTests
         var (sealedState1, nonce1, state1) = await fx.BuildRedirectAsync("fake");
         var code1 = fx.IssueCode("user-9", "gina@example.com", nonce1);
         await fx.Coordinator.HandleCallbackAsync("fake", code1, sealedState1, state1);
-        var user = await fx.UserStore.GetByEmailAsync("gina@example.com");
+        var user = await fx.UserStore.GetByEmailAsync("gina@example.com", tenantId: null);
         Assert.NotNull(user);
-        await fx.UserStore.SetDisabledAsync(user!.Id, DateTime.UtcNow, "compromised");
+        await fx.UserStore.SetDisabledAsync(user!.Id, DateTime.UtcNow, "compromised", tenantId: null);
         var (sealedState2, nonce2, state2) = await fx.BuildRedirectAsync("fake");
         var code2 = fx.IssueCode("user-9", "gina@example.com", nonce2);
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code2, sealedState2, state2));

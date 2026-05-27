@@ -1,7 +1,9 @@
 using Lyo.Audit.Postgres.Database;
 using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Audit.Postgres.Tests;
 
@@ -119,5 +121,100 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         Assert.Equal(2, entities.Count);
         Assert.Contains(entities, e => e.EventType == "BulkEvent1");
         Assert.Contains(entities, e => e.EventType == "BulkEvent2" && e.FromEntityType == "User" && e.FromEntityId == "actor-1");
+    }
+
+    [Fact]
+    public async Task RecordEvent_WithTenant_FiltersByTenant()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+        var evtA = new AuditEvent(EntityRef.ForKey("Doc", "doc-a"), "Created", "doc A") { TenantId = tenantA };
+        var evtB = new AuditEvent(EntityRef.ForKey("Doc", "doc-b"), "Created", "doc B") { TenantId = tenantB };
+        var evtSystem = new AuditEvent(EntityRef.ForKey("System", "system-1"), "Created", "system");
+        await _fixture.Recorder.RecordEventAsync(evtA, TestContext.Current.CancellationToken);
+        await _fixture.Recorder.RecordEventAsync(evtB, TestContext.Current.CancellationToken);
+        await _fixture.Recorder.RecordEventAsync(evtSystem, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var onlyTenantA = await context.AuditEvents.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(onlyTenantA);
+        Assert.Equal("doc-a", onlyTenantA[0].ForEntityId);
+        var onlySystem = await context.AuditEvents.WhereTenant(null).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(onlySystem);
+        Assert.Equal("system-1", onlySystem[0].ForEntityId);
+        var tenantAOrSystem = await context.AuditEvents.WhereTenantOrSystem(tenantA).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(2, tenantAOrSystem.Count);
+        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "doc-a");
+        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "system-1");
+    }
+
+    [Fact]
+    public async Task SystemOnly_PersistsNullTenantRegardlessOfCaller()
+    {
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        var recorder = new PostgresAuditRecorder(
+            factory,
+            Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresAuditOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.SystemOnly } }));
+        var evt = new AuditEvent(EntityRef.ForKey("Doc", "system-only"), "Created", "ignored tenant") { TenantId = Guid.NewGuid() };
+        await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entity = await context.AuditEvents.FirstAsync(e => e.ForEntityId == "system-only", TestContext.Current.CancellationToken);
+        Assert.Null(entity.TenantId);
+    }
+
+    [Fact]
+    public async Task MultiTenantStrict_ThrowsWhenCallerDoesNotSupplyTenant()
+    {
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        var recorder = new PostgresAuditRecorder(
+            factory,
+            Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresAuditOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.MultiTenantStrict } }));
+        var evt = new AuditEvent(EntityRef.ForKey("Doc", "strict-missing"), "Created", "no tenant");
+        await Assert.ThrowsAsync<ArgumentNullException>(() => recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task SingleTenantDefault_NullTenantUsesFeatureDefault()
+    {
+        var defaultTenant = Guid.NewGuid();
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        var recorder = new PostgresAuditRecorder(
+            factory,
+            Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresAuditOptions {
+                Tenancy = new TenancyOptions { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant }
+            }));
+        var evt = new AuditEvent(EntityRef.ForKey("Doc", "default-tenant"), "Created", "uses default");
+        await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var entity = await context.AuditEvents.FirstAsync(e => e.ForEntityId == "default-tenant", TestContext.Current.CancellationToken);
+        Assert.Equal(defaultTenant, entity.TenantId);
+    }
+
+    [Fact]
+    public async Task RecordChange_WithTenant_FiltersByTenant()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+        var changeA = new AuditChange(
+                EntityRef.ForKey("Order", "1"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 })
+            { TenantId = tenantA };
+
+        var changeB = new AuditChange(
+                EntityRef.ForKey("Order", "2"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 })
+            { TenantId = tenantB };
+
+        await _fixture.Recorder.RecordChangeAsync(changeA, TestContext.Current.CancellationToken);
+        await _fixture.Recorder.RecordChangeAsync(changeB, TestContext.Current.CancellationToken);
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var onlyTenantA = await context.AuditChanges.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(onlyTenantA);
+        Assert.Equal("1", onlyTenantA[0].ForEntityId);
+        var onlyTenantB = await context.AuditChanges.WhereTenant(tenantB).ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Single(onlyTenantB);
+        Assert.Equal("2", onlyTenantB[0].ForEntityId);
     }
 }

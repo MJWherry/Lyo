@@ -8,6 +8,9 @@ public sealed class HomeItemMovementEntity
     [Key]
     public Guid Id { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped movement.</summary>
+    public Guid? TenantId { get; set; }
+
     public Guid ItemId { get; set; }
 
     public int MovementType { get; set; }

@@ -15,6 +15,7 @@ public sealed class CommentReactionEntityConfiguration : IEntityTypeConfiguratio
         builder.Property(e => e.FromEntityType).HasMaxLength(200).IsRequired().HasColumnName("from_entity_type");
         builder.Property(e => e.FromEntityId).IsRequired().HasColumnName("from_entity_id").HasColumnType("uuid");
         builder.Property(e => e.ReactionType).HasColumnName("reaction_type");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.HasIndex(e => new {
                 e.ForEntityType,
@@ -26,5 +27,6 @@ public sealed class CommentReactionEntityConfiguration : IEntityTypeConfiguratio
             .IsUnique();
 
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_comment_reaction_for_entity");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_comment_reaction_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

@@ -7,6 +7,7 @@ using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Postgres.Stores;
 using Lyo.Authentication.Records;
+using Lyo.EntityReference.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -127,6 +128,51 @@ public sealed class PostgresAuthAuditRecorderTests
     }
 
     [Fact]
+    public async Task RecordAsync_WithTenantId_PersistsTenantOnRow()
+    {
+        var recorder = NewRecorder();
+        var tenantId = Guid.NewGuid();
+        var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: tenantId);
+        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
+
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        Assert.Equal(tenantId, row.TenantId);
+    }
+
+    [Fact]
+    public async Task RecordAsync_SystemOnlyMode_PersistsNullTenant()
+    {
+        var recorder = new PostgresAuthAuditRecorder(
+            _fixture.ContextFactory,
+            NullLogger<PostgresAuthAuditRecorder>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new EntityRefOptions()),
+            Microsoft.Extensions.Options.Options.Create(new PostgresUserOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.SystemOnly } }));
+        var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: Guid.NewGuid());
+        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
+
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var row = await ctx.Events.AsNoTracking().FirstAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        Assert.Null(row.TenantId);
+    }
+
+    [Fact]
+    public async Task RecordAsync_MultiTenantStrictMode_SwallowsErrorWhenCallerOmitsTenant()
+    {
+        var recorder = new PostgresAuthAuditRecorder(
+            _fixture.ContextFactory,
+            NullLogger<PostgresAuthAuditRecorder>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new EntityRefOptions()),
+            Microsoft.Extensions.Options.Options.Create(new PostgresUserOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.MultiTenantStrict } }));
+        var evt = NewEvent(AuthAuditEventKind.JwtIssued);
+        await recorder.RecordAsync(evt, TestContext.Current.CancellationToken);
+
+        await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var row = await ctx.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == evt.Id, TestContext.Current.CancellationToken);
+        Assert.Null(row);
+    }
+
+    [Fact]
     public async Task UserSchema_EventTable_Exists()
     {
         await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
@@ -144,13 +190,17 @@ public sealed class PostgresAuthAuditRecorderTests
     }
 
     private PostgresAuthAuditRecorder NewRecorder() =>
-        new(_fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance);
+        new(_fixture.ContextFactory,
+            NullLogger<PostgresAuthAuditRecorder>.Instance,
+            Microsoft.Extensions.Options.Options.Create(new EntityRefOptions()),
+            Microsoft.Extensions.Options.Options.Create(new PostgresUserOptions()));
 
     private static AuthAuditEvent NewEvent(
         AuthAuditEventKind kind,
         Guid? userId = null,
         string? subject = null,
         string? provider = null,
+        Guid? tenantId = null,
         IReadOnlyDictionary<string, object?>? metadata = null) =>
         new(
             Id: Guid.NewGuid(),
@@ -164,6 +214,7 @@ public sealed class PostgresAuthAuditRecorderTests
             IpAddress: "127.0.0.1",
             UserAgent: "test-runner",
             CorrelationId: "test-" + Guid.NewGuid().ToString("N"),
+            TenantId: tenantId,
             Metadata: metadata);
 
     private async Task<LyoUser> CreateUserAsync()
@@ -183,7 +234,7 @@ public sealed class PostgresAuthAuditRecorderTests
             LastLoginAt: null,
             DisabledAt: null,
             DisabledReason: null);
-        return await _fixture.UserStore.CreateAsync(user, TestContext.Current.CancellationToken);
+        return await _fixture.UserStore.CreateAsync(user, tenantId: null, TestContext.Current.CancellationToken);
     }
 
     private sealed class FakeAccessor(string ip, string ua, string corr) : IAuthAuditContextAccessor

@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Authentication.Postgres;
@@ -16,6 +17,10 @@ public sealed class PostgresUserOptions : IPostgresMigrationConfig
 
     /// <summary>Whether to run pending migrations on host startup. Set <c>false</c> in environments where DDL is managed out of band.</summary>
     public bool EnableAutoMigrations { get; set; } = false;
+
+    /// <summary>Per-feature tenancy policy. Unset properties inherit from <see cref="EntityRefOptions" />.</summary>
+    /// <remarks>Authentication tables (user/token/linked-identity/user-event) all have nullable <c>tenant_id</c> columns, so all three tenancy modes are valid.</remarks>
+    public TenancyOptions Tenancy { get; set; } = new();
 
     /// <inheritdoc />
     string IPostgresMigrationConfig.Schema => Schema;

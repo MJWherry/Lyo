@@ -19,8 +19,8 @@ public sealed class PostgresApiTokenStoreTests
     public async Task Insert_And_Get_RoundTrip()
     {
         var token = NewToken(id: NewId(), scopes: ["people.read", "people.write"]);
-        await _fixture.TokenStore.InsertAsync(token, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(token, tenantId: null, TestContext.Current.CancellationToken);
+        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, tenantId: null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
         Assert.Equal(token.Id, loaded!.Id);
         Assert.Equal(token.SecretHash, loaded.SecretHash);
@@ -34,18 +34,18 @@ public sealed class PostgresApiTokenStoreTests
     public async Task Insert_Duplicate_Throws()
     {
         var token = NewToken(id: NewId());
-        await _fixture.TokenStore.InsertAsync(token, TestContext.Current.CancellationToken);
-        await Assert.ThrowsAnyAsync<Exception>(() => _fixture.TokenStore.InsertAsync(token, TestContext.Current.CancellationToken));
+        await _fixture.TokenStore.InsertAsync(token, tenantId: null, TestContext.Current.CancellationToken);
+        await Assert.ThrowsAnyAsync<Exception>(() => _fixture.TokenStore.InsertAsync(token, tenantId: null, TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task Revoke_SetsRevokedFields()
     {
         var token = NewToken(id: NewId());
-        await _fixture.TokenStore.InsertAsync(token, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(token, tenantId: null, TestContext.Current.CancellationToken);
         var revokedAt = DateTime.UtcNow;
-        await _fixture.TokenStore.RevokeAsync(token.Id, revokedAt, "by-user", TestContext.Current.CancellationToken);
-        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.RevokeAsync(token.Id, revokedAt, "by-user", tenantId: null, TestContext.Current.CancellationToken);
+        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, tenantId: null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
         Assert.NotNull(loaded!.RevokedAt);
         Assert.Equal("by-user", loaded.RevokedReason);
@@ -55,10 +55,10 @@ public sealed class PostgresApiTokenStoreTests
     public async Task TouchLastUsed_UpdatesTimestamp()
     {
         var token = NewToken(id: NewId());
-        await _fixture.TokenStore.InsertAsync(token, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(token, tenantId: null, TestContext.Current.CancellationToken);
         var now = DateTime.UtcNow;
-        await _fixture.TokenStore.TouchLastUsedAsync(token.Id, now, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.TouchLastUsedAsync(token.Id, now, tenantId: null, TestContext.Current.CancellationToken);
+        var loaded = await _fixture.TokenStore.GetByIdAsync(token.Id, tenantId: null, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded!.LastUsedAt);
     }
 
@@ -69,9 +69,9 @@ public sealed class PostgresApiTokenStoreTests
         var other = await CreateUserAsync();
         var owned = NewToken(id: NewId(), userId: owner.Id);
         var foreign = NewToken(id: NewId(), userId: other.Id);
-        await _fixture.TokenStore.InsertAsync(owned, TestContext.Current.CancellationToken);
-        await _fixture.TokenStore.InsertAsync(foreign, TestContext.Current.CancellationToken);
-        var list = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: false, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(owned, tenantId: null, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(foreign, tenantId: null, TestContext.Current.CancellationToken);
+        var list = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: false, tenantId: null, TestContext.Current.CancellationToken);
         Assert.Single(list);
         Assert.Equal(owned.Id, list[0].Id);
     }
@@ -82,12 +82,12 @@ public sealed class PostgresApiTokenStoreTests
         var owner = await CreateUserAsync();
         var active = NewToken(id: NewId(), userId: owner.Id);
         var dead = NewToken(id: NewId(), userId: owner.Id);
-        await _fixture.TokenStore.InsertAsync(active, TestContext.Current.CancellationToken);
-        await _fixture.TokenStore.InsertAsync(dead, TestContext.Current.CancellationToken);
-        await _fixture.TokenStore.RevokeAsync(dead.Id, DateTime.UtcNow, "test", TestContext.Current.CancellationToken);
-        var visible = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: false, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(active, tenantId: null, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(dead, tenantId: null, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.RevokeAsync(dead.Id, DateTime.UtcNow, "test", tenantId: null, TestContext.Current.CancellationToken);
+        var visible = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: false, tenantId: null, TestContext.Current.CancellationToken);
         Assert.DoesNotContain(visible, t => t.Id == dead.Id);
-        var all = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: true, TestContext.Current.CancellationToken);
+        var all = await _fixture.TokenStore.ListForUserAsync(owner.Id, includeRevoked: true, tenantId: null, TestContext.Current.CancellationToken);
         Assert.Contains(all, t => t.Id == dead.Id);
     }
 
@@ -108,17 +108,17 @@ public sealed class PostgresApiTokenStoreTests
             LastLoginAt: null,
             DisabledAt: null,
             DisabledReason: null);
-        return await _fixture.UserStore.CreateAsync(user, TestContext.Current.CancellationToken);
+        return await _fixture.UserStore.CreateAsync(user, tenantId: null, TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public async Task RotatedFrom_PreservesChain()
     {
         var first = NewToken(id: NewId());
-        await _fixture.TokenStore.InsertAsync(first, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(first, tenantId: null, TestContext.Current.CancellationToken);
         var second = NewToken(id: NewId(), rotatedFromId: first.Id);
-        await _fixture.TokenStore.InsertAsync(second, TestContext.Current.CancellationToken);
-        var loaded = await _fixture.TokenStore.GetByIdAsync(second.Id, TestContext.Current.CancellationToken);
+        await _fixture.TokenStore.InsertAsync(second, tenantId: null, TestContext.Current.CancellationToken);
+        var loaded = await _fixture.TokenStore.GetByIdAsync(second.Id, tenantId: null, TestContext.Current.CancellationToken);
         Assert.Equal(first.Id, loaded!.RotatedFromId);
     }
 
@@ -126,9 +126,9 @@ public sealed class PostgresApiTokenStoreTests
     public async Task ConcurrentIssuance_AllSucceed_NoCollisions()
     {
         var ids = Enumerable.Range(0, 20).Select(_ => NewId()).ToArray();
-        await Task.WhenAll(ids.Select(id => _fixture.TokenStore.InsertAsync(NewToken(id), TestContext.Current.CancellationToken)));
+        await Task.WhenAll(ids.Select(id => _fixture.TokenStore.InsertAsync(NewToken(id), tenantId: null, TestContext.Current.CancellationToken)));
         foreach (var id in ids)
-            Assert.NotNull(await _fixture.TokenStore.GetByIdAsync(id, TestContext.Current.CancellationToken));
+            Assert.NotNull(await _fixture.TokenStore.GetByIdAsync(id, tenantId: null, TestContext.Current.CancellationToken));
     }
 
     private static string NewId()

@@ -6,7 +6,7 @@ namespace Lyo.EntityReference.Postgres.Database;
 /// EF columns for a string-keyed target entity plus optional &quot;from&quot; actor (for example change history). This is not the Option A uuid-backed
 /// <see cref="EntityRefEntityBase" /> row; use that for tenant-scoped associations with GUID ids.
 /// </summary>
-[DebuggerDisplay("{ForEntityType,nq}:{ForEntityId,nq} | From={FromEntityType,nq}:{FromEntityId,nq}")]
+[DebuggerDisplay("{ForEntityType,nq}:{ForEntityId,nq} | From={FromEntityType,nq}:{FromEntityId,nq} | Tenant={TenantId}")]
 public abstract class EntityRefOptionalFromStringAssociationBase
 {
     /// <summary>Type discriminator for the entity being referenced.</summary>
@@ -21,6 +21,9 @@ public abstract class EntityRefOptionalFromStringAssociationBase
     /// <summary>Optional actor id for <see cref="FromEntityType" />.</summary>
     public string? FromEntityId { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped row.</summary>
+    public Guid? TenantId { get; set; }
+
     /// <inheritdoc />
-    public override string ToString() => $"{GetType().Name}: For={ForEntityType}/{ForEntityId}, From={FromEntityType}/{FromEntityId}";
+    public override string ToString() => $"{GetType().Name}: For={ForEntityType}/{ForEntityId}, From={FromEntityType}/{FromEntityId}, Tenant={TenantId}";
 }

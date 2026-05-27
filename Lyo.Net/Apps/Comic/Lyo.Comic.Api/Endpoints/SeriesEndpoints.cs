@@ -116,7 +116,7 @@ public static class SeriesEndpoints
 
     private static async Task<IResult> RemoveTag(Guid id, string tag, string? tagType, string? slug, ITagStore tagStore, CancellationToken ct = default)
     {
-        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ResolveTagType(tagType), slug, ct);
+        await tagStore.RemoveTagAsync(new(EntityType, id.ToString()), tag, ResolveTagType(tagType), slug, ct: ct);
         return Results.NoContent();
     }
 
@@ -124,7 +124,7 @@ public static class SeriesEndpoints
 
     private static async Task<IResult> GetRatings(Guid id, IRatingStore ratingStore, CancellationToken ct = default)
     {
-        var ratings = await ratingStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), ct);
+        var ratings = await ratingStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), ct: ct);
         return Results.Ok(ratings);
     }
 
@@ -142,13 +142,13 @@ public static class SeriesEndpoints
             Message = req.Message
         };
 
-        await ratingStore.SaveAsync(record, ct);
+        await ratingStore.SaveAsync(record, ct: ct);
         return Results.NoContent();
     }
 
     private static async Task<IResult> GetComments(Guid id, ICommentStore commentStore, bool includeReplies = true, CancellationToken ct = default)
     {
-        var comments = await commentStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), includeReplies, ct);
+        var comments = await commentStore.GetForEntityAsync(EntityRef.ForGuid(EntityType, id), includeReplies, ct: ct);
         return Results.Ok(comments);
     }
 
@@ -164,7 +164,7 @@ public static class SeriesEndpoints
             ReplyToCommentId = req.ReplyToCommentId
         };
 
-        await commentStore.SaveAsync(record, ct);
+        await commentStore.SaveAsync(record, ct: ct);
         return Results.NoContent();
     }
 

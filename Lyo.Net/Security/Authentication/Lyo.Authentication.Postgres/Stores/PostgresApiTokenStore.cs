@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Records;
 using Lyo.Authentication.Services.Opaque;
+using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -19,14 +22,24 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
 {
     private readonly IDbContextFactory<UserDbContext> _contextFactory;
     private readonly ILogger<PostgresApiTokenStore> _logger;
+    private readonly EntityRefOptions _entityRefOptions;
+    private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new store.</summary>
-    public PostgresApiTokenStore(IDbContextFactory<UserDbContext> contextFactory, ILogger<PostgresApiTokenStore> logger)
+    public PostgresApiTokenStore(
+        IDbContextFactory<UserDbContext> contextFactory,
+        ILogger<PostgresApiTokenStore> logger,
+        IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresUserOptions> userOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(logger);
+        ArgumentHelpers.ThrowIfNull(entityRefOptions);
+        ArgumentHelpers.ThrowIfNull(userOptions);
         _contextFactory = contextFactory;
         _logger = logger;
+        _entityRefOptions = entityRefOptions.Value;
+        _featureTenancy = userOptions.Value.Tenancy;
     }
 
     /// <inheritdoc/>
@@ -51,31 +64,40 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
     }
 
     /// <inheritdoc/>
-    public async Task InsertAsync(ApiTokenRecord record, CancellationToken ct = default)
+    public async Task InsertAsync(ApiTokenRecord record, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(record);
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        context.Tokens.Add(ToEntity(record));
+        var entity = ToEntity(record);
+        entity.TenantId = resolvedTenant;
+        context.Tokens.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task<ApiTokenRecord?> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<ApiTokenRecord?> GetByIdAsync(string id, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Tokens.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Tokens.AsNoTracking()
+            .Where(t => t.TenantId == resolvedTenant)
+            .FirstOrDefaultAsync(t => t.Id == id, ct)
+            .ConfigureAwait(false);
+
         return entity is null ? null : ToRecord(entity);
     }
 
     /// <inheritdoc/>
-    public async Task TouchLastUsedAsync(string id, DateTime utcNow, CancellationToken ct = default)
+    public async Task TouchLastUsedAsync(string id, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
         try {
+            var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
             await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             var rows = await context.Tokens
-                .Where(t => t.Id == id)
+                .Where(t => t.Id == id && t.TenantId == resolvedTenant)
                 .ExecuteUpdateAsync(
                     setters => setters
                         .SetProperty(t => t.LastUsedTimestamp, utcNow)
@@ -92,12 +114,13 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAsync(string id, DateTime revokedAt, string? reason, CancellationToken ct = default)
+    public async Task RevokeAsync(string id, DateTime revokedAt, string? reason, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await context.Tokens
-            .Where(t => t.Id == id)
+            .Where(t => t.Id == id && t.TenantId == resolvedTenant)
             .ExecuteUpdateAsync(
                 setters => setters
                     .SetProperty(t => t.RevokedTimestamp, revokedAt)
@@ -111,10 +134,11 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
     }
 
     /// <inheritdoc/>
-    public async Task<IReadOnlyList<ApiTokenRecord>> ListForUserAsync(Guid userId, bool includeRevoked, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ApiTokenRecord>> ListForUserAsync(Guid userId, bool includeRevoked, Guid? tenantId, CancellationToken ct = default)
     {
+        var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tokens.AsNoTracking().Where(t => t.UserId == userId);
+        var query = context.Tokens.AsNoTracking().Where(t => t.UserId == userId && t.TenantId == resolvedTenant);
         if (!includeRevoked)
             query = query.Where(t => t.RevokedTimestamp == null);
 

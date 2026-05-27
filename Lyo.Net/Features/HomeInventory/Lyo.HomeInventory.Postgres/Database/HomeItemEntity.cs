@@ -8,6 +8,9 @@ public sealed class HomeItemEntity
     [Key]
     public Guid Id { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped item.</summary>
+    public Guid? TenantId { get; set; }
+
     [MaxLength(200)]
     public string? OwnerEntityType { get; set; }
 

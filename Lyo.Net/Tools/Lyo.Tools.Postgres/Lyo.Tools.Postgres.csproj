@@ -12,8 +12,6 @@
 
     <ItemGroup>
         <!-- Base -->
-        <ProjectReference Include="..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
-
         <!-- Core -->
         <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>

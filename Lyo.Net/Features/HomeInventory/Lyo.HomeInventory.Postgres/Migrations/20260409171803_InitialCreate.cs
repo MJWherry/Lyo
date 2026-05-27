@@ -20,6 +20,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     parent_category_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     slug = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
@@ -46,6 +47,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     parent_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
@@ -72,6 +74,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     owner_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     owner_entity_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     category_id = table.Column<Guid>(type: "uuid", nullable: true),
@@ -139,6 +142,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     item_id = table.Column<Guid>(type: "uuid", nullable: false),
                     movement_type = table.Column<int>(type: "integer", nullable: false),
                     quantity = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
@@ -183,6 +187,7 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 {
                     item_id = table.Column<Guid>(type: "uuid", nullable: false),
                     location_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     quantity_on_hand = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
                     quantity_reserved = table.Column<decimal>(type: "numeric(18,4)", nullable: false),
                     reorder_point = table.Column<decimal>(type: "numeric(18,4)", nullable: true),
@@ -218,6 +223,13 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 schema: "home_inventory",
                 table: "category",
                 column: "parent_category_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_home_inv_category_tenant",
+                schema: "home_inventory",
+                table: "category",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_home_inv_item_bt_mac",
@@ -270,6 +282,13 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 filter: "sku IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "ix_home_inv_item_tenant",
+                schema: "home_inventory",
+                table: "item",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_home_inv_location_code",
                 schema: "home_inventory",
                 table: "location",
@@ -280,6 +299,13 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 schema: "home_inventory",
                 table: "location",
                 column: "parent_location_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_home_inv_location_tenant",
+                schema: "home_inventory",
+                table: "location",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_home_inv_movement_created",
@@ -306,10 +332,24 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                 column: "to_location_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_home_inv_movement_tenant",
+                schema: "home_inventory",
+                table: "movement",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_home_inv_stock_location",
                 schema: "home_inventory",
                 table: "stock",
                 column: "location_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_home_inv_stock_tenant",
+                schema: "home_inventory",
+                table: "stock",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
         }
 
         /// <inheritdoc />

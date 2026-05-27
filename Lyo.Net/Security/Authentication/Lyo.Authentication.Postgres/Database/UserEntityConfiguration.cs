@@ -20,12 +20,13 @@ public sealed class UserEntityConfiguration : IEntityTypeConfiguration<UserEntit
         builder.Property(e => e.ScopesJson).HasColumnName("scopes_json").HasColumnType("jsonb").IsRequired();
         builder.Property(e => e.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb");
         builder.Property(e => e.PersonId).HasColumnName("person_id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnName("tenant_id").HasColumnType("uuid");
         builder.Property(e => e.CreatedTimestamp).HasColumnName("created_timestamp").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(e => e.UpdatedTimestamp).HasColumnName("updated_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.LastLoginTimestamp).HasColumnName("last_login_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.DisabledTimestamp).HasColumnName("disabled_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.DisabledReason).HasColumnName("disabled_reason").HasMaxLength(500);
-        builder.HasIndex(e => e.Email).IsUnique().HasDatabaseName("ux_user_email");
+        builder.HasIndex(e => new { e.TenantId, e.Email }).IsUnique().HasDatabaseName("ux_user_tenant_email");
         builder.HasIndex(e => e.DisabledTimestamp)
             .HasDatabaseName("ix_user_disabled_timestamp")
             .HasFilter("\"disabled_timestamp\" IS NULL");
@@ -33,5 +34,8 @@ public sealed class UserEntityConfiguration : IEntityTypeConfiguration<UserEntit
         builder.HasIndex(e => e.PersonId)
             .HasDatabaseName("ix_user_person_id")
             .HasFilter("\"person_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId)
+            .HasDatabaseName("ix_user_tenant_id")
+            .HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

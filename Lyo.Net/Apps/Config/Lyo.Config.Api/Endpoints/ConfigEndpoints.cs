@@ -22,7 +22,7 @@ internal static class ConfigEndpoints
         AppendAdvisoryPollHeader(http.Response.Headers, hostingOptions.PollIntervalAdvisoryMilliseconds);
         ResolvedConfigRecord resolvedValue;
         try {
-            resolvedValue = await store.LoadConfigAsync(refs, ct).ConfigureAwait(false);
+            resolvedValue = await store.LoadConfigAsync(refs, tenantId: null, ct).ConfigureAwait(false);
         }
         catch (InvalidOperationException ex) {
             return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict, title: "Config validation failed.");
@@ -176,7 +176,7 @@ internal static class ConfigEndpoints
             manage.MapPut(
                 "/bindings", async Task<Results<NoContent, ProblemHttpResult>> (ConfigBindingRecord binding, IConfigStore store, CancellationToken ct) => {
                     try {
-                        await store.SaveBindingAsync(binding, ct).ConfigureAwait(false);
+                        await store.SaveBindingAsync(binding, tenantId: null, ct).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException ex) {
                         return TypedResults.Problem(ex.Message, title: "Binding rejected", statusCode: StatusCodes.Status409Conflict);
@@ -187,12 +187,12 @@ internal static class ConfigEndpoints
 
             manage.MapDelete(
                 "/bindings/{bindingId:guid}", async Task<Results<NoContent, NotFound, ProblemHttpResult>> (Guid bindingId, IConfigStore store, CancellationToken ct) => {
-                    var existing = await store.GetBindingByIdAsync(bindingId, ct).ConfigureAwait(false);
+                    var existing = await store.GetBindingByIdAsync(bindingId, tenantId: null, ct).ConfigureAwait(false);
                     if (existing is null)
                         return TypedResults.NotFound();
 
                     try {
-                        await store.DeleteBindingAsync(bindingId, ct).ConfigureAwait(false);
+                        await store.DeleteBindingAsync(bindingId, tenantId: null, ct).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException ex) {
                         return TypedResults.Problem(ex.Message, title: "Delete rejected", statusCode: StatusCodes.Status409Conflict);
@@ -204,13 +204,13 @@ internal static class ConfigEndpoints
             manage.MapGet(
                 "/bindings/{bindingId:guid}/revisions",
                 async Task<Ok<IReadOnlyList<ConfigBindingRevisionRecord>>> (Guid bindingId, IConfigStore store, CancellationToken ct)
-                    => TypedResults.Ok(await store.GetBindingRevisionsAsync(bindingId, ct).ConfigureAwait(false)));
+                    => TypedResults.Ok(await store.GetBindingRevisionsAsync(bindingId, tenantId: null, ct).ConfigureAwait(false)));
 
             manage.MapPost(
                 "/bindings/{bindingId:guid}/revert",
                 async Task<Results<NoContent, ProblemHttpResult>> (Guid bindingId, RevertRevisionDto body, IConfigStore store, CancellationToken ct) => {
                     try {
-                        await store.RevertBindingToRevisionAsync(bindingId, body.Revision, ct).ConfigureAwait(false);
+                        await store.RevertBindingToRevisionAsync(bindingId, body.Revision, tenantId: null, ct).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException ex) {
                         return TypedResults.Problem(ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);
@@ -225,7 +225,7 @@ internal static class ConfigEndpoints
                     if (!AppConfigEntity.TryCreate(appKind, appId, out var refs, out var msg))
                         return TypedResults.BadRequest(msg);
 
-                    var list = await store.GetBindingsAsync(refs, ct).ConfigureAwait(false);
+                    var list = await store.GetBindingsAsync(refs, tenantId: null, ct).ConfigureAwait(false);
                     return TypedResults.Ok(list);
                 });
 
@@ -242,7 +242,7 @@ internal static class ConfigEndpoints
                     if (string.IsNullOrWhiteSpace(key))
                         return TypedResults.BadRequest("Key segment is required.");
 
-                    return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), ct).ConfigureAwait(false));
+                    return TypedResults.Ok(await store.GetBindingRevisionsAsync(refs, Uri.UnescapeDataString(key.Trim()), tenantId: null, ct).ConfigureAwait(false));
                 });
 
             manage.MapPost(
@@ -260,7 +260,7 @@ internal static class ConfigEndpoints
                         return TypedResults.BadRequest("Key segment is required.");
 
                     try {
-                        await store.RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, ct).ConfigureAwait(false);
+                        await store.RevertBindingToRevisionAsync(refs, Uri.UnescapeDataString(key.Trim()), body.Revision, tenantId: null, ct).ConfigureAwait(false);
                     }
                     catch (InvalidOperationException ex) {
                         return TypedResults.Problem(ex.Message, title: "Revert rejected", statusCode: StatusCodes.Status409Conflict);

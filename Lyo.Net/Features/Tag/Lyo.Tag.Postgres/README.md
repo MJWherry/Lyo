@@ -96,10 +96,31 @@ await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId)
 
 ## Schema
 
-- **tag.tag** – `id` (uuid), `for_entity_type`, `for_entity_id`, `tag`, `from_entity_type`, `from_entity_id`, `created_timestamp`
+- **tag.tag** – `id` (uuid), `for_entity_type`, `for_entity_id`, `tag`, `from_entity_type`, `from_entity_id`, `tenant_id` (uuid), `created_timestamp`
 - Unique index on (for_entity_type, for_entity_id, tag)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
+
+## Tenancy
+
+`PostgresTagStore` accepts an optional `Guid? tenantId` on every read/write
+method (mirroring `IFavoriteStore`) and resolves it through `TenancyResolver`
+under the policy configured in `PostgresTagOptions.Tenancy` (inheriting from
+`EntityRefOptions.Mode` when unset). The `tenant_id` column is non-null, so only
+`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is
+rejected at store construction. The store applies a `WhereTenant` filter on
+every query. See
+[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
+for the full policy matrix and `appsettings.json` snippet.
+
+```json
+{
+  "PostgresTag": {
+    "ConnectionString": "Host=localhost;Database=lyo;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
 
 ## Dependencies
 

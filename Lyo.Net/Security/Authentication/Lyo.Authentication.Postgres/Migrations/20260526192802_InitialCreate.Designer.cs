@@ -68,6 +68,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("subject");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UnlinkedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("unlinked_timestamp");
@@ -85,12 +89,16 @@ namespace Lyo.Authentication.Postgres.Migrations
                     b.HasIndex("Provider")
                         .HasDatabaseName("ix_linked_identity_provider");
 
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_linked_identity_tenant_id")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_linked_identity_user_id");
 
-                    b.HasIndex("Provider", "Subject")
+                    b.HasIndex("TenantId", "Provider", "Subject")
                         .IsUnique()
-                        .HasDatabaseName("ux_linked_identity_provider_subject")
+                        .HasDatabaseName("ux_linked_identity_tenant_provider_subject")
                         .HasFilter("\"unlinked_timestamp\" IS NULL");
 
                     b.ToTable("linked_identity", "user");
@@ -161,6 +169,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasColumnType("bytea")
                         .HasColumnName("secret_hash");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -176,6 +188,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasFilter("\"expires_timestamp\" IS NOT NULL");
 
                     b.HasIndex("RotatedFromId");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_token_tenant_id")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.HasIndex("Kind", "Ring")
                         .HasDatabaseName("ix_token_kind_ring");
@@ -251,6 +267,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("scopes_json");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -261,9 +281,9 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasDatabaseName("ix_user_disabled_timestamp")
                         .HasFilter("\"disabled_timestamp\" IS NULL");
 
-                    b.HasIndex("Email")
+                    b.HasIndex("TenantId", "Email")
                         .IsUnique()
-                        .HasDatabaseName("ux_user_email");
+                        .HasDatabaseName("ux_user_tenant_email");
 
                     b.HasIndex("LastLoginTimestamp")
                         .IsDescending()
@@ -272,6 +292,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                     b.HasIndex("PersonId")
                         .HasDatabaseName("ix_user_person_id")
                         .HasFilter("\"person_id\" IS NOT NULL");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_user_tenant_id")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.ToTable("user", "user");
                 });
@@ -322,6 +346,10 @@ namespace Lyo.Authentication.Postgres.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("subject");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
@@ -339,6 +367,10 @@ namespace Lyo.Authentication.Postgres.Migrations
 
                     b.HasIndex("Kind")
                         .HasDatabaseName("ix_user_event_kind");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_user_event_tenant_id")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.HasIndex("Timestamp")
                         .IsDescending()

@@ -16,13 +16,12 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
 
     private readonly IDbContextFactory<NoteDbContext> _contextFactory;
 
-    private Guid Tenant => ResolveTenant(null);
-
     public PostgresNoteStore(
         IDbContextFactory<NoteDbContext> contextFactory,
         IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresNoteOptions> noteOptions,
         IEnumerable<IEntityRefActionInterceptor>? interceptors = null)
-        : base(entityRefOptions, interceptors)
+        : base(entityRefOptions, noteOptions?.Value.Tenancy ?? throw new ArgumentNullException(nameof(noteOptions)), interceptors)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         _contextFactory = contextFactory;
@@ -50,23 +49,24 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     }
 
     /// <inheritdoc />
-    public async Task SaveAsync(NoteRecord note, CancellationToken ct = default)
+    public async Task SaveAsync(NoteRecord note, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(note);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(note.ForEntity);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(note.FromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (note.Id != default) {
-            var existing = await context.Notes.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(n => n.Id == note.Id, ct).ConfigureAwait(false);
+            var existing = await context.Notes.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == note.Id, ct).ConfigureAwait(false);
             if (existing != null) {
                 existing.ForEntityType = note.ForEntityType;
                 existing.ForEntityId = forId;
                 existing.FromEntityType = note.FromEntityType;
                 existing.FromEntityId = fromId;
                 existing.Content = note.Content;
-                await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforePersist, existing, ct).ConfigureAwait(false);
+                await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforePersist, existing, ct).ConfigureAwait(false);
                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterPersist, existing, ct).ConfigureAwait(false);
+                await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterPersist, existing, ct).ConfigureAwait(false);
                 return;
             }
         }
@@ -77,34 +77,36 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
             ForEntityId = forId,
             FromEntityType = note.FromEntityType,
             FromEntityId = fromId,
-            TenantId = Tenant,
+            TenantId = tenant,
             Content = note.Content,
             Visibility = string.IsNullOrWhiteSpace(note.Visibility) ? EntityRefVisibility.Private : note.Visibility,
             CreatedAt = note.CreatedAt == default ? DateTime.UtcNow : note.CreatedAt
         };
 
-        await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
+        await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforePersist, entity, ct).ConfigureAwait(false);
         context.Notes.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
+        await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterPersist, entity, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<NoteRecord?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<NoteRecord?> GetByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
     {
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Notes.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Notes.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<NoteRecord>> GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
+    public async Task<IReadOnlyList<NoteRecord>> GetForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
             .OrderBy(n => n.CreatedAt)
             .ToListAsync(ct)
@@ -114,13 +116,14 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<NoteRecord>> GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)
+    public async Task<IReadOnlyList<NoteRecord>> GetFromEntityAsync(EntityRef fromEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(fromEntity);
+        var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(n => n.FromEntityType == fromEntity.EntityType && n.FromEntityId == fromId)
             .OrderBy(n => n.CreatedAt)
             .ToListAsync(ct)
@@ -130,11 +133,12 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<NoteRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<NoteRecord>> GetForEntityTypeAsync(string forEntityType, Guid? forEntityId = null, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Notes.WhereActive().WhereTenant(Tenant).Where(n => n.ForEntityType == forEntityType);
+        var query = context.Notes.WhereActive().WhereTenant(tenant).Where(n => n.ForEntityType == forEntityType);
         if (forEntityId.HasValue)
             query = query.Where(n => n.ForEntityId == forEntityId.Value);
 
@@ -143,40 +147,42 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     }
 
     /// <inheritdoc />
-    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task DeleteAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
     {
+        var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Notes.WhereActive().WhereTenant(Tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Notes.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == id, ct).ConfigureAwait(false);
         if (entity != null) {
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, entity, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforeSoftDelete, entity, ct).ConfigureAwait(false);
             entity.DeletedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, entity, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterSoftDelete, entity, ct).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc />
-    public async Task DeleteForEntityAsync(EntityRef forEntity, CancellationToken ct = default)
+    public async Task DeleteForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
+        var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
-            .WhereTenant(Tenant)
+            .WhereTenant(tenant)
             .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
         var utc = DateTime.UtcNow;
         foreach (var e in entities)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforeSoftDelete, e, ct).ConfigureAwait(false);
 
         foreach (var e in entities)
             e.DeletedAt = utc;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var e in entities)
-            await RunInterceptorsAsync(ModuleKey, Tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
+            await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.AfterSoftDelete, e, ct).ConfigureAwait(false);
     }
 
     private static NoteRecord ToRecord(NoteEntity e)

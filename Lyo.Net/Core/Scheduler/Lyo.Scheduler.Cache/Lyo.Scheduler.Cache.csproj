@@ -10,9 +10,9 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.1,)"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 
 </Project>

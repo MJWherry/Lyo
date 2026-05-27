@@ -19,6 +19,9 @@ public sealed class UserEventEntity
     /// <summary>Optional Lyo user the event is about. Soft FK to <c>[user].[user].id</c>.</summary>
     public Guid? UserId { get; set; }
 
+    /// <summary>Optional tenant scope. <see langword="null" /> means system / no tenant; non-null indicates a tenant-scoped event.</summary>
+    public Guid? TenantId { get; set; }
+
     /// <summary>Free-form subject id (token id, handoff id, external sub, …).</summary>
     public string? Subject { get; set; }
 

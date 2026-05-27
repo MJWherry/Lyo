@@ -10,6 +10,7 @@ public sealed class HomeLocationEntityConfiguration : IEntityTypeConfiguration<H
         builder.ToTable("location");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.ParentLocationId).HasColumnName("parent_location_id").HasColumnType("uuid");
         builder.Property(e => e.Name).HasMaxLength(300).IsRequired().HasColumnName("name");
         builder.Property(e => e.Code).HasMaxLength(100).HasColumnName("code");
@@ -20,5 +21,6 @@ public sealed class HomeLocationEntityConfiguration : IEntityTypeConfiguration<H
         builder.HasOne(e => e.Parent).WithMany(e => e.Children).HasForeignKey(e => e.ParentLocationId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(e => e.ParentLocationId).HasDatabaseName("ix_home_inv_location_parent");
         builder.HasIndex(e => e.Code).HasDatabaseName("ix_home_inv_location_code");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_home_inv_location_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

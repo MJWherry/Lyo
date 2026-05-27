@@ -11,11 +11,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
         <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\..\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>
         <ProjectReference Include="..\Lyo.ChangeTracker\Lyo.ChangeTracker.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

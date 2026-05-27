@@ -12,8 +12,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Lyo.Testing\Lyo.Testing.csproj"/>
-        <ProjectReference Include="..\Lyo.Lock\Lyo.Lock.csproj"/>
         <ProjectReference Include="..\Lyo.Lock.Redis\Lyo.Lock.Redis.csproj"/>
+        <ProjectReference Include="..\Lyo.Lock\Lyo.Lock.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

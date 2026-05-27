@@ -11,18 +11,17 @@
         <PackageReference Include="MetadataExtractor" Version="2.9.0"/>
         <PackageReference Include="SkiaSharp" Version="3.*"/>
         <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.*"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Lyo.Images\Lyo.Images.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
-        <ProjectReference Include="..\Lyo.Images\Lyo.Images.csproj"/>
     </ItemGroup>
 
 

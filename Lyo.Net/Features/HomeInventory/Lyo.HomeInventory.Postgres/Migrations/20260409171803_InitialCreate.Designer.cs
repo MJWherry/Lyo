@@ -61,6 +61,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -69,6 +73,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
 
                     b.HasIndex("ParentCategoryId")
                         .HasDatabaseName("ix_home_inv_category_parent");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_home_inv_category_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.HasIndex("Name", "ParentCategoryId")
                         .HasDatabaseName("ix_home_inv_category_name_parent");
@@ -244,6 +252,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("Upc")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
@@ -300,6 +312,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasDatabaseName("ux_home_inv_item_sku")
                         .HasFilter("sku IS NOT NULL");
 
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_home_inv_item_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
+
                     b.HasIndex("OwnerEntityType", "OwnerEntityId")
                         .HasDatabaseName("ix_home_inv_item_owner");
 
@@ -341,6 +357,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("parent_location_id");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -352,6 +372,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
 
                     b.HasIndex("ParentLocationId")
                         .HasDatabaseName("ix_home_inv_location_parent");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_home_inv_location_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.ToTable("location", "home_inventory");
                 });
@@ -403,6 +427,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("reference_number");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<Guid?>("ToLocationId")
                         .HasColumnType("uuid")
                         .HasColumnName("to_location_id");
@@ -416,6 +444,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
 
                     b.HasIndex("ItemId")
                         .HasDatabaseName("ix_home_inv_movement_item");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_home_inv_movement_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.HasIndex("ToLocationId");
 
@@ -444,6 +476,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
                         .HasColumnType("decimal(18,4)")
                         .HasColumnName("reorder_point");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTime>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -452,6 +488,10 @@ namespace Lyo.HomeInventory.Postgres.Migrations
 
                     b.HasIndex("LocationId")
                         .HasDatabaseName("ix_home_inv_stock_location");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_home_inv_stock_tenant")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
 
                     b.ToTable("stock", "home_inventory");
                 });

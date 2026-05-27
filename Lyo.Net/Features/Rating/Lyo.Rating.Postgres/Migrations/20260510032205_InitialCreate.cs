@@ -57,6 +57,7 @@ namespace Lyo.Rating.Postgres.Migrations
                     from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     from_entity_id = table.Column<Guid>(type: "uuid", nullable: false),
                     reaction_type = table.Column<int>(type: "integer", nullable: false),
+                    tenant_id = table.Column<Guid>(type: "uuid", nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -113,6 +114,13 @@ namespace Lyo.Rating.Postgres.Migrations
                 table: "rating_reaction",
                 columns: new[] { "for_entity_type", "for_entity_id", "from_entity_type", "from_entity_id" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_rating_reaction_tenant",
+                schema: "rating",
+                table: "rating_reaction",
+                column: "tenant_id",
+                filter: "\"tenant_id\" IS NOT NULL");
         }
 
         /// <inheritdoc />

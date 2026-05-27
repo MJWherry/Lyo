@@ -34,6 +34,7 @@ class Project:
     rel_path: str
     abs_path: Path
     refs: list[str] = field(default_factory=list)
+    package_refs: list[tuple[str, str]] = field(default_factory=list)
 
 
 def load_slnx_projects() -> list[Project]:
@@ -75,6 +76,26 @@ def parse_refs(p: Project) -> None:
             continue
         seen.add(target_name)
         p.refs.append(target_name)
+
+    # NuGet / external packages. Version may be missing under Central Package
+    # Management; store empty string in that case.
+    pkg_seen: set[tuple[str, str]] = set()
+    for pkg in root.iter("PackageReference"):
+        include = pkg.attrib.get("Include")
+        if not include:
+            continue
+        version = pkg.attrib.get("Version", "")
+        # Some csprojs use a child element, e.g.
+        #   <PackageReference Include="X"><Version>1.2.3</Version></PackageReference>
+        if not version:
+            v_el = pkg.find("Version")
+            if v_el is not None and v_el.text:
+                version = v_el.text.strip()
+        key = (include, version)
+        if key in pkg_seen:
+            continue
+        pkg_seen.add(key)
+        p.package_refs.append(key)
 
 
 def is_test_like(name: str) -> bool:
@@ -124,11 +145,65 @@ AREA_STROKE = {
 # ---------------------------------------------------------------------------
 
 
+def _transitive_projects(p: Project, name_to_proj: dict[str, Project]) -> list[str]:
+    """All Lyo projects reachable from `p` via ProjectReference (excluding `p`)."""
+    visited: set[str] = set()
+    stack: list[str] = [r for r in p.refs if r in name_to_proj and r != p.name]
+    while stack:
+        cur = stack.pop()
+        if cur in visited:
+            continue
+        visited.add(cur)
+        nxt = name_to_proj.get(cur)
+        if nxt is None:
+            continue
+        for r in nxt.refs:
+            if r in name_to_proj and r != p.name and r not in visited:
+                stack.append(r)
+    return sorted(visited)
+
+
+def _aggregate_packages(
+    names: list[str], name_to_proj: dict[str, Project]
+) -> list[dict]:
+    """Union of (package, version) pairs across the given projects."""
+    versions_by_pkg: dict[str, set[str]] = defaultdict(set)
+    for n in names:
+        proj = name_to_proj.get(n)
+        if proj is None:
+            continue
+        for pkg, ver in proj.package_refs:
+            versions_by_pkg[pkg].add(ver)
+    out: list[dict] = []
+    for pkg in sorted(versions_by_pkg):
+        versions = sorted(v for v in versions_by_pkg[pkg] if v)
+        # If every entry was empty, keep a single empty placeholder so the UI
+        # can still list the package name.
+        if not versions and "" in versions_by_pkg[pkg]:
+            versions = [""]
+        out.append({"name": pkg, "versions": versions})
+    return out
+
+
 def build_graph_data(projects: list[Project]) -> dict:
     name_to_proj = {p.name: p for p in projects}
     by_area: dict[str, int] = defaultdict(int)
     for p in projects:
         by_area[top_area(p.folder)] += 1
+
+    # Per-project transitive Lyo closure (sorted by area then name) and
+    # transitive package union.
+    area_of = {p.name: top_area(p.folder) for p in projects}
+    transitive_lyo: dict[str, list[str]] = {}
+    transitive_pkgs: dict[str, list[dict]] = {}
+    for p in projects:
+        names = _transitive_projects(p, name_to_proj)
+        names.sort(key=lambda n: (
+            AREA_ORDER.index(area_of[n]) if area_of.get(n) in AREA_ORDER else 99,
+            n,
+        ))
+        transitive_lyo[p.name] = names
+        transitive_pkgs[p.name] = _aggregate_packages([p.name] + names, name_to_proj)
 
     serial_projects = [
         {
@@ -136,6 +211,12 @@ def build_graph_data(projects: list[Project]) -> dict:
             "area": top_area(p.folder),
             "folder": p.folder.strip("/") or "(root)",
             "refs": [r for r in p.refs if r in name_to_proj],
+            "directPackages": [
+                {"name": pkg, "versions": [ver] if ver else [""]}
+                for pkg, ver in sorted(set(p.package_refs))
+            ],
+            "transitiveLyo": transitive_lyo[p.name],
+            "transitivePackages": transitive_pkgs[p.name],
         }
         for p in projects
     ]
@@ -223,16 +304,74 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   }
   #info {
     position: absolute; right: 16px; bottom: 60px;
-    max-width: 360px;
+    width: 380px; max-width: calc(100vw - 32px);
+    max-height: 65vh;
     background: var(--bg-elev); border: 1px solid var(--border);
     border-radius: 8px; padding: 12px 14px;
     font-size: 12px; line-height: 1.5;
     box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    display: none;
+    display: none; flex-direction: column;
   }
-  #info h3 { margin: 0 0 6px 0; font-size: 13px; color: var(--accent); }
+  #info.open { display: flex; }
+  #info h3 { margin: 0; font-size: 13px; color: var(--accent); }
+  #info .meta { color: var(--text-dim); font-size: 11px; margin-bottom: 8px; }
+  #info .header-row {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 4px 0;
+  }
+  #info .back {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 8px; cursor: pointer; font-size: 12px;
+    font-family: inherit; line-height: 1.2;
+  }
+  #info .back:hover { color: var(--accent); border-color: var(--accent); }
+  #info .back[hidden] { display: none; }
   #info ul { margin: 4px 0 0 16px; padding: 0; }
   #info li { margin: 1px 0; }
+  #info .empty { color: var(--text-dim); font-style: italic; }
+  #info .tabs {
+    display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  }
+  #info .tab {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid transparent; border-radius: 6px;
+    padding: 3px 8px; font-size: 12px; cursor: pointer;
+    font-family: inherit;
+  }
+  #info .tab:hover { color: var(--text); }
+  #info .tab.active {
+    color: var(--text); background: #2c3038;
+    border-color: var(--accent);
+  }
+  #info .tabpanel {
+    overflow-y: auto; flex: 1 1 auto; min-height: 0;
+    padding-right: 2px;
+  }
+  #info .pkg-row {
+    display: flex; gap: 6px; align-items: baseline;
+    flex-wrap: wrap; margin: 2px 0;
+  }
+  #info .pkg-name { color: var(--text); }
+  #info .proj-link {
+    cursor: pointer; color: var(--accent);
+    text-decoration: none; border-bottom: 1px dotted transparent;
+  }
+  #info .proj-link:hover { border-bottom-color: var(--accent); }
+  #info .proj-link:focus { outline: 1px dashed var(--accent); outline-offset: 2px; }
+  #info .ver {
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: #cfd3da; background: #2c3038;
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 0 5px;
+  }
+  #info .ver.multi { border-color: #d79b00; }
+  #info .section + .section { margin-top: 10px; }
+  #info .section h4 {
+    margin: 0 0 4px 0; font-size: 12px; color: var(--text);
+    font-weight: 600;
+  }
   .kbd { font-family: ui-monospace, monospace; background: #2c3038;
          border: 1px solid var(--border); border-radius: 4px;
          padding: 1px 5px; font-size: 11px; }
@@ -427,6 +566,7 @@ function loadOverview() {
   setCrumb('<b>Areas overview</b> &mdash; click an area to drill in');
   setStatus(DATA.areas.length + ' areas');
   hideInfo();
+  if (typeof resetNav === 'function') resetNav();
 }
 
 function loadArea(area) {
@@ -441,20 +581,21 @@ function loadArea(area) {
   setCrumb('<b>' + area + '</b> &mdash; click a project to focus on it');
   setStatus(n + ' nodes, ' + e + ' edges');
   hideInfo();
+  // Note: no resetNav here. _showProject() calls loadArea internally when
+  // jumping across areas, and we want to preserve the navigation stack
+  // across that transition. Manual page changes (via the dropdown / overview
+  // button) reset navigation in their own click handlers.
 }
 
 // ----- Interactions --------------------------------------------------------
 cy.on('tap', 'node[kind="area"]', evt => loadArea(evt.target.data('area')));
 
 cy.on('tap', 'node[kind="project"], node[kind="external"]', evt => {
-  const node = evt.target;
-  highlightNeighborhood(node);
-  showInfo(node);
-  focusOnNode(node);
+  jumpToProject(evt.target.id());
 });
 
 cy.on('tap', evt => {
-  if (evt.target === cy) { unfocus(); clearHighlight(); hideInfo(); }
+  if (evt.target === cy) { unfocus(); clearHighlight(); hideInfo(); resetNav(); }
 });
 
 function highlightNeighborhood(node) {
@@ -545,26 +686,172 @@ function unfocus() {
   focused = false;
 }
 
+function projLink(name) {
+  const n = escapeHtml(name);
+  return '<span class="proj-link" data-jump="' + n + '" tabindex="0" role="link">' +
+         n + '</span>';
+}
+
+function listSection(title, items) {
+  if (!items.length) {
+    return '<div class="section"><h4>' + escapeHtml(title) + ' (0)</h4>' +
+           '<div class="empty">none</div></div>';
+  }
+  return '<div class="section"><h4>' + escapeHtml(title) +
+         ' (' + items.length + ')</h4>' +
+         '<ul>' + items.map(r => '<li>' + projLink(r) + '</li>').join('') +
+         '</ul></div>';
+}
+
+function packageSection(title, pkgs) {
+  if (!pkgs.length) {
+    return '<div class="section"><h4>' + escapeHtml(title) + ' (0)</h4>' +
+           '<div class="empty">none</div></div>';
+  }
+  const rows = pkgs.map(pkg => {
+    const versions = (pkg.versions && pkg.versions.length)
+      ? pkg.versions
+      : [''];
+    const multi = versions.length > 1;
+    const chips = versions.map(v => {
+      const label = v ? escapeHtml(v) : '<i>unspecified</i>';
+      return '<span class="ver' + (multi ? ' multi' : '') + '">' + label + '</span>';
+    }).join('');
+    return '<div class="pkg-row"><span class="pkg-name">' +
+           escapeHtml(pkg.name) + '</span>' + chips + '</div>';
+  }).join('');
+  return '<div class="section"><h4>' + escapeHtml(title) +
+         ' (' + pkgs.length + ')</h4>' + rows + '</div>';
+}
+
 function showInfo(node) {
   const info = document.getElementById('info');
   const name = node.id();
   const p = projectByName[name];
-  if (!p) { info.style.display = 'none'; return; }
-  const directRefs = p.refs;
+  if (!p) { info.classList.remove('open'); return; }
+
+  const directRefs = p.refs || [];
   const directDeps = DATA.projects.filter(q => q.refs.includes(name)).map(q => q.name);
+  const directPkgs = p.directPackages || [];
+  const transLyo   = p.transitiveLyo || [];
+  const transPkgs  = p.transitivePackages || [];
+
+  const directHtml =
+    listSection('Depends on', directRefs) +
+    listSection('Depended on by', directDeps) +
+    packageSection('Direct packages', directPkgs);
+
+  const lyoHtml = transLyo.length
+    ? listSection('Transitive Lyo projects', transLyo)
+    : '<div class="empty">No transitive Lyo dependencies.</div>';
+
+  const pkgHtml = transPkgs.length
+    ? packageSection('Transitive packages', transPkgs)
+    : '<div class="empty">No transitive packages reachable from this project.</div>';
+
   info.innerHTML =
-    '<h3>' + escapeHtml(name) + '</h3>' +
-    '<div style="color:var(--text-dim)">' + escapeHtml(p.folder) + ' &middot; ' + escapeHtml(p.area) + '</div>' +
-    '<div style="margin-top:8px;"><b>Depends on (' + directRefs.length + ')</b>' +
-      (directRefs.length ? ('<ul>' + directRefs.map(r => '<li>' + escapeHtml(r) + '</li>').join('') + '</ul>') : '') +
+    '<div class="header-row">' +
+      '<button class="back" id="info-back" title="Back" hidden>&larr;</button>' +
+      '<h3>' + escapeHtml(name) + '</h3>' +
     '</div>' +
-    '<div style="margin-top:8px;"><b>Depended on by (' + directDeps.length + ')</b>' +
-      (directDeps.length ? ('<ul>' + directDeps.map(r => '<li>' + escapeHtml(r) + '</li>').join('') + '</ul>') : '') +
-    '</div>';
-  info.style.display = 'block';
+    '<div class="meta">' + escapeHtml(p.folder) + ' &middot; ' + escapeHtml(p.area) + '</div>' +
+    '<div class="tabs">' +
+      '<button class="tab active" data-tab="direct">Direct (' +
+        (directRefs.length + directDeps.length + directPkgs.length) + ')</button>' +
+      '<button class="tab" data-tab="lyo">Transitive Lyo (' + transLyo.length + ')</button>' +
+      '<button class="tab" data-tab="pkg">Transitive packages (' + transPkgs.length + ')</button>' +
+    '</div>' +
+    '<div class="tabpanel" data-tab="direct">' + directHtml + '</div>' +
+    '<div class="tabpanel" data-tab="lyo" hidden>' + lyoHtml + '</div>' +
+    '<div class="tabpanel" data-tab="pkg" hidden>' + pkgHtml + '</div>';
+
+  info.classList.add('open');
+
+  info.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const which = btn.getAttribute('data-tab');
+      info.querySelectorAll('.tab').forEach(b => b.classList.toggle('active',
+        b.getAttribute('data-tab') === which));
+      info.querySelectorAll('.tabpanel').forEach(p => {
+        if (p.getAttribute('data-tab') === which) p.removeAttribute('hidden');
+        else p.setAttribute('hidden', '');
+      });
+    });
+  });
 }
 
-function hideInfo() { document.getElementById('info').style.display = 'none'; }
+function hideInfo() { document.getElementById('info').classList.remove('open'); }
+
+// ----- Back-navigation history --------------------------------------------
+let navHistory = [];   // previous project names (oldest -> newest)
+let navCurrent = null; // project currently shown in the panel
+
+function refreshBackButton() {
+  const back = document.getElementById('info-back');
+  if (!back) return;
+  if (navHistory.length) back.removeAttribute('hidden');
+  else back.setAttribute('hidden', '');
+}
+
+function _showProject(name) {
+  const target = projectByName[name];
+  if (!target) return false;
+  // If the target isn't currently in the graph, switch to its home area first.
+  let n = cy.getElementById(name);
+  if (n.empty() && target.area) {
+    loadArea(target.area);
+    n = cy.getElementById(name);
+  }
+  if (n.empty()) return false;
+  highlightNeighborhood(n);
+  showInfo(n);
+  focusOnNode(n);
+  refreshBackButton();
+  return true;
+}
+
+function jumpToProject(name) {
+  if (!_showProject(name)) return;
+  if (navCurrent && navCurrent !== name) navHistory.push(navCurrent);
+  navCurrent = name;
+  refreshBackButton();
+}
+
+function navBack() {
+  if (!navHistory.length) return;
+  const prev = navHistory.pop();
+  if (_showProject(prev)) navCurrent = prev;
+  refreshBackButton();
+}
+
+function resetNav() {
+  navHistory = [];
+  navCurrent = null;
+  refreshBackButton();
+}
+
+document.getElementById('info').addEventListener('click', evt => {
+  const back = evt.target.closest('#info-back');
+  if (back) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    navBack();
+    return;
+  }
+  const link = evt.target.closest('.proj-link');
+  if (!link) return;
+  evt.preventDefault();
+  evt.stopPropagation();
+  jumpToProject(link.getAttribute('data-jump'));
+});
+
+document.getElementById('info').addEventListener('keydown', evt => {
+  if (evt.key !== 'Enter' && evt.key !== ' ') return;
+  const link = evt.target.closest('.proj-link');
+  if (!link) return;
+  evt.preventDefault();
+  jumpToProject(link.getAttribute('data-jump'));
+});
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
@@ -579,11 +866,14 @@ for (const a of DATA.areas) {
   o.value = a; o.textContent = a + ' (' + DATA.byArea[a] + ')';
   sel.appendChild(o);
 }
-sel.addEventListener('change', () => { if (sel.value) loadArea(sel.value); sel.value = ''; });
+sel.addEventListener('change', () => {
+  if (sel.value) { resetNav(); loadArea(sel.value); }
+  sel.value = '';
+});
 
 document.getElementById('overview-btn').onclick = loadOverview;
 document.getElementById('reset-btn').onclick = () => {
-  unfocus(); clearHighlight(); hideInfo();
+  unfocus(); clearHighlight(); hideInfo(); resetNav();
 };
 
 const search = document.getElementById('search');

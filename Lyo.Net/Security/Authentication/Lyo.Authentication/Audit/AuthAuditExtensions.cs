@@ -24,6 +24,7 @@ public static class AuthAuditExtensions
         string? outcome = null,
         string? reason = null,
         IReadOnlyDictionary<string, object?>? metadata = null,
+        Guid? tenantId = null,
         CancellationToken ct = default)
     {
         var evt = new AuthAuditEvent(
@@ -38,7 +39,8 @@ public static class AuthAuditExtensions
             IpAddress: context?.IpAddress,
             UserAgent: context?.UserAgent,
             CorrelationId: context?.CorrelationId,
-            Metadata: metadata);
+            Metadata: metadata,
+            TenantId: tenantId);
 
         return SafeRecordAsync(recorder, evt, logger, ct);
     }

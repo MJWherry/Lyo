@@ -1,8 +1,10 @@
 using Lyo.Audit.Postgres.Database;
+using Lyo.EntityReference.Models;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Audit.Postgres.Tests;
 
@@ -27,7 +29,10 @@ public sealed class AuditPostgresFixture : PostgresContainerFixtureBase
         await using var context = await factory.CreateDbContextAsync(cancellationToken);
         await context.Database.MigrateAsync(cancellationToken);
         var recorderFactory = ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        Recorder = new PostgresAuditRecorder(recorderFactory);
+        Recorder = new PostgresAuditRecorder(
+            recorderFactory,
+            Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresAuditOptions()));
     }
 
     protected override ValueTask OnContainerDisposingAsync(CancellationToken cancellationToken)

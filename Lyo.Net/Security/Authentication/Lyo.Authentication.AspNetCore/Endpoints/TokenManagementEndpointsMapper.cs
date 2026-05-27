@@ -59,7 +59,7 @@ public static class TokenManagementEndpointsMapper
         if (!TryResolveUser(ctx, out var userId))
             return Results.Unauthorized();
 
-        var tokens = await store.ListForUserAsync(userId, includeRevoked ?? false, ctx.RequestAborted).ConfigureAwait(false);
+        var tokens = await store.ListForUserAsync(userId, includeRevoked ?? false, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.Json(tokens.Select(MapForDisplay).ToArray());
     }
 
@@ -124,14 +124,14 @@ public static class TokenManagementEndpointsMapper
         if (!TryResolveUser(ctx, out var userId))
             return Results.Unauthorized();
 
-        var record = await store.GetByIdAsync(id, ctx.RequestAborted).ConfigureAwait(false);
+        var record = await store.GetByIdAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         if (record is null)
             return Results.NotFound();
 
         if (record.UserId != userId)
             return Results.Forbid();
 
-        await store.RevokeAsync(id, DateTime.UtcNow, "revoked_by_owner", ctx.RequestAborted).ConfigureAwait(false);
+        await store.RevokeAsync(id, DateTime.UtcNow, "revoked_by_owner", tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.NoContent();
     }
 

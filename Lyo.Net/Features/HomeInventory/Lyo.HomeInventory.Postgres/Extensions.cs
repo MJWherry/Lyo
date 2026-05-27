@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.HomeInventory.Postgres.Database;
 using Lyo.Postgres;
@@ -42,6 +43,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
+            services.AddOptions<EntityRefOptions>();
             services.AddSingleton(Options.Create(options));
             services.AddPostgresMigrations<HomeInventoryDbContext, PostgresHomeInventoryOptions>();
             services.AddDbContextFactory<HomeInventoryDbContext>(dbOpts => dbOpts.UseNpgsql(

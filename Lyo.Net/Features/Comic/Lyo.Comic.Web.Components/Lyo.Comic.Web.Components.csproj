@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Comic\Lyo.Comic.csproj"/>
-        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
     </ItemGroup>
 

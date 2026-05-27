@@ -1,9 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Lyo.Audit.Postgres.Database;
+using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Audit.Postgres;
 
@@ -11,13 +14,24 @@ namespace Lyo.Audit.Postgres;
 public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
 {
     private readonly IDbContextFactory<AuditDbContext> _contextFactory;
+    private readonly EntityRefOptions _entityRefOptions;
+    private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new PostgresAuditRecorder.</summary>
-    /// <param name="contextFactory">Factory for creating AuditDbContext instances</param>
-    public PostgresAuditRecorder(IDbContextFactory<AuditDbContext> contextFactory)
+    /// <param name="contextFactory">Factory for creating AuditDbContext instances.</param>
+    /// <param name="entityRefOptions">Global EntityRef options (default tenant, mode).</param>
+    /// <param name="auditOptions">Per-feature audit options (carries the audit-specific <see cref="TenancyOptions" />).</param>
+    public PostgresAuditRecorder(
+        IDbContextFactory<AuditDbContext> contextFactory,
+        IOptions<EntityRefOptions> entityRefOptions,
+        IOptions<PostgresAuditOptions> auditOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
+        ArgumentHelpers.ThrowIfNull(entityRefOptions);
+        ArgumentHelpers.ThrowIfNull(auditOptions);
         _contextFactory = contextFactory;
+        _entityRefOptions = entityRefOptions.Value;
+        _featureTenancy = auditOptions.Value.Tenancy;
     }
 
     /// <inheritdoc />
@@ -121,7 +135,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
         }
     }
 
-    private static AuditChangeEntity ToEntity(AuditChange change)
+    private AuditChangeEntity ToEntity(AuditChange change)
         => new() {
             Id = change.Id,
             Timestamp = change.Timestamp,
@@ -129,11 +143,12 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
             ForEntityId = change.Entity.EntityId,
             FromEntityType = change.Actor?.EntityType,
             FromEntityId = change.Actor?.EntityId,
+            TenantId = TenancyResolver.Resolve(change.TenantId, _featureTenancy, _entityRefOptions),
             OldValuesJson = SerializeDict(change.OldValues),
             ChangedPropertiesJson = SerializeDict(change.ChangedProperties)
         };
 
-    private static AuditEventEntity ToEntity(AuditEvent evt)
+    private AuditEventEntity ToEntity(AuditEvent evt)
         => new() {
             Id = evt.Id,
             EventType = evt.EventType,
@@ -142,6 +157,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
             ForEntityId = evt.Subject.EntityId,
             FromEntityType = evt.Actor?.EntityType,
             FromEntityId = evt.Actor?.EntityId,
+            TenantId = TenancyResolver.Resolve(evt.TenantId, _featureTenancy, _entityRefOptions),
             Message = evt.Message,
             MetadataJson = evt.Metadata is { Count: > 0 } ? SerializeDict(evt.Metadata) : null
         };

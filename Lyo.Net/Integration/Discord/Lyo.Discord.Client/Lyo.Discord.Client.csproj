@@ -9,13 +9,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\Lyo.Discord.Models\Lyo.Discord.Models.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
-        <ProjectReference Include="..\Lyo.Discord.Models\Lyo.Discord.Models.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
     </ItemGroup>
 

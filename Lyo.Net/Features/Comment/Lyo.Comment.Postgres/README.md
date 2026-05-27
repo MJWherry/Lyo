@@ -114,8 +114,32 @@ Schema name: `comment` (`PostgresCommentOptions.Schema`).
   `is_edited`, and `updated_timestamp`.
 - **comment.comment_reaction** — `id` (uuid), `for_entity_type` (always
   `"Comment"`), `for_entity_id` (the parent comment id), `from_entity_type`,
-  `from_entity_id` (uuid), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
+  `from_entity_id` (uuid), `tenant_id` (nullable uuid, inherited from the parent
+  comment at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
   `created_timestamp`.
+
+## Tenancy
+
+`PostgresCommentStore` accepts an optional `Guid? tenantId` on every
+read/write method (mirroring `IFavoriteStore`) and resolves it through
+`TenancyResolver` under the policy configured in
+`PostgresCommentOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when
+unset). The comment `tenant_id` column is non-null, so only
+`SingleTenantDefault` and `MultiTenantStrict` modes are valid — `SystemOnly` is
+rejected at store construction. The store applies a `WhereTenant` filter on
+every query, and reactions inherit the parent comment's `TenantId` on insert
+so the sub-table stays consistent with the parent. See
+[`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy)
+for the full policy matrix and `appsettings.json` snippet.
+
+```json
+{
+  "PostgresComment": {
+    "ConnectionString": "Host=localhost;Database=lyo;...",
+    "Tenancy": { "Mode": "MultiTenantStrict" }
+  }
+}
+```
 
 ## Dependencies
 

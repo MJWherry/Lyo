@@ -4,6 +4,7 @@ using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Postgres.Stores;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
+using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +52,7 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString, nameof(options.ConnectionString));
             services.AddSingleton(MsOptions.Create(options));
+            services.AddOptions<EntityRefOptions>();
             services.AddPostgresMigrations<UserDbContext, PostgresUserOptions>();
             services.AddDbContextFactory<UserDbContext>(dbOpts => dbOpts.UseNpgsql(
                 options.ConnectionString,

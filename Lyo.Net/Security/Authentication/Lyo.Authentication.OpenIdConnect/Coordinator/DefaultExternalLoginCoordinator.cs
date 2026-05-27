@@ -136,28 +136,28 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
         if (_options.RequireVerifiedEmail && !mapping.EmailVerified)
             throw new ExternalLoginRejectedException("EmailNotVerified", $"{provider.Name} reported email_verified=false");
 
-        var link = await _identities.FindByProviderSubjectAsync(provider.Name, subject!, ct).ConfigureAwait(false);
+        var link = await _identities.FindByProviderSubjectAsync(provider.Name, subject!, tenantId: null, ct).ConfigureAwait(false);
         LyoUser user;
         var newlyProvisioned = false;
         if (link is null) {
             user = await ResolveOrProvisionAsync(provider, mapping, claims, ct).ConfigureAwait(false);
-            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, ct).ConfigureAwait(false);
+            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, tenantId: null, ct).ConfigureAwait(false);
             _logger.LogInformation("Provisioned and linked Lyo user {UserId} for {Provider}", user.Id, provider.Name);
             newlyProvisioned = true;
             await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.UserProvisioned, userId: user.Id, subject: subject, provider: provider.Name, outcome: "success", ct: ct).ConfigureAwait(false);
             await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.IdentityLinked, userId: user.Id, subject: subject, provider: provider.Name, outcome: "success", ct: ct).ConfigureAwait(false);
         }
         else {
-            user = await _users.GetByIdAsync(link.UserId, ct).ConfigureAwait(false)
+            user = await _users.GetByIdAsync(link.UserId, tenantId: null, ct).ConfigureAwait(false)
                 ?? throw new ExternalLoginRejectedException("UserNotProvisioned", "linked Lyo user not found");
 
             if (user.IsDisabled)
                 throw new ExternalLoginRejectedException("UserDisabled", "Lyo user is disabled");
 
-            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, ct).ConfigureAwait(false);
+            link = await _identities.LinkAsync(user.Id, provider.Name, subject!, mapping.Email, mapping.ProviderScopes, claims, tenantId: null, ct).ConfigureAwait(false);
         }
 
-        await _users.UpdateLastLoginAsync(user.Id, DateTime.UtcNow, ct).ConfigureAwait(false);
+        await _users.UpdateLastLoginAsync(user.Id, DateTime.UtcNow, tenantId: null, ct).ConfigureAwait(false);
         var effective = EffectiveScopes(user, link);
         var issued = await _jwtIssuer.IssueAsync(user, effective, provider.Name, subject, includeRefresh: true, ct).ConfigureAwait(false);
         await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.ExternalLoginSucceeded, userId: user.Id, subject: subject, provider: provider.Name, outcome: "success", reason: newlyProvisioned ? "jit_provisioned" : null, ct: ct).ConfigureAwait(false);
@@ -189,7 +189,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
                 if (string.IsNullOrWhiteSpace(mapping.Email))
                     throw new ExternalLoginRejectedException("UserNotProvisioned", "no email and policy=RequireExistingUser");
 
-                return await _users.GetByEmailAsync(mapping.Email!, ct).ConfigureAwait(false)
+                return await _users.GetByEmailAsync(mapping.Email!, tenantId: null, ct).ConfigureAwait(false)
                     ?? throw new ExternalLoginRejectedException("UserNotProvisioned", "no pre-existing Lyo user with that email");
             }
 
@@ -223,7 +223,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
         if (string.IsNullOrWhiteSpace(mapping.Email))
             throw new ExternalLoginRejectedException("UserNotProvisioned", $"{providerName} returned no email; cannot provision");
 
-        var existing = await _users.GetByEmailAsync(mapping.Email!, ct).ConfigureAwait(false);
+        var existing = await _users.GetByEmailAsync(mapping.Email!, tenantId: null, ct).ConfigureAwait(false);
         if (existing is not null)
             return existing;
 
@@ -247,7 +247,7 @@ public sealed class DefaultExternalLoginCoordinator : IExternalLoginCoordinator
             DisabledAt: null,
             DisabledReason: null);
 
-        return await _users.CreateAsync(user, ct).ConfigureAwait(false);
+        return await _users.CreateAsync(user, tenantId: null, ct).ConfigureAwait(false);
     }
 
     private static IReadOnlyList<string> EffectiveScopes(LyoUser user, LinkedIdentity link)

@@ -21,5 +21,6 @@ public sealed class AuditChangeEntityConfiguration : IEntityTypeConfiguration<Au
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId, e.Timestamp }).HasDatabaseName("ix_audit_changes_for_entity_timestamp");
         builder.HasIndex(e => e.ForEntityType).HasDatabaseName("ix_audit_changes_for_entity_type");
         builder.HasIndex(e => new { e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_audit_changes_from_entity");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_audit_changes_tenant");
     }
 }

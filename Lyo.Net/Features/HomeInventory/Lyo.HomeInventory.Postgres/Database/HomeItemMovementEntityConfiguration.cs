@@ -10,6 +10,7 @@ public sealed class HomeItemMovementEntityConfiguration : IEntityTypeConfigurati
         builder.ToTable("movement");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.ItemId).HasColumnName("item_id").HasColumnType("uuid");
         builder.Property(e => e.MovementType).HasColumnName("movement_type");
         builder.Property(e => e.Quantity).HasColumnType("decimal(18,4)").HasColumnName("quantity");
@@ -25,5 +26,6 @@ public sealed class HomeItemMovementEntityConfiguration : IEntityTypeConfigurati
         builder.HasOne(e => e.ToLocation).WithMany(e => e.MovementsTo).HasForeignKey(e => e.ToLocationId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(e => e.ItemId).HasDatabaseName("ix_home_inv_movement_item");
         builder.HasIndex(e => e.CreatedTimestamp).HasDatabaseName("ix_home_inv_movement_created");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_home_inv_movement_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }
