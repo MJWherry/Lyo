@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
 /// A mapping between a Lyo user and an external OIDC identity (a single <c>(provider, subject)</c> tuple). Backed by the <c>[user].[linked_identity]</c> table when persisted via

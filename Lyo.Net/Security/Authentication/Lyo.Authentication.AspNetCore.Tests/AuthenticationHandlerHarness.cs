@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Format;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Keystore;
 using Microsoft.AspNetCore.Builder;

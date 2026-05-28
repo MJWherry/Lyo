@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 
 namespace Lyo.Authentication.OpenIdConnect.Coordinator;
 

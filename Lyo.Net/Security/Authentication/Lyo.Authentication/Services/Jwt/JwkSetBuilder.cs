@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Options;
 using Lyo.Exceptions;
 using Lyo.Keystore;

@@ -3,7 +3,7 @@ using Lyo.Encryption.Security;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
+namespace Lyo.Encryption.XChaCha20Poly1305;
 
 internal static class XChaCha20Poly1305Helper
 {

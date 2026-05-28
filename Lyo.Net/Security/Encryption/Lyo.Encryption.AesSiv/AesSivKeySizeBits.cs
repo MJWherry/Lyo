@@ -1,4 +1,4 @@
-namespace Lyo.Encryption.Symmetric.Aes.AesSiv;
+namespace Lyo.Encryption.AesSiv;
 
 /// <summary>AES-SIV key sizes per RFC 5297 (Dorssel.Security.Cryptography.AesExtra): 256/384/512-bit keys (32/48/64 bytes).</summary>
 public enum AesSivKeySizeBits

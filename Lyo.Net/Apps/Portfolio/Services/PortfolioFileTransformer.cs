@@ -11,18 +11,18 @@ using Lyo.Compression.Snappier;
 using Lyo.Compression.XZ;
 using Lyo.Compression.Zstd;
 using Lyo.Encryption;
+using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
-using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
-using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
+using Lyo.Encryption.XChaCha20Poly1305;
 using Lyo.Exceptions;
 using Lyo.Hashing;
 using Lyo.Keystore;
 using Lyo.Result;
 using Microsoft.AspNetCore.Components.Forms;
-using AesSivKeySizeBits = Lyo.Encryption.Symmetric.Aes.AesSiv.AesSivKeySizeBits;
+using AesSivKeySizeBits = Lyo.Encryption.AesSiv.AesSivKeySizeBits;
 
 namespace Lyo.Portfolio.Services;
 

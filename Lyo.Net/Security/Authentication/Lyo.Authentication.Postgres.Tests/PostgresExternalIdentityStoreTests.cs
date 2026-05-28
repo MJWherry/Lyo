@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 
 namespace Lyo.Authentication.Postgres.Tests;
 

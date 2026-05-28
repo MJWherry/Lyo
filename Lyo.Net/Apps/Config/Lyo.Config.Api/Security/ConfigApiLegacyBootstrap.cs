@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

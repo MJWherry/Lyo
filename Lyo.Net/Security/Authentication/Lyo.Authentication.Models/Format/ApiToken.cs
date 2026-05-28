@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.Format;
+namespace Lyo.Authentication.Models.Format;
 
 /// <summary>A parsed Format-B Lyo token. Produced by <see cref="ApiTokenCodec.TryParse"/>.</summary>
 /// <param name="Plaintext">The original wire string. Held briefly during validation, never persisted.</param>

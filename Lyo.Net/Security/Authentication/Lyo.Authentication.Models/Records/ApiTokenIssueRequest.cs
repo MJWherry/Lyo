@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The request shape for <see cref="Services.Opaque.IApiTokenIssuer.IssueAsync"/>.</summary>
 /// <param name="Kind">One of <see cref="Format.ApiTokenKind"/>. Determines display routing (PATs vs internal vs webhook).</param>

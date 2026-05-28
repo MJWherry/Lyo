@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Scopes;
 using Microsoft.AspNetCore.Authorization;
 

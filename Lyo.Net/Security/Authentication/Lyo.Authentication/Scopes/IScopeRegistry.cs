@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Lyo.Authentication.Models.Scopes;
 
 namespace Lyo.Authentication.Scopes;
 

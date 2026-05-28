@@ -1,13 +1,13 @@
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Records;
+using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.AesGcm;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Exceptions;
-using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
-using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
+using Lyo.Encryption.XChaCha20Poly1305;
 using Lyo.Keystore;
 
 namespace Lyo.Encryption.Tests;

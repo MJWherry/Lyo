@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Lyo.Exceptions;
 
-namespace Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
+namespace Lyo.Encryption.XChaCha20Poly1305;
 
 /// <summary>HChaCha20 per RFC 8439 §2.3 (used by XChaCha20-Poly1305 subkey derivation).</summary>
 internal static class HChaCha20

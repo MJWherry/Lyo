@@ -5,7 +5,7 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Lyo.Encryption.Symmetric.Aes.AesCcm;
+namespace Lyo.Encryption.AesCcm;
 
 internal static class AesCcmHelper
 {

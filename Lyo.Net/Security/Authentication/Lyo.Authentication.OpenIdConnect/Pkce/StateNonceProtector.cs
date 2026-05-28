@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.DataProtection;
 

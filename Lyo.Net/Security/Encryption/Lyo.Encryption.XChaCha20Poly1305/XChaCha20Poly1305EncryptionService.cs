@@ -6,7 +6,7 @@ using Lyo.Encryption.Security;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
-namespace Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
+namespace Lyo.Encryption.XChaCha20Poly1305;
 
 /// <summary>XChaCha20-Poly1305 (24-byte nonce, 32-byte key, 128-bit tag). Portable implementation uses HChaCha20 subkey derivation and BouncyCastle ChaCha20-Poly1305 (IETF).</summary>
 public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize

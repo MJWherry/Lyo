@@ -1,4 +1,3 @@
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.Keystore;

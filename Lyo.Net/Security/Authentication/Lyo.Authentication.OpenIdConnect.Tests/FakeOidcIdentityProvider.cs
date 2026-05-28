@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;

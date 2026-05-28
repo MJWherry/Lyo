@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.Format;
+namespace Lyo.Authentication.Models.Format;
 
 /// <summary>Well-known values for the <c>kind</c> segment of a Format-B Lyo token (`lyo_&lt;kind&gt;_&lt;ring&gt;_&lt;id&gt;_&lt;secret&gt;`).</summary>
 /// <remarks>Stored as plain string in the database to remain forward-compatible; consumers can introduce additional kinds without a migration.</remarks>

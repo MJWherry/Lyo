@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Lyo.Authentication.Scopes;
+namespace Lyo.Authentication.Models.Scopes;
 
 /// <summary>A registered authorization scope. Names are <c>{resource}.{action}</c> lowercase dot-notation (e.g. <c>people.read</c>, <c>config.admin</c>).</summary>
 /// <param name="Name">The wire name. Must be lowercase ASCII with optional dot separators.</param>

@@ -1,7 +1,7 @@
 using System.Text;
 using Lyo.Common.Records;
+using Lyo.Encryption.AesSiv;
 using Lyo.Encryption.Extensions;
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
 using Lyo.Keystore;
 using Lyo.Keystore.KeyDerivation;
 

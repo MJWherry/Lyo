@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Stores;
-using Lyo.Authentication.Records;
 using Lyo.EntityReference.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 

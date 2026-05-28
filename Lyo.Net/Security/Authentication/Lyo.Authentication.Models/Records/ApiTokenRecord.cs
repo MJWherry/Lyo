@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The persistent shape of a Format-B token. Backed by the <c>[user].[token]</c> table when persisted via <c>Lyo.Authentication.Postgres</c>.</summary>
 /// <param name="Id">The 11-character Crockford base32 id (PK).</param>

@@ -1,4 +1,4 @@
-namespace Lyo.Authentication.Format;
+namespace Lyo.Authentication.Models.Format;
 
 /// <summary>Well-known values for the <c>ring</c> segment of a Format-B Lyo token. Identifies which deployment ring the token was issued for.</summary>
 /// <remarks>Validators MUST reject tokens whose ring does not match the runtime ring to prevent dev/test credentials from accidentally working in production.</remarks>

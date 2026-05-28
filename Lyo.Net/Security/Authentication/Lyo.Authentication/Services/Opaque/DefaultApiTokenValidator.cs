@@ -1,8 +1,8 @@
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
-using Lyo.Authentication.Records;
 using Lyo.Authentication.Services.Users;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;

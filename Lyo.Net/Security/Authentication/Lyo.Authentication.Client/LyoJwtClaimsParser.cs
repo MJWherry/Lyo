@@ -9,5 +9,5 @@ namespace Lyo.Authentication.Client;
 public static class LyoJwtClaimsParser
 {
     /// <inheritdoc cref="Records.LyoJwtClaimsParser.Parse(string)"/>
-    public static IReadOnlyList<Claim> Parse(string jwt) => Records.LyoJwtClaimsParser.Parse(jwt);
+    public static IReadOnlyList<Claim> Parse(string jwt) => Models.Records.LyoJwtClaimsParser.Parse(jwt);
 }

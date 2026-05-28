@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyo.Authentication.Client;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
 using Lyo.Exceptions;
@@ -87,7 +87,7 @@ public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
             return false;
         }
 
-        var claims = Lyo.Authentication.Records.LyoJwtClaimsParser.Parse(refreshed.AccessToken);
+        var claims = Lyo.Authentication.Models.Records.LyoJwtClaimsParser.Parse(refreshed.AccessToken);
         session.Update(
             accessToken: refreshed.AccessToken,
             refreshToken: refreshed.RefreshToken,

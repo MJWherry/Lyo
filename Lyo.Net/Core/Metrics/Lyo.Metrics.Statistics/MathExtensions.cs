@@ -3,7 +3,7 @@ using Lyo.Mathematics.Functions;
 using Lyo.Mathematics.Models;
 using Lyo.Metrics.Models;
 
-namespace Lyo.Metrics;
+namespace Lyo.Metrics.Statistics;
 
 /// <summary>Convenience helpers that apply math/statistics functions to recorded metrics data.</summary>
 public static class MathExtensions

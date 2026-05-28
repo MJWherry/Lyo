@@ -6,7 +6,7 @@ using Lyo.Encryption.Security;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
-namespace Lyo.Encryption.Symmetric.Aes.AesCcm;
+namespace Lyo.Encryption.AesCcm;
 
 /// <summary>AES-CCM authenticated encryption (12-byte nonce, 128-bit tag). On all target frameworks the implementation uses BouncyCastle for identical wire-format behavior.</summary>
 public class AesCcmEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize

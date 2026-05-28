@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>A Lyo-internal user. Backed by the <c>[user].[user]</c> table when persisted via <c>Lyo.Authentication.Postgres</c>.</summary>
 /// <param name="Id">Stable Lyo user identifier. Forms the <c>sub</c> claim on issued JWTs (<c>lyo_user:&lt;guid&gt;</c>).</param>

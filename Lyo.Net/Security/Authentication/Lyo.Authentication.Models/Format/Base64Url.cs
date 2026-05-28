@@ -1,7 +1,6 @@
-using System;
 using Lyo.Exceptions;
 
-namespace Lyo.Authentication.Format;
+namespace Lyo.Authentication.Models.Format;
 
 /// <summary>Base64url (RFC 4648 §5) without padding. Used both for the Format-B opaque token <c>secret</c> segment and for Lyo JWT components.</summary>
 public static class Base64Url

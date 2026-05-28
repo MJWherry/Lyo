@@ -1,4 +1,3 @@
-using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.Keystore;

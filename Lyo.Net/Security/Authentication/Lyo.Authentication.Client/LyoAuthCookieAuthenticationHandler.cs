@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using LyoClaimNames = Lyo.Authentication.Records.LyoJwtClaims;
+using LyoClaimNames = Lyo.Authentication.Models.Records.LyoJwtClaims;
 
 namespace Lyo.Authentication.Client;
 

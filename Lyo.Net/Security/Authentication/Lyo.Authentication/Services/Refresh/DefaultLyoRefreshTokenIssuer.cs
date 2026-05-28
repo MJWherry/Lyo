@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Format;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Exceptions;
 

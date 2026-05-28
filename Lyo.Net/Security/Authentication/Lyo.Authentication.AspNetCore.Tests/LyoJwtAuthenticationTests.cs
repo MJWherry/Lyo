@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Users;
 using Microsoft.Extensions.DependencyInjection;

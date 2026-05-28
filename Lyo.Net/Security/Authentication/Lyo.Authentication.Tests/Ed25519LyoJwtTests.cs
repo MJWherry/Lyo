@@ -1,8 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
-using Lyo.Authentication.Records;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Security;

@@ -1,7 +1,6 @@
-using System;
 using Lyo.Exceptions;
 
-namespace Lyo.Authentication.Format;
+namespace Lyo.Authentication.Models.Format;
 
 /// <summary>
 /// Crockford base32 encoder/decoder. Used for the <c>id</c> segment of a Format-B Lyo token: 64 random bits encoded as 11 lowercase characters (no padding, no

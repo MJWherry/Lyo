@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Lyo.Authentication.Exceptions;
+using Lyo.Authentication.Models.Scopes;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Scopes;

@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Authentication.Models.Format;
 using Lyo.Common.Security;
 using Lyo.Exceptions;
 using Lyo.Hashing;

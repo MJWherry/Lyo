@@ -1,6 +1,4 @@
-using System;
-
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The result of <see cref="Services.Jwt.ILyoJwtIssuer.IssueAsync"/>: an access JWT, a paired refresh token, and their expirations.</summary>
 /// <param name="AccessToken">The compact-serialized Lyo JWT (<c>header.payload.signature</c>).</param>

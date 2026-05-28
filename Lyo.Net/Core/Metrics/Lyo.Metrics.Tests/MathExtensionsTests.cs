@@ -1,4 +1,5 @@
 using Lyo.Metrics.Models;
+using Lyo.Metrics.Statistics;
 
 namespace Lyo.Metrics.Tests;
 

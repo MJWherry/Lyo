@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Json;
-using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
 /// Projects a Lyo-signed JWT payload into a <see cref="ClaimsIdentity"/> for cookie-based or in-browser authentication.

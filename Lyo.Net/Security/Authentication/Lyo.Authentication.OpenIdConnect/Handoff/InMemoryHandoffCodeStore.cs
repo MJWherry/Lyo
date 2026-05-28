@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Handoff;

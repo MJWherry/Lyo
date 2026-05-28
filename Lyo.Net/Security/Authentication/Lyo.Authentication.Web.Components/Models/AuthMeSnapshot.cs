@@ -1,4 +1,4 @@
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Records;
 
 namespace Lyo.Authentication.Web.Components.Models;
 

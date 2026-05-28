@@ -6,7 +6,7 @@ using Lyo.Encryption.Security;
 using Lyo.Exceptions;
 using Lyo.Keystore;
 
-namespace Lyo.Encryption.Symmetric.Aes.AesSiv;
+namespace Lyo.Encryption.AesSiv;
 
 /// <summary>
 /// AES-SIV (RFC 5297) via Dorssel.Security.Cryptography.AesExtra. The 16-byte synthetic IV is stored in the header "nonce" field; ciphertext is the CTR payload only (no

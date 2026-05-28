@@ -2,6 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Authentication.Format;
+using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;

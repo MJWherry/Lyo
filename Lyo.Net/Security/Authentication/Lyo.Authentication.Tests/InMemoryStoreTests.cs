@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Lyo.Authentication.Format;
-using Lyo.Authentication.Records;
+using Lyo.Authentication.Models.Format;
+using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
 
@@ -16,7 +17,7 @@ public class InMemoryStoreTests
         var (plaintext, id, hash) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
         var record = new ApiTokenRecord(
             id, hash, ApiTokenKind.Pat, ApiTokenRing.Live,
-            UserId: Guid.NewGuid(), DisplayName: "test", Scopes: new[] { "people.read" }, Metadata: null,
+            UserId: Guid.NewGuid(), DisplayName: "test", Scopes: ["people.read"], Metadata: null,
             CreatedAt: DateTime.UtcNow, UpdatedAt: null, ExpiresAt: null, LastUsedAt: null,
             RevokedAt: null, RevokedReason: null, RotatedFromId: null);
 

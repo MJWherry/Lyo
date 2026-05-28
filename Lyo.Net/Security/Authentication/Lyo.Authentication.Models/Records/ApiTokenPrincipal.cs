@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-
-namespace Lyo.Authentication.Records;
+namespace Lyo.Authentication.Models.Records;
 
 /// <summary>The successfully-validated form of a Format-B token. Consumed by the ASP.NET Core handler to project into a <see cref="System.Security.Claims.ClaimsPrincipal"/>.</summary>
 /// <param name="TokenId">The 11-char token id (becomes the <c>lyo:token_id</c> claim).</param>

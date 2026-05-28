@@ -1,8 +1,6 @@
 using Lyo.Encryption.AesCcm;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.TwoKey;
-using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.XChaCha20Poly1305;
 using Lyo.Keystore;
 using Microsoft.Extensions.DependencyInjection;
