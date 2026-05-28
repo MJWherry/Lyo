@@ -302,8 +302,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     --text: #e6e8ec;
     --text-dim: #9aa0a8;
     --accent: #7aa2f7;
-    --sidebar-w: 400px;
-    --sidebar-collapsed-w: 36px;
+    --sidebar-w: 260px;
+    --sidebar-collapsed-w: 32px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
@@ -359,6 +359,33 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     overflow: hidden;
   }
   #sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+  #sidebar.resizing { transition: none; }
+  #sidebar-resize {
+    flex-shrink: 0;
+    width: 6px;
+    cursor: col-resize;
+    touch-action: none;
+    background: transparent;
+    position: relative;
+  }
+  #sidebar-resize::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+    opacity: 0.6;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  #sidebar-resize:hover::before,
+  #sidebar.resizing #sidebar-resize::before {
+    opacity: 1;
+    background: var(--accent);
+  }
+  #sidebar:not(.resizable) #sidebar-resize,
+  #sidebar.collapsed #sidebar-resize { display: none; }
   #sidebar-toggle {
     flex-shrink: 0;
     width: var(--sidebar-collapsed-w);
@@ -377,8 +404,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     flex: 1; min-width: 0;
     display: flex; flex-direction: column;
     font-size: 12px; line-height: 1.5;
-    padding: 12px 14px;
+    padding: 10px 10px;
     overflow: hidden;
+  }
+  #info h3 {
+    margin: 0; font-size: 13px; color: var(--accent);
+    word-break: break-word;
+    line-height: 1.3;
   }
   #sidebar.collapsed #info { display: none; }
   #info .sidebar-empty {
@@ -386,7 +418,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     font-size: 12px; padding: 8px 4px;
     line-height: 1.5;
   }
-  #info h3 { margin: 0; font-size: 13px; color: var(--accent); }
   #info .meta { color: var(--text-dim); font-size: 11px; margin-bottom: 8px; }
   #info .header-row {
     display: flex; align-items: center; gap: 8px;
@@ -467,7 +498,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     padding: 3px 0; border-bottom: 1px solid #2a2e36;
   }
   #info .dep-row.dep-hidden { display: none; }
-  #info .dep-row .dep-name { color: var(--text); }
+  #info .dep-row .dep-name {
+    color: var(--text);
+    word-break: break-word;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
   #info .tag {
     font-family: ui-monospace, monospace; font-size: 9px;
     line-height: 1.4; padding: 0 5px; border-radius: 3px;
@@ -521,6 +557,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
   <aside id="sidebar" class="collapsed">
     <button type="button" id="sidebar-toggle" title="Toggle details panel" aria-expanded="false">&lsaquo;</button>
+    <div id="sidebar-resize" role="separator" aria-orientation="vertical"
+         aria-label="Resize details panel" title="Drag to resize"></div>
     <div id="info">
       <div class="sidebar-empty">Click a project to inspect dependencies.</div>
     </div>
@@ -533,6 +571,30 @@ const FILLS = DATA.fills;
 
 const projectByName = {};
 for (const p of DATA.projects) projectByName[p.name] = p;
+
+/** Allow Cytoscape to wrap long dotted names inside the node bubble. */
+function wrapGraphLabel(name) {
+  return name ? name.replace(/\./g, '.\u200b') : name;
+}
+
+function labelMaxWidthForCount(n) {
+  if (n <= 12) return 220;
+  if (n <= 30) return 180;
+  if (n <= 60) return 150;
+  return 120;
+}
+
+function applyGraphLabelSizing(nodes) {
+  const n = nodes.length;
+  const tmax = labelMaxWidthForCount(n);
+  const fs = n > 60 ? 9 : 10;
+  const pad = n > 60 ? 8 : 10;
+  nodes.style({
+    'text-max-width': tmax,
+    'font-size': fs,
+    'padding': pad,
+  });
+}
 
 // ----- Element builders ----------------------------------------------------
 function buildOverviewElements() {
@@ -559,14 +621,14 @@ function buildAreaElements(area) {
   const nodes = [];
   for (const p of projects) {
     nodes.push({ data: {
-      id: p.name, label: p.name,
+      id: p.name, label: wrapGraphLabel(p.name),
       area: p.area, folder: p.folder, kind: 'project'
     }});
   }
   for (const n of externals) {
     const p = projectByName[n];
     nodes.push({ data: {
-      id: n, label: n, area: p.area, folder: p.folder, kind: 'external'
+      id: n, label: wrapGraphLabel(n), area: p.area, folder: p.folder, kind: 'external'
     }});
   }
   const edges = [];
@@ -592,6 +654,7 @@ const cy = cytoscape({
     { selector: 'node', style: {
         'label': 'data(label)',
         'text-wrap': 'wrap',
+        'text-overflow-wrap': 'anywhere',
         'color': '#1a1d22',
         'font-size': 12,
         'font-family': 'inherit',
@@ -603,20 +666,28 @@ const cy = cytoscape({
     { selector: 'node[kind="area"]', style: {
         'background-color': function(e) { return FILLS[e.data('area')] || '#888'; },
         'border-color':     function(e) { return COLORS[e.data('area')] || '#444'; },
-        'width': 200, 'height': 70,
-        'font-size': 14, 'font-weight': 'bold',
+        'width': 'label', 'height': 'label',
+        'padding': 12,
+        'text-max-width': 200,
+        'font-size': 12, 'font-weight': 'bold',
     }},
     { selector: 'node[kind="project"]', style: {
         'background-color': function(e) { return FILLS[e.data('area')] || '#fff'; },
         'border-color':     function(e) { return COLORS[e.data('area')] || '#444'; },
-        'width': 220, 'height': 36,
+        'width': 'label', 'height': 'label',
+        'padding': 10,
+        'text-max-width': 200,
+        'font-size': 10,
     }},
     { selector: 'node[kind="external"]', style: {
         'background-color': '#2c3038',
         'color': '#cfd3da',
         'border-color': function(e) { return COLORS[e.data('area')] || '#666'; },
         'border-style': 'dashed',
-        'width': 220, 'height': 36,
+        'width': 'label', 'height': 'label',
+        'padding': 10,
+        'text-max-width': 200,
+        'font-size': 10,
     }},
     { selector: 'edge', style: {
         'curve-style': 'bezier',
@@ -642,7 +713,14 @@ const cy = cytoscape({
         'line-style': 'dashed',
         'opacity': 0.7,
     }},
-    { selector: '.dim', style: { 'opacity': 0.10 } },
+    { selector: '.dim', style: { 'opacity': 0.08 } },
+    { selector: 'edge.hover-edge', style: {
+        'opacity': 0.9,
+        'line-color': '#9aa8c4',
+        'target-arrow-color': '#9aa8c4',
+        'width': 2,
+        'z-index': 9997,
+    }},
     { selector: 'node.hi', style: {
         'opacity': 1.0,
         'border-color': '#f7c948', 'border-width': 3,
@@ -670,10 +748,134 @@ const cy = cytoscape({
   elements: [],
 });
 
-const layoutOpts = {
-  overview: { name: 'dagre', rankDir: 'TB', nodeSep: 60, rankSep: 110, edgeSep: 30, animate: false },
-  area:     { name: 'dagre', rankDir: 'TB', nodeSep: 22, rankSep: 70,  edgeSep: 14, animate: false },
+// Compact wrapped layout: dependency layers flow top-to-bottom, each layer
+// wraps into multiple rows. Node width follows label (width:label); rows are
+// spaced from measured bounding boxes so labels never overlap neighbors.
+const LAYOUT_NODE_GAP = 28;
+const LAYOUT_ROW_GAP = 72;
+const LAYOUT_MEASURE_PAD = 8;
+
+function maxColsForCount(n) {
+  if (n <= 8) return Math.min(4, n);
+  if (n <= 20) return 5;
+  if (n <= 50) return 6;
+  return 8;
+}
+
+function computeDependencyDepth(ids, edges) {
+  const outgoing = {};
+  ids.forEach(id => { outgoing[id] = []; });
+  edges.forEach(e => {
+    const s = e.source().id(), t = e.target().id();
+    if (outgoing[s]) outgoing[s].push(t);
+  });
+  const memo = {};
+  function depth(id, visiting) {
+    if (memo[id] !== undefined) return memo[id];
+    visiting = visiting || new Set();
+    if (visiting.has(id)) return 0;
+    visiting.add(id);
+    const outs = outgoing[id] || [];
+    let d = 0;
+    for (const t of outs) d = Math.max(d, depth(t, visiting) + 1);
+    visiting.delete(id);
+    memo[id] = d;
+    return d;
+  }
+  ids.forEach(id => depth(id));
+  return memo;
+}
+
+function measureRow(nodes, slice) {
+  slice.forEach((id, i) => {
+    nodes.getElementById(id).position({ x: i * 900, y: -8000 });
+  });
+  return slice.map(id => {
+    const n = nodes.getElementById(id);
+    const dim = n.layoutDimensions({ nodeDimensionsIncludeLabels: true });
+    return {
+      id: id,
+      w: dim.w + LAYOUT_MEASURE_PAD,
+      h: dim.h + LAYOUT_MEASURE_PAD,
+    };
+  });
+}
+
+function placeRow(nodes, slice, sizes, y, gap) {
+  const totalW = sizes.reduce((s, m) => s + m.w, 0) + gap * (sizes.length - 1);
+  let x = -totalW / 2;
+  sizes.forEach(m => {
+    nodes.getElementById(m.id).position({ x: x + m.w / 2, y: y });
+    x += m.w + gap;
+  });
+  return Math.max(...sizes.map(m => m.h), 32);
+}
+
+function runWrappedLayerLayout(nodes, edges, opts) {
+  const ids = nodes.map(n => n.id());
+  if (!ids.length) return;
+  const depthMap = computeDependencyDepth(ids, edges);
+  const maxD = Math.max(0, ...ids.map(id => depthMap[id]));
+  const byLayer = {};
+  ids.forEach(id => {
+    const layer = maxD - depthMap[id];
+    if (!byLayer[layer]) byLayer[layer] = [];
+    byLayer[layer].push(id);
+  });
+  const maxCols = opts.maxCols || maxColsForCount(ids.length);
+  const gap = opts.gap || LAYOUT_NODE_GAP;
+  const rowGap = opts.rowGap || LAYOUT_ROW_GAP;
+  let y = 0;
+  Object.keys(byLayer).map(Number).sort((a, b) => a - b).forEach(layer => {
+    const row = byLayer[layer].sort((a, b) => a.localeCompare(b));
+    for (let i = 0; i < row.length; i += maxCols) {
+      const slice = row.slice(i, i + maxCols);
+      const sizes = measureRow(nodes, slice);
+      const rowH = placeRow(nodes, slice, sizes, y, gap);
+      y += rowH + rowGap;
+    }
+  });
+}
+
+const NODE_BASE = {
+  area:     { pad: 12, tmax: 200, fs: 12 },
+  project:  { pad: 10, tmax: 200, fs: 10 },
+  external: { pad: 10, tmax: 200, fs: 10 },
 };
+
+function hoverScaleFactor() {
+  const z = cy.zoom();
+  if (z >= 1.5) return 1.12;
+  if (z >= 1.0) return 1.18;
+  if (z >= 0.55) return 1.35;
+  if (z >= 0.25) return 1.75;
+  return Math.min(3.2, 1.4 + 0.9 / Math.max(z, 0.1));
+}
+
+function applyHoverStyle(n, opts) {
+  const mild = opts && opts.mild;
+  const kind = n.data('kind') || 'project';
+  const b = NODE_BASE[kind] || NODE_BASE.project;
+  let s = hoverScaleFactor();
+  if (mild) s = 1 + (s - 1) * 0.55;
+  const fs = Math.round(b.fs * s);
+  const tmax = Math.round(b.tmax * s);
+  n.style({
+    'width': 'label',
+    'height': 'label',
+    'padding': Math.round(b.pad * s),
+    'text-max-width': tmax,
+    'font-size': fs,
+    'z-index': mild ? 9998 : 9999,
+    'border-width': mild ? Math.min(4, 1 + s * 0.35) : Math.min(5, 2 + s * 0.3),
+    'border-color': mild ? '#e6c76a' : '#f7c948',
+    'opacity': 1,
+  });
+}
+
+function clearHoverStyle(n) {
+  n.removeStyle();
+}
 
 let mode = 'overview';
 let currentArea = null;
@@ -691,21 +893,57 @@ function saveView() {
   savedView = { zoom: cy.zoom(), pan: Object.assign({}, cy.pan()) };
 }
 
-// ----- Collapsible right sidebar ------------------------------------------
+// ----- Collapsible / resizable right sidebar -------------------------------
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarResize = document.getElementById('sidebar-resize');
 const INFO_EMPTY = '<div class="sidebar-empty">Click a project to inspect dependencies.</div>';
+const SIDEBAR_W_KEY = 'lyo-graph-sidebar-w';
+const SIDEBAR_MIN_W = 200;
+const SIDEBAR_MAX_VW = 0.55;
+
+function sidebarMaxWidth() {
+  return Math.max(SIDEBAR_MIN_W, Math.floor(window.innerWidth * SIDEBAR_MAX_VW));
+}
+
+function readSidebarWidth() {
+  const stored = parseInt(localStorage.getItem(SIDEBAR_W_KEY), 10);
+  if (!Number.isFinite(stored)) return 260;
+  return Math.max(SIDEBAR_MIN_W, Math.min(stored, sidebarMaxWidth()));
+}
+
+function setSidebarWidth(px, persist) {
+  const w = Math.max(SIDEBAR_MIN_W, Math.min(px, sidebarMaxWidth()));
+  document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+  if (persist) localStorage.setItem(SIDEBAR_W_KEY, String(w));
+  scheduleCyResize();
+}
+
+function clampSidebarWidth() {
+  if (sidebar.classList.contains('collapsed')) return;
+  const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w'));
+  if (Number.isFinite(cur)) setSidebarWidth(cur, true);
+}
+
+function updateSidebarResizable() {
+  const on = !sidebar.classList.contains('collapsed') &&
+    !document.getElementById('info').querySelector('.sidebar-empty');
+  sidebar.classList.toggle('resizable', on);
+}
 
 function updateSidebarToggle() {
   const collapsed = sidebar.classList.contains('collapsed');
   sidebarToggle.textContent = collapsed ? '\u2039' : '\u203A';
   sidebarToggle.title = collapsed ? 'Show details panel' : 'Hide details panel';
   sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+  updateSidebarResizable();
 }
 
 function scheduleCyResize() {
   requestAnimationFrame(() => { cy.resize(); });
 }
+
+setSidebarWidth(readSidebarWidth(), false);
 
 sidebarToggle.addEventListener('click', () => {
   sidebar.classList.toggle('collapsed');
@@ -716,6 +954,42 @@ sidebarToggle.addEventListener('click', () => {
 sidebar.addEventListener('transitionend', evt => {
   if (evt.propertyName === 'width') scheduleCyResize();
 });
+
+window.addEventListener('resize', clampSidebarWidth);
+
+let sidebarResizeDrag = null;
+
+function endSidebarResize(e) {
+  if (!sidebarResizeDrag) return;
+  if (e && sidebarResizeDrag.pointerId !== undefined &&
+      e.pointerId !== sidebarResizeDrag.pointerId) return;
+  sidebar.classList.remove('resizing');
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  try { sidebarResize.releasePointerCapture(sidebarResizeDrag.pointerId); } catch (_) {}
+  localStorage.setItem(SIDEBAR_W_KEY, String(sidebar.offsetWidth));
+  sidebarResizeDrag = null;
+  scheduleCyResize();
+}
+
+sidebarResize.addEventListener('pointerdown', e => {
+  if (!sidebar.classList.contains('resizable')) return;
+  e.preventDefault();
+  sidebarResize.setPointerCapture(e.pointerId);
+  sidebarResizeDrag = { pointerId: e.pointerId, startX: e.clientX, startW: sidebar.offsetWidth };
+  sidebar.classList.add('resizing');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+});
+
+sidebarResize.addEventListener('pointermove', e => {
+  if (!sidebarResizeDrag || e.pointerId !== sidebarResizeDrag.pointerId) return;
+  const delta = sidebarResizeDrag.startX - e.clientX;
+  setSidebarWidth(sidebarResizeDrag.startW + delta, false);
+});
+
+sidebarResize.addEventListener('pointerup', endSidebarResize);
+sidebarResize.addEventListener('pointercancel', endSidebarResize);
 
 function expandSidebar() {
   if (sidebar.classList.contains('collapsed')) {
@@ -728,7 +1002,7 @@ function expandSidebar() {
 function loadOverview() {
   cy.elements().remove();
   cy.add(buildOverviewElements());
-  cy.layout(layoutOpts.overview).run();
+  runWrappedLayerLayout(cy.nodes(), cy.edges(), { maxCols: 4, rowGap: 80 });
   cy.fit(undefined, 40);
   savePositions();
   savedView = null;
@@ -742,7 +1016,11 @@ function loadOverview() {
 function loadArea(area) {
   cy.elements().remove();
   cy.add(buildAreaElements(area));
-  cy.layout(layoutOpts.area).run();
+  const nodes = cy.nodes();
+  applyGraphLabelSizing(nodes);
+  runWrappedLayerLayout(nodes, cy.edges(), {
+    maxCols: maxColsForCount(nodes.length),
+  });
   cy.fit(undefined, 40);
   savePositions();
   savedView = null;
@@ -766,6 +1044,63 @@ cy.on('tap', 'node[kind="project"], node[kind="external"]', evt => {
 
 cy.on('tap', evt => {
   if (evt.target === cy) { unfocus(); clearHighlight(); hideInfo(); resetNav(); }
+});
+
+// Hover: enlarge node + neighbors, dim everything else.
+let hoverNode = null;
+let hoverRelated = null;
+
+function clearHoverState() {
+  if (hoverRelated) {
+    hoverRelated.nodes().forEach(nn => {
+      nn.removeClass('hover-neighbor');
+      clearHoverStyle(nn);
+    });
+    hoverRelated.edges().removeClass('hover-edge');
+    hoverRelated = null;
+  }
+  if (hoverNode) {
+    hoverNode.removeClass('hover');
+    clearHoverStyle(hoverNode);
+    hoverNode = null;
+  }
+  if (!cy.$('.hi, .hi-down, .hi-up').length) {
+    cy.elements().removeClass('dim');
+  }
+}
+
+cy.on('mouseover', 'node', evt => {
+  const n = evt.target;
+  clearHoverState();
+  if (cy.$('.hi, .hi-down, .hi-up').length) {
+    n.addClass('hover');
+    applyHoverStyle(n, { mild: true });
+    hoverNode = n;
+    return;
+  }
+
+  const related = n.closedNeighborhood();
+  hoverNode = n;
+  hoverRelated = related;
+
+  cy.elements().addClass('dim');
+  related.removeClass('dim');
+  related.edges().addClass('hover-edge');
+
+  n.addClass('hover');
+  applyHoverStyle(n);
+  related.nodes().not(n).forEach(m => {
+    m.addClass('hover-neighbor');
+    applyHoverStyle(m, { mild: true });
+  });
+});
+
+cy.on('mouseout', 'node', evt => {
+  clearHoverState();
+});
+
+cy.on('mouseout', evt => {
+  if (evt.target === cy) clearHoverState();
 });
 
 function highlightNeighborhood(node) {
@@ -817,18 +1152,26 @@ function focusOnNode(node) {
   others.style('display', 'none');
   related.style('display', 'element');
 
-  relatedNodes.layout({
-    name: 'concentric',
-    concentric: n => maxDist - (dist[n.id()] || 0),
-    levelWidth: () => 1,
-    minNodeSpacing: 40,
-    spacingFactor: 1.1,
-    animate: true,
-    animationDuration: 450,
-    animationEasing: 'ease-out',
-    fit: true,
-    padding: 80,
-  }).run();
+  const byRing = {};
+  relatedNodes.forEach(nn => {
+    const ring = maxDist - (dist[nn.id()] || 0);
+    if (!byRing[ring]) byRing[ring] = [];
+    byRing[ring].push(nn.id());
+  });
+  const maxCols = maxColsForCount(relatedNodes.length);
+  let y = 0;
+  for (let ring = 0; ring <= maxDist; ring++) {
+    const row = (byRing[ring] || []).sort((a, b) => a.localeCompare(b));
+    for (let i = 0; i < row.length; i += maxCols) {
+      const slice = row.slice(i, i + maxCols);
+      const sizes = measureRow(relatedNodes, slice);
+      const rowH = placeRow(relatedNodes, slice, sizes, y, LAYOUT_NODE_GAP);
+      y += rowH + LAYOUT_ROW_GAP;
+    }
+  }
+  cy.animate({ fit: { eles: related, padding: 60 } }, {
+    duration: 450, easing: 'ease-out',
+  });
 }
 
 function unfocus() {
@@ -1205,11 +1548,13 @@ function showInfo(node) {
 
   applyDepFilters('depends');
   applyDepFilters('usedby');
+  updateSidebarResizable();
   scheduleCyResize();
 }
 
 function hideInfo() {
   document.getElementById('info').innerHTML = INFO_EMPTY;
+  updateSidebarResizable();
 }
 
 function rerenderPanel() {
