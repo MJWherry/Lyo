@@ -21,6 +21,29 @@ SLNX = REPO_ROOT / "Lyo.Net" / "Lyo.slnx"
 OUT_HTML = REPO_ROOT / "Lyo.ProjectGraph.html"
 NS_RE = re.compile(r"\sxmlns=\"[^\"]+\"")
 
+# Match `'$(TargetFramework)' == 'netstandard2.0'` and friends.
+# The closing `'` after `)` is optional to stay tolerant of variants.
+_TFM_EQ_RE = re.compile(
+    r"\$\(\s*TargetFramework\s*\)\s*'?\s*==\s*'?([\w.+-]+)'?"
+)
+_TFM_NEQ_RE = re.compile(
+    r"\$\(\s*TargetFramework\s*\)\s*'?\s*!=\s*'?([\w.+-]+)'?"
+)
+
+
+def framework_label(condition: str) -> str:
+    """Reduce an MSBuild Condition string to a short framework label."""
+    if not condition:
+        return "all"
+    m = _TFM_EQ_RE.search(condition)
+    if m:
+        return m.group(1)
+    m = _TFM_NEQ_RE.search(condition)
+    if m:
+        return f"!{m.group(1)}"
+    short = condition.strip().strip("'\"")
+    return short[:40] + ("..." if len(short) > 40 else "")
+
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -34,7 +57,8 @@ class Project:
     rel_path: str
     abs_path: Path
     refs: list[str] = field(default_factory=list)
-    package_refs: list[tuple[str, str]] = field(default_factory=list)
+    # (package, version, framework_label)
+    package_refs: list[tuple[str, str, str]] = field(default_factory=list)
 
 
 def load_slnx_projects() -> list[Project]:
@@ -77,25 +101,31 @@ def parse_refs(p: Project) -> None:
         seen.add(target_name)
         p.refs.append(target_name)
 
-    # NuGet / external packages. Version may be missing under Central Package
+    # NuGet / external packages. We iterate ItemGroups (not just the inner
+    # PackageReference nodes) so we can capture an enclosing
+    # `Condition="'$(TargetFramework)' == 'netstandard2.0'"` and bucket packages
+    # per target framework. Version may be missing under Central Package
     # Management; store empty string in that case.
-    pkg_seen: set[tuple[str, str]] = set()
-    for pkg in root.iter("PackageReference"):
-        include = pkg.attrib.get("Include")
-        if not include:
-            continue
-        version = pkg.attrib.get("Version", "")
-        # Some csprojs use a child element, e.g.
-        #   <PackageReference Include="X"><Version>1.2.3</Version></PackageReference>
-        if not version:
-            v_el = pkg.find("Version")
-            if v_el is not None and v_el.text:
-                version = v_el.text.strip()
-        key = (include, version)
-        if key in pkg_seen:
-            continue
-        pkg_seen.add(key)
-        p.package_refs.append(key)
+    pkg_seen: set[tuple[str, str, str]] = set()
+    for ig in root.iter("ItemGroup"):
+        ig_cond = ig.attrib.get("Condition", "") or ""
+        for pkg in ig.findall("PackageReference"):
+            include = pkg.attrib.get("Include")
+            if not include:
+                continue
+            version = pkg.attrib.get("Version", "")
+            if not version:
+                v_el = pkg.find("Version")
+                if v_el is not None and v_el.text:
+                    version = v_el.text.strip()
+            pkg_cond = pkg.attrib.get("Condition", "") or ""
+            combined = " ".join(c for c in (ig_cond, pkg_cond) if c)
+            fw = framework_label(combined)
+            key = (include, version, fw)
+            if key in pkg_seen:
+                continue
+            pkg_seen.add(key)
+            p.package_refs.append(key)
 
 
 def is_test_like(name: str) -> bool:
@@ -163,25 +193,36 @@ def _transitive_projects(p: Project, name_to_proj: dict[str, Project]) -> list[s
     return sorted(visited)
 
 
+def _framework_sort_key(fw: str) -> tuple:
+    if fw == "all":
+        return (0, "")
+    if fw.startswith("!"):
+        return (2, fw.lower())
+    return (1, fw.lower())
+
+
 def _aggregate_packages(
     names: list[str], name_to_proj: dict[str, Project]
 ) -> list[dict]:
-    """Union of (package, version) pairs across the given projects."""
-    versions_by_pkg: dict[str, set[str]] = defaultdict(set)
+    """Group package refs across `names` by framework label, then by package."""
+    # framework -> package -> set(versions)
+    by_fw: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
     for n in names:
         proj = name_to_proj.get(n)
         if proj is None:
             continue
-        for pkg, ver in proj.package_refs:
-            versions_by_pkg[pkg].add(ver)
+        for pkg, ver, fw in proj.package_refs:
+            by_fw[fw][pkg].add(ver)
+
     out: list[dict] = []
-    for pkg in sorted(versions_by_pkg):
-        versions = sorted(v for v in versions_by_pkg[pkg] if v)
-        # If every entry was empty, keep a single empty placeholder so the UI
-        # can still list the package name.
-        if not versions and "" in versions_by_pkg[pkg]:
-            versions = [""]
-        out.append({"name": pkg, "versions": versions})
+    for fw in sorted(by_fw, key=_framework_sort_key):
+        pkgs: list[dict] = []
+        for pkg in sorted(by_fw[fw]):
+            versions = sorted(v for v in by_fw[fw][pkg] if v)
+            if not versions:
+                versions = [""]
+            pkgs.append({"name": pkg, "versions": versions})
+        out.append({"framework": fw, "packages": pkgs})
     return out
 
 
@@ -211,10 +252,7 @@ def build_graph_data(projects: list[Project]) -> dict:
             "area": top_area(p.folder),
             "folder": p.folder.strip("/") or "(root)",
             "refs": [r for r in p.refs if r in name_to_proj],
-            "directPackages": [
-                {"name": pkg, "versions": [ver] if ver else [""]}
-                for pkg, ver in sorted(set(p.package_refs))
-            ],
+            "directPackages": _aggregate_packages([p.name], name_to_proj),
             "transitiveLyo": transitive_lyo[p.name],
             "transitivePackages": transitive_pkgs[p.name],
         }
@@ -367,6 +405,18 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     padding: 0 5px;
   }
   #info .ver.multi { border-color: #d79b00; }
+  #info .fw-group + .fw-group { margin-top: 8px; }
+  #info .fw-label {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: 11px; color: #cfd3da;
+    background: #2c3038; border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 8px;
+    margin: 4px 0 4px 0;
+  }
+  #info .fw-label.fw-all          { border-color: #6c8ebf; color: #c5d6f0; }
+  #info .fw-label.fw-netstandard2_0 { border-color: #d79b00; color: #f5d99e; }
+  #info .fw-label.fw-net10_0       { border-color: #82b366; color: #c4dfb1; }
   #info .section + .section { margin-top: 10px; }
   #info .section h4 {
     margin: 0 0 4px 0; font-size: 12px; color: var(--text);
@@ -703,25 +753,46 @@ function listSection(title, items) {
          '</ul></div>';
 }
 
-function packageSection(title, pkgs) {
-  if (!pkgs.length) {
+function uniquePkgCount(groups) {
+  const seen = new Set();
+  for (const g of groups) for (const p of g.packages) seen.add(p.name);
+  return seen.size;
+}
+
+function frameworkChipHtml(fw, count) {
+  const slug = String(fw).replace(/[^A-Za-z0-9_]/g, '_');
+  const label = (fw === 'all') ? 'All frameworks' : fw;
+  return '<div class="fw-label fw-' + slug + '">' +
+         escapeHtml(label) + ' &middot; ' + count + '</div>';
+}
+
+function pkgRowHtml(pkg) {
+  const versions = (pkg.versions && pkg.versions.length) ? pkg.versions : [''];
+  const multi = versions.length > 1;
+  const chips = versions.map(v => {
+    const label = v ? escapeHtml(v) : '<i>unspecified</i>';
+    return '<span class="ver' + (multi ? ' multi' : '') + '">' + label + '</span>';
+  }).join('');
+  return '<div class="pkg-row"><span class="pkg-name">' +
+         escapeHtml(pkg.name) + '</span>' + chips + '</div>';
+}
+
+function packageSection(title, groups) {
+  if (!groups.length) {
     return '<div class="section"><h4>' + escapeHtml(title) + ' (0)</h4>' +
            '<div class="empty">none</div></div>';
   }
-  const rows = pkgs.map(pkg => {
-    const versions = (pkg.versions && pkg.versions.length)
-      ? pkg.versions
-      : [''];
-    const multi = versions.length > 1;
-    const chips = versions.map(v => {
-      const label = v ? escapeHtml(v) : '<i>unspecified</i>';
-      return '<span class="ver' + (multi ? ' multi' : '') + '">' + label + '</span>';
-    }).join('');
-    return '<div class="pkg-row"><span class="pkg-name">' +
-           escapeHtml(pkg.name) + '</span>' + chips + '</div>';
-  }).join('');
-  return '<div class="section"><h4>' + escapeHtml(title) +
-         ' (' + pkgs.length + ')</h4>' + rows + '</div>';
+  const unique = uniquePkgCount(groups);
+  let html = '<div class="section"><h4>' + escapeHtml(title) +
+             ' (' + unique + ')</h4>';
+  for (const g of groups) {
+    html += '<div class="fw-group">' +
+            frameworkChipHtml(g.framework, g.packages.length);
+    for (const pkg of g.packages) html += pkgRowHtml(pkg);
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
 }
 
 function showInfo(node) {
@@ -735,6 +806,9 @@ function showInfo(node) {
   const directPkgs = p.directPackages || [];
   const transLyo   = p.transitiveLyo || [];
   const transPkgs  = p.transitivePackages || [];
+
+  const directPkgUnique = uniquePkgCount(directPkgs);
+  const transPkgUnique  = uniquePkgCount(transPkgs);
 
   const directHtml =
     listSection('Depends on', directRefs) +
@@ -757,9 +831,9 @@ function showInfo(node) {
     '<div class="meta">' + escapeHtml(p.folder) + ' &middot; ' + escapeHtml(p.area) + '</div>' +
     '<div class="tabs">' +
       '<button class="tab active" data-tab="direct">Direct (' +
-        (directRefs.length + directDeps.length + directPkgs.length) + ')</button>' +
+        (directRefs.length + directDeps.length + directPkgUnique) + ')</button>' +
       '<button class="tab" data-tab="lyo">Transitive Lyo (' + transLyo.length + ')</button>' +
-      '<button class="tab" data-tab="pkg">Transitive packages (' + transPkgs.length + ')</button>' +
+      '<button class="tab" data-tab="pkg">Transitive packages (' + transPkgUnique + ')</button>' +
     '</div>' +
     '<div class="tabpanel" data-tab="direct">' + directHtml + '</div>' +
     '<div class="tabpanel" data-tab="lyo" hidden>' + lyoHtml + '</div>' +
