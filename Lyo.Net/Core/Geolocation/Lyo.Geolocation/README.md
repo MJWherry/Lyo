@@ -1,67 +1,47 @@
 # Lyo.Geolocation
 
-Provider-agnostic **geospatial operations** façade.
+Provider-agnostic geospatial operations and persistence contracts.
 
-## Role of this assembly
+## Assemblies
 
-Defines **`IGeolocationService`** (async surface) referencing shared DTOs from [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md)—**addresses**, **coordinates**, *
-*distance enums**, routing envelopes—while keeping **vendor HTTP/SDK wiring out** of the contract.
+| Package | Role |
+|---------|------|
+| [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md) | Domain DTOs (`Address`, `GeocodeResult`, `Route`, …) |
+| **`Lyo.Geolocation`** (this) | `IGeolocationService`, `IGeolocationStore`, `GeolocationQueryKey`, `GeolocationMath` |
+| [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md) | EF Core store (`geolocation` schema) |
 
-Consumers inject **`IGeolocationService`** inside domain logic (shipping radius checks, SLA windows, travel-time estimates, timezone-aware reminders) **without referencing**
-Google/AWS-specific types.
+This package does **not** reference HTTP clients or vendor SDKs. Wire providers and import mappers in the **host** (API, worker, tool).
 
-## Implementations shipped in-tree
+## `IGeolocationService`
 
-| Package                                                         | Responsibility                                                                                                     |
-|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| [`Lyo.Geolocation.Google`](../Lyo.Geolocation.Google/README.md) | REST-backed **`GoogleGeolocationService`** wrapping Google Maps platform endpoints (Directions, Time Zone API, …). |
+Contract for geocoding, routing, time zone, and distance operations (implementations live in separate integration packages).
 
-Add more providers (`MapboxGeolocationService`, `AzureMapsGeolocationService`, …) in separate assemblies that depend on **Models + this abstraction** only.
+## `IGeolocationStore`
 
-### Interface capabilities (mental map)
+Persistence boundary (implemented by [`PostgresGeolocationStore`](../Lyo.Geolocation.Postgres/PostgresGeolocationStore.cs)):
 
-The contract groups operations into thematic areas:
+- Canonical **`geolocation.address`** rows
+- **`geolocation.address_source`** — `EntityRef` provenance (`source_entity_type` + `source_entity_id` strings you define at import time)
+- **`GetBySourceAsync`** / **`SaveAddressAsync`**
 
-**Geocode / reverse**
+Use [`Lyo.Cache`](../Cache/Lyo.Cache/README.md) in the host if you need query-key caching.
 
-- Convert **street strings** or structured **`Address`** objects into **`GeoCoordinate`**.
-- **`GeocodeBatchAsync`** fans out parallel requests—still subject to quotas; backoff belongs in implementations.
-- Reverse paths resolve coordinates back into normalized **`Address`** graphs (localized components handled in models).
+## Consumer composition (example)
 
-**Distance & vicinity**
+A worker or API registers **store + provider(s)** and owns mapping from vendor DTOs to `Address` + `Sources`:
 
-- **Spherical distances** versus **routing-derived driving distances** (see overloads distinguishing **straight-line** vs **routing** APIs).
-- **`IsWithinRadiusAsync`** answers membership questions for alerting (“nearest technician within 40 km”), typically using great‑circle math unless overridden.
+```csharp
+// Host project references: Lyo.Geolocation.Postgres, Lyo.Google.Geolocation.Client, …
+services.AddPostgresGeolocationStoreFromConfiguration(configuration);
+services.AddGoogleMapsClientFromConfiguration(configuration);
+services.AddGoogleMapsGeolocationService();
 
-**Timezone**
+// Ingest: call IGeolocationService, map to Address + EntitySourceRecord, then:
+await geolocationStore.SaveAddressAsync(address, ct);
+```
 
-**`GetTimeZoneAsync`** retrieves **IANA zone ids** (“America/New_York”) powering scheduling + audit timelines.
-
-**Routes**
-
-**`Route` / `RouteOptions`** exposes multi-leg durations, geometries (if providers enrich), modality selection (consult models for supported enum values relevant to integrated
-provider capabilities).
-
-Every method returns **`Task<…>`** and should honor **`CancellationToken`** when surfaced by implementors—even if abstraction interface omits overloads, concrete Google service
-uses cooperative cancellation on HTTP requests.
-
-### Design constraints
-
-Abstraction purposely **does not** standardize caching—add memoization decorators in your composition root if repeatedly geocoding identical warehouse addresses (`IDecorator`
-pattern preventing thundering herds on cold starts).
-
-**Security / privacy**: avoid logging raw user-provided addresses in infrastructure logs unless compliant with policy—wrap provider logging filters upstream.
-
-Telemetry hooks live in implementations (metrics around quota exhaustion, durations per external API)—not mandated here.
-
-## Extension guidance for new vendors
-
-Implement **`IGeolocationService`** end-to-end, map provider-specific status codes → domain exceptions sparingly (**prefer fault types** centralized in hosting layer).
-
-Share DTO converters in **Models** assembly when multiple providers ingest same logical shape (prevent drift between Google vs competitor address normalization).
-
-Use dependency injection **`IOptions<TProviderOptions>`** for API keys/regions—not static configuration.
+Vendor-specific `EntityRef` type names (e.g. `GoogleMapsPlace`) are defined in the integration package that performs the mapping, not in this assembly.
 
 ## See also
 
-[`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md) — enumerations (`DistanceUnit`, `TransportMode`), coordinate math helpers, postal normalization records.
+[`Lyo.People.Models`](../People/Lyo.People.Models/README.md) — internal people rows with their own `*_source` tables; link across stores via `EntityRef` at import time.

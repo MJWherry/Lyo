@@ -39,4 +39,6 @@ public sealed class ContactEmailAddressEntity
 
     [ForeignKey(nameof(EmailAddressId))]
     public EmailAddressEntity? EmailAddress { get; set; }
+
+    public ICollection<ContactEmailAddressSourceEntity> Sources { get; set; } = [];
 }

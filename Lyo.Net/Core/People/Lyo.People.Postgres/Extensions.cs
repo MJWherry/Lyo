@@ -80,5 +80,13 @@ public static class Extensions
 
             return services;
         }
+
+        /// <summary>Registers <see cref="PostgresPeopleStore" /> as <see cref="IPeopleStore" />.</summary>
+        public IServiceCollection AddPostgresPeopleStore()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<IPeopleStore, PostgresPeopleStore>();
+            return services;
+        }
     }
 }

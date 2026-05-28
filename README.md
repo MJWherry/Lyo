@@ -74,7 +74,8 @@ top-level area.
 - [Lyo.DateAndTime](Lyo.Net/Core/DateAndTime/Lyo.DateAndTime/README.md): time zones, US-state mapping, scheduling utilities.
 - [Lyo.Diagnostic](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md): stack decoding, breadcrumbs, error inbox, trace sanitisation, structured logging enrichers.
 - [Lyo.Diagnostic.AspNetCore](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md): ASP.NET Core breadcrumbs per request and exception recording to **`Lyo.Diagnostic`**.
-- [Lyo.Geolocation.Google](Lyo.Net/Core/Geolocation/Lyo.Geolocation.Google/README.md): Google Maps geocoding / reverse geocoding service.
+- [Lyo.Geolocation.Postgres](Lyo.Net/Core/Geolocation/Lyo.Geolocation.Postgres/README.md): Canonical address and geocode cache persistence.
+- [Lyo.Google.Geolocation.Client](Lyo.Net/Integration/Google/Lyo.Google.Geolocation.Client/README.md): Google Maps geocoding / routing client.
 - [Lyo.Health](Lyo.Net/Core/Health/Lyo.Health/README.md): `IHealth` and `HealthResult` for service health checks.
 - [Lyo.Lock](Lyo.Net/Core/Lock/Lyo.Lock/README.md): in-process locks and keyed semaphores.
 - [Lyo.Lock.Redis](Lyo.Net/Core/Lock/Lyo.Lock.Redis/README.md): Redis distributed locks for `Lyo.Lock`.

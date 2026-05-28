@@ -27,9 +27,6 @@ public class PersonEntity
     [MaxLength(12)]
     public string? NameSuffix { get; set; }
 
-    [MaxLength(30)]
-    public string Source { get; set; } = "Manual";
-
     [MaxLength(100)]
     public string? PreferredName { get; set; }
 
@@ -105,4 +102,6 @@ public class PersonEntity
     public virtual ICollection<ContactPhoneNumberEntity> ContactPhoneNumbers { get; set; } = new List<ContactPhoneNumberEntity>();
 
     public virtual ICollection<ContactAddressEntity> ContactAddresses { get; set; } = new List<ContactAddressEntity>();
+
+    public ICollection<PersonSourceEntity> Sources { get; set; } = [];
 }

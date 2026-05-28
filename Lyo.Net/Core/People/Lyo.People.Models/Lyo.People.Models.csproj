@@ -11,6 +11,7 @@
         <ProjectReference Include="..\..\DateAndTime\Lyo.DateAndTime\Lyo.DateAndTime.csproj"/>
         <ProjectReference Include="..\..\Geolocation\Lyo.Geolocation.Models\Lyo.Geolocation.Models.csproj"/>
         <ProjectReference Include="..\..\Common\Lyo.Common\Lyo.Common.csproj"/>
+        <ProjectReference Include="..\..\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
     </ItemGroup>
 
 

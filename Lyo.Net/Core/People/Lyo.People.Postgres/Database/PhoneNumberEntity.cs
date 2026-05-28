@@ -29,4 +29,6 @@ public sealed class PhoneNumberEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    public ICollection<PhoneNumberSourceEntity> Sources { get; set; } = [];
 }

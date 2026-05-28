@@ -1,7 +1,6 @@
-namespace Lyo.Geolocation.Google;
+namespace Lyo.Google.Geolocation.Client.Models;
 
-// Google Geocoding API response models
-internal class GoogleGeocodeResponse
+internal sealed class GoogleGeocodeResponse
 {
     public string? Status { get; set; }
 
@@ -10,7 +9,7 @@ internal class GoogleGeocodeResponse
     public string? ErrorMessage { get; set; }
 }
 
-internal class GoogleGeocodeResult
+internal sealed class GoogleGeocodeResult
 {
     public List<GoogleAddressComponent>? AddressComponents { get; set; }
 
@@ -23,7 +22,7 @@ internal class GoogleGeocodeResult
     public List<string>? Types { get; set; }
 }
 
-internal class GoogleAddressComponent
+internal sealed class GoogleAddressComponent
 {
     public string? LongName { get; set; }
 
@@ -32,7 +31,7 @@ internal class GoogleAddressComponent
     public List<string>? Types { get; set; }
 }
 
-internal class GoogleGeometry
+internal sealed class GoogleGeometry
 {
     public GoogleLocation? Location { get; set; }
 
@@ -43,22 +42,21 @@ internal class GoogleGeometry
     public GoogleBounds? Bounds { get; set; }
 }
 
-internal class GoogleLocation
+internal sealed class GoogleLocation
 {
     public double Lat { get; set; }
 
     public double Lng { get; set; }
 }
 
-internal class GoogleBounds
+internal sealed class GoogleBounds
 {
     public GoogleLocation? Northeast { get; set; }
 
     public GoogleLocation? Southwest { get; set; }
 }
 
-// Google Time Zone API response models
-internal class GoogleTimeZoneResponse
+internal sealed class GoogleTimeZoneResponse
 {
     public string? Status { get; set; }
 
@@ -73,8 +71,7 @@ internal class GoogleTimeZoneResponse
     public string? ErrorMessage { get; set; }
 }
 
-// Google Directions API response models
-internal class GoogleDirectionsResponse
+internal sealed class GoogleDirectionsResponse
 {
     public string? Status { get; set; }
 
@@ -83,7 +80,7 @@ internal class GoogleDirectionsResponse
     public string? ErrorMessage { get; set; }
 }
 
-internal class GoogleRoute
+internal sealed class GoogleRoute
 {
     public GoogleBounds? Bounds { get; set; }
 
@@ -92,21 +89,15 @@ internal class GoogleRoute
     public List<GoogleLeg>? Legs { get; set; }
 
     public List<string>? Warnings { get; set; }
-
-    public List<int>? WaypointOrder { get; set; }
 }
 
-internal class GoogleLeg
+internal sealed class GoogleLeg
 {
     public GoogleDistance? Distance { get; set; }
 
     public GoogleDuration? Duration { get; set; }
 
     public GoogleDuration? DurationInTraffic { get; set; }
-
-    public string? StartAddress { get; set; }
-
-    public string? EndAddress { get; set; }
 
     public GoogleLocation? StartLocation { get; set; }
 
@@ -115,7 +106,7 @@ internal class GoogleLeg
     public List<GoogleStep>? Steps { get; set; }
 }
 
-internal class GoogleStep
+internal sealed class GoogleStep
 {
     public GoogleDistance? Distance { get; set; }
 
@@ -132,25 +123,14 @@ internal class GoogleStep
     public string? Maneuver { get; set; }
 
     public string? RoadName { get; set; }
-
-    public GooglePolyline? Polyline { get; set; }
 }
 
-internal class GoogleDistance
+internal sealed class GoogleDistance
 {
-    public string? Text { get; set; }
-
-    public int Value { get; set; } // Value in meters
+    public int Value { get; set; }
 }
 
-internal class GoogleDuration
+internal sealed class GoogleDuration
 {
-    public string? Text { get; set; }
-
-    public int Value { get; set; } // Value in seconds
-}
-
-internal class GooglePolyline
-{
-    public string? Points { get; set; }
+    public int Value { get; set; }
 }

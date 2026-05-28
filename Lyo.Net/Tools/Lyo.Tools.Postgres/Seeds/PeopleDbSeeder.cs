@@ -1,4 +1,6 @@
 using Bogus;
+using Lyo.EntityReference.Models;
+using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -38,6 +40,17 @@ public sealed class PeopleDbSeeder
         _logger.LogInformation("Seeding {Count} persons...", count);
         var persons = BuildPersons(faker, count);
         db.Persons.AddRange(persons);
+        await db.SaveChangesAsync(ct);
+        foreach (var person in persons) {
+            db.PersonSources.Add(new PersonSourceEntity {
+                Id = Guid.NewGuid(),
+                PersonId = person.Id,
+                SourceEntityType = PeopleSourceTypes.Seed,
+                SourceEntityId = person.Id.ToString(),
+                ImportedAt = DateTime.UtcNow
+            });
+        }
+
         await db.SaveChangesAsync(ct);
         var phones = new List<(Guid personId, PhoneNumberEntity phone)>();
         var emails = new List<(Guid personId, EmailAddressEntity email)>();
@@ -154,7 +167,6 @@ public sealed class PeopleDbSeeder
             .RuleFor(p => p.CurrentJobTitle, f => f.Random.Bool(0.6f) ? f.Name.JobTitle() : null)
             .RuleFor(p => p.CurrentCompany, f => f.Random.Bool(0.5f) ? f.Company.CompanyName() : null)
             .RuleFor(p => p.IsActive, f => f.Random.Bool(0.9f))
-            .RuleFor(p => p.Source, _ => "Seed")
             .RuleFor(p => p.CreatedTimestamp, f => f.Date.Past(3).ToUniversalTime());
 
         return personFaker.Generate(count);

@@ -1,27 +1,31 @@
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
+using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models.Coordinates;
 
 namespace Lyo.Geolocation.Models.Addresses;
 
 /// <summary>Unified address model that handles both US and international addresses</summary>
-public class Address : IEquatable<Address>
+public class Address : IEquatable<Address>, IHasEntitySources
 {
     /// <summary>Unique identifier for the address</summary>
     public Guid Id { get; set; }
 
-    // Street address components (US-style)
-    /// <summary>Street number</summary>
-    public string? StreetNumber { get; set; }
+    /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
+
+    // Street address components (US-style, Endato-aligned)
+    /// <summary>House or street number</summary>
+    public string? HouseNumber { get; set; }
 
     /// <summary>Street pre-direction (N, S, E, W)</summary>
-    public CardinalDirection? StreetPreDirection { get; set; }
+    public string? StreetPreDirection { get; set; }
 
     /// <summary>Street name</summary>
     public string? StreetName { get; set; }
 
     /// <summary>Street post-direction (N, S, E, W)</summary>
-    public CardinalDirection? StreetPostDirection { get; set; }
+    public string? StreetPostDirection { get; set; }
 
     /// <summary>Street type (St, Ave, Blvd, etc.)</summary>
     public string? StreetType { get; set; }
@@ -79,6 +83,25 @@ public class Address : IEquatable<Address>
     /// <summary>Geographic coordinate</summary>
     public GeoCoordinate? Coordinate { get; set; }
 
+    /// <summary>Single-line formatted address when known.</summary>
+    public string? FullAddress { get; set; }
+
+    // Endato-style enrichment (nullable)
+    public bool? IsDeliverable { get; set; }
+    public bool? IsMergedAddress { get; set; }
+    public bool? IsPublic { get; set; }
+    public string? PropertyIndicator { get; set; }
+    public string? BldgCode { get; set; }
+    public string? UtilityCode { get; set; }
+    public int? UnitCount { get; set; }
+    public DateTime? FirstReportedDate { get; set; }
+    public DateTime? LastReportedDate { get; set; }
+    public DateTime? PublicFirstSeenDate { get; set; }
+    public double? GeocodeConfidence { get; set; }
+
+    /// <summary>Overflow vendor-specific fields (serialized at persistence boundary).</summary>
+    public IReadOnlyDictionary<string, string>? Metadata { get; set; }
+
     // Additional properties
     /// <summary>Time zone information</summary>
     public GeoTimeZone? TimeZone { get; set; }
@@ -109,17 +132,17 @@ public class Address : IEquatable<Address>
 
         // Otherwise, build from components
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(StreetNumber))
-            parts.Add(StreetNumber);
+        if (!string.IsNullOrEmpty(HouseNumber))
+            parts.Add(HouseNumber);
 
-        if (StreetPreDirection.HasValue)
-            parts.Add(StreetPreDirection.Value.GetDescription());
+        if (!string.IsNullOrEmpty(StreetPreDirection))
+            parts.Add(StreetPreDirection);
 
         if (!string.IsNullOrEmpty(StreetName))
             parts.Add(StreetName);
 
-        if (StreetPostDirection.HasValue)
-            parts.Add(StreetPostDirection.Value.GetDescription());
+        if (!string.IsNullOrEmpty(StreetPostDirection))
+            parts.Add(StreetPostDirection);
 
         if (!string.IsNullOrEmpty(StreetType))
             parts.Add(StreetType);
@@ -225,7 +248,7 @@ public class Address : IEquatable<Address>
 
     /// <summary>Checks if address is valid (has minimum required fields)</summary>
     public bool IsValid()
-        => (!string.IsNullOrEmpty(StreetAddress) || (!string.IsNullOrEmpty(StreetNumber) && !string.IsNullOrEmpty(StreetName))) && !string.IsNullOrEmpty(City) &&
+        => (!string.IsNullOrEmpty(StreetAddress) || (!string.IsNullOrEmpty(HouseNumber) && !string.IsNullOrEmpty(StreetName))) && !string.IsNullOrEmpty(City) &&
             CountryCode != CountryCode.UU;
 
     /// <summary>Checks if address is complete (has all recommended fields)</summary>
@@ -240,10 +263,11 @@ public class Address : IEquatable<Address>
     {
         var normalized = new Address {
             Id = Id,
-            StreetNumber = StreetNumber?.Trim(),
-            StreetPreDirection = StreetPreDirection,
+            Sources = Sources.ToList(),
+            HouseNumber = HouseNumber?.Trim(),
+            StreetPreDirection = StreetPreDirection?.Trim(),
             StreetName = StreetName?.Trim(),
-            StreetPostDirection = StreetPostDirection,
+            StreetPostDirection = StreetPostDirection?.Trim(),
             StreetType = NormalizeStreetType(StreetType),
             StreetAddress = StreetAddress?.Trim(),
             StreetAddressLine2 = StreetAddressLine2?.Trim(),
@@ -263,7 +287,20 @@ public class Address : IEquatable<Address>
             TimeZone = TimeZone,
             AddressType = AddressType,
             ValidationStatus = ValidationStatus,
-            LastValidated = LastValidated
+            LastValidated = LastValidated,
+            FullAddress = FullAddress?.Trim(),
+            IsDeliverable = IsDeliverable,
+            IsMergedAddress = IsMergedAddress,
+            IsPublic = IsPublic,
+            PropertyIndicator = PropertyIndicator,
+            BldgCode = BldgCode,
+            UtilityCode = UtilityCode,
+            UnitCount = UnitCount,
+            FirstReportedDate = FirstReportedDate,
+            LastReportedDate = LastReportedDate,
+            PublicFirstSeenDate = PublicFirstSeenDate,
+            GeocodeConfidence = GeocodeConfidence,
+            Metadata = Metadata
         };
 
         return normalized;

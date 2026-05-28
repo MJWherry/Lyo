@@ -7,6 +7,7 @@ using Lyo.ContactUs.Postgres.Database;
 using Lyo.Discord.Postgres.Database;
 using Lyo.Email.Postgres.Database;
 using Lyo.Endato.Postgres.Database;
+using Lyo.Geolocation.Postgres.Database;
 using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
@@ -66,6 +67,8 @@ public sealed class MigrationRunner
 
     public Task RunFileMetadataStoreAsync(CancellationToken ct = default) => MigrateLatestAsync<FileMetadataStoreDbContext>("filestore", ct);
 
+    public Task RunGeolocationAsync(CancellationToken ct = default) => MigrateLatestAsync<GeolocationDbContext>("geolocation", ct);
+
     public Task RunHomeInventoryAsync(CancellationToken ct = default) => MigrateLatestAsync<HomeInventoryDbContext>("home_inventory", ct);
 
     public Task RunJobAsync(CancellationToken ct = default) => MigrateLatestAsync<JobContext>("job", ct);
@@ -99,6 +102,7 @@ public sealed class MigrationRunner
         await RunEndatoAsync(ct);
         await RunFavoriteAsync(ct);
         await RunFileMetadataStoreAsync(ct);
+        await RunGeolocationAsync(ct);
         await RunHomeInventoryAsync(ct);
         await RunJobAsync(ct);
         await RunNoteAsync(ct);

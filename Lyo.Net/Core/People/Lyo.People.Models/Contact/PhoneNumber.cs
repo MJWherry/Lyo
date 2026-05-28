@@ -1,13 +1,17 @@
 using Lyo.Common;
 using Lyo.Common.Enums;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Base phone number model containing the actual phone number data</summary>
-public class PhoneNumber : IEquatable<PhoneNumber>
+public class PhoneNumber : IEquatable<PhoneNumber>, IHasEntitySources
 {
     /// <summary>Unique identifier for the phone number</summary>
     public Guid Id { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <summary>Phone number in E.164 format</summary>
     public string Number { get; set; } = null!;

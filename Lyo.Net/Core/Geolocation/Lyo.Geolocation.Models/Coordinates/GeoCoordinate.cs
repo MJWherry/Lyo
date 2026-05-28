@@ -125,11 +125,37 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
         return $"{latDegrees}°{latMinutes}'{latSeconds:F2}\"{latDir} {lonDegrees}°{lonMinutes}'{lonSeconds:F2}\"{lonDir}";
     }
 
-    /// <summary>Parses a coordinate from Degrees Minutes Seconds format</summary>
+    /// <summary>Parses a coordinate from Degrees Minutes Seconds format (e.g. 40°26'46"N 79°58'56"W).</summary>
     public static GeoCoordinate FromDms(string dms)
-        => throw
-            // Simplified parser - would need more robust implementation
-            new NotImplementedException("DMS parsing not yet implemented");
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(dms);
+        var parts = dms.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2)
+            throw new FormatException("DMS string must contain latitude and longitude segments.");
+
+        return new(ParseDmsSegment(parts[0], true), ParseDmsSegment(parts[1], false));
+    }
+
+    private static double ParseDmsSegment(string segment, bool isLatitude)
+    {
+        var dir = segment[^1];
+        var numeric = segment[..^1].Trim();
+        var pieces = numeric.Split(['°', '\'', '"'], StringSplitOptions.RemoveEmptyEntries);
+        if (pieces.Length < 2)
+            throw new FormatException($"Invalid DMS segment: {segment}");
+
+        var degrees = double.Parse(pieces[0]);
+        var minutes = double.Parse(pieces[1]);
+        var seconds = pieces.Length > 2 ? double.Parse(pieces[2]) : 0;
+        var decimalDegrees = degrees + minutes / 60.0 + seconds / 3600.0;
+        var negative = dir is 'S' or 's' or 'W' or 'w';
+        if (isLatitude && dir is not ('N' or 'n' or 'S' or 's'))
+            throw new FormatException($"Invalid latitude direction in: {segment}");
+        if (!isLatitude && dir is not ('E' or 'e' or 'W' or 'w'))
+            throw new FormatException($"Invalid longitude direction in: {segment}");
+
+        return negative ? -decimalDegrees : decimalDegrees;
+    }
 
     public override bool Equals(object? obj) => obj is GeoCoordinate other && Equals(other);
 

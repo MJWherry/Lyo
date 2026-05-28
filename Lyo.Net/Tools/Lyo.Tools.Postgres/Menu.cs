@@ -7,6 +7,7 @@ using Lyo.ContactUs.Postgres.Database;
 using Lyo.Discord.Postgres.Database;
 using Lyo.Email.Postgres.Database;
 using Lyo.Endato.Postgres.Database;
+using Lyo.Geolocation.Postgres.Database;
 using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
@@ -161,7 +162,7 @@ internal static class Menu
                     .PageSize(20)
                     .AddChoices(
                         "Run All (Latest)", "Audit", "ChangeTracker", "Comic", "Comment", "Config", "ContactUs", "Discord", "Email", "Endato", "Favorite", "FileMetadataStore",
-                        "HomeInventory", "Job", "Note", "People", "Rating", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Tag", BackLabel));
+                        "Geolocation", "HomeInventory", "Job", "Note", "People", "Rating", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Tag", BackLabel));
 
             if (choice == BackLabel)
                 break;
@@ -202,6 +203,7 @@ internal static class Menu
             "Endato" => ContextMenuAsync<EndatoDbContext>(runner, "endato", label, ct),
             "Favorite" => ContextMenuAsync<FavoriteDbContext>(runner, "favorite", label, ct),
             "FileMetadataStore" => ContextMenuAsync<FileMetadataStoreDbContext>(runner, "filestore", label, ct),
+            "Geolocation" => ContextMenuAsync<GeolocationDbContext>(runner, "geolocation", label, ct),
             "HomeInventory" => ContextMenuAsync<HomeInventoryDbContext>(runner, "home_inventory", label, ct),
             "Job" => ContextMenuAsync<JobContext>(runner, "job", label, ct),
             "Note" => ContextMenuAsync<NoteDbContext>(runner, "note", label, ct),

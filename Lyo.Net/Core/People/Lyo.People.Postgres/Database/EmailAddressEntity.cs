@@ -20,4 +20,6 @@ public sealed class EmailAddressEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    public ICollection<EmailAddressSourceEntity> Sources { get; set; } = [];
 }

@@ -8,6 +8,7 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Postgres;
+using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
 using Lyo.TestApi.FileStorageWorkbench;
@@ -88,7 +89,19 @@ public static class SetupEndpoints
             //app.MapDynamicCrudEndpoints<PeopleDbContext>(c => c.BaseRoute = "Person");
             app.CreateBuilder<PeopleDbContext, PersonEntity, PersonReq, PersonRes, Guid>(Constants.Person.Route, "Person")
                 .WithCrud(crud => crud.WithFlags(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance)
-                    .BeforeCreate(ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres()))
+                    .BeforeCreate(ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres())
+                    .AfterCreate(ctx => {
+                        if (ctx.DbContext is not PeopleDbContext db)
+                            return;
+                        var sourceType = string.IsNullOrWhiteSpace(ctx.Request.Source) ? PeopleSourceTypes.Manual : ctx.Request.Source;
+                        db.PersonSources.Add(new PersonSourceEntity {
+                            Id = Guid.NewGuid(),
+                            PersonId = ctx.Entity.Id,
+                            SourceEntityType = sourceType,
+                            SourceEntityId = ctx.Entity.Id.ToString(),
+                            ImportedAt = DateTime.UtcNow
+                        });
+                    }))
                 .WithMetadata()
                 .WithProjectionComputedFields()
                 .Build();

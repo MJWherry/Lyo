@@ -1,11 +1,15 @@
+using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models.Enums;
 
 namespace Lyo.Geolocation.Models.Addresses;
 
 /// <summary>Links a person to an address with relationship type (home, work, etc.) This allows a person to have multiple addresses of different types</summary>
-public class ContactAddress
+public class ContactAddress : IHasEntitySources
 {
     public Guid Id { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     public Guid PersonId { get; set; }
 

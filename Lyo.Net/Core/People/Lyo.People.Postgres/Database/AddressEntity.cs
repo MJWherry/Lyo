@@ -71,4 +71,6 @@ public sealed class AddressEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    public ICollection<AddressSourceEntity> Sources { get; set; } = [];
 }

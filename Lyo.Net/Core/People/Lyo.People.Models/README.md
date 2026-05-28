@@ -5,7 +5,7 @@ People and person-related models for the Lyo library suite.
 ## Overview
 
 This package provides domain models for representing people, their contact information, relationships, employment history, and preferences. It integrates with
-`Lyo.Geolocation.Models` for address support.
+`Lyo.Geolocation.Models` for address support. Internal rows live in **`people.*`** with parallel **`{entity}_source`** tables (`EntitySourceRecord` / [`PeopleSourceTypes`](PeopleSourceTypes.cs)) so imports from Endato (or any future provider) are traced without vendor-specific columns. Enriched locations may also be stored in [`geolocation.address`](../Geolocation/Lyo.Geolocation.Postgres/README.md); link across stores via `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs.
 
 ## Models
 

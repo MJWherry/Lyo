@@ -1,12 +1,16 @@
+using Lyo.EntityReference.Models;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Links a person to a phone number with relationship type (home, work, etc.). Allows a person to have multiple phone numbers of different types.</summary>
-public class ContactPhoneNumber
+public class ContactPhoneNumber : IHasEntitySources
 {
     /// <summary>Unique identifier for the contact-phone association</summary>
     public Guid Id { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <summary>ID of the person this phone number belongs to</summary>
     public Guid PersonId { get; set; }

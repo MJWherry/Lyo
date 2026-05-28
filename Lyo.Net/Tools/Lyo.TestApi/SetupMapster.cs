@@ -113,7 +113,6 @@ public static class SetupMapster
                 .Map(dest => dest.NamePrefix, src => string.IsNullOrEmpty(src.Prefix) ? null : src.Prefix)
                 .Map(dest => dest.MiddleName, src => string.IsNullOrEmpty(src.MiddleName) ? null : src.MiddleName)
                 .Map(dest => dest.NameSuffix, src => string.IsNullOrEmpty(src.Suffix) ? null : src.Suffix)
-                .Map(dest => dest.Source, src => string.IsNullOrEmpty(src.Source) ? "Manual" : src.Source)
                 .IgnoreNonMapped(true);
 
             config.NewConfig<PersonAddressReq, AddressEntity>().IgnoreNonMapped(true);
@@ -121,7 +120,8 @@ public static class SetupMapster
             config.NewConfig<PersonPhoneNumberReq, PhoneNumberEntity>().IgnoreNonMapped(true);
             config.NewConfig<PersonEntity, PersonRes>()
                 .MapWith(src => new(
-                    src.Id, null, src.NamePrefix, src.FirstName, src.MiddleName, src.LastName, src.NameSuffix, src.Source ?? "",
+                    src.Id, null, src.NamePrefix, src.FirstName, src.MiddleName, src.LastName, src.NameSuffix,
+                    src.Sources.OrderByDescending(s => s.ImportedAt).Select(s => s.SourceEntityType).FirstOrDefault() ?? "Manual",
                     src.ContactAddresses.Where(ca => ca.Address != null)
                         .Select(ca => new PersonAddressRes(
                             ca.Address!.Id, ca.PersonId, ca.Address.HouseNumber, ca.Address.StreetPreDirection, ca.Address.StreetName, ca.Address.StreetPostDirection,

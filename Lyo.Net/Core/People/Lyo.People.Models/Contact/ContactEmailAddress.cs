@@ -1,12 +1,16 @@
+using Lyo.EntityReference.Models;
 using Lyo.People.Models.Enum;
 
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Links a person to an email address with relationship type (personal, work, etc.). Allows a person to have multiple email addresses of different types.</summary>
-public class ContactEmailAddress
+public class ContactEmailAddress : IHasEntitySources
 {
     /// <summary>Unique identifier for the contact-email association</summary>
     public Guid Id { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <summary>ID of the person this email address belongs to</summary>
     public Guid PersonId { get; set; }

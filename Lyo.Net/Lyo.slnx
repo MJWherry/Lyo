@@ -87,8 +87,9 @@
         <Project Path="Core/Diff/Lyo.Diff.Tests/Lyo.Diff.Tests.csproj"/>
     </Folder>
     <Folder Name="/Core/Geolocation/">
-        <Project Path="Core/Geolocation/Lyo.Geolocation.Google/Lyo.Geolocation.Google.csproj"/>
         <Project Path="Core/Geolocation/Lyo.Geolocation.Models/Lyo.Geolocation.Models.csproj"/>
+        <Project Path="Core/Geolocation/Lyo.Geolocation.Postgres.Tests/Lyo.Geolocation.Postgres.Tests.csproj"/>
+        <Project Path="Core/Geolocation/Lyo.Geolocation.Postgres/Lyo.Geolocation.Postgres.csproj"/>
         <Project Path="Core/Geolocation/Lyo.Geolocation/Lyo.Geolocation.csproj"/>
     </Folder>
     <Folder Name="/Core/Metrics/">
@@ -388,6 +389,9 @@
         <Project Path="Integration/Endato/Lyo.Endato.Client/Lyo.Endato.Client.csproj"/>
         <Project Path="Integration/Endato/Lyo.Endato.Postgres/Lyo.Endato.Postgres.csproj"/>
         <Project Path="Integration/Endato/Lyo.Endato.Postgres.Tests/Lyo.Endato.Postgres.Tests.csproj"/>
+    </Folder>
+    <Folder Name="/Integration/Google/">
+        <Project Path="Integration/Google/Lyo.Google.Geolocation.Client/Lyo.Google.Geolocation.Client.csproj"/>
     </Folder>
     <Folder Name="/Integration/Typecast/">
         <Project Path="Integration/Typecast/Lyo.Typecast.Client/Lyo.Typecast.Client.csproj"/>

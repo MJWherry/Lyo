@@ -4,6 +4,7 @@ using DateOnly = Lyo.DateAndTime.DateOnlyModel;
 #endif
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
+using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Models.Enums;
 using Lyo.People.Models.Contact;
@@ -14,10 +15,13 @@ using Lyo.People.Models.Relationships;
 namespace Lyo.People.Models;
 
 /// <summary>Core person model representing an individual with contact info, demographics, and relationships</summary>
-public class Person
+public class Person : IHasEntitySources
 {
     /// <summary>Unique identifier for the person</summary>
     public Guid Id { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <summary>Person's name</summary>
     public PersonName Name { get; set; } = null!;

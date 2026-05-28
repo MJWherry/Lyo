@@ -15,7 +15,6 @@ public sealed class PersonEntityConfiguration : IEntityTypeConfiguration<PersonE
         builder.Property(e => e.MiddleName).HasMaxLength(25).HasColumnName("middle_name");
         builder.Property(e => e.LastName).HasMaxLength(25).IsRequired().HasColumnName("last_name");
         builder.Property(e => e.NameSuffix).HasMaxLength(12).HasColumnName("name_suffix");
-        builder.Property(e => e.Source).HasMaxLength(30).IsRequired().HasDefaultValue("Manual").HasColumnName("source");
         builder.Property(e => e.PreferredName).HasMaxLength(100).HasColumnName("preferred_name");
         builder.Property(e => e.MaidenName).HasMaxLength(100).HasColumnName("maiden_name");
         builder.Property(e => e.DateOfBirth).HasColumnType("date").HasColumnName("date_of_birth");

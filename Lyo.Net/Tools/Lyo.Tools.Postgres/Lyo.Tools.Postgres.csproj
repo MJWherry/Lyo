@@ -15,6 +15,7 @@
         <!-- Core -->
         <ProjectReference Include="..\..\Core\Audit\Lyo.Audit.Postgres\Lyo.Audit.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\ChangeTracker\Lyo.ChangeTracker.Postgres\Lyo.ChangeTracker.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Core\Geolocation\Lyo.Geolocation.Postgres\Lyo.Geolocation.Postgres.csproj"/>
         <ProjectReference Include="..\..\Core\People\Lyo.People.Postgres\Lyo.People.Postgres.csproj"/>
 
         <!-- Communication -->
