@@ -714,12 +714,27 @@ const cy = cytoscape({
         'opacity': 0.7,
     }},
     { selector: '.dim', style: { 'opacity': 0.08 } },
-    { selector: 'edge.hover-edge', style: {
-        'opacity': 0.9,
-        'line-color': '#9aa8c4',
-        'target-arrow-color': '#9aa8c4',
-        'width': 2,
-        'z-index': 9997,
+    { selector: 'edge.hover-edge-down', style: {
+        'opacity': 1,
+        'line-color': '#9ab4f7',
+        'target-arrow-color': '#9ab4f7',
+        'width': 2.5,
+        'z-index': 9998,
+    }},
+    { selector: 'edge.hover-edge-up', style: {
+        'opacity': 1,
+        'line-color': '#8ed9a3',
+        'target-arrow-color': '#8ed9a3',
+        'width': 2.5,
+        'z-index': 9998,
+    }},
+    { selector: 'node.hover-consumer', style: {
+        'border-color': '#79c98e', 'border-width': 2,
+        'opacity': 1,
+    }},
+    { selector: 'node.hover-neighbor', style: {
+        'border-color': '#7aa2f7', 'border-width': 2,
+        'opacity': 1,
     }},
     { selector: 'node.hi', style: {
         'opacity': 1.0,
@@ -873,8 +888,13 @@ function applyHoverStyle(n, opts) {
   });
 }
 
+const HOVER_STYLE_KEYS = [
+  'width', 'height', 'padding', 'text-max-width', 'font-size',
+  'z-index', 'border-width', 'border-color', 'opacity',
+];
+
 function clearHoverStyle(n) {
-  n.removeStyle();
+  HOVER_STYLE_KEYS.forEach(k => n.style(k, ''));
 }
 
 let mode = 'overview';
@@ -1046,17 +1066,56 @@ cy.on('tap', evt => {
   if (evt.target === cy) { unfocus(); clearHighlight(); hideInfo(); resetNav(); }
 });
 
-// Hover: enlarge node + neighbors, dim everything else.
+// Hover: highlight transitive deps (out) + transitive consumers (in).
 let hoverNode = null;
 let hoverRelated = null;
+
+function hasSelectionHighlight() {
+  return cy.$('.hi, .hi-down, .hi-up').length > 0;
+}
+
+function focusRelatedEles() {
+  if (!focused || !navCurrent) return null;
+  const anchor = cy.getElementById(navCurrent);
+  if (anchor.empty()) return null;
+  return anchor.successors().union(anchor.predecessors()).add(anchor);
+}
+
+function restoreFocusVisibility() {
+  const clip = focusRelatedEles();
+  if (!clip) return;
+  cy.elements().difference(clip).style('display', 'none');
+  clip.style('display', 'element');
+}
+
+/** source -> target means source depends on target */
+function hoverDependencyEles(n) {
+  const allDeps = n.successors();
+  const allBy = n.predecessors();
+  let all = n.union(allDeps).union(allBy);
+  let downEdges = allDeps.edges();
+  let upEdges = allBy.edges();
+  const clip = focusRelatedEles();
+  if (clip) {
+    all = all.intersect(clip);
+    downEdges = downEdges.filter(e => clip.contains(e));
+    upEdges = upEdges.filter(e => clip.contains(e));
+  }
+  return {
+    all: all,
+    downEdges: downEdges,
+    upEdges: upEdges,
+    consumerNodes: all.intersect(allBy.nodes()),
+  };
+}
 
 function clearHoverState() {
   if (hoverRelated) {
     hoverRelated.nodes().forEach(nn => {
-      nn.removeClass('hover-neighbor');
+      nn.removeClass('hover-neighbor hover-consumer');
       clearHoverStyle(nn);
     });
-    hoverRelated.edges().removeClass('hover-edge');
+    hoverRelated.edges().removeClass('hover-edge-down hover-edge-up');
     hoverRelated = null;
   }
   if (hoverNode) {
@@ -1064,35 +1123,33 @@ function clearHoverState() {
     clearHoverStyle(hoverNode);
     hoverNode = null;
   }
-  if (!cy.$('.hi, .hi-down, .hi-up').length) {
-    cy.elements().removeClass('dim');
-  }
+  restoreFocusVisibility();
+  if (!hasSelectionHighlight()) cy.elements().removeClass('dim');
+}
+
+function applyHoverDependencyHighlight(n) {
+  const hl = hoverDependencyEles(n);
+  hoverNode = n;
+  hoverRelated = hl.all;
+
+  if (!hasSelectionHighlight()) cy.elements().addClass('dim');
+  hl.all.removeClass('dim');
+  hl.downEdges.addClass('hover-edge-down');
+  hl.upEdges.addClass('hover-edge-up');
+
+  n.addClass('hover');
+  applyHoverStyle(n);
+  hl.all.nodes().not(n).forEach(m => {
+    const isConsumer = hl.consumerNodes.contains(m);
+    m.addClass(isConsumer ? 'hover-consumer' : 'hover-neighbor');
+    applyHoverStyle(m, { mild: true });
+  });
 }
 
 cy.on('mouseover', 'node', evt => {
   const n = evt.target;
   clearHoverState();
-  if (cy.$('.hi, .hi-down, .hi-up').length) {
-    n.addClass('hover');
-    applyHoverStyle(n, { mild: true });
-    hoverNode = n;
-    return;
-  }
-
-  const related = n.closedNeighborhood();
-  hoverNode = n;
-  hoverRelated = related;
-
-  cy.elements().addClass('dim');
-  related.removeClass('dim');
-  related.edges().addClass('hover-edge');
-
-  n.addClass('hover');
-  applyHoverStyle(n);
-  related.nodes().not(n).forEach(m => {
-    m.addClass('hover-neighbor');
-    applyHoverStyle(m, { mild: true });
-  });
+  applyHoverDependencyHighlight(n);
 });
 
 cy.on('mouseout', 'node', evt => {

@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text.Json;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
@@ -11,12 +10,10 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
-using Lyo.Csv.Models;
 using Lyo.Formatter;
 using Lyo.Metrics;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -29,17 +26,16 @@ namespace Lyo.Api.Services.Export;
 /// </remarks>
 public class ExportService<TContext>(
     IQueryService<TContext> queryService,
-    ICsvService csvService,
-    IXlsxService xlsxService,
+    IEnumerable<IExportFormatHandler> formatHandlers,
     QueryOptions queryOptions,
     IFormatterService? formatterService = null,
     ILogger<ExportService<TContext>>? logger = null,
-    JsonSerializerOptions? serializerOptions = null,
     IMetrics? metrics = null) : IExportService<TContext>
     where TContext : DbContext
 {
     private static readonly (string, string)[] ExportTags = [("operation", "export")];
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
+    private readonly Dictionary<ExportFormat, IExportFormatHandler> _formatHandlers = formatHandlers.ToDictionary(h => h.Format);
 
     public async Task<(Stream Stream, string ContentType, string FileName)> ExportAsync<TDbEntity, TResponse>(
         ExportRequest request,
@@ -127,7 +123,7 @@ public class ExportService<TContext>(
             _metrics.IncrementCounter("api.export.success", 1, ExportTags);
             return output2;
         }
-        catch (Exception ex) when (ex is not InvalidOperationException) {
+        catch (Exception ex) when (ex is not InvalidOperationException and not NotSupportedException) {
             _metrics.IncrementCounter("api.export.failure", 1, ExportTags);
             _metrics.RecordError("api.export.duration", ex, ExportTags);
             throw;
@@ -216,24 +212,13 @@ public class ExportService<TContext>(
         ExportColumnPlan? columnPlan,
         CancellationToken ct)
     {
-        var extension = format.ToString().ToLowerInvariant();
-        var fileName = $"export.{extension}";
+        var handler = GetFormatHandler(format);
         if (columnPlan is { ColumnMappings.Count: > 0 }) {
             var formatters = BuildProjectedColumnExtractors(columnPlan);
-            return format switch {
-                ExportFormat.Csv => await ExportCsvAsync(items, formatters, ct).ConfigureAwait(false),
-                ExportFormat.Xlsx => await ExportXlsxAsync(items, formatters, ct).ConfigureAwait(false),
-                ExportFormat.Json => ExportJson(items, fileName, serializerOptions),
-                var _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported export format")
-            };
+            return await handler.WriteProjectedAsync(items, formatters, ct).ConfigureAwait(false);
         }
 
-        return format switch {
-            ExportFormat.Csv => await ExportCsvAsync(items, (Dictionary<string, Func<object?, string>>?)null, ct).ConfigureAwait(false),
-            ExportFormat.Xlsx => await ExportXlsxAsync(items, (Dictionary<string, Func<object?, string>>?)null, ct).ConfigureAwait(false),
-            ExportFormat.Json => ExportJson(items, fileName, serializerOptions),
-            var _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported export format")
-        };
+        return await handler.WriteProjectedAsync(items, null, ct).ConfigureAwait(false);
     }
 
     private static Dictionary<string, Func<object?, string>> BuildProjectedColumnExtractors(ExportColumnPlan plan)
@@ -262,14 +247,9 @@ public class ExportService<TContext>(
         Dictionary<string, string>? columns,
         CancellationToken ct)
     {
-        var extension = format.ToString().ToLowerInvariant();
-        var fileName = $"export.{extension}";
-        return format switch {
-            ExportFormat.Csv => await ExportCsvAsync(items, columns, ct).ConfigureAwait(false),
-            ExportFormat.Xlsx => await ExportXlsxAsync(items, columns, ct).ConfigureAwait(false),
-            ExportFormat.Json => ExportJson(items, fileName, serializerOptions),
-            var _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported export format")
-        };
+        var handler = GetFormatHandler(format);
+        var resolved = ResolveColumns<T>(columns);
+        return await handler.WriteTypedAsync(items, resolved, ct).ConfigureAwait(false);
     }
 
     private Dictionary<string, PropertyInfo>? ResolveColumns<T>(Dictionary<string, string>? columns)
@@ -290,76 +270,18 @@ public class ExportService<TContext>(
         return resolved.Count > 0 ? resolved : null;
     }
 
-    private async Task<(Stream Stream, string ContentType, string FileName)> ExportCsvAsync<T>(
-        IEnumerable<T> items,
-        Dictionary<string, Func<T, string>>? formatters,
-        CancellationToken ct)
+    private IExportFormatHandler GetFormatHandler(ExportFormat format)
     {
-        var stream = new MemoryStream();
-        if (formatters is not null)
-            await csvService.ExportToCsvStreamAsync(items, formatters, stream, ct).ConfigureAwait(false);
-        else {
-            var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead).ToList();
-            await csvService.ExportToCsvStreamAsync(items, props, stream, ct).ConfigureAwait(false);
-        }
+        if (_formatHandlers.TryGetValue(format, out var handler))
+            return handler;
 
-        stream.Position = 0;
-        return (stream, FileTypeInfo.Csv.MimeType, "export.csv");
-    }
+        var addonHint = format switch {
+            ExportFormat.Csv => "AddCsvExport()",
+            ExportFormat.Xlsx => "AddXlsxExport()",
+            _ => "register an IExportFormatHandler"
+        };
 
-    private async Task<(Stream Stream, string ContentType, string FileName)> ExportCsvAsync<T>(IEnumerable<T> items, Dictionary<string, string>? columns, CancellationToken ct)
-    {
-        var stream = new MemoryStream();
-        var resolved = ResolveColumns<T>(columns);
-        if (resolved is not null)
-            await csvService.ExportToCsvStreamAsync(items, resolved, stream, ct).ConfigureAwait(false);
-        else {
-            var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead).ToList();
-            await csvService.ExportToCsvStreamAsync(items, props, stream, ct).ConfigureAwait(false);
-        }
-
-        stream.Position = 0;
-        return (stream, FileTypeInfo.Csv.MimeType, "export.csv");
-    }
-
-    private async Task<(Stream Stream, string ContentType, string FileName)> ExportXlsxAsync<T>(
-        IEnumerable<T> items,
-        Dictionary<string, Func<T, string>>? formatters,
-        CancellationToken ct)
-    {
-        var stream = new MemoryStream();
-        if (formatters is not null)
-            await xlsxService.ExportToXlsxAsync(items, formatters, stream, null, ct).ConfigureAwait(false);
-        else {
-            var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead).ToList();
-            await xlsxService.ExportToXlsxAsync(items, props, stream, null, ct).ConfigureAwait(false);
-        }
-
-        stream.Position = 0;
-        return (stream, FileTypeInfo.Xlsx.MimeType, "export.xlsx");
-    }
-
-    private async Task<(Stream Stream, string ContentType, string FileName)> ExportXlsxAsync<T>(IEnumerable<T> items, Dictionary<string, string>? columns, CancellationToken ct)
-    {
-        var stream = new MemoryStream();
-        var resolved = ResolveColumns<T>(columns);
-        if (resolved is not null)
-            await xlsxService.ExportToXlsxAsync(items, resolved, stream, null, ct).ConfigureAwait(false);
-        else {
-            var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead).ToList();
-            await xlsxService.ExportToXlsxAsync(items, props, stream, null, ct).ConfigureAwait(false);
-        }
-
-        stream.Position = 0;
-        return (stream, FileTypeInfo.Xlsx.MimeType, "export.xlsx");
-    }
-
-    private static (Stream Stream, string ContentType, string FileName) ExportJson<T>(IEnumerable<T> items, string fileName, JsonSerializerOptions? serializerOptions = null)
-    {
-        var stream = new MemoryStream();
-        JsonSerializer.Serialize(stream, items, serializerOptions ?? JsonSerializerOptions.Default);
-        stream.Position = 0;
-        return (stream, FileTypeInfo.Json.MimeType, fileName);
+        throw new NotSupportedException($"Export format '{format}' is not supported. Call {addonHint} on the service collection.");
     }
 
     private static QueryReq ToQueryReq(ProjectionQueryReq source)

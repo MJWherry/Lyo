@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>XLSX export menu item for Lyo data grids.</Description>
+        <PackageTags>blazor components export xlsx mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor" Version="[9.3,)"/>
+    </ItemGroup>
+
+</Project>

@@ -187,33 +187,33 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             typeof(TResponse) == typeof(object) ? null : ToTypeMetadata(typeof(TResponse)), keyPropertyName, keyType.Name);
     }
 
-    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(ApiFeatureFlag features, CrudConfiguration<TDbContext, TDbEntity, TRequest> config)
+    public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> WithCrud(ApiFeatureSet features, CrudConfiguration<TDbContext, TDbEntity, TRequest> config)
     {
-        if (features.HasFlag(ApiFeatureFlag.Query)) {
+        if (features.Contains(ApiFeature.Query)) {
             WithQuery(config.QueryAuth);
-            if (features.HasFlag(ApiFeatureFlag.ProjectionComputedFields))
+            if (features.Contains(ApiFeature.ProjectionComputedFields))
                 WithProjectionComputedFields();
         }
 
-        if (features.HasFlag(ApiFeatureFlag.Get))
+        if (features.Contains(ApiFeature.Get))
             WithGet(config.BeforeGet, config.AfterGet, config.GetAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.Create))
+        if (features.Contains(ApiFeature.Create))
             WithCreate(config.BeforeCreate, config.AfterCreate, config.CreateAuth, config.AfterCreateAsync);
 
-        if (features.HasFlag(ApiFeatureFlag.CreateBulk))
+        if (features.Contains(ApiFeature.CreateBulk))
             WithCreateBulk(config.BeforeCreate, config.AfterCreate, config.CreateBulkAuth, config.AfterCreateAsync);
 
-        if (features.HasFlag(ApiFeatureFlag.Update))
+        if (features.Contains(ApiFeature.Update))
             WithUpdate(config.BeforeUpdate, config.AfterUpdate, config.UpdateAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.UpdateBulk))
+        if (features.Contains(ApiFeature.UpdateBulk))
             WithUpdateBulk(config.BeforeUpdate, config.AfterUpdate, config.UpdateBulkAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.Patch)) {
+        if (features.Contains(ApiFeature.Patch)) {
             var beforePatch = config.BeforePatch;
             var afterPatch = config.AfterPatch;
-            if (features.HasFlag(ApiFeatureFlag.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
+            if (features.Contains(ApiFeature.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
                 beforePatch ??= config.BeforeUpdate != null
                     ? ctx => config.BeforeUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
                     : null;
@@ -226,10 +226,10 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             WithPatch(beforePatch, afterPatch, true, config.PatchAuth, config.PatchPropertyAuthorization);
         }
 
-        if (features.HasFlag(ApiFeatureFlag.PatchBulk)) {
+        if (features.Contains(ApiFeature.PatchBulk)) {
             var beforePatch = config.BeforePatch;
             var afterPatch = config.AfterPatch;
-            if (features.HasFlag(ApiFeatureFlag.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
+            if (features.Contains(ApiFeature.PatchInheritsUpdate) && (config.BeforeUpdate != null || config.AfterUpdate != null)) {
                 beforePatch ??= config.BeforeUpdate != null
                     ? ctx => config.BeforeUpdate!(new(new() { Keys = ctx.Request.Keys?.FirstOrDefault() ?? [], Data = default! }, ctx.Entity, ctx.DbContext, ctx.Services))
                     : null;
@@ -242,56 +242,58 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             WithPatchBulk(beforePatch, afterPatch, true, config.PatchBulkAuth, config.PatchPropertyAuthorization);
         }
 
-        if (features.HasFlag(ApiFeatureFlag.Delete))
+        if (features.Contains(ApiFeature.Delete))
             WithDelete(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, config.DeleteAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.DeleteBulk))
+        if (features.Contains(ApiFeature.DeleteBulk))
             WithDeleteBulk(config.BeforeDelete, config.AfterDelete, config.DeleteIncludes, null, config.DeleteBulkAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.Export))
-            WithExport(config.ExportAuth);
+        foreach (var contributor in app.Services.GetServices<IApiEndpointContributor>()) {
+            if (features.Contains(contributor.Feature))
+                contributor.ConfigureTypedCrud(new ApiEndpointCrudContributorContext(config.ExportAuth, auth => { _ = WithExport(auth); }));
+        }
 
-        if (features.HasFlag(ApiFeatureFlag.Metadata))
+        if (features.Contains(ApiFeature.Metadata))
             WithMetadata(config.Metadata, config.MetadataAuth);
 
-        if (features.HasFlag(ApiFeatureFlag.Upsert)) {
+        if (features.Contains(ApiFeature.Upsert)) {
             var beforeCreate = config.BeforeCreate;
             var afterCreate = config.AfterCreate;
             var beforeUpdate = config.BeforeUpdate;
             var afterUpdate = config.AfterUpdate;
-            if (features.HasFlag(ApiFeatureFlag.UpsertInheritCreate)) {
+            if (features.Contains(ApiFeature.UpsertInheritCreate)) {
                 beforeCreate = config.BeforeCreate;
                 afterCreate = config.AfterCreate;
             }
 
-            if (features.HasFlag(ApiFeatureFlag.UpsertInheritUpdate)) {
+            if (features.Contains(ApiFeature.UpsertInheritUpdate)) {
                 beforeUpdate = config.BeforeUpdate;
                 afterUpdate = config.AfterUpdate;
             }
 
             WithUpsert(
-                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.HasFlag(ApiFeatureFlag.UpsertInheritCreate),
-                features.HasFlag(ApiFeatureFlag.UpsertInheritUpdate), config.UpsertAuth);
+                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.Contains(ApiFeature.UpsertInheritCreate),
+                features.Contains(ApiFeature.UpsertInheritUpdate), config.UpsertAuth);
         }
 
-        if (features.HasFlag(ApiFeatureFlag.UpsertBulk)) {
+        if (features.Contains(ApiFeature.UpsertBulk)) {
             var beforeCreate = config.BeforeCreate;
             var afterCreate = config.AfterCreate;
             var beforeUpdate = config.BeforeUpdate;
             var afterUpdate = config.AfterUpdate;
-            if (features.HasFlag(ApiFeatureFlag.UpsertInheritCreate)) {
+            if (features.Contains(ApiFeature.UpsertInheritCreate)) {
                 beforeCreate = config.BeforeCreate;
                 afterCreate = config.AfterCreate;
             }
 
-            if (features.HasFlag(ApiFeatureFlag.UpsertInheritUpdate)) {
+            if (features.Contains(ApiFeature.UpsertInheritUpdate)) {
                 beforeUpdate = config.BeforeUpdate;
                 afterUpdate = config.AfterUpdate;
             }
 
             WithUpsertBulk(
-                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.HasFlag(ApiFeatureFlag.UpsertInheritCreate),
-                features.HasFlag(ApiFeatureFlag.UpsertInheritUpdate), config.UpsertBulkAuth);
+                config.BeforeUpsert, config.AfterUpsert, beforeCreate, afterCreate, beforeUpdate, afterUpdate, features.Contains(ApiFeature.UpsertInheritCreate),
+                features.Contains(ApiFeature.UpsertInheritUpdate), config.UpsertBulkAuth);
         }
 
         return this;
@@ -921,7 +923,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                             httpContext,
                             LyoProblemDetails.FromCode(
                                 Constants.ApiErrorCodes.InvalidQuery,
-                                "Computed fields are not enabled. Enable via ApiFeatureFlag.ProjectionComputedFields or WithProjectionComputedFields.", DateTime.UtcNow));
+                                "Computed fields are not enabled. Enable via ApiFeature.ProjectionComputedFields or WithProjectionComputedFields.", DateTime.UtcNow));
 
                         return Results.Json(cfError, statusCode: cfError.Status);
                     }
@@ -982,7 +984,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         OperationHelpers.ThrowIf(
             !exportServiceRegistered,
             $"Export endpoint for '{typeof(TDbContext).Name}' requires '{nameof(IExportService<TDbContext>)}'. " +
-            $"Register it with services.{nameof(ServiceCollectionExtensions.WithExportService)}<{typeof(TDbContext).Name}>().");
+            $"Register it with services.AddLyoApiExport<{typeof(TDbContext).Name}>().");
 
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Export", async (

@@ -87,42 +87,44 @@ public static class Extensions
     public static WebApplication BuildDiscordGroup(this WebApplication app)
     {
         app.CreateBuilder<DiscordDbContext, DiscordUser, DiscordUserReq, DiscordUserRes, long>(Constants.Rest.Discord.Users, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordUserCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordUserCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordGuild, DiscordGuildReq, DiscordGuildRes, long>(Constants.Rest.Discord.Guilds, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordGuildCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordGuildCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordChannel, DiscordChannelReq, DiscordChannelRes, long>(Constants.Rest.Discord.Channels, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordChannelCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordChannelCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordEmoji, DiscordEmojiReq, DiscordEmojiRes, long>(Constants.Rest.Discord.Emojis, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordEmojiCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordEmojiCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordRole, DiscordRoleReq, DiscordRoleRes, long>(Constants.Rest.Discord.Roles, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordRoleCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordRoleCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordInteraction, DiscordInteractionReq, DiscordInteractionRes, long>(Constants.Rest.Discord.Interactions, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new())
+            .WithCrud(ApiFeatureSet.DefaultCrud, new())
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordMessage, DiscordMessageReq, DiscordMessageRes, long>(Constants.Rest.Discord.Messages, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, DiscordMessageCrud)
+            .WithCrud(ApiFeatureSet.DefaultCrud, DiscordMessageCrud)
             .Build();
 
         app.CreateBuilder<DiscordDbContext, DiscordAttachment, DiscordAttachmentReq, DiscordAttachmentRes, long>(Constants.Rest.Discord.Attachments, "Discord")
-            .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new())
+            .WithCrud(ApiFeatureSet.DefaultCrud, new())
             .Build();
 
         // Composite PK (UserId, GuildId): no GET/DELETE by single `{id}` route — use Query, Upsert, or PATCH with Keys in the body (two values in PK order).
         app.CreateBuilder<DiscordDbContext, DiscordMember, DiscordMemberReq, DiscordMemberRes, long>(Constants.Rest.Discord.Members, "Discord")
             .WithCrud(
-                ApiFeatureFlag.Query | ApiFeatureFlag.Upsert | ApiFeatureFlag.UpsertBulk | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate |
-                ApiFeatureFlag.Patch | ApiFeatureFlag.PatchBulk | ApiFeatureFlag.PatchInheritsUpdate, new())
+                new ApiFeatureSet([
+                    ApiFeature.Query, ApiFeature.Upsert, ApiFeature.UpsertBulk, ApiFeature.UpsertInheritCreate, ApiFeature.UpsertInheritUpdate, ApiFeature.Patch,
+                    ApiFeature.PatchBulk, ApiFeature.PatchInheritsUpdate
+                ]), new())
             .Build();
 
         app.MapDiscordGuildSettingsEndpoints();

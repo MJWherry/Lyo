@@ -48,7 +48,7 @@ public static class ServiceCollectionExtensions
 
         /// <summary>
         /// Registers CRUD services for a DbContext: IQueryService, ICreateService, IPatchService, IDeleteService, IUpdateService, IUpsertService, IQueryHistoryService. Export is
-        /// opt-in via WithExportService. Requires: AddLyoQueryServices, AddFusionCache or AddLocalCache, ILyoMapper, IDbContextFactory&lt;TContext&gt;.
+        /// opt-in via AddLyoApiExport (Lyo.Api.Export). Requires: AddLyoQueryServices, AddFusionCache or AddLocalCache, ILyoMapper, IDbContextFactory&lt;TContext&gt;.
         /// </summary>
         public IServiceCollection AddLyoCrudServices<TContext>()
             where TContext : DbContext
@@ -64,14 +64,14 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IUpsertService<TContext>, UpsertService<TContext>>();
             services.AddScoped<IQueryHistoryService, QueryHistoryService<TContext>>();
             services.AddScoped<ILyoRepository<TContext>, LyoRepository<TContext>>();
+            services.AddBuiltInExportFormatHandlers();
             return services;
         }
 
-        /// <summary>Registers export service for a DbContext. Call this when using endpoint builders with WithExport.</summary>
-        public IServiceCollection WithExportService<TContext>()
-            where TContext : DbContext
+        /// <summary>Registers the built-in JSON export format handler. CSV and XLSX require <c>Lyo.Api.Export.Csv</c> / <c>Lyo.Api.Export.Xlsx</c>.</summary>
+        public IServiceCollection AddBuiltInExportFormatHandlers()
         {
-            services.TryAddScoped<IExportService<TContext>, ExportService<TContext>>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IExportFormatHandler, JsonExportFormatHandler>());
             return services;
         }
 

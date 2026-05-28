@@ -34,6 +34,9 @@
         <ProjectReference Include="..\..\Features\Config\Lyo.Config.Postgres\Lyo.Config.Postgres.csproj"/>
         <ProjectReference Include="..\..\Features\ContactUs\Lyo.ContactUs.Postgres\Lyo.ContactUs.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Endato\Lyo.Endato.Postgres\Lyo.Endato.Postgres.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\Integration\Api\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Postgres\Lyo.Discord.Postgres.csproj"/>
         <ProjectReference Include="..\..\Integration\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>

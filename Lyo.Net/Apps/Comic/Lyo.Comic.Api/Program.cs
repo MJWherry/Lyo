@@ -1,4 +1,7 @@
 using Lyo.Api;
+using Lyo.Api.Export;
+using Lyo.Api.Export.Csv;
+using Lyo.Api.Export.Xlsx;
 using Lyo.Comic.Api;
 using Lyo.Comic.Postgres.Database;
 using Lyo.Common;
@@ -12,7 +15,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddComicApi(builder.Configuration);
-builder.Services.WithExportService<ComicDbContext>();
+builder.Services.AddLyoApiExport<ComicDbContext>();
+builder.Services.AddCsvExport();
+builder.Services.AddXlsxExport();
 var app = builder.Build();
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();

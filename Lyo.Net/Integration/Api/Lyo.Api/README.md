@@ -19,7 +19,7 @@ tree. DTOs and HTTP contracts live in **`Lyo.Api.Models`** (see that package’s
 |-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **CreateBuilder**           | Structured REST under `baseRoute`: `{baseRoute}/Query`, `{baseRoute}/QueryProject`, `{baseRoute}` + `GetDefaultEndpoint<TKey>()` for GET/DELETE by key (e.g. `{baseRoute}/{id:guid}`), etc.             | Typed `TRequest` / `TResponse`, one registration per entity, **`ILyoMapper`** for DTO mapping, full CRUD control                                                                                       |
 | **MapDynamicCrudEndpoints** | Dynamic segment `{entityType}` (entity CLR **name**): `{baseRoute}/{entityType}/Query`, `{baseRoute}/{entityType}/{id}`, …; also `GET {baseRoute}/Metadata` and `GET {baseRoute}/{entityType}/Metadata` | All (or filtered) EF model types on a single `DbContext`; JSON bodies deserialize to entities; no DTO layer                                                                                            |
-| **CreateReadOnlyBuilder**   | Same URL shape as **CreateBuilder**                                                                                                                                                                     | `TRequest` is fixed to `object`; use `.WithReadOnlyEndpoints()` or `WithCrud(ApiFeatureFlag.ReadOnly, …)` so only **Query**, **QueryProject**, and **Get** are emitted (`ReadOnly` = `Query` \| `Get`) |
+| **CreateReadOnlyBuilder**   | Same URL shape as **CreateBuilder**                                                                                                                                                                     | `TRequest` is fixed to `object`; use `.WithReadOnlyEndpoints()` or `WithCrud(ApiFeatureSet.ReadOnly, …)` so only **Query**, **QueryProject**, and **Get** are emitted (`ReadOnly` = `Query` \| `Get`) |
 
 **Entry points:** `WebApplication` extension methods in [`ApiEndpointBuilderExtensions`](ApiEndpoint/ApiEndpointBuilderExtensions.cs) (`CreateBuilder`, `CreateReadOnlyBuilder`)
 and [`DynamicCrudEndpointBuilder`](ApiEndpoint/Dynamic/DynamicCrudEndpointBuilder.cs) (`MapDynamicCrudEndpoints`). `baseRoute` should not end with `/`; it is combined with route
@@ -61,7 +61,7 @@ metadata—see **`entityTypes`** below.
   in [query result caching](#query-result-caching) the same way as **`POST …/Query`**.
 - **Derived includes** – Select paths auto-include required navigation properties
 - **Computed fields** – Optional **`ComputedFields`** on the request: SmartFormat templates add named columns from other projected values (requires **`IFormatterService`** and *
-  *`ApiFeatureFlag.ProjectionComputedFields`** on the endpoint). Placeholders use dotted paths that must be loadable from **`Select`**; the server may append missing paths for
+  *`ApiFeature.ProjectionComputedFields`** on the endpoint). Placeholders use dotted paths that must be loadable from **`Select`**; the server may append missing paths for
   template dependencies and can strip those dependency leaves from the JSON response when they were only needed for formatting (see sibling-merge / auto-derived path behavior in
   projection services).
 - **`entityTypes` (success only)** – On successful **`QueryProject`** responses, **`entityTypes`** is a sorted, distinct list of CLR **class** names for: the root entity type, and
@@ -81,7 +81,7 @@ metadata—see **`entityTypes`** below.
   enabled; auto-invalidation on Create/Update/Patch/Delete/Upsert. Details: [Query result caching](#query-result-caching).
 - **Authorization** – Builder-level and per-endpoint via `RequireAuthorization`, `AllowAnonymous`, `EndpointAuth`
 - **CrudConfiguration** – Before/After hooks, per-operation auth; optional **patch property authorization** (policy-based allowlists or custom rules; disallowed keys return 403)
-- **ApiFeatureFlag** – Fine-grained control over which endpoints are generated
+- **ApiFeature / ApiFeatureSet** – Fine-grained control over which endpoints are generated
 - **ILyoMapper** – Request/response mapping abstraction (Mapster, AutoMapper, or hand-written). When source and destination types are identical, CRUD services **skip** the mapper
   and cast (`MapOrCast`).
 - **Request validation** – Paging bounds (`Start` / `Amount` vs `QueryOptions`), bulk batch size vs `BulkOperationOptions`, **`PatchRequest`** property names and convertible values
@@ -110,8 +110,10 @@ builder.Services.AddDbContextFactory<MyDbContext>(...);
 // Register ILyoMapper — any implementation (Mapster/AutoMapper/custom). Many samples use a thin Mapster adapter.
 builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
 
-// Optional: export (required for WithExport)
-builder.Services.WithExportService<MyDbContext>();
+// Optional: export endpoint + IExportService (Lyo.Api.Export); add format handlers separately
+builder.Services.AddLyoApiExport<MyDbContext>();
+builder.Services.AddCsvExport();   // Lyo.Api.Export.Csv + AddCsvService()
+builder.Services.AddXlsxExport();  // Lyo.Api.Export.Xlsx + AddXlsxService()
 // Optional: PostgreSQL set-returning functions (ISprocService), Lyo.Diff helpers
 // builder.Services.AddPostgresSprocService<MyDbContext>();
 // builder.Services.AddLyoDiffServices();
@@ -130,8 +132,9 @@ All registrations are extension methods on `IServiceCollection` (no `IServiceCol
 | Method                                | Registers                                                                                                                                                                                                                                                                                    |
 |---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AddLyoQueryServices()`               | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.               |
-| `AddLyoCrudServices<TContext>()`      | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `IQueryHistoryService`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults. |
-| `WithExportService<TContext>()`       | Scoped `IExportService<TContext>` (required for the Export endpoint / `ApiFeatureFlag.Export`).                                                                                                                                                                                              |
+| `AddLyoCrudServices<TContext>()`      | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `IQueryHistoryService`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults; registers JSON export handler. |
+| `AddLyoApiExport<TContext>()` (`Lyo.Api.Export`) | Scoped `IExportService<TContext>` + export endpoint contributor (`ExportApiFeature`). Requires `AddLyoCrudServices`. |
+| `AddCsvExport()` / `AddXlsxExport()` | Optional format handlers (`Lyo.Api.Export.Csv` / `.Xlsx`). |
 | `AddPostgresSprocService<TContext>()` | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                           |
 | `AddLyoDiffServices()`                | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                                            |
 
@@ -186,16 +189,16 @@ using Lyo.Api.ApiEndpoint;
 
 app.CreateBuilder<MyDbContext, MyEntity, MyRequest, MyResponse, Guid>("/api/items", "Items")
     .WithCrud(crud => crud
-        .WithFlags(ApiFeatureFlag.FullCrud)
+        .WithFlags(ApiFeatureSet.FullCrud)
         .CreateAuth(EndpointAuth.RequireRole("Editor")))
     .Build();
 ```
 
-You can still pass a `CrudConfiguration<...>` record: `.WithCrud(ApiFeatureFlag.FullCrud, new CrudConfiguration<...> { ... })`.
+You can still pass a `CrudConfiguration<...>` record: `.WithCrud(ApiFeatureSet.FullCrud, new CrudConfiguration<...> { ... })`.
 
 ## Endpoints
 
-Routes emitted by **CreateBuilder** / **CreateReadOnlyBuilder** when the matching `With*` / `ApiFeatureFlag` configuration is enabled (17 HTTP endpoints when everything below is
+Routes emitted by **CreateBuilder** / **CreateReadOnlyBuilder** when the matching `With*` / `ApiFeature / ApiFeatureSet` configuration is enabled (17 HTTP endpoints when everything below is
 turned on).
 
 | Method | Route                                        | Description                                                                                                                     |
@@ -216,35 +219,38 @@ turned on).
 | DELETE | `{baseRoute}` + `GetDefaultEndpoint<TKey>()` | Delete by primary key                                                                                                           |
 | DELETE | `{baseRoute}`                                | Delete by body (`DeleteRequest` with `Keys` or `Query`)                                                                         |
 | DELETE | `{baseRoute}/Bulk`                           | Bulk delete                                                                                                                     |
-| GET    | `{baseRoute}/Metadata`                       | OpenAPI-style metadata for this group (`WithMetadata` / `ApiFeatureFlag.Metadata`)                                              |
+| GET    | `{baseRoute}/Metadata`                       | OpenAPI-style metadata for this group (`WithMetadata` / `ApiFeature.Metadata`)                                              |
 
-## ApiFeatureFlag
+## ApiFeature / ApiFeatureSet
 
-| Flag                       | Endpoints                                                                                                                                                                  |
+Features are extensible records in a set (`features.Contains(ApiFeature.Query)`). **`Export`** lives in **`Lyo.Api.Export`** as `ExportApiFeature.Instance` — not in core presets.
+
+| Feature / preset           | Endpoints                                                                                                                                                                  |
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Query`                    | Query, QueryProject                                                                                                                                                        |
-| `Get`                      | Get                                                                                                                                                                        |
-| `Create`                   | Create                                                                                                                                                                     |
-| `CreateBulk`               | Bulk create                                                                                                                                                                |
-| `Update`                   | Update                                                                                                                                                                     |
-| `UpdateBulk`               | Bulk update                                                                                                                                                                |
-| `Patch`                    | Patch                                                                                                                                                                      |
-| `PatchBulk`                | Bulk patch                                                                                                                                                                 |
-| `Delete`                   | Delete                                                                                                                                                                     |
-| `DeleteBulk`               | Bulk delete                                                                                                                                                                |
-| `Upsert`                   | Upsert                                                                                                                                                                     |
-| `UpsertBulk`               | Bulk upsert                                                                                                                                                                |
-| `Export`                   | Export                                                                                                                                                                     |
-| `Metadata`                 | Metadata endpoint                                                                                                                                                          |
-| `ProjectionComputedFields` | Enables **`ComputedFields`** on **`ProjectionQueryReq`** for **`/QueryProject`** (requires `Query` + registered **`IFormatterService`**)                                   |
-| `ReadOnly`                 | Query, QueryProject, Get (`Query` \| `Get`)                                                                                                                                |
-| `BasicCrud`                | Query, Get, Create, Update, Patch, Delete                                                                                                                                  |
-| `FullCrud`                 | BasicCrud + Upsert                                                                                                                                                         |
-| `BulkOperations`           | All bulk variants                                                                                                                                                          |
-| `All`                      | All **standard** CRUD/export operations (`Query` … `Export`). Does **not** include **`Metadata`** or **`ProjectionComputedFields`**—add those flags explicitly when needed |
-| `UpsertInheritCreate`      | Upsert uses Create hooks                                                                                                                                                   |
-| `UpsertInheritUpdate`      | Upsert uses Update hooks                                                                                                                                                   |
-| `PatchInheritsUpdate`      | Patch uses Update hooks                                                                                                                                                    |
+| `ApiFeature.Query`         | Query, QueryProject                                                                                                                                                        |
+| `ApiFeature.Get`           | Get                                                                                                                                                                        |
+| `ApiFeature.Create`        | Create                                                                                                                                                                     |
+| `ApiFeature.CreateBulk`    | Bulk create                                                                                                                                                                |
+| `ApiFeature.Update`        | Update                                                                                                                                                                     |
+| `ApiFeature.UpdateBulk`    | Bulk update                                                                                                                                                                |
+| `ApiFeature.Patch`         | Patch                                                                                                                                                                      |
+| `ApiFeature.PatchBulk`     | Bulk patch                                                                                                                                                                 |
+| `ApiFeature.Delete`        | Delete                                                                                                                                                                     |
+| `ApiFeature.DeleteBulk`    | Bulk delete                                                                                                                                                                |
+| `ApiFeature.Upsert`        | Upsert                                                                                                                                                                     |
+| `ApiFeature.UpsertBulk`    | Bulk upsert                                                                                                                                                                |
+| `ExportApiFeature.Instance`| Export (`Lyo.Api.Export` + `AddLyoApiExport`)                                                                                                                              |
+| `ApiFeature.Metadata`      | Metadata endpoint                                                                                                                                                          |
+| `ApiFeature.ProjectionComputedFields` | Enables **`ComputedFields`** on **`ProjectionQueryReq`** for **`/QueryProject`** (requires `Query` + registered **`IFormatterService`**)                   |
+| `ApiFeatureSet.ReadOnly`   | Query + Get                                                                                                                                                                |
+| `ApiFeatureSet.BasicCrud`  | Query, Get, Create, Update, Patch, Delete                                                                                                                                 |
+| `ApiFeatureSet.FullCrud`   | BasicCrud + Upsert                                                                                                                                                         |
+| `ApiFeatureSet.BulkOperations` | All bulk variants                                                                                                                                                      |
+| `ApiFeatureSet.CoreAll`    | Standard CRUD + bulk (**no Export**, Metadata, or ProjectionComputedFields)                                                                                                |
+| `ApiFeatureSet.DefaultCrud`| `CoreAll` + upsert/patch inheritance flags                                                                                                                                 |
+| `ApiFeature.UpsertInheritCreate` | Upsert uses Create hooks                                                                                                                                             |
+| `ApiFeature.UpsertInheritUpdate` | Upsert uses Update hooks                                                                                                                                             |
+| `ApiFeature.PatchInheritsUpdate` | Patch uses Update hooks                                                                                                                                              |
 
 ## Dynamic Endpoint Builder (MapDynamicCrudEndpoints)
 
@@ -260,7 +266,7 @@ For **per-entity routes with custom DTOs**, use `CreateBuilder` (see Quick Start
 app.MapDynamicCrudEndpoints<JobContext>(c => c
     .WithDefaults(d => {
         d.BaseRoute = "api/Job";
-        d.Features = ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate;
+        d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
     })
     .For<JobDefinition>(e => e
         .ExcludeCreate()
@@ -293,7 +299,7 @@ app.MapDynamicCrudEndpoints<PeopleDbContext>(o => o.BaseRoute = "/api");
 | Property      | Default | Description                                  |
 |---------------|---------|----------------------------------------------|
 | BaseRoute     | ""      | Route prefix (e.g. "/api")                   |
-| Features      | All     | ApiFeatureFlag for each entity               |
+| Features      | DefaultCrud | `ApiFeatureSet` for each entity               |
 | IncludedTypes | []      | When non-empty, only these types (whitelist) |
 | ExcludedTypes | []      | Types to exclude (e.g. xref tables)          |
 
@@ -341,7 +347,7 @@ entity:
 }
 ```
 
-For `CreateBuilder`, metadata is opt-in via `.WithMetadata()` or `ApiFeatureFlag.Metadata` and is exposed at `GET {baseRoute}/Metadata`.
+For `CreateBuilder`, metadata is opt-in via `.WithMetadata()` or `ApiFeature.Metadata` and is exposed at `GET {baseRoute}/Metadata`.
 
 By default it returns request/response metadata plus key metadata. Database entity metadata is only included when metadata was configured with `IncludeEntityMetadata = true`, for
 example:
@@ -386,7 +392,7 @@ Example response when entity metadata is enabled:
 ```csharp
 // Full CRUD (request/response types)
 app.CreateBuilder<MyDbContext, MyEntity, MyRequest, MyResponse, Guid>("/api/items", "Items")
-    .WithCrud(crud => crud.WithFlags(ApiFeatureFlag.FullCrud))
+    .WithCrud(crud => crud.WithFlags(ApiFeatureSet.FullCrud))
     .Build();
 
 // Read-only (no request type; use object for TRequest)
@@ -396,7 +402,7 @@ app.CreateReadOnlyBuilder<MyDbContext, MyEntity, MyResponse>("/api/items", "Item
 
 // Entity-as-both (no DTOs; mapping skipped when TRequest = TDbModel or TDbModel = TResult)
 app.CreateBuilder<MyDbContext, MyEntity, MyEntity, MyEntity, Guid>("/api/items", "Items")
-    .WithCrud(crud => crud.WithFlags(ApiFeatureFlag.All))
+    .WithCrud(crud => crud.WithFlags(ApiFeatureSet.CoreAll + ExportApiFeature.Instance))
     .Build();
 ```
 
@@ -489,7 +495,7 @@ app.CreateBuilder<...>("/api/items", "Items")
     .RequireAuthorization()                    // All endpoints require auth
     .RequireAuthorization("AdminOnly")         // Or specific policy
     .AllowAnonymous()                          // Or allow anonymous
-    .WithCrud(crud => crud.WithFlags(ApiFeatureFlag.FullCrud))
+    .WithCrud(crud => crud.WithFlags(ApiFeatureSet.FullCrud))
     .Build();
 ```
 
@@ -558,7 +564,7 @@ Use **`Select`** to specify which fields to return. Supports dotted paths and wi
 
 Optional **`ComputedFields`**: each entry has **`name`** (output column) and **`template`** (SmartFormat string). Placeholders reference projected paths, e.g.
 `"{LastName}, {FirstName}"`, `"{contactaddresses.address.city}"`, or a single bare dotted path as the whole template. Enable the feature with *
-*`ApiFeatureFlag.ProjectionComputedFields`** and register **`IFormatterService`**. Template placeholders contribute to **`entityTypes`** the same way **`Select`** paths do.
+*`ApiFeature.ProjectionComputedFields`** and register **`IFormatterService`**. Template placeholders contribute to **`entityTypes`** the same way **`Select`** paths do.
 
 Example:
 
@@ -739,7 +745,7 @@ var patchReq = PatchRequestBuilder.New()
 
 ## Export
 
-Export requires `WithExportService<TContext>()` and `WithExport` or `WithCrud` with `ApiFeatureFlag.Export`.
+Export requires `AddLyoApiExport<TContext>()`, optional `AddCsvExport()` / `AddXlsxExport()`, and `ExportApiFeature.Instance` on the route (or `.WithExport()`).
 
 ```csharp
 // ExportRequest

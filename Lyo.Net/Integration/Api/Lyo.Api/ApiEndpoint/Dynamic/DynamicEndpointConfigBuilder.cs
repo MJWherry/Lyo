@@ -7,7 +7,7 @@ namespace Lyo.Api.ApiEndpoint.Dynamic;
 /// <code>
 /// var config = new DynamicEndpointConfigBuilder&lt;PeopleDbContext&gt;()
 ///     .WithDefaults(d => {
-///         d.Features = ApiFeatureFlag.All;
+///         d.Features = ApiFeatureSet.DefaultCrud;
 ///         d.BaseRoute = "Person";
 ///     })
 ///     .For&lt;PersonEntity&gt;(e => e

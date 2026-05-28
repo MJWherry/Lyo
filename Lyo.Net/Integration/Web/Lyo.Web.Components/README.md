@@ -62,7 +62,7 @@ Completed chips always render the shortened display name (not the raw full name 
 - **`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).
 - **`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).
 - **`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.
-- **`ExportColumnSelectorDialog`** (top-level) — dialog for choosing which columns participate in CSV / XLSX export.
+- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
 - **`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component.
 
 ## Identifier workbench (`Identifiers/`)
@@ -109,11 +109,10 @@ operator menus used across the grid, query editor, and form.
 
 - [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md)
 - [`Lyo.IO.Temp`](../../../Data/IOTemp/Lyo.IO.Temp/README.md)
-- [`Lyo.Pdf`](../../../Data/Pdf/Lyo.Pdf/README.md)
 - [`Lyo.Query.Models`](../../../Data/Query/Lyo.Query.Models/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)
-- [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md)
 - [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
+
+Optional composable export UI: [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md) (+ `.Csv` / `.Xlsx` menu item packages).

@@ -17,6 +17,9 @@
         <ProjectReference Include="..\..\..\Core\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\Lyo.Api.Tests.Host\Lyo.Api.Tests.Host.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\Job\Lyo.Job.Models\Lyo.Job.Models.csproj"/>

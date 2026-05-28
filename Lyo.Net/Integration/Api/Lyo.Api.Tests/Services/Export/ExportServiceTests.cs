@@ -8,6 +8,8 @@ using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Export;
+using Lyo.Api.Export.Csv;
+using Lyo.Api.Export.Xlsx;
 using Lyo.Common.Enums;
 using Lyo.Common.Records;
 using Lyo.Csv;
@@ -18,6 +20,7 @@ using Lyo.Testing;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Api.Tests.Services.Export;
@@ -28,6 +31,8 @@ public sealed class ExportServiceTests
     private readonly IFormatterService _formatterService;
     private readonly ILogger<ExportService<TestDbContext>> _logger;
     private readonly IXlsxService _xlsxService;
+
+    private readonly IReadOnlyList<IExportFormatHandler> _formatHandlers;
 
     public ExportServiceTests(ITestOutputHelper output)
     {
@@ -40,6 +45,12 @@ public sealed class ExportServiceTests
         _csvService = new CsvService(loggerFactory.CreateLogger<CsvService>());
         _xlsxService = new XlsxService(loggerFactory.CreateLogger<XlsxService>());
         _formatterService = new FormatterService();
+        _formatHandlers =
+        [
+            new JsonExportFormatHandler(new ServiceCollection().BuildServiceProvider()),
+            new CsvExportFormatHandler(_csvService),
+            new XlsxExportFormatHandler(_xlsxService)
+        ];
     }
 
     [Fact]
@@ -47,7 +58,7 @@ public sealed class ExportServiceTests
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(Guid.NewGuid(), "Bob", "Jones", new(2024, 2, 20)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = null };
         var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
         await using var _ = stream;
@@ -66,7 +77,7 @@ public sealed class ExportServiceTests
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
         var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
         await using var _ = stream;
@@ -82,7 +93,7 @@ public sealed class ExportServiceTests
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(Guid.NewGuid(), "Bob", "Jones", new(2024, 2, 20)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest {
             Query = new() { Start = 0, Amount = 10 },
             Format = ExportFormat.Csv,
@@ -105,7 +116,7 @@ public sealed class ExportServiceTests
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest {
             Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Xlsx, Columns = new() { ["Full Name"] = "{FirstName} {LastName}", ["Date"] = "{CreatedAt:yyyy-MM-dd}" }
         };
@@ -122,7 +133,7 @@ public sealed class ExportServiceTests
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), null, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Json, Columns = null };
         var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
         await using var _ = stream;
@@ -134,11 +145,47 @@ public sealed class ExportServiceTests
     }
 
     [Fact]
+    public async Task ExportAsync_Csv_WithoutCsvHandler_ThrowsNotSupportedException()
+    {
+        var jsonOnlyHandlers = new IExportFormatHandler[] { new JsonExportFormatHandler(new ServiceCollection().BuildServiceProvider()) };
+        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
+        var exportService = new ExportService<TestDbContext>(queryService, jsonOnlyHandlers, new(), _formatterService, _logger);
+        var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
+
+        var ex = await Assert.ThrowsAsync<NotSupportedException>(()
+            => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken));
+
+        Assert.Contains("AddCsvExport()", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ExportAsync_Csv_WithCsvHandler_Succeeds()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<ICsvService>(_csvService);
+        services.AddCsvExport();
+        var handlers = services.BuildServiceProvider().GetServices<IExportFormatHandler>().ToList();
+
+        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
+        var exportService = new ExportService<TestDbContext>(queryService, handlers, new(), _formatterService, _logger);
+        var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
+
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        await using var _ = stream;
+        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(FileTypeInfo.Csv.MimeType, contentType);
+        Assert.Equal("export.csv", fileName);
+        Assert.Contains("Alice", content);
+    }
+
+    [Fact]
     public async Task ExportAsync_WithoutFormatter_WithPropertyColumns_StillWorks()
     {
         var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), null, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
         var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
         await using var _ = stream;
@@ -153,7 +200,7 @@ public sealed class ExportServiceTests
     public async Task ExportAsync_QueryFailure_Throws()
     {
         var queryService = new FailingQueryService<TestDbContext>();
-        var exportService = new ExportService<TestDbContext>(queryService, _csvService, _xlsxService, new(), _formatterService, _logger);
+        var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
         await Assert.ThrowsAsync<ApiErrorException>(()
             => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken));

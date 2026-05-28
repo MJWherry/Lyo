@@ -1,5 +1,6 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
+using Lyo.Api.Export;
 using Lyo.Common.Enums;
 using Lyo.Common.Identifiers;
 using Lyo.Exceptions;
@@ -34,7 +35,7 @@ public static class Extensions
     {
         app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>(Constants.Rest.Job.Definitions, "Job")
             .WithCrud(
-                ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new() {
+                ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
                     AfterUpdate = ctx => {
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
@@ -63,7 +64,7 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobParameter, JobParameterReq, JobParameterRes, Guid>($"{Constants.Rest.Job.DefinitionParameters}", "Job")
             .WithCrud(
-                ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate,
+                ApiFeatureSet.DefaultCrud,
                 new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
                     AfterUpdate = ctx => app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult()
@@ -72,7 +73,7 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobSchedule, JobScheduleReq, JobScheduleRes, Guid>($"{Constants.Rest.Job.Schedules}", "Job")
             .WithCrud(
-                ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
                     AfterUpdate = ctx => {
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
@@ -82,7 +83,7 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobTrigger, JobTriggerReq, JobTriggerRes, Guid>($"{Constants.Rest.Job.Triggers}", "Job")
             .WithCrud(
-                ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres(),
                     AfterUpdate = ctx => {
                         var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
@@ -114,6 +115,7 @@ public static class Extensions
                     db.JobRunParameters.RemoveRange(jobRun.JobRunParameters);
                     db.JobRunResults.RemoveRange(jobRun.JobRunResults);
                 }, null, ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun"])
+            .WithExport()
             .Build();
 
         app.CreateBuilder<JobContext, JobRunParameter, JobRunParameterReq, JobRunParameterRes, Guid>(Constants.Rest.Job.RunParameters, "Job")

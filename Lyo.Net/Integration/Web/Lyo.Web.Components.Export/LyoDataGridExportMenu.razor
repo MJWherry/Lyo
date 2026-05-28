@@ -1,0 +1,23 @@
+@namespace Lyo.Web.Components.Export
+@using Lyo.Web.Components.DataGrid
+
+<MudMenu Label="Export"
+         StartIcon="@Icons.Material.Filled.Download"
+         AnchorOrigin="Origin.TopLeft"
+         TransformOrigin="Origin.TopRight"
+         Variant="Variant.Outlined"
+         Size="Size.Small"
+         Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+         Dense>
+    @ChildContent
+</MudMenu>
+
+@code {
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter(Name = "LyoDataGridExportHost")]
+    private IDataGridExportHost? ExportHost { get; set; }
+
+}

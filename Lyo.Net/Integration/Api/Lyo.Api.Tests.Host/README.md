@@ -31,7 +31,7 @@ Two parallel surfaces are mapped over the same `JobContext`:
   `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`,
   `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
 - **Dynamic builder** at `api/Job` — `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` ensuring a `Guid.NewGuid()` PK when callers omit
-  `Id`. Features: `ApiFeatureFlag.All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate`.
+  `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
 
 ## Using it from tests
 

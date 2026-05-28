@@ -1,0 +1,28 @@
+@namespace Lyo.Web.Components.Export.Xlsx
+@using Lyo.Api.Models.Enums
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+
+<MudMenuItem Icon="@Icons.Material.Filled.GridOn"
+             Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+             OnClick="@ExportXlsxAsync">
+    Export as XLSX
+</MudMenuItem>
+
+@code {
+
+    [Inject]
+    private DataGridExportService ExportService { get; set; } = null!;
+
+    [CascadingParameter(Name = "LyoDataGridExportHost")]
+    private IDataGridExportHost? ExportHost { get; set; }
+
+    private async Task ExportXlsxAsync()
+    {
+        if (ExportHost is null)
+            return;
+
+        await ExportService.ExportAsync(ExportHost, ExportFormat.Xlsx, showColumnSelector: true, ExportHost.CancellationToken);
+    }
+
+}

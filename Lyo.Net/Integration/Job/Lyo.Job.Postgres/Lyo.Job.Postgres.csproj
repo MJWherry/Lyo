@@ -20,6 +20,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\..\Communication\MessageQueue\Lyo.MessageQueue\Lyo.MessageQueue.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common\Lyo.Common.csproj"/>

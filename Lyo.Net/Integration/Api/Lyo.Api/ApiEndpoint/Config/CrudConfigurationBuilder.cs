@@ -29,7 +29,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
 
     private string[]? _deleteIncludes;
     private EndpointAuth? _exportAuth;
-    private ApiFeatureFlag _flags;
+    private ApiFeatureSet _flags = ApiFeatureSet.Empty;
     private bool _flagsSet;
     private EndpointAuth? _getAuth;
     private MetadataConfiguration<TDbContext, TDbEntity>? _metadata;
@@ -45,7 +45,7 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
     private EndpointAuth? _upsertBulkAuth;
 
     /// <summary>Which endpoints and behaviors to register (required).</summary>
-    public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> WithFlags(ApiFeatureFlag features)
+    public CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest> WithFlags(ApiFeatureSet features)
     {
         _flags = features;
         _flagsSet = true;
@@ -249,9 +249,9 @@ public sealed class CrudConfigurationBuilder<TDbContext, TDbEntity, TRequest>
         return this;
     }
 
-    internal (ApiFeatureFlag Features, CrudConfiguration<TDbContext, TDbEntity, TRequest> Config) Build()
+    internal (ApiFeatureSet Features, CrudConfiguration<TDbContext, TDbEntity, TRequest> Config) Build()
     {
-        OperationHelpers.ThrowIf(!_flagsSet, "Call WithFlags(...) to specify ApiFeatureFlag values for WithCrud (e.g. ApiFeatureFlag.All).");
+        OperationHelpers.ThrowIf(!_flagsSet, "Call WithFlags(...) to specify ApiFeatureSet values for WithCrud (e.g. ApiFeatureSet.CoreAll).");
         var config = new CrudConfiguration<TDbContext, TDbEntity, TRequest> {
             AfterCreate = _afterCreate,
             AfterCreateAsync = _afterCreateAsync,

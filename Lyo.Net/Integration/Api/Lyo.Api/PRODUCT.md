@@ -11,7 +11,7 @@ auth, and observability — all wired together, all out of the box.
 
 ```csharp
 app.CreateBuilder<AppDbContext, PersonEntity, PersonRequest, PersonResponse>("person")
-    .WithCrud(ApiFeatureFlag.All)
+    .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance)
     .RequireAuthorization("AdminPolicy")
     .Build();
 ```
@@ -207,10 +207,11 @@ app.CreateBuilder<AppDbContext, PersonEntity, PersonRequest, PersonResponse>("pe
 Only expose what you need:
 
 ```csharp
-.WithCrud(ApiFeatureFlag.ReadOnly)      // Query + Get only
-.WithCrud(ApiFeatureFlag.BasicCrud)     // Query, Get, Create, Update, Patch, Delete
-.WithCrud(ApiFeatureFlag.FullCrud)      // BasicCrud + Upsert
-.WithCrud(ApiFeatureFlag.All)           // Everything including bulk operations + export
+.WithCrud(ApiFeatureSet.ReadOnly)                              // Query + Get only
+.WithCrud(ApiFeatureSet.BasicCrud)                            // Query, Get, Create, Update, Patch, Delete
+.WithCrud(ApiFeatureSet.FullCrud)                             // BasicCrud + Upsert
+.WithCrud(ApiFeatureSet.CoreAll)                              // CRUD + bulk (no Export)
+.WithCrud(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance) // DefaultCrud + export endpoint
 ```
 
 ### Caching with Automatic Invalidation
@@ -353,17 +354,17 @@ builder.Services.AddLyoCrudServices<AppDbContext>();
 
 // Endpoints
 app.CreateBuilder<AppDbContext, OrderEntity, OrderRequest, OrderResponse, int>("orders", "Orders")
-    .WithCrud(ApiFeatureFlag.FullCrud)
+    .WithCrud(ApiFeatureSet.FullCrud)
     .RequireAuthorization()
     .Build();
 
 app.CreateBuilder<AppDbContext, ProductEntity, ProductRequest, ProductResponse>("products", "Products")
-    .WithCrud(ApiFeatureFlag.ReadOnly)
+    .WithCrud(ApiFeatureSet.ReadOnly)
     .AllowAnonymous()
     .Build();
 
 app.CreateBuilder<AppDbContext, CustomerEntity, CustomerRequest, CustomerResponse>("customers", "Customers")
-    .WithCrud(ApiFeatureFlag.All)
+    .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance)
     .RequireAuthorization("AdminPolicy")
     .WithDelete(config => config.Auth = EndpointAuth.RequireRole("SuperAdmin"))
     .Build();

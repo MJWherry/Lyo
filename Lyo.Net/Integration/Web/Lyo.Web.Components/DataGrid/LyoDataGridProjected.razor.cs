@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
@@ -7,14 +6,12 @@ using Lyo.Api.Models.Error;
 using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
-using Lyo.Csv.Models;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
-using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using SortDirection = MudBlazor.SortDirection;
@@ -22,7 +19,7 @@ using LyoProjectionQueryReqBuilder = Lyo.Query.Models.Builders.ProjectionQueryRe
 
 namespace Lyo.Web.Components.DataGrid;
 
-public partial class LyoDataGridProjected
+public partial class LyoDataGridProjected : IDataGridExportHost
 {
     private const string RowActionsColumnTag = "__lyo_row_actions__";
     private const int SaveDebounceMs = 800;
@@ -60,16 +57,7 @@ public partial class LyoDataGridProjected
     private IJsInterop Js { get; set; } = null!;
 
     [Inject]
-    private IXlsxService XlsxService { get; set; } = null!;
-
-    [Inject]
-    private ICsvService CsvService { get; set; } = null!;
-
-    [Inject]
     private IDialogService DialogService { get; set; } = null!;
-
-    [Inject]
-    private JsonSerializerOptions JsonSerializerOptions { get; set; } = LyoJsonSerializerOptions.Create();
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -132,12 +120,14 @@ public partial class LyoDataGridProjected
     public RenderFragment? BulkMenuItems { get; init; }
 
     [Parameter]
-    public FileTypeFlags? AvailableExportTypes { get; init; } = FileTypeFlags.Csv | FileTypeFlags.Json | FileTypeFlags.Xlsx;
+    public RenderFragment? BulkExportControls { get; init; }
 
     [Parameter]
     public string? PatchRoute { get; init; }
 
     private string DeleteRoute => Route.TrimEnd('/');
+
+    string IDataGridExportHost.ExportRoute => ExportRoute;
 
     private string ExportRoute => Route.TrimEnd('/') + "/Export";
 
@@ -688,62 +678,26 @@ public partial class LyoDataGridProjected
         }
     }
 
-    private async Task BulkExport(FileTypeFlags flag)
+    bool IDataGridExportHost.CanExport => CanExport();
+
+    bool IDataGridExportHost.IsLoading => _loading;
+
+    IApiClient IDataGridExportHost.ApiClient => ApiClient;
+
+    CancellationToken IDataGridExportHost.CancellationToken => _cts.Token;
+
+    Type? IDataGridExportHost.ExportDataType => null;
+
+    IEnumerable<string>? IDataGridExportHost.ExportAvailableFields => SelectFields;
+
+    IReadOnlyList<FilterPropertyDefinition>? IDataGridExportHost.ExportDisplayNameOverrides => FilterPropertyDefinitions;
+
+    IReadOnlyCollection<string>? IDataGridExportHost.ExportFieldsUncheckedByDefault => _visibilityBinder?.GetHiddenFields();
+
+    bool IDataGridExportHost.ExportAllowCustomColumns => true;
+
+    public async Task ExportViaApiAsync(ExportFormat format, List<ExportColumnMapping>? columnList, CancellationToken cancellationToken = default)
     {
-        ArgumentHelpers.ThrowIf(!flag.IsSingleFlag(), "Only a single export type allowed.", nameof(flag));
-        if (!string.IsNullOrEmpty(Route)) {
-            await BulkExportViaApi(flag);
-            return;
-        }
-
-        var allItems = (IsSelectable && EffectiveSelectedCount > 0 ? SelectedItems.ToList() : await GetAllItemsForExport()).Cast<object>().ToList();
-        if (!allItems.Any()) {
-            Logger.LogWarning("No data to export");
-            return;
-        }
-
-        using var stream = new MemoryStream();
-        await JsonSerializer.SerializeAsync(stream, allItems, JsonSerializerOptions);
-        stream.Position = 0;
-        await Js.DownloadFileFromStreamReference(
-            stream, $"{Guid.NewGuid()}.{flag.ToString().ToLowerInvariant()}", Enum.Parse<MimeType>(flag.ToString()).ToString().ToLowerInvariant());
-    }
-
-    private async Task BulkExportViaApi(FileTypeFlags flag)
-    {
-        var format = flag switch {
-            FileTypeFlags.Csv => ExportFormat.Csv,
-            FileTypeFlags.Xlsx => ExportFormat.Xlsx,
-            FileTypeFlags.Json => ExportFormat.Json,
-            var _ => throw new NotSupportedException($"Export type '{flag}' not supported.")
-        };
-
-        List<ExportColumnMapping>? columnList = null;
-        if (format is ExportFormat.Csv or ExportFormat.Xlsx) {
-            var dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
-            var parameters = new DialogParameters<ExportColumnSelectorDialog> {
-                { x => x.AvailableFields, SelectFields },
-                { x => x.DisplayNameOverrides, FilterPropertyDefinitions },
-                { x => x.AllowCustomColumns, true },
-                { x => x.FieldsUncheckedByDefault, _visibilityBinder?.GetHiddenFields() }
-            };
-
-            var dialog = await DialogService.ShowAsync<ExportColumnSelectorDialog>("Select Fields to Export", parameters, dialogOptions);
-            var result = await dialog.Result;
-            if (result.Canceled) {
-                Logger.LogInformation("Export canceled by user");
-                return;
-            }
-
-            var selectedItems = result.Data as List<ExportColumnSelectorDialog.ExportColumnItem>;
-            if (selectedItems == null || !selectedItems.Any()) {
-                Logger.LogWarning("No fields selected for export");
-                return;
-            }
-
-            columnList = selectedItems.OrderBy(p => p.Order).Select(p => new ExportColumnMapping { Header = p.Header, Value = p.Value }).ToList();
-        }
-
         var queryBuilder = GetQuery(0, MaxBulkSize);
         var query = queryBuilder.Build();
         if (IsSelectable && KeySelector != null) {
@@ -754,10 +708,12 @@ public partial class LyoDataGridProjected
         }
 
         var exportRequest = new ExportRequest { Query = query, Format = format, ColumnList = columnList };
-        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute!, exportRequest, ct: _cts.Token);
+        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute, exportRequest, ct: cancellationToken);
         using var stream = new MemoryStream(bytes);
         stream.Position = 0;
-        await Js.DownloadFileFromStreamReference(stream, $"export.{flag.ToString().ToLowerInvariant()}", Enum.Parse<MimeType>(flag.ToString()).ToString().ToLowerInvariant());
+        var extension = format.ToString().ToLowerInvariant();
+        var mimeType = Enum.Parse<MimeType>(format.ToString()).ToString().ToLowerInvariant();
+        await Js.DownloadFileFromStreamReference(stream, $"export.{extension}", mimeType);
     }
 
     public bool CanExport()
@@ -770,53 +726,6 @@ public partial class LyoDataGridProjected
             return "(too many items)";
 
         return EffectiveSelectedCount > 0 ? $"({EffectiveSelectedCount:N0} items)" : $"({CurrentResults?.Total:N0} items)";
-    }
-
-    private static IEnumerable<FileTypeFlags> GetExportFlags(FileTypeFlags? flags) => flags is not null ? Enum.GetValues<FileTypeFlags>().Where(f => flags.Value.HasFlag(f)) : [];
-
-    private async Task<List<object?>> GetAllItemsForExport()
-    {
-        const int maxPageSize = 500;
-        var allItems = new List<object?>();
-        var totalCount = await GetTotalCount();
-        if (totalCount == 0)
-            return allItems;
-
-        var totalPages = (int)Math.Ceiling((double)totalCount / maxPageSize);
-        for (var page = 0; page < totalPages; page++) {
-            var offset = page * maxPageSize;
-            var pageItems = await FetchPageForExport(offset, maxPageSize);
-            if (pageItems.Any())
-                allItems.AddRange(pageItems);
-        }
-
-        return allItems;
-    }
-
-    private async Task<int> GetTotalCount()
-    {
-        try {
-            var query = GetQuery(0, 1).Build();
-            var result = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(GetDataRoute(), query);
-            return result.Total ?? 0;
-        }
-        catch (Exception ex) {
-            Logger.LogError(ex, "Error getting total count");
-            return 0;
-        }
-    }
-
-    private async Task<IEnumerable<object?>> FetchPageForExport(int offset, int pageSize)
-    {
-        try {
-            var query = GetQuery(offset, pageSize).Build();
-            var result = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(GetDataRoute(), query);
-            return result.Error == null ? result.Items?.ToArray() ?? [] : [];
-        }
-        catch (Exception ex) {
-            Logger.LogError(ex, "Error fetching export page");
-            return [];
-        }
     }
 
     private bool HasFeature(LyoDataGridFeatureFlags feature) => Features.HasFeature(feature);

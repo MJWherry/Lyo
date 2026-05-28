@@ -9,6 +9,9 @@
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
         <ProjectReference Include="..\..\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\Web\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
     </ItemGroup>
 

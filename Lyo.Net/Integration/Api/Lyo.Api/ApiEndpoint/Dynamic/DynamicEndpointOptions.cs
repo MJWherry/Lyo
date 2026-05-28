@@ -9,9 +9,8 @@ public sealed class DynamicEndpointOptions<TContext>
     /// <summary>Base route prefix (e.g. "/api"). Default "".</summary>
     public string BaseRoute { get; set; } = "";
 
-    /// <summary>Feature flags for each entity. Default ApiFeatureFlag.All with bulk and upsert inheritance.</summary>
-    public ApiFeatureFlag Features { get; init; } =
-        ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate;
+    /// <summary>Feature flags for each entity. Default <see cref="ApiFeatureSet.DefaultCrud" />.</summary>
+    public ApiFeatureSet Features { get; init; } = ApiFeatureSet.DefaultCrud;
 
     /// <summary>When non-empty, only these entity types are registered (whitelist). When empty, all entities in the context are registered.</summary>
     public List<Type> IncludedTypes { get; } = [];

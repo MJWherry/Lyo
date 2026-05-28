@@ -11,7 +11,7 @@ public enum LyoDataGridFeatureFlags
     Filterable = 1 << 4,
     Searchable = 1 << 5,
     AutoRefresh = 1 << 6,
-    All = Filterable | Searchable | AutoRefresh | BulkMenu | BulkExport | BulkPatch | BulkDelete
+    All = Filterable | Searchable | AutoRefresh | BulkMenu | BulkPatch | BulkDelete
 }
 
 public static class LyoDataGridFeatureFlagsExtensions

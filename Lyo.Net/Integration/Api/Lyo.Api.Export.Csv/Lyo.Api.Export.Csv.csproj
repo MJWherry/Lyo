@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>CSV export format handler for Lyo.Api export service.</Description>
+        <PackageTags>api export csv</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+    </ItemGroup>
+
+</Project>

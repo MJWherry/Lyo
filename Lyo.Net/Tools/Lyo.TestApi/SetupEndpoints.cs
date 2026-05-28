@@ -1,5 +1,6 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Dynamic;
+using Lyo.Api.Export;
 using Lyo.Api.Services.Crud;
 using Lyo.Common.Identifiers;
 using Lyo.Discord.Postgres;
@@ -86,7 +87,7 @@ public static class SetupEndpoints
         {
             //app.MapDynamicCrudEndpoints<PeopleDbContext>(c => c.BaseRoute = "Person");
             app.CreateBuilder<PeopleDbContext, PersonEntity, PersonReq, PersonRes, Guid>(Constants.Person.Route, "Person")
-                .WithCrud(crud => crud.WithFlags(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate)
+                .WithCrud(crud => crud.WithFlags(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance)
                     .BeforeCreate(ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres()))
                 .WithMetadata()
                 .WithProjectionComputedFields()

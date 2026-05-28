@@ -1,6 +1,7 @@
 using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Config;
+using Lyo.Api.Export;
 using Lyo.Api.Mapping;
 using Lyo.Cache;
 using Lyo.Comic.Api.Endpoints;
@@ -58,7 +59,7 @@ public static class Extensions
         app.CreateBuilder<ComicDbContext, SeriesEntity, ComicSeriesReq, ComicSeriesRes>($"{prefix}/series", "ComicSeries")
             .AllowAnonymous()
             .WithCrud(
-                ApiFeatureFlag.All & ~ApiFeatureFlag.Get, new() {
+                ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new() {
                     BeforeUpdate = ctx => {
                         // Replace AlternateTitles collection in-place (requires DB context access)
                         ctx.DbContext.Entry(ctx.Entity).Collection(e => e.AlternateTitles).Load();
@@ -93,22 +94,22 @@ public static class Extensions
         // Volumes: all operations except plain GET
         app.CreateBuilder<ComicDbContext, VolumeEntity, ComicVolumeReq, ComicVolumeRes>($"{prefix}/volumes", "ComicVolume")
             .AllowAnonymous()
-            .WithCrud(ApiFeatureFlag.All & ~ApiFeatureFlag.Get, new())
+            .WithCrud(ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new())
             .Build();
 
         // Chapters: all operations except plain GET
         app.CreateBuilder<ComicDbContext, ChapterEntity, ComicChapterReq, ComicChapterRes>($"{prefix}/chapters", "ComicChapter")
             .AllowAnonymous()
-            .WithCrud(ApiFeatureFlag.All & ~ApiFeatureFlag.Get, new())
+            .WithCrud(ApiFeatureSet.CoreAll.Without(ApiFeature.Get) + ExportApiFeature.Instance, new())
             .Build();
 
         // Pages: all operations including plain GET (ComicPageRes has no async enrichment)
-        app.CreateBuilder<ComicDbContext, PageEntity, ComicPageReq, ComicPageRes>($"{prefix}/pages", "ComicPage").AllowAnonymous().WithCrud(ApiFeatureFlag.All, new()).Build();
+        app.CreateBuilder<ComicDbContext, PageEntity, ComicPageReq, ComicPageRes>($"{prefix}/pages", "ComicPage").AllowAnonymous().WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new()).Build();
 
         // Characters: all CRUD + Query; volume appearances are managed via the join table
         app.CreateBuilder<ComicDbContext, CharacterEntity, ComicCharacterReq, ComicCharacterRes>($"{prefix}/characters", "ComicCharacter")
             .AllowAnonymous()
-            .WithCrud(ApiFeatureFlag.All, new())
+            .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new())
             .Build();
 
         return app;

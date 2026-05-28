@@ -11,101 +11,101 @@ public sealed class EntityEndpointConfigBuilder<TEntity, TContext>
     private CreateConfig<object, object, TContext>? _createConfig;
     private DeleteConfig<object, TContext>? _deleteConfig;
     private ExportConfig<object>? _exportConfig;
-    private ApiFeatureFlag _features;
+    private ApiFeatureSet _features;
     private PatchConfig<object, TContext>? _patchConfig;
     private UpdateConfig<object, object, TContext>? _updateConfig;
     private UpsertConfig<object, object, TContext>? _upsertConfig;
 
-    internal EntityEndpointConfigBuilder(ApiFeatureFlag defaultFeatures) => _features = defaultFeatures;
+    internal EntityEndpointConfigBuilder(ApiFeatureSet defaultFeatures) => _features = defaultFeatures;
 
     /// <summary>Exclude Create endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeCreate()
     {
-        _features &= ~ApiFeatureFlag.Create;
+        _features = _features.Without(ApiFeature.Create);
         return this;
     }
 
     /// <summary>Exclude CreateBulk endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeCreateBulk()
     {
-        _features &= ~ApiFeatureFlag.CreateBulk;
+        _features = _features.Without(ApiFeature.CreateBulk);
         return this;
     }
 
     /// <summary>Exclude Update endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeUpdate()
     {
-        _features &= ~(ApiFeatureFlag.Update | ApiFeatureFlag.UpdateBulk);
+        _features = _features.Without(ApiFeature.Update, ApiFeature.UpdateBulk);
         return this;
     }
 
     /// <summary>Exclude UpdateBulk endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeUpdateBulk()
     {
-        _features &= ~ApiFeatureFlag.UpdateBulk;
+        _features = _features.Without(ApiFeature.UpdateBulk);
         return this;
     }
 
     /// <summary>Exclude Patch endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludePatch()
     {
-        _features &= ~(ApiFeatureFlag.Patch | ApiFeatureFlag.PatchBulk);
+        _features = _features.Without(ApiFeature.Patch, ApiFeature.PatchBulk);
         return this;
     }
 
     /// <summary>Exclude PatchBulk endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludePatchBulk()
     {
-        _features &= ~ApiFeatureFlag.PatchBulk;
+        _features = _features.Without(ApiFeature.PatchBulk);
         return this;
     }
 
     /// <summary>Exclude Delete endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeDelete()
     {
-        _features &= ~(ApiFeatureFlag.Delete | ApiFeatureFlag.DeleteBulk);
+        _features = _features.Without(ApiFeature.Delete, ApiFeature.DeleteBulk);
         return this;
     }
 
     /// <summary>Exclude DeleteBulk endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeDeleteBulk()
     {
-        _features &= ~ApiFeatureFlag.DeleteBulk;
+        _features = _features.Without(ApiFeature.DeleteBulk);
         return this;
     }
 
     /// <summary>Exclude Upsert endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeUpsert()
     {
-        _features &= ~(ApiFeatureFlag.Upsert | ApiFeatureFlag.UpsertBulk);
+        _features = _features.Without(ApiFeature.Upsert, ApiFeature.UpsertBulk);
         return this;
     }
 
     /// <summary>Exclude UpsertBulk endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeUpsertBulk()
     {
-        _features &= ~ApiFeatureFlag.UpsertBulk;
+        _features = _features.Without(ApiFeature.UpsertBulk);
         return this;
     }
 
     /// <summary>Exclude Export endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeExport()
     {
-        _features &= ~ApiFeatureFlag.Export;
+        _features = _features.WithoutName("Export");
         return this;
     }
 
     /// <summary>Exclude Query and QueryProject endpoints for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeQuery()
     {
-        _features &= ~ApiFeatureFlag.Query;
+        _features = _features.Without(ApiFeature.Query);
         return this;
     }
 
     /// <summary>Exclude Get endpoint for this entity.</summary>
     public EntityEndpointConfigBuilder<TEntity, TContext> ExcludeGet()
     {
-        _features &= ~ApiFeatureFlag.Get;
+        _features = _features.Without(ApiFeature.Get);
         return this;
     }
 

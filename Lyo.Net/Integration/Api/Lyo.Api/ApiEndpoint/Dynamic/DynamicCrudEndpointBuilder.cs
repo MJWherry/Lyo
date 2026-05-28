@@ -33,7 +33,7 @@ public static class DynamicCrudEndpointBuilder
     /// <example>
     /// <code>
     /// app.MapDynamicCrudEndpoints&lt;PeopleDbContext&gt;(c => c
-    ///     .WithDefaults(d => { d.BaseRoute = "Person"; d.Features = ApiFeatureFlag.All; })
+    ///     .WithDefaults(d => { d.BaseRoute = "Person"; d.Features = ApiFeatureSet.CoreAll; })
     ///     .For&lt;PersonEntity&gt;(e => e.ExcludeCreate().ForPatch(p => p.Before((ctx, entity) => entity.ModifiedAt = DateTime.UtcNow)))
     /// );
     /// </code>
@@ -107,22 +107,13 @@ public static class DynamicCrudEndpointBuilder
             .Produces<EntityTypeMetadata>()
             .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Export)) {
-            webApp.MapPost(
-                    $"{entityRoute}/Export",
-                    async (
-                        [FromRoute] string entityType,
-                        [FromBody] ExportRequest request,
-                        [FromServices] IExportService<TContext> exportService,
-                        HttpContext httpContext,
-                        CancellationToken ct) => await HandleExport(registry, config, entityType, request, exportService, httpContext, SortDirection.Desc, ct))
-                .WithTags("Dynamic")
-                .Produces(StatusCodes.Status200OK)
-                .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
-                .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
+        var dynamicContext = new DynamicApiEndpointContributorContext<TContext>(webApp, registry, config);
+        foreach (var contributor in webApp.Services.GetServices<IApiEndpointContributor>()) {
+            if (defaults.Features.Contains(contributor.Feature))
+                contributor.RegisterDynamicRoutes(dynamicContext);
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Query)) {
+        if (defaults.Features.Contains(ApiFeature.Query)) {
             webApp.MapPost(
                     $"{entityRoute}/Query",
                     async (
@@ -136,7 +127,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            var enableComputedFields = defaults.Features.HasFlag(ApiFeatureFlag.ProjectionComputedFields);
+            var enableComputedFields = defaults.Features.Contains(ApiFeature.ProjectionComputedFields);
             webApp.MapPost(
                     $"{entityRoute}/QueryProject", async (
                         [FromRoute] string entityType,
@@ -148,7 +139,7 @@ public static class DynamicCrudEndpointBuilder
                             var error = ApiErrorResponseFactory.CreateForError(
                                 httpContext,
                                 LyoProblemDetails.FromCode(
-                                    Constants.ApiErrorCodes.InvalidQuery, "Computed fields are not enabled. Enable via ApiFeatureFlag.ProjectionComputedFields.", DateTime.UtcNow));
+                                    Constants.ApiErrorCodes.InvalidQuery, "Computed fields are not enabled. Enable via ApiFeature.ProjectionComputedFields.", DateTime.UtcNow));
 
                             return Results.Json(error, statusCode: error.Status);
                         }
@@ -161,7 +152,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Get)) {
+        if (defaults.Features.Contains(ApiFeature.Get)) {
             webApp.MapGet(
                     $"{entityRoute}/{{id}}",
                     async (
@@ -176,7 +167,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Create)) {
+        if (defaults.Features.Contains(ApiFeature.Create)) {
             webApp.MapPost(
                     $"{entityRoute}",
                     async ([FromRoute] string entityType, HttpRequest request, [FromServices] ICreateService<TContext> createService, HttpContext httpContext, CancellationToken ct)
@@ -186,7 +177,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            if (defaults.Features.HasFlag(ApiFeatureFlag.CreateBulk)) {
+            if (defaults.Features.Contains(ApiFeature.CreateBulk)) {
                 webApp.MapPost(
                         $"{entityRoute}/Bulk",
                         async (
@@ -203,7 +194,7 @@ public static class DynamicCrudEndpointBuilder
             }
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Patch)) {
+        if (defaults.Features.Contains(ApiFeature.Patch)) {
             webApp.MapPatch(
                     $"{entityRoute}",
                     async (
@@ -217,7 +208,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            if (defaults.Features.HasFlag(ApiFeatureFlag.PatchBulk)) {
+            if (defaults.Features.Contains(ApiFeature.PatchBulk)) {
                 webApp.MapPatch(
                         $"{entityRoute}/Bulk",
                         async (
@@ -233,7 +224,7 @@ public static class DynamicCrudEndpointBuilder
             }
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Update)) {
+        if (defaults.Features.Contains(ApiFeature.Update)) {
             webApp.MapPost(
                     $"{entityRoute}/Update",
                     async (
@@ -247,7 +238,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            if (defaults.Features.HasFlag(ApiFeatureFlag.UpdateBulk)) {
+            if (defaults.Features.Contains(ApiFeature.UpdateBulk)) {
                 webApp.MapPost(
                         $"{entityRoute}/Bulk/Update",
                         async (
@@ -263,7 +254,7 @@ public static class DynamicCrudEndpointBuilder
             }
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Upsert)) {
+        if (defaults.Features.Contains(ApiFeature.Upsert)) {
             webApp.MapPost(
                     $"{entityRoute}/Upsert",
                     async (
@@ -277,7 +268,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            if (defaults.Features.HasFlag(ApiFeatureFlag.UpsertBulk)) {
+            if (defaults.Features.Contains(ApiFeature.UpsertBulk)) {
                 webApp.MapPost(
                         $"{entityRoute}/Bulk/Upsert",
                         async (
@@ -293,7 +284,7 @@ public static class DynamicCrudEndpointBuilder
             }
         }
 
-        if (defaults.Features.HasFlag(ApiFeatureFlag.Delete)) {
+        if (defaults.Features.Contains(ApiFeature.Delete)) {
             webApp.MapDelete(
                     $"{entityRoute}",
                     async (
@@ -320,7 +311,7 @@ public static class DynamicCrudEndpointBuilder
                 .Produces<DeleteResult<object>>()
                 .Produces<LyoProblemDetails>(StatusCodes.Status404NotFound);
 
-            if (defaults.Features.HasFlag(ApiFeatureFlag.DeleteBulk)) {
+            if (defaults.Features.Contains(ApiFeature.DeleteBulk)) {
                 webApp.MapDelete(
                         $"{entityRoute}/Bulk",
                         async (
@@ -1087,7 +1078,7 @@ public static class DynamicCrudEndpointBuilder
         return Results.Ok(result);
     }
 
-    private static async Task<IResult> HandleExport<TContext>(
+    internal static async Task<IResult> HandleExport<TContext>(
         IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
         DynamicEndpointConfig<TContext> config,
         string entityType,
@@ -1101,7 +1092,8 @@ public static class DynamicCrudEndpointBuilder
         if (!TryGetMetadata(registry, entityType, out var meta))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Unknown entity type: {entityType}"), statusCode: 404);
 
-        if (!config.GetConfig(meta.EntityType).Features.HasFlag(ApiFeatureFlag.Export))
+        var exportFeature = ApiFeature.TryFromName("Export");
+        if (exportFeature is null || !config.GetConfig(meta.EntityType).Features.Contains(exportFeature))
             return Results.Json(ApiErrorResponseFactory.CreateNotFound(httpContext, null, $"Export not enabled for {entityType}"), statusCode: 404);
 
         try {

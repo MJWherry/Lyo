@@ -35,6 +35,7 @@ using Lyo.Translation.Aws;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
 using Lyo.Web.Components;
+using Lyo.Web.Components.Export;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
 using Microsoft.Extensions.Options;
@@ -52,6 +53,7 @@ builder.Services.AddLogging(i => i.ClearProviders()
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
+builder.Services.AddLyoDataGridExport();
 builder.Services.AddLyoMetrics();
 builder.Services.AddScheduler();
 builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);

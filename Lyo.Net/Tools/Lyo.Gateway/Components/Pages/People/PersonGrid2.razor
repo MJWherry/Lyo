@@ -1,5 +1,8 @@
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Models
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
 @using Constants = Lyo.Gateway.Models.Constants
 @inject IApiClient ApiClient
 @inject IDialogService DialogService
@@ -12,6 +15,13 @@
              BeforeQuery="@(query => query.AddIncludes(_includes.ToArray()))"
              FilterPropertyDefinitions="@_propertyDefinitions"
              RowMenuControls="@GetRowMenuControls()">
+    <BulkExportControls>
+        <LyoDataGridExportMenu>
+            <ExportCsvMenuItem />
+            <ExportJsonMenuItem />
+            <ExportXlsxMenuItem />
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
     <Columns>
         <LyoPropertyColumn T="PersonRes" TProperty="Guid" Property="x => x.Id" Title="ID"/>
         <LyoPropertyColumn T="PersonRes" TProperty="string?" Property="x => x.FirstName" Title="Firstname" QuickSearchPropertyName="FirstName"/>

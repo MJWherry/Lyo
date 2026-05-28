@@ -8,10 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
         <ProjectReference Include="..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query\Lyo.Query.csproj"/>
-        <ProjectReference Include="..\..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
         <ProjectReference Include="..\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic.AspNetCore\Lyo.Diagnostic.AspNetCore.csproj"/>

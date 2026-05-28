@@ -394,8 +394,14 @@
     </Folder>
     <Folder Name="/Integration/Web/">
         <Project Path="Integration/Web/Lyo.Web.Components/Lyo.Web.Components.csproj"/>
+        <Project Path="Integration/Web/Lyo.Web.Components.Export/Lyo.Web.Components.Export.csproj"/>
+        <Project Path="Integration/Web/Lyo.Web.Components.Export.Csv/Lyo.Web.Components.Export.Csv.csproj"/>
+        <Project Path="Integration/Web/Lyo.Web.Components.Export.Xlsx/Lyo.Web.Components.Export.Xlsx.csproj"/>
     </Folder>
     <Folder Name="/Integration/Api/">
+        <Project Path="Integration/Api/Lyo.Api.Export/Lyo.Api.Export.csproj"/>
+        <Project Path="Integration/Api/Lyo.Api.Export.Csv/Lyo.Api.Export.Csv.csproj"/>
+        <Project Path="Integration/Api/Lyo.Api.Export.Xlsx/Lyo.Api.Export.Xlsx.csproj"/>
         <Project Path="Integration/Api/Lyo.Api.Client/Lyo.Api.Client.csproj"/>
         <Project Path="Integration/Api/Lyo.Api.Models/Lyo.Api.Models.csproj"/>
         <Project Path="Integration/Api/Lyo.Api.Tests.Host/Lyo.Api.Tests.Host.csproj"/>

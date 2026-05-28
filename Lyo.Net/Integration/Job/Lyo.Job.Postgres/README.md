@@ -73,7 +73,7 @@ All event-bearing methods short-circuit with `MessageQueueConnectionIssue` when 
 ## Endpoint matrix (`BuildJobGroup`)
 
 `BuildJobGroup(this WebApplication)` is called once after `app.Build()` and registers the full CRUD surface for the job schema. Tag `"Job"`. Every CRUD endpoint set is created with
-`ApiFeatureFlag.All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate`.
+`ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on **JobDefinition**; **JobRun** exposes Query/Get/Delete/DeleteBulk plus `.WithExport()`.
 
 | Route prefix                               | Entity             | Endpoints                                                      | Side effects                                                                                                                                                          |
 |--------------------------------------------|--------------------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|

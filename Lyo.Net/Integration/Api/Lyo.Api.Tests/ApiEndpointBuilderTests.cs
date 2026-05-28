@@ -1,4 +1,8 @@
+using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
+using Lyo.Api.Export;
+using Lyo.Api.Export.Csv;
+using Lyo.Api.Export.Xlsx;
 using Lyo.Api.Mapping;
 using Lyo.Cache;
 using Lyo.Csv;
@@ -63,7 +67,9 @@ public class ApiEndpointBuilderTests
         builder.Services.AddCsvService();
         builder.Services.AddXlsxService();
         builder.Services.AddFormatterService();
-        builder.Services.WithExportService<JobContext>();
+        builder.Services.AddLyoApiExport<JobContext>();
+        builder.Services.AddCsvExport();
+        builder.Services.AddXlsxExport();
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
         config.ConfigureJobMappings();
@@ -74,7 +80,7 @@ public class ApiEndpointBuilderTests
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
                 .AllowAnonymous()
-                .WithCrud(ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate, new())
+                .WithCrud(ApiFeatureSet.DefaultCrud, new())
                 .Build());
 
         Assert.Null(exception);
@@ -92,7 +98,9 @@ public class ApiEndpointBuilderTests
         builder.Services.AddCsvService();
         builder.Services.AddXlsxService();
         builder.Services.AddFormatterService();
-        builder.Services.WithExportService<JobContext>();
+        builder.Services.AddLyoApiExport<JobContext>();
+        builder.Services.AddCsvExport();
+        builder.Services.AddXlsxExport();
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
         config.ConfigureJobMappings();
@@ -103,7 +111,7 @@ public class ApiEndpointBuilderTests
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
                 .AllowAnonymous()
-                .WithCrud(ApiFeatureFlag.All, new() { BeforeCreate = ctx => ctx.Entity.Id = Guid.NewGuid() })
+                .WithCrud(ApiFeatureSet.CoreAll, new() { BeforeCreate = ctx => ctx.Entity.Id = Guid.NewGuid() })
                 .Build());
 
         Assert.Null(exception);
@@ -150,7 +158,7 @@ public class ApiEndpointBuilderTests
         var exception = Record.Exception(()
             => app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")
                 .AllowAnonymous()
-                .WithCrud(ApiFeatureFlag.ReadOnly | ApiFeatureFlag.Metadata, new() { Metadata = new() { IncludeEntityMetadata = true } })
+                .WithCrud(ApiFeatureSet.ReadOnly + ApiFeature.Metadata, new() { Metadata = new() { IncludeEntityMetadata = true } })
                 .Build());
 
         Assert.Null(exception);

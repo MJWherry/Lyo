@@ -1,36 +1,26 @@
 @namespace Lyo.Web.Components.DataGrid
-@using Lyo.Common.Enums
 @using Lyo.Web.Components.QueryNodeEditor
 @implements IDisposable
 
+<CascadingValue Name="LyoDataGridExportHost" Value="this" IsFixed="true">
 <LyoElementRoot ElementId="@ElementId" DefaultId="@GridRootElementId.DataGridProjected(GridKey)" style="display: contents;">
     @* Toolbar *@
     <MudStack Spacing="2" Style="width: 100%; padding: 8px 16px;">
         <MudStack Row Spacing="2" AlignItems="AlignItems.Center" Style="width: 100%;">
             @if (HasFeature(LyoDataGridFeatureFlags.BulkMenu)) {
-                <MudMenu Disabled="@(_loading || !CanExport())">
+                <MudMenu Disabled="@_loading">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
                                    EndIcon="@Icons.Material.Filled.ArrowDropDown"
-                                   Disabled="@(_loading || !CanExport())"
+                                   Disabled="@_loading"
                                    OnClick="@context.ToggleAsync">
                             Bulk @(GetBulkLabel())
                         </MudButton>
                     </ActivatorContent>
                     <ChildContent>
                         <MudMenuItem>
-                            @if (HasFeature(LyoDataGridFeatureFlags.BulkExport) && AvailableExportTypes is not null) {
-                                <MudMenu Label="Export" StartIcon="@Icons.Material.Filled.Download"
-                                         AnchorOrigin="Origin.TopLeft" TransformOrigin="Origin.TopRight"
-                                         Variant="Variant.Outlined" Size="Size.Small" Disabled="@(!CanExport())" Dense>
-                                    @foreach (var flag in GetExportFlags(AvailableExportTypes)) {
-                                        @if (flag is not FileTypeFlags.Unknown or FileTypeFlags.All) {
-                                            <MudMenuItem OnClick="@(() => BulkExport(flag))" Icon="@Extensions.GetIcon(flag)">
-                                                Export as @flag
-                                            </MudMenuItem>
-                                        }
-                                    }
-                                </MudMenu>
+                            @if (BulkExportControls is not null) {
+                                @BulkExportControls
                             }
                             @if (KeySelector is not null) {
                                 @if (BulkMenuItems is not null) {
@@ -240,6 +230,7 @@
         </PagerContent>
     </MudDataGrid>
 </LyoElementRoot>
+</CascadingValue>
 
 @code {
 

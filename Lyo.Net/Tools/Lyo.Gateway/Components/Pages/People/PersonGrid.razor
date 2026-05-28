@@ -1,5 +1,8 @@
 @using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Models
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
 @using Constants = Lyo.Gateway.Models.Constants
 @inject IApiClient ApiClient
 @inject IDialogService DialogService
@@ -11,6 +14,13 @@
                       KeySelector="@(GetKey)"
                       FilterPropertyDefinitions="@_propertyDefinitions"
                       RowMenuControls="@GetRowMenuControls()">
+    <BulkExportControls>
+        <LyoDataGridExportMenu>
+            <ExportCsvMenuItem />
+            <ExportJsonMenuItem />
+            <ExportXlsxMenuItem />
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
     <Columns>
         <LyoProjectedColumn Field="Id" Title="ID"/>
         <LyoProjectedColumn Field="FirstName" Title="Firstname" QuickSearchPropertyName="Firstname"/>

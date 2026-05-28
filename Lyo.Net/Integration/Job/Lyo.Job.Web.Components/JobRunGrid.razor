@@ -1,5 +1,8 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@using Lyo.Web.Components.Export
+@using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Xlsx
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -9,6 +12,13 @@
                       FilterPropertyDefinitions="@_propertyDefinitions"
                       BeforeQuery="@(q => q.AddIncludes("JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule", "ReRanFromJobRun"))"
                       Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu>
+            <ExportCsvMenuItem />
+            <ExportJsonMenuItem />
+            <ExportXlsxMenuItem />
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
     <LeftControls>
         <MudButton OnClick="@OpenCreateRunDialog"
                    StartIcon="@Icons.Material.Filled.Add"

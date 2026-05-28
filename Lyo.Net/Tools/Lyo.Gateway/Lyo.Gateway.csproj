@@ -75,6 +75,9 @@
         <ProjectReference Include="..\..\Core\Scheduler\Lyo.Scheduler\Lyo.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Communication\Speech\Lyo.Tts.Typecast\Lyo.Tts.Typecast.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\Integration\Web\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Integration\Web\Renderer\Lyo.Web.WebRenderer\Lyo.Web.WebRenderer.csproj"/>
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
     </ItemGroup>

@@ -18,7 +18,7 @@ A standard `WebApplication` with the following pipeline:
 - **Postgres stores** — A single `ConnectionStrings:Postgres` is shared by `Job`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `FileMetadataStore`. Every
   `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on first run.
 - **CRUD/Query** — `AddLyoCrudServices<TContext>()` for `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`;
-  `WithExportService<TContext>()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.
+  `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.
 - **File storage** — `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, "AwsKeyStore")` +
   `AddPostgresFileMetadataStoreKeyed("gateway-filestorage-metadata")` reading `PostgresFileMetadataStore` (falls back to the shared Postgres connection if not set) +
   `AddS3FileStorageServiceKeyed("gateway-filestorage")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()`.

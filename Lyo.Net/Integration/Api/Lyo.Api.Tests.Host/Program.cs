@@ -3,6 +3,9 @@ using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.ApiEndpoint.Dynamic;
+using Lyo.Api.Export;
+using Lyo.Api.Export.Csv;
+using Lyo.Api.Export.Xlsx;
 using Lyo.Api.Mapping;
 using Lyo.Api.Tests.Host;
 using Lyo.Cache;
@@ -44,7 +47,9 @@ builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(
 builder.Services.AddLocalCache();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddPostgresJobManagementFromConfiguration(builder.Configuration);
-builder.Services.WithExportService<JobContext>();
+builder.Services.AddLyoApiExport<JobContext>();
+builder.Services.AddCsvExport();
+builder.Services.AddXlsxExport();
 builder.Services.AddSingleton(config);
 builder.Services.AddScoped<IMapper, ServiceMapper>();
 builder.Services.AddScoped<ILyoMapper, MapsterLyoMapper>();
@@ -81,7 +86,7 @@ app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes,
 
 app.MapDynamicCrudEndpoints<JobContext>(c => c.WithDefaults(d => {
         d.BaseRoute = "api/Job";
-        d.Features = ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate;
+        d.Features = ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance;
         // Match static MapPost create hooks: dynamic CRUD has no per-entity WithCreate unless registered; ensure Guid PK is set when the client omits id.
         d.BeforeCreate = ctx => {
             if (ctx.Entity is JobDefinition jd && jd.Id == Guid.Empty)

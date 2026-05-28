@@ -7,6 +7,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>

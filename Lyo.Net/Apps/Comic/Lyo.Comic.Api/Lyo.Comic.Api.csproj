@@ -15,6 +15,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Features\Comic\Lyo.Comic.Postgres\Lyo.Comic.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Features\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>

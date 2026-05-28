@@ -9,17 +9,17 @@ namespace Lyo.Api.ApiEndpoint;
 /// </summary>
 public static class ApiEndpointBuilderExtensions
 {
-    /// <summary>Registers Query, QueryProject, and Get only (<see cref="ApiFeatureFlag.ReadOnly" />). Default sort uses the entity primary key.</summary>
+    /// <summary>Registers Query, QueryProject, and Get only (<see cref="ApiFeatureSet.ReadOnly" />). Default sort uses the entity primary key.</summary>
     public static ApiEndpointBuilder<TDbContext, TDbEntity, object, TResponse, TKey> WithReadOnlyEndpoints<TDbContext, TDbEntity, TResponse, TKey>(
         this ApiEndpointBuilder<TDbContext, TDbEntity, object, TResponse, TKey> builder)
         where TDbContext : DbContext where TDbEntity : class
-        => builder.WithCrud(ApiFeatureFlag.ReadOnly, new());
+        => builder.WithCrud(ApiFeatureSet.ReadOnly, new());
 
     /// <summary>Same as <see cref="WithReadOnlyEndpoints{TDbContext,TDbEntity,TResponse,TKey}" /> with <c>TKey = Guid</c>.</summary>
     public static ApiEndpointBuilder<TDbContext, TDbEntity, object, TResponse, Guid> WithReadOnlyEndpoints<TDbContext, TDbEntity, TResponse>(
         this ApiEndpointBuilder<TDbContext, TDbEntity, object, TResponse, Guid> builder)
         where TDbContext : DbContext where TDbEntity : class
-        => builder.WithCrud(ApiFeatureFlag.ReadOnly, new());
+        => builder.WithCrud(ApiFeatureSet.ReadOnly, new());
 
     /// <summary>Route template suffix for GET/DELETE by primary key (e.g. <c>/{id:guid}</c> for <see cref="Guid" />).</summary>
     public static string GetDefaultEndpoint<TKey>()

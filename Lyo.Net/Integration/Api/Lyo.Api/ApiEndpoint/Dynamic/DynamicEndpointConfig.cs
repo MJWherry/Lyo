@@ -29,8 +29,7 @@ public sealed class DynamicEndpointConfig<TContext>
 /// <summary>Default settings applied to all entities. Configure via DynamicEndpointConfigBuilder.WithDefaults.</summary>
 public sealed class DynamicEndpointDefaults
 {
-    public ApiFeatureFlag Features { get; set; } =
-        ApiFeatureFlag.All | ApiFeatureFlag.UpsertInheritCreate | ApiFeatureFlag.UpsertInheritUpdate | ApiFeatureFlag.PatchInheritsUpdate;
+    public ApiFeatureSet Features { get; set; } = ApiFeatureSet.DefaultCrud;
 
     public Action<CreateContext<object, object, DbContext>>? BeforeCreate { get; set; } // Used when no per-entity override; DbContext base for defaults
 
@@ -52,7 +51,7 @@ public sealed class DynamicEndpointDefaults
 public sealed class EntityEndpointConfig<TContext>
     where TContext : DbContext
 {
-    public ApiFeatureFlag Features { get; }
+    public ApiFeatureSet Features { get; }
 
     public CreateConfig<object, object, TContext>? CreateConfig { get; }
 
@@ -67,7 +66,7 @@ public sealed class EntityEndpointConfig<TContext>
     public ExportConfig<object>? ExportConfig { get; }
 
     internal EntityEndpointConfig(
-        ApiFeatureFlag features,
+        ApiFeatureSet features,
         CreateConfig<object, object, TContext>? createConfig,
         PatchConfig<object, TContext>? patchConfig,
         UpdateConfig<object, object, TContext>? updateConfig,

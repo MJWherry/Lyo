@@ -1,0 +1,28 @@
+@namespace Lyo.Web.Components.Export.Csv
+@using Lyo.Api.Models.Enums
+@using Lyo.Web.Components.DataGrid
+@using Lyo.Web.Components.Export
+
+<MudMenuItem Icon="@Icons.Material.Filled.TableChart"
+             Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+             OnClick="@ExportCsvAsync">
+    Export as CSV
+</MudMenuItem>
+
+@code {
+
+    [Inject]
+    private DataGridExportService ExportService { get; set; } = null!;
+
+    [CascadingParameter(Name = "LyoDataGridExportHost")]
+    private IDataGridExportHost? ExportHost { get; set; }
+
+    private async Task ExportCsvAsync()
+    {
+        if (ExportHost is null)
+            return;
+
+        await ExportService.ExportAsync(ExportHost, ExportFormat.Csv, showColumnSelector: true, ExportHost.CancellationToken);
+    }
+
+}
