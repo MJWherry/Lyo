@@ -3,15 +3,15 @@ using System.Runtime.InteropServices;
 using EasyCompressor;
 using Joveler.Compression.XZ;
 
-namespace Lyo.Compression.Compressors;
+namespace Lyo.Compression.XZ;
 
 /// <summary>XZ compressor adapter implementing <see cref="ICompressor" /> using Joveler.Compression.XZ.</summary>
-internal sealed class XZCompressor : ICompressor
+internal sealed class XzCompressor : ICompressor
 {
     private static readonly object InitLock = new();
     private static bool _initialized;
 
-    public XZCompressor(string? name = null)
+    public XzCompressor(string? name = null)
     {
         Name = name;
         EnsureInitialized();

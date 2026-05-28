@@ -4,7 +4,6 @@ using System.IO.Compression;
 using System.Text;
 using EasyCompressor;
 using Lyo.Common.Records;
-using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 using Lyo.Exceptions;
 using Lyo.Metrics;
@@ -14,17 +13,19 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Compression;
 
-/// <summary>Default <see cref="ICompressionService" /> implementation backed by EasyCompressor adapters, with optional <see cref="Lyo.Metrics.IMetrics" /> emission.</summary>
+/// <summary>Default <see cref="ICompressionService" /> implementation backed by registered <see cref="ICompressorFactory" /> instances, with optional <see cref="Lyo.Metrics.IMetrics" /> emission.</summary>
 /// <remarks>
 /// <para>
 /// The compressor and algorithm are fixed after construction. Safe to resolve as a singleton and call concurrently; batch APIs use parallel workers bounded by
 /// <see cref="CompressionServiceOptions.MaxParallelFileOperations" />.
 /// </para>
+/// <para>
+/// Algorithm resolution is dispatched through the injected <see cref="ICompressorFactory" /> collection: the base package registers GZip/Deflate (and Brotli/ZLib on net10+);
+/// addon packages such as <c>Lyo.Compression.LZ4</c> register their own factories via their <c>services.Add{Algo}Compressor()</c> extension.
+/// </para>
 /// </remarks>
 public sealed class CompressionService : ICompressionService
 {
-    private const string CompressorName = "CompressionService";
-
     private readonly ILogger<CompressionService> _logger;
 
     private readonly CompressionServiceOptions _options;
@@ -33,13 +34,19 @@ public sealed class CompressionService : ICompressionService
 
     private readonly IMetrics _metrics;
 
-    /// <inheritdoc />
-    public CompressionAlgorithm Algorithm { get; private set; }
+    private readonly IReadOnlyDictionary<CompressionAlgorithm, ICompressorFactory> _factories;
 
     /// <inheritdoc />
-    public string FileExtension => Constants.Data.AlgorithmExtensions[Algorithm];
+    public CompressionAlgorithm Algorithm { get; private set; } = null!;
 
-    public CompressionService(ILogger<CompressionService>? logger = null, CompressionServiceOptions? options = null, IMetrics? metrics = null)
+    /// <inheritdoc />
+    public string FileExtension => Algorithm.Extension;
+
+    public CompressionService(
+        IEnumerable<ICompressorFactory>? factories = null,
+        ILogger<CompressionService>? logger = null,
+        CompressionServiceOptions? options = null,
+        IMetrics? metrics = null)
     {
         _logger = logger ?? NullLoggerFactory.Instance.CreateLogger<CompressionService>();
         _options = options ?? new CompressionServiceOptions();
@@ -51,57 +58,25 @@ public sealed class CompressionService : ICompressionService
 
         ArgumentHelpers.ThrowIfNullOrNotInRange(_options.AsyncFileBufferSize, 1024, int.MaxValue, nameof(options) + "." + nameof(CompressionServiceOptions.AsyncFileBufferSize));
         ArgumentHelpers.ThrowIfNullOrNotInRange(_options.MaxInputSize, 1024, long.MaxValue, nameof(options) + "." + nameof(CompressionServiceOptions.MaxInputSize));
+
+        // Last-writer-wins if two factories advertise the same algorithm; addons can therefore override built-in implementations.
+        _factories = (factories ?? []).GroupBy(f => f.Algorithm).ToDictionary(g => g.Key, g => g.Last());
         _compressor = CreateCompressor(_options.DefaultAlgorithm, _options.DefaultCompressionLevel);
         _metrics = _options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance;
     }
 
     private ICompressor CreateCompressor(CompressionAlgorithm algorithm, CompressionLevel level)
     {
-        switch (algorithm) {
-            case CompressionAlgorithm.Deflate:
-                Algorithm = algorithm;
-                return new DeflateCompressor(CompressorName, level);
-            case CompressionAlgorithm.GZip:
-                Algorithm = algorithm;
-                return new GZipCompressor(CompressorName, level);
-            case CompressionAlgorithm.ZstdSharp:
-                Algorithm = algorithm;
-                return new ZstdSharpCompressor(CompressorName);
-            case CompressionAlgorithm.Snappier:
-                Algorithm = algorithm;
-                return new SnappierCompressor(CompressorName);
-            case CompressionAlgorithm.LZ4:
-                Algorithm = algorithm;
-                return new LZ4Compressor(CompressorName);
-            case CompressionAlgorithm.LZMA:
-                Algorithm = algorithm;
-                return new LZMACompressor(CompressorName);
-            case CompressionAlgorithm.BZip2:
-                Algorithm = algorithm;
-                return new BZip2Compressor(CompressorName, MapCompressionLevelToBZip2(level));
-            case CompressionAlgorithm.XZ:
-                Algorithm = algorithm;
-                return new XZCompressor(CompressorName);
-#if !NETSTANDARD2_0
-            case CompressionAlgorithm.Brotli:
-                Algorithm = algorithm;
-                return new BrotliCompressor(CompressorName, level);
-            case CompressionAlgorithm.ZLib:
-                Algorithm = algorithm;
-                return new ZLibCompressor(CompressorName, level);
-#endif
-            default:
-                throw new NotSupportedException("Compression algorithm not supported: " + algorithm);
-        }
-    }
+        ArgumentHelpers.ThrowIfNull(algorithm);
+        if (!_factories.TryGetValue(algorithm, out var factory))
+            throw new NotSupportedException(
+                $"No compressor registered for algorithm '{algorithm.Name}'. " +
+                $"Did you forget to install/register the Lyo.Compression.{algorithm.Name} addon package " +
+                $"(e.g. services.Add{algorithm.Name}Compressor())?");
 
-    private static int MapCompressionLevelToBZip2(CompressionLevel level)
-        => level switch {
-            CompressionLevel.Fastest => 3,
-            CompressionLevel.NoCompression => 1,
-            CompressionLevel.Optimal => 6,
-            var _ => 6 // Optimal or SmallestSize
-        };
+        Algorithm = algorithm;
+        return factory.Create(level);
+    }
 
     private string GetCompressedFilePath(string inputFilePath)
     {

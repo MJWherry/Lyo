@@ -1,7 +1,7 @@
 using EasyCompressor;
-using ICSharpCode.SharpZipLib.BZip2;
+using SzlBZip2 = ICSharpCode.SharpZipLib.BZip2.BZip2;
 
-namespace Lyo.Compression.Compressors;
+namespace Lyo.Compression.BZip2;
 
 /// <summary>BZip2 compressor adapter implementing <see cref="ICompressor" /> using SharpZipLib.</summary>
 internal sealed class BZip2Compressor : ICompressor
@@ -36,9 +36,9 @@ internal sealed class BZip2Compressor : ICompressor
         return output.ToArray();
     }
 
-    public void Compress(Stream inputStream, Stream outputStream) => BZip2.Compress(inputStream, outputStream, false, _level);
+    public void Compress(Stream inputStream, Stream outputStream) => SzlBZip2.Compress(inputStream, outputStream, false, _level);
 
-    public void Decompress(Stream inputStream, Stream outputStream) => BZip2.Decompress(inputStream, outputStream, false);
+    public void Decompress(Stream inputStream, Stream outputStream) => SzlBZip2.Decompress(inputStream, outputStream, false);
 
     public Task CompressAsync(Stream inputStream, Stream outputStream, CancellationToken ct = default)
     {

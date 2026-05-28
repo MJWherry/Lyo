@@ -2,7 +2,14 @@ using System.Buffers.Binary;
 using System.Text;
 using Lyo.Common.Records;
 using Lyo.Compression;
+using Lyo.Compression.BZip2;
+using Lyo.Compression.Compressors;
+using Lyo.Compression.LZ4;
+using Lyo.Compression.LZMA;
 using Lyo.Compression.Models;
+using Lyo.Compression.Snappier;
+using Lyo.Compression.XZ;
+using Lyo.Compression.Zstd;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
@@ -457,9 +464,22 @@ public sealed class TestGatewayFileTransformer
         }
     }
 
+    private static readonly ICompressorFactory[] AllCompressorFactories = [
+        new GZipCompressorFactory(),
+        new DeflateCompressorFactory(),
+        new BrotliCompressorFactory(),
+        new ZLibCompressorFactory(),
+        new Lz4CompressorFactory(),
+        new LzmaCompressorFactory(),
+        new SnappierCompressorFactory(),
+        new ZstdCompressorFactory(),
+        new BZip2CompressorFactory(),
+        new XzCompressorFactory()
+    ];
+
     private static TestGatewayStepResult Compress(byte[] bytes, string fileName, CompressionAlgorithm algorithm)
     {
-        var service = new CompressionService(options: new() { DefaultAlgorithm = algorithm });
+        var service = new CompressionService(AllCompressorFactories, options: new() { DefaultAlgorithm = algorithm });
         var info = service.Compress(bytes, out var compressed);
         return new(
             fileName + service.FileExtension, compressed,
@@ -471,7 +491,7 @@ public sealed class TestGatewayFileTransformer
 
     private static TestGatewayStepResult Decompress(byte[] bytes, string fileName, CompressionAlgorithm algorithm)
     {
-        var service = new CompressionService(options: new() { DefaultAlgorithm = algorithm });
+        var service = new CompressionService(AllCompressorFactories, options: new() { DefaultAlgorithm = algorithm });
         var info = service.Decompress(bytes, out var decompressed);
         return new(
             BuildDecompressedName(fileName, service.FileExtension), decompressed,

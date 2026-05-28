@@ -1,5 +1,3 @@
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
-
 namespace Lyo.Encryption;
 
 /// <summary>Options for configuring encryption service behavior.</summary>
@@ -19,7 +17,4 @@ public class EncryptionServiceOptions
 
     /// <summary>AES-GCM key size for <see cref="AesGcm.AesGcmEncryptionService" /> / hybrid AES paths. Ignored by non-AES services.</summary>
     public AesGcmKeySizeBits AesGcmKeySize { get; set; } = AesGcmKeySizeBits.Bits256;
-
-    /// <summary>AES-SIV key size (RFC 5297: 32/48/64-byte keys). Ignored by non-SIV services.</summary>
-    public AesSivKeySizeBits AesSivKeySize { get; set; } = AesSivKeySizeBits.Bits256;
 }

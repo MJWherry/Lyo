@@ -182,7 +182,7 @@ public sealed class FileTypeInfo
 
     public static readonly FileTypeInfo Webm = new("WEBM", "audio/webm", ".webm", null, FileTypeCategory.Audio, "WebM audio file");
 
-    /// <summary>Distinct default extensions for stream algorithms in <c>Lyo.Compression.Constants.Data.AlgorithmExtensions</c> (GZip through XZ).</summary>
+    /// <summary>Distinct default extensions for stream algorithms exposed by <c>Lyo.Compression.Models.CompressionAlgorithm.Extension</c> (GZip through XZ).</summary>
     public static readonly IReadOnlyList<string> StreamCompressionAlgorithmDefaultExtensions = [
         Gz.DefaultExtension, Brotli.DefaultExtension, ZLibStream.DefaultExtension, DeflateStream.DefaultExtension, SnappyStream.DefaultExtension, ZstdStream.DefaultExtension,
         LZ4Stream.DefaultExtension, LZMAStream.DefaultExtension, Bz2.DefaultExtension, Xz.DefaultExtension

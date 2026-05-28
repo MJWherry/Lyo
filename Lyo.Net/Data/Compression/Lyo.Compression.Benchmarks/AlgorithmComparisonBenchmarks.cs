@@ -1,7 +1,14 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Compression.BZip2;
+using Lyo.Compression.Compressors;
+using Lyo.Compression.LZ4;
+using Lyo.Compression.LZMA;
 using Lyo.Compression.Models;
+using Lyo.Compression.Snappier;
+using Lyo.Compression.XZ;
+using Lyo.Compression.Zstd;
 
 namespace Lyo.Compression.Benchmarks;
 
@@ -10,6 +17,21 @@ namespace Lyo.Compression.Benchmarks;
 [MemoryDiagnoser]
 public class AlgorithmComparisonBenchmarks
 {
+    private static readonly ICompressorFactory[] AllFactories = [
+        new GZipCompressorFactory(),
+        new DeflateCompressorFactory(),
+#if !NETSTANDARD2_0
+        new BrotliCompressorFactory(),
+        new ZLibCompressorFactory(),
+#endif
+        new Lz4CompressorFactory(),
+        new LzmaCompressorFactory(),
+        new SnappierCompressorFactory(),
+        new ZstdCompressorFactory(),
+        new BZip2CompressorFactory(),
+        new XzCompressorFactory()
+    ];
+
     private CompressionService _bzip2Service = null!;
     private byte[] _compressedBZip2 = null!;
     private byte[] _compressedDeflate = null!;
@@ -34,27 +56,17 @@ public class AlgorithmComparisonBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        var gzipOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false };
-        _gzipService = new(options: gzipOptions);
-        var deflateOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.Deflate, EnableMetrics = false };
-        _deflateService = new(options: deflateOptions);
-        var zstdOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.ZstdSharp, EnableMetrics = false };
-        _zstdService = new(options: zstdOptions);
-        var snappierOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.Snappier, EnableMetrics = false };
-        _snappierService = new(options: snappierOptions);
-        var lz4Options = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.LZ4, EnableMetrics = false };
-        _lz4Service = new(options: lz4Options);
-        var lzmaOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.LZMA, EnableMetrics = false };
-        _lzmaService = new(options: lzmaOptions);
-        var bzip2Options = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.BZip2, EnableMetrics = false };
-        _bzip2Service = new(options: bzip2Options);
-        var xzOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.XZ, EnableMetrics = false };
-        _xzService = new(options: xzOptions);
+        _gzipService = new(AllFactories, options: new() { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false });
+        _deflateService = new(AllFactories, options: new() { DefaultAlgorithm = CompressionAlgorithm.Deflate, EnableMetrics = false });
+        _zstdService = new(AllFactories, options: new() { DefaultAlgorithm = ZstdCompressionAlgorithm.Instance, EnableMetrics = false });
+        _snappierService = new(AllFactories, options: new() { DefaultAlgorithm = SnappierCompressionAlgorithm.Instance, EnableMetrics = false });
+        _lz4Service = new(AllFactories, options: new() { DefaultAlgorithm = Lz4CompressionAlgorithm.Instance, EnableMetrics = false });
+        _lzmaService = new(AllFactories, options: new() { DefaultAlgorithm = LzmaCompressionAlgorithm.Instance, EnableMetrics = false });
+        _bzip2Service = new(AllFactories, options: new() { DefaultAlgorithm = BZip2CompressionAlgorithm.Instance, EnableMetrics = false });
+        _xzService = new(AllFactories, options: new() { DefaultAlgorithm = XzCompressionAlgorithm.Instance, EnableMetrics = false });
 #if !NETSTANDARD2_0
-        var brotliOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.Brotli, EnableMetrics = false };
-        _brotliService = new(options: brotliOptions);
-        var zlibOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.ZLib, EnableMetrics = false };
-        _zlibService = new(options: zlibOptions);
+        _brotliService = new(AllFactories, options: new() { DefaultAlgorithm = CompressionAlgorithm.Brotli, EnableMetrics = false });
+        _zlibService = new(AllFactories, options: new() { DefaultAlgorithm = CompressionAlgorithm.ZLib, EnableMetrics = false });
 #endif
         _testData = new byte[DataSize];
         RandomNumberGenerator.Fill(_testData);

@@ -93,6 +93,7 @@
     </Folder>
     <Folder Name="/Core/Metrics/">
         <Project Path="Core/Metrics/Lyo.Metrics.OpenTelemetry/Lyo.Metrics.OpenTelemetry.csproj" />
+        <Project Path="Core/Metrics/Lyo.Metrics.Statistics/Lyo.Metrics.Statistics.csproj" />
         <Project Path="Core/Metrics/Lyo.Metrics.Tests/Lyo.Metrics.Tests.csproj" />
         <Project Path="Core/Metrics/Lyo.Metrics/Lyo.Metrics.csproj" />
     </Folder>
@@ -137,7 +138,13 @@
     <Folder Name="/Data/Compression/">
         <Project Path="Data/Compression/Lyo.Compression/Lyo.Compression.csproj" />
         <Project Path="Data/Compression/Lyo.Compression.Benchmarks/Lyo.Compression.Benchmarks.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.BZip2/Lyo.Compression.BZip2.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.LZ4/Lyo.Compression.LZ4.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.LZMA/Lyo.Compression.LZMA.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.Snappier/Lyo.Compression.Snappier.csproj" />
         <Project Path="Data/Compression/Lyo.Compression.Tests/Lyo.Compression.Tests.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.XZ/Lyo.Compression.XZ.csproj" />
+        <Project Path="Data/Compression/Lyo.Compression.Zstd/Lyo.Compression.Zstd.csproj" />
     </Folder>
     <Folder Name="/Data/Csv/">
         <Project Path="Data/Csv/Lyo.Csv/Lyo.Csv.csproj" />
@@ -349,6 +356,9 @@
     <Folder Name="/Security/Encryption/">
         <Project Path="Security/Encryption/Lyo.Encryption/Lyo.Encryption.csproj" />
         <File Path="Security\Encryption\README.md" />
+        <Project Path="Security/Encryption/Lyo.Encryption.AesCcm/Lyo.Encryption.AesCcm.csproj" />
+        <Project Path="Security/Encryption/Lyo.Encryption.AesSiv/Lyo.Encryption.AesSiv.csproj" />
+        <Project Path="Security/Encryption/Lyo.Encryption.XChaCha20Poly1305/Lyo.Encryption.XChaCha20Poly1305.csproj" />
         <Project Path="Security/Encryption/Lyo.Encryption.Benchmarks/Lyo.Encryption.Benchmarks.csproj" />
         <Project Path="Security/Encryption/Lyo.Encryption.Tests/Lyo.Encryption.Tests.csproj" />
         <Project Path="Security/Encryption/Lyo.Keystore.Aws/Lyo.Keystore.Aws.csproj" />

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Statistical analysis extensions for Lyo.Metrics histograms (percentiles, quartiles, moving averages, anomaly detection). Pulls in Lyo.Mathematics and Lyo.Mathematics.Functions so the base Lyo.Metrics can stay dependency-light.</Description>
+        <PackageTags>metrics statistics percentile quartile histogram anomaly</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics\Lyo.Mathematics.csproj"/>
+        <ProjectReference Include="..\..\Mathematics\Lyo.Mathematics.Functions\Lyo.Mathematics.Functions.fsproj"/>
+        <ProjectReference Include="..\..\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

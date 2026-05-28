@@ -85,6 +85,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPreviewService(); //preview HTML, images, etc. in browser
         services.AddLyoMetrics(); //metrics
         services.AddCompressionService(); //compression
+        services.AddDefaultCompressionService<CompressionService>();
         services.AddLyoDiffServices();
         services.AddPdfServiceFromConfiguration(context.Configuration); //pdf
         services.AddFormatterService(); // formatter

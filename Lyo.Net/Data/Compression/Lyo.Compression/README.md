@@ -293,44 +293,75 @@ else
 
 ### 8. Dependency Injection (ASP.NET Core)
 
+#### What gets registered
+
+| Call | Registers in DI |
+|------|-----------------|
+| `AddCompressionService()` | `ICompressorFactory` (built-ins), `CompressionServiceOptions`, **`CompressionService`** (concrete) |
+| `AddDefaultCompressionService<CompressionService>()` | **`ICompressionService`** → same instance as `CompressionService` |
+| `AddLz4Compressor()` / other addons | Additional **`ICompressorFactory`** entries only |
+| `AddCompressionServiceKeyed("key", …)` | Per-key options + **`CompressionService`** + **`ICompressionService`** (no separate default mapper) |
+
+`AddCompressionService` does **not** register `ICompressionService` until you call `AddDefaultCompressionService<TConcrete>()`.
+
+#### Unkeyed registration (typical app)
+
 ```csharp
 using Lyo.Compression;
 using Lyo.Compression.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-// Register with default options
+// 1) Defaults — concrete + built-in factories (GZip, Deflate, Brotli, ZLib on net10+)
 services.AddCompressionService();
+services.AddDefaultCompressionService<CompressionService>();
 
-// Register with custom options
+// 2) Configure via lambda (same pattern as other Lyo libraries)
 services.AddCompressionService(options =>
 {
     options.DefaultAlgorithm = CompressionAlgorithm.Brotli;
     options.DefaultCompressionLevel = CompressionLevel.Optimal;
-    options.MaxInputSize = 10L * 1024 * 1024 * 1024; // 10 GB
+    options.MaxInputSize = 10L * 1024 * 1024 * 1024;
     options.MaxParallelFileOperations = 8;
 });
+services.AddDefaultCompressionService<CompressionService>();
 
-// Register from configuration (binds section to singleton CompressionServiceOptions)
-using Microsoft.Extensions.Configuration;
-services.AddCompressionServiceFromConfiguration(configuration, configSectionName: CompressionServiceOptions.SectionName);
-// Default section name is "CompressionService" if you omit the second argument.
+// 3) Bind from IConfiguration / appsettings.json
+services.AddCompressionServiceFromConfiguration(
+    configuration,
+    configSectionName: CompressionServiceOptions.SectionName); // "CompressionOptions"
+services.AddDefaultCompressionService<CompressionService>();
+```
 
-// Keyed registration — separate options + service instance per key (multi-tenant, pipelines)
-services.AddCompressionServiceKeyed("tenant-a", o => o.DefaultAlgorithm = CompressionAlgorithm.GZip);
+See [Configuration File Example](#configuration-file-example-appsettingsjson) below for the `CompressionOptions` section shape.
 
-// Use in controllers/services
-public class MyController
+#### Keyed registration (multi-tenant / multiple policies)
+
+```csharp
+services.AddCompressionServiceKeyed("tenant-a", options =>
+    options.DefaultAlgorithm = CompressionAlgorithm.GZip);
+services.AddCompressionServiceKeyed("tenant-b", options =>
+    options.DefaultAlgorithm = CompressionAlgorithm.Deflate);
+
+// Resolve: GetRequiredKeyedService<ICompressionService>("tenant-a")
+```
+
+Optional addon factories (register before or with `AddCompressionService`; idempotent):
+
+```csharp
+services.AddLz4Compressor();   // Lyo.Compression.LZ4
+services.AddZstdCompressor();  // Lyo.Compression.Zstd
+// Then set DefaultAlgorithm on options (lambda, config file, or keyed configure).
+```
+
+#### Consumption
+
+```csharp
+public class MyController(ICompressionService compressionService)
 {
-    private readonly ICompressionService _compressionService;
-    
-    public MyController(ICompressionService compressionService)
-    {
-        _compressionService = compressionService;
-    }
-    
     public IActionResult CompressData(byte[] data)
     {
-        var info = _compressionService.Compress(data, out var compressed);
+        var info = compressionService.Compress(data, out var compressed);
         return Ok(new { compressed, ratio = info.CompressionRatio });
     }
 }
@@ -365,7 +396,7 @@ public class CompressionServiceOptions
 }
 ```
 
-### Configuration File Example (appsettings.json)
+### Configuration file example (appsettings.json)
 
 ```json
 {
@@ -767,7 +798,7 @@ The library throws specific exceptions for different error conditions:
 | **`FileCompressionInfo` / `FileDecompressionInfo`**                        | File-level operation metadata (input/output paths, sizes, timings).                                                                  |
 | **`BatchFileCompressionResult` / `BatchFileDecompressionResult`**          | Batch metadata + per-file failures (`FailedFiles`).                                                                                 |
 | **`CompressionFileInfo` / `DecompressionFileInfo` / `FileCompressionInfo` / `FileDecompressionInfo` / `FailedFileOperation` / `BatchCompressionResult` / `BatchDecompressionResult` / `CompressionProgress`** | Supporting models in `Lyo.Compression.Models`. |
-| **`Extensions`**                                                           | DI: `AddCompressionService()`, `AddCompressionService(Action<CompressionServiceOptions>)`, `AddCompressionServiceFromConfiguration(IConfiguration, sectionName?)`, `AddCompressionServiceKeyed(string key, Action<CompressionServiceOptions>?)`. |
+| **`Extensions`**                                                           | DI: `AddCompressionService()`, `AddDefaultCompressionService<TConcrete>()`, `AddCompressionService(Action<CompressionServiceOptions>)`, `AddCompressionServiceFromConfiguration(IConfiguration, sectionName?)`, `AddCompressionServiceKeyed(string key, Action<CompressionServiceOptions>?)`. |
 | **`CompressionErrorCodes`**                                                | Stable error code strings.                                                                                                           |
 
 The `Compressors/` folder (`BZip2Compressor`, `XZCompressor`) contains internal helpers backing those two algorithms; consumers should go through `ICompressionService`.

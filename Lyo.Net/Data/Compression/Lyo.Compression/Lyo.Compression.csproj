@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>A production-ready .NET compression library providing efficient, thread-safe compression with support for multiple algorithms (GZip, Brotli, Deflate, ZLib, Snappier, ZstdSharp, LZ4, LZMA, BZip2, XZ), batch operations, and atomic file operations.</Description>
-        <PackageTags>compression gzip brotli deflate zlib snappy zstd lz4 lzma bzip2 xz</PackageTags>
+        <Description>A production-ready .NET compression library providing efficient, thread-safe compression for the built-in BCL algorithms (GZip, Deflate, and on net10+ Brotli, ZLib). Additional algorithms (LZ4, LZMA, Snappier, Zstd, BZip2, XZ) ship as separate Lyo.Compression.* addon packages so consumers only pay for what they use.</Description>
+        <PackageTags>compression gzip brotli deflate zlib</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
@@ -17,16 +17,10 @@
 
     <ItemGroup>
         <PackageReference Include="EasyCompressor" Version="[2.1,)"/>
-        <PackageReference Include="EasyCompressor.LZ4" Version="[2.1,)"/>
-        <PackageReference Include="EasyCompressor.LZMA" Version="[2.1,)"/>
-        <PackageReference Include="EasyCompressor.Snappier" Version="[2.1,)"/>
-        <PackageReference Include="EasyCompressor.ZstdSharp" Version="[2.1,)"/>
-        <PackageReference Include="Joveler.Compression.XZ" Version="5.0.2"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10,)"/>
         <PackageReference Include="Microsoft.Extensions.Options" Version="[10,)"/>
-        <PackageReference Include="SharpZipLib" Version="1.4.2"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

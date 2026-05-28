@@ -27,8 +27,10 @@ internal static class FusionCacheRegistration
         configureOptions?.Invoke(cacheOptions);
         svc.AddSingleton(cacheOptions);
         svc.AddMemoryCache();
-        if (!svc.Any(static d => d.ServiceType == typeof(ICompressionService)))
+        if (!svc.Any(static d => d.ServiceType == typeof(CompressionService)))
             svc.AddCompressionService();
+        if (!svc.Any(static d => d.ServiceType == typeof(ICompressionService)))
+            svc.AddDefaultCompressionService<CompressionService>();
 
         svc.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
             sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>()));

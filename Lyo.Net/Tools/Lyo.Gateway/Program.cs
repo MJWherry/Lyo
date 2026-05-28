@@ -58,6 +58,7 @@ builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);
 builder.Services.AddLocalLock(options => options.EnableMetrics = true);
 builder.Services.AddLocalKeyedSemaphore(options => options.EnableMetrics = true);
 builder.Services.AddCompressionService();
+builder.Services.AddDefaultCompressionService<CompressionService>();
 builder.Services.AddImageSharpImageServiceFromConfiguration(builder.Configuration);
 builder.Services.AddQRCodeServiceFromConfiguration(builder.Configuration);
 builder.Services.AddNativeBarcodeServiceFromConfiguration(builder.Configuration);

@@ -67,28 +67,86 @@ other dependencies) are not thread-safe, synchronize or scope lifetimes accordin
 
 ## Dependency injection (this assembly)
 
-Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**).
+Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already referenced by this package on **netstandard2.0** and **net10.0**). Algorithm addons (
+`Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers; keys come from [`Lyo.Keystore`](../Lyo.Keystore/README.md).
+
+### Registration overview
+
+| Call | Registers |
+|------|-----------|
+| `AddLocalKeyStore(configure)` | `LocalKeyStore` + unkeyed `IKeyStore` |
+| `AddKeyedLocalKeyStore(key, configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
+| `AddEncryptionServiceKeyed(...)` | Keyed DEK/KEK concretes, `IEncryptionService`, **`ITwoKeyEncryptionService`** |
+| `AddAesCcmEncryption()` (addon) | Unkeyed **`AesCcmEncryptionService`** only |
+| `AddDefaultEncryptionService<T>()` | Unkeyed **`IEncryptionService`** → `T` |
+| `AddDefaultTwoKeyEncryptionService<T>()` | Unkeyed **`ITwoKeyEncryptionService`** → `T` (rare) |
+| `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX) |
+
+Unkeyed addon methods do **not** register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. **File storage and envelope encryption** should use **keyed** registration (includes `ITwoKeyEncryptionService`).
+
+### Keyed two-key (recommended)
 
 ```csharp
+using Lyo.Encryption;
+using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Extensions;
+using Lyo.Encryption.TwoKey;
+using Lyo.Keystore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-// RSA or hybrid (paths / PFX as appropriate for your deployment)
-services.AddRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath: "keys/private.pem");
-services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath: "keys/private.pem");
+const string keyName = "primary";
 
-// Keyed two-key stack: registers keyed IKeyStore, keyed DEK/KEK IEncryptionService, and keyed ITwoKeyEncryptionService
+// Configure key store via lambda (read secrets from IConfiguration inside configure)
+services.AddKeyedLocalKeyStore(keyName, store =>
+{
+    store.UpdateKeyFromString("default-key", "replace-in-production");
+});
+
+// Or inline factory with IConfiguration (custom IKeyStore types)
 services.AddEncryptionServiceKeyed<MyKeyStore>(
-    keyName: "tenant-1",
-    sp => new MyKeyStore(sp, /* ... */),
+    keyName,
+    sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var ks = new MyKeyStore(sp);
+        ks.UpdateKeyFromString("default-key", config["Encryption:KekSecret"]!);
+        return ks;
+    },
     aesGcmKeySize: AesGcmKeySizeBits.Bits256);
 
+// AES-GCM DEK + KEK (built into this package)
+services.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);
+
+// Mixed algorithms (examples)
+services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);
+
 // Resolve
-var twoKey = serviceProvider.GetRequiredKeyedService<ITwoKeyEncryptionService>("tenant-1");
+var envelope = serviceProvider.GetRequiredKeyedService<ITwoKeyEncryptionService>(keyName);
 ```
 
-**`AddEncryptionServiceKeyed`** has overloads that accept an existing keyed key-store name or inline key-store factory; generic overloads support different DEK vs KEK service types
-when both derive from **`IEncryptionService`** and are constructible from **`IKeyStore`** (see source for supported type matrix).
+`AddEncryptionServiceKeyed` overloads accept an existing keyed key-store name, or register the store via `Func<IServiceProvider, TKeyStore>`. Generic overloads support different DEK vs KEK types when both implement **`IEncryptionService`** and are built from **`IKeyStore`** (see source for the built-in type matrix).
+
+### Unkeyed (single algorithm / cache helper)
+
+```csharp
+services.AddLocalKeyStore(ks => ks.UpdateKeyFromString("k", "dev-secret"));
+// Built-in types use core keyed helpers; addons:
+// services.AddAesCcmEncryption();  // from Lyo.Encryption.AesCcm
+services.AddDefaultEncryptionService<AesGcmEncryptionService>(); // after registering that concrete
+```
+
+### RSA / hybrid
+
+```csharp
+services.AddRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath: "keys/private.pem");
+services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath: "keys/private.pem");
+```
+
+### Configuration notes
+
+- **Service options** (`EncryptionServiceOptions`: `MaxInputSize`, `FileExtension`, `AesGcmKeySize`, etc.) are set on concrete service constructors today — use algorithm parameters on `AddEncryptionServiceKeyed` (`aesGcmKeySize`) or construct services manually for advanced cases.
+- **Secrets and key material** — use `AddLocalKeyStore` / `AddKeyedLocalKeyStore` with `configure => { ... }` and read **`IConfiguration`** inside that callback (same pattern as other Lyo apps). There is no `AddEncryptionServiceFromConfiguration` on this package; bind appsettings in the key-store configure delegate or in a custom `IKeyStore` factory.
 
 **`EncryptionServiceExtensions.DetermineAlgorithm`**, **`DetermineDekAlgorithm`**, and **`DetermineKekAlgorithm`** introspect live instances for logging or diagnostics.
 

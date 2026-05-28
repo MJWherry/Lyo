@@ -20,11 +20,11 @@ public class CompressionServiceOptions
     public CompressionLevel DefaultCompressionLevel { get; set; } = CompressionLevel.Optimal;
 
     /// <summary>Codec backing this service instance. On <c>netstandard2.0</c>, <see cref="CompressionAlgorithm.Brotli" /> and <see cref="CompressionAlgorithm.ZLib" /> are unavailable.</summary>
-    public CompressionAlgorithm DefaultAlgorithm { get; set; }
+    public CompressionAlgorithm DefaultAlgorithm { get; set; } =
 #if NETSTANDARD2_0
-        = CompressionAlgorithm.GZip;
+        CompressionAlgorithm.GZip;
 #else
-        = CompressionAlgorithm.Brotli;
+        CompressionAlgorithm.Brotli;
 #endif
 
     /// <summary>Buffer size for synchronous buffered file streams (minimum 1024 enforced in <see cref="Lyo.Compression.CompressionService" /> ctor).</summary>

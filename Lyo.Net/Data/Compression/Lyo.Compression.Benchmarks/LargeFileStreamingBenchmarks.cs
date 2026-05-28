@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
+using Lyo.Compression.Zstd;
 
 // ReSharper disable InconsistentNaming
 
@@ -27,10 +29,11 @@ public class LargeFileStreamingBenchmarks
     [GlobalSetup]
     public void Setup()
     {
+        ICompressorFactory[] factories = [new GZipCompressorFactory(), new ZstdCompressorFactory()];
         var gzipOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false };
-        _gzipService = new(options: gzipOptions);
-        var zstdOptions = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.ZstdSharp, EnableMetrics = false };
-        _zstdService = new(options: zstdOptions);
+        _gzipService = new(factories, options: gzipOptions);
+        var zstdOptions = new CompressionServiceOptions { DefaultAlgorithm = ZstdCompressionAlgorithm.Instance, EnableMetrics = false };
+        _zstdService = new(factories, options: zstdOptions);
 
         // Create test data streams (using FileStream for very large files to avoid memory issues)
         _data100MB = CreateTestDataStream(100 * 1024 * 1024); // 100 MB

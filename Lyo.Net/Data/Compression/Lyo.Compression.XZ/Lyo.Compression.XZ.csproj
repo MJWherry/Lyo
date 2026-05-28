@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>XZ / LZMA2 compression addon for Lyo.Compression. Registers an XZ ICompressorFactory backed by Joveler.Compression.XZ (native liblzma).</Description>
+        <PackageTags>compression xz lzma2 liblzma</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Compression\Lyo.Compression.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Joveler.Compression.XZ" Version="5.0.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

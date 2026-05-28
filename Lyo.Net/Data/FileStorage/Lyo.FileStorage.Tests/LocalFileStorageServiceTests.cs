@@ -1,5 +1,6 @@
 using System.Text;
 using Lyo.Compression;
+using Lyo.Compression.Compressors;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.ChaCha20Poly1305;
@@ -38,6 +39,18 @@ public class LocalFileStorageServiceTests : IDisposable
         _loggerFactory.Dispose();
         _tempSession.Dispose();
     }
+
+    private static ICompressorFactory[] BuiltInCompressorFactories() =>
+    [
+        new GZipCompressorFactory(),
+        new DeflateCompressorFactory(),
+#if !NETSTANDARD2_0
+        new BrotliCompressorFactory(),
+        new ZLibCompressorFactory(),
+#endif
+    ];
+
+    private static CompressionService CreateTestCompressionService() => new(BuiltInCompressorFactories());
 
     private LocalFileStorageService CreateService(
         bool enableDuplicateDetection = false,
@@ -138,7 +151,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_WithCompression_CompressesFile()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress me!" + new string('B', 1000));
         var result = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
@@ -152,7 +165,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task GetFileAsync_WithCompression_DecompressesFile()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('X', 1000) + "Decompress me!" + new string('Y', 1000));
         var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);
@@ -201,7 +214,7 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
@@ -222,7 +235,7 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
@@ -397,7 +410,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task GetFileAsync_CompressedWithoutService_ThrowsInvalidOperationException()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress test");
         var saveResult = await service.SaveFileAsync(testData, compress: true, ct: TestContext.Current.CancellationToken);
@@ -532,7 +545,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_WithCompression_LargeFile_CompressesWell()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         // Create data that compresses well (repeating patterns)
         var largeData = new byte[1024 * 100]; // 100KB
@@ -1684,7 +1697,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_FromFilePath_WithCompression_CompressesFile()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 1000) + "Compress me!" + new string('B', 1000));
         var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
@@ -1723,7 +1736,7 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
@@ -1752,7 +1765,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_FromFilePath_WithCompression_GetFileAsync_DecompressesCorrectly()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('X', 1000) + "Decompress from file!" + new string('Y', 1000));
         var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
@@ -1783,7 +1796,7 @@ public class LocalFileStorageServiceTests : IDisposable
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
         await keyStore.UpdateKeyFromStringAsync(keyId, "test-kek-key", TestContext.Current.CancellationToken);
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         var aesGcmService = new AesGcmEncryptionService(keyStore);
         var encryptionService = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(aesGcmService, keyStore);
         using var service = CreateService(compressionService: compressionService, encryptionService: encryptionService);
@@ -1820,7 +1833,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_FromFilePath_WithChunkSize_UsesProvidedChunkSize()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         var testData = Encoding.UTF8.GetBytes(new string('A', 5000));
         var tempFile = await _tempSession.CreateFileAsync(testData, ct: TestContext.Current.CancellationToken);
@@ -1846,7 +1859,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_FromFilePath_WithCompression_LargeFile_CompressesWell()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService);
         // Create data that compresses well (repeating patterns)
         var largeData = new byte[1024 * 100]; // 100KB
@@ -2014,7 +2027,7 @@ public class LocalFileStorageServiceTests : IDisposable
     [Fact]
     public async Task SaveFileAsync_WithCompressionAndSha384_StoresAndRetrieves()
     {
-        var compressionService = new CompressionService();
+        var compressionService = CreateTestCompressionService();
         using var service = CreateService(compressionService: compressionService, hashAlgorithm: HashAlgorithm.Sha384);
         var testData = Encoding.UTF8.GetBytes(new string('A', 500) + "Compress with Sha384" + new string('B', 500));
         var saveResult = await service.SaveFileAsync(testData, "compressed.txt", true, ct: TestContext.Current.CancellationToken);

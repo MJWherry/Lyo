@@ -3,9 +3,6 @@ using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.AesGcmRsa;
 using Lyo.Encryption.ChaCha20Poly1305;
 using Lyo.Encryption.Rsa;
-using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
-using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.Keystore;
@@ -30,6 +27,22 @@ public static class EncryptionServiceExtensions
     /// <param name="twoKeyService">The two-key encryption service to analyze</param>
     /// <returns>The KEK encryption algorithm, or null if not recognized</returns>
     public static EncryptionAlgorithm? DetermineKekAlgorithm(ITwoKeyEncryptionService? twoKeyService) => twoKeyService?.KekAlgorithm;
+
+    /// <summary>Instantiates one of the encryption service types shipped with the base <c>Lyo.Encryption</c> package (AES-GCM or ChaCha20-Poly1305). Throws a guidance exception for niche addon types so callers know which addon helper to call.</summary>
+    private static TService CreateBuiltInService<TService>(IKeyStore keyStore, AesGcmKeySizeBits aesGcmKeySize)
+        where TService : class, IEncryptionService
+    {
+        if (typeof(TService) == typeof(AesGcmEncryptionService))
+            return (TService)(object)new AesGcmEncryptionService(keyStore, aesGcmKeySize);
+
+        if (typeof(TService) == typeof(ChaCha20Poly1305EncryptionService))
+            return (TService)(object)new ChaCha20Poly1305EncryptionService(keyStore);
+
+        throw new InvalidOperationException(
+            $"Generic AddEncryptionServiceKeyed does not support '{typeof(TService).Name}'. " +
+            $"Install the matching Lyo.Encryption addon package (e.g. Lyo.Encryption.AesCcm / Lyo.Encryption.AesSiv / Lyo.Encryption.XChaCha20Poly1305) " +
+            "and call its dedicated AddXxxEncryptionServiceKeyed extension, or register the service manually via services.AddKeyedSingleton.");
+    }
 
     /// <param name="services">The service collection</param>
     extension(IServiceCollection services)
@@ -78,22 +91,7 @@ public static class EncryptionServiceExtensions
                     keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
-                        if (typeof(TDekService) == typeof(AesGcmEncryptionService))
-                            return (TDekService)(object)new AesGcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TDekService) == typeof(ChaCha20Poly1305EncryptionService))
-                            return (TDekService)(object)new ChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TDekService) == typeof(AesCcmEncryptionService))
-                            return (TDekService)(object)new AesCcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TDekService) == typeof(XChaCha20Poly1305EncryptionService))
-                            return (TDekService)(object)new XChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TDekService) == typeof(AesSivEncryptionService))
-                            return (TDekService)(object)new AesSivEncryptionService(keyStore);
-
-                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
+                        return CreateBuiltInService<TDekService>(keyStore, aesGcmKeySize);
                     });
 
                 // Register interface for DEK service
@@ -109,22 +107,7 @@ public static class EncryptionServiceExtensions
                     keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
-                        if (typeof(TKekService) == typeof(AesGcmEncryptionService))
-                            return (TKekService)(object)new AesGcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TKekService) == typeof(ChaCha20Poly1305EncryptionService))
-                            return (TKekService)(object)new ChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TKekService) == typeof(AesCcmEncryptionService))
-                            return (TKekService)(object)new AesCcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TKekService) == typeof(XChaCha20Poly1305EncryptionService))
-                            return (TKekService)(object)new XChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TKekService) == typeof(AesSivEncryptionService))
-                            return (TKekService)(object)new AesSivEncryptionService(keyStore);
-
-                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
+                        return CreateBuiltInService<TKekService>(keyStore, aesGcmKeySize);
                     });
             }
 
@@ -203,22 +186,7 @@ public static class EncryptionServiceExtensions
                     keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyName);
                         OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyName}' was not found.");
-                        if (typeof(TDekService) == typeof(AesGcmEncryptionService))
-                            return (TDekService)(object)new AesGcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TDekService) == typeof(ChaCha20Poly1305EncryptionService))
-                            return (TDekService)(object)new ChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TDekService) == typeof(AesCcmEncryptionService))
-                            return (TDekService)(object)new AesCcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TDekService) == typeof(XChaCha20Poly1305EncryptionService))
-                            return (TDekService)(object)new XChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TDekService) == typeof(AesSivEncryptionService))
-                            return (TDekService)(object)new AesSivEncryptionService(keyStore);
-
-                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TDekService).Name}. Register it manually.");
+                        return CreateBuiltInService<TDekService>(keyStore, aesGcmKeySize);
                     });
 
                 // Register interface for DEK service
@@ -233,23 +201,8 @@ public static class EncryptionServiceExtensions
                 services.AddKeyedSingleton<TKekService>(
                     keyName, (provider, _) => {
                         var keyStore = provider.GetKeyedService<IKeyStore>(keyName);
-                        OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStore}' was not found.");
-                        if (typeof(TKekService) == typeof(AesGcmEncryptionService))
-                            return (TKekService)(object)new AesGcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TKekService) == typeof(ChaCha20Poly1305EncryptionService))
-                            return (TKekService)(object)new ChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TKekService) == typeof(AesCcmEncryptionService))
-                            return (TKekService)(object)new AesCcmEncryptionService(keyStore, aesGcmKeySize);
-
-                        if (typeof(TKekService) == typeof(XChaCha20Poly1305EncryptionService))
-                            return (TKekService)(object)new XChaCha20Poly1305EncryptionService(keyStore);
-
-                        if (typeof(TKekService) == typeof(AesSivEncryptionService))
-                            return (TKekService)(object)new AesSivEncryptionService(keyStore);
-
-                        throw new InvalidOperationException($"Generic AddEncryptionServiceKeyed does not support {typeof(TKekService).Name}. Register it manually.");
+                        OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyName}' was not found.");
+                        return CreateBuiltInService<TKekService>(keyStore, aesGcmKeySize);
                     });
             }
 
@@ -304,6 +257,28 @@ public static class EncryptionServiceExtensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             return services.AddScoped(_ => new AesGcmRsaEncryptionService(publicPemPath, privatePemPath, pfxPath, password, padding));
+        }
+
+        /// <summary>Maps unkeyed <see cref="IEncryptionService" /> to an already-registered concrete singleton.</summary>
+        /// <typeparam name="TConcrete">Concrete encryption service type registered earlier in the same service collection.</typeparam>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddDefaultEncryptionService<TConcrete>()
+            where TConcrete : class, IEncryptionService
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<IEncryptionService>(sp => sp.GetRequiredService<TConcrete>());
+            return services;
+        }
+
+        /// <summary>Maps unkeyed <see cref="ITwoKeyEncryptionService" /> to an already-registered concrete singleton. Prefer keyed registration for multiple envelopes.</summary>
+        /// <typeparam name="TConcrete">Concrete two-key encryption service type registered earlier in the same service collection.</typeparam>
+        /// <returns>The service collection for chaining</returns>
+        public IServiceCollection AddDefaultTwoKeyEncryptionService<TConcrete>()
+            where TConcrete : class, ITwoKeyEncryptionService
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.AddSingleton<ITwoKeyEncryptionService>(sp => sp.GetRequiredService<TConcrete>());
+            return services;
         }
     }
 }

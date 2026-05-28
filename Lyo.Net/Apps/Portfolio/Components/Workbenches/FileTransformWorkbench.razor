@@ -99,7 +99,7 @@
                             <MudStack Spacing="2">
                                 <MudSelect T="CompressionAlgorithm?" Label="@(_reverse ? "Decompression algorithm" : "Compression algorithm")" @bind-Value="_compressionAlgorithm">
                                     <MudSelectItem Value="@((CompressionAlgorithm?)null)">None</MudSelectItem>
-                                    @foreach (var algorithm in Enum.GetValues<CompressionAlgorithm>()) {
+                                    @foreach (var algorithm in CompressionAlgorithm.All) {
                                         <MudSelectItem Value="@((CompressionAlgorithm?)algorithm)">@algorithm</MudSelectItem>
                                     }
                                 </MudSelect>
@@ -600,7 +600,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private bool ApplyCompression => _compressionAlgorithm.HasValue;
+    private bool ApplyCompression => _compressionAlgorithm is not null;
 
     private bool ApplyEncryption => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
 

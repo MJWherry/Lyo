@@ -13,6 +13,14 @@ namespace Lyo.Cache;
 /// <summary>Extension methods for configuring LocalCacheService with dependency injection.</summary>
 public static class CacheServiceExtensions
 {
+    private static void EnsureCompressionRegistered(IServiceCollection services)
+    {
+        if (!services.Any(static d => d.ServiceType == typeof(CompressionService)))
+            services.AddCompressionService();
+        if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
+            services.AddDefaultCompressionService<CompressionService>();
+    }
+
     private static void RegisterCachePayloadCodec(IServiceCollection services)
         => services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
             sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>(), sp.GetService<IEncryptionService>()));
@@ -32,8 +40,7 @@ public static class CacheServiceExtensions
             configureOptions?.Invoke(cacheOptions);
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
-            if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
-                services.AddCompressionService();
+            EnsureCompressionRegistered(services);
 
             RegisterCachePayloadCodec(services);
             RegisterCachePayloadSerializer(services);
@@ -66,8 +73,7 @@ public static class CacheServiceExtensions
             configureOptions?.Invoke(cacheOptions);
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
-            if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
-                services.AddCompressionService();
+            EnsureCompressionRegistered(services);
 
             RegisterCachePayloadCodec(services);
             RegisterCachePayloadSerializer(services);

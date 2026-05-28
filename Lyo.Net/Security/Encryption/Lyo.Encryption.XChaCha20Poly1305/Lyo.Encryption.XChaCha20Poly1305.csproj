@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>XChaCha20-Poly1305 addon for Lyo.Encryption. Adds the XChaCha20Poly1305EncryptionService (HChaCha20 subkey + BouncyCastle ChaCha20-Poly1305) and matching DI extensions.</Description>
+        <PackageTags>encryption security xchacha20-poly1305 chacha cryptography</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Encryption\Lyo.Encryption.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+</Project>

@@ -53,14 +53,54 @@ Implementations of **`IKeyDerivationService`**:
 Optional capability for admin UIs and audits: enumerate logical **`keyId`**s and versions. Not every production store implements full listing—probe for **`IKeyInventoryStore`** (or
 your cloud-specific API) before assuming discovery works.
 
+## Dependency injection
+
+| Extension | Registers |
+|-----------|-----------|
+| `AddLocalKeyStore()` | `LocalKeyStore` + unkeyed `IKeyStore` |
+| `AddLocalKeyStore(Action<LocalKeyStore> configure)` | Configured `LocalKeyStore` + unkeyed `IKeyStore` |
+| `AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
+
+Configuration uses the **`configure =>`** lambda (there is no `AddLocalKeyStoreFromConfiguration`). Read **`IConfiguration`** inside `configure` — the same pattern as other Lyo libraries:
+
+```csharp
+using Lyo.Keystore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+// Unkeyed
+services.AddLocalKeyStore(ks =>
+{
+    ks.UpdateKeyFromString("app", configuration["Encryption:CurrentKek"]!);
+});
+
+// Keyed (pair with AddEncryptionServiceKeyed / addon *ServiceKeyed)
+const string storeKey = "primary";
+services.AddKeyedLocalKeyStore(storeKey, ks =>
+{
+    ks.AddKeyFromString("app", "v1", configuration["Encryption:Kek:v1"]!);
+    ks.SetCurrentVersion("app", "v1");
+});
+```
+
+Example **appsettings.json** (values consumed manually in `configure`):
+
+```json
+{
+  "Encryption": {
+    "CurrentKek": "replace-in-user-secrets",
+    "Kek": {
+      "v1": "versioned-secret"
+    }
+  }
+}
+```
+
 ## Local development (`LocalKeyStore`)
 
 In-memory store for tests and local apps:
 
 ```csharp
-using Lyo.Keystore;
-using Microsoft.Extensions.DependencyInjection;
-
 services.AddLocalKeyStore(ks =>
 {
     ks.AddKeyFromString("app", "v1", "local-dev-secret");

@@ -679,56 +679,74 @@ catch (OperationCanceledException ex)
 
 ### 12. Dependency Injection (ASP.NET Core)
 
-The Lyo encryption stack always registers a **two-key** envelope (DEK + KEK) through one of the keyed `AddEncryptionServiceKeyed` overloads in [
-`Lyo.Encryption.Extensions.EncryptionServiceExtensions`](Lyo.Encryption/Extensions/EncryptionServiceExtensions.cs). The legacy `AddAesGcmEncryption<TKeyStore>` and
-`AddTwoKeyEncryption<TKeyStore>` helpers shown in earlier docs do not exist; use the keyed pattern below.
+Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.Keystore`](Lyo.Keystore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [`AesSiv`](Lyo.Encryption.AesSiv/README.md), [`XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md)). For compression, see [`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md).
+
+#### Registration overview (encryption)
+
+| Step | Extension | What is registered |
+|------|-----------|-------------------|
+| Keys | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore` |
+| Envelope (prod) | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed` | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
+| Single alg (unkeyed) | `AddAesCcmEncryption()` etc. | Concrete algorithm service only |
+| Interface default | `AddDefaultEncryptionService<T>()` | Unkeyed `IEncryptionService` → `T` |
+
+Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship `AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.Keystore` DI section](Lyo.Keystore/README.md#dependency-injection)).
+
+#### Keyed two-key (file storage, Comic.Api, etc.)
 
 ```csharp
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.Extensions;
 using Lyo.Encryption.Symmetric.Aes.AesCcm;
-using Lyo.Encryption.Symmetric.Aes.AesSiv;
 using Lyo.Encryption.Symmetric.ChaCha.XChaCha20Poly1305;
 using Lyo.Encryption.TwoKey;
 using Lyo.Keystore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 const string keyName = "primary";
 
-// 1) Register a keyed key store. LocalKeyStore is dev-only.
-services.AddLocalKeyStoreKeyed(keyName, store =>
+// 1) Key store — configure via lambda (IConfiguration inside configure)
+services.AddKeyedLocalKeyStore(keyName, store =>
 {
-    store.UpdateKeyFromString("default-key", "production-key");
+    store.UpdateKeyFromString("default-key", configuration["Encryption:KekSecret"]!);
 });
 
-// 2) Register the keyed two-key envelope. Defaults to AES-GCM for both DEK and KEK.
+// 2) Two-key envelope — built-in AES-GCM / ChaCha, or addon keyed helpers:
 services.AddEncryptionServiceKeyed(keyName, keyStoreName: keyName);
+// services.AddAesCcmEncryptionServiceKeyed(keyName, keyName);
+// services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);
 
-// Alternatives — pick the DEK/KEK algorithms explicitly:
-services.AddEncryptionServiceKeyed<AesGcmEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-GCM/AES-GCM
-services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEncryptionService>(keyName, keyName);    // XChaCha DEK + AES-GCM KEK
-services.AddEncryptionServiceKeyed<AesCcmEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-CCM DEK + AES-GCM KEK
-services.AddEncryptionServiceKeyed<AesSivEncryptionService, AesGcmEncryptionService>(keyName, keyName);              // AES-SIV DEK + AES-GCM KEK
-
-// RSA / AES-GCM+RSA hybrid (asymmetric KEK at the application boundary):
-services.AddRsaEncryption(publicPemPath: "/secrets/public.pem", privatePemPath: "/secrets/private.pem");
-services.AddAesGcmRsaEncryption(publicPemPath: "/secrets/public.pem", privatePemPath: "/secrets/private.pem");
-
-// 3) Consume the keyed two-key service.
-public sealed class MyService
+// 3) Consume
+public sealed class MyService([FromKeyedServices("primary")] ITwoKeyEncryptionService envelope)
 {
-    private readonly ITwoKeyEncryptionService _envelope;
-
-    public MyService([FromKeyedServices("primary")] ITwoKeyEncryptionService envelope) => _envelope = envelope;
-
     public TwoKeyEncryptionResult Protect(byte[] payload, string keyId = "default-key")
-        => _envelope.Encrypt(payload, kekKeyId: keyId);
+        => envelope.Encrypt(payload, kekKeyId: keyId);
 }
 ```
 
-The generic helpers branch over the algorithm types listed in `EncryptionAlgorithm`: `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, `AesCcmEncryptionService`,
-`AesSivEncryptionService`, and `XChaCha20Poly1305EncryptionService`. Any other DEK/KEK combination must be registered manually (the generic registration throws
-`InvalidOperationException` to make that explicit).
+#### Unkeyed addon + default interface
+
+```csharp
+services.AddLocalKeyStore(ks => ks.UpdateKeyFromString("k", configuration["Encryption:KekSecret"]!));
+services.AddAesCcmEncryption();
+services.AddXChaCha20Poly1305Encryption();
+services.AddDefaultEncryptionService<AesCcmEncryptionService>(); // pick one default IEncryptionService
+```
+
+#### Compression (same app)
+
+```csharp
+using Lyo.Compression;
+using Lyo.Compression.Models;
+
+services.AddCompressionService(options => options.DefaultAlgorithm = CompressionAlgorithm.Brotli);
+services.AddDefaultCompressionService<CompressionService>();
+// Or: AddCompressionServiceFromConfiguration(configuration, CompressionServiceOptions.SectionName);
+```
+
+The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, and addon types (`AesCcmEncryptionService`, `AesSivEncryptionService`, `XChaCha20Poly1305EncryptionService`). Other combinations use manual registration or throw `InvalidOperationException` from the generic helper.
 
 ## 🔐 Security Best Practices
 

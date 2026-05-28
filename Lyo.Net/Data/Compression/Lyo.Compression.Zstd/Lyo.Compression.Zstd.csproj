@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Zstandard (Zstd) compression addon for Lyo.Compression. Registers a Zstd ICompressorFactory backed by EasyCompressor.ZstdSharp.</Description>
+        <PackageTags>compression zstd zstandard</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Compression\Lyo.Compression.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EasyCompressor.ZstdSharp" Version="[2.1,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

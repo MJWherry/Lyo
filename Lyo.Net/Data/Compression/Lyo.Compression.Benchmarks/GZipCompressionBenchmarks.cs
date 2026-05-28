@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
+using Lyo.Compression.Compressors;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Benchmarks;
@@ -21,7 +22,8 @@ public class GZipCompressionBenchmarks
     public void Setup()
     {
         var options = new CompressionServiceOptions { DefaultAlgorithm = CompressionAlgorithm.GZip, EnableMetrics = false };
-        _compressionService = new(options: options);
+        ICompressorFactory[] factories = [new GZipCompressorFactory()];
+        _compressionService = new(factories, options: options);
 
         // Generate test data
         _smallData = new byte[1024]; // 1 KB

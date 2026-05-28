@@ -26,6 +26,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddCsvService();
 builder.Services.AddXlsxService();
 builder.Services.AddCompressionService();
+builder.Services.AddDefaultCompressionService<CompressionService>();
 builder.Services.AddLyoMetrics();
 builder.Services.AddScheduler();
 builder.Services.AddLocalCacheFromConfiguration(builder.Configuration);

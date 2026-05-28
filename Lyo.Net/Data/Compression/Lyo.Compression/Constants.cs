@@ -1,41 +1,8 @@
-using Lyo.Common.Records;
-using Lyo.Compression.Models;
-
 namespace Lyo.Compression;
 
 /// <summary>Consolidated constants for the Compression library.</summary>
 public static class Constants
 {
-    /// <summary>File extensions and algorithm mappings.</summary>
-    public static class Data
-    {
-        public static readonly string GZipExtension = FileTypeInfo.Gz.DefaultExtension;
-        public static readonly string BrotliExtension = FileTypeInfo.Brotli.DefaultExtension;
-        public static readonly string ZLibExtension = FileTypeInfo.ZLibStream.DefaultExtension;
-        public static readonly string DeflateExtension = FileTypeInfo.DeflateStream.DefaultExtension;
-        public static readonly string SnappierExtension = FileTypeInfo.SnappyStream.DefaultExtension;
-        public static readonly string ZstdSharpExtension = FileTypeInfo.ZstdStream.DefaultExtension;
-        public static readonly string LZ4Extension = FileTypeInfo.LZ4Stream.DefaultExtension;
-        public static readonly string LZMAExtension = FileTypeInfo.LZMAStream.DefaultExtension;
-        public static readonly string BZip2Extension = FileTypeInfo.Bz2.DefaultExtension;
-        public static readonly string XZExtension = FileTypeInfo.Xz.DefaultExtension;
-
-        public static readonly Dictionary<CompressionAlgorithm, string> AlgorithmExtensions = new() {
-            { CompressionAlgorithm.GZip, GZipExtension },
-#if !NETSTANDARD2_0
-            { CompressionAlgorithm.Brotli, BrotliExtension },
-            { CompressionAlgorithm.ZLib, ZLibExtension },
-#endif
-            { CompressionAlgorithm.Deflate, DeflateExtension },
-            { CompressionAlgorithm.Snappier, SnappierExtension },
-            { CompressionAlgorithm.ZstdSharp, ZstdSharpExtension },
-            { CompressionAlgorithm.LZ4, LZ4Extension },
-            { CompressionAlgorithm.LZMA, LZMAExtension },
-            { CompressionAlgorithm.BZip2, BZip2Extension },
-            { CompressionAlgorithm.XZ, XZExtension }
-        };
-    }
-
     /// <summary>Metric names and tags.</summary>
     public static class Metrics
     {

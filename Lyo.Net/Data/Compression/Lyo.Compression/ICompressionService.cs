@@ -12,7 +12,7 @@ namespace Lyo.Compression;
 /// </remarks>
 public interface ICompressionService
 {
-    /// <summary>File extension for this instance's algorithm (from <see cref="Constants.Data.AlgorithmExtensions" />).</summary>
+    /// <summary>File extension for this instance's algorithm (from <see cref="CompressionAlgorithm.Extension" />).</summary>
     string FileExtension { get; }
 
     /// <summary>Algorithm selected when the service was constructed.</summary>

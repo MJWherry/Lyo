@@ -69,9 +69,7 @@ public sealed class FileMetadataEntity
 
     public FileStoreResult ToFileStoreResult()
     {
-        CompressionAlgorithm? compressionAlgorithm = null;
-        if (!string.IsNullOrEmpty(CompressionAlgorithm) && Enum.TryParse<CompressionAlgorithm>(CompressionAlgorithm, out var alg))
-            compressionAlgorithm = alg;
+        var compressionAlgorithm = Lyo.Compression.Models.CompressionAlgorithm.TryFromName(CompressionAlgorithm);
 
         EncryptionAlgorithm? dekAlgorithm = null;
         if (!string.IsNullOrEmpty(DataEncryptionKeyAlgorithm) && Enum.TryParse<EncryptionAlgorithm>(DataEncryptionKeyAlgorithm, out var dekAlg))

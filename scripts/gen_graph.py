@@ -302,6 +302,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     --text: #e6e8ec;
     --text-dim: #9aa0a8;
     --accent: #7aa2f7;
+    --sidebar-w: 400px;
+    --sidebar-collapsed-w: 36px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; }
@@ -329,28 +331,61 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   button:hover { border-color: var(--accent); }
   input { width: 220px; }
   #status { color: var(--text-dim); font-size: 12px; margin-left: auto; }
+  #workspace {
+    display: flex; flex: 1; min-height: 0; min-width: 0;
+  }
+  #graph-col {
+    flex: 1; min-width: 0; display: flex; flex-direction: column;
+  }
   #cy { flex: 1; min-height: 0; background: #15171b; }
   #legend {
     display: flex; gap: 10px; flex-wrap: wrap;
     padding: 6px 16px; background: var(--bg-elev);
     border-top: 1px solid var(--border);
     font-size: 12px;
+    flex-shrink: 0;
   }
   .swatch {
     display: inline-block; width: 10px; height: 10px;
     border-radius: 2px; margin-right: 6px; vertical-align: middle;
   }
-  #info {
-    position: absolute; right: 16px; bottom: 60px;
-    width: 380px; max-width: calc(100vw - 32px);
-    max-height: 65vh;
-    background: var(--bg-elev); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 14px;
-    font-size: 12px; line-height: 1.5;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    display: none; flex-direction: column;
+  #sidebar {
+    flex-shrink: 0;
+    width: var(--sidebar-w);
+    display: flex; flex-direction: row;
+    background: var(--bg-elev);
+    border-left: 1px solid var(--border);
+    transition: width 0.2s ease;
+    overflow: hidden;
   }
-  #info.open { display: flex; }
+  #sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+  #sidebar-toggle {
+    flex-shrink: 0;
+    width: var(--sidebar-collapsed-w);
+    border: none;
+    border-right: 1px solid var(--border);
+    background: #2c3038;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    border-radius: 0;
+  }
+  #sidebar-toggle:hover { color: var(--accent); background: #343840; }
+  #info {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column;
+    font-size: 12px; line-height: 1.5;
+    padding: 12px 14px;
+    overflow: hidden;
+  }
+  #sidebar.collapsed #info { display: none; }
+  #info .sidebar-empty {
+    color: var(--text-dim); font-style: italic;
+    font-size: 12px; padding: 8px 4px;
+    line-height: 1.5;
+  }
   #info h3 { margin: 0; font-size: 13px; color: var(--accent); }
   #info .meta { color: var(--text-dim); font-size: 11px; margin-bottom: 8px; }
   #info .header-row {
@@ -405,6 +440,48 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     padding: 0 5px;
   }
   #info .ver.multi { border-color: #d79b00; }
+  #info .dep-overview {
+    display: flex; flex-wrap: wrap; gap: 6px 12px;
+    font-size: 11px; color: var(--text-dim);
+    padding: 6px 8px; margin-bottom: 6px;
+    background: #1b1d22; border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  #info .dep-overview b { color: var(--text); font-weight: 600; }
+  #info .dep-overview .ov-tp b { color: #d79b00; }
+  #info .dep-filters {
+    display: flex; flex-wrap: wrap; gap: 6px 10px;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  #info .dep-filters label {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--text-dim); cursor: pointer;
+    user-select: none; white-space: nowrap;
+  }
+  #info .dep-filters input { margin: 0; width: 12px; height: 12px; cursor: pointer; }
+  #info .dep-filters label:hover { color: var(--text); }
+  #info .dep-list { margin: 0; }
+  #info .dep-row {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px;
+    padding: 3px 0; border-bottom: 1px solid #2a2e36;
+  }
+  #info .dep-row.dep-hidden { display: none; }
+  #info .dep-row .dep-name { color: var(--text); }
+  #info .tag {
+    font-family: ui-monospace, monospace; font-size: 9px;
+    line-height: 1.4; padding: 0 5px; border-radius: 3px;
+    border: 1px solid var(--border); text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  #info .tag-direct   { color: #c5d6f0; border-color: #6c8ebf; }
+  #info .tag-transitive { color: #f5d99e; border-color: #d79b00; }
+  #info .tag-lyo      { color: #c4dfb1; border-color: #82b366; }
+  #info .tag-ms       { color: #9aa0a8; border-color: #4a5160; }
+  #info .tag-tp       { color: #fff; border-color: #d79b00; background: #6b5018; }
+  #info .fw-block { margin-top: 6px; }
+  #info .fw-block + .fw-block { margin-top: 10px; }
+  #info .fw-block.fw-hidden { display: none; }
   #info .fw-group + .fw-group { margin-top: 8px; }
   #info .fw-label {
     display: inline-block;
@@ -437,9 +514,18 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <button id="reset-btn">Reset highlight</button>
   <span id="status"></span>
 </header>
-<div id="cy"></div>
-<div id="legend"></div>
-<div id="info"></div>
+<div id="workspace">
+  <div id="graph-col">
+    <div id="cy"></div>
+    <div id="legend"></div>
+  </div>
+  <aside id="sidebar" class="collapsed">
+    <button type="button" id="sidebar-toggle" title="Toggle details panel" aria-expanded="false">&lsaquo;</button>
+    <div id="info">
+      <div class="sidebar-empty">Click a project to inspect dependencies.</div>
+    </div>
+  </aside>
+</div>
 <script>
 const DATA = __DATA_JSON__;
 const COLORS = DATA.colors;
@@ -605,6 +691,40 @@ function saveView() {
   savedView = { zoom: cy.zoom(), pan: Object.assign({}, cy.pan()) };
 }
 
+// ----- Collapsible right sidebar ------------------------------------------
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const INFO_EMPTY = '<div class="sidebar-empty">Click a project to inspect dependencies.</div>';
+
+function updateSidebarToggle() {
+  const collapsed = sidebar.classList.contains('collapsed');
+  sidebarToggle.textContent = collapsed ? '\u2039' : '\u203A';
+  sidebarToggle.title = collapsed ? 'Show details panel' : 'Hide details panel';
+  sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+}
+
+function scheduleCyResize() {
+  requestAnimationFrame(() => { cy.resize(); });
+}
+
+sidebarToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  updateSidebarToggle();
+  scheduleCyResize();
+});
+
+sidebar.addEventListener('transitionend', evt => {
+  if (evt.propertyName === 'width') scheduleCyResize();
+});
+
+function expandSidebar() {
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+    updateSidebarToggle();
+    scheduleCyResize();
+  }
+}
+
 function loadOverview() {
   cy.elements().remove();
   cy.add(buildOverviewElements());
@@ -742,21 +862,10 @@ function projLink(name) {
          n + '</span>';
 }
 
-function listSection(title, items) {
-  if (!items.length) {
-    return '<div class="section"><h4>' + escapeHtml(title) + ' (0)</h4>' +
-           '<div class="empty">none</div></div>';
-  }
-  return '<div class="section"><h4>' + escapeHtml(title) +
-         ' (' + items.length + ')</h4>' +
-         '<ul>' + items.map(r => '<li>' + projLink(r) + '</li>').join('') +
-         '</ul></div>';
-}
-
-function uniquePkgCount(groups) {
-  const seen = new Set();
-  for (const g of groups) for (const p of g.packages) seen.add(p.name);
-  return seen.size;
+// Treat anything in the Microsoft.* or System.* namespace as a Microsoft
+// package; everything else is third-party.
+function isMicrosoft(name) {
+  return /^(Microsoft|System)\./i.test(String(name));
 }
 
 function frameworkChipHtml(fw, count) {
@@ -766,62 +875,292 @@ function frameworkChipHtml(fw, count) {
          escapeHtml(label) + ' &middot; ' + count + '</div>';
 }
 
-function pkgRowHtml(pkg) {
-  const versions = (pkg.versions && pkg.versions.length) ? pkg.versions : [''];
-  const multi = versions.length > 1;
-  const chips = versions.map(v => {
+function tagHtml(cls, label) {
+  return '<span class="tag tag-' + cls + '">' + label + '</span>';
+}
+
+function versionChipsHtml(versions) {
+  const vs = (versions && versions.length) ? versions : [''];
+  const multi = vs.length > 1;
+  return vs.map(v => {
     const label = v ? escapeHtml(v) : '<i>unspecified</i>';
     return '<span class="ver' + (multi ? ' multi' : '') + '">' + label + '</span>';
   }).join('');
-  return '<div class="pkg-row"><span class="pkg-name">' +
-         escapeHtml(pkg.name) + '</span>' + chips + '</div>';
 }
 
-function packageSection(title, groups) {
-  if (!groups.length) {
-    return '<div class="section"><h4>' + escapeHtml(title) + ' (0)</h4>' +
-           '<div class="empty">none</div></div>';
+// ----- Dependency panel: two tabs, tags, filters, overview ----------------
+let activeTab = 'depends';
+let depFilters = {
+  transitive: true,
+  lyo: true,
+  ms: true,
+  tp: true,
+};
+
+function buildDependsRows(p) {
+  const directRefSet = new Set(p.refs || []);
+  const directPkgNames = new Set();
+  const rows = [];
+
+  for (const r of (p.refs || [])) {
+    rows.push({
+      kind: 'lyo', name: r, scope: 'direct',
+      framework: null, versions: null, vendor: null,
+    });
   }
-  const unique = uniquePkgCount(groups);
-  let html = '<div class="section"><h4>' + escapeHtml(title) +
-             ' (' + unique + ')</h4>';
-  for (const g of groups) {
-    html += '<div class="fw-group">' +
-            frameworkChipHtml(g.framework, g.packages.length);
-    for (const pkg of g.packages) html += pkgRowHtml(pkg);
+  for (const r of (p.transitiveLyo || [])) {
+    if (directRefSet.has(r)) continue;
+    rows.push({
+      kind: 'lyo', name: r, scope: 'transitive',
+      framework: null, versions: null, vendor: null,
+    });
+  }
+
+  function addPackageGroups(groups, scope) {
+    for (const g of groups) {
+      for (const pkg of g.packages) {
+        if (scope === 'transitive' && directPkgNames.has(pkg.name)) continue;
+        if (scope === 'direct') directPkgNames.add(pkg.name);
+        const ms = isMicrosoft(pkg.name);
+        rows.push({
+          kind: 'pkg', name: pkg.name, scope: scope,
+          framework: g.framework, versions: pkg.versions, vendor: ms ? 'ms' : 'tp',
+        });
+      }
+    }
+  }
+  addPackageGroups(p.directPackages || [], 'direct');
+  addPackageGroups(p.transitivePackages || [], 'transitive');
+  return rows;
+}
+
+function depRowHtml(row) {
+  const scope = row.scope;
+  const isLyo = row.kind === 'lyo';
+  const isMs = row.vendor === 'ms';
+  const tags =
+    tagHtml(scope, scope) +
+    (isLyo ? tagHtml('lyo', 'lyo') : '') +
+    (!isLyo && isMs ? tagHtml('ms', 'ms') : '') +
+    (!isLyo && !isMs ? tagHtml('tp', '3rd') : '');
+
+  const attrs =
+    ' data-kind="' + row.kind + '"' +
+    ' data-scope="' + scope + '"' +
+    ' data-lyo="' + (isLyo ? '1' : '0') + '"' +
+    ' data-ms="' + (!isLyo && isMs ? '1' : '0') + '"' +
+    ' data-tp="' + (!isLyo && !isMs ? '1' : '0') + '"' +
+    (row.framework ? ' data-framework="' + escapeHtml(row.framework) + '"' : '');
+
+  let body;
+  if (isLyo) {
+    body = projLink(row.name);
+  } else {
+    body = '<span class="dep-name">' + escapeHtml(row.name) + '</span>' +
+           versionChipsHtml(row.versions);
+  }
+  return '<div class="dep-row"' + attrs + '>' + tags + body + '</div>';
+}
+
+function renderDependsList(rows) {
+  if (!rows.length) {
+    return '<div class="empty">No dependencies.</div>';
+  }
+  const lyoRows = rows.filter(r => r.kind === 'lyo');
+  const pkgRows = rows.filter(r => r.kind === 'pkg');
+
+  let html = '<div class="dep-list" id="dep-list">';
+  if (lyoRows.length) {
+    html += '<div class="section"><h4>Projects</h4>';
+    for (const r of lyoRows) html += depRowHtml(r);
+    html += '</div>';
+  }
+
+  if (pkgRows.length) {
+    html += '<div class="section"><h4>Packages</h4>';
+    const byFw = {};
+    for (const r of pkgRows) {
+      const fw = r.framework || 'all';
+      if (!byFw[fw]) byFw[fw] = [];
+      byFw[fw].push(r);
+    }
+    const fwKeys = Object.keys(byFw).sort((a, b) => {
+      if (a === 'all') return -1;
+      if (b === 'all') return 1;
+      return a.localeCompare(b);
+    });
+    for (const fw of fwKeys) {
+      const blockRows = byFw[fw];
+      html += '<div class="fw-block" data-fw-block="' + escapeHtml(fw) + '">' +
+              frameworkChipHtml(fw, blockRows.length);
+      for (const r of blockRows) html += depRowHtml(r);
+      html += '</div>';
+    }
     html += '</div>';
   }
   html += '</div>';
   return html;
 }
 
+function buildUsedByRows(name) {
+  return DATA.projects.filter(q => q.refs.includes(name)).map(q => ({
+    kind: 'lyo', name: q.name, scope: 'direct',
+    framework: null, versions: null, vendor: null,
+  }));
+}
+
+function renderUsedByList(rows) {
+  if (!rows.length) {
+    return '<div class="empty">Nothing in the solution depends on this project.</div>';
+  }
+  let html = '<div class="dep-list" id="usedby-list">';
+  for (const r of rows) html += depRowHtml(r);
+  html += '</div>';
+  return html;
+}
+
+function depOverviewHtml(stats) {
+  return '<div class="dep-overview" id="dep-overview">' +
+    '<span><b id="ov-shown">' + stats.shown + '</b> / <b id="ov-total">' +
+    stats.total + '</b> shown</span>' +
+    '<span>Lyo <b id="ov-lyo">' + stats.lyo + '</b></span>' +
+    '<span>Pkgs <b id="ov-pkg">' + stats.pkg + '</b></span>' +
+    '<span>Direct <b id="ov-direct">' + stats.direct + '</b></span>' +
+    '<span>Transitive <b id="ov-trans">' + stats.transitive + '</b></span>' +
+    '<span class="ov-tp">3rd <b id="ov-tp">' + stats.tp + '</b></span>' +
+    '<span>MS <b id="ov-ms">' + stats.ms + '</b></span>' +
+    '</div>';
+}
+
+function depFiltersHtml() {
+  function chk(key, label) {
+    const on = depFilters[key] ? ' checked' : '';
+    return '<label><input type="checkbox" data-dep-filter="' + key + '"' +
+           on + '/> ' + label + '</label>';
+  }
+  return '<div class="dep-filters" id="dep-filters">' +
+    chk('transitive', 'Transitive') +
+    chk('lyo', 'Lyo') +
+    chk('ms', 'Microsoft') +
+    chk('tp', '3rd party') +
+    '</div>';
+}
+
+function applyDepFilters(panelId) {
+  const panel = document.querySelector('.tabpanel[data-tab="' + panelId + '"]');
+  if (!panel) return;
+  const list = panel.querySelector('.dep-list');
+  if (!list) return;
+
+  list.querySelectorAll('.dep-row').forEach(el => {
+    const scope = el.dataset.scope;
+    const isLyo = el.dataset.lyo === '1';
+    const isMs = el.dataset.ms === '1';
+    const isTp = el.dataset.tp === '1';
+    let show = true;
+    if (panelId === 'depends') {
+      if (scope === 'transitive' && !depFilters.transitive) show = false;
+      if (isLyo && !depFilters.lyo) show = false;
+      if (isMs && !depFilters.ms) show = false;
+      if (isTp && !depFilters.tp) show = false;
+    } else {
+      // Depended on by tab: incoming Lyo projects only
+      if (isLyo && !depFilters.lyo) show = false;
+    }
+    el.classList.toggle('dep-hidden', !show);
+  });
+
+  list.querySelectorAll('.fw-block').forEach(block => {
+    const visible = block.querySelectorAll('.dep-row:not(.dep-hidden)').length;
+    block.classList.toggle('fw-hidden', visible === 0);
+  });
+
+  if (panelId === 'depends') updateDependsOverview();
+  else updateUsedByOverview();
+}
+
+function updateDependsOverview() {
+  const list = document.getElementById('dep-list');
+  if (!list) return;
+  const total = list.querySelectorAll('.dep-row').length;
+  const stats = { total: total, shown: 0, lyo: 0, pkg: 0,
+                  direct: 0, transitive: 0, ms: 0, tp: 0 };
+  list.querySelectorAll('.dep-row:not(.dep-hidden)').forEach(el => {
+    stats.shown++;
+    if (el.dataset.lyo === '1') stats.lyo++;
+    if (el.dataset.kind === 'pkg') stats.pkg++;
+    if (el.dataset.scope === 'direct') stats.direct++;
+    if (el.dataset.scope === 'transitive') stats.transitive++;
+    if (el.dataset.ms === '1') stats.ms++;
+    if (el.dataset.tp === '1') stats.tp++;
+  });
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('ov-shown', stats.shown);
+  set('ov-total', stats.total);
+  set('ov-lyo', stats.lyo);
+  set('ov-pkg', stats.pkg);
+  set('ov-direct', stats.direct);
+  set('ov-trans', stats.transitive);
+  set('ov-ms', stats.ms);
+  set('ov-tp', stats.tp);
+  // Update tab count
+  const tab = document.querySelector('.tab[data-tab="depends"]');
+  if (tab) tab.textContent = 'Depends (' + stats.shown + '/' + stats.total + ')';
+}
+
+function updateUsedByOverview() {
+  const list = document.getElementById('usedby-list');
+  const total = list ? list.querySelectorAll('.dep-row').length : 0;
+  const shown = list ? list.querySelectorAll('.dep-row:not(.dep-hidden)').length : 0;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('ov-shown-usedby', shown);
+  set('ov-total-usedby', total);
+  set('ov-lyo-usedby', shown);
+  const tab = document.querySelector('.tab[data-tab="usedby"]');
+  if (tab) tab.textContent = 'Depended on by (' + shown + '/' + total + ')';
+}
+
 function showInfo(node) {
   const info = document.getElementById('info');
   const name = node.id();
   const p = projectByName[name];
-  if (!p) { info.classList.remove('open'); return; }
+  if (!p) { hideInfo(); return; }
+  expandSidebar();
 
-  const directRefs = p.refs || [];
-  const directDeps = DATA.projects.filter(q => q.refs.includes(name)).map(q => q.name);
-  const directPkgs = p.directPackages || [];
-  const transLyo   = p.transitiveLyo || [];
-  const transPkgs  = p.transitivePackages || [];
+  const dependsRows = buildDependsRows(p);
+  const usedByRows = buildUsedByRows(name);
 
-  const directPkgUnique = uniquePkgCount(directPkgs);
-  const transPkgUnique  = uniquePkgCount(transPkgs);
+  const dependsStats = {
+    total: dependsRows.length, shown: dependsRows.length,
+    lyo: dependsRows.filter(r => r.kind === 'lyo').length,
+    pkg: dependsRows.filter(r => r.kind === 'pkg').length,
+    direct: dependsRows.filter(r => r.scope === 'direct').length,
+    transitive: dependsRows.filter(r => r.scope === 'transitive').length,
+    ms: dependsRows.filter(r => r.vendor === 'ms').length,
+    tp: dependsRows.filter(r => r.vendor === 'tp').length,
+  };
 
-  const directHtml =
-    listSection('Depends on', directRefs) +
-    listSection('Depended on by', directDeps) +
-    packageSection('Direct packages', directPkgs);
+  const dependsPanel =
+    depOverviewHtml(dependsStats) +
+    depFiltersHtml() +
+    renderDependsList(dependsRows);
 
-  const lyoHtml = transLyo.length
-    ? listSection('Transitive Lyo projects', transLyo)
-    : '<div class="empty">No transitive Lyo dependencies.</div>';
-
-  const pkgHtml = transPkgs.length
-    ? packageSection('Transitive packages', transPkgs)
-    : '<div class="empty">No transitive packages reachable from this project.</div>';
+  const usedByStats = {
+    total: usedByRows.length, shown: usedByRows.length,
+    lyo: usedByRows.length, pkg: 0, direct: usedByRows.length,
+    transitive: 0, ms: 0, tp: 0,
+  };
+  const usedByPanel =
+    '<div class="dep-overview" id="dep-overview-usedby">' +
+      '<span><b id="ov-shown-usedby">' + usedByStats.shown + '</b> / ' +
+        '<b id="ov-total-usedby">' + usedByStats.total + '</b> shown</span>' +
+      '<span>Lyo <b id="ov-lyo-usedby">' + usedByStats.lyo + '</b></span>' +
+    '</div>' +
+    '<div class="dep-filters" id="usedby-filters">' +
+      '<label><input type="checkbox" data-dep-filter="lyo"' +
+      (depFilters.lyo ? ' checked' : '') + '/> Lyo</label>' +
+    '</div>' +
+    renderUsedByList(usedByRows);
 
   info.innerHTML =
     '<div class="header-row">' +
@@ -830,31 +1169,54 @@ function showInfo(node) {
     '</div>' +
     '<div class="meta">' + escapeHtml(p.folder) + ' &middot; ' + escapeHtml(p.area) + '</div>' +
     '<div class="tabs">' +
-      '<button class="tab active" data-tab="direct">Direct (' +
-        (directRefs.length + directDeps.length + directPkgUnique) + ')</button>' +
-      '<button class="tab" data-tab="lyo">Transitive Lyo (' + transLyo.length + ')</button>' +
-      '<button class="tab" data-tab="pkg">Transitive packages (' + transPkgUnique + ')</button>' +
+      '<button class="tab active" data-tab="depends">Depends (' +
+        dependsStats.shown + '/' + dependsStats.total + ')</button>' +
+      '<button class="tab" data-tab="usedby">Depended on by (' +
+        usedByStats.shown + '/' + usedByStats.total + ')</button>' +
     '</div>' +
-    '<div class="tabpanel" data-tab="direct">' + directHtml + '</div>' +
-    '<div class="tabpanel" data-tab="lyo" hidden>' + lyoHtml + '</div>' +
-    '<div class="tabpanel" data-tab="pkg" hidden>' + pkgHtml + '</div>';
+    '<div class="tabpanel" data-tab="depends">' + dependsPanel + '</div>' +
+    '<div class="tabpanel" data-tab="usedby" hidden>' + usedByPanel + '</div>';
 
-  info.classList.add('open');
+  const tabAliases = {
+    direct: 'depends', pkg: 'deps', deps: 'depends', lyo: 'depends', depended: 'usedby',
+  };
+  if (tabAliases[activeTab]) activeTab = tabAliases[activeTab];
+  const validTabs = ['depends', 'usedby'];
+  if (!validTabs.includes(activeTab)) activeTab = 'depends';
+
+  info.querySelectorAll('.tab').forEach(b => b.classList.toggle('active',
+    b.getAttribute('data-tab') === activeTab));
+  info.querySelectorAll('.tabpanel').forEach(pan => {
+    if (pan.getAttribute('data-tab') === activeTab) pan.removeAttribute('hidden');
+    else pan.setAttribute('hidden', '');
+  });
 
   info.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
-      const which = btn.getAttribute('data-tab');
+      activeTab = btn.getAttribute('data-tab');
       info.querySelectorAll('.tab').forEach(b => b.classList.toggle('active',
-        b.getAttribute('data-tab') === which));
-      info.querySelectorAll('.tabpanel').forEach(p => {
-        if (p.getAttribute('data-tab') === which) p.removeAttribute('hidden');
-        else p.setAttribute('hidden', '');
+        b.getAttribute('data-tab') === activeTab));
+      info.querySelectorAll('.tabpanel').forEach(pan => {
+        if (pan.getAttribute('data-tab') === activeTab) pan.removeAttribute('hidden');
+        else pan.setAttribute('hidden', '');
       });
     });
   });
+
+  applyDepFilters('depends');
+  applyDepFilters('usedby');
+  scheduleCyResize();
 }
 
-function hideInfo() { document.getElementById('info').classList.remove('open'); }
+function hideInfo() {
+  document.getElementById('info').innerHTML = INFO_EMPTY;
+}
+
+function rerenderPanel() {
+  if (!navCurrent) return;
+  const n = cy.getElementById(navCurrent);
+  if (!n.empty()) showInfo(n);
+}
 
 // ----- Back-navigation history --------------------------------------------
 let navHistory = [];   // previous project names (oldest -> newest)
@@ -927,6 +1289,14 @@ document.getElementById('info').addEventListener('keydown', evt => {
   jumpToProject(link.getAttribute('data-jump'));
 });
 
+document.getElementById('info').addEventListener('change', evt => {
+  const key = evt.target.getAttribute('data-dep-filter');
+  if (!key || !(key in depFilters)) return;
+  depFilters[key] = evt.target.checked;
+  applyDepFilters('depends');
+  applyDepFilters('usedby');
+});
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -981,6 +1351,8 @@ tip.innerHTML = 'Tip: <span class="kbd">click</span> = drill / highlight &middot
 legend.appendChild(tip);
 
 loadOverview();
+updateSidebarToggle();
+window.addEventListener('resize', scheduleCyResize);
 </script>
 </body>
 </html>

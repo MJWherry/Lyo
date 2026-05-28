@@ -15,6 +15,7 @@ namespace Lyo.Encryption.Symmetric.Aes.AesSiv;
 public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     private const int SivSize = 16;
+    private readonly AesSivKeySizeBits _aesSivKeySize;
 
     public AesSivEncryptionService(IKeyStore keyStore)
         : this(keyStore, AesSivKeySizeBits.Bits256) { }
@@ -25,14 +26,20 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
                 CurrentFormatVersion = (byte)StreamFormatVersion.V1,
                 MaxInputSize = long.MaxValue,
                 MinInputSize = 1,
-                FileExtension = FileTypeInfo.LyoAesSiv.DefaultExtension,
-                AesSivKeySize = keySize
-            }, keyStore) { }
+                FileExtension = FileTypeInfo.LyoAesSiv.DefaultExtension
+            }, keyStore)
+        => _aesSivKeySize = keySize;
 
     public AesSivEncryptionService(EncryptionServiceOptions options, IKeyStore keyStore)
-        : base(options, keyStore) { }
+        : this(options, keyStore, AesSivKeySizeBits.Bits256) { }
 
-    public int RequiredKeyBytes => Options.AesSivKeySize.GetKeyLengthBytes();
+    public AesSivEncryptionService(EncryptionServiceOptions options, IKeyStore keyStore, AesSivKeySizeBits keySize)
+        : base(options, keyStore)
+        => _aesSivKeySize = keySize;
+
+    public AesSivKeySizeBits AesSivKeySize => _aesSivKeySize;
+
+    public int RequiredKeyBytes => _aesSivKeySize.GetKeyLengthBytes();
 
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesSiv;
 

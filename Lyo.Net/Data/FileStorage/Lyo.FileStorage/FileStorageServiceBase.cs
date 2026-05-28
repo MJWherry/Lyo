@@ -22,7 +22,6 @@ using Lyo.Streams;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using HashAlgorithm = Lyo.FileMetadataStore.Models.HashAlgorithm;
-using static Lyo.Compression.Constants.Data;
 
 namespace Lyo.FileStorage;
 
@@ -278,19 +277,11 @@ public abstract class FileStorageServiceBase
         return !declaredContentType.IsNullOrWhitespace() ? declaredContentType.Trim() : FileTypeInfo.Unknown.MimeType;
     }
 
-    /// <summary>Maps compressor file extensions to enumeration values used in <see cref="FileStoreResult" />.</summary>
-    protected internal static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension)
-        => fileExtension switch {
-            var _ when fileExtension == GZipExtension => CompressionAlgorithm.GZip,
-#if !NETSTANDARD2_0
-            var _ when fileExtension == BrotliExtension => CompressionAlgorithm.Brotli,
-            var _ when fileExtension == ZLibExtension => CompressionAlgorithm.ZLib,
-#endif
-            var _ when fileExtension == DeflateExtension => CompressionAlgorithm.Deflate,
-            var _ when fileExtension == SnappierExtension => CompressionAlgorithm.Snappier,
-            var _ when fileExtension == ZstdSharpExtension => CompressionAlgorithm.ZstdSharp,
-            var _ => null
-        };
+    /// <summary>
+    /// Maps a file extension to the registered compression algorithm used in <see cref="FileStoreResult" />. Returns <see langword="null" /> for unknown extensions; recognition is
+    /// dynamic and only covers algorithms whose addon assemblies have been loaded (typically via <c>services.Add{Algo}Compressor()</c>).
+    /// </summary>
+    protected internal static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension) => CompressionAlgorithm.TryFromExtension(fileExtension);
 
     /// <summary>Computes a cryptographic digest for byte arrays using the configured <see cref="Lyo.FileMetadataStore.Models.HashAlgorithm" />.</summary>
     protected static byte[] ComputeHash(byte[] data, HashAlgorithm algorithm = HashAlgorithm.Sha256)

@@ -1,15 +1,28 @@
 using Lyo.Common.Records;
+using Lyo.Compression.BZip2;
+using Lyo.Compression.LZ4;
+using Lyo.Compression.LZMA;
+using Lyo.Compression.Models;
+using Lyo.Compression.Snappier;
+using Lyo.Compression.XZ;
+using Lyo.Compression.Zstd;
 
 namespace Lyo.Compression.Tests;
 
 public class LyoCompressionConstantsAlignWithFileTypeInfoTests
 {
     [Fact]
-    public void Constants_Data_Extensions_Match_FileTypeInfo_StreamDefaults()
+    public void CompressionAlgorithm_Extensions_Match_FileTypeInfo_StreamDefaults()
     {
-        Assert.Equal(FileTypeInfo.Gz.DefaultExtension, Constants.Data.GZipExtension);
-        Assert.Equal(FileTypeInfo.Brotli.DefaultExtension, Constants.Data.BrotliExtension);
-        Assert.Equal(FileTypeInfo.LZMAStream.DefaultExtension, Constants.Data.LZMAExtension);
-        Assert.Equal(FileTypeInfo.Xz.DefaultExtension, Constants.Data.XZExtension);
+        Assert.Equal(FileTypeInfo.Gz.DefaultExtension, CompressionAlgorithm.GZip.Extension);
+        Assert.Equal(FileTypeInfo.Brotli.DefaultExtension, CompressionAlgorithm.Brotli.Extension);
+        Assert.Equal(FileTypeInfo.ZLibStream.DefaultExtension, CompressionAlgorithm.ZLib.Extension);
+        Assert.Equal(FileTypeInfo.DeflateStream.DefaultExtension, CompressionAlgorithm.Deflate.Extension);
+        Assert.Equal(FileTypeInfo.LZ4Stream.DefaultExtension, Lz4CompressionAlgorithm.Instance.Extension);
+        Assert.Equal(FileTypeInfo.LZMAStream.DefaultExtension, LzmaCompressionAlgorithm.Instance.Extension);
+        Assert.Equal(FileTypeInfo.SnappyStream.DefaultExtension, SnappierCompressionAlgorithm.Instance.Extension);
+        Assert.Equal(FileTypeInfo.ZstdStream.DefaultExtension, ZstdCompressionAlgorithm.Instance.Extension);
+        Assert.Equal(FileTypeInfo.Bz2.DefaultExtension, BZip2CompressionAlgorithm.Instance.Extension);
+        Assert.Equal(FileTypeInfo.Xz.DefaultExtension, XzCompressionAlgorithm.Instance.Extension);
     }
 }

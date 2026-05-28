@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Snappy/Snappier compression addon for Lyo.Compression. Registers a Snappier ICompressorFactory backed by EasyCompressor.Snappier.</Description>
+        <PackageTags>compression snappy snappier</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Compression\Lyo.Compression.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="EasyCompressor.Snappier" Version="[2.1,)"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

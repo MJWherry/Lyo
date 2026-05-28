@@ -196,10 +196,8 @@ public class LocalFileMetadataStore : IFileMetadataStore
     {
         _logger.LogDebug("Searching for metadata by keyId '{KeyId}' and version {KeyVersion}", keyId, keyVersion ?? "any");
         var results = new List<FileStoreResult>();
-        if (!Directory.Exists(_rootDirectoryPath)) {
-            _logger.LogDebug("Root directory does not exist, returning empty results");
+        if (!Directory.Exists(_rootDirectoryPath))
             return results;
-        }
 
         try {
             var metadataFiles = Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories);
