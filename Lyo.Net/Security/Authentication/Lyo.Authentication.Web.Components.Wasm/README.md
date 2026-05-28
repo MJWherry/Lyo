@@ -37,7 +37,7 @@ browser ── POST /auth/handoff/exchange { code } ──► API
 
 ## Quick start
 
-`Program.cs`:
+In the consuming WASM host's `Program.cs`:
 
 ```csharp
 builder.Services.AddLyoAuthWebComponents(builder.Configuration);

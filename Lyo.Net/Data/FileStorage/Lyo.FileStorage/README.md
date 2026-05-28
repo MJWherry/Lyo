@@ -265,21 +265,26 @@ Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; dee
 
 ## Dependencies
 
-*(From `Lyo.FileStorage.csproj`.)*
+*(Synchronized from `Lyo.FileStorage.csproj`.)*
 
-**Target framework:** `net10.0`
+**Target framework:** `netstandard2.0;net10.0`
 
 ### NuGet packages
 
-_None declared beyond the BCL in this project file._
+| Package                           | Version   | Notes                 |
+|-----------------------------------|-----------|-----------------------|
+| `Microsoft.Bcl.AsyncInterfaces`   | `10.0.1`  | *netstandard2.0 only* |
+| `System.Text.Json`                | `[10,)`   | *netstandard2.0 only* |
 
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Compression`](../../Compression/Lyo.Compression/README.md)
+- [`Lyo.ContentThreatScan`](../../../Security/ContentThreat/Lyo.ContentThreatScan/README.md)
 - [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.FileMetadataStore`](../../FileMetadataStore/Lyo.FileMetadataStore/README.md)
+- [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 - [`Lyo.Streams`](../../../Core/Streams/Lyo.Streams/README.md)

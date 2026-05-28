@@ -121,7 +121,6 @@ var audio = await client.TextToSpeech.SynthesizeAsync(request, ct);
 
 | Package                                                 | Version |
 |---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
 | `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |

@@ -94,17 +94,15 @@ public interface IJobScheduler
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Hosting.Abstractions`             | `[10,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10,)` |
+| Package                                                | Version |
+|--------------------------------------------------------|---------|
+| `Microsoft.Extensions.Hosting.Abstractions`            | `[10,)` |
+| `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)` |
 
 ### Project references
 
 - [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
 - [`Lyo.Api.Models`](../../Api/Lyo.Api.Models/README.md)
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
 - [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)

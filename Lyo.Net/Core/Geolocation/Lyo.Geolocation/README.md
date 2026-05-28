@@ -4,7 +4,7 @@ Provider-agnostic **geospatial operations** façade.
 
 ## Role of this assembly
 
-Defines **`IGeolocationService`** (async surface) referencing shared DTOs from [`Lyo.Geolocation.Models`](../Geolocation.Models/README.md)—**addresses**, **coordinates**, *
+Defines **`IGeolocationService`** (async surface) referencing shared DTOs from [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md)—**addresses**, **coordinates**, *
 *distance enums**, routing envelopes—while keeping **vendor HTTP/SDK wiring out** of the contract.
 
 Consumers inject **`IGeolocationService`** inside domain logic (shipping radius checks, SLA windows, travel-time estimates, timezone-aware reminders) **without referencing**
@@ -64,4 +64,4 @@ Use dependency injection **`IOptions<TProviderOptions>`** for API keys/regions�
 
 ## See also
 
-[`Lyo.Geolocation.Models`](../Geolocation.Models/README.md) — enumerations (`DistanceUnit`, `TransportMode`), coordinate math helpers, postal normalization records.
+[`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md) — enumerations (`DistanceUnit`, `TransportMode`), coordinate math helpers, postal normalization records.

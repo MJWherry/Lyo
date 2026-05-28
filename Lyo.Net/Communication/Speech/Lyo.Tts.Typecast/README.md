@@ -52,13 +52,12 @@ bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …
 
 ### NuGet packages
 
-| Package                                           | Version                  |
-|---------------------------------------------------|--------------------------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`                  |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`                  |
-| `Microsoft.Extensions.Logging.Abstractions`       | `[10,)`                  |
-| `Microsoft.Extensions.Options`                    | `[10,)`                  |
-| `System.Text.Json`                                | `[10,)` (netstandard2.0) |
+| Package                                     | Version | Notes                 |
+|---------------------------------------------|---------|-----------------------|
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |                       |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |                       |
+| `Microsoft.Extensions.Options`              | `[10,)` |                       |
+| `System.Text.Json`                          | `[10,)` | *netstandard2.0 only* |
 
 ### Project references
 

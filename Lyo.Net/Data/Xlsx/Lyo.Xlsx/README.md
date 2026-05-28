@@ -148,7 +148,7 @@ IReadOnlyList<Result<DataTable>> async =
 
 | Package                                                 | Version   |
 |---------------------------------------------------------|-----------|
-| `ClosedXML`                                             | `[0.99,)` |
+| `ClosedXML`                                             | `[0.100,)` |
 | `ExcelDataReader`                                       | `[3.8,)`  |
 | `ExcelDataReader.DataSet`                               | `[3.8,)`  |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
@@ -156,9 +156,10 @@ IReadOnlyList<Result<DataTable>> async =
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Exceptions`
-- `Lyo.Xlsx.Models`
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+- [`Lyo.Xlsx.Models`](../Lyo.Xlsx.Models/README.md)
 
 ## Public API (generated)
 

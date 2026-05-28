@@ -150,6 +150,8 @@ These are deliberate gaps in the current API surface — not bugs to ignore.
 ## Related projects
 
 - [`Lyo.Api`](../../../Integration/Api/Lyo.Api/README.md)
+- [`Lyo.Api.Export`](../../../Integration/Api/Lyo.Api.Export/README.md) (plus `Lyo.Api.Export.Csv` / `Lyo.Api.Export.Xlsx` handler packages)
+- [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
 - [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)
 - [`Lyo.Comment.Postgres`](../../../Features/Comment/Lyo.Comment.Postgres/README.md)
 - [`Lyo.Favorite.Postgres`](../../../Features/Favorite/Lyo.Favorite.Postgres/README.md)

@@ -117,7 +117,7 @@ For the reference Config app, routes look like `/api/config/{appKind}/{appId}`. 
 
 *(Synchronized from `Lyo.Config.csproj`.)*
 
-**Target framework:** `netstandard2.0;net10.0`
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
 ### NuGet packages
 

@@ -901,24 +901,28 @@ Further detail: [Lyo.Cache README](../../../Core/Cache/Lyo.Cache/README.md).
 
 ### NuGet packages
 
-| Package                                     | Version     |
-|---------------------------------------------|-------------|
-| `Microsoft.AspNetCore.Authorization`        | `[10,)`     |
-| `Microsoft.AspNetCore.Http.Abstractions`    | `2.*`       |
-| `Microsoft.AspNetCore.OpenApi`              | `[10,)`     |
-| `Microsoft.EntityFrameworkCore`             | `[10,)`     |
-| `Microsoft.EntityFrameworkCore.Analyzers`   | `[10,)`     |
-| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)`     |
-| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)`     |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.AspNetCore.Authorization`        | `[10,)` |
+| `Microsoft.AspNetCore.Http.Abstractions`    | `2.*`   |
+| `Microsoft.AspNetCore.OpenApi`              | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Analyzers`   | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)` |
+| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |
 
 ### Project references
 
 - [`Lyo.Api.Models`](../Lyo.Api.Models/README.md)
 - [`Lyo.Cache`](../../../Core/Cache/Lyo.Cache/README.md)
-- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md)
 - [`Lyo.Diff`](../../../Core/Diff/Lyo.Diff/README.md)
+- [`Lyo.Diagnostic.AspNetCore`](../../../Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md)
 - [`Lyo.Formatter`](../../../Data/Formatter/Lyo.Formatter/README.md)
+- [`Lyo.Hashing`](../../../Security/Hashing/Lyo.Hashing/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
 - [`Lyo.Query`](../../../Data/Query/Lyo.Query/README.md)
-- [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md)
+- [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)
+
+### Related / optional packages
+
+- [`Lyo.Api.Export`](../Lyo.Api.Export/README.md) — export endpoints; format handlers ship in `Lyo.Api.Export.Csv` and `Lyo.Api.Export.Xlsx` (no separate README)
+- [`Lyo.Csv`](../../../Data/Csv/Lyo.Csv/README.md), [`Lyo.Xlsx`](../../../Data/Xlsx/Lyo.Xlsx/README.md) — used by export add-ons

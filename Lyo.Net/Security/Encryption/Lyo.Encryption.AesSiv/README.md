@@ -7,8 +7,7 @@ Install this addon only when you actually use AES-SIV — the core `Lyo.Encrypti
 
 ## Dependency injection
 
-Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [
-`Lyo.Keystore`](../../Lyo.Keystore/README.md)).
+Requires **`IKeyStore`**. Configure keys with `AddLocalKeyStore` / `AddKeyedLocalKeyStore` and read **`IConfiguration`** inside the `configure` callback (see [`Lyo.Keystore`](../Lyo.Keystore/README.md)).
 
 ### Unkeyed
 

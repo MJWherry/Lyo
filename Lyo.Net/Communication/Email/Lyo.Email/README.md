@@ -652,7 +652,11 @@ Limits enforced by `EmailServiceOptions`:
 - [`Lyo.Email.Models`](../Lyo.Email.Models/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
-  **Production Ready:** This library has been reviewed for production use and includes:
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
+
+---
+
+**Production Ready:** This library has been reviewed for production use and includes:
 
 - ✅ Thread-safe operations
 - ✅ Comprehensive error handling

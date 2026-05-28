@@ -112,24 +112,18 @@ The database schema itself lives in **Lyo.Discord.Postgres**; this package only 
 
 *(Synchronized from `Lyo.Discord.Bot.csproj`.)*
 
-**Target framework:** `netstandard2.0;net10.0`
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
 ### NuGet packages
 
-| Package                                                 | Version     |
-|---------------------------------------------------------|-------------|
-| `DSharpPlus`                                            | `4.5.1`     |
-| `DSharpPlus.CommandsNext`                               | `4.5.1`     |
-| `DSharpPlus.Interactivity`                              | `4.5.1`     |
-| `DSharpPlus.SlashCommands`                              | `4.5.1`     |
-| `Microsoft.Extensions.Caching.Memory`                   | `[10.0.1,)` |
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10.0.1,)` |
-| `Microsoft.Extensions.Configuration.Binder`             | `[10.0.1,)` |
-| `Microsoft.Extensions.DependencyInjection`              | `[10.0.1,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10.0.1,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10.0.1,)` |
-| `Microsoft.Extensions.Options`                          | `[10.0.1,)` |
-| `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10.0.1,)` |
+| Package                                     | Version     |
+|---------------------------------------------|-------------|
+| `DSharpPlus`                                | `4.5.1`     |
+| `DSharpPlus.CommandsNext`                   | `4.5.1`     |
+| `DSharpPlus.Interactivity`                  | `4.5.1`     |
+| `DSharpPlus.SlashCommands`                  | `4.5.1`     |
+| `Microsoft.Extensions.DependencyInjection`  | `[10.0.1,)` |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
 
 ### Project references
 

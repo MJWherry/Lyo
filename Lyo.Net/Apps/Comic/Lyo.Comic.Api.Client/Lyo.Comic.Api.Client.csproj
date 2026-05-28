@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Comic.Api.Models\Lyo.Comic.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
     </ItemGroup>
 

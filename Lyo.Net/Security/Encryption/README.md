@@ -1113,21 +1113,27 @@ Built with security best practices in mind, following:
 
 *(Synchronized from `Lyo.Encryption.csproj`.)*
 
-**Target frameworks:** `netstandard2.0`, `net10.0`
+**Target framework:** `netstandard2.0;net10.0`
 
 ### NuGet packages
 
-| Package                                                 | Version                                          |
-|---------------------------------------------------------|--------------------------------------------------|
-| `BouncyCastle.Cryptography`                             | `2.6.2`                                          |
-| `Dorssel.Security.Cryptography.AesExtra`                | `2.0.0`                                          |
-| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` *(netstandard2.0 only)*                 |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `8.0.2` *(netstandard2.0)* / `[10,)` *(net10.0)* |
-| `System.Threading.Tasks.Extensions`                     | `4.6.3` *(netstandard2.0 only)*                  |
+| Package                                                 | Version  | Notes                 |
+|---------------------------------------------------------|----------|-----------------------|
+| `BouncyCastle.Cryptography`                             | `2.6.2`  | *netstandard2.0 only* |
+| `Microsoft.Bcl.AsyncInterfaces`                         | `10.0.0` | *netstandard2.0 only* |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |                       |
+| `System.Threading.Tasks.Extensions`                     | `4.6.3`  | *netstandard2.0 only* |
+
+### Related / optional packages
+
+- [`Lyo.Encryption.AesSiv`](Lyo.Encryption.AesSiv/README.md) — AES-SIV / `Dorssel.Security.Cryptography.AesExtra`
+- [`Lyo.Encryption.AesCcm`](Lyo.Encryption.AesCcm/README.md), [`Lyo.Encryption.XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md) — algorithm add-ons
 
 ### Project references
 
 - [`Lyo.Common`](../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../Core/Lyo.Exceptions/README.md)
-- [`Lyo.Keystore`](Lyo.Keystore/README.md)
+- [`Lyo.Result`](../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Streams`](../../Core/Streams/Lyo.Streams/README.md)
+- [`Lyo.Hashing`](../Hashing/Lyo.Hashing/README.md)
+- [`Lyo.Keystore`](Lyo.Keystore/README.md)

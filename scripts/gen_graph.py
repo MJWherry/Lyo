@@ -646,6 +646,97 @@ function buildAreaElements(area) {
   return nodes.concat(edges);
 }
 
+function nodeKindForArea(projArea) {
+  if (mode === 'area' && currentArea && projArea === currentArea) return 'project';
+  return 'external';
+}
+
+function edgeExternalFlag(targetName) {
+  if (mode !== 'area' || !currentArea) return false;
+  const t = projectByName[targetName];
+  return !t || t.area !== currentArea;
+}
+
+let dynAddedEles = null;
+let dynAddedFor = null;
+
+function pruneDynAdded() {
+  if (dynAddedEles && dynAddedEles.length) {
+    dynAddedEles.stop().remove();
+  }
+  dynAddedEles = null;
+  dynAddedFor = null;
+}
+
+/** Add missing nodes/edges for direct Lyo refs (in + out) so focus can show them. */
+function ensureDirectLyoRefsInGraph(name) {
+  const p = projectByName[name];
+  if (!p) return;
+  if (dynAddedFor === name && dynAddedEles && dynAddedEles.length) return;
+  pruneDynAdded();
+
+  const nodeAdds = [];
+  const edgeAdds = [];
+  const wantNodes = new Set(p.refs);
+  const consumers = DATA.projects.filter(q => q.refs.includes(name)).map(q => q.name);
+  if (consumers.length <= ENSURE_MAX_INCOMING) {
+    for (const id of consumers) wantNodes.add(id);
+  }
+
+  for (const id of wantNodes) {
+    const tp = projectByName[id];
+    if (!tp || !cy.getElementById(id).length) {
+      if (tp) {
+        nodeAdds.push({
+          group: 'nodes',
+          data: {
+            id: id,
+            label: wrapGraphLabel(id),
+            area: tp.area,
+            folder: tp.folder,
+            kind: nodeKindForArea(tp.area),
+          },
+        });
+      }
+    }
+  }
+  let added = cy.collection();
+  if (nodeAdds.length) added = added.union(cy.add(nodeAdds));
+
+  for (const r of p.refs) {
+    const eid = name + '->' + r;
+    if (!cy.getElementById(eid).length) {
+      edgeAdds.push({
+        group: 'edges',
+        data: {
+          id: eid, source: name, target: r,
+          external: edgeExternalFlag(r), kind: 'pedge',
+        },
+      });
+    }
+  }
+  const ensureIncoming = consumers.length <= ENSURE_MAX_INCOMING;
+  for (const q of DATA.projects) {
+    if (!q.refs.includes(name)) continue;
+    if (!ensureIncoming && !cy.getElementById(q.name).length) continue;
+    const eid = q.name + '->' + name;
+    if (!cy.getElementById(eid).length) {
+      edgeAdds.push({
+        group: 'edges',
+        data: {
+          id: eid, source: q.name, target: name,
+          external: edgeExternalFlag(name), kind: 'pedge',
+        },
+      });
+    }
+  }
+  if (edgeAdds.length) added = added.union(cy.add(edgeAdds));
+  if (added.length) {
+    dynAddedEles = added;
+    dynAddedFor = name;
+  }
+}
+
 // ----- Cytoscape -----------------------------------------------------------
 const cy = cytoscape({
   container: document.getElementById('cy'),
@@ -728,13 +819,24 @@ const cy = cytoscape({
         'width': 2.5,
         'z-index': 9998,
     }},
+    { selector: 'edge.hover-area-edge', style: {
+        'opacity': 1,
+        'line-color': '#9ab4f7',
+        'target-arrow-color': '#9ab4f7',
+        'width': 2.5,
+        'z-index': 9998,
+    }},
+    { selector: 'node.hover', style: {
+        'border-color': '#f7c948', 'border-width': 3,
+        'z-index': 9999, 'opacity': 1,
+    }},
     { selector: 'node.hover-consumer', style: {
         'border-color': '#79c98e', 'border-width': 2,
-        'opacity': 1,
+        'opacity': 1, 'z-index': 9998,
     }},
     { selector: 'node.hover-neighbor', style: {
         'border-color': '#7aa2f7', 'border-width': 2,
-        'opacity': 1,
+        'opacity': 1, 'z-index': 9998,
     }},
     { selector: 'node.hi', style: {
         'opacity': 1.0,
@@ -747,17 +849,19 @@ const cy = cytoscape({
     }},
     { selector: 'node.hi-down', style: {
         'border-color': '#7aa2f7', 'border-width': 3,
+        'opacity': 1,
     }},
     { selector: 'edge.hi-down', style: {
         'line-color': '#7aa2f7', 'target-arrow-color': '#7aa2f7',
-        'width': 2.0,
+        'width': 2.0, 'opacity': 1,
     }},
     { selector: 'node.hi-up', style: {
         'border-color': '#79c98e', 'border-width': 3,
+        'opacity': 1,
     }},
     { selector: 'edge.hi-up', style: {
         'line-color': '#79c98e', 'target-arrow-color': '#79c98e',
-        'width': 2.0,
+        'width': 2.0, 'opacity': 1,
     }},
   ],
   elements: [],
@@ -852,52 +956,12 @@ function runWrappedLayerLayout(nodes, edges, opts) {
   });
 }
 
-const NODE_BASE = {
-  area:     { pad: 12, tmax: 200, fs: 12 },
-  project:  { pad: 10, tmax: 200, fs: 10 },
-  external: { pad: 10, tmax: 200, fs: 10 },
-};
-
-function hoverScaleFactor() {
-  const z = cy.zoom();
-  if (z >= 1.5) return 1.12;
-  if (z >= 1.0) return 1.18;
-  if (z >= 0.55) return 1.35;
-  if (z >= 0.25) return 1.75;
-  return Math.min(3.2, 1.4 + 0.9 / Math.max(z, 0.1));
-}
-
-function applyHoverStyle(n, opts) {
-  const mild = opts && opts.mild;
-  const kind = n.data('kind') || 'project';
-  const b = NODE_BASE[kind] || NODE_BASE.project;
-  let s = hoverScaleFactor();
-  if (mild) s = 1 + (s - 1) * 0.55;
-  const fs = Math.round(b.fs * s);
-  const tmax = Math.round(b.tmax * s);
-  n.style({
-    'width': 'label',
-    'height': 'label',
-    'padding': Math.round(b.pad * s),
-    'text-max-width': tmax,
-    'font-size': fs,
-    'z-index': mild ? 9998 : 9999,
-    'border-width': mild ? Math.min(4, 1 + s * 0.35) : Math.min(5, 2 + s * 0.3),
-    'border-color': mild ? '#e6c76a' : '#f7c948',
-    'opacity': 1,
-  });
-}
-
-const HOVER_STYLE_KEYS = [
-  'width', 'height', 'padding', 'text-max-width', 'font-size',
-  'z-index', 'border-width', 'border-color', 'opacity',
-];
-
-function clearHoverStyle(n) {
-  HOVER_STYLE_KEYS.forEach(k => n.style(k, ''));
-}
-
 let mode = 'overview';
+let focusAnchorId = null;
+let focusMode = null; // null | 'ring' | 'lite'
+const FOCUS_RING_MAX_NODES = 24;
+/** Do not inject large fan-in (depended-on-by) sets — sidebar lists them. */
+const ENSURE_MAX_INCOMING = 16;
 let currentArea = null;
 let focused = false;
 
@@ -1020,6 +1084,16 @@ function expandSidebar() {
 }
 
 function loadOverview() {
+  cy.stop();
+  if (focused) unfocus();
+  pruneDynAdded();
+  cancelScheduledClearHover();
+  clearHoverOnly();
+  clearHighlight();
+  focused = false;
+  focusAnchorId = null;
+  focusMode = null;
+  resetNav();
   cy.elements().remove();
   cy.add(buildOverviewElements());
   runWrappedLayerLayout(cy.nodes(), cy.edges(), { maxCols: 4, rowGap: 80 });
@@ -1030,10 +1104,23 @@ function loadOverview() {
   setCrumb('<b>Areas overview</b> &mdash; click an area to drill in');
   setStatus(DATA.areas.length + ' areas');
   hideInfo();
-  if (typeof resetNav === 'function') resetNav();
 }
 
-function loadArea(area) {
+function loadArea(area, opts) {
+  opts = opts || {};
+  cy.stop();
+  if (focused) unfocus();
+  pruneDynAdded();
+  cancelScheduledClearHover();
+  clearHoverOnly();
+  clearHighlight();
+  focused = false;
+  focusAnchorId = null;
+  focusMode = null;
+  if (!opts.preserveNav) {
+    resetNav();
+    hideInfo();
+  }
   cy.elements().remove();
   cy.add(buildAreaElements(area));
   const nodes = cy.nodes();
@@ -1048,15 +1135,12 @@ function loadArea(area) {
   const n = cy.nodes().length, e = cy.edges().length;
   setCrumb('<b>' + area + '</b> &mdash; click a project to focus on it');
   setStatus(n + ' nodes, ' + e + ' edges');
-  hideInfo();
-  // Note: no resetNav here. _showProject() calls loadArea internally when
-  // jumping across areas, and we want to preserve the navigation stack
-  // across that transition. Manual page changes (via the dropdown / overview
-  // button) reset navigation in their own click handlers.
 }
 
 // ----- Interactions --------------------------------------------------------
-cy.on('tap', 'node[kind="area"]', evt => loadArea(evt.target.data('area')));
+cy.on('tap', 'node[kind="area"]', evt => {
+  loadArea(evt.target.data('area'));
+});
 
 cy.on('tap', 'node[kind="project"], node[kind="external"]', evt => {
   jumpToProject(evt.target.id());
@@ -1070,61 +1154,116 @@ cy.on('tap', evt => {
 let hoverNode = null;
 let hoverRelated = null;
 
-function hasSelectionHighlight() {
-  return cy.$('.hi, .hi-down, .hi-up').length > 0;
+function hasActiveSelection() {
+  return !!(navCurrent || focusAnchorId);
 }
 
 function focusRelatedEles() {
-  if (!focused || !navCurrent) return null;
-  const anchor = cy.getElementById(navCurrent);
+  if (!focused || !focusAnchorId) return null;
+  const anchor = cy.getElementById(focusAnchorId);
   if (anchor.empty()) return null;
   return anchor.successors().union(anchor.predecessors()).add(anchor);
 }
 
-function restoreFocusVisibility() {
-  const clip = focusRelatedEles();
-  if (!clip) return;
-  cy.elements().difference(clip).style('display', 'none');
-  clip.style('display', 'element');
+/** source -> target: source depends on target */
+function traverseDependsOn(n) {
+  const nodeIds = new Set([n.id()]);
+  const edgeList = [];
+  let frontier = [n];
+  while (frontier.length) {
+    const next = [];
+    for (const u of frontier) {
+      u.outgoers().forEach(e => {
+        const tgt = e.target();
+        if (nodeIds.has(tgt.id())) return;
+        nodeIds.add(tgt.id());
+        edgeList.push(e);
+        next.push(tgt);
+      });
+    }
+    frontier = next;
+  }
+  const nodes = cy.nodes().filter(nn => nodeIds.has(nn.id()));
+  return { nodes: nodes, edges: cy.collection(edgeList) };
 }
 
-/** source -> target means source depends on target */
+/** All dependents (incoming only); do not expand each dependent's own dependencies. */
+function traverseDependedBy(n) {
+  const nodeIds = new Set([n.id()]);
+  const edgeList = [];
+  let frontier = [n];
+  while (frontier.length) {
+    const next = [];
+    for (const u of frontier) {
+      u.incomers().forEach(e => {
+        const src = e.source();
+        if (nodeIds.has(src.id())) return;
+        nodeIds.add(src.id());
+        edgeList.push(e);
+        next.push(src);
+      });
+    }
+    frontier = next;
+  }
+  const nodes = cy.nodes().filter(nn => nodeIds.has(nn.id()));
+  return { nodes: nodes, edges: cy.collection(edgeList) };
+}
+
 function hoverDependencyEles(n) {
-  const allDeps = n.successors();
-  const allBy = n.predecessors();
-  let all = n.union(allDeps).union(allBy);
-  let downEdges = allDeps.edges();
-  let upEdges = allBy.edges();
-  const clip = focusRelatedEles();
-  if (clip) {
-    all = all.intersect(clip);
-    downEdges = downEdges.filter(e => clip.contains(e));
-    upEdges = upEdges.filter(e => clip.contains(e));
+  const down = traverseDependsOn(n);
+  const up = traverseDependedBy(n);
+  let all = down.nodes.union(up.nodes);
+  let downEdges = down.edges;
+  let upEdges = up.edges;
+  if (focused) {
+    const visible = cy.nodes(':visible');
+    all = all.intersect(visible);
+    downEdges = downEdges.filter(e => visible.contains(e.source()) && visible.contains(e.target()));
+    upEdges = upEdges.filter(e => visible.contains(e.source()) && visible.contains(e.target()));
   }
   return {
     all: all,
     downEdges: downEdges,
     upEdges: upEdges,
-    consumerNodes: all.intersect(allBy.nodes()),
+    consumerNodes: all.intersect(up.nodes).difference(n),
   };
 }
 
+function restoreSelectionHighlight() {
+  const id = focusAnchorId || navCurrent;
+  if (!id) return;
+  const anchor = cy.getElementById(id);
+  if (!anchor.empty()) highlightNeighborhood(anchor);
+}
+
+function clearHoverOnly() {
+  cy.nodes().removeClass('hover hover-neighbor hover-consumer');
+  cy.edges().removeClass('hover-edge-down hover-edge-up hover-area-edge');
+  hoverRelated = null;
+  hoverNode = null;
+}
+
 function clearHoverState() {
-  if (hoverRelated) {
-    hoverRelated.nodes().forEach(nn => {
-      nn.removeClass('hover-neighbor hover-consumer');
-      clearHoverStyle(nn);
-    });
-    hoverRelated.edges().removeClass('hover-edge-down hover-edge-up');
-    hoverRelated = null;
+  clearHoverOnly();
+  if (hasActiveSelection()) restoreSelectionHighlight();
+  else cy.elements().removeClass('dim');
+}
+
+let hoverClearTimer = null;
+
+function scheduleClearHover() {
+  if (hoverClearTimer) clearTimeout(hoverClearTimer);
+  hoverClearTimer = setTimeout(() => {
+    hoverClearTimer = null;
+    clearHoverState();
+  }, 40);
+}
+
+function cancelScheduledClearHover() {
+  if (hoverClearTimer) {
+    clearTimeout(hoverClearTimer);
+    hoverClearTimer = null;
   }
-  if (hoverNode) {
-    hoverNode.removeClass('hover');
-    clearHoverStyle(hoverNode);
-    hoverNode = null;
-  }
-  restoreFocusVisibility();
-  if (!hasSelectionHighlight()) cy.elements().removeClass('dim');
 }
 
 function applyHoverDependencyHighlight(n) {
@@ -1132,59 +1271,121 @@ function applyHoverDependencyHighlight(n) {
   hoverNode = n;
   hoverRelated = hl.all;
 
-  if (!hasSelectionHighlight()) cy.elements().addClass('dim');
+  cy.elements().removeClass('hi hi-down hi-up');
+  cy.elements().addClass('dim');
   hl.all.removeClass('dim');
   hl.downEdges.addClass('hover-edge-down');
   hl.upEdges.addClass('hover-edge-up');
 
   n.addClass('hover');
-  applyHoverStyle(n);
   hl.all.nodes().not(n).forEach(m => {
     const isConsumer = hl.consumerNodes.contains(m);
     m.addClass(isConsumer ? 'hover-consumer' : 'hover-neighbor');
-    applyHoverStyle(m, { mild: true });
   });
 }
 
 cy.on('mouseover', 'node', evt => {
+  cancelScheduledClearHover();
+  // Do not override selection/focus highlight while a project is active in the panel.
+  if (hasActiveSelection()) return;
   const n = evt.target;
-  clearHoverState();
+  if (hoverNode && hoverNode.id() === n.id()) return;
+  clearHoverOnly();
+  if (mode === 'overview' || n.data('kind') === 'area') {
+    const hood = n.closedNeighborhood();
+    hoverNode = n;
+    hoverRelated = hood;
+    cy.elements().removeClass('hi hi-down hi-up').addClass('dim');
+    hood.removeClass('dim');
+    n.addClass('hover');
+    hood.nodes().not(n).addClass('hover-neighbor');
+    hood.edges().addClass('hover-area-edge');
+    return;
+  }
   applyHoverDependencyHighlight(n);
 });
 
-cy.on('mouseout', 'node', evt => {
-  clearHoverState();
-});
+cy.on('mouseout', 'node', () => scheduleClearHover());
 
 cy.on('mouseout', evt => {
-  if (evt.target === cy) clearHoverState();
+  if (evt.target === cy) scheduleClearHover();
 });
 
+document.getElementById('cy').addEventListener('mouseleave', () => scheduleClearHover());
+
 function highlightNeighborhood(node) {
-  cy.elements().removeClass('hi hi-down hi-up').addClass('dim');
+  cy.elements()
+    .removeClass('hi hi-down hi-up hover-edge-down hover-edge-up hover-area-edge')
+    .addClass('dim');
   node.removeClass('dim').addClass('hi');
   const downstream = node.successors();
   downstream.removeClass('dim').addClass('hi-down');
   const upstream = node.predecessors();
   upstream.removeClass('dim').addClass('hi-up');
+  node.connectedEdges().removeClass('dim');
 }
 
 function clearHighlight() {
   cy.elements().removeClass('dim hi hi-down hi-up');
 }
 
+function restoreSavedLayout() {
+  cy.elements().style('display', 'element');
+  cy.nodes().forEach(nn => {
+    const p = nn.scratch('_pos');
+    if (p) nn.position(p);
+  });
+}
+
 // ----- Focus / unfocus -----------------------------------------------------
-function focusOnNode(node) {
+function focusOnNodeLite(node) {
+  cy.stop();
+  clearHoverState();
+  focusAnchorId = node.id();
+  const related = node.successors().union(node.predecessors()).add(node);
+  if (!focused) saveView();
+  else if (focusMode === 'ring') restoreSavedLayout();
+  focused = true;
+  focusMode = 'lite';
+  cy.elements().style('display', 'element');
+  highlightNeighborhood(node);
+  cy.animate({ fit: { eles: related, padding: 60 } }, {
+    duration: 450, easing: 'ease-out',
+  });
+}
+
+function focusOnNode(node, opts) {
+  opts = opts || {};
+  if (opts.lite) {
+    focusOnNodeLite(node);
+    return;
+  }
+
+  cy.stop();
+  clearHoverState();
+  focusAnchorId = node.id();
+
+  const related = node.successors().union(node.predecessors()).add(node);
+  const relatedNodes = related.nodes();
+
+  // Huge neighborhoods (e.g. Lyo.TestConsole): ring layout stacks nodes; use
+  // highlight + fit only.
+  if (relatedNodes.length > FOCUS_RING_MAX_NODES) {
+    focusOnNodeLite(node);
+    return;
+  }
+
   // Save layout positions and camera state the first time we focus
   // from a fresh view.
   if (!focused) {
     savePositions();
     saveView();
     focused = true;
+  } else {
+    restoreSavedLayout();
   }
+  focusMode = 'ring';
 
-  const related = node.successors().union(node.predecessors()).add(node);
-  const relatedNodes = related.nodes();
   const others = cy.elements().difference(related);
 
   // BFS distance (treating the graph as undirected within the related set)
@@ -1233,27 +1434,38 @@ function focusOnNode(node) {
 
 function unfocus() {
   if (!focused) return;
+  cy.stop();
+  clearHoverState();
+  clearHighlight();
+  pruneDynAdded();
+
+  if (focusMode === 'lite') {
+    if (savedView) {
+      cy.zoom(savedView.zoom);
+      cy.pan(savedView.pan);
+    }
+    focused = false;
+    focusMode = null;
+    focusAnchorId = null;
+    scheduleCyResize();
+    return;
+  }
+
   cy.elements().style('display', 'element');
+  cy.nodes().removeClass('hover hover-neighbor hover-consumer');
   cy.nodes().forEach(n => {
     const p = n.scratch('_pos');
-    if (p) {
-      n.animation({
-        position: { x: p.x, y: p.y },
-        duration: 450,
-        easing: 'ease-out',
-      }).play();
-    }
+    if (p) n.position(p);
   });
+
   if (savedView) {
-    cy.animate({
-      zoom: savedView.zoom,
-      pan:  savedView.pan,
-    }, {
-      duration: 450,
-      easing: 'ease-out',
-    });
+    cy.zoom(savedView.zoom);
+    cy.pan(savedView.pan);
   }
   focused = false;
+  focusMode = null;
+  focusAnchorId = null;
+  scheduleCyResize();
 }
 
 function projLink(name) {
@@ -1634,31 +1846,55 @@ function refreshBackButton() {
 function _showProject(name) {
   const target = projectByName[name];
   if (!target) return false;
-  // If the target isn't currently in the graph, switch to its home area first.
-  let n = cy.getElementById(name);
-  if (n.empty() && target.area) {
-    loadArea(target.area);
-    n = cy.getElementById(name);
+
+  // Re-clicking the focused project re-ran ensureDirect + focus, stacking
+  // re-added external nodes on top of the layout (top-middle overlap).
+  if (navCurrent === name && focused && focusAnchorId === name) {
+    const cur = cy.getElementById(name);
+    if (!cur.empty()) return true;
   }
+
+  cy.stop();
+  cancelScheduledClearHover();
+  clearHighlight();
+
+  // Always switch to the project's home area when it differs from the current
+  // view. External nodes (e.g. Lyo.TestConsole while viewing Core Scheduler)
+  // must not skip loadArea — that caused wrong graph + stacked layout.
+  const crossArea = !!(target.area && target.area !== currentArea);
+  if (crossArea) {
+    if (focused) unfocus();
+    loadArea(target.area, { preserveNav: true });
+  }
+
+  const n = cy.getElementById(name);
   if (n.empty()) return false;
-  highlightNeighborhood(n);
+
+  if (focused && focusAnchorId !== name) {
+    if (focusMode === 'ring') restoreSavedLayout();
+    pruneDynAdded();
+  }
+
+  navCurrent = name;
+  if (!crossArea) ensureDirectLyoRefsInGraph(name);
   showInfo(n);
-  focusOnNode(n);
+  if (crossArea) focusOnNode(n, { lite: true });
+  else focusOnNode(n);
   refreshBackButton();
   return true;
 }
 
 function jumpToProject(name) {
+  const prev = navCurrent;
   if (!_showProject(name)) return;
-  if (navCurrent && navCurrent !== name) navHistory.push(navCurrent);
-  navCurrent = name;
+  if (prev && prev !== name) navHistory.push(prev);
   refreshBackButton();
 }
 
 function navBack() {
   if (!navHistory.length) return;
   const prev = navHistory.pop();
-  if (_showProject(prev)) navCurrent = prev;
+  _showProject(prev);
   refreshBackButton();
 }
 
@@ -1752,9 +1988,21 @@ tip.innerHTML = 'Tip: <span class="kbd">click</span> = drill / highlight &middot
                 '<span class="kbd">scroll</span> = zoom &middot; <span class="kbd">drag</span> = pan';
 legend.appendChild(tip);
 
+function onGraphPageVisible() {
+  cy.stop();
+  clearHoverState();
+  scheduleCyResize();
+}
+
 loadOverview();
 updateSidebarToggle();
 window.addEventListener('resize', scheduleCyResize);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) onGraphPageVisible();
+});
+window.addEventListener('pageshow', evt => {
+  if (evt.persisted) onGraphPageVisible();
+});
 </script>
 </body>
 </html>

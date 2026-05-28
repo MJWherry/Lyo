@@ -194,10 +194,10 @@ Key lifecycle and storage are caller responsibilities.
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `System.Memory`                                         | `4.6.3` | *(netstandard2.0 only)* |
+| Package                                                 | Version | Notes                 |
+|---------------------------------------------------------|---------|-----------------------|
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |                       |
+| `System.Memory`                                         | `4.6.3` | *netstandard2.0 only* |
 
 ### Project references
 

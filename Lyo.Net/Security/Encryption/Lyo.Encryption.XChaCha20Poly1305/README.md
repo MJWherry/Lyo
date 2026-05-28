@@ -7,7 +7,7 @@ Install this addon only when you actually use XChaCha20-Poly1305 — the core `L
 
 ## Dependency injection
 
-Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.Keystore`](../../Lyo.Keystore/README.md)).
+Requires **`IKeyStore`**. Use `configure =>` on key-store registration to bind secrets from **`IConfiguration`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md)).
 
 ### Unkeyed
 

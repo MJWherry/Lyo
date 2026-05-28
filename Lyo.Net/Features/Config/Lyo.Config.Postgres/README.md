@@ -68,15 +68,15 @@ See [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityRef
 
 ### NuGet packages
 
-| Package                                           | Version |
-|---------------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`            | `[10,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| Package                                      | Version |
+|----------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`       | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder`  | `[10,)` |
 
 ### Project references
 
 - [`Lyo.Config`](../Lyo.Config/README.md)
 - [`Lyo.EntityReference.Models`](../../../Core/EntityReference/Lyo.EntityReference.Models/README.md)
+- [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md)
 - [`Lyo.Health`](../../../Core/Health/Lyo.Health/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

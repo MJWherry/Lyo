@@ -115,4 +115,6 @@ operator menus used across the grid, query editor, and form.
 - [`Lyo.Validation`](../../../Core/Validation/Lyo.Validation/README.md)
 - [`Lyo.Encryption`](../../../Security/Encryption/Lyo.Encryption/README.md)
 
-Optional composable export UI: [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md) (+ `.Csv` / `.Xlsx` menu item packages).
+### Related / optional packages
+
+- [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md), [`Lyo.Web.Components.Export.Csv`](../Lyo.Web.Components.Export.Csv/README.md), [`Lyo.Web.Components.Export.Xlsx`](../Lyo.Web.Components.Export.Xlsx/README.md) — export UI composables (not direct refs of this assembly)

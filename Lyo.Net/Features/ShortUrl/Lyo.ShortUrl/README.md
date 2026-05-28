@@ -126,13 +126,12 @@ var result = await shortUrlService.ShortenAsync(builder, ct);
 
 *(Synchronized from `Lyo.ShortUrl.csproj`.)*
 
-**Target framework:** `netstandard2.0;net10.0`
+**Target frameworks:** `netstandard2.0`, `net10.0`
 
 ### NuGet packages
 
 | Package                                                 | Version |
 |---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
 | `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |

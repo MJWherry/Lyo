@@ -106,14 +106,12 @@ var args = new FFmpegCommandBuilder()
 | Package                                                 | Version   |
 |---------------------------------------------------------|-----------|
 | `CliWrap`                                               | `[3.10,)` |
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`   |
 | `Microsoft.Extensions.Configuration.Binder`             | `[10,)`   |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
 
 ### Project references
 
-- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Ffmpeg.Models`](../Lyo.Ffmpeg.Models/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)

@@ -1,14 +1,14 @@
 # Lyo.Scientific.Functions
 
 F# **formulas** for chemistry, orbital mechanics, thermodynamics, fluid and compressible flow, rigid-body style mechanics, and solid mechanics — built on [
-`Lyo.Scientific`](../Lyo.Scientific/README.md) models and [`Lyo.Mathematics`](../Mathematics/Lyo.Mathematics/README.md) quantities.
+`Lyo.Scientific`](../Lyo.Scientific/README.md) models and [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md) quantities.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
 ## Dependencies
 
 - [`Lyo.Scientific`](../Lyo.Scientific/README.md)
-- [`Lyo.Mathematics`](../Mathematics/Lyo.Mathematics/README.md)
+- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md)
 
 ---
 

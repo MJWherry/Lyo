@@ -58,15 +58,12 @@ The host must be started — typically `Host.CreateDefaultBuilder()` (worker / c
 
 ### NuGet packages
 
-| Package                                     | Version | Notes                                              |
-|---------------------------------------------|---------|----------------------------------------------------|
-| `Microsoft.EntityFrameworkCore`             | `[10,)` |                                                    |
-| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
-| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)` |                                                    |
-| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |                                                    |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |                                                    |
-| `Microsoft.Extensions.Options`              | `[10,)` |                                                    |
-| `Npgsql.EntityFrameworkCore.PostgreSQL`     | `[10,)` |                                                    |
+| Package                                       | Version | Notes                                              |
+|-----------------------------------------------|---------|----------------------------------------------------|
+| `Microsoft.EntityFrameworkCore.Design`        | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
+| `Microsoft.Extensions.Hosting.Abstractions`   | `[10,)` |                                                    |
+| `Microsoft.Extensions.Options`                | `[10,)` |                                                    |
+| `Npgsql.EntityFrameworkCore.PostgreSQL`       | `[10,)` |                                                    |
 
 ### Project references
 

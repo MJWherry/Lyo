@@ -28,7 +28,6 @@ This package has **no DI surface** — registration lives in `Lyo.Ffmpeg`. Refer
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 
 ## Related projects

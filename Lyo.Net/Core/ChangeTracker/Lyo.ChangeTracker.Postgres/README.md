@@ -85,14 +85,15 @@ The `ix_changes_tenant` index supports per-tenant lookups. Use the
 
 ### NuGet packages
 
-| Package                                           | Version |
-|---------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
 
 - [`Lyo.ChangeTracker`](../Lyo.ChangeTracker/README.md)
+- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
+- [`Lyo.EntityReference.Postgres`](../../EntityReference/Lyo.EntityReference.Postgres/README.md)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
 - [`Lyo.Health`](../../Health/Lyo.Health/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)

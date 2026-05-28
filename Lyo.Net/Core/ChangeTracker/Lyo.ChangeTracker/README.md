@@ -58,5 +58,4 @@ var history = await changeTracker.GetForEntityAsync(orderRef);
 
 ### Project references
 
-- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
+- [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)

@@ -1,6 +1,6 @@
 # Lyo.Config.Api
 
-HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../Features/Config/Lyo.Config/). Microservices resolve merged config per deployment identity
+HTTP host for central **app** configuration backed by PostgreSQL and [`Lyo.Config`](../../../Features/Config/Lyo.Config/README.md). Microservices resolve merged config per deployment identity
 and poll using **ETags** or an optional **`version`** query mirror.
 
 Resolution contracts (**`ConfigResolveConditionalResult`**) live in **[`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md)**. The HTTP typed client and *
@@ -195,4 +195,4 @@ Development OpenAPI document: **`/openapi/v1.json`** (ASP.NET convention). Scala
 
 ## See also
 
-- Feature docs: [`Lyo.Config/README.md`](../../Features/Config/Lyo.Config/README.md)
+- Feature docs: [`Lyo.Config/README.md`](../../../Features/Config/Lyo.Config/README.md)

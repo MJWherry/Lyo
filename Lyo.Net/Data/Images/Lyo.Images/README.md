@@ -110,7 +110,6 @@ Stages run in the queued order. SVG input is supported by `Overlay`; the other p
 
 | Package                                                 | Version |
 |---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
 | `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
 | `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |

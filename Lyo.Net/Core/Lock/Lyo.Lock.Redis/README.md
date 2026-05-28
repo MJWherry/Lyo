@@ -108,17 +108,16 @@ Inherited from `LockOptions`: `DefaultAcquireTimeout`, `DefaultLockDuration`, `K
 
 *(Synchronized from `Lyo.Lock.Redis.csproj`.)*
 
-**Target frameworks:** `netstandard2.0`, `net10.0`
+**Target framework:** `netstandard2.0;net10.0`
 
 ### NuGet packages
 
-| Package                                           | Version     |
-|---------------------------------------------------|-------------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)`     |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)`     |
-| `Microsoft.Extensions.DependencyInjection`        | `[10,)`     |
-| `Microsoft.Extensions.Logging.Abstractions`       | `[10.0.1,)` |
-| `StackExchange.Redis`                             | `[2.12,)`   |
+| Package                                     | Version     |
+|---------------------------------------------|-------------|
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)`     |
+| `Microsoft.Extensions.DependencyInjection`  | `[10,)`     |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10.0.1,)` |
+| `StackExchange.Redis`                       | `[2.12,)`   |
 
 ### Project references
 

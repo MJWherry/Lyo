@@ -6,7 +6,7 @@ Install this addon only when you actually use AES-CCM — the core `Lyo.Encrypti
 
 ## Dependency injection
 
-Requires a registered **`IKeyStore`** ([`Lyo.Keystore`](../../Lyo.Keystore/README.md)).
+Requires a registered **`IKeyStore`** ([`Lyo.Keystore`](../Lyo.Keystore/README.md)).
 
 ### Unkeyed (concrete + optional interface default)
 
@@ -55,4 +55,4 @@ services.AddAesCcmEncryptionServiceKeyed(keyName, keyStoreName, AesGcmKeySizeBit
 // Inject: [FromKeyedServices("file-storage")] ITwoKeyEncryptionService
 ```
 
-See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Security/Encryption `README.md`](../../README.md) for mixed DEK/KEK algorithms and RSA registration.
+See [`Lyo.Encryption`](../Lyo.Encryption/README.md) and [Encryption area `README.md`](../README.md) for mixed DEK/KEK algorithms and RSA registration.

@@ -295,13 +295,10 @@ Sessions land under `{TempPath}/lyo-io-temp-tests/{subdirectoryName}/{Guid}/`, i
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)` |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Hosting.Abstractions`             | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |
 
 ### Project references
 

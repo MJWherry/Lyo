@@ -652,14 +652,9 @@ public class MyBackgroundService : BackgroundService
 
 | Package                                                 | Version |
 |---------------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)` |
 | `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Options`                          | `[10,)` |
 | `Microsoft.Extensions.Options.ConfigurationExtensions`  | `[10,)` |
 
 ### Project references
 
-- [`Lyo.Common`](../../Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)
-- [`Lyo.Mathematics`](../../Mathematics/Lyo.Mathematics/README.md)
-- [`Lyo.Mathematics.Functions`](../../Mathematics/Lyo.Mathematics.Functions/README.md)

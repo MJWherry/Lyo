@@ -535,15 +535,13 @@ If validation fails, an `OptionsValidationException` is thrown during applicatio
 
 | Package                                                | Version   |
 |--------------------------------------------------------|-----------|
-| `Microsoft.Extensions.Configuration.Abstractions`      | `[10,)`   |
-| `Microsoft.Extensions.Configuration.Binder`            | `[10,)`   |
 | `Microsoft.Extensions.Http`                            | `[10,)`   |
 | `Microsoft.Extensions.Logging.Abstractions`            | `[10,)`   |
-| `Microsoft.Extensions.Options`                         | `[10,)`   |
 | `Microsoft.Extensions.Options.ConfigurationExtensions` | `[10,)`   |
 | `Twilio`                                               | `[7.14,)` |
 
 ### Project references
 
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Sms`](../Lyo.Sms/README.md)

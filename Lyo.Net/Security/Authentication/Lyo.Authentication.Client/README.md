@@ -44,7 +44,7 @@ browser receives Set-Cookie: lyo_session=...
 
 ## Quick start
 
-`Program.cs`:
+In the consuming host's `Program.cs`:
 
 ```csharp
 builder.Services.AddLyoAuthClient(builder.Configuration);

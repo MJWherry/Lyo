@@ -101,4 +101,3 @@ When `EnableAutoMigrations` is true, migrations run at **host startup** (via `IH
 ### Project references
 
 - [`Lyo.EntityReference.Models`](../../EntityReference/Lyo.EntityReference.Models/README.md)
-- [`Lyo.Exceptions`](../../Lyo.Exceptions/README.md)

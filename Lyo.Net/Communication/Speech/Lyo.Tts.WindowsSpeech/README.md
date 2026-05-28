@@ -95,7 +95,7 @@ register both interfaces because they ship an `*TtsAppService` adapter.
 
 *(Synchronized from `Lyo.Tts.WindowsSpeech.csproj`.)*
 
-**Target framework:** `netstandard2.0`
+**Target framework:** `netstandard2.0;net10.0` *(Windows only)*
 
 ### NuGet packages
 

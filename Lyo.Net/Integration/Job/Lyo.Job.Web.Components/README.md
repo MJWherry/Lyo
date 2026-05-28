@@ -74,3 +74,6 @@ Static helper for consistent visual treatment of job state, result, and log leve
 - [`Lyo.Api.Client`](../../Api/Lyo.Api.Client/README.md)
 - [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
 - [`Lyo.Web.Components`](../../Web/Lyo.Web.Components/README.md)
+- [`Lyo.Web.Components.Export`](../../Web/Lyo.Web.Components.Export/README.md)
+- [`Lyo.Web.Components.Export.Csv`](../../Web/Lyo.Web.Components.Export.Csv/README.md)
+- [`Lyo.Web.Components.Export.Xlsx`](../../Web/Lyo.Web.Components.Export.Xlsx/README.md)

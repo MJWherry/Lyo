@@ -558,14 +558,14 @@ All bulk SMS operations, rate limiting, and common functionality are automatical
 
 ### NuGet packages
 
-| Package                                                 | Version |
-|---------------------------------------------------------|---------|
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |
 
 ### Project references
 
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Metrics`](../../../Core/Metrics/Lyo.Metrics/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 - [`Lyo.Sms.Models`](../Lyo.Sms.Models/README.md)

@@ -79,9 +79,9 @@ pre-registered so other Lyo packages can reuse them without duplicating wiring.
 
 ### NuGet packages
 
-| Package            | Version |
-|--------------------|---------|
-| `System.Text.Json` | `[10,)` |
+| Package            | Version | Notes                 |
+|--------------------|---------|-----------------------|
+| `System.Text.Json` | `[10,)` | *netstandard2.0 only* |
 
 ### Project references
 

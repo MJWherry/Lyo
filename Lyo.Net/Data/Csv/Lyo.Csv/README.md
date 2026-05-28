@@ -226,9 +226,10 @@ fields, normalizes header matching, disables constructor-parameter mapping, and 
 
 ### Project references
 
-- `Lyo.Common`
-- `Lyo.Csv.Models`
-- `Lyo.Exceptions`
+- [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
+- [`Lyo.Csv.Models`](../Lyo.Csv.Models/README.md)
+- [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
+- [`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md)
 
 ## Public API (generated)
 

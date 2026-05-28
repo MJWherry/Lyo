@@ -91,10 +91,9 @@ Each table has an `ix_<table>_tenant` index for filtered scans. Use `WhereTenant
 
 ### NuGet packages
 
-| Package                                           | Version |
-|---------------------------------------------------|---------|
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
 

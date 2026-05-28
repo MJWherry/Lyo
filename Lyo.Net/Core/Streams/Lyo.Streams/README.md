@@ -46,9 +46,9 @@ await source.CopyToAsync(destination, bufferSize: 81920, progress: progress);
 
 ### NuGet packages
 
-| Package          | Version |
-|------------------|---------|
-| `System.Buffers` | `4.6.0` |
+| Package          | Version | Notes                 |
+|------------------|---------|-----------------------|
+| `System.Buffers` | `4.6.0` | *netstandard2.0 only* |
 
 ### Project references
 

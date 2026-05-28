@@ -130,18 +130,22 @@ dotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres
 
 ### NuGet packages
 
-| Package                                           | Version |
-|---------------------------------------------------|---------|
-| `Mapster`                                         | `[10,)` |
-| `Microsoft.EntityFrameworkCore.Design`            | `[10,)` |
-| `Microsoft.Extensions.Configuration.Abstractions` | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`       | `[10,)` |
+| Package                                    | Version |
+|--------------------------------------------|---------|
+| `Mapster`                                  | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Design`     | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
 
 - [`Lyo.Api`](../../Api/Lyo.Api/README.md)
+- [`Lyo.Api.Export`](../../Api/Lyo.Api.Export/README.md)
 - [`Lyo.Common`](../../../Core/Common/Lyo.Common/README.md)
 - [`Lyo.Exceptions`](../../../Core/Lyo.Exceptions/README.md)
 - [`Lyo.Job.Models`](../Lyo.Job.Models/README.md)
 - [`Lyo.MessageQueue`](../../../Communication/MessageQueue/Lyo.MessageQueue/README.md)
 - [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md)
+
+### Related / optional packages
+
+- [`Lyo.Api.Export.Csv`](../../Api/Lyo.Api.Export.Csv/README.md), [`Lyo.Api.Export.Xlsx`](../../Api/Lyo.Api.Export.Xlsx/README.md) — CSV/XLSX export add-ons (not direct refs of this assembly)

@@ -101,9 +101,9 @@ culture-aware data in context instead).
 
 ## Dependencies
 
-*(From `Lyo.Formatter.csproj`.)*
+*(Synchronized from `Lyo.Formatter.csproj`.)*
 
-**Target frameworks:** `net10.0`, `netstandard2.0`
+**Target framework:** `net10.0;netstandard2.0`
 
 ### NuGet packages
 

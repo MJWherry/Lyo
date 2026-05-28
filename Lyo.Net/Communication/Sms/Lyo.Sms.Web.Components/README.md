@@ -29,7 +29,7 @@ Outcome panel shows **`BulkResult<SmsRequest>`** summary (total/success/failure/
 
 ## Setup expectations
 
-In **`Program.cs`** / host startup:
+In the consuming host's **`Program.cs`** / startup:
 
 1. Register a real **`ISmsService`** (e.g. **`AddTwilioSmsService*`**).
 2. Add MudBlazor + [`Lyo.Web.Components`](../../../Integration/Web/Lyo.Web.Components/README.md) services the host already uses internally.

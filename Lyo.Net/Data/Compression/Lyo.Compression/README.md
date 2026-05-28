@@ -763,21 +763,18 @@ The library throws specific exceptions for different error conditions:
 
 ### NuGet packages
 
-| Package                                                 | Version  |
-|---------------------------------------------------------|----------|
-| `EasyCompressor`                                        | `[2.1,)` |
-| `EasyCompressor.LZ4`                                    | `[2.1,)` |
-| `EasyCompressor.LZMA`                                   | `[2.1,)` |
-| `EasyCompressor.Snappier`                               | `[2.1,)` |
-| `EasyCompressor.ZstdSharp`                              | `[2.1,)` |
-| `Joveler.Compression.XZ`                                | `5.0.2`  |
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`  |
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`  |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`  |
-| `Microsoft.Extensions.Options`                          | `[10,)`  |
-| `SharpZipLib`                                           | `1.4.2`  |
+| Package                                                 | Version  | Notes                 |
+|---------------------------------------------------------|----------|-----------------------|
+| `EasyCompressor`                                        | `[2.1,)` |                       |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`  |                       |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`  |                       |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`  |                       |
+| `Microsoft.Extensions.Options`                          | `[10,)`  |                       |
 | `System.Text.Json`                                      | `[10,)`  | *netstandard2.0 only* |
+
+### Related / optional packages
+
+- [`Lyo.Compression.LZ4`](../Lyo.Compression.LZ4/README.md), [`Lyo.Compression.LZMA`](../Lyo.Compression.LZMA/README.md), [`Lyo.Compression.Snappier`](../Lyo.Compression.Snappier/README.md), [`Lyo.Compression.Zstd`](../Lyo.Compression.Zstd/README.md), [`Lyo.Compression.BZip2`](../Lyo.Compression.BZip2/README.md), [`Lyo.Compression.XZ`](../Lyo.Compression.XZ/README.md) — algorithm add-ons
 
 ### Project references
 
