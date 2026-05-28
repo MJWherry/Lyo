@@ -4,14 +4,16 @@ Provider-agnostic **geospatial operations** façade.
 
 ## Role of this assembly
 
-Defines **`IGeolocationService`** (async surface) referencing shared DTOs from [`Lyo.Geolocation.Models`](../Geolocation.Models/README.md)—**addresses**, **coordinates**, **distance enums**, routing envelopes—while keeping **vendor HTTP/SDK wiring out** of the contract.
+Defines **`IGeolocationService`** (async surface) referencing shared DTOs from [`Lyo.Geolocation.Models`](../Geolocation.Models/README.md)—**addresses**, **coordinates**, *
+*distance enums**, routing envelopes—while keeping **vendor HTTP/SDK wiring out** of the contract.
 
-Consumers inject **`IGeolocationService`** inside domain logic (shipping radius checks, SLA windows, travel-time estimates, timezone-aware reminders) **without referencing** Google/AWS-specific types.
+Consumers inject **`IGeolocationService`** inside domain logic (shipping radius checks, SLA windows, travel-time estimates, timezone-aware reminders) **without referencing**
+Google/AWS-specific types.
 
 ## Implementations shipped in-tree
 
-| Package | Responsibility |
-|---------|----------------|
+| Package                                                         | Responsibility                                                                                                     |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
 | [`Lyo.Geolocation.Google`](../Lyo.Geolocation.Google/README.md) | REST-backed **`GoogleGeolocationService`** wrapping Google Maps platform endpoints (Directions, Time Zone API, …). |
 
 Add more providers (`MapboxGeolocationService`, `AzureMapsGeolocationService`, …) in separate assemblies that depend on **Models + this abstraction** only.
@@ -29,7 +31,7 @@ The contract groups operations into thematic areas:
 **Distance & vicinity**
 
 - **Spherical distances** versus **routing-derived driving distances** (see overloads distinguishing **straight-line** vs **routing** APIs).
-- **`IsWithinRadiusAsync`** answers membership questions for alerting (“nearest technician within 40 km”), typically using great‑circle math unless overridden.
+- **`IsWithinRadiusAsync`** answers membership questions for alerting (“nearest technician within 40 km”), typically using great‑circle math unless overridden.
 
 **Timezone**
 
@@ -37,13 +39,16 @@ The contract groups operations into thematic areas:
 
 **Routes**
 
-**`Route` / `RouteOptions`** exposes multi-leg durations, geometries (if providers enrich), modality selection (consult models for supported enum values relevant to integrated provider capabilities).
+**`Route` / `RouteOptions`** exposes multi-leg durations, geometries (if providers enrich), modality selection (consult models for supported enum values relevant to integrated
+provider capabilities).
 
-Every method returns **`Task<…>`** and should honor **`CancellationToken`** when surfaced by implementors—even if abstraction interface omits overloads, concrete Google service uses cooperative cancellation on HTTP requests.
+Every method returns **`Task<…>`** and should honor **`CancellationToken`** when surfaced by implementors—even if abstraction interface omits overloads, concrete Google service
+uses cooperative cancellation on HTTP requests.
 
 ### Design constraints
 
-Abstraction purposely **does not** standardize caching—add memoization decorators in your composition root if repeatedly geocoding identical warehouse addresses (`IDecorator` pattern preventing thundering herds on cold starts).
+Abstraction purposely **does not** standardize caching—add memoization decorators in your composition root if repeatedly geocoding identical warehouse addresses (`IDecorator`
+pattern preventing thundering herds on cold starts).
 
 **Security / privacy**: avoid logging raw user-provided addresses in infrastructure logs unless compliant with policy—wrap provider logging filters upstream.
 

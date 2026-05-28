@@ -1,8 +1,8 @@
 namespace Lyo.Authentication.Models.Audit;
 
 /// <summary>
-/// Closed taxonomy of audit-worthy moments in the Lyo authentication subsystem. Stored as the kind column in <c>[user].[event]</c> when persistence is wired up, so this enum is
-/// effectively part of the schema — only append new members at the end, never renumber or rename.
+/// Closed taxonomy of audit-worthy moments in the Lyo authentication subsystem. Stored as the kind column in <c>[user].[event]</c> when persistence is wired up, so this enum
+/// is effectively part of the schema — only append new members at the end, never renumber or rename.
 /// </summary>
 public enum AuthAuditEventKind
 {

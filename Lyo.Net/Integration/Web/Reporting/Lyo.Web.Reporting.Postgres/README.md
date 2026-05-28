@@ -14,7 +14,7 @@ PostgreSQL **schema and migrations** for storing pre-built reports. Schema name 
 - **`ReportEntity`** ([`Database/ReportEntity.cs`](Database/ReportEntity.cs)) — the row shape:
 
   | Column                | Type / Constraints                                          |
-  |-----------------------|-------------------------------------------------------------|
+    |-----------------------|-------------------------------------------------------------|
   | `Id`                  | `Guid`, primary key (default `Guid.NewGuid()`).             |
   | `Name`                | `string`, required, max length 500.                         |
   | `Description`         | `string?`, max length 2000.                                 |
@@ -34,13 +34,13 @@ PostgreSQL **schema and migrations** for storing pre-built reports. Schema name 
 
 All registrations are extension methods on `IServiceCollection` (declared inside `extension(IServiceCollection services)` blocks):
 
-| Method                                                                  | Description                                                                                                                                            |
-|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddReportingDbContext(string connectionString)`                        | Convenience: registers the factory plus a scoped `ReportingDbContext` resolved from the factory.                                                        |
-| `AddReportingDbContext(Action<DbContextOptionsBuilder>)`                | Standard EF `AddDbContext` overload.                                                                                                                    |
-| `AddReportingDbContextFactory(Action<PostgresReportingOptions>)`        | Builds options inline.                                                                                                                                  |
-| `AddReportingDbContextFactoryFromConfiguration(config, sectionName?)`   | Binds options from configuration (default section `"PostgresReporting"`).                                                                               |
-| `AddReportingDbContextFactory(PostgresReportingOptions)`                | Registers `IDbContextFactory<ReportingDbContext>` (Npgsql provider), wires `AddPostgresMigrations<ReportingDbContext, …>`, and points the migrations history table at the `report` schema. |
+| Method                                                                | Description                                                                                                                                                                                |
+|-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddReportingDbContext(string connectionString)`                      | Convenience: registers the factory plus a scoped `ReportingDbContext` resolved from the factory.                                                                                           |
+| `AddReportingDbContext(Action<DbContextOptionsBuilder>)`              | Standard EF `AddDbContext` overload.                                                                                                                                                       |
+| `AddReportingDbContextFactory(Action<PostgresReportingOptions>)`      | Builds options inline.                                                                                                                                                                     |
+| `AddReportingDbContextFactoryFromConfiguration(config, sectionName?)` | Binds options from configuration (default section `"PostgresReporting"`).                                                                                                                  |
+| `AddReportingDbContextFactory(PostgresReportingOptions)`              | Registers `IDbContextFactory<ReportingDbContext>` (Npgsql provider), wires `AddPostgresMigrations<ReportingDbContext, …>`, and points the migrations history table at the `report` schema. |
 
 ## Quick start
 

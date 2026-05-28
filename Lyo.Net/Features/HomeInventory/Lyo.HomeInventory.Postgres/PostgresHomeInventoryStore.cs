@@ -29,9 +29,6 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         _featureTenancy = homeInventoryOptions.Value.Tenancy;
     }
 
-    private Guid? ResolveTenant(Guid? tenantId)
-        => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
-
     /// <inheritdoc />
     public string HealthCheckName => "home-inventory-postgres";
 
@@ -101,6 +98,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         var entity = await context.Items.AsNoTracking()
             .FirstOrDefaultAsync(i => i.Sku != null && i.Sku.ToLower() == lower && i.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         return entity == null ? null : ToItemRecord(entity);
     }
 
@@ -172,6 +170,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
             .ThenBy(c => c.Name)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return list.Select(ToCategoryRecord).ToList();
     }
 
@@ -183,9 +182,10 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         OperationHelpers.ThrowIf(
             await context.Categories.AnyAsync(c => c.ParentCategoryId == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false),
             "Reassign or delete child categories first.");
+
         OperationHelpers.ThrowIf(
-            await context.Items.AnyAsync(i => i.CategoryId == id && i.TenantId == resolvedTenant, ct).ConfigureAwait(false),
-            "Category is still assigned to items.");
+            await context.Items.AnyAsync(i => i.CategoryId == id && i.TenantId == resolvedTenant, ct).ConfigureAwait(false), "Category is still assigned to items.");
+
         var entity = await context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
             context.Categories.Remove(entity);
@@ -257,11 +257,11 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(
-            await context.Locations.AnyAsync(l => l.ParentLocationId == id && l.TenantId == resolvedTenant, ct).ConfigureAwait(false),
-            "Reassign or delete child locations first.");
+            await context.Locations.AnyAsync(l => l.ParentLocationId == id && l.TenantId == resolvedTenant, ct).ConfigureAwait(false), "Reassign or delete child locations first.");
+
         OperationHelpers.ThrowIf(
-            await context.Stocks.AnyAsync(s => s.LocationId == id && s.TenantId == resolvedTenant, ct).ConfigureAwait(false),
-            "Location still has stock rows.");
+            await context.Stocks.AnyAsync(s => s.LocationId == id && s.TenantId == resolvedTenant, ct).ConfigureAwait(false), "Location still has stock rows.");
+
         OperationHelpers.ThrowIf(
             await context.Movements.AnyAsync(m => (m.FromLocationId == id || m.ToLocationId == id) && m.TenantId == resolvedTenant, ct).ConfigureAwait(false),
             "Location is referenced by movement history.");
@@ -317,6 +317,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
         var row = await context.Stocks.AsNoTracking()
             .FirstOrDefaultAsync(s => s.ItemId == itemId && s.LocationId == locationId && s.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         return row == null ? null : ToStockRecord(row);
     }
 
@@ -325,10 +326,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var list = await context.Stocks.AsNoTracking()
-            .Where(s => s.ItemId == itemId && s.TenantId == resolvedTenant)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var list = await context.Stocks.AsNoTracking().Where(s => s.ItemId == itemId && s.TenantId == resolvedTenant).ToListAsync(ct).ConfigureAwait(false);
         return list.Select(ToStockRecord).ToList();
     }
 
@@ -422,7 +420,9 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
             toRow.UpdatedTimestamp = DateTime.UtcNow;
         }
 
-        context.Movements.Add(CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, notes, createdBy, resolvedTenant));
+        context.Movements.Add(
+            CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, notes, createdBy, resolvedTenant));
+
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
     }
@@ -432,12 +432,12 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = context.Movements.AsNoTracking()
-            .Where(m => m.ItemId == itemId && m.TenantId == resolvedTenant)
-            .OrderByDescending(m => m.CreatedTimestamp);
+        var q = context.Movements.AsNoTracking().Where(m => m.ItemId == itemId && m.TenantId == resolvedTenant).OrderByDescending(m => m.CreatedTimestamp);
         var list = take > 0 ? await q.Take(take).ToListAsync(ct).ConfigureAwait(false) : await q.ToListAsync(ct).ConfigureAwait(false);
         return list.Select(ToMovementRecord).ToList();
     }
+
+    private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
 
     private static HomeItemMovementEntity CreateMovementEntity(
         Guid itemId,

@@ -13,12 +13,11 @@ namespace Lyo.IO.Temp.Models;
 public sealed class IOTempSessionOptions
 {
     /// <summary>
-    /// Default parent directory for standalone sessions. Suffixed with the current process id so two test runners (or two production processes) on the same host don't
-    /// share a cleanup root by accident, while still being grouped under a well-known <c>lyo-io-temp</c> folder for discovery.
+    /// Default parent directory for standalone sessions. Suffixed with the current process id so two test runners (or two production processes) on the same host don't share a
+    /// cleanup root by accident, while still being grouped under a well-known <c>lyo-io-temp</c> folder for discovery.
     /// </summary>
     private static readonly string DefaultRootDirectory = Path.Combine(
-        Path.GetTempPath(),
-        "lyo-io-temp",
+        Path.GetTempPath(), "lyo-io-temp",
 #if NET5_0_OR_GREATER
         Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
 #else

@@ -1,3 +1,4 @@
+using System.Text;
 using Lyo.Authentication;
 using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Authorization;
@@ -13,14 +14,17 @@ namespace Lyo.Config.Api;
 /// <summary>Registers Postgres-backed config services plus route mapping.</summary>
 public static class Extensions
 {
-    /// <summary>Adds <see cref="IConfigStore" /> plus security + hosting options and the Lyo authentication pipeline (opaque-token + JWT, scope policies, Postgres-backed user/token/audit stores).</summary>
+    /// <summary>
+    /// Adds <see cref="IConfigStore" /> plus security + hosting options and the Lyo authentication pipeline (opaque-token + JWT, scope policies, Postgres-backed user/token/audit
+    /// stores).
+    /// </summary>
     public static IServiceCollection AddConfigApi(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddPostgresConfigStoreFromConfiguration(configuration);
         services.Configure<ConfigApiSecurityOptions>(configuration.GetSection(ConfigApiSecurityOptions.SectionName));
         services.Configure<ConfigApiHostingOptions>(configuration.GetSection(ConfigApiHostingOptions.SectionName));
         services.AddLocalKeyStore(ks => {
-            var seed = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("lyo-config-api-dev-jwt-signing-key/v1"));
+            var seed = SHA256.HashData(Encoding.UTF8.GetBytes("lyo-config-api-dev-jwt-signing-key/v1"));
             ks.AddKey("lyo-sig", "v1", seed);
             ks.SetCurrentVersion("lyo-sig", "v1");
         });
@@ -36,7 +40,10 @@ public static class Extensions
         return services;
     }
 
-    /// <summary>Maps centralized config routes grouped under <paramref name="prefix" />. All endpoints require <c>config.read</c>; mutating endpoints require <c>config.write</c>; deletes/reverts require <c>config.admin</c>.</summary>
+    /// <summary>
+    /// Maps centralized config routes grouped under <paramref name="prefix" />. All endpoints require <c>config.read</c>; mutating endpoints require <c>config.write</c>;
+    /// deletes/reverts require <c>config.admin</c>.
+    /// </summary>
     public static RouteGroupBuilder MapConfigApiEndpoints(this WebApplication app, string prefix = "/api/config")
     {
         var group = app.MapGroup(prefix).RequireScope("config.read");

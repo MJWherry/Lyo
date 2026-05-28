@@ -1,12 +1,10 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Web.Components.Models;
 
 namespace Lyo.Authentication.Web.Components.Abstractions;
 
 /// <summary>
-/// Read-side view of the active session for the debug workbench. Host adapters surface their internal session bag (cookie + server store on Server, in-memory + local-storage on WASM)
-/// through this contract so the same Razor UI works on either host.
+/// Read-side view of the active session for the debug workbench. Host adapters surface their internal session bag (cookie + server store on Server, in-memory + local-storage
+/// on WASM) through this contract so the same Razor UI works on either host.
 /// </summary>
 public interface IAuthSessionAccessor
 {

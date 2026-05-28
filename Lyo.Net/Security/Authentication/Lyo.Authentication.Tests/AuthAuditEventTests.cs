@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
 
@@ -14,9 +10,7 @@ public class AuthAuditEventTests
     {
         var recorder = new CapturingRecorder();
         var context = new FakeContextAccessor("203.0.113.5", "ua/test", "trace-abc");
-
-        await recorder.RecordAsync(context, logger: null, AuthAuditEventKind.JwtIssued, userId: Guid.NewGuid(), subject: "jti", provider: "google", outcome: "success", ct: TestContext.Current.CancellationToken);
-
+        await recorder.RecordAsync(context, null, AuthAuditEventKind.JwtIssued, Guid.NewGuid(), "jti", "google", "success", ct: TestContext.Current.CancellationToken);
         var evt = Assert.Single(recorder.Events);
         Assert.Equal(AuthAuditEventKind.JwtIssued, evt.Kind);
         Assert.Equal("203.0.113.5", evt.IpAddress);
@@ -32,7 +26,7 @@ public class AuthAuditEventTests
     public async Task RecordAsync_NullContext_DoesNotThrow()
     {
         var recorder = new CapturingRecorder();
-        await recorder.RecordAsync(context: null, logger: null, AuthAuditEventKind.SignedOut, outcome: "success");
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.SignedOut, outcome: "success");
         var evt = Assert.Single(recorder.Events);
         Assert.Null(evt.IpAddress);
         Assert.Null(evt.UserAgent);
@@ -43,9 +37,8 @@ public class AuthAuditEventTests
     public async Task RecordAsync_ThrowingRecorder_IsSwallowed()
     {
         var recorder = new ThrowingRecorder();
-
-        var ex = await Record.ExceptionAsync(() =>
-            recorder.RecordAsync(context: null, logger: null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestContext.Current.CancellationToken));
+        var ex = await Record.ExceptionAsync(() => recorder.RecordAsync(
+            null, null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestContext.Current.CancellationToken));
 
         Assert.Null(ex);
     }
@@ -70,7 +63,7 @@ public class AuthAuditEventTests
     {
         var recorder = new CapturingRecorder();
         var tenant = Guid.NewGuid();
-        await recorder.RecordAsync(context: null, logger: null, AuthAuditEventKind.JwtIssued, tenantId: tenant, ct: TestContext.Current.CancellationToken);
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, tenantId: tenant, ct: TestContext.Current.CancellationToken);
         var evt = Assert.Single(recorder.Events);
         Assert.Equal(tenant, evt.TenantId);
     }
@@ -79,14 +72,8 @@ public class AuthAuditEventTests
     public async Task RecordAsync_PropagatesMetadata()
     {
         var recorder = new CapturingRecorder();
-        var metadata = new Dictionary<string, object?> {
-            ["jti"] = "abc",
-            ["exp"] = 1234,
-            ["nullable"] = null
-        };
-
-        await recorder.RecordAsync(context: null, logger: null, AuthAuditEventKind.JwtIssued, metadata: metadata, ct: TestContext.Current.CancellationToken);
-
+        var metadata = new Dictionary<string, object?> { ["jti"] = "abc", ["exp"] = 1234, ["nullable"] = null };
+        await recorder.RecordAsync(null, null, AuthAuditEventKind.JwtIssued, metadata: metadata, ct: TestContext.Current.CancellationToken);
         var evt = Assert.Single(recorder.Events);
         Assert.NotNull(evt.Metadata);
         Assert.Equal(3, evt.Metadata!.Count);
@@ -107,14 +94,15 @@ public class AuthAuditEventTests
 
     private sealed class ThrowingRecorder : IAuthAuditRecorder
     {
-        public Task RecordAsync(AuthAuditEvent evt, CancellationToken ct = default) =>
-            throw new InvalidOperationException("boom");
+        public Task RecordAsync(AuthAuditEvent evt, CancellationToken ct = default) => throw new InvalidOperationException("boom");
     }
 
     private sealed class FakeContextAccessor(string? ip, string? ua, string? corr) : IAuthAuditContextAccessor
     {
         public string? IpAddress { get; } = ip;
+
         public string? UserAgent { get; } = ua;
+
         public string? CorrelationId { get; } = corr;
     }
 }

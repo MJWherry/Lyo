@@ -121,9 +121,9 @@ For the reference Config app, routes look like `/api/config/{appKind}/{appId}`. 
 
 ### NuGet packages
 
-| Package            | Version | Notes                                          |
-|--------------------|---------|------------------------------------------------|
-| `System.Text.Json` | `[10,)` | Added only for the `netstandard2.0` target.    |
+| Package            | Version | Notes                                       |
+|--------------------|---------|---------------------------------------------|
+| `System.Text.Json` | `[10,)` | Added only for the `netstandard2.0` target. |
 
 ### Project references
 

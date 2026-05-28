@@ -1,10 +1,10 @@
-using System;
 using Lyo.Diagnostic.AspNetCore;
 using Lyo.Exceptions;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Client;
 
@@ -15,9 +15,10 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the consumer-side Lyo auth runtime: options, <see cref="LyoAuthSessionStore"/>, the typed <see cref="LyoAuthApiClient"/> targeting <see cref="LyoAuthClientOptions.AuthBaseUrl"/>,
-        /// the <see cref="LyoAuthDelegatingHandler"/>, the cookie scheme (<see cref="LyoAuthClientOptions.SchemeName"/>), data protection, and <see cref="Microsoft.AspNetCore.Http.IHttpContextAccessor"/>.
-        /// Does NOT register <see cref="LyoAuthStateProvider"/> (Blazor-specific); call <see cref="AddLyoAuthBlazorStateProvider"/> on Blazor hosts.
+        /// Registers the consumer-side Lyo auth runtime: options, <see cref="LyoAuthSessionStore" />, the typed <see cref="LyoAuthApiClient" /> targeting
+        /// <see cref="LyoAuthClientOptions.AuthBaseUrl" />, the <see cref="LyoAuthDelegatingHandler" />, the cookie scheme (<see cref="LyoAuthClientOptions.SchemeName" />), data protection,
+        /// and <see cref="Microsoft.AspNetCore.Http.IHttpContextAccessor" />. Does NOT register <see cref="LyoAuthStateProvider" /> (Blazor-specific); call
+        /// <see cref="AddLyoAuthBlazorStateProvider" /> on Blazor hosts.
         /// </summary>
         public IServiceCollection AddLyoAuthClient(Action<LyoAuthClientOptions> configure)
         {
@@ -27,7 +28,7 @@ public static class Extensions
             return services.RegisterLyoAuthClientCore();
         }
 
-        /// <summary>Same as <see cref="AddLyoAuthClient(Action{LyoAuthClientOptions})"/> but binds <see cref="LyoAuthClientOptions"/> from configuration.</summary>
+        /// <summary>Same as <see cref="AddLyoAuthClient(Action{LyoAuthClientOptions})" /> but binds <see cref="LyoAuthClientOptions" /> from configuration.</summary>
         public IServiceCollection AddLyoAuthClient(IConfiguration configuration, string sectionName = LyoAuthClientOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -36,11 +37,14 @@ public static class Extensions
             return services.RegisterLyoAuthClientCore();
         }
 
-        /// <summary>Registers <see cref="LyoAuthStateProvider"/> as the Blazor <see cref="Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider"/>. Call after <see cref="AddLyoAuthClient(Action{LyoAuthClientOptions})"/>.</summary>
+        /// <summary>
+        /// Registers <see cref="LyoAuthStateProvider" /> as the Blazor <see cref="Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider" />. Call after
+        /// <see cref="AddLyoAuthClient(Action{LyoAuthClientOptions})" />.
+        /// </summary>
         public IServiceCollection AddLyoAuthBlazorStateProvider()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, LyoAuthStateProvider>();
+            services.AddScoped<AuthenticationStateProvider, LyoAuthStateProvider>();
             return services;
         }
 
@@ -51,10 +55,11 @@ public static class Extensions
             services.AddLyoCorrelation();
             services.TryAddSingleton<LyoAuthSessionStore>();
             services.AddHttpClient<LyoAuthApiClient>((sp, http) => {
-                var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<LyoAuthClientOptions>>().Value;
-                ArgumentHelpers.ThrowIfNullOrWhiteSpace(opts.AuthBaseUrl, "LyoAuthClientOptions.AuthBaseUrl");
-                http.BaseAddress = new(opts.AuthBaseUrl);
-            }).AddLyoCorrelationHandler();
+                    var opts = sp.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
+                    ArgumentHelpers.ThrowIfNullOrWhiteSpace(opts.AuthBaseUrl, "LyoAuthClientOptions.AuthBaseUrl");
+                    http.BaseAddress = new(opts.AuthBaseUrl);
+                })
+                .AddLyoCorrelationHandler();
 
             services.AddTransient<LyoAuthDelegatingHandler>();
             services.AddAuthentication(LyoAuthClientOptions.SchemeName)
@@ -68,15 +73,16 @@ public static class Extensions
     extension(IHttpClientBuilder builder)
     {
         /// <summary>
-        /// Attaches <see cref="LyoAuthDelegatingHandler"/> so outbound calls automatically get <c>Authorization: Bearer</c> and auto-refresh. When
-        /// <paramref name="propagateCorrelationId"/> is <c>true</c> (the default), also chains <see cref="Lyo.Diagnostic.Correlation.LyoCorrelationDelegatingHandler"/> as the
-        /// <strong>outermost</strong> handler so the correlation header is stamped before the auth handler runs (covering both the primary call and any nested refresh roundtrip).
-        /// Opt out by passing <c>false</c> for hosts that already stamp the header elsewhere.
+        /// Attaches <see cref="LyoAuthDelegatingHandler" /> so outbound calls automatically get <c>Authorization: Bearer</c> and auto-refresh. When
+        /// <paramref name="propagateCorrelationId" /> is <c>true</c> (the default), also chains <see cref="Lyo.Diagnostic.Correlation.LyoCorrelationDelegatingHandler" /> as the
+        /// <strong>outermost</strong> handler so the correlation header is stamped before the auth handler runs (covering both the primary call and any nested refresh roundtrip). Opt out by
+        /// passing <c>false</c> for hosts that already stamp the header elsewhere.
         /// </summary>
         public IHttpClientBuilder AddLyoAuthHandler(bool propagateCorrelationId = true)
         {
             if (propagateCorrelationId)
                 builder.AddLyoCorrelationHandler();
+
             return builder.AddHttpMessageHandler<LyoAuthDelegatingHandler>();
         }
     }

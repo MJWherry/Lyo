@@ -1,6 +1,9 @@
 using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Serialization;
 using Lyo.Api;
+using Lyo.Api.Services.Crud.Read;
 using Lyo.Authentication;
 using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Endpoints;
@@ -9,7 +12,6 @@ using Lyo.Authentication.Keycloak;
 using Lyo.Authentication.OpenIdConnect;
 using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Authentication.Postgres;
-using Lyo.Api.Services.Crud.Read;
 using Lyo.Cache;
 using Lyo.Comic.Postgres;
 using Lyo.Common;
@@ -140,9 +142,8 @@ builder.Services.AddS3FileStorageServiceKeyed(Constants.FileStorageWorkbench.Ser
 builder.Services.AddFileOperationContextAccessor();
 builder.Services.AddPostgresFileAuditSink();
 builder.Services.AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>();
-
 builder.Services.AddLocalKeyStore(ks => {
-    var seed = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("lyo-test-api-dev-jwt-signing-key/v1"));
+    var seed = SHA256.HashData(Encoding.UTF8.GetBytes("lyo-test-api-dev-jwt-signing-key/v1"));
     ks.AddKey("lyo-sig", "v1", seed);
     ks.SetCurrentVersion("lyo-sig", "v1");
 });
@@ -152,6 +153,7 @@ builder.Services.AddPostgresAuthenticationStores(o => {
     o.ConnectionString = builder.Configuration.GetSection("PostgresUser")["ConnectionString"] ?? connStr;
     o.EnableAutoMigrations = true;
 });
+
 builder.Services.AddLyoApiTokenAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddLyoOpenIdConnect(builder.Configuration);

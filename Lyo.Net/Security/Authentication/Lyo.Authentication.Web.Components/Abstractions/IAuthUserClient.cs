@@ -1,13 +1,10 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Web.Components.Models;
 
 namespace Lyo.Authentication.Web.Components.Abstractions;
 
 /// <summary>
-/// Host-agnostic HTTP wrapper for the <c>/auth/me</c> and <c>/auth/users/{id}</c> endpoints exposed by <c>Lyo.Authentication.OpenIdConnect</c>. The host adapter is responsible for
-/// attaching the bearer token (either via the Server-side <c>LyoAuthDelegatingHandler</c> or the WASM-side equivalent).
+/// Host-agnostic HTTP wrapper for the <c>/auth/me</c> and <c>/auth/users/{id}</c> endpoints exposed by <c>Lyo.Authentication.OpenIdConnect</c>. The host adapter is
+/// responsible for attaching the bearer token (either via the Server-side <c>LyoAuthDelegatingHandler</c> or the WASM-side equivalent).
 /// </summary>
 public interface IAuthUserClient
 {

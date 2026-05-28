@@ -4,9 +4,8 @@ namespace Lyo.Rating;
 
 /// <summary>Interface for storing and retrieving ratings.</summary>
 /// <remarks>
-/// All read/write methods accept an optional <c>Guid? tenantId</c>. When <c>null</c>, the
-/// store falls back to <c>EntityRefOptions.DefaultTenantId</c> (single-tenant deployments
-/// resolve this to <c>EntityRefWellKnown.SingleTenantDefaultId</c>).
+/// All read/write methods accept an optional <c>Guid? tenantId</c>. When <c>null</c>, the store falls back to <c>EntityRefOptions.DefaultTenantId</c> (single-tenant
+/// deployments resolve this to <c>EntityRefWellKnown.SingleTenantDefaultId</c>).
 /// </remarks>
 public interface IRatingStore
 {

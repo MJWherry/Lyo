@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Opaque;

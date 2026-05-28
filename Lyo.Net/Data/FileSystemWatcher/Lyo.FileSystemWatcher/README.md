@@ -496,15 +496,15 @@ directly.
 
 ## Public surface
 
-| Type                                       | Description                                                                                                                              |
-|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **`FileSystemWatcher`**                    | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
-| **`FileSystemWatcherOptions`**             | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`.                                  |
-| **`FileSystemChangeInfo`**                 | `record` payload emitted by every change event.                                                                                          |
-| **`ChangeTypeEnum`**                       | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`.                                                                    |
-| **`DirectorySnapshotEntry`**               | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`).                                                          |
-| **`SnapshotTree`** / **`SnapshotDirectoryNode`** | In-memory snapshot of the watched tree used for diffing.                                                                          |
-| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above).                                                              |
-| **`Utilities`**                            | Helpers shared by the watcher implementation.                                                                                            |
+| Type                                                   | Description                                                                                                                                                                                                            |
+|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`FileSystemWatcher`**                                | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`Error` events listed above. |
+| **`FileSystemWatcherOptions`**                         | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`.                                                                                                                 |
+| **`FileSystemChangeInfo`**                             | `record` payload emitted by every change event.                                                                                                                                                                        |
+| **`ChangeTypeEnum`**                                   | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`.                                                                                                                                                   |
+| **`DirectorySnapshotEntry`**                           | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`).                                                                                                                                        |
+| **`SnapshotTree`** / **`SnapshotDirectoryNode`**       | In-memory snapshot of the watched tree used for diffing.                                                                                                                                                               |
+| **`Constants.Metrics`** + **`Constants.Metrics.Tags`** | Metric and tag name constants (see *Metrics Integration* above).                                                                                                                                                       |
+| **`Utilities`**                                        | Helpers shared by the watcher implementation.                                                                                                                                                                          |
 
 <!-- LYO_README_SYNC:END -->

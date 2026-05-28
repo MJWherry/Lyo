@@ -1,5 +1,4 @@
 @page "/account/tokens"
-@using Lyo.Api.Client
 @inject IApiClient ApiClient
 @inject ISnackbar Snackbar
 
@@ -42,7 +41,9 @@
                 <MudTd>@(context.LastUsedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "—")</MudTd>
                 <MudTd>@(context.RevokedAt is null ? "Active" : "Revoked")</MudTd>
                 <MudTd>
-                    <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" OnClick="@(() => RevokeAsync(context.Id))" Disabled="context.RevokedAt is not null">Revoke</MudButton>
+                    <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined" OnClick="@(() => RevokeAsync(context.Id))" Disabled="context.RevokedAt is not null">
+                        Revoke
+                    </MudButton>
                 </MudTd>
             </RowTemplate>
         </MudTable>
@@ -57,10 +58,7 @@
     private bool _loading;
     private bool _busy;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await RefreshAsync();
-    }
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
 
     private async Task RefreshAsync()
     {
@@ -85,11 +83,8 @@
 
         _busy = true;
         try {
-            var scopes = (_newScopes ?? string.Empty)
-                .Split(new[] {' ', ','}, StringSplitOptions.RemoveEmptyEntries);
-            var resp = await ApiClient.PostAsAsync<CreateTokenRequest, CreateTokenResponse>(
-                "tokens",
-                new CreateTokenRequest(_newName, scopes, null, null)).ConfigureAwait(true);
+            var scopes = (_newScopes ?? string.Empty).Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var resp = await ApiClient.PostAsAsync<CreateTokenRequest, CreateTokenResponse>("tokens", new(_newName, scopes, null, null)).ConfigureAwait(true);
             _lastPlaintext = resp?.Plaintext;
             _newName = string.Empty;
             _newScopes = string.Empty;
@@ -114,19 +109,10 @@
         }
     }
 
-    private sealed record TokenDto(
-        string Id,
-        string Kind,
-        string Ring,
-        string DisplayName,
-        string[] Scopes,
-        DateTime CreatedAt,
-        DateTime? ExpiresAt,
-        DateTime? LastUsedAt,
-        DateTime? RevokedAt,
-        string? RevokedReason);
+    private sealed record TokenDto(string Id, string Kind, string Ring, string DisplayName, string[] Scopes, DateTime CreatedAt, DateTime? ExpiresAt, DateTime? LastUsedAt, DateTime? RevokedAt, string? RevokedReason);
 
-    private sealed record CreateTokenRequest(string DisplayName, string[] Scopes, int? LifetimeSeconds, System.Collections.Generic.IReadOnlyDictionary<string, object?>? Metadata);
+    private sealed record CreateTokenRequest(string DisplayName, string[] Scopes, int? LifetimeSeconds, IReadOnlyDictionary<string, object?>? Metadata);
 
     private sealed record CreateTokenResponse(string Plaintext, TokenDto Record);
+
 }

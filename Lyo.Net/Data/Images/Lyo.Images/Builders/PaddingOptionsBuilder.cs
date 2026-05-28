@@ -5,13 +5,13 @@ namespace Lyo.Images.Builders;
 /// <summary>Fluent builder for <see cref="PaddingOptions" />. Use <see cref="New" /> to start a builder.</summary>
 public sealed class PaddingOptionsBuilder
 {
-    private int? _paddingPx;
-    private int? _marginPx;
-    private string? _panelColorHex;
     private string? _canvasColorHex;
+    private int? _cornerRadiusPx;
+    private int? _marginPx;
+    private int? _paddingPx;
+    private string? _panelColorHex;
     private string? _shadowColorHex;
     private int? _shadowOffsetPx;
-    private int? _cornerRadiusPx;
 
     private PaddingOptionsBuilder() { }
 

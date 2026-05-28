@@ -1,5 +1,3 @@
-using System;
-
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[linked_identity]</c> table (external OIDC identity links).</summary>

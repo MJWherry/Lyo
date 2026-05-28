@@ -32,6 +32,9 @@ public abstract class ImageServiceBase : IImageService
     /// <summary>Gets the metric names dictionary. Derived classes can modify this dictionary to override metric names.</summary>
     protected Dictionary<string, string> MetricNames { get; }
 
+    /// <summary>Decoration primitives (overlay / frame / caption / outer padding). Delegated to <see cref="ImageDecorationService" /> so backend implementations don't re-implement them.</summary>
+    protected ImageDecorationService Decoration { get; }
+
     /// <summary>Initializes a new instance of the <see cref="ImageServiceBase" /> class.</summary>
     /// <param name="options">The image service options.</param>
     /// <param name="logger">The logger instance.</param>
@@ -44,9 +47,6 @@ public abstract class ImageServiceBase : IImageService
         MetricNames = CreateMetricNamesDictionary();
         Decoration = new(options, null, metrics);
     }
-
-    /// <summary>Decoration primitives (overlay / frame / caption / outer padding). Delegated to <see cref="ImageDecorationService" /> so backend implementations don't re-implement them.</summary>
-    protected ImageDecorationService Decoration { get; }
 
     /// <inheritdoc />
     public ImageFormat DefaultFormat => ImageFormat.Jpeg;

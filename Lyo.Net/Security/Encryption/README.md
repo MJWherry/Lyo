@@ -679,18 +679,21 @@ catch (OperationCanceledException ex)
 
 ### 12. Dependency Injection (ASP.NET Core)
 
-Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.Keystore`](Lyo.Keystore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [`AesSiv`](Lyo.Encryption.AesSiv/README.md), [`XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md)). For compression, see [`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md).
+Package-level guides: [`Lyo.Encryption`](Lyo.Encryption/README.md), [`Lyo.Keystore`](Lyo.Keystore/README.md), addons ([`AesCcm`](Lyo.Encryption.AesCcm/README.md), [
+`AesSiv`](Lyo.Encryption.AesSiv/README.md), [`XChaCha20Poly1305`](Lyo.Encryption.XChaCha20Poly1305/README.md)). For compression, see [
+`Lyo.Compression`](../../Data/Compression/Lyo.Compression/README.md).
 
 #### Registration overview (encryption)
 
-| Step | Extension | What is registered |
-|------|-----------|-------------------|
-| Keys | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore` |
-| Envelope (prod) | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed` | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
-| Single alg (unkeyed) | `AddAesCcmEncryption()` etc. | Concrete algorithm service only |
-| Interface default | `AddDefaultEncryptionService<T>()` | Unkeyed `IEncryptionService` → `T` |
+| Step                 | Extension                                                               | What is registered                                                      |
+|----------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Keys                 | `AddLocalKeyStore(configure)` / `AddKeyedLocalKeyStore(key, configure)` | `LocalKeyStore`, `IKeyStore`                                            |
+| Envelope (prod)      | `AddEncryptionServiceKeyed` / `Add*EncryptionServiceKeyed`              | Keyed concretes + `IEncryptionService` + **`ITwoKeyEncryptionService`** |
+| Single alg (unkeyed) | `AddAesCcmEncryption()` etc.                                            | Concrete algorithm service only                                         |
+| Interface default    | `AddDefaultEncryptionService<T>()`                                      | Unkeyed `IEncryptionService` → `T`                                      |
 
-Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship `AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.Keystore` DI section](Lyo.Keystore/README.md#dependency-injection)).
+Configure secrets with **`configure => { ... }`** on the key store and read **`IConfiguration`** inside that callback. Encryption does not ship
+`AddEncryptionServiceFromConfiguration`; bind appsettings in the keystore `configure` delegate (see [`Lyo.Keystore` DI section](Lyo.Keystore/README.md#dependency-injection)).
 
 #### Keyed two-key (file storage, Comic.Api, etc.)
 
@@ -746,7 +749,8 @@ services.AddDefaultCompressionService<CompressionService>();
 // Or: AddCompressionServiceFromConfiguration(configuration, CompressionServiceOptions.SectionName);
 ```
 
-The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, and addon types (`AesCcmEncryptionService`, `AesSivEncryptionService`, `XChaCha20Poly1305EncryptionService`). Other combinations use manual registration or throw `InvalidOperationException` from the generic helper.
+The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305EncryptionService`, and addon types (`AesCcmEncryptionService`, `AesSivEncryptionService`,
+`XChaCha20Poly1305EncryptionService`). Other combinations use manual registration or throw `InvalidOperationException` from the generic helper.
 
 ## 🔐 Security Best Practices
 

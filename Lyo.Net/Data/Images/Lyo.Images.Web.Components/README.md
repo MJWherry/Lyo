@@ -5,14 +5,14 @@ animator/extractor built on `ISpriteSheetExportService`.
 
 ## Components
 
-| Component                                | Purpose                                                                                                                                                                                |
-|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`<ImageWorkbench />`**                 | Upload an image, inspect metadata + palette, and exercise the `IImageService` surface (resize/crop/rotate/watermark/convert/thumbnail/compress).                                       |
-| **`<SpriteSheetWorkbench />`**           | Two-tab workbench — **Animate** a flat strip and **Extract** a grid spritesheet from an animated source (GIF/WebP/APNG) via `ISpriteSheetExportService`.                               |
-| **`<SpriteSheetAnimateUploader />`**     | Multi-sheet upload + label/select chrome consumed by `SpriteSheetWorkbench`.                                                                                                           |
-| **`<SpriteSheetImageInfo />`**           | Compact metadata readout (dimensions, format, byte size) for a loaded raster.                                                                                                          |
-| **`<SpriteSheetPlayer />`**              | Plays a sliced strip in-browser using a JS animator (canvas-based) for live preview.                                                                                                   |
-| **`<SpriteSheetProcessor />`**           | Slicing/parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid).                                                                                              |
+| Component                            | Purpose                                                                                                                                                  |
+|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`<ImageWorkbench />`**             | Upload an image, inspect metadata + palette, and exercise the `IImageService` surface (resize/crop/rotate/watermark/convert/thumbnail/compress).         |
+| **`<SpriteSheetWorkbench />`**       | Two-tab workbench — **Animate** a flat strip and **Extract** a grid spritesheet from an animated source (GIF/WebP/APNG) via `ISpriteSheetExportService`. |
+| **`<SpriteSheetAnimateUploader />`** | Multi-sheet upload + label/select chrome consumed by `SpriteSheetWorkbench`.                                                                             |
+| **`<SpriteSheetImageInfo />`**       | Compact metadata readout (dimensions, format, byte size) for a loaded raster.                                                                            |
+| **`<SpriteSheetPlayer />`**          | Plays a sliced strip in-browser using a JS animator (canvas-based) for live preview.                                                                     |
+| **`<SpriteSheetProcessor />`**       | Slicing/parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid).                                                                |
 
 Supporting types live in **`SpriteSheetModels.cs`** (`SpriteSheetEntry`, frame/grid state used to drive the workbench).
 

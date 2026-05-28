@@ -1,17 +1,14 @@
-using System;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Handoff;
 
 /// <summary>
-/// Single-process <see cref="IHandoffCodeStore"/> backed by a <see cref="ConcurrentDictionary{TKey,TValue}"/>. Suitable for single-instance dev/test deployments and for hosts
-/// where the consumer exchanges the code in the same process minutes that issued it. For multi-instance production deployments use a distributed implementation (Redis/Postgres).
+/// Single-process <see cref="IHandoffCodeStore" /> backed by a <see cref="ConcurrentDictionary{TKey,TValue}" />. Suitable for single-instance dev/test deployments and for
+/// hosts where the consumer exchanges the code in the same process minutes that issued it. For multi-instance production deployments use a distributed implementation
+/// (Redis/Postgres).
 /// </summary>
 public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
 {
@@ -21,7 +18,7 @@ public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
     private readonly ConcurrentDictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     private readonly Func<DateTime> _now;
 
-    /// <summary>Creates a store using <see cref="DateTime.UtcNow"/> for expiry checks.</summary>
+    /// <summary>Creates a store using <see cref="DateTime.UtcNow" /> for expiry checks.</summary>
     public InMemoryHandoffCodeStore()
         : this(static () => DateTime.UtcNow) { }
 
@@ -32,15 +29,7 @@ public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
         _now = nowProvider;
     }
 
-    /// <summary>Generates a fresh handoff id using a cryptographically secure RNG (16 bytes → ~122 bits of entropy). Wire form <c>lyoh_&lt;base64url&gt;</c>.</summary>
-    public static string NewId()
-    {
-        var bytes = new byte[16];
-        RandomNumberGenerator.Fill(bytes);
-        return IdPrefix + Base64Url.Encode(bytes);
-    }
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task StoreAsync(LyoHandoffCode code, TimeSpan ttl, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(code);
@@ -54,7 +43,7 @@ public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<LyoHandoffCode?> ConsumeAsync(string id, string callerOrigin, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(callerOrigin))
@@ -72,12 +61,20 @@ public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
         return Task.FromResult<LyoHandoffCode?>(entry.Code);
     }
 
+    /// <summary>Generates a fresh handoff id using a cryptographically secure RNG (16 bytes → ~122 bits of entropy). Wire form <c>lyoh_&lt;base64url&gt;</c>.</summary>
+    public static string NewId()
+    {
+        var bytes = new byte[16];
+        RandomNumberGenerator.Fill(bytes);
+        return IdPrefix + Base64Url.Encode(bytes);
+    }
+
     private void SweepExpired()
     {
         var now = _now();
         foreach (var kvp in _entries) {
             if (now >= kvp.Value.ExpiresAt)
-                _entries.TryRemove(kvp.Key, out _);
+                _entries.TryRemove(kvp.Key, out var _);
         }
     }
 

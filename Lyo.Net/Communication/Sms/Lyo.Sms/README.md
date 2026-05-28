@@ -329,7 +329,7 @@ The stack surfaces structured **`Result`** errors and validates inputs early (bu
 - **Error codes**: `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
 
   | Constant            | Value                  | Raised when                                       |
-    |---------------------|------------------------|---------------------------------------------------|
+      |---------------------|------------------------|---------------------------------------------------|
   | `BuildFailed`       | `BUILD_FAILED`         | A builder threw while constructing the request.   |
   | `MessageNotBuilt`   | `MESSAGE_NOT_BUILT`    | The bulk pipeline reached the send step with no built request. |
   | `OperationCancelled`| `OPERATION_CANCELLED`  | The bulk send was cancelled via `CancellationToken`. |

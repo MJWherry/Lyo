@@ -21,10 +21,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     /// <param name="contextFactory">Factory for creating AuditDbContext instances.</param>
     /// <param name="entityRefOptions">Global EntityRef options (default tenant, mode).</param>
     /// <param name="auditOptions">Per-feature audit options (carries the audit-specific <see cref="TenancyOptions" />).</param>
-    public PostgresAuditRecorder(
-        IDbContextFactory<AuditDbContext> contextFactory,
-        IOptions<EntityRefOptions> entityRefOptions,
-        IOptions<PostgresAuditOptions> auditOptions)
+    public PostgresAuditRecorder(IDbContextFactory<AuditDbContext> contextFactory, IOptions<EntityRefOptions> entityRefOptions, IOptions<PostgresAuditOptions> auditOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(entityRefOptions);

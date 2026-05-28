@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Lyo.Authentication;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.OpenIdConnect.Client;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
@@ -28,10 +24,9 @@ public sealed class ExternalLoginCoordinatorTests
         Assert.Equal("/home", result.ReturnUrl);
         Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
         Assert.False(string.IsNullOrEmpty(result.Issued.RefreshToken));
-
-        var user = await fx.UserStore.GetByEmailAsync("alice@example.com", tenantId: null);
+        var user = await fx.UserStore.GetByEmailAsync("alice@example.com", null);
         Assert.NotNull(user);
-        var links = await fx.IdentityStore.ListForUserAsync(user!.Id, tenantId: null);
+        var links = await fx.IdentityStore.ListForUserAsync(user!.Id, null);
         Assert.Single(links);
         Assert.Equal("user-1", links[0].Subject);
     }
@@ -50,29 +45,14 @@ public sealed class ExternalLoginCoordinatorTests
     public async Task HandleCallbackAsync_RequireExistingUser_LinksExistingLyoUser()
     {
         await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.RequireExistingUser);
-        var preExisting = new LyoUser(
-            Id: Guid.NewGuid(),
-            DisplayName: "Carol",
-            Email: "carol@example.com",
-            EmailVerified: true,
-            AvatarUrl: null,
-            PreferredLanguageBcp47: null,
-            Scopes: ["people.read"],
-            Metadata: null,
-            PersonId: null,
-            CreatedAt: DateTime.UtcNow,
-            UpdatedAt: null,
-            LastLoginAt: null,
-            DisabledAt: null,
-            DisabledReason: null);
-
-        await fx.UserStore.CreateAsync(preExisting, tenantId: null);
+        var preExisting = new LyoUser(Guid.NewGuid(), "Carol", "carol@example.com", true, null, null, ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);
+        await fx.UserStore.CreateAsync(preExisting, null);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-3", "carol@example.com", nonce);
         var result = await fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state);
         Assert.NotNull(result);
         Assert.False(string.IsNullOrEmpty(result.Issued.AccessToken));
-        var links = await fx.IdentityStore.ListForUserAsync(preExisting.Id, tenantId: null);
+        var links = await fx.IdentityStore.ListForUserAsync(preExisting.Id, null);
         Assert.Single(links);
     }
 
@@ -111,11 +91,7 @@ public sealed class ExternalLoginCoordinatorTests
     [Fact]
     public async Task HandleCallbackAsync_JitFromAllowedClaim_RejectsOutsideAllowedSet()
     {
-        await using var fx = await CoordinatorFixture.CreateAsync(
-            ExternalLoginPolicy.JitFromAllowedClaim,
-            allowedClaimName: "hd",
-            allowedClaimValues: ["lyolabs.io"]);
-
+        await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JitFromAllowedClaim, "hd", ["lyolabs.io"]);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var claims = CoordinatorFixture.IssueClaims("user-7", "x@nope.io", nonce);
         claims["hd"] = "nope.io";
@@ -127,11 +103,7 @@ public sealed class ExternalLoginCoordinatorTests
     [Fact]
     public async Task HandleCallbackAsync_JitFromAllowedClaim_AcceptsWhenInsideAllowedSet()
     {
-        await using var fx = await CoordinatorFixture.CreateAsync(
-            ExternalLoginPolicy.JitFromAllowedClaim,
-            allowedClaimName: "hd",
-            allowedClaimValues: ["lyolabs.io"]);
-
+        await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JitFromAllowedClaim, "hd", ["lyolabs.io"]);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var claims = CoordinatorFixture.IssueClaims("user-8", "ok@lyolabs.io", nonce);
         claims["hd"] = "lyolabs.io";
@@ -158,9 +130,9 @@ public sealed class ExternalLoginCoordinatorTests
         var (sealedState1, nonce1, state1) = await fx.BuildRedirectAsync("fake");
         var code1 = fx.IssueCode("user-9", "gina@example.com", nonce1);
         await fx.Coordinator.HandleCallbackAsync("fake", code1, sealedState1, state1);
-        var user = await fx.UserStore.GetByEmailAsync("gina@example.com", tenantId: null);
+        var user = await fx.UserStore.GetByEmailAsync("gina@example.com", null);
         Assert.NotNull(user);
-        await fx.UserStore.SetDisabledAsync(user!.Id, DateTime.UtcNow, "compromised", tenantId: null);
+        await fx.UserStore.SetDisabledAsync(user!.Id, DateTime.UtcNow, "compromised", null);
         var (sealedState2, nonce2, state2) = await fx.BuildRedirectAsync("fake");
         var code2 = fx.IssueCode("user-9", "gina@example.com", nonce2);
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code2, sealedState2, state2));
@@ -169,8 +141,8 @@ public sealed class ExternalLoginCoordinatorTests
 
     private sealed class CoordinatorFixture : IAsyncDisposable
     {
-        private FakeOidcIdentityProvider _idp = null!;
         private IHost _host = null!;
+        private FakeOidcIdentityProvider _idp = null!;
         private StateNonceProtector _protector = null!;
 
         public IExternalLoginCoordinator Coordinator { get; private set; } = null!;
@@ -179,23 +151,27 @@ public sealed class ExternalLoginCoordinatorTests
 
         public IExternalIdentityStore IdentityStore { get; private set; } = null!;
 
+        public async ValueTask DisposeAsync()
+        {
+            if (_host is not null) {
+                await _host.StopAsync();
+                _host.Dispose();
+            }
+        }
+
         public async Task<(string sealedState, string nonce, string state)> BuildRedirectAsync(string providerName)
         {
             var redirect = await Coordinator.BuildLoginRedirectAsync(providerName, "/home");
-            var unsealed = _protector.Unseal(redirect.SealedState)
-                ?? throw new InvalidOperationException("could not unseal state in test");
-
+            var unsealed = _protector.Unseal(redirect.SealedState) ?? throw new InvalidOperationException("could not unseal state in test");
             return (redirect.SealedState, unsealed.Nonce, unsealed.State);
         }
 
-        public string IssueCode(string sub, string email, string nonce)
-            => IssueCodeWithClaims(IssueClaims(sub, email, nonce));
+        public string IssueCode(string sub, string email, string nonce) => IssueCodeWithClaims(IssueClaims(sub, email, nonce));
 
-        public string IssueCodeWithClaims(Dictionary<string, object?> claims)
-            => _idp.IssueCode(claims);
+        public string IssueCodeWithClaims(Dictionary<string, object?> claims) => _idp.IssueCode(claims);
 
-        public static Dictionary<string, object?> IssueClaims(string subject, string email, string nonce) =>
-            new() {
+        public static Dictionary<string, object?> IssueClaims(string subject, string email, string nonce)
+            => new() {
                 ["sub"] = subject,
                 ["iss"] = FakeOidcIdentityProvider.Issuer,
                 ["aud"] = "test-client",
@@ -223,9 +199,10 @@ public sealed class ExternalLoginCoordinatorTests
             hostBuilder.Services.Configure<ExternalLoginOptions>(o => {
                 o.Policy = policy;
                 o.AllowedClaimName = allowedClaimName;
-                if (allowedClaimValues is not null)
+                if (allowedClaimValues is not null) {
                     foreach (var v in allowedClaimValues)
                         o.AllowedClaimValues.Add(v);
+                }
             });
 
             hostBuilder.Services.AddSingleton<IOpenIdConnectProvider>(new FakeOidcProviderProfile());
@@ -243,14 +220,5 @@ public sealed class ExternalLoginCoordinatorTests
             fx._protector = fx._host.Services.GetRequiredService<StateNonceProtector>();
             return fx;
         }
-
-        public async ValueTask DisposeAsync()
-        {
-            if (_host is not null) {
-                await _host.StopAsync();
-                _host.Dispose();
-            }
-        }
     }
-
 }

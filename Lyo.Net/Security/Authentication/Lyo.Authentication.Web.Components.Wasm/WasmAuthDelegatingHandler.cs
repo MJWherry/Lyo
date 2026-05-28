@@ -1,31 +1,22 @@
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Web.Components.Wasm;
 
 /// <summary>
-/// Outbound <see cref="DelegatingHandler"/> for WASM-hosted HTTP clients. Injects <c>Authorization: Bearer &lt;access_token&gt;</c> on every request, pre-emptively refreshes when the
-/// access token is within <c>AccessTokenSkew</c> of expiry, and retries once on 401.
+/// Outbound <see cref="DelegatingHandler" /> for WASM-hosted HTTP clients. Injects <c>Authorization: Bearer &lt;access_token&gt;</c> on every request, pre-emptively
+/// refreshes when the access token is within <c>AccessTokenSkew</c> of expiry, and retries once on 401.
 /// </summary>
 public sealed class WasmAuthDelegatingHandler : DelegatingHandler
 {
-    private readonly WasmAuthSessionStore _sessions;
     private readonly WasmAuthApiClient _authApi;
-    private readonly WasmAuthClientOptions _options;
     private readonly ILogger<WasmAuthDelegatingHandler> _logger;
+    private readonly WasmAuthClientOptions _options;
+    private readonly WasmAuthSessionStore _sessions;
 
     /// <summary>Creates a new handler.</summary>
-    public WasmAuthDelegatingHandler(
-        WasmAuthSessionStore sessions,
-        WasmAuthApiClient authApi,
-        IOptions<WasmAuthClientOptions> options,
-        ILogger<WasmAuthDelegatingHandler> logger)
+    public WasmAuthDelegatingHandler(WasmAuthSessionStore sessions, WasmAuthApiClient authApi, IOptions<WasmAuthClientOptions> options, ILogger<WasmAuthDelegatingHandler> logger)
     {
         _sessions = sessions;
         _authApi = authApi;
@@ -33,7 +24,7 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
         _logger = logger;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var session = await _sessions.GetAsync(cancellationToken).ConfigureAwait(false);
@@ -44,7 +35,7 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
                 session = await TryRefreshAsync(session, cancellationToken).ConfigureAwait(false) ?? session;
             }
 
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+            request.Headers.Authorization = new("Bearer", session.AccessToken);
         }
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -60,7 +51,7 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
         }
 
         var retry = await CloneAsync(request).ConfigureAwait(false);
-        retry.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
+        retry.Headers.Authorization = new("Bearer", refreshed.AccessToken);
         return await base.SendAsync(retry, cancellationToken).ConfigureAwait(false);
     }
 
@@ -77,22 +68,14 @@ public sealed class WasmAuthDelegatingHandler : DelegatingHandler
             return null;
         }
 
-        var snapshot = new WasmAuthPersistedSession(
-            AccessToken: refreshed.AccessToken,
-            RefreshToken: refreshed.RefreshToken,
-            AccessTokenExpiresAt: DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn));
-
+        var snapshot = new WasmAuthPersistedSession(refreshed.AccessToken, refreshed.RefreshToken, DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn));
         await _sessions.SetAsync(snapshot, ct).ConfigureAwait(false);
         return snapshot;
     }
 
     private static async Task<HttpRequestMessage> CloneAsync(HttpRequestMessage source)
     {
-        var clone = new HttpRequestMessage(source.Method, source.RequestUri) {
-            Version = source.Version,
-            VersionPolicy = source.VersionPolicy
-        };
-
+        var clone = new HttpRequestMessage(source.Method, source.RequestUri) { Version = source.Version, VersionPolicy = source.VersionPolicy };
         if (source.Content is not null) {
             var bytes = await source.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             var cloneContent = new ByteArrayContent(bytes);

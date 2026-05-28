@@ -6,15 +6,15 @@ inputs (`FfmpegTempHelper`).
 
 ## Public API
 
-| Type                        | Description                                                                                                                                                                                                                                  |
-|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`FfmpegAudioPlayer`**     | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`.                                                                                                                                     |
-| **`FfmpegAudioProber`**     | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata).                                         |
-| **`FfmpegAudioConverter`**  | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
-| **`FFmpegCommandBuilder`**  | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FfmpegOptions)`, custom args.                              |
-| **`FfmpegProcessRunner`**   | Internal runner that executes the built command line through CliWrap, applying `FfmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`).                                                                            |
-| **`FfmpegTempHelper`**      | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal).                                                                                                                   |
-| **`Extensions`**            | DI: **`AddFfmpegServices()`**, **`AddFfmpegServices(Action<FfmpegOptions>)`**, **`AddFfmpegServicesFromConfiguration(IConfiguration, sectionName?)`**.                                                                                       |
+| Type                       | Description                                                                                                                                                                                                                                  |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`FfmpegAudioPlayer`**    | `IAudioPlayer` over `ffplay`; `PlayAsync(filePath)`, `PlayStreamAsync(stream)`, `PlayBytesAsync(bytes)`.                                                                                                                                     |
+| **`FfmpegAudioProber`**    | `IAudioProber` over `ffprobe`; `ProbeAsync`, `ProbeStreamAsync`, `ProbeBytesAsync` → `AudioProbeResult` (duration, sample rate, channels, codec, bit rate, has-video/audio, raw `ffprobe` metadata).                                         |
+| **`FfmpegAudioConverter`** | `IAudioConverter` over `ffmpeg`; full matrix of file/stream/byte conversion overloads (`ConvertFileToFileAsync`, `ConvertFileToStreamAsync`, `ConvertStreamToBytesAsync`, etc.) and a request-shaped `ConvertAsync(AudioConversionRequest)`. |
+| **`FFmpegCommandBuilder`** | Fluent builder for ad-hoc ffmpeg command lines: `WithInput/WithOutput`, `WithCodec`, `WithSampleRate`, `WithChannels`, `WithFormat`, `WithOverwrite`, `WithNoVideo`, `WithDefaults(FfmpegOptions)`, custom args.                             |
+| **`FfmpegProcessRunner`**  | Internal runner that executes the built command line through CliWrap, applying `FfmpegOptions.GlobalArguments` and `ProcessOutputMode` (`Suppress`/`Passthrough`).                                                                           |
+| **`FfmpegTempHelper`**     | Materializes input streams/bytes into a scoped temp file so ffmpeg/ffprobe can read them by path (cleaned up on disposal).                                                                                                                   |
+| **`Extensions`**           | DI: **`AddFfmpegServices()`**, **`AddFfmpegServices(Action<FfmpegOptions>)`**, **`AddFfmpegServicesFromConfiguration(IConfiguration, sectionName?)`**.                                                                                       |
 
 Each `AddFfmpegServices*` overload registers `FfmpegAudioPlayer`/`FfmpegAudioProber`/`FfmpegAudioConverter` as **scoped** services and exposes them through both the concrete
 type and their respective interfaces.
@@ -103,13 +103,13 @@ var args = new FFmpegCommandBuilder()
 
 ### NuGet packages
 
-| Package                                                 | Version    |
-|---------------------------------------------------------|------------|
-| `CliWrap`                                               | `[3.10,)`  |
-| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`    |
-| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`    |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`    |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`    |
+| Package                                                 | Version   |
+|---------------------------------------------------------|-----------|
+| `CliWrap`                                               | `[3.10,)` |
+| `Microsoft.Extensions.Configuration.Abstractions`       | `[10,)`   |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`   |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
 
 ### Project references
 

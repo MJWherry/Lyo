@@ -1,6 +1,7 @@
 # Lyo.Authentication.Models
 
-Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material, no DI; just records, format helpers, and a JWT parser.
+Wire-shape data for `Lyo.Authentication` — the half of the auth stack that's safe to ship to anyone, including Blazor WebAssembly clients. No services, no stores, no key material,
+no DI; just records, format helpers, and a JWT parser.
 
 ## What's in it
 
@@ -22,11 +23,13 @@ Scopes/
   Scope                                                    # single registered authorization scope record
 ```
 
-> The minting/hashing parts of `ApiTokenCodec`, every `IApiTokenStore` / `IUserStore` / `ILyoJwtIssuer` / `ILyoJwtValidator`, the scope registry runtime, and the audit recorder live in **`Lyo.Authentication`** — not here. They depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle.
+> The minting/hashing parts of `ApiTokenCodec`, every `IApiTokenStore` / `IUserStore` / `ILyoJwtIssuer` / `ILyoJwtValidator`, the scope registry runtime, and the audit recorder
+> live in **`Lyo.Authentication`** — not here. They depend on `Lyo.Keystore`, `Lyo.Hashing`, and BouncyCastle, which have no business in a browser bundle.
 
 ## Dependencies
 
-Only `Lyo.Exceptions` (for `ArgumentHelpers`). On `netstandard2.0` an extra `System.Text.Json` package reference is pulled in for `LyoJwtClaimsParser`; `net10.0` consumes the BCL build of `System.Text.Json` directly.
+Only `Lyo.Exceptions` (for `ArgumentHelpers`). On `netstandard2.0` an extra `System.Text.Json` package reference is pulled in for `LyoJwtClaimsParser`; `net10.0` consumes the BCL
+build of `System.Text.Json` directly.
 
 Multi-targets `netstandard2.0;net10.0`.
 
@@ -38,7 +41,8 @@ Multi-targets `netstandard2.0;net10.0`.
 
 ## When NOT to reference it
 
-- If you are the API/auth-server host, reference `Lyo.Authentication` directly. It transitively pulls Models in for you, and you'll need the service interfaces and DI helpers that only live in the server package.
+- If you are the API/auth-server host, reference `Lyo.Authentication` directly. It transitively pulls Models in for you, and you'll need the service interfaces and DI helpers that
+  only live in the server package.
 
 ## Verifying the boundary
 

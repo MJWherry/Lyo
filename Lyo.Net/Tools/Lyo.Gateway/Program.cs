@@ -4,6 +4,7 @@ using Lyo.Api.Client;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Web.Components;
 using Lyo.Authentication.Web.Components.Abstractions;
+using Lyo.Authentication.Web.Components.Options;
 using Lyo.Authentication.Web.Components.Server;
 using Lyo.Barcode.Native;
 using Lyo.Cache;
@@ -21,7 +22,6 @@ using Lyo.Gateway.Services;
 using Lyo.Gateway.Stores;
 using Lyo.Images;
 using Lyo.IO.Temp;
-using Lyo.Keystore;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
@@ -80,12 +80,13 @@ builder.Services.AddLyoAuthBlazorStateProvider();
 builder.Services.AddLyoApiClient(httpClientBuilderOverride: clientBuilder => clientBuilder.AddLyoAuthHandler());
 builder.Services.AddAuthorization();
 builder.Services.AddLyoAuthWebComponents(builder.Configuration);
-builder.Services.PostConfigure<Lyo.Authentication.Web.Components.Options.LyoAuthWebComponentsOptions>(opts => {
+builder.Services.PostConfigure<LyoAuthWebComponentsOptions>(opts => {
     if (opts.Providers.Count == 0) {
         opts.Providers.Add(new("google", "Sign in with Google", Icons.Material.Filled.AccountCircle));
         opts.Providers.Add(new("keycloak", "Sign in with Keycloak", Icons.Material.Filled.Shield));
     }
 });
+
 builder.Services.AddLyoAuthWebComponentsServer();
 builder.Services.AddScoped<IAuthPasswordSignIn, GatewayPlaceholderPasswordSignIn>();
 builder.Services.AddSingleton(_ => {

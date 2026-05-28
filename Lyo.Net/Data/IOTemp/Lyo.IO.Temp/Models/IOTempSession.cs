@@ -63,26 +63,6 @@ public sealed class IOTempSession : IIOTempSession
         _metrics.IncrementCounter(Constants.Metrics.SessionCreated);
     }
 
-    /// <summary>
-    /// Convenience factory for tests: creates a session under <c>{TempPath}/lyo-io-temp-tests/{subdirectoryName ?? new Guid}</c>. The root is auto-created so test classes
-    /// don't have to call <see cref="Directory.CreateDirectory(string)" /> first, and using the test class/method name as <paramref name="subdirectoryName" /> makes
-    /// leftover directories from failing CI runs trivially identifiable.
-    /// </summary>
-    /// <param name="subdirectoryName">Stable name for the session's parent folder; falls back to a fresh GUID when null/whitespace.</param>
-    /// <param name="logger">Optional logger.</param>
-    /// <param name="metrics">Optional metrics sink.</param>
-    /// <param name="storageProvider">Optional storage provider; defaults to file system.</param>
-    public static IOTempSession CreateForTests(
-        string? subdirectoryName = null,
-        ILogger<IOTempSession>? logger = null,
-        IMetrics? metrics = null,
-        IIOTempStorageProvider? storageProvider = null)
-    {
-        var leaf = string.IsNullOrWhiteSpace(subdirectoryName) ? Guid.NewGuid().ToString("N") : subdirectoryName!;
-        var rootDirectory = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests", leaf);
-        return new IOTempSession(new IOTempSessionOptions { RootDirectory = rootDirectory }, logger, metrics, storageProvider: storageProvider);
-    }
-
     /// <inheritdoc />
     public string SessionDirectory { get; }
 
@@ -131,6 +111,26 @@ public sealed class IOTempSession : IIOTempSession
     }
 
 #endregion
+
+    /// <summary>
+    /// Convenience factory for tests: creates a session under <c>{TempPath}/lyo-io-temp-tests/{subdirectoryName ?? new Guid}</c>. The root is auto-created so test classes don't
+    /// have to call <see cref="Directory.CreateDirectory(string)" /> first, and using the test class/method name as <paramref name="subdirectoryName" /> makes leftover directories from
+    /// failing CI runs trivially identifiable.
+    /// </summary>
+    /// <param name="subdirectoryName">Stable name for the session's parent folder; falls back to a fresh GUID when null/whitespace.</param>
+    /// <param name="logger">Optional logger.</param>
+    /// <param name="metrics">Optional metrics sink.</param>
+    /// <param name="storageProvider">Optional storage provider; defaults to file system.</param>
+    public static IOTempSession CreateForTests(
+        string? subdirectoryName = null,
+        ILogger<IOTempSession>? logger = null,
+        IMetrics? metrics = null,
+        IIOTempStorageProvider? storageProvider = null)
+    {
+        var leaf = string.IsNullOrWhiteSpace(subdirectoryName) ? Guid.NewGuid().ToString("N") : subdirectoryName!;
+        var rootDirectory = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests", leaf);
+        return new(new() { RootDirectory = rootDirectory }, logger, metrics, storageProvider: storageProvider);
+    }
 
 #region Inspection
 

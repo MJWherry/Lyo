@@ -1,10 +1,8 @@
-using System.Collections.Generic;
-
 namespace Lyo.Authentication.OpenIdConnect.Provider;
 
 /// <summary>
-/// Describes a single external OIDC provider (Google, a specific Keycloak realm, etc.). Used by the coordinator and discovery cache. Per-provider packages (Google, Keycloak) implement
-/// this interface.
+/// Describes a single external OIDC provider (Google, a specific Keycloak realm, etc.). Used by the coordinator and discovery cache. Per-provider packages (Google, Keycloak)
+/// implement this interface.
 /// </summary>
 public interface IOpenIdConnectProvider
 {

@@ -1,4 +1,3 @@
-using System;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +21,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers a Google OIDC provider profile by binding <see cref="GoogleOptions"/> from configuration (default section <c>GoogleAuth</c>).</summary>
+        /// <summary>Registers a Google OIDC provider profile by binding <see cref="GoogleOptions" /> from configuration (default section <c>GoogleAuth</c>).</summary>
         public IServiceCollection AddGoogleProviderFromConfiguration(IConfiguration configuration, string sectionName = GoogleOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);

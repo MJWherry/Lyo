@@ -28,7 +28,10 @@ public static class EncryptionServiceExtensions
     /// <returns>The KEK encryption algorithm, or null if not recognized</returns>
     public static EncryptionAlgorithm? DetermineKekAlgorithm(ITwoKeyEncryptionService? twoKeyService) => twoKeyService?.KekAlgorithm;
 
-    /// <summary>Instantiates one of the encryption service types shipped with the base <c>Lyo.Encryption</c> package (AES-GCM or ChaCha20-Poly1305). Throws a guidance exception for niche addon types so callers know which addon helper to call.</summary>
+    /// <summary>
+    /// Instantiates one of the encryption service types shipped with the base <c>Lyo.Encryption</c> package (AES-GCM or ChaCha20-Poly1305). Throws a guidance exception for niche
+    /// addon types so callers know which addon helper to call.
+    /// </summary>
     private static TService CreateBuiltInService<TService>(IKeyStore keyStore, AesGcmKeySizeBits aesGcmKeySize)
         where TService : class, IEncryptionService
     {

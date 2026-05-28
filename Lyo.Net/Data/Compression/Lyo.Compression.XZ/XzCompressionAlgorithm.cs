@@ -8,5 +8,6 @@ public sealed record XzCompressionAlgorithm : CompressionAlgorithm
     /// <summary>Canonical singleton.</summary>
     public static readonly XzCompressionAlgorithm Instance = new();
 
-    private XzCompressionAlgorithm() : base("XZ", ".xz") { }
+    private XzCompressionAlgorithm()
+        : base("XZ", ".xz") { }
 }

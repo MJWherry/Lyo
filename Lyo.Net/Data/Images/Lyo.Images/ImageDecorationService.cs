@@ -1,3 +1,4 @@
+using System.Text;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Images.Decoration;
@@ -13,8 +14,8 @@ using static Lyo.Images.ImageErrorCodes;
 namespace Lyo.Images;
 
 /// <summary>
-/// Default <see cref="IImageDecorationService" /> implementation: stream-based overlay/frame/caption/padding primitives plus the
-/// <see cref="ImageDecorationPipeline" /> factory. The compositors themselves live in <c>Lyo.Images.Decoration</c>.
+/// Default <see cref="IImageDecorationService" /> implementation: stream-based overlay/frame/caption/padding primitives plus the <see cref="ImageDecorationPipeline" />
+/// factory. The compositors themselves live in <c>Lyo.Images.Decoration</c>.
 /// </summary>
 public class ImageDecorationService : IImageDecorationService
 {
@@ -56,9 +57,9 @@ public class ImageDecorationService : IImageDecorationService
             var bgBytes = bg.ToArray();
             var overlayBytes = ov.ToArray();
             if (format == ImageFormat.Svg || LooksLikeSvg(bgBytes)) {
-                var svg = System.Text.Encoding.UTF8.GetString(bgBytes);
+                var svg = Encoding.UTF8.GetString(bgBytes);
                 var modified = await OverlayDrawer.ApplyToSvgAsync(svg, overlayBytes, options, ct).ConfigureAwait(false);
-                var bytes = System.Text.Encoding.UTF8.GetBytes(modified);
+                var bytes = Encoding.UTF8.GetBytes(modified);
                 await outputStream.WriteAsync(bytes.AsMemory(0, bytes.Length), ct).ConfigureAwait(false);
                 return Result<bool>.Success(true);
             }
@@ -175,8 +176,8 @@ public class ImageDecorationService : IImageDecorationService
         if (i >= input.Length || input[i] != (byte)'<')
             return false;
 
-        var head = System.Text.Encoding.ASCII.GetString(input, i, Math.Min(256, input.Length - i));
-        return head.StartsWith("<?xml", StringComparison.Ordinal) && head.Contains("<svg", StringComparison.OrdinalIgnoreCase)
-            || head.StartsWith("<svg", StringComparison.OrdinalIgnoreCase);
+        var head = Encoding.ASCII.GetString(input, i, Math.Min(256, input.Length - i));
+        return (head.StartsWith("<?xml", StringComparison.Ordinal) && head.Contains("<svg", StringComparison.OrdinalIgnoreCase)) ||
+            head.StartsWith("<svg", StringComparison.OrdinalIgnoreCase);
     }
 }

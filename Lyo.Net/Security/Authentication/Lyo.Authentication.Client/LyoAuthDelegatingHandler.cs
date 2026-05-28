@@ -1,10 +1,5 @@
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,18 +8,18 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Authentication.Client;
 
 /// <summary>
-/// Outbound <see cref="DelegatingHandler"/> that injects <c>Authorization: Bearer &lt;access_token&gt;</c> on every request made through the API client. When the upstream returns 401
-/// (or when the access token is within <see cref="LyoAuthClientOptions.AccessTokenSkew"/> of expiry), the handler transparently refreshes via <see cref="LyoAuthApiClient.RefreshAsync"/>,
-/// updates the active session, and retries the original request once.
+/// Outbound <see cref="DelegatingHandler" /> that injects <c>Authorization: Bearer &lt;access_token&gt;</c> on every request made through the API client. When the upstream
+/// returns 401 (or when the access token is within <see cref="LyoAuthClientOptions.AccessTokenSkew" /> of expiry), the handler transparently refreshes via
+/// <see cref="LyoAuthApiClient.RefreshAsync" />, updates the active session, and retries the original request once.
 /// </summary>
 public sealed class LyoAuthDelegatingHandler : DelegatingHandler
 {
-    private readonly IHttpContextAccessor _httpContext;
-    private readonly LyoAuthSessionStore _sessions;
     private readonly LyoAuthApiClient _authApi;
+    private readonly IHttpContextAccessor _httpContext;
+    private readonly ILogger<LyoAuthDelegatingHandler> _logger;
     private readonly LyoAuthClientOptions _options;
     private readonly IDataProtector _protector;
-    private readonly ILogger<LyoAuthDelegatingHandler> _logger;
+    private readonly LyoAuthSessionStore _sessions;
 
     /// <summary>Creates a new handler.</summary>
     public LyoAuthDelegatingHandler(
@@ -43,7 +38,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         _logger = logger;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var session = ResolveSession();
@@ -54,7 +49,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
                 await TryRefreshAsync(session, cancellationToken).ConfigureAwait(false);
             }
 
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+            request.Headers.Authorization = new("Bearer", session.AccessToken);
         }
 
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -69,7 +64,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         }
 
         var retry = await CloneAsync(request).ConfigureAwait(false);
-        retry.Headers.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
+        retry.Headers.Authorization = new("Bearer", session.AccessToken);
         return await base.SendAsync(retry, cancellationToken).ConfigureAwait(false);
     }
 
@@ -87,13 +82,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
         }
 
         var claims = LyoJwtClaimsParser.Parse(refreshed.AccessToken);
-        session.Update(
-            accessToken: refreshed.AccessToken,
-            refreshToken: refreshed.RefreshToken,
-            accessTokenExpiresAt: DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn),
-            refreshTokenExpiresAt: null,
-            claims: claims);
-
+        session.Update(refreshed.AccessToken, refreshed.RefreshToken, DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn), null, claims);
         return true;
     }
 
@@ -122,11 +111,7 @@ public sealed class LyoAuthDelegatingHandler : DelegatingHandler
 
     private static async Task<HttpRequestMessage> CloneAsync(HttpRequestMessage source)
     {
-        var clone = new HttpRequestMessage(source.Method, source.RequestUri) {
-            Version = source.Version,
-            VersionPolicy = source.VersionPolicy
-        };
-
+        var clone = new HttpRequestMessage(source.Method, source.RequestUri) { Version = source.Version, VersionPolicy = source.VersionPolicy };
         if (source.Content is not null) {
             var bytes = await source.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             var cloneContent = new ByteArrayContent(bytes);

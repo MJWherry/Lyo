@@ -1,13 +1,11 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.AspNetCore.Authorization;
 
 /// <summary>
-/// Creates <c>scope:&lt;name&gt;</c> policies on demand. Delegates to the default policy provider for everything else. This lets endpoints opt in to scope checks without pre-registering
-/// every scope:
+/// Creates <c>scope:&lt;name&gt;</c> policies on demand. Delegates to the default policy provider for everything else. This lets endpoints opt in to scope checks without
+/// pre-registering every scope:
 /// <code>
 /// .RequireAuthorization("scope:people.read");
 /// </code>
@@ -21,7 +19,7 @@ public sealed class ScopeAuthorizationPolicyProvider : DefaultAuthorizationPolic
     public ScopeAuthorizationPolicyProvider(IOptions<AuthorizationOptions> options)
         : base(options) { }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public override async Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
         if (!string.IsNullOrEmpty(policyName) && policyName.StartsWith(PolicyPrefix, StringComparison.Ordinal)) {

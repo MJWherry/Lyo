@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Authentication.Postgres.Database;
 
-/// <summary>EF configuration for <see cref="UserEntity"/>.</summary>
+/// <summary>EF configuration for <see cref="UserEntity" />.</summary>
 public sealed class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         builder.ToTable("user");
@@ -27,15 +27,9 @@ public sealed class UserEntityConfiguration : IEntityTypeConfiguration<UserEntit
         builder.Property(e => e.DisabledTimestamp).HasColumnName("disabled_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.DisabledReason).HasColumnName("disabled_reason").HasMaxLength(500);
         builder.HasIndex(e => new { e.TenantId, e.Email }).IsUnique().HasDatabaseName("ux_user_tenant_email");
-        builder.HasIndex(e => e.DisabledTimestamp)
-            .HasDatabaseName("ix_user_disabled_timestamp")
-            .HasFilter("\"disabled_timestamp\" IS NULL");
+        builder.HasIndex(e => e.DisabledTimestamp).HasDatabaseName("ix_user_disabled_timestamp").HasFilter("\"disabled_timestamp\" IS NULL");
         builder.HasIndex(e => e.LastLoginTimestamp).HasDatabaseName("ix_user_last_login_timestamp").IsDescending();
-        builder.HasIndex(e => e.PersonId)
-            .HasDatabaseName("ix_user_person_id")
-            .HasFilter("\"person_id\" IS NOT NULL");
-        builder.HasIndex(e => e.TenantId)
-            .HasDatabaseName("ix_user_tenant_id")
-            .HasFilter("\"tenant_id\" IS NOT NULL");
+        builder.HasIndex(e => e.PersonId).HasDatabaseName("ix_user_person_id").HasFilter("\"person_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_user_tenant_id").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

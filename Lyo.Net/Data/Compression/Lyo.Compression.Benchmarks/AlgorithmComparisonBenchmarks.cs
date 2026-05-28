@@ -18,17 +18,11 @@ namespace Lyo.Compression.Benchmarks;
 public class AlgorithmComparisonBenchmarks
 {
     private static readonly ICompressorFactory[] AllFactories = [
-        new GZipCompressorFactory(),
-        new DeflateCompressorFactory(),
+        new GZipCompressorFactory(), new DeflateCompressorFactory(),
 #if !NETSTANDARD2_0
-        new BrotliCompressorFactory(),
-        new ZLibCompressorFactory(),
+        new BrotliCompressorFactory(), new ZLibCompressorFactory(),
 #endif
-        new Lz4CompressorFactory(),
-        new LzmaCompressorFactory(),
-        new SnappierCompressorFactory(),
-        new ZstdCompressorFactory(),
-        new BZip2CompressorFactory(),
+        new Lz4CompressorFactory(), new LzmaCompressorFactory(), new SnappierCompressorFactory(), new ZstdCompressorFactory(), new BZip2CompressorFactory(),
         new XzCompressorFactory()
     ];
 

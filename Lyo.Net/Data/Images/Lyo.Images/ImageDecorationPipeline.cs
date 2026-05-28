@@ -1,3 +1,4 @@
+using System.Text;
 using Lyo.Common.Enums;
 using Lyo.Exceptions;
 using Lyo.Images.Decoration;
@@ -9,7 +10,10 @@ using static Lyo.Images.ImageErrorCodes;
 
 namespace Lyo.Images;
 
-/// <summary>Default <see cref="IImageDecorationPipeline" /> implementation: holds a raster <see cref="Image{Rgba32}" /> or SVG text between stages and applies queued mutations in order.</summary>
+/// <summary>
+/// Default <see cref="IImageDecorationPipeline" /> implementation: holds a raster <see cref="Image{Rgba32}" /> or SVG text between stages and applies queued mutations in
+/// order.
+/// </summary>
 internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
 {
     private readonly ImageServiceOptions _options;
@@ -164,11 +168,13 @@ internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
 
         public bool IsSvg => Svg != null;
 
+        public void Dispose() => Raster?.Dispose();
+
         public static async Task<PipelineState> LoadAsync(byte[] input, CancellationToken ct)
         {
             var state = new PipelineState();
             if (LooksLikeSvg(input))
-                state.Svg = System.Text.Encoding.UTF8.GetString(input);
+                state.Svg = Encoding.UTF8.GetString(input);
             else {
                 await using var ms = new MemoryStream(input, false);
                 state.Raster = await Image.LoadAsync<Rgba32>(ms, ct).ConfigureAwait(false);
@@ -192,7 +198,7 @@ internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
         public async Task WriteAsync(Stream output, ImageFormat? format, int? quality, ImageServiceOptions options, CancellationToken ct)
         {
             if (Svg != null) {
-                var bytes = System.Text.Encoding.UTF8.GetBytes(Svg);
+                var bytes = Encoding.UTF8.GetBytes(Svg);
                 await output.WriteAsync(bytes.AsMemory(0, bytes.Length), ct).ConfigureAwait(false);
                 return;
             }
@@ -202,8 +208,6 @@ internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
             var encoder = fmt == ImageFormat.Png ? ImagePngEncoding.TruecolorForComposites(options.UseFastPngForQrComposites) : ImageEncoderFactory.GetEncoder(fmt, quality);
             await Raster.SaveAsync(output, encoder, ct).ConfigureAwait(false);
         }
-
-        public void Dispose() => Raster?.Dispose();
 
         private static bool LooksLikeSvg(byte[] input)
         {
@@ -218,9 +222,9 @@ internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
             if (i >= input.Length || input[i] != (byte)'<')
                 return false;
 
-            var head = System.Text.Encoding.ASCII.GetString(input, i, Math.Min(256, input.Length - i));
-            return head.StartsWith("<?xml", StringComparison.Ordinal) && head.Contains("<svg", StringComparison.OrdinalIgnoreCase)
-                || head.StartsWith("<svg", StringComparison.OrdinalIgnoreCase);
+            var head = Encoding.ASCII.GetString(input, i, Math.Min(256, input.Length - i));
+            return (head.StartsWith("<?xml", StringComparison.Ordinal) && head.Contains("<svg", StringComparison.OrdinalIgnoreCase)) ||
+                head.StartsWith("<svg", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

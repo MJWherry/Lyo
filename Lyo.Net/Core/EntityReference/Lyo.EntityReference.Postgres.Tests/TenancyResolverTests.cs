@@ -11,14 +11,14 @@ public class TenancyResolverTests
     [Fact]
     public void Resolve_NullFeature_Throws()
     {
-        var ex = Assert.Throws<ArgumentNullException>(() => TenancyResolver.Resolve(CallerTenant, null!, new EntityRefOptions()));
+        var ex = Assert.Throws<ArgumentNullException>(() => TenancyResolver.Resolve(CallerTenant, null!, new()));
         Assert.Equal("feature", ex.ParamName);
     }
 
     [Fact]
     public void Resolve_NullGlobal_Throws()
     {
-        var ex = Assert.Throws<ArgumentNullException>(() => TenancyResolver.Resolve(CallerTenant, new TenancyOptions(), null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => TenancyResolver.Resolve(CallerTenant, new(), null!));
         Assert.Equal("global", ex.ParamName);
     }
 

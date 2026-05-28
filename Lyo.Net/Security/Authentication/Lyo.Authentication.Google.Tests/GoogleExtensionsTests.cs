@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,13 +26,13 @@ public sealed class GoogleExtensionsTests
     [Fact]
     public void AddGoogleProviderFromConfiguration_BindsSection()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> {
-                ["GoogleAuth:ClientId"] = "client-from-config",
-                ["GoogleAuth:ClientSecret"] = "secret-from-config",
-                ["GoogleAuth:RedirectUri"] = "https://api/callback",
-                ["GoogleAuth:HostedDomain"] = "lyolabs.io"
-            })
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["GoogleAuth:ClientId"] = "client-from-config",
+                    ["GoogleAuth:ClientSecret"] = "secret-from-config",
+                    ["GoogleAuth:RedirectUri"] = "https://api/callback",
+                    ["GoogleAuth:HostedDomain"] = "lyolabs.io"
+                })
             .Build();
 
         var services = new ServiceCollection();

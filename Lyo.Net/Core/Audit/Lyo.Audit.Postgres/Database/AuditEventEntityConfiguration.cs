@@ -13,7 +13,7 @@ public sealed class AuditEventEntityConfiguration : IEntityTypeConfiguration<Aud
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.EventType).HasMaxLength(200).IsRequired().HasColumnName("event_type");
         builder.Property(e => e.Timestamp).IsRequired().HasColumnName("timestamp").HasColumnType("timestamp with time zone");
-        builder.MapOptionalFromStringAssociationColumns(500);
+        builder.MapOptionalFromStringAssociationColumns();
         builder.Property(e => e.Message).HasMaxLength(4000).HasColumnName("message");
         builder.Property(e => e.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb").HasMaxLength(8192);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");

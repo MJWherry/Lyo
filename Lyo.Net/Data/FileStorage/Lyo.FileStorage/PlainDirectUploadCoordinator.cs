@@ -108,8 +108,8 @@ internal sealed class PlainDirectUploadCoordinator
 
         var ts = DateTime.UtcNow;
         var meta = new FileStoreResult(
-            fileId, request.OriginalFileName ?? fileId.ToString(), 0, [], fileId.ToString(), 0, [], false, null, null, null, false, null, null,
-            null, null, null, null, null, null, ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, resolvedTenant, FileAvailability.PendingDirectUpload);
+            fileId, request.OriginalFileName ?? fileId.ToString(), 0, [], fileId.ToString(), 0, [], false, null, null, null, false, null, null, null, null, null, null, null, null,
+            ts, normalizedPathPrefix, _options.HashAlgorithm, ctResolved, resolvedTenant, FileAvailability.PendingDirectUpload);
 
         await _metadataService.SaveMetadataAsync(fileId, meta, ct).ConfigureAwait(false);
         await _auditPublisher.PublishAuditAsync(
@@ -158,8 +158,10 @@ internal sealed class PlainDirectUploadCoordinator
                         await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
                 }
 #else
-                await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-                    await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+                {
+                    await using (var spoolWrite = new FileStream(spoolPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
+                        await raw.CopyToAsync(spoolWrite, _copyToBufferSizeBytes, ct).ConfigureAwait(false);
+                }
 #endif
                 var observedLength = new FileInfo(spoolPath).Length;
                 OperationHelpers.ThrowIfLessThan(observedLength, 1, "Direct uploaded object was empty.");
@@ -180,8 +182,10 @@ internal sealed class PlainDirectUploadCoordinator
                         plainHash = ha.ComputeHash(hashStream);
                 }
 #else
-                await using (var hashStream = File.OpenRead(spoolPath))
-                    plainHash = await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false);
+                {
+                    await using (var hashStream = File.OpenRead(spoolPath))
+                        plainHash = await ha.ComputeHashAsync(hashStream, ct).ConfigureAwait(false);
+                }
 #endif
                 FileAvailability availability;
                 if (_options.RequireScanBeforeAvailable) {

@@ -5,10 +5,10 @@ QRCoder's mature renderers; pick the built-in **`BuiltInQRCodeService`** when yo
 
 ## Public API
 
-| Type                                  | Description                                                                                                                                                |
-|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`QRCoderQRCodeService`**            | `IQRCodeService` implementation. No image dependencies — decoration (logo, frame, caption, padding) is the consumer's job via `Lyo.Images.IImageDecorationService`. |
-| **`QRCoderQrCodeServiceExtensions`**  | DI: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`. |
+| Type                                 | Description                                                                                                                                                                              |
+|--------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`QRCoderQRCodeService`**           | `IQRCodeService` implementation. No image dependencies — decoration (logo, frame, caption, padding) is the consumer's job via `Lyo.Images.IImageDecorationService`.                      |
+| **`QRCoderQrCodeServiceExtensions`** | DI: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`. |
 
 ## Usage
 

@@ -1,11 +1,10 @@
-using System;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Models;
 
 /// <summary>
-/// Display-safe projection of an issued token, mirroring the shape returned by <c>GET /tokens</c> and the <c>Record</c> field of <c>POST /tokens</c>. No secret material — only what's
-/// safe to render in a list.
+/// Display-safe projection of an issued token, mirroring the shape returned by <c>GET /tokens</c> and the <c>Record</c> field of <c>POST /tokens</c>. No secret material —
+/// only what's safe to render in a list.
 /// </summary>
 /// <param name="Id">The 11-character Crockford base32 id (also the second-to-last segment of the wire-form token).</param>
 /// <param name="Kind">One of <c>pat</c> / <c>svc</c> / <c>cli</c> / <c>webhook</c>.</param>
@@ -21,15 +20,20 @@ public sealed record AuthTokenSummary(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("kind")] string Kind,
     [property: JsonPropertyName("ring")] string Ring,
-    [property: JsonPropertyName("displayName")] string DisplayName,
+    [property: JsonPropertyName("displayName")]
+    string DisplayName,
     [property: JsonPropertyName("scopes")] string[] Scopes,
-    [property: JsonPropertyName("createdAt")] DateTime CreatedAt,
-    [property: JsonPropertyName("expiresAt")] DateTime? ExpiresAt,
-    [property: JsonPropertyName("lastUsedAt")] DateTime? LastUsedAt,
-    [property: JsonPropertyName("revokedAt")] DateTime? RevokedAt,
-    [property: JsonPropertyName("revokedReason")] string? RevokedReason)
+    [property: JsonPropertyName("createdAt")]
+    DateTime CreatedAt,
+    [property: JsonPropertyName("expiresAt")]
+    DateTime? ExpiresAt,
+    [property: JsonPropertyName("lastUsedAt")]
+    DateTime? LastUsedAt,
+    [property: JsonPropertyName("revokedAt")]
+    DateTime? RevokedAt,
+    [property: JsonPropertyName("revokedReason")]
+    string? RevokedReason)
 {
     /// <summary>Convenience for the UI: true when the token is still good (not revoked, not expired).</summary>
-    public bool IsActive(DateTime now) =>
-        !RevokedAt.HasValue && (!ExpiresAt.HasValue || ExpiresAt.Value > now);
+    public bool IsActive(DateTime now) => !RevokedAt.HasValue && (!ExpiresAt.HasValue || ExpiresAt.Value > now);
 }

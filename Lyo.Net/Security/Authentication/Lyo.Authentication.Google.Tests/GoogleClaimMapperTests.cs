@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Lyo.Authentication.Google.Tests;
 
 public sealed class GoogleClaimMapperTests
@@ -7,14 +5,15 @@ public sealed class GoogleClaimMapperTests
     [Fact]
     public void Map_ReadsCanonicalGoogleClaims()
     {
-        var result = GoogleClaimMapper.Map(new Dictionary<string, object?> {
-            ["sub"] = "abc",
-            ["name"] = "Alice Example",
-            ["email"] = "alice@example.com",
-            ["email_verified"] = true,
-            ["picture"] = "https://example/avatar.png",
-            ["locale"] = "en"
-        });
+        var result = GoogleClaimMapper.Map(
+            new Dictionary<string, object?> {
+                ["sub"] = "abc",
+                ["name"] = "Alice Example",
+                ["email"] = "alice@example.com",
+                ["email_verified"] = true,
+                ["picture"] = "https://example/avatar.png",
+                ["locale"] = "en"
+            });
 
         Assert.Equal("Alice Example", result.DisplayName);
         Assert.Equal("alice@example.com", result.Email);
@@ -27,10 +26,7 @@ public sealed class GoogleClaimMapperTests
     [Fact]
     public void Map_FallsBackToEmailForDisplayName()
     {
-        var result = GoogleClaimMapper.Map(new Dictionary<string, object?> {
-            ["email"] = "alice@example.com"
-        });
-
+        var result = GoogleClaimMapper.Map(new Dictionary<string, object?> { ["email"] = "alice@example.com" });
         Assert.Equal("alice@example.com", result.DisplayName);
         Assert.False(result.EmailVerified);
     }
@@ -38,11 +34,7 @@ public sealed class GoogleClaimMapperTests
     [Fact]
     public void Map_HandlesStringEmailVerified()
     {
-        var result = GoogleClaimMapper.Map(new Dictionary<string, object?> {
-            ["email"] = "bob@example.com",
-            ["email_verified"] = "true"
-        });
-
+        var result = GoogleClaimMapper.Map(new Dictionary<string, object?> { ["email"] = "bob@example.com", ["email_verified"] = "true" });
         Assert.True(result.EmailVerified);
     }
 

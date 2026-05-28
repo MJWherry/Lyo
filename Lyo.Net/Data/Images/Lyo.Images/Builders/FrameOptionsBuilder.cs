@@ -5,11 +5,11 @@ namespace Lyo.Images.Builders;
 /// <summary>Fluent builder for <see cref="FrameOptions" />. Use <see cref="New" /> to start a builder.</summary>
 public sealed class FrameOptionsBuilder
 {
-    private string? _strokeColorHex;
-    private int? _strokeWidthPx;
     private int? _cornerRadiusPx;
     private string? _fillColorHex;
     private int? _paddingPx;
+    private string? _strokeColorHex;
+    private int? _strokeWidthPx;
 
     private FrameOptionsBuilder() { }
 

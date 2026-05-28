@@ -1,10 +1,8 @@
-using System;
-using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
 
 namespace Lyo.Authentication.Postgres.Database;
 
-/// <summary>EF entity for the <c>[user].[event]</c> audit table. Persistence of <see cref="AuthAuditEvent"/>.</summary>
+/// <summary>EF entity for the <c>[user].[event]</c> audit table. Persistence of <see cref="AuthAuditEvent" />.</summary>
 public sealed class UserEventEntity
 {
     /// <summary>Server-generated row id (Guid v4). PK.</summary>

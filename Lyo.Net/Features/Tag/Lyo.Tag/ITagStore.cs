@@ -4,8 +4,8 @@ namespace Lyo.Tag;
 
 /// <summary>Interface for storing and retrieving tags across entities.</summary>
 /// <remarks>
-/// Stores accept <see cref="EntityRef" /> at the API boundary but persist <c>EntityId</c> as a single Guid per Option A. Pass null for <c>tenantId</c> on methods in single-tenant
-/// deployments (resolved via <see cref="EntityRefOptions.DefaultTenantId" />).
+/// Stores accept <see cref="EntityRef" /> at the API boundary but persist <c>EntityId</c> as a single Guid per Option A. Pass null for <c>tenantId</c> on methods in
+/// single-tenant deployments (resolved via <see cref="EntityRefOptions.DefaultTenantId" />).
 /// </remarks>
 public interface ITagStore
 {
@@ -27,12 +27,7 @@ public interface ITagStore
     Task<IReadOnlyList<TagRecord>> GetTagsForEntityAsync(EntityRef forEntity, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Gets all entities with a given tag, optionally filtered by entity type and tag type.</summary>
-    Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(
-        string tag,
-        string? forEntityType = null,
-        string? tagType = null,
-        Guid? tenantId = null,
-        CancellationToken ct = default);
+    Task<IReadOnlyList<TagRecord>> GetEntitiesWithTagAsync(string tag, string? forEntityType = null, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Gets all distinct tag values that have been applied to any entity of the given type, optionally filtered by tag type.</summary>
     Task<IReadOnlyList<string>> GetAllTagsForEntityTypeAsync(string forEntityType, string? tagType = null, Guid? tenantId = null, CancellationToken ct = default);

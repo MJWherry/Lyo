@@ -1,27 +1,29 @@
 # Lyo.Compression.Benchmarks
 
-[BenchmarkDotNet](https://benchmarkdotnet.org/) harness for the `Lyo.Compression` library. It produces reproducible micro and macro benchmarks for every supported algorithm and is the source of the numbers behind [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md).
+[BenchmarkDotNet](https://benchmarkdotnet.org/) harness for the `Lyo.Compression` library. It produces reproducible micro and macro benchmarks for every supported algorithm and is
+the source of the numbers behind [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md).
 
 > Console executable (`<OutputType>Exe</OutputType>`, `net10.0`). Run from a Release build; do not run benchmarks under the debugger.
 
 ## What ships
 
-| File | Suite |
-|------|-------|
-| [`Program.cs`](Program.cs) | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet. |
-| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs) | Baseline GZip compression / decompression at three fixed payload sizes (1 KB, 1 MB, 10 MB). Useful for tracking GZip-specific regressions over time. |
+| File                                                                   | Suite                                                                                                                                                                                                                                                                     |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`Program.cs`](Program.cs)                                             | `BenchmarkSwitcher.FromAssembly(...).Run(args)` — exposes filtering, `--list`, and the interactive picker built into BenchmarkDotNet.                                                                                                                                     |
+| [`GZipCompressionBenchmarks.cs`](GZipCompressionBenchmarks.cs)         | Baseline GZip compression / decompression at three fixed payload sizes (1 KB, 1 MB, 10 MB). Useful for tracking GZip-specific regressions over time.                                                                                                                      |
 | [`AlgorithmComparisonBenchmarks.cs`](AlgorithmComparisonBenchmarks.cs) | Side-by-side compress + decompress for every algorithm on `Lyo.Compression` (GZip, Deflate, ZstdSharp, Snappier, LZ4, LZMA, BZip2, XZ; plus Brotli and ZLib on non-`netstandard2.0` targets). Parameterized over `DataSize` `[1 KB, 1 MB, 10 MB, 100 MB]` via `[Params]`. |
-| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs) | Stream-based compression / decompression for GZip and Zstd at 100 MB, 1 GB, and 2 GB. Validates that the streaming API stays memory-bounded — note the 2 GB run requires enough disk space for the temp file. |
-| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md) | Captured results and analysis. Update after material algorithm or dependency changes. |
+| [`LargeFileStreamingBenchmarks.cs`](LargeFileStreamingBenchmarks.cs)   | Stream-based compression / decompression for GZip and Zstd at 100 MB, 1 GB, and 2 GB. Validates that the streaming API stays memory-bounded — note the 2 GB run requires enough disk space for the temp file.                                                             |
+| [`BENCHMARK_SUMMARY.md`](BENCHMARK_SUMMARY.md)                         | Captured results and analysis. Update after material algorithm or dependency changes.                                                                                                                                                                                     |
 
-All benchmark types are decorated with `[SimpleJob(RuntimeMoniker.HostProcess)]` and `[MemoryDiagnoser]` so the results include managed allocations and run inside the host process for fast iteration.
+All benchmark types are decorated with `[SimpleJob(RuntimeMoniker.HostProcess)]` and `[MemoryDiagnoser]` so the results include managed allocations and run inside the host process
+for fast iteration.
 
 ## Dependencies
 
-| Package | Version |
-|---------|---------|
-| `BenchmarkDotNet` | `0.15.8` |
-| `Lyo.Compression` (project reference) | — |
+| Package                               | Version  |
+|---------------------------------------|----------|
+| `BenchmarkDotNet`                     | `0.15.8` |
+| `Lyo.Compression` (project reference) | —        |
 
 ## Running the benchmarks
 
@@ -55,9 +57,11 @@ Results are written under `BenchmarkDotNet.Artifacts/` next to the binary.
 
 ## Notes / caveats
 
-- Benchmark payloads use `RandomNumberGenerator.Fill(...)` so the data is incompressible by design. That isolates **throughput**; absolute compression ratios on real-world payloads will be very different.
+- Benchmark payloads use `RandomNumberGenerator.Fill(...)` so the data is incompressible by design. That isolates **throughput**; absolute compression ratios on real-world payloads
+  will be very different.
 - `LargeFileStreamingBenchmarks` uses real `FileStream`s and can consume several GB of disk space — run only on a host with sufficient free space.
-- `Brotli` and `ZLib` benchmarks are gated by `#if !NETSTANDARD2_0`. The executable targets `net10.0` today, so both run; if the project is ever multi-targeted, those benchmarks will fall off the `netstandard2.0` matrix.
+- `Brotli` and `ZLib` benchmarks are gated by `#if !NETSTANDARD2_0`. The executable targets `net10.0` today, so both run; if the project is ever multi-targeted, those benchmarks
+  will fall off the `netstandard2.0` matrix.
 - Benchmarks construct `CompressionService` directly (no DI) with `EnableMetrics = false` so metric overhead does not pollute the measurements.
 
 ## See also

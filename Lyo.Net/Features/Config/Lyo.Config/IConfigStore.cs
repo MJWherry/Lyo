@@ -57,8 +57,8 @@ public interface IConfigStore
     Task RevertBindingToRevisionAsync(Guid bindingId, int revision, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
-    /// Same as <see cref="RevertBindingToRevisionAsync(System.Guid,int,System.Guid?,System.Threading.CancellationToken)" /> for the binding resolved from <paramref name="forEntity" /> and
-    /// <paramref name="key" />.
+    /// Same as <see cref="RevertBindingToRevisionAsync(System.Guid,int,System.Guid?,System.Threading.CancellationToken)" /> for the binding resolved from
+    /// <paramref name="forEntity" /> and <paramref name="key" />.
     /// </summary>
     Task RevertBindingToRevisionAsync(EntityRef forEntity, string key, int revision, Guid? tenantId, CancellationToken ct = default);
 }

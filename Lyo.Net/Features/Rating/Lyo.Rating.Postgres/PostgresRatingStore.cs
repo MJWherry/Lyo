@@ -124,7 +124,12 @@ public sealed class PostgresRatingStore : EntityRefPostgresStoreBase, IRatingSto
     }
 
     /// <inheritdoc />
-    public async Task<RatingRecord?> GetForEntityFromEntityAsync(EntityRef forEntity, EntityRef fromEntity, string? subject = null, Guid? tenantId = null, CancellationToken ct = default)
+    public async Task<RatingRecord?> GetForEntityFromEntityAsync(
+        EntityRef forEntity,
+        EntityRef fromEntity,
+        string? subject = null,
+        Guid? tenantId = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         ArgumentHelpers.ThrowIfNull(fromEntity);

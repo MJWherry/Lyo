@@ -9,7 +9,10 @@ public sealed class TenancyOptions
     /// <summary>Override the per-feature tenancy mode. When <see langword="null" /> the feature inherits <see cref="EntityRefOptions.Mode" />.</summary>
     public TenancyMode? Mode { get; set; }
 
-    /// <summary>Override the per-feature default tenant id used by <see cref="TenancyMode.SingleTenantDefault" />. When <see langword="null" /> the feature inherits <see cref="EntityRefOptions.DefaultTenantId" />.</summary>
+    /// <summary>
+    /// Override the per-feature default tenant id used by <see cref="TenancyMode.SingleTenantDefault" />. When <see langword="null" /> the feature inherits
+    /// <see cref="EntityRefOptions.DefaultTenantId" />.
+    /// </summary>
     public Guid? DefaultTenantId { get; set; }
 
     /// <inheritdoc />

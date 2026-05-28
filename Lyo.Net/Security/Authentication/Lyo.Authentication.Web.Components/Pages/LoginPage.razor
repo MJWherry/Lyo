@@ -73,6 +73,7 @@
 
                     @if (_showPasswordCard) {
                         <MudDivider Class="my-2"/>
+
                         <MudText Typo="Typo.overline" Align="Align.Center" Color="Color.Secondary">or</MudText>
 
                         <MudPaper Outlined="true" Class="pa-4">
@@ -160,7 +161,6 @@
         _providers = ProviderCatalog.List();
         _passwordHandler = Services.GetService<IAuthPasswordSignIn>();
         _showPasswordCard = _passwordHandler is not null && Options.Value.EnablePasswordSignIn;
-
         var state = await AuthState.GetAuthenticationStateAsync();
         if (state.User.Identity?.IsAuthenticated == true)
             _currentUser = state.User;
@@ -178,15 +178,10 @@
         _passwordBusy = true;
         _passwordError = null;
         try {
-            var result = await _passwordHandler.SignInAsync(
-                _passwordForm.Username,
-                _passwordForm.Password,
-                _passwordForm.RememberMe,
-                NormalizeReturnUrl(ReturnUrl));
-
+            var result = await _passwordHandler.SignInAsync(_passwordForm.Username, _passwordForm.Password, _passwordForm.RememberMe, NormalizeReturnUrl(ReturnUrl));
             if (result.Succeeded) {
                 _passwordForm.Password = string.Empty;
-                Navigation.NavigateTo(result.ReturnUrl ?? NormalizeReturnUrl(ReturnUrl) ?? "/", forceLoad: false);
+                Navigation.NavigateTo(result.ReturnUrl ?? NormalizeReturnUrl(ReturnUrl) ?? "/", false);
                 return;
             }
 
@@ -216,7 +211,7 @@
 
     private Task GoToReturnUrlAsync()
     {
-        Navigation.NavigateTo(NormalizeReturnUrl(ReturnUrl) ?? "/", forceLoad: false);
+        Navigation.NavigateTo(NormalizeReturnUrl(ReturnUrl) ?? "/", false);
         return Task.CompletedTask;
     }
 
@@ -225,9 +220,7 @@
         if (!string.IsNullOrWhiteSpace(principal.Identity?.Name))
             return principal.Identity!.Name!;
 
-        var subject = principal.FindFirst(LyoJwtClaims.Subject)?.Value
-                      ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
-
+        var subject = principal.FindFirst(LyoJwtClaims.Subject)?.Value ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
         return string.IsNullOrWhiteSpace(subject) ? "this user" : subject!;
     }
 

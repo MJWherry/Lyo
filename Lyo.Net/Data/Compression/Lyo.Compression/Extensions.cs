@@ -9,10 +9,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Compression;
 
-/// <summary>Registers <see cref="CompressionService" /> with Microsoft.Extensions.DependencyInjection. Use <see cref="Extensions.AddDefaultCompressionService{TConcrete}" /> for unkeyed <see cref="ICompressionService" />.</summary>
+/// <summary>
+/// Registers <see cref="CompressionService" /> with Microsoft.Extensions.DependencyInjection. Use <see cref="Extensions.AddDefaultCompressionService{TConcrete}" /> for
+/// unkeyed <see cref="ICompressionService" />.
+/// </summary>
 public static class Extensions
 {
-    /// <summary>Registers the built-in <see cref="ICompressorFactory" /> implementations shipped in the base <c>Lyo.Compression</c> package (GZip, Deflate, and on net10+ Brotli/ZLib). Idempotent.</summary>
+    /// <summary>
+    /// Registers the built-in <see cref="ICompressorFactory" /> implementations shipped in the base <c>Lyo.Compression</c> package (GZip, Deflate, and on net10+ Brotli/ZLib).
+    /// Idempotent.
+    /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddBuiltInCompressors(this IServiceCollection services)
@@ -115,10 +121,8 @@ public static class Extensions
             services.AddKeyedSingleton<CompressionService>(
                 keyedServiceName,
                 (provider, key) => new(
-                    provider.GetServices<ICompressorFactory>(),
-                    provider.GetService<ILogger<CompressionService>>(),
-                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key),
-                    provider.GetService<IMetrics>()));
+                    provider.GetServices<ICompressorFactory>(), provider.GetService<ILogger<CompressionService>>(),
+                    provider.GetRequiredKeyedService<CompressionServiceOptions>(key), provider.GetService<IMetrics>()));
 
             services.AddKeyedSingleton<ICompressionService>(keyedServiceName, (provider, _) => provider.GetRequiredKeyedService<CompressionService>(keyedServiceName));
             return services;

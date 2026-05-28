@@ -7,11 +7,11 @@ This package has **no DI extensions** and **no options**: it is consumed directl
 
 ## Public API
 
-| Type                                       | Description                                                                                                                                                                            |
-|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`ZxingCodeImageDecoder`** (`static`)     | `DecodeQrCode(byte[] imageBytes)` and `DecodeBarcode(byte[] imageBytes)` returning `Result<CodeReadPayload>`.                                                                          |
-| **`CodeReadPayload`** (record)             | `Text` (decoded payload) and `FormatName` (ZXing **`BarcodeFormat`** enum name, e.g. `QR_CODE`, `CODE_128`).                                                                           |
-| **`ZxingDecodeErrorCodes`** (`static`)     | Stable error code constants: **`ZXING_IMAGE_EMPTY`**, **`ZXING_IMAGE_LOAD`**, **`ZXING_NO_QR`**, **`ZXING_NO_BARCODE`**.                                                               |
+| Type                                   | Description                                                                                                              |
+|----------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| **`ZxingCodeImageDecoder`** (`static`) | `DecodeQrCode(byte[] imageBytes)` and `DecodeBarcode(byte[] imageBytes)` returning `Result<CodeReadPayload>`.            |
+| **`CodeReadPayload`** (record)         | `Text` (decoded payload) and `FormatName` (ZXing **`BarcodeFormat`** enum name, e.g. `QR_CODE`, `CODE_128`).             |
+| **`ZxingDecodeErrorCodes`** (`static`) | Stable error code constants: **`ZXING_IMAGE_EMPTY`**, **`ZXING_IMAGE_LOAD`**, **`ZXING_NO_QR`**, **`ZXING_NO_BARCODE`**. |
 
 ### `DecodeQrCode(byte[] imageBytes)`
 
@@ -53,11 +53,11 @@ Callers (e.g. `ZxingBarcodeService`, `QRCoderQrCodeService`) translate `CodeRead
 
 ### NuGet packages
 
-| Package                                | Version    |
-|----------------------------------------|------------|
-| `SixLabors.ImageSharp`                 | `3.*`      |
-| `ZXing.Net`                            | `0.16.11`  |
-| `ZXing.Net.Bindings.ImageSharp.V3`     | `0.16.15`  |
+| Package                            | Version   |
+|------------------------------------|-----------|
+| `SixLabors.ImageSharp`             | `3.*`     |
+| `ZXing.Net`                        | `0.16.11` |
+| `ZXing.Net.Bindings.ImageSharp.V3` | `0.16.15` |
 
 ### Project references
 

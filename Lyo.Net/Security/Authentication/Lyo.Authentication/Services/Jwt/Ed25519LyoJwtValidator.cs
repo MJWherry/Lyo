@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
@@ -21,16 +15,16 @@ using Org.BouncyCastle.Crypto.Signers;
 namespace Lyo.Authentication.Services.Jwt;
 
 /// <summary>
-/// Default <see cref="ILyoJwtValidator"/>. Splits header/payload/signature, verifies the signature against the keystore key for the JWT's <c>kid</c>, checks <c>iss</c>/<c>aud</c>/<c>exp</c>/<c>iat</c>,
-/// rejects <c>alg=none</c> / non-EdDSA algorithms, and consults <see cref="IUserStore"/> for the Option C user-disabled kill switch.
+/// Default <see cref="ILyoJwtValidator" />. Splits header/payload/signature, verifies the signature against the keystore key for the JWT's <c>kid</c>, checks <c>iss</c>/
+/// <c>aud</c>/<c>exp</c>/<c>iat</c>, rejects <c>alg=none</c> / non-EdDSA algorithms, and consults <see cref="IUserStore" /> for the Option C user-disabled kill switch.
 /// </summary>
 public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
 {
-    private readonly IKeyStore _keys;
-    private readonly IUserStore _users;
-    private readonly LyoJwtOptions _options;
     private readonly AuthenticationOptions _authOptions;
+    private readonly IKeyStore _keys;
     private readonly ILogger<Ed25519LyoJwtValidator> _logger;
+    private readonly LyoJwtOptions _options;
+    private readonly IUserStore _users;
 
     /// <summary>Creates a new validator.</summary>
     public Ed25519LyoJwtValidator(
@@ -52,7 +46,7 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
         _logger = logger;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<ClaimsPrincipal?> ValidateAsync(string jwt, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(jwt))
@@ -144,7 +138,7 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
             return null;
         }
 
-        var user = await _users.GetByIdAsync(userId, tenantId: null, ct).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId, null, ct).ConfigureAwait(false);
         if (user is null) {
             _logger.LogDebug("JWT rejected: user {UserId} not found", userId);
             return null;
@@ -182,7 +176,7 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
             claims = claims.Where(c => c.Type != LyoJwtClaims.Scope || current.Contains(c.Value)).ToList();
         }
 
-        var identity = new ClaimsIdentity(claims, authenticationType: "LyoJwt", nameType: LyoJwtClaims.LyoUser, roleType: LyoJwtClaims.Scope);
+        var identity = new ClaimsIdentity(claims, "LyoJwt", LyoJwtClaims.LyoUser, LyoJwtClaims.Scope);
         return new(identity);
     }
 

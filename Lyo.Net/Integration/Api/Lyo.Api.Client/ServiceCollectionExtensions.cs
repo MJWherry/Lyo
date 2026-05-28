@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
 {
     /// <summary>
     /// Adds a compression-aware HttpClientFactory configuration for ApiClient. Uses <see cref="ApiClientOptions" /> to set Accept-Encoding and automatic response decompression.
-    /// When <paramref name="propagateCorrelationId"/> is <c>true</c> (the default), chains <see cref="LyoCorrelationDelegatingHandler"/> as the outermost handler so every outbound
+    /// When <paramref name="propagateCorrelationId" /> is <c>true</c> (the default), chains <see cref="LyoCorrelationDelegatingHandler" /> as the outermost handler so every outbound
     /// request carries the ambient correlation id; opt out by passing <c>false</c> for hosts that don't want stamping (e.g. when the caller already manages headers themselves).
     /// </summary>
     public static IHttpClientBuilder AddLyoApiClient(
@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers the <see cref="LyoCorrelationDelegatingHandler"/> transient + <see cref="CorrelationHandlerOptions"/> + an <see cref="AmbientCorrelationIdResolver"/> fallback if
-    /// no <see cref="ICorrelationIdResolver"/> is already registered. Idempotent (uses <c>TryAdd</c>), so hosts that wire <c>AddLyoDiagnosticsWeb</c> (which registers the
+    /// Registers the <see cref="LyoCorrelationDelegatingHandler" /> transient + <see cref="CorrelationHandlerOptions" /> + an <see cref="AmbientCorrelationIdResolver" />
+    /// fallback if no <see cref="ICorrelationIdResolver" /> is already registered. Idempotent (uses <c>TryAdd</c>), so hosts that wire <c>AddLyoDiagnosticsWeb</c> (which registers the
     /// HTTP-aware resolver via the same <c>TryAdd</c>) keep their resolver.
     /// </summary>
     internal static IServiceCollection AddLyoCorrelationHandlerCore(this IServiceCollection services)
@@ -60,8 +60,8 @@ public static class ServiceCollectionExtensions
         services.AddOptions<CorrelationHandlerOptions>();
         services.TryAddSingleton<ICorrelationIdResolver>(_ => AmbientCorrelationIdResolver.Instance);
         services.TryAddTransient<LyoCorrelationDelegatingHandler>(sp => new(
-            sp.GetRequiredService<ICorrelationIdResolver>(),
-            sp.GetService<IOptions<CorrelationHandlerOptions>>()?.Value));
+            sp.GetRequiredService<ICorrelationIdResolver>(), sp.GetService<IOptions<CorrelationHandlerOptions>>()?.Value));
+
         return services;
     }
 

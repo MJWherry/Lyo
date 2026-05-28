@@ -278,8 +278,8 @@ public abstract class FileStorageServiceBase
     }
 
     /// <summary>
-    /// Maps a file extension to the registered compression algorithm used in <see cref="FileStoreResult" />. Returns <see langword="null" /> for unknown extensions; recognition is
-    /// dynamic and only covers algorithms whose addon assemblies have been loaded (typically via <c>services.Add{Algo}Compressor()</c>).
+    /// Maps a file extension to the registered compression algorithm used in <see cref="FileStoreResult" />. Returns <see langword="null" /> for unknown extensions; recognition
+    /// is dynamic and only covers algorithms whose addon assemblies have been loaded (typically via <c>services.Add{Algo}Compressor()</c>).
     /// </summary>
     protected internal static CompressionAlgorithm? DetermineCompressionAlgorithm(string fileExtension) => CompressionAlgorithm.TryFromExtension(fileExtension);
 

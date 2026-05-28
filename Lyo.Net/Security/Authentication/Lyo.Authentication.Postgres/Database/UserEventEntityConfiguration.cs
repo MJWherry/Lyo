@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Authentication.Postgres.Database;
 
-/// <summary>EF configuration for <see cref="UserEventEntity"/>.</summary>
+/// <summary>EF configuration for <see cref="UserEventEntity" />.</summary>
 public sealed class UserEventEntityConfiguration : IEntityTypeConfiguration<UserEventEntity>
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<UserEventEntity> builder)
     {
         builder.ToTable("event");
@@ -26,16 +26,8 @@ public sealed class UserEventEntityConfiguration : IEntityTypeConfiguration<User
         builder.Property(e => e.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb");
         builder.HasIndex(e => e.Timestamp).HasDatabaseName("ix_user_event_timestamp").IsDescending();
         builder.HasIndex(e => e.Kind).HasDatabaseName("ix_user_event_kind");
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("ix_user_event_user_id")
-            .HasFilter("\"user_id\" IS NOT NULL");
-        builder.HasIndex(e => e.TenantId)
-            .HasDatabaseName("ix_user_event_tenant_id")
-            .HasFilter("\"tenant_id\" IS NOT NULL");
-
-        builder.HasOne<UserEntity>()
-            .WithMany()
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(e => e.UserId).HasDatabaseName("ix_user_event_user_id").HasFilter("\"user_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_user_event_tenant_id").HasFilter("\"tenant_id\" IS NOT NULL");
+        builder.HasOne<UserEntity>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
     }
 }

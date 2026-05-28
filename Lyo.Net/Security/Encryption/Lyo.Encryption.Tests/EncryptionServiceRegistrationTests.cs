@@ -17,7 +17,6 @@ public class EncryptionServiceRegistrationTests
         services.AddAesCcmEncryption();
         services.AddXChaCha20Poly1305Encryption();
         var provider = services.BuildServiceProvider();
-
         Assert.NotNull(provider.GetRequiredService<AesCcmEncryptionService>());
         Assert.NotNull(provider.GetRequiredService<XChaCha20Poly1305EncryptionService>());
     }
@@ -29,7 +28,6 @@ public class EncryptionServiceRegistrationTests
         services.AddSingleton<IKeyStore>(_ => new LocalKeyStore());
         services.AddAesCcmEncryption();
         var provider = services.BuildServiceProvider();
-
         Assert.Null(provider.GetService<IEncryptionService>());
     }
 
@@ -41,7 +39,6 @@ public class EncryptionServiceRegistrationTests
         services.AddAesCcmEncryption();
         services.AddDefaultEncryptionService<AesCcmEncryptionService>();
         var provider = services.BuildServiceProvider();
-
         var concrete = provider.GetRequiredService<AesCcmEncryptionService>();
         var iface = provider.GetRequiredService<IEncryptionService>();
         Assert.Same(concrete, iface);
@@ -56,7 +53,6 @@ public class EncryptionServiceRegistrationTests
         services.AddKeyedLocalKeyStore(keyStoreName, _ => { });
         services.AddAesCcmEncryptionServiceKeyed(keyName, keyStoreName);
         var provider = services.BuildServiceProvider();
-
         Assert.NotNull(provider.GetKeyedService<IEncryptionService>(keyName));
         Assert.NotNull(provider.GetKeyedService<ITwoKeyEncryptionService>(keyName));
     }

@@ -39,7 +39,6 @@ public class FileMetadataEntityConfiguration : IEntityTypeConfiguration<FileMeta
         builder.Property(e => e.Availability).HasMaxLength(32).HasColumnName("availability");
         builder.Property(e => e.DeletedAt).HasColumnType("timestamp with time zone").HasColumnName("deleted_at");
         builder.Property(e => e.OwnerId).HasColumnType("uuid").HasColumnName("owner_id");
-
         builder.HasIndex(e => e.OriginalFileHash).HasDatabaseName("ix_file_metadata_original_file_hash");
         builder.HasIndex(e => e.Timestamp).HasDatabaseName("ix_file_metadata_timestamp");
         builder.HasIndex(e => e.OriginalFileName).HasDatabaseName("ix_file_metadata_original_file_name");

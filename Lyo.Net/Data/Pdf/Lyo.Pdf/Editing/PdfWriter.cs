@@ -117,6 +117,7 @@ public sealed class PdfWriter : IPdfWriter
 #else
         if (stream.CanSeek && stream.CanWrite)
             stream.SetLength(0);
+
         doc.Save(stream);
 #endif
     }
@@ -138,11 +139,9 @@ public sealed class PdfWriter : IPdfWriter
         return Task.CompletedTask;
     }
 #else
-    public Task SaveAsync(string filePath, CancellationToken ct = default)
-        => Task.Run(() => Save(filePath), ct);
+    public Task SaveAsync(string filePath, CancellationToken ct = default) => Task.Run(() => Save(filePath), ct);
 
-    public Task CopyToAsync(Stream stream, CancellationToken ct = default)
-        => Task.Run(() => CopyTo(stream), ct);
+    public Task CopyToAsync(Stream stream, CancellationToken ct = default) => Task.Run(() => CopyTo(stream), ct);
 #endif
 
     public void Dispose()

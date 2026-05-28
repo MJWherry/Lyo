@@ -14,8 +14,8 @@ namespace Lyo.QRCode.QRCoder;
 
 /// <summary>
 /// QR code service implementation using the QRCoder NuGet library. PNG/SVG are cross-platform; JPEG/BMP still require Windows because QRCoder routes them through
-/// <c>System.Drawing</c>. Decoration (logo overlay, frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the returned
-/// bytes for that.
+/// <c>System.Drawing</c>. Decoration (logo overlay, frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the returned bytes for
+/// that.
 /// </summary>
 public class QRCoderQRCodeService : IQRCodeService
 {

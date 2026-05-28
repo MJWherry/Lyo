@@ -1,17 +1,13 @@
-using System;
 using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Authentication.OpenIdConnect.Discovery;
 
 /// <summary>
-/// In-memory, time-bounded cache of OIDC discovery documents. Reduces traffic to the provider's <c>/.well-known/openid-configuration</c> endpoint. Hosts that scale out share nothing
-/// (each replica fetches once per TTL).
+/// In-memory, time-bounded cache of OIDC discovery documents. Reduces traffic to the provider's <c>/.well-known/openid-configuration</c> endpoint. Hosts that scale out share
+/// nothing (each replica fetches once per TTL).
 /// </summary>
 public sealed class OidcDiscoveryCache
 {
@@ -23,7 +19,7 @@ public sealed class OidcDiscoveryCache
     private readonly ILogger<OidcDiscoveryCache> _logger;
     private readonly TimeSpan _ttl;
 
-    /// <summary>Creates a new cache backed by the supplied <paramref name="http"/>. TTL defaults to <see cref="DefaultTtl"/>.</summary>
+    /// <summary>Creates a new cache backed by the supplied <paramref name="http" />. TTL defaults to <see cref="DefaultTtl" />.</summary>
     public OidcDiscoveryCache(HttpClient http, ILogger<OidcDiscoveryCache> logger, TimeSpan? ttl = null)
     {
         ArgumentHelpers.ThrowIfNull(http);
@@ -42,8 +38,8 @@ public sealed class OidcDiscoveryCache
             return entry.Document;
 
         _logger.LogDebug("Fetching OIDC discovery document from {Url}", discoveryUrl);
-        var document = await _http.GetFromJsonAsync<OidcDiscoveryDocument>(discoveryUrl, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"OIDC discovery at '{discoveryUrl}' returned no body.");
+        var document = await _http.GetFromJsonAsync<OidcDiscoveryDocument>(discoveryUrl, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"OIDC discovery at '{discoveryUrl}' returned no body.");
 
         _cache[discoveryUrl] = new(document, now + _ttl);
         return document;
@@ -53,7 +49,7 @@ public sealed class OidcDiscoveryCache
     public bool Invalidate(string discoveryUrl)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(discoveryUrl);
-        return _cache.TryRemove(discoveryUrl, out _);
+        return _cache.TryRemove(discoveryUrl, out var _);
     }
 
     private sealed record CacheEntry(OidcDiscoveryDocument Document, DateTime ExpiresAt);

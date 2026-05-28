@@ -48,12 +48,12 @@ through the standard Razor class-library `_content/Lyo.Pdf.Web.Components/` path
 
 ## Dependencies
 
-| Project / package                  | Role                                       |
-|------------------------------------|--------------------------------------------|
-| `Lyo.Pdf`, `Lyo.Pdf.Models`        | Reader / extraction surface and DTOs       |
-| `Lyo.Web.Components`               | File upload and shared MudBlazor pieces    |
-| `Lyo.Web.WebRenderer`              | HTML → PDF rendering for the workbench     |
-| `MudBlazor`                        | UI primitives                              |
+| Project / package           | Role                                    |
+|-----------------------------|-----------------------------------------|
+| `Lyo.Pdf`, `Lyo.Pdf.Models` | Reader / extraction surface and DTOs    |
+| `Lyo.Web.Components`        | File upload and shared MudBlazor pieces |
+| `Lyo.Web.WebRenderer`       | HTML → PDF rendering for the workbench  |
+| `MudBlazor`                 | UI primitives                           |
 
 ## Related projects
 

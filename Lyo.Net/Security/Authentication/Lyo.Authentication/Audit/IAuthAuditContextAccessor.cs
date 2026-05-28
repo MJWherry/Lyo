@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Audit;
 namespace Lyo.Authentication.Audit;
 
 /// <summary>
-/// Per-request enricher for <see cref="AuthAuditEvent"/> values: provides whatever ambient context (IP, user-agent, correlation id) the current host knows about. Recorders consult
-/// this when their caller didn't supply those fields explicitly. The default <see cref="NullAuthAuditContextAccessor"/> returns nothing.
+/// Per-request enricher for <see cref="AuthAuditEvent" /> values: provides whatever ambient context (IP, user-agent, correlation id) the current host knows about. Recorders
+/// consult this when their caller didn't supply those fields explicitly. The default <see cref="NullAuthAuditContextAccessor" /> returns nothing.
 /// </summary>
 public interface IAuthAuditContextAccessor
 {
@@ -18,18 +18,18 @@ public interface IAuthAuditContextAccessor
     string? CorrelationId { get; }
 }
 
-/// <summary>Default <see cref="IAuthAuditContextAccessor"/> that knows nothing. Registered when the host hasn't supplied a more capable accessor (e.g. an HTTP one).</summary>
+/// <summary>Default <see cref="IAuthAuditContextAccessor" /> that knows nothing. Registered when the host hasn't supplied a more capable accessor (e.g. an HTTP one).</summary>
 public sealed class NullAuthAuditContextAccessor : IAuthAuditContextAccessor
 {
     /// <summary>Singleton instance.</summary>
     public static readonly NullAuthAuditContextAccessor Instance = new();
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string? IpAddress => null;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string? UserAgent => null;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string? CorrelationId => null;
 }

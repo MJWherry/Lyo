@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
 using Lyo.Exceptions;
@@ -13,8 +8,8 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Web.Components.Server;
 
 /// <summary>
-/// Server-side <see cref="IAuthTokenManagementClient"/>. Backed by a typed <see cref="HttpClient"/> that goes through the existing <c>LyoAuthDelegatingHandler</c>, so requests
-/// automatically carry the active bearer and refresh on 401. Pointed at <c>LyoAuthClientOptions.AuthBaseUrl</c>.
+/// Server-side <see cref="IAuthTokenManagementClient" />. Backed by a typed <see cref="HttpClient" /> that goes through the existing <c>LyoAuthDelegatingHandler</c>, so
+/// requests automatically carry the active bearer and refresh on 401. Pointed at <c>LyoAuthClientOptions.AuthBaseUrl</c>.
 /// </summary>
 public sealed class ServerAuthTokenManagementClient : IAuthTokenManagementClient
 {
@@ -29,7 +24,7 @@ public sealed class ServerAuthTokenManagementClient : IAuthTokenManagementClient
         _http = http;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IReadOnlyList<AuthTokenKindDescriptor>?> ListKindsAsync(CancellationToken ct = default)
     {
         using var response = await _http.GetAsync("/tokens/kinds", ct).ConfigureAwait(false);
@@ -39,7 +34,7 @@ public sealed class ServerAuthTokenManagementClient : IAuthTokenManagementClient
         return await response.Content.ReadFromJsonAsync<AuthTokenKindDescriptor[]>(JsonOptions, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IReadOnlyList<AuthTokenSummary>?> ListAsync(bool includeRevoked = false, CancellationToken ct = default)
     {
         using var response = await _http.GetAsync($"/tokens?includeRevoked={(includeRevoked ? "true" : "false")}", ct).ConfigureAwait(false);
@@ -49,7 +44,7 @@ public sealed class ServerAuthTokenManagementClient : IAuthTokenManagementClient
         return await response.Content.ReadFromJsonAsync<AuthTokenSummary[]>(JsonOptions, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<AuthIssuedTokenResult?> CreateAsync(AuthIssueTokenRequest request, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
@@ -60,7 +55,7 @@ public sealed class ServerAuthTokenManagementClient : IAuthTokenManagementClient
         return await response.Content.ReadFromJsonAsync<AuthIssuedTokenResult>(JsonOptions, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> RevokeAsync(string tokenId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tokenId);

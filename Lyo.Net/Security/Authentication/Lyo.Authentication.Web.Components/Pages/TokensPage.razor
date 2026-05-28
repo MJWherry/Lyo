@@ -21,7 +21,9 @@
                     </div>
 
                     @if (_kindsLoading) {
-                        <MudStack AlignItems="AlignItems.Center"><MudProgressCircular Indeterminate="true"/></MudStack>
+                        <MudStack AlignItems="AlignItems.Center">
+                            <MudProgressCircular Indeterminate="true"/>
+                        </MudStack>
                     }
                     else if (_kinds is null) {
                         <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
@@ -85,7 +87,9 @@
                                     <MudText Typo="Typo.subtitle2">Scopes</MudText>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
                                         @if (string.Equals(_form.Kind, ApiTokenKind.Webhook, StringComparison.Ordinal)) {
-                                            <text>Webhook tokens may be issued without scopes — the signature itself is the proof. Pick scopes only if the receiving system also makes scoped calls back into Lyo.</text>
+                                            <text>
+                                                Webhook tokens may be issued without scopes — the signature itself is the proof. Pick scopes only if the receiving system also makes
+                                                scoped calls back into Lyo.</text>
                                         }
                                         else {
                                             <text>Only scopes you currently hold can be granted. The API silently drops scopes you don't possess.</text>
@@ -174,7 +178,9 @@
                     </MudStack>
 
                     @if (_listLoading) {
-                        <MudStack AlignItems="AlignItems.Center"><MudProgressCircular Indeterminate="true"/></MudStack>
+                        <MudStack AlignItems="AlignItems.Center">
+                            <MudProgressCircular Indeterminate="true"/>
+                        </MudStack>
                     }
                     else if (_tokens is null) {
                         <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
@@ -206,7 +212,9 @@
                                         <strong>@token.DisplayName</strong>
                                         <MudText HtmlTag="div" Typo="Typo.caption" Color="Color.Secondary"><code>@token.Id</code></MudText>
                                     </td>
-                                    <td><MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@token.Kind</MudChip></td>
+                                    <td>
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@token.Kind</MudChip>
+                                    </td>
                                     <td>@token.Ring</td>
                                     <td>
                                         @if (token.Scopes.Length == 0) {
@@ -289,7 +297,6 @@
     {
         var session = await SessionAccessor.GetCurrentAsync();
         _availableScopes = session?.Scopes ?? Array.Empty<string>();
-
         await LoadKindsAsync();
         await ReloadTokensAsync();
     }
@@ -332,15 +339,9 @@
         _createError = null;
     }
 
-    private void OnScopesChanged(IReadOnlyCollection<string>? selected)
-    {
-        _form.SelectedScopes = selected is null
-            ? new HashSet<string>(StringComparer.Ordinal)
-            : new HashSet<string>(selected, StringComparer.Ordinal);
-    }
+    private void OnScopesChanged(IReadOnlyCollection<string>? selected) => _form.SelectedScopes = selected is null ? new(StringComparer.Ordinal) : new HashSet<string>(selected, StringComparer.Ordinal);
 
-    private AuthTokenKindDescriptor? SelectedKindDescriptor() =>
-        _kinds?.FirstOrDefault(k => string.Equals(k.Kind, _form.Kind, StringComparison.Ordinal));
+    private AuthTokenKindDescriptor? SelectedKindDescriptor() => _kinds?.FirstOrDefault(k => string.Equals(k.Kind, _form.Kind, StringComparison.Ordinal));
 
     private bool CanSubmit()
     {
@@ -362,17 +363,8 @@
         _creating = true;
         _createError = null;
         try {
-            var lifetime = _form.LifetimeDays is { } days && days > 0
-                ? (int?)(int)TimeSpan.FromDays(days).TotalSeconds
-                : null;
-
-            var result = await TokenClient.CreateAsync(new AuthIssueTokenRequest(
-                DisplayName: _form.DisplayName.Trim(),
-                Kind: _form.Kind,
-                Scopes: _form.SelectedScopes.ToArray(),
-                LifetimeSeconds: lifetime,
-                Metadata: null));
-
+            var lifetime = _form.LifetimeDays is { } days && days > 0 ? (int?)(int)TimeSpan.FromDays(days).TotalSeconds : null;
+            var result = await TokenClient.CreateAsync(new(_form.DisplayName.Trim(), _form.Kind, _form.SelectedScopes.ToArray(), lifetime, null));
             if (result is null) {
                 _createError = "The API rejected the request. Check that you hold the required scope and try again.";
                 return;
@@ -423,13 +415,14 @@
 
     private void DismissReveal() => _lastIssued = null;
 
-    private static string PrettyKind(string kind) => kind switch {
-        ApiTokenKind.Pat => "Personal access token (pat)",
-        ApiTokenKind.Svc => "Service token (svc)",
-        ApiTokenKind.Cli => "CLI token (cli)",
-        ApiTokenKind.Webhook => "Webhook signing token (webhook)",
-        _ => kind
-    };
+    private static string PrettyKind(string kind)
+        => kind switch {
+            ApiTokenKind.Pat => "Personal access token (pat)",
+            ApiTokenKind.Svc => "Service token (svc)",
+            ApiTokenKind.Cli => "CLI token (cli)",
+            ApiTokenKind.Webhook => "Webhook signing token (webhook)",
+            var _ => kind
+        };
 
     private sealed class IssueFormModel
     {

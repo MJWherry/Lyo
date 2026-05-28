@@ -27,4 +27,5 @@ services.AddCompressionServiceFromConfiguration(configuration, CompressionServic
 services.AddDefaultCompressionService<CompressionService>();
 ```
 
-`AddLz4Compressor()` only registers a factory. Pair with [`Lyo.Compression`](../Lyo.Compression/README.md) for `AddCompressionService`, `AddDefaultCompressionService<CompressionService>()`, and keyed registration.
+`AddLz4Compressor()` only registers a factory. Pair with [`Lyo.Compression`](../Lyo.Compression/README.md) for `AddCompressionService`,
+`AddDefaultCompressionService<CompressionService>()`, and keyed registration.

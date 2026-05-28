@@ -1,5 +1,3 @@
-using System;
-
 namespace Lyo.Authentication.Options;
 
 /// <summary>Options controlling Lyo-signed JWT issuance and validation.</summary>
@@ -20,7 +18,7 @@ public sealed class LyoJwtOptions
     /// <summary>How long a freshly-minted refresh token is valid (delivered as <c>lyo_refresh</c> cookie). Default = 30 days.</summary>
     public TimeSpan RefreshTokenLifetime { get; set; } = TimeSpan.FromDays(30);
 
-    /// <summary>The key id under which the signing key is stored in <see cref="Lyo.Keystore.IKeyStore"/>. Default = <c>lyo-sig</c>.</summary>
+    /// <summary>The key id under which the signing key is stored in <see cref="Lyo.Keystore.IKeyStore" />. Default = <c>lyo-sig</c>.</summary>
     public string SigningKeyId { get; set; } = "lyo-sig";
 
     /// <summary>Signing algorithm. Currently only <c>EdDSA</c> (Ed25519) is supported.</summary>
@@ -30,8 +28,8 @@ public sealed class LyoJwtOptions
     public TimeSpan ClockSkew { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// When <c>true</c>, <see cref="Services.Jwt.Ed25519KeyBootstrapper"/> auto-generates a fresh Ed25519 keypair into the keystore on startup if none exists. Default = <c>true</c>.
-    /// Set to <c>false</c> for environments that provision the key out-of-band (e.g. via HSM or a sealed secret).
+    /// When <c>true</c>, <see cref="Services.Jwt.Ed25519KeyBootstrapper" /> auto-generates a fresh Ed25519 keypair into the keystore on startup if none exists. Default =
+    /// <c>true</c>. Set to <c>false</c> for environments that provision the key out-of-band (e.g. via HSM or a sealed secret).
     /// </summary>
     public bool AutoGenerateSigningKey { get; set; } = true;
 }

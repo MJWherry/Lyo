@@ -23,9 +23,7 @@ internal static class FrameDrawer
         var imageX = stroke + pad;
         var imageY = stroke + pad;
         var strokeColor = DecorationGeometry.ParseColorOr(options.StrokeColorHex, Color.Black);
-        var hasFill = !string.IsNullOrWhiteSpace(options.FillColorHex)
-            && DecorationGeometry.TryParseColor(options.FillColorHex, out var fillColor);
-
+        var hasFill = !string.IsNullOrWhiteSpace(options.FillColorHex) && DecorationGeometry.TryParseColor(options.FillColorHex, out var fillColor);
         image.Mutate(ctx => {
             if (hasFill) {
                 var fillPath = DecorationGeometry.RoundedRectPath(stroke / 2f, stroke / 2f, canvasW - stroke, canvasH - stroke, Math.Max(0, radius - stroke / 2f));

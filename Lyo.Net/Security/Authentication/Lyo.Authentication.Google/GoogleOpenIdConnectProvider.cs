@@ -1,17 +1,15 @@
-using System;
-using System.Collections.Generic;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Google;
 
-/// <summary>The Google profile for <see cref="IOpenIdConnectProvider"/>. Reads its configuration from <see cref="GoogleOptions"/>.</summary>
+/// <summary>The Google profile for <see cref="IOpenIdConnectProvider" />. Reads its configuration from <see cref="GoogleOptions" />.</summary>
 public sealed class GoogleOpenIdConnectProvider : IOpenIdConnectProvider
 {
     private readonly GoogleOptions _options;
 
-    /// <summary>Creates a Google provider from <see cref="GoogleOptions"/>.</summary>
+    /// <summary>Creates a Google provider from <see cref="GoogleOptions" />.</summary>
     public GoogleOpenIdConnectProvider(IOptions<GoogleOptions> options)
     {
         ArgumentHelpers.ThrowIfNull(options);
@@ -21,32 +19,31 @@ public sealed class GoogleOpenIdConnectProvider : IOpenIdConnectProvider
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(_options.RedirectUri, nameof(_options.RedirectUri));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string Name => _options.Name;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string DiscoveryUrl => GoogleOptions.DiscoveryUrl;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string ClientId => _options.ClientId;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string ClientSecret => _options.ClientSecret;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string RedirectUri => _options.RedirectUri;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public IReadOnlyList<string> Scopes => [.. _options.Scopes];
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public IReadOnlyDictionary<string, string> ExtraAuthorizeParameters { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
-    /// <inheritdoc/>
-    public OidcClaimMappingResult MapClaims(IReadOnlyDictionary<string, object?> claims)
-        => GoogleClaimMapper.Map(claims);
+    /// <inheritdoc />
+    public OidcClaimMappingResult MapClaims(IReadOnlyDictionary<string, object?> claims) => GoogleClaimMapper.Map(claims);
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public string? PreflightReject(IReadOnlyDictionary<string, object?> claims)
     {
         if (string.IsNullOrWhiteSpace(_options.HostedDomain))

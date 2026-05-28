@@ -1,5 +1,4 @@
 @page "/auth/debug"
-
 @using System.Text
 @using System.Text.Json
 @using Lyo.Authentication.Models.Format
@@ -22,11 +21,15 @@
                 </div>
 
                 @if (_loading) {
-                    <MudStack AlignItems="AlignItems.Center"><MudProgressCircular Indeterminate="true"/></MudStack>
+                    <MudStack AlignItems="AlignItems.Center">
+                        <MudProgressCircular Indeterminate="true"/>
+                    </MudStack>
                 }
                 else if (_snapshot is null) {
                     <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                        No active session. <MudLink Href="/auth/login">Sign in</MudLink> to populate this page.
+                        No active session.
+                        <MudLink Href="/auth/login">Sign in</MudLink>
+                        to populate this page.
                     </MudAlert>
                 }
                 else {
@@ -98,7 +101,10 @@
                             else {
                                 <MudSimpleTable Dense="true" Hover="true">
                                     <thead>
-                                    <tr><th>Type</th><th>Value</th></tr>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Value</th>
+                                    </tr>
                                     </thead>
                                     <tbody>
                                     @foreach (var claim in _snapshot.Claims) {

@@ -13,8 +13,7 @@ public static class QRCoderQrCodeServiceExtensions
 {
     private static void RegisterQRCoderQrCodeService(IServiceCollection services)
         => services.AddSingleton<IQRCodeService>(sp => new QRCoderQRCodeService(
-            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<QRCoderQRCodeService>>() ?? NullLogger<QRCoderQRCodeService>.Instance,
-            sp.GetService<IMetrics>()));
+            sp.GetRequiredService<QRCodeServiceOptions>(), sp.GetService<ILogger<QRCoderQRCodeService>>() ?? NullLogger<QRCoderQRCodeService>.Instance, sp.GetService<IMetrics>()));
 
     extension(IServiceCollection services)
     {

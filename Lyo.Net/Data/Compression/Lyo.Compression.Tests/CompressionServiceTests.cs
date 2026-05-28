@@ -19,40 +19,18 @@ namespace Lyo.Compression.Tests;
 
 public class CompressionServiceTests : IDisposable
 {
-    private readonly ILogger<CompressionService> _logger;
-
-    private readonly IIOTempSession _tempSession;
-
     private static readonly ICompressorFactory[] AllFactories = [
-        new GZipCompressorFactory(),
-        new DeflateCompressorFactory(),
+        new GZipCompressorFactory(), new DeflateCompressorFactory(),
 #if !NETSTANDARD2_0
-        new BrotliCompressorFactory(),
-        new ZLibCompressorFactory(),
+        new BrotliCompressorFactory(), new ZLibCompressorFactory(),
 #endif
-        new Lz4CompressorFactory(),
-        new LzmaCompressorFactory(),
-        new SnappierCompressorFactory(),
-        new ZstdCompressorFactory(),
-        new BZip2CompressorFactory(),
+        new Lz4CompressorFactory(), new LzmaCompressorFactory(), new SnappierCompressorFactory(), new ZstdCompressorFactory(), new BZip2CompressorFactory(),
         new XzCompressorFactory()
     ];
 
-    public static IEnumerable<TheoryDataRow<CompressionAlgorithm>> AllAlgorithms()
-    {
-        yield return new TheoryDataRow<CompressionAlgorithm>(CompressionAlgorithm.GZip);
-        yield return new TheoryDataRow<CompressionAlgorithm>(CompressionAlgorithm.Deflate);
-        yield return new TheoryDataRow<CompressionAlgorithm>(SnappierCompressionAlgorithm.Instance);
-        yield return new TheoryDataRow<CompressionAlgorithm>(ZstdCompressionAlgorithm.Instance);
-        yield return new TheoryDataRow<CompressionAlgorithm>(Lz4CompressionAlgorithm.Instance);
-        yield return new TheoryDataRow<CompressionAlgorithm>(LzmaCompressionAlgorithm.Instance);
-        yield return new TheoryDataRow<CompressionAlgorithm>(BZip2CompressionAlgorithm.Instance);
-        yield return new TheoryDataRow<CompressionAlgorithm>(XzCompressionAlgorithm.Instance);
-#if !NETSTANDARD2_0
-        yield return new TheoryDataRow<CompressionAlgorithm>(CompressionAlgorithm.Brotli);
-        yield return new TheoryDataRow<CompressionAlgorithm>(CompressionAlgorithm.ZLib);
-#endif
-    }
+    private readonly ILogger<CompressionService> _logger;
+
+    private readonly IIOTempSession _tempSession;
 
     public CompressionServiceTests(ITestOutputHelper output)
     {
@@ -67,8 +45,23 @@ public class CompressionServiceTests : IDisposable
 
     public void Dispose() => _tempSession.Dispose();
 
-    private CompressionService NewService(CompressionServiceOptions? options = null, ILogger<CompressionService>? logger = null)
-        => new(AllFactories, logger ?? _logger, options);
+    public static IEnumerable<TheoryDataRow<CompressionAlgorithm>> AllAlgorithms()
+    {
+        yield return new(CompressionAlgorithm.GZip);
+        yield return new(CompressionAlgorithm.Deflate);
+        yield return new(SnappierCompressionAlgorithm.Instance);
+        yield return new(ZstdCompressionAlgorithm.Instance);
+        yield return new(Lz4CompressionAlgorithm.Instance);
+        yield return new(LzmaCompressionAlgorithm.Instance);
+        yield return new(BZip2CompressionAlgorithm.Instance);
+        yield return new(XzCompressionAlgorithm.Instance);
+#if !NETSTANDARD2_0
+        yield return new(CompressionAlgorithm.Brotli);
+        yield return new(CompressionAlgorithm.ZLib);
+#endif
+    }
+
+    private CompressionService NewService(CompressionServiceOptions? options = null, ILogger<CompressionService>? logger = null) => new(AllFactories, logger ?? _logger, options);
 
     [Theory]
     [MemberData(nameof(AllAlgorithms))]
@@ -700,8 +693,7 @@ public class CompressionServiceTests : IDisposable
 
         // Create a scenario where compression might fail - use a very large file with low limit
         var serviceWithLowLimit = new CompressionService(
-            AllFactories,
-            options: new() {
+            AllFactories, options: new() {
                 MaxInputSize = 1024 // 1 KB limit
             });
 
@@ -723,8 +715,7 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFileAsync_OnFailure_NoPartialFileLeft()
     {
         var service = new CompressionService(
-            AllFactories,
-            options: new() {
+            AllFactories, options: new() {
                 MaxInputSize = 1024 // 1 KB limit
             });
 

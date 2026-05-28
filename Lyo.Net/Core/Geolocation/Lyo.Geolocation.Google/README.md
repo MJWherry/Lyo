@@ -15,13 +15,13 @@ This package provides a `GoogleGeolocationService` that implements `IGeolocation
 
 `GoogleOptions` (`SectionName = "GoogleOptions"`) carries:
 
-| Property | Notes |
-|----------|-------|
-| `ApiKey` | Required Google Maps API key. |
-| `BaseUrl` | Defaults to `https://maps.googleapis.com/maps/api`. |
+| Property          | Notes                                                                                         |
+|-------------------|-----------------------------------------------------------------------------------------------|
+| `ApiKey`          | Required Google Maps API key.                                                                 |
+| `BaseUrl`         | Defaults to `https://maps.googleapis.com/maps/api`.                                           |
 | `DefaultLanguage` | Optional `language=` parameter applied to geocoding, reverse-geocoding, and directions calls. |
-| `DefaultRegion` | Optional `region=` bias applied to geocoding calls. |
-| `TimeoutSeconds` | Used to construct the default `HttpClient` (30 s by default). |
+| `DefaultRegion`   | Optional `region=` bias applied to geocoding calls.                                           |
+| `TimeoutSeconds`  | Used to construct the default `HttpClient` (30 s by default).                                 |
 
 ```csharp
 var options = new GoogleOptions
@@ -84,7 +84,6 @@ var tzFromAddress = await service.GetTimeZoneAsync("1600 Amphitheatre Parkway, M
 - HTTP failures surface as `ServiceUnavailableException`; non-JSON responses surface as `InvalidFormatException`; empty result sets surface as `NotFoundException`.
 - The implementation uses direct HTTP calls to Google Maps REST APIs. The `Geo.Google` NuGet package is referenced for shared types and can be used for additional Google Maps
   functionality if needed.
-
 
 ## Dependencies
 

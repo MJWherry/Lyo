@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
@@ -10,7 +5,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Services.Refresh;
 
-/// <summary>Default <see cref="ILyoRefreshTokenIssuer"/>. Thin wrapper over <see cref="IApiTokenIssuer"/>.</summary>
+/// <summary>Default <see cref="ILyoRefreshTokenIssuer" />. Thin wrapper over <see cref="IApiTokenIssuer" />.</summary>
 public sealed class DefaultLyoRefreshTokenIssuer : ILyoRefreshTokenIssuer
 {
     /// <summary>Metadata key storing the originating provider name on a refresh token.</summary>
@@ -31,28 +26,16 @@ public sealed class DefaultLyoRefreshTokenIssuer : ILyoRefreshTokenIssuer
         _issuer = issuer;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<IssuedApiToken> IssueAsync(Guid userId, string parentJti, TimeSpan lifetime, string provider, string? externalSubject, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(parentJti);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
-        var metadata = new Dictionary<string, object?> {
-            [ParentJtiMetadataKey] = parentJti,
-            ["user_id"] = userId.ToString("D"),
-            [ProviderMetadataKey] = provider
-        };
-
+        var metadata = new Dictionary<string, object?> { [ParentJtiMetadataKey] = parentJti, ["user_id"] = userId.ToString("D"), [ProviderMetadataKey] = provider };
         if (!string.IsNullOrWhiteSpace(externalSubject))
             metadata[ExternalSubjectMetadataKey] = externalSubject;
 
-        var request = new ApiTokenIssueRequest(
-            Kind: ApiTokenKind.Internal,
-            DisplayName: "Lyo refresh token",
-            Scopes: [LyoRefreshTokenScopes.Refresh],
-            UserId: userId,
-            Lifetime: lifetime,
-            Metadata: metadata);
-
+        var request = new ApiTokenIssueRequest(ApiTokenKind.Internal, "Lyo refresh token", [LyoRefreshTokenScopes.Refresh], userId, Lifetime: lifetime, Metadata: metadata);
         return _issuer.IssueAsync(request, ct);
     }
 }

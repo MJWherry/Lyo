@@ -4,8 +4,8 @@ Reusable **Blazor / MudBlazor** components for exercising the **`IBarcodeService
 
 ## Components
 
-| Component                 | Purpose                                                                                                                                                                              |
-|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Component                  | Purpose                                                                                                                                                                                                                                                                  |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **`<BarcodeWorkbench />`** | Generate **Code 128** barcodes in BMP or SVG, with controls for module width, bar height, quiet zone, bar/background/border colors, optional human-readable caption (font, gap, padding, color override), and live preview/download via `IBarcodeService.GenerateAsync`. |
 
 ## DI / required services

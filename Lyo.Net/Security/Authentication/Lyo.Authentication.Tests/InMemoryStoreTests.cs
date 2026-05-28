@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
@@ -16,20 +14,17 @@ public class InMemoryStoreTests
         var store = new InMemoryApiTokenStore();
         var (plaintext, id, hash) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
         var record = new ApiTokenRecord(
-            id, hash, ApiTokenKind.Pat, ApiTokenRing.Live,
-            UserId: Guid.NewGuid(), DisplayName: "test", Scopes: ["people.read"], Metadata: null,
-            CreatedAt: DateTime.UtcNow, UpdatedAt: null, ExpiresAt: null, LastUsedAt: null,
-            RevokedAt: null, RevokedReason: null, RotatedFromId: null);
+            id, hash, ApiTokenKind.Pat, ApiTokenRing.Live, Guid.NewGuid(), "test", ["people.read"], null, DateTime.UtcNow, null, null, null, null, null, null);
 
-        await store.InsertAsync(record, tenantId: null);
-        var fetched = await store.GetByIdAsync(id, tenantId: null);
+        await store.InsertAsync(record, null);
+        var fetched = await store.GetByIdAsync(id, null);
         Assert.NotNull(fetched);
         Assert.Equal(id, fetched!.Id);
-        await store.TouchLastUsedAsync(id, DateTime.UtcNow, tenantId: null);
-        fetched = await store.GetByIdAsync(id, tenantId: null);
+        await store.TouchLastUsedAsync(id, DateTime.UtcNow, null);
+        fetched = await store.GetByIdAsync(id, null);
         Assert.NotNull(fetched!.LastUsedAt);
-        await store.RevokeAsync(id, DateTime.UtcNow, "test", tenantId: null);
-        fetched = await store.GetByIdAsync(id, tenantId: null);
+        await store.RevokeAsync(id, DateTime.UtcNow, "test", null);
+        fetched = await store.GetByIdAsync(id, null);
         Assert.NotNull(fetched!.RevokedAt);
         Assert.Equal("test", fetched.RevokedReason);
         Assert.NotNull(plaintext);
@@ -40,8 +35,8 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryApiTokenStore();
         var record = NewTokenRecord();
-        await store.InsertAsync(record, tenantId: null);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, tenantId: null));
+        await store.InsertAsync(record, null);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.InsertAsync(record, null));
     }
 
     [Fact]
@@ -50,10 +45,10 @@ public class InMemoryStoreTests
         var store = new InMemoryApiTokenStore();
         var u1 = Guid.NewGuid();
         var u2 = Guid.NewGuid();
-        await store.InsertAsync(NewTokenRecord(u1), tenantId: null);
-        await store.InsertAsync(NewTokenRecord(u1), tenantId: null);
-        await store.InsertAsync(NewTokenRecord(u2), tenantId: null);
-        var list = await store.ListForUserAsync(u1, includeRevoked: false, tenantId: null);
+        await store.InsertAsync(NewTokenRecord(u1), null);
+        await store.InsertAsync(NewTokenRecord(u1), null);
+        await store.InsertAsync(NewTokenRecord(u2), null);
+        var list = await store.ListForUserAsync(u1, false, null);
         Assert.Equal(2, list.Count);
     }
 
@@ -62,10 +57,10 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var user = NewUser();
-        await store.CreateAsync(user, tenantId: null);
-        Assert.Equal(user.Id, (await store.GetByIdAsync(user.Id, tenantId: null))!.Id);
-        Assert.Equal(user.Id, (await store.GetByEmailAsync(user.Email, tenantId: null))!.Id);
-        Assert.Null(await store.GetByEmailAsync("ghost@example.com", tenantId: null));
+        await store.CreateAsync(user, null);
+        Assert.Equal(user.Id, (await store.GetByIdAsync(user.Id, null))!.Id);
+        Assert.Equal(user.Id, (await store.GetByEmailAsync(user.Email, null))!.Id);
+        Assert.Null(await store.GetByEmailAsync("ghost@example.com", null));
     }
 
     [Fact]
@@ -74,8 +69,8 @@ public class InMemoryStoreTests
         var store = new InMemoryUserStore();
         var a = NewUser();
         var b = NewUser() with { Email = a.Email };
-        await store.CreateAsync(a, tenantId: null);
-        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, tenantId: null));
+        await store.CreateAsync(a, null);
+        await Assert.ThrowsAnyAsync<InvalidOperationException>(() => store.CreateAsync(b, null));
     }
 
     [Fact]
@@ -83,9 +78,9 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryUserStore();
         var u = NewUser();
-        await store.CreateAsync(u, tenantId: null);
-        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked", tenantId: null);
-        var disabled = await store.GetByIdAsync(u.Id, tenantId: null);
+        await store.CreateAsync(u, null);
+        await store.SetDisabledAsync(u.Id, DateTime.UtcNow, "kicked", null);
+        var disabled = await store.GetByIdAsync(u.Id, null);
         Assert.True(disabled!.IsDisabled);
         Assert.Equal("kicked", disabled.DisabledReason);
     }
@@ -95,13 +90,13 @@ public class InMemoryStoreTests
     {
         var store = new InMemoryExternalIdentityStore();
         var userId = Guid.NewGuid();
-        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", new[] { "admin" }, null, tenantId: null);
+        var link = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", new[] { "admin" }, null, null);
         Assert.NotEqual(Guid.Empty, link.Id);
-        var found = await store.FindByProviderSubjectAsync("google", "sub-1", tenantId: null);
+        var found = await store.FindByProviderSubjectAsync("google", "sub-1", null);
         Assert.NotNull(found);
-        await store.UnlinkAsync(link.Id, DateTime.UtcNow, tenantId: null);
-        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1", tenantId: null));
-        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", System.Array.Empty<string>(), null, tenantId: null);
+        await store.UnlinkAsync(link.Id, DateTime.UtcNow, null);
+        Assert.Null(await store.FindByProviderSubjectAsync("google", "sub-1", null));
+        var relink = await store.LinkAsync(userId, "google", "sub-1", "x@example.com", Array.Empty<string>(), null, null);
         Assert.NotEqual(link.Id, relink.Id);
     }
 
@@ -109,25 +104,11 @@ public class InMemoryStoreTests
     {
         var (_, id, hash) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
         return new(
-            id, hash, ApiTokenKind.Pat, ApiTokenRing.Live,
-            UserId: userId ?? Guid.NewGuid(), DisplayName: "test", Scopes: System.Array.Empty<string>(), Metadata: null,
-            CreatedAt: DateTime.UtcNow, UpdatedAt: null, ExpiresAt: null, LastUsedAt: null,
-            RevokedAt: null, RevokedReason: null, RotatedFromId: null);
+            id, hash, ApiTokenKind.Pat, ApiTokenRing.Live, userId ?? Guid.NewGuid(), "test", Array.Empty<string>(), null, DateTime.UtcNow, null, null, null, null, null, null);
     }
 
-    private static LyoUser NewUser() => new(
-        Id: Guid.NewGuid(),
-        DisplayName: "Test " + Guid.NewGuid().ToString("N").Substring(0, 8),
-        Email: $"user-{Guid.NewGuid():N}@example.com",
-        EmailVerified: true,
-        AvatarUrl: null,
-        PreferredLanguageBcp47: null,
-        Scopes: System.Array.Empty<string>(),
-        Metadata: null,
-        PersonId: null,
-        CreatedAt: DateTime.UtcNow,
-        UpdatedAt: null,
-        LastLoginAt: null,
-        DisabledAt: null,
-        DisabledReason: null);
+    private static LyoUser NewUser()
+        => new(
+            Guid.NewGuid(), "Test " + Guid.NewGuid().ToString("N").Substring(0, 8), $"user-{Guid.NewGuid():N}@example.com", true, null, null, Array.Empty<string>(), null, null,
+            DateTime.UtcNow, null, null, null, null);
 }

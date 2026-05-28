@@ -5,9 +5,9 @@ gateway test harness.
 
 ## Components
 
-| Component                       | Purpose                                                                                                                       |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| **`<BarcodeTestWorkbench />`**  | Page-level wrapper that titles the surface ("Barcode test workbench") and renders `<BarcodeWorkbench />`. No extra parameters. |
+| Component                      | Purpose                                                                                                                        |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| **`<BarcodeTestWorkbench />`** | Page-level wrapper that titles the surface ("Barcode test workbench") and renders `<BarcodeWorkbench />`. No extra parameters. |
 
 ## DI / required services
 

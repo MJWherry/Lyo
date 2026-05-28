@@ -80,7 +80,8 @@ internal static class OverlayDrawer
         if (options.DrawBorder) {
             var strokeHex = string.IsNullOrWhiteSpace(options.BorderColorHex) ? "#334155" : options.BorderColorHex!;
             var strokeWidth = Math.Max(1, options.BorderStrokeWidthPx);
-            border = $"  <rect x=\"{ix - 1}\" y=\"{iy - 1}\" width=\"{iconSize + 2}\" height=\"{iconSize + 2}\" fill=\"none\" stroke=\"{strokeHex}\" stroke-width=\"{strokeWidth}\"/>\n";
+            border =
+                $"  <rect x=\"{ix - 1}\" y=\"{iy - 1}\" width=\"{iconSize + 2}\" height=\"{iconSize + 2}\" fill=\"none\" stroke=\"{strokeHex}\" stroke-width=\"{strokeWidth}\"/>\n";
         }
 
         var img =

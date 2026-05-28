@@ -95,27 +95,27 @@ metadata are cached on hot paths.
 When `IMetrics` is registered, `BaseWhereClauseService` emits durations and counters
 under `Lyo.Query.Constants.Metrics`:
 
-| Name                                            | Kind             |
-|-------------------------------------------------|------------------|
-| `query.filter.apply_query_node.duration`        | histogram/timer  |
-| `query.filter.apply_query_node.success`         | counter          |
-| `query.filter.sort_by_property.duration`        | histogram/timer  |
-| `query.filter.sort_by_property.success`         | counter          |
-| `query.filter.apply_ordering.duration`          | histogram/timer  |
-| `query.filter.apply_ordering.success`           | counter          |
-| `query.filter.matches_query_node.duration`      | histogram/timer  |
-| `query.filter.matches_query_node.success`       | counter          |
-| `query.filter.sort_by_count`                    | gauge            |
+| Name                                       | Kind            |
+|--------------------------------------------|-----------------|
+| `query.filter.apply_query_node.duration`   | histogram/timer |
+| `query.filter.apply_query_node.success`    | counter         |
+| `query.filter.sort_by_property.duration`   | histogram/timer |
+| `query.filter.sort_by_property.success`    | counter         |
+| `query.filter.apply_ordering.duration`     | histogram/timer |
+| `query.filter.apply_ordering.success`      | counter         |
+| `query.filter.matches_query_node.duration` | histogram/timer |
+| `query.filter.matches_query_node.success`  | counter         |
+| `query.filter.sort_by_count`               | gauge           |
 
 Tag keys: `entity_type`, `operation`.
 
 ## Mental model vs `Lyo.Api`
 
-| Concern                                                        | `Lyo.Query`            | `Lyo.Api`                                |
-|----------------------------------------------------------------|------------------------|------------------------------------------|
-| JSON DTOs / builders                                           | `Lyo.Query.Models`     | Endpoints compose those DTOs             |
-| AST → LINQ                                                     | **This package**       | Wires authenticated CRUD/query endpoints |
-| EF Core specifics (tracking, Include graphs, compiled queries) | Stays mostly outside   | Implemented in the mapper pipeline       |
+| Concern                                                        | `Lyo.Query`          | `Lyo.Api`                                |
+|----------------------------------------------------------------|----------------------|------------------------------------------|
+| JSON DTOs / builders                                           | `Lyo.Query.Models`   | Endpoints compose those DTOs             |
+| AST → LINQ                                                     | **This package**     | Wires authenticated CRUD/query endpoints |
+| EF Core specifics (tracking, Include graphs, compiled queries) | Stays mostly outside | Implemented in the mapper pipeline       |
 
 `Lyo.Query` is reusable library logic; `Lyo.Api` adds HTTP, authorization, and EF
 integration.

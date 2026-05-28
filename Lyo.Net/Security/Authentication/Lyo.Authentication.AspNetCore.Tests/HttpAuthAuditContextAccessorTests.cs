@@ -1,6 +1,6 @@
+using System.Net;
 using Lyo.Authentication.AspNetCore.Audit;
 using Lyo.Diagnostic.Correlation;
-using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Authentication.AspNetCore.Tests;
 
@@ -11,7 +11,6 @@ public sealed class HttpAuthAuditContextAccessorTests
     {
         var resolver = new StubResolver("resolved-id");
         var accessor = new HttpAuthAuditContextAccessor(new HttpContextAccessor(), resolver);
-
         Assert.Equal("resolved-id", accessor.CorrelationId);
         Assert.Equal(1, resolver.CallCount);
     }
@@ -21,21 +20,15 @@ public sealed class HttpAuthAuditContextAccessorTests
     {
         var resolver = new StubResolver("");
         var accessor = new HttpAuthAuditContextAccessor(new HttpContextAccessor(), resolver);
-
         Assert.Null(accessor.CorrelationId);
     }
 
     [Fact]
     public void IpAndUserAgent_SourcedFromHttpContext()
     {
-        var httpContextAccessor = new HttpContextAccessor {
-            HttpContext = new DefaultHttpContext {
-                Connection = { RemoteIpAddress = System.Net.IPAddress.Parse("203.0.113.5") },
-            },
-        };
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext { Connection = { RemoteIpAddress = IPAddress.Parse("203.0.113.5") } } };
         httpContextAccessor.HttpContext!.Request.Headers.UserAgent = "ua/test";
         var accessor = new HttpAuthAuditContextAccessor(httpContextAccessor, new StubResolver("ignored"));
-
         Assert.Equal("203.0.113.5", accessor.IpAddress);
         Assert.Equal("ua/test", accessor.UserAgent);
     }

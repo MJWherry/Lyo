@@ -1,6 +1,6 @@
 namespace Lyo.Authentication.Models.Records;
 
-/// <summary>Canonical claim names used on Lyo-issued JWTs and the projected ASP.NET <see cref="System.Security.Claims.ClaimsPrincipal"/>.</summary>
+/// <summary>Canonical claim names used on Lyo-issued JWTs and the projected ASP.NET <see cref="System.Security.Claims.ClaimsPrincipal" />.</summary>
 public static class LyoJwtClaims
 {
     /// <summary>Standard <c>iss</c>.</summary>

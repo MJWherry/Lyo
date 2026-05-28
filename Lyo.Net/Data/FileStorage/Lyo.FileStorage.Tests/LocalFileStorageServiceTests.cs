@@ -40,15 +40,13 @@ public class LocalFileStorageServiceTests : IDisposable
         _tempSession.Dispose();
     }
 
-    private static ICompressorFactory[] BuiltInCompressorFactories() =>
-    [
-        new GZipCompressorFactory(),
-        new DeflateCompressorFactory(),
+    private static ICompressorFactory[] BuiltInCompressorFactories()
+        => [
+            new GZipCompressorFactory(), new DeflateCompressorFactory(),
 #if !NETSTANDARD2_0
-        new BrotliCompressorFactory(),
-        new ZLibCompressorFactory(),
+            new BrotliCompressorFactory(), new ZLibCompressorFactory(),
 #endif
-    ];
+        ];
 
     private static CompressionService CreateTestCompressionService() => new(BuiltInCompressorFactories());
 

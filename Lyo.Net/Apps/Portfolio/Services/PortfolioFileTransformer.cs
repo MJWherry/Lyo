@@ -51,6 +51,11 @@ public sealed class PortfolioFileTransformer
 {
     public const long MaxUploadBytes = 100L * 1024 * 1024;
 
+    private static readonly ICompressorFactory[] AllCompressorFactories = [
+        new GZipCompressorFactory(), new DeflateCompressorFactory(), new BrotliCompressorFactory(), new ZLibCompressorFactory(), new Lz4CompressorFactory(),
+        new LzmaCompressorFactory(), new SnappierCompressorFactory(), new ZstdCompressorFactory(), new BZip2CompressorFactory(), new XzCompressorFactory()
+    ];
+
     public async Task<PortfolioTransformResult> TransformAsync(PortfolioUploadedFile file, PortfolioTransformOptions options, CancellationToken ct = default)
     {
         OperationHelpers.ThrowIf(file.Content.Length == 0, "Please upload a file first.");
@@ -447,19 +452,6 @@ public sealed class PortfolioFileTransformer
             (service as IDisposable)?.Dispose();
         }
     }
-
-    private static readonly ICompressorFactory[] AllCompressorFactories = [
-        new GZipCompressorFactory(),
-        new DeflateCompressorFactory(),
-        new BrotliCompressorFactory(),
-        new ZLibCompressorFactory(),
-        new Lz4CompressorFactory(),
-        new LzmaCompressorFactory(),
-        new SnappierCompressorFactory(),
-        new ZstdCompressorFactory(),
-        new BZip2CompressorFactory(),
-        new XzCompressorFactory()
-    ];
 
     private static StepResult Compress(byte[] bytes, string fileName, CompressionAlgorithm algorithm)
     {

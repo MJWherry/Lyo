@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
@@ -14,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
-/// <summary>PostgreSQL implementation of <see cref="IExternalIdentityStore"/>. Persists OIDC identity links to <c>[user].[linked_identity]</c>.</summary>
+/// <summary>PostgreSQL implementation of <see cref="IExternalIdentityStore" />. Persists OIDC identity links to <c>[user].[linked_identity]</c>.</summary>
 public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
 {
     private readonly IDbContextFactory<UserDbContext> _contextFactory;
@@ -22,10 +17,7 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
     private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new store.</summary>
-    public PostgresExternalIdentityStore(
-        IDbContextFactory<UserDbContext> contextFactory,
-        IOptions<EntityRefOptions> entityRefOptions,
-        IOptions<PostgresUserOptions> userOptions)
+    public PostgresExternalIdentityStore(IDbContextFactory<UserDbContext> contextFactory, IOptions<EntityRefOptions> entityRefOptions, IOptions<PostgresUserOptions> userOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(entityRefOptions);
@@ -35,27 +27,21 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         _featureTenancy = userOptions.Value.Tenancy;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.LinkedIdentities
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                l => l.TenantId == resolvedTenant
-                    && l.Provider == provider
-                    && l.Subject == subject
-                    && l.UnlinkedTimestamp == null,
-                ct)
+        var entity = await context.LinkedIdentities.AsNoTracking()
+            .FirstOrDefaultAsync(l => l.TenantId == resolvedTenant && l.Provider == provider && l.Subject == subject && l.UnlinkedTimestamp == null, ct)
             .ConfigureAwait(false);
 
         return entity is null ? null : ToRecord(entity);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<LinkedIdentity> LinkAsync(
         Guid userId,
         string provider,
@@ -71,13 +57,8 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         ArgumentHelpers.ThrowIfNull(scopes);
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = await context.LinkedIdentities
-            .FirstOrDefaultAsync(
-                l => l.TenantId == resolvedTenant
-                    && l.Provider == provider
-                    && l.Subject == subject
-                    && l.UnlinkedTimestamp == null,
-                ct)
+        var existing = await context.LinkedIdentities.FirstOrDefaultAsync(
+                l => l.TenantId == resolvedTenant && l.Provider == provider && l.Subject == subject && l.UnlinkedTimestamp == null, ct)
             .ConfigureAwait(false);
 
         var now = DateTime.UtcNow;
@@ -116,13 +97,12 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         return ToRecord(entity);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default)
     {
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var rows = await context.LinkedIdentities
-            .AsNoTracking()
+        var rows = await context.LinkedIdentities.AsNoTracking()
             .Where(l => l.UserId == userId && l.TenantId == resolvedTenant && l.UnlinkedTimestamp == null)
             .OrderBy(l => l.LinkedTimestamp)
             .ToListAsync(ct)
@@ -131,35 +111,21 @@ public sealed class PostgresExternalIdentityStore : IExternalIdentityStore
         return rows.Select(ToRecord).ToArray();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var rows = await context.LinkedIdentities
-            .Where(l => l.Id == linkedIdentityId && l.TenantId == resolvedTenant)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(l => l.UnlinkedTimestamp, utcNow)
-                    .SetProperty(l => l.UpdatedTimestamp, utcNow),
-                ct)
+        var rows = await context.LinkedIdentities.Where(l => l.Id == linkedIdentityId && l.TenantId == resolvedTenant)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(l => l.UnlinkedTimestamp, utcNow).SetProperty(l => l.UpdatedTimestamp, utcNow), ct)
             .ConfigureAwait(false);
 
         if (rows == 0)
             throw new InvalidOperationException($"Linked identity '{linkedIdentityId}' not found.");
     }
 
-    private static LinkedIdentity ToRecord(LinkedIdentityEntity entity) =>
-        new(
-            Id: entity.Id,
-            UserId: entity.UserId,
-            Provider: entity.Provider,
-            Subject: entity.Subject,
-            EmailAtLink: entity.EmailAtLink,
-            Scopes: JsonHelper.DeserializeStringList(entity.ScopesJson),
-            RawClaims: JsonHelper.DeserializeMetadata(entity.RawClaimsJson),
-            LinkedAt: entity.LinkedTimestamp,
-            UpdatedAt: entity.UpdatedTimestamp,
-            LastUsedAt: entity.LastUsedTimestamp,
-            UnlinkedAt: entity.UnlinkedTimestamp);
+    private static LinkedIdentity ToRecord(LinkedIdentityEntity entity)
+        => new(
+            entity.Id, entity.UserId, entity.Provider, entity.Subject, entity.EmailAtLink, JsonHelper.DeserializeStringList(entity.ScopesJson),
+            JsonHelper.DeserializeMetadata(entity.RawClaimsJson), entity.LinkedTimestamp, entity.UpdatedTimestamp, entity.LastUsedTimestamp, entity.UnlinkedTimestamp);
 }

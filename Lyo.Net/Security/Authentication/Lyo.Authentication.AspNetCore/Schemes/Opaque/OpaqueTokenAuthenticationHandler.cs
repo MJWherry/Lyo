@@ -1,33 +1,26 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Lyo.Authentication.AspNetCore.Defaults;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
-using LyoJwtClaims = Lyo.Authentication.Models.Records.LyoJwtClaims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using LyoJwtClaims = Lyo.Authentication.Models.Records.LyoJwtClaims;
 
 namespace Lyo.Authentication.AspNetCore.Schemes.Opaque;
 
-/// <summary>ASP.NET Core authentication handler for Format-B opaque Lyo tokens. Delegates to <see cref="IApiTokenValidator"/>.</summary>
+/// <summary>ASP.NET Core authentication handler for Format-B opaque Lyo tokens. Delegates to <see cref="IApiTokenValidator" />.</summary>
 public sealed class OpaqueTokenAuthenticationHandler : AuthenticationHandler<OpaqueTokenAuthenticationOptions>
 {
     private readonly IApiTokenValidator _validator;
 
     /// <summary>Creates a new handler.</summary>
-    public OpaqueTokenAuthenticationHandler(
-        IOptionsMonitor<OpaqueTokenAuthenticationOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder,
-        IApiTokenValidator validator)
-        : base(options, logger, encoder) =>
-        _validator = validator;
+    public OpaqueTokenAuthenticationHandler(IOptionsMonitor<OpaqueTokenAuthenticationOptions> options, ILoggerFactory logger, UrlEncoder encoder, IApiTokenValidator validator)
+        : base(options, logger, encoder)
+        => _validator = validator;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var token = ExtractCredential();
@@ -77,6 +70,6 @@ public sealed class OpaqueTokenAuthenticationHandler : AuthenticationHandler<Opa
         foreach (var scope in principal.Scopes)
             claims.Add(new(LyoJwtClaims.Scope, scope));
 
-        return new(claims, LyoAuthenticationSchemes.OpaqueToken, nameType: LyoJwtClaims.LyoUser, roleType: LyoJwtClaims.Scope);
+        return new(claims, LyoAuthenticationSchemes.OpaqueToken, LyoJwtClaims.LyoUser, LyoJwtClaims.Scope);
     }
 }

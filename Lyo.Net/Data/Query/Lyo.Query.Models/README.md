@@ -14,11 +14,11 @@ Targets `netstandard2.0;net10.0`. Depends on `Lyo.Exceptions` and `Lyo.Common`.
 
 ## Where-clause AST
 
-| Type                       | Role                                                                                              |
-|----------------------------|---------------------------------------------------------------------------------------------------|
-| `WhereClause` (abstract)   | Root of the polymorphic filter tree. `[JsonDerivedType]` discriminators are `condition` / `group`. Carries optional `Description` and `SubClause` (two-phase filter chain). |
-| `ConditionClause`          | Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Implements `IEquatable<ConditionClause>` and `Print(indent)`. |
-| `GroupClause`              | Branch: `Operator` (`GroupOperatorEnum`) + `List<WhereClause> Children`; structural `Equals` / `GetHashCode` and `Print(indent)`. |
+| Type                     | Role                                                                                                                                                                                       |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WhereClause` (abstract) | Root of the polymorphic filter tree. `[JsonDerivedType]` discriminators are `condition` / `group`. Carries optional `Description` and `SubClause` (two-phase filter chain).                |
+| `ConditionClause`        | Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Implements `IEquatable<ConditionClause>` and `Print(indent)`. |
+| `GroupClause`            | Branch: `Operator` (`GroupOperatorEnum`) + `List<WhereClause> Children`; structural `Equals` / `GetHashCode` and `Print(indent)`.                                                          |
 
 Polymorphic JSON shape produced by `System.Text.Json`:
 
@@ -83,12 +83,12 @@ detail for failed `Or` groups.
 
 ## Builders
 
-| Builder                       | Produces                | Notes                                                                                  |
-|-------------------------------|-------------------------|----------------------------------------------------------------------------------------|
-| `WhereClauseBuilder`          | `WhereClause`           | `WhereClauseBuilder.And()` / `Or()` start a group; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `GreaterThan`, `LessThan`, …); `AddCondition`, `AddConditionWithSubClause`; nested `And()` / `Or()` for groups; static `Condition(...)` and `ConditionWithSubClause(...)` factories. |
-| `WhereClauseBuilderFor<T>`    | `WhereClause`           | Returned by `WhereClauseBuilder.For<T>()`; resolves property paths from `Expression<Func<T, …>>` lambdas. |
-| `QueryReqBuilder`             | `QueryReq`              | `AddIncludes`, `AddWhere(WhereClause)` / `AddWhere(Action<WhereClauseBuilder>)`, `AddSort`, `SetPagination(start, amount)`, `First()`, `SetTotalCountMode`, `SetIncludeFilterMode`, `For<T>()`. |
-| `ProjectionQueryReqBuilder`   | `ProjectionQueryReq`    | Same shape as `QueryReqBuilder` plus `AddSelect`, `AddComputedField`, and projection options. |
+| Builder                     | Produces             | Notes                                                                                                                                                                                                                                                                                              |
+|-----------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WhereClauseBuilder`        | `WhereClause`        | `WhereClauseBuilder.And()` / `Or()` start a group; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `GreaterThan`, `LessThan`, …); `AddCondition`, `AddConditionWithSubClause`; nested `And()` / `Or()` for groups; static `Condition(...)` and `ConditionWithSubClause(...)` factories. |
+| `WhereClauseBuilderFor<T>`  | `WhereClause`        | Returned by `WhereClauseBuilder.For<T>()`; resolves property paths from `Expression<Func<T, …>>` lambdas.                                                                                                                                                                                          |
+| `QueryReqBuilder`           | `QueryReq`           | `AddIncludes`, `AddWhere(WhereClause)` / `AddWhere(Action<WhereClauseBuilder>)`, `AddSort`, `SetPagination(start, amount)`, `First()`, `SetTotalCountMode`, `SetIncludeFilterMode`, `For<T>()`.                                                                                                    |
+| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same shape as `QueryReqBuilder` plus `AddSelect`, `AddComputedField`, and projection options.                                                                                                                                                                                                      |
 
 ## Attributes and exceptions
 

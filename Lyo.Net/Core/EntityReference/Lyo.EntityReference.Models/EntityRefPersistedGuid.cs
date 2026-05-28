@@ -23,9 +23,8 @@ public static class EntityRefPersistedGuid
     /// <exception cref="EntityRefPersistenceException"><see cref="EntityRef.EntityId" /> is not exactly one valid GUID (for example composite or malformed text).</exception>
     public static Guid RequirePersistedGuid(EntityRef entityRef)
     {
-        if (!TryGetPersistedGuid(entityRef, out var guid)) {
+        if (!TryGetPersistedGuid(entityRef, out var guid))
             throw new EntityRefPersistenceException($"EntityRef.EntityId must be a single Guid for this store (got composite or invalid key for type '{entityRef.EntityType}').");
-        }
 
         return guid;
     }

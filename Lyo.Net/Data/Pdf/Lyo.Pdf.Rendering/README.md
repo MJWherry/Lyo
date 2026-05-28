@@ -51,13 +51,13 @@ rasterization with `IOcrEngine` and project bounding boxes back into PDF coordin
 
 ## Dependencies
 
-| Package                                                 | Role                          |
-|---------------------------------------------------------|-------------------------------|
-| `PDFtoImage`                                            | PDFium-backed rasterization   |
-| `SixLabors.ImageSharp`                                  | Bitmap probe (width/height)   |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | DI registration               |
-| `Microsoft.Extensions.Logging.Abstractions`             | Optional logger               |
-| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Result`            | Shared helpers + `Result<T>`  |
+| Package                                                 | Role                         |
+|---------------------------------------------------------|------------------------------|
+| `PDFtoImage`                                            | PDFium-backed rasterization  |
+| `SixLabors.ImageSharp`                                  | Bitmap probe (width/height)  |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | DI registration              |
+| `Microsoft.Extensions.Logging.Abstractions`             | Optional logger              |
+| `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Result`            | Shared helpers + `Result<T>` |
 
 ## Related projects
 

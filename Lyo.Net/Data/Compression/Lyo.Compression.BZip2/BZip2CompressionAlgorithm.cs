@@ -8,5 +8,6 @@ public sealed record BZip2CompressionAlgorithm : CompressionAlgorithm
     /// <summary>Canonical singleton.</summary>
     public static readonly BZip2CompressionAlgorithm Instance = new();
 
-    private BZip2CompressionAlgorithm() : base("BZip2", ".bz2") { }
+    private BZip2CompressionAlgorithm()
+        : base("BZip2", ".bz2") { }
 }

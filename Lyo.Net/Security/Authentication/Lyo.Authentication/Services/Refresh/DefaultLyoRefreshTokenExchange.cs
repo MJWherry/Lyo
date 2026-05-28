@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
@@ -16,17 +11,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Authentication.Services.Refresh;
 
-/// <summary>Default <see cref="ILyoRefreshTokenExchange"/>. Validates → revokes (rotates) → issues new JWT + refresh.</summary>
+/// <summary>Default <see cref="ILyoRefreshTokenExchange" />. Validates → revokes (rotates) → issues new JWT + refresh.</summary>
 public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
 {
-    private readonly IApiTokenValidator _validator;
-    private readonly IApiTokenStore _store;
-    private readonly IUserStore _users;
-    private readonly IExternalIdentityStore? _identities;
-    private readonly ILyoJwtIssuer _jwtIssuer;
     private readonly IAuthAuditRecorder _audit;
     private readonly IAuthAuditContextAccessor _auditContext;
+    private readonly IExternalIdentityStore? _identities;
+    private readonly ILyoJwtIssuer _jwtIssuer;
     private readonly ILogger<DefaultLyoRefreshTokenExchange> _logger;
+    private readonly IApiTokenStore _store;
+    private readonly IUserStore _users;
+    private readonly IApiTokenValidator _validator;
 
     /// <summary>Creates a new exchange.</summary>
     public DefaultLyoRefreshTokenExchange(
@@ -54,7 +49,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
         _auditContext = auditContext ?? NullAuthAuditContextAccessor.Instance;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IssuedLyoJwt?> ExchangeAsync(string presentedRefreshToken, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(presentedRefreshToken))
@@ -68,14 +63,18 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
 
         if (!string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
             _logger.LogDebug("Refresh exchange rejected: token {TokenId} is not internal kind", parsed.Id);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "KindMismatch", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "KindMismatch", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
         var principal = await _validator.ValidateAsync(presentedRefreshToken, ct).ConfigureAwait(false);
         if (principal is null) {
             await HandlePossibleTheftAsync(parsed.Id, ct).ConfigureAwait(false);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "ValidationFailed", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "ValidationFailed", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
@@ -89,38 +88,39 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
 
         if (!hasRefreshScope) {
             _logger.LogDebug("Refresh exchange rejected: token {TokenId} missing {Scope}", parsed.Id, LyoRefreshTokenScopes.Refresh);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, userId: principal.OwnerUserId, subject: parsed.Id, outcome: "failure", reason: "MissingScope", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(
+                    _auditContext, _logger, AuthAuditEventKind.RefreshRejected, principal.OwnerUserId, parsed.Id, outcome: "failure", reason: "MissingScope", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
         if (!principal.OwnerUserId.HasValue) {
             _logger.LogDebug("Refresh exchange rejected: token {TokenId} has no owner user", parsed.Id);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "NoOwner", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, subject: parsed.Id, outcome: "failure", reason: "NoOwner", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
-        var user = await _users.GetByIdAsync(principal.OwnerUserId.Value, tenantId: null, ct).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(principal.OwnerUserId.Value, null, ct).ConfigureAwait(false);
         if (user is null || user.IsDisabled) {
             _logger.LogDebug("Refresh exchange rejected: owner user disabled or missing");
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshRejected, userId: principal.OwnerUserId, subject: parsed.Id, outcome: "failure", reason: user is null ? "UserNotFound" : "UserDisabled", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(
+                    _auditContext, _logger, AuthAuditEventKind.RefreshRejected, principal.OwnerUserId, parsed.Id, outcome: "failure",
+                    reason: user is null ? "UserNotFound" : "UserDisabled", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
-        var record = await _store.GetByIdAsync(parsed.Id, tenantId: null, ct).ConfigureAwait(false);
+        var record = await _store.GetByIdAsync(parsed.Id, null, ct).ConfigureAwait(false);
         var (provider, externalSubject) = ExtractProvider(record);
         var effectiveScopes = await ResolveEffectiveScopesAsync(user, provider, externalSubject, ct).ConfigureAwait(false);
-        await _store.RevokeAsync(parsed.Id, DateTime.UtcNow, "rotated", tenantId: null, ct).ConfigureAwait(false);
-        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRevoked, userId: user.Id, subject: parsed.Id, provider: provider, outcome: "success", reason: "rotated", ct: ct).ConfigureAwait(false);
-        var issued = await _jwtIssuer.IssueAsync(
-                user: user,
-                scopes: effectiveScopes,
-                provider: provider,
-                externalSubject: externalSubject,
-                includeRefresh: true,
-                ct: ct)
-            .ConfigureAwait(false);
-
-        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshSucceeded, userId: user.Id, subject: issued.AccessTokenJti, provider: provider, outcome: "success", ct: ct).ConfigureAwait(false);
+        await _store.RevokeAsync(parsed.Id, DateTime.UtcNow, "rotated", null, ct).ConfigureAwait(false);
+        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRevoked, user.Id, parsed.Id, provider, "success", "rotated", ct: ct).ConfigureAwait(false);
+        var issued = await _jwtIssuer.IssueAsync(user, effectiveScopes, provider, externalSubject, true, ct).ConfigureAwait(false);
+        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.RefreshSucceeded, user.Id, issued.AccessTokenJti, provider, "success", ct: ct).ConfigureAwait(false);
         return issued;
     }
 
@@ -130,7 +130,7 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
             return user.Scopes;
 
         try {
-            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject!, tenantId: null, ct).ConfigureAwait(false);
+            var link = await _identities.FindByProviderSubjectAsync(provider, externalSubject!, null, ct).ConfigureAwait(false);
             if (link is null || link.UserId != user.Id || !link.IsActive)
                 return user.Scopes;
 
@@ -165,13 +165,13 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
     private async Task HandlePossibleTheftAsync(string tokenId, CancellationToken ct)
     {
         try {
-            var record = await _store.GetByIdAsync(tokenId, tenantId: null, ct).ConfigureAwait(false);
+            var record = await _store.GetByIdAsync(tokenId, null, ct).ConfigureAwait(false);
             if (record is null || !record.RevokedAt.HasValue)
                 return;
 
             _logger.LogWarning(
-                "Refresh exchange rejected: presented an already-revoked refresh token {TokenId} (theft detection). Original revocation reason: {Reason}",
-                tokenId, record.RevokedReason);
+                "Refresh exchange rejected: presented an already-revoked refresh token {TokenId} (theft detection). Original revocation reason: {Reason}", tokenId,
+                record.RevokedReason);
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, "Refresh-exchange theft detection failed");

@@ -46,15 +46,17 @@ operations flow through `IHomeInventoryStore`.
   — single stock row.
 - `GetStockForItemAsync(Guid itemId, CancellationToken ct = default)` — every
   location that has a stock row for the item.
-- `AdjustStockAsync(Guid itemId, Guid locationId, decimal quantityDelta, HomeItemMovementType movementType, string? referenceNumber, string? notes, EntityRef? createdBy, CancellationToken ct = default)`
-  — applies a signed delta to `QuantityOnHand` and writes a paired movement
-  row in one transaction. Positive deltas land in `ToLocationId`, negative
-  deltas come out of `FromLocationId`. Refuses to drive on-hand negative or
-  to seed a brand-new row with a non-positive delta.
-- `TransferStockAsync(Guid itemId, Guid fromLocationId, Guid toLocationId, decimal quantity, string? referenceNumber, string? notes, EntityRef? createdBy, CancellationToken ct = default)`
-  — moves quantity between two locations inside a single transaction,
-  emitting a `StockTransfer` movement. Requires `quantity > 0` and fails when
-  the source row is missing or has insufficient on-hand.
+-
+`AdjustStockAsync(Guid itemId, Guid locationId, decimal quantityDelta, HomeItemMovementType movementType, string? referenceNumber, string? notes, EntityRef? createdBy, CancellationToken ct = default)`
+— applies a signed delta to `QuantityOnHand` and writes a paired movement
+row in one transaction. Positive deltas land in `ToLocationId`, negative
+deltas come out of `FromLocationId`. Refuses to drive on-hand negative or
+to seed a brand-new row with a non-positive delta.
+-
+`TransferStockAsync(Guid itemId, Guid fromLocationId, Guid toLocationId, decimal quantity, string? referenceNumber, string? notes, EntityRef? createdBy, CancellationToken ct = default)`
+— moves quantity between two locations inside a single transaction,
+emitting a `StockTransfer` movement. Requires `quantity > 0` and fails when
+the source row is missing or has insufficient on-hand.
 
 **Movements**
 

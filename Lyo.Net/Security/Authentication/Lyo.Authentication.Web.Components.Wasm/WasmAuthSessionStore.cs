@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Blazored.LocalStorage;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
@@ -13,14 +10,11 @@ namespace Lyo.Authentication.Web.Components.Wasm;
 /// </summary>
 public sealed class WasmAuthSessionStore
 {
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly ILocalStorageService _localStorage;
     private readonly WasmAuthClientOptions _options;
-    private readonly SemaphoreSlim _gate = new(1, 1);
     private WasmAuthPersistedSession? _current;
     private bool _loaded;
-
-    /// <summary>Raised whenever the active session changes (sign-in, refresh, or sign-out). The argument is <c>null</c> on sign-out.</summary>
-    public event Action<WasmAuthPersistedSession?>? Changed;
 
     /// <summary>Creates a new store.</summary>
     public WasmAuthSessionStore(ILocalStorageService localStorage, IOptions<WasmAuthClientOptions> options)
@@ -30,6 +24,9 @@ public sealed class WasmAuthSessionStore
         _localStorage = localStorage;
         _options = options.Value;
     }
+
+    /// <summary>Raised whenever the active session changes (sign-in, refresh, or sign-out). The argument is <c>null</c> on sign-out.</summary>
+    public event Action<WasmAuthPersistedSession?>? Changed;
 
     /// <summary>Returns the cached snapshot, hydrating from LocalStorage on first call. Returns <c>null</c> when nothing is stored or hydration is impossible (e.g. pre-render).</summary>
     public async Task<WasmAuthPersistedSession?> GetAsync(CancellationToken ct = default)
@@ -60,7 +57,7 @@ public sealed class WasmAuthSessionStore
     /// <summary>Returns the cached snapshot without touching LocalStorage. Useful inside synchronous codepaths (e.g. <c>WasmAuthDelegatingHandler.SendAsync</c>'s fast path).</summary>
     public WasmAuthPersistedSession? Peek() => _current;
 
-    /// <summary>Stores a new snapshot in memory and LocalStorage and raises <see cref="Changed"/>.</summary>
+    /// <summary>Stores a new snapshot in memory and LocalStorage and raises <see cref="Changed" />.</summary>
     public async Task SetAsync(WasmAuthPersistedSession snapshot, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(snapshot);
@@ -76,7 +73,7 @@ public sealed class WasmAuthSessionStore
         Changed?.Invoke(snapshot);
     }
 
-    /// <summary>Clears the active snapshot from memory and LocalStorage and raises <see cref="Changed"/> with <c>null</c>.</summary>
+    /// <summary>Clears the active snapshot from memory and LocalStorage and raises <see cref="Changed" /> with <c>null</c>.</summary>
     public async Task ClearAsync(CancellationToken ct = default)
     {
         _current = null;

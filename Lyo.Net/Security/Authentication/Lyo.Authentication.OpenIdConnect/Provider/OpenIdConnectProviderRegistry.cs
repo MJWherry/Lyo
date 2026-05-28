@@ -1,15 +1,15 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Provider;
 
-/// <summary>Registry of <see cref="IOpenIdConnectProvider"/> instances keyed by <see cref="IOpenIdConnectProvider.Name"/>.</summary>
+/// <summary>Registry of <see cref="IOpenIdConnectProvider" /> instances keyed by <see cref="IOpenIdConnectProvider.Name" />.</summary>
 public sealed class OpenIdConnectProviderRegistry
 {
     private readonly ConcurrentDictionary<string, IOpenIdConnectProvider> _providers = new(StringComparer.Ordinal);
+
+    /// <summary>All registered providers in registration order.</summary>
+    public IReadOnlyCollection<IOpenIdConnectProvider> All => _providers.Values.ToArray();
 
     /// <summary>Creates a registry and seeds it with the supplied providers (typically registered via DI).</summary>
     public OpenIdConnectProviderRegistry(IEnumerable<IOpenIdConnectProvider> providers)
@@ -27,9 +27,6 @@ public sealed class OpenIdConnectProviderRegistry
         if (!_providers.TryAdd(provider.Name, provider))
             throw new InvalidOperationException($"OIDC provider '{provider.Name}' is already registered.");
     }
-
-    /// <summary>All registered providers in registration order.</summary>
-    public IReadOnlyCollection<IOpenIdConnectProvider> All => _providers.Values.ToArray();
 
     /// <summary>Returns the provider with the given name. Throws when unknown.</summary>
     public IOpenIdConnectProvider Get(string name)

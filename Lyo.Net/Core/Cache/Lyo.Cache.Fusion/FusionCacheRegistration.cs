@@ -29,6 +29,7 @@ internal static class FusionCacheRegistration
         svc.AddMemoryCache();
         if (!svc.Any(static d => d.ServiceType == typeof(CompressionService)))
             svc.AddCompressionService();
+
         if (!svc.Any(static d => d.ServiceType == typeof(ICompressionService)))
             svc.AddDefaultCompressionService<CompressionService>();
 

@@ -8,18 +8,18 @@ Implementations (e.g. **`Lyo.Images.Ocr.Tesseract`**) register **`IOcrEngine`**.
 
 ## Public API
 
-| Type                                  | Description                                                                                                                                                    |
-|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`IOcrEngine`**                      | `ReadAsync(Stream imageStream, OcrReadRequest?, CancellationToken) → Task<Result<OcrPageResult>>` — runs OCR on an encoded raster stream (PNG/JPEG/etc.).      |
-| **`OcrReadRequest`**                  | Optional per-call overrides: `Languages`, `PageSegmentationMode`, `MinimumConfidencePercent`.                                                                  |
-| **`OcrPageResult`**                   | `FullText`, `Words` (with pixel Y-up bounding boxes), `Lines` (grouped), `ImageWidth`, `ImageHeight`.                                                          |
-| **`OcrWord`** / **`OcrLine`**         | Word + line records used in `OcrPageResult`. `OcrWord.BoundingBoxPixels` is a `BoundingBox2D` (Y-up).                                                          |
-| **`OcrEngineOptions`**                | `EnableMetrics`, `DefaultLanguages` (default `"eng"`), `DefaultPageSegmentationMode` (default `SparseTextOsd`); `SectionName = "OcrEngine"`.                   |
-| **`OcrPageSegmentationMode`**         | Provider-neutral layout modes (`AutoOsd`, `Auto`, `SingleColumn`, `SingleBlock`, `SingleLine`, `SingleWord`, `CircleWord`, `SingleChar`, `SparseTextOsd`, …). |
-| **`OcrCoordinateTransforms`**         | `FromTopLeftDownwardRect`, `MapPixelBoxToPdfPoints`, and other helpers to convert between raster, Y-up pixel, and PDF point coordinates.                       |
-| **`OcrLineGrouper`**                  | Groups `OcrWord` results into `OcrLine` rows.                                                                                                                  |
-| **`OcrMetrics`** / **`OcrErrorCodes`** | Metric name and error code constants for engines to use consistently.                                                                                          |
-| **`OcrServiceCollectionExtensions`**  | DI: `AddOcrEngineOptions(Action<OcrEngineOptions>?)`, `AddOcrEngineOptionsFromConfiguration(IConfiguration, sectionName?)`.                                    |
+| Type                                   | Description                                                                                                                                                   |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`IOcrEngine`**                       | `ReadAsync(Stream imageStream, OcrReadRequest?, CancellationToken) → Task<Result<OcrPageResult>>` — runs OCR on an encoded raster stream (PNG/JPEG/etc.).     |
+| **`OcrReadRequest`**                   | Optional per-call overrides: `Languages`, `PageSegmentationMode`, `MinimumConfidencePercent`.                                                                 |
+| **`OcrPageResult`**                    | `FullText`, `Words` (with pixel Y-up bounding boxes), `Lines` (grouped), `ImageWidth`, `ImageHeight`.                                                         |
+| **`OcrWord`** / **`OcrLine`**          | Word + line records used in `OcrPageResult`. `OcrWord.BoundingBoxPixels` is a `BoundingBox2D` (Y-up).                                                         |
+| **`OcrEngineOptions`**                 | `EnableMetrics`, `DefaultLanguages` (default `"eng"`), `DefaultPageSegmentationMode` (default `SparseTextOsd`); `SectionName = "OcrEngine"`.                  |
+| **`OcrPageSegmentationMode`**          | Provider-neutral layout modes (`AutoOsd`, `Auto`, `SingleColumn`, `SingleBlock`, `SingleLine`, `SingleWord`, `CircleWord`, `SingleChar`, `SparseTextOsd`, …). |
+| **`OcrCoordinateTransforms`**          | `FromTopLeftDownwardRect`, `MapPixelBoxToPdfPoints`, and other helpers to convert between raster, Y-up pixel, and PDF point coordinates.                      |
+| **`OcrLineGrouper`**                   | Groups `OcrWord` results into `OcrLine` rows.                                                                                                                 |
+| **`OcrMetrics`** / **`OcrErrorCodes`** | Metric name and error code constants for engines to use consistently.                                                                                         |
+| **`OcrServiceCollectionExtensions`**   | DI: `AddOcrEngineOptions(Action<OcrEngineOptions>?)`, `AddOcrEngineOptionsFromConfiguration(IConfiguration, sectionName?)`.                                   |
 
 ## Bounding boxes
 

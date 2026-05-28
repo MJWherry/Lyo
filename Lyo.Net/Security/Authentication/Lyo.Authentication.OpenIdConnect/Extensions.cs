@@ -19,8 +19,8 @@ public static class Extensions
     {
         /// <summary>
         /// Registers the OIDC base: discovery cache, JWKS resolver, PKCE state protector, authorize URL builder, token-exchange client, id_token validator, provider registry,
-        /// <see cref="DefaultExternalLoginCoordinator"/>, <see cref="OpenIdConnectBffOptions"/>, and the default in-memory <see cref="IHandoffCodeStore"/>. Per-provider profiles
-        /// (Google, Keycloak) layer on top.
+        /// <see cref="DefaultExternalLoginCoordinator" />, <see cref="OpenIdConnectBffOptions" />, and the default in-memory <see cref="IHandoffCodeStore" />. Per-provider profiles (Google,
+        /// Keycloak) layer on top.
         /// </summary>
         public IServiceCollection AddLyoOpenIdConnect()
         {
@@ -40,7 +40,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Same as <see cref="AddLyoOpenIdConnect()"/> plus binding <see cref="ExternalLoginOptions"/> and <see cref="OpenIdConnectBffOptions"/> from configuration.</summary>
+        /// <summary>Same as <see cref="AddLyoOpenIdConnect()" /> plus binding <see cref="ExternalLoginOptions" /> and <see cref="OpenIdConnectBffOptions" /> from configuration.</summary>
         public IServiceCollection AddLyoOpenIdConnect(
             IConfiguration configuration,
             string externalLoginSectionName = ExternalLoginOptions.SectionName,

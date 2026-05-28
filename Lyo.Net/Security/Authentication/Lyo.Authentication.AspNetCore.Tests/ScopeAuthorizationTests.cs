@@ -1,7 +1,5 @@
-using System.Threading.Tasks;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.AspNetCore.Tests;
 

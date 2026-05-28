@@ -27,7 +27,7 @@ public class ApiTokenCodecTests
         var (b, idB, hashB) = ApiTokenCodec.Mint(ApiTokenKind.Cli, ApiTokenRing.Dev);
         Assert.NotEqual(a, b);
         Assert.NotEqual(idA, idB);
-        Assert.NotEqual(System.Convert.ToBase64String(hashA), System.Convert.ToBase64String(hashB));
+        Assert.NotEqual(Convert.ToBase64String(hashA), Convert.ToBase64String(hashB));
     }
 
     [Fact]
@@ -57,14 +57,14 @@ public class ApiTokenCodecTests
     {
         var (plaintext, _, _) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
         var truncated = plaintext.Substring(0, plaintext.Length - 1);
-        Assert.False(ApiTokenCodec.TryParse(truncated, out _));
+        Assert.False(ApiTokenCodec.TryParse(truncated, out var _));
     }
 
     [Fact]
     public void TryParse_RejectsBadId()
     {
         var bad = "lyo_pat_live_uuuuuuuuuuu_" + new string('A', 43);
-        Assert.False(ApiTokenCodec.TryParse(bad, out _));
+        Assert.False(ApiTokenCodec.TryParse(bad, out var _));
     }
 
     [Fact]
@@ -72,20 +72,17 @@ public class ApiTokenCodecTests
     {
         for (var i = 0; i < 500; i++) {
             var (plaintext, _, _) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
-            Assert.True(ApiTokenCodec.TryParse(plaintext, out _), $"Failed on '{plaintext}'");
+            Assert.True(ApiTokenCodec.TryParse(plaintext, out var _), $"Failed on '{plaintext}'");
         }
     }
 
     [Fact]
-    public void Mint_WithUppercaseKind_Throws()
-    {
-        Assert.Throws<System.ArgumentException>(() => ApiTokenCodec.Mint("PAT", ApiTokenRing.Live));
-    }
+    public void Mint_WithUppercaseKind_Throws() => Assert.Throws<ArgumentException>(() => ApiTokenCodec.Mint("PAT", ApiTokenRing.Live));
 
     [Fact]
     public void Mint_AcrossManyIterations_ProducesUniqueIds()
     {
-        var ids = new System.Collections.Generic.HashSet<string>();
+        var ids = new HashSet<string>();
         for (var i = 0; i < 5000; i++) {
             var (_, id, _) = ApiTokenCodec.Mint(ApiTokenKind.Pat, ApiTokenRing.Live);
             Assert.True(ids.Add(id), $"Duplicate id on iteration {i}: {id}");

@@ -9,15 +9,15 @@ public sealed class PostgresAuditOptions : IPostgresMigrationConfig
     public const string SectionName = "PostgresAudit";
     public const string Schema = "audit";
 
+    /// <summary>Per-feature tenancy policy. Unset properties inherit from <see cref="EntityRefOptions" />.</summary>
+    /// <remarks>Audit rows have a nullable <c>tenant_id</c> column, so all three tenancy modes are valid.</remarks>
+    public TenancyOptions Tenancy { get; set; } = new();
+
     /// <summary>Gets or sets the PostgreSQL connection string.</summary>
     public string ConnectionString { get; set; } = string.Empty;
 
     /// <summary>Gets or sets whether to enable automatic database migrations on startup.</summary>
     public bool EnableAutoMigrations { get; set; } = false;
-
-    /// <summary>Per-feature tenancy policy. Unset properties inherit from <see cref="EntityRefOptions" />.</summary>
-    /// <remarks>Audit rows have a nullable <c>tenant_id</c> column, so all three tenancy modes are valid.</remarks>
-    public TenancyOptions Tenancy { get; set; } = new();
 
     /// <inheritdoc />
     string IPostgresMigrationConfig.Schema => Schema;

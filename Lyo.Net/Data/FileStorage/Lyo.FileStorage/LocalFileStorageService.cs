@@ -132,33 +132,33 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
         if (meta.Availability != FileAvailability.PendingDirectUpload)
             throw new InvalidOperationException($"File {fileId} is not pending direct upload (availability={meta.Availability}).");
 
-#if NETSTANDARD2_0
-        using var output = await CreateOutputStreamAsync(fileId, "", meta.PathPrefix, ct).ConfigureAwait(false);
-#else
-        await using var output = await CreateOutputStreamAsync(fileId, "", meta.PathPrefix, ct).ConfigureAwait(false);
-#endif
-        var max = Options.MaxUploadSizeBytes;
-        if (max is null) {
-            await body.CopyToAsync(output, 81920, ct).ConfigureAwait(false);
-            return;
-        }
-
-        const int bufferSize = 81920;
-        var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+        var output = await CreateOutputStreamAsync(fileId, "", meta.PathPrefix, ct).ConfigureAwait(false);
         try {
-            long total = 0;
-            int read;
-            while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
-                total += read;
-                if (total > max.Value) {
-                    throw new InvalidOperationException($"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
-                }
+            var max = Options.MaxUploadSizeBytes;
+            if (max is null) {
+                await body.CopyToAsync(output, 81920, ct).ConfigureAwait(false);
+                return;
+            }
 
-                await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
+            const int bufferSize = 81920;
+            var buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+            try {
+                long total = 0;
+                int read;
+                while ((read = await body.ReadAsync(buffer, 0, bufferSize, ct).ConfigureAwait(false)) > 0) {
+                    total += read;
+                    if (total > max.Value)
+                        throw new InvalidOperationException($"PUT body for {fileId} exceeded MaxUploadSizeBytes ({max.Value} bytes) during receive.");
+
+                    await output.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);
+                }
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
         finally {
-            ArrayPool<byte>.Shared.Return(buffer);
+            output.Dispose();
         }
     }
 
@@ -277,14 +277,14 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
 
         EncryptionHeader oldHeader;
         int oldHeaderSize;
-#if NETSTANDARD2_0
-        using (var readStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous))
-#else
-        await using (var readStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous))
-#endif
-        {
+        var readStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous);
+        try {
+            ct.ThrowIfCancellationRequested();
             oldHeader = EncryptionHeader.Read(readStream);
             oldHeaderSize = (int)readStream.Position;
+        }
+        finally {
+            readStream.Dispose();
         }
 
         var updatedHeader = oldHeader.With(targetKeyId, targetKeyVersion, newEncryptedDek);
@@ -292,34 +292,35 @@ public class LocalFileStorageService : FileStorageServiceBase, IFileStorageDiagn
 
         // If the header size is unchanged, do an in-place overwrite to avoid touching the rest of the file.
         if (newHeaderBytes.Length == oldHeaderSize) {
-#if NETSTANDARD2_0
-            using var rw = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-#else
-            await using var rw = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-#endif
-            await rw.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
-            await rw.FlushAsync(ct).ConfigureAwait(false);
+            var writeStream = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
+            try {
+                await writeStream.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
+                await writeStream.FlushAsync(ct).ConfigureAwait(false);
+            }
+            finally {
+                writeStream.Dispose();
+            }
         }
         else {
             // Stream the rest of the original file (after the old header) into a sibling temp file with the new header prefix, then atomically replace.
             var tempPath = filePath + ".dek-rotate-" + Guid.NewGuid().ToString("N") + ".tmp";
             try {
-#if NETSTANDARD2_0
-                using (var src = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous)) {
-                    using (var dst = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-#else
-                await using (var src = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous))
-                await using (var dst = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous))
-#endif
-                    {
-                        await dst.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
-                        src.Position = oldHeaderSize;
-                        await src.CopyToAsync(dst, 81920, ct).ConfigureAwait(false);
-                        await dst.FlushAsync(ct).ConfigureAwait(false);
+                var source = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous);
+                try {
+                    var destination = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
+                    try {
+                        await destination.WriteAsync(newHeaderBytes, 0, newHeaderBytes.Length, ct).ConfigureAwait(false);
+                        source.Position = oldHeaderSize;
+                        await source.CopyToAsync(destination, 81920, ct).ConfigureAwait(false);
+                        await destination.FlushAsync(ct).ConfigureAwait(false);
                     }
-#if NETSTANDARD2_0
+                    finally {
+                        destination.Dispose();
+                    }
                 }
-#endif
+                finally {
+                    source.Dispose();
+                }
 
                 File.Replace(tempPath, filePath, null);
             }

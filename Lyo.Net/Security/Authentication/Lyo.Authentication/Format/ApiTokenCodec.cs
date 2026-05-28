@@ -6,18 +6,15 @@ using Lyo.Hashing;
 
 namespace Lyo.Authentication.Format;
 
-/// <summary>
-/// Encodes, decodes, and hashes Format-B Lyo opaque tokens.
-/// </summary>
+/// <summary>Encodes, decodes, and hashes Format-B Lyo opaque tokens.</summary>
 /// <remarks>
 /// Wire format: <c>lyo_&lt;kind&gt;_&lt;ring&gt;_&lt;id&gt;_&lt;secret&gt;</c> where
 /// <list type="bullet">
-/// <item><c>kind</c> is a lowercase ASCII string (typically one of <see cref="ApiTokenKind"/>)</item>
-/// <item><c>ring</c> is a lowercase ASCII string (typically one of <see cref="ApiTokenRing"/>)</item>
-/// <item><c>id</c> is 11 lowercase Crockford base32 chars over 64 random bits</item>
-/// <item><c>secret</c> is 43 chars of base64url (32 random bytes, ~256 bits of entropy)</item>
+/// <item><c>kind</c> is a lowercase ASCII string (typically one of <see cref="ApiTokenKind" />)</item>
+/// <item><c>ring</c> is a lowercase ASCII string (typically one of <see cref="ApiTokenRing" />)</item>
+/// <item><c>id</c> is 11 lowercase Crockford base32 chars over 64 random bits</item> <item><c>secret</c> is 43 chars of base64url (32 random bytes, ~256 bits of entropy)</item>
 /// </list>
-/// Verification is always: parse → look up by <c>id</c> → constant-time-compare <see cref="ComputeSecretHash(string)"/> against the stored hash.
+/// Verification is always: parse → look up by <c>id</c> → constant-time-compare <see cref="ComputeSecretHash(string)" /> against the stored hash.
 /// </remarks>
 public static class ApiTokenCodec
 {
@@ -31,9 +28,9 @@ public static class ApiTokenCodec
     public const int EncodedSecretLength = 43;
 
     /// <summary>
-    /// Builds a new, freshly-randomized Format-B token for the given <paramref name="kind"/> and <paramref name="ring"/>.
-    /// Returns both the wire-form plaintext and its SHA-256 secret hash for persistence. The caller is responsible for ensuring the id is unique (collision probability is ~2^-27.5
-    /// after 1 billion issuances, so retry-on-conflict at the store level is the right pattern).
+    /// Builds a new, freshly-randomized Format-B token for the given <paramref name="kind" /> and <paramref name="ring" />. Returns both the wire-form plaintext and its SHA-256
+    /// secret hash for persistence. The caller is responsible for ensuring the id is unique (collision probability is ~2^-27.5 after 1 billion issuances, so retry-on-conflict at the
+    /// store level is the right pattern).
     /// </summary>
     public static (string Plaintext, string Id, byte[] SecretHash) Mint(string kind, string ring)
     {
@@ -51,7 +48,7 @@ public static class ApiTokenCodec
         return (plaintext, id, hash);
     }
 
-    /// <summary>Builds the wire-form string from already-decided segments. Does not allocate randomness — use <see cref="Mint"/> for new tokens.</summary>
+    /// <summary>Builds the wire-form string from already-decided segments. Does not allocate randomness — use <see cref="Mint" /> for new tokens.</summary>
     public static string Encode(string kind, string ring, string id, string secret)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(kind);
@@ -63,8 +60,14 @@ public static class ApiTokenCodec
         return $"{Prefix}{Separator}{kind}{Separator}{ring}{Separator}{id}{Separator}{secret}";
     }
 
-    /// <summary>Attempts to parse a token off the wire. Returns <c>false</c> with <paramref name="token"/> = <c>null</c> for any malformed input (no exceptions on the validation hot path).</summary>
-    /// <remarks>The secret segment is base64url and CAN contain underscores, so we cannot simply split on '_'. We instead pin the first four '_' positions (one per fixed segment boundary) and treat the remainder as the secret.</remarks>
+    /// <summary>
+    /// Attempts to parse a token off the wire. Returns <c>false</c> with <paramref name="token" /> = <c>null</c> for any malformed input (no exceptions on the validation hot
+    /// path).
+    /// </summary>
+    /// <remarks>
+    /// The secret segment is base64url and CAN contain underscores, so we cannot simply split on '_'. We instead pin the first four '_' positions (one per fixed segment
+    /// boundary) and treat the remainder as the secret.
+    /// </remarks>
     public static bool TryParse(string? input, out ApiToken? token)
     {
         token = null;

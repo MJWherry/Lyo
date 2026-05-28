@@ -1,24 +1,25 @@
 # Lyo.Testing.Containers
 
-xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover **PostgreSQL** — other backends can be added by following the same shape.
+xUnit v3 fixture helpers around **Testcontainers** so integration tests can spin up real backing services without hand-rolling lifecycle plumbing. The shipped helpers cover *
+*PostgreSQL** — other backends can be added by following the same shape.
 
 > **Internal-only:** `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects; do not pack it.
 
 ## Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `Testcontainers.PostgreSql` | `4.10.0` | Spins up the Docker container. |
-| `xunit.v3.extensibility.core` | `3.2.2` | Provides `IAsyncLifetime` + `TestContext.Current` used by the fixture base. |
+| Package                       | Version  | Purpose                                                                     |
+|-------------------------------|----------|-----------------------------------------------------------------------------|
+| `Testcontainers.PostgreSql`   | `4.10.0` | Spins up the Docker container.                                              |
+| `xunit.v3.extensibility.core` | `3.2.2`  | Provides `IAsyncLifetime` + `TestContext.Current` used by the fixture base. |
 
 Docker (or a compatible runtime) must be available on the host running the tests.
 
 ## Public surface
 
-| Type | Role |
-|------|------|
-| **`PostgresTestContainer`** | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
-| **`PostgresContainerOptions`** | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc. |
+| Type                               | Role                                                                                                                                                                                                                                                                                                        |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`PostgresTestContainer`**        | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`.                                                                                   |
+| **`PostgresContainerOptions`**     | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, etc.                                                                                                                                                     |
 | **`PostgresContainerFixtureBase`** | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
 
 ## Quick start — xUnit v3 class fixture

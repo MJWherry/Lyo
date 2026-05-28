@@ -5,15 +5,15 @@ using Lyo.Result;
 namespace Lyo.Images;
 
 /// <summary>
-/// Image-decoration primitives (centered overlay, stroked frame, caption band, outer padding/shadow). Implemented without QR-specific assumptions — usable for any raster (PNG)
-/// or, in the overlay case, SVG document. Use <see cref="Pipeline(byte[])" /> / <see cref="Pipeline(Stream)" /> to chain primitives without juggling intermediate streams.
+/// Image-decoration primitives (centered overlay, stroked frame, caption band, outer padding/shadow). Implemented without QR-specific assumptions — usable for any raster
+/// (PNG) or, in the overlay case, SVG document. Use <see cref="Pipeline(byte[])" /> / <see cref="Pipeline(Stream)" /> to chain primitives without juggling intermediate streams.
 /// </summary>
 public interface IImageDecorationService
 {
     /// <summary>
     /// Composites <paramref name="overlayStream" /> onto <paramref name="backgroundStream" /> at the position requested by <paramref name="options" />. When
-    /// <paramref name="format" /> is <see cref="ImageFormat.Svg" />, the background is treated as SVG text and the overlay is embedded as a base64 PNG image element. Otherwise
-    /// the operation runs through ImageSharp on a raster.
+    /// <paramref name="format" /> is <see cref="ImageFormat.Svg" />, the background is treated as SVG text and the overlay is embedded as a base64 PNG image element. Otherwise the
+    /// operation runs through ImageSharp on a raster.
     /// </summary>
     Task<Result<bool>> OverlayAsync(
         Stream backgroundStream,

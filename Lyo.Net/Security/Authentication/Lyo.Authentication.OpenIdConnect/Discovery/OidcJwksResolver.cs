@@ -1,16 +1,11 @@
-using System;
 using System.Collections.Concurrent;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Authentication.OpenIdConnect.Discovery;
 
-/// <summary>Fetches and caches provider JWKS documents. Used by <see cref="Client.OidcIdTokenValidator"/> to validate id_token signatures.</summary>
+/// <summary>Fetches and caches provider JWKS documents. Used by <see cref="Client.OidcIdTokenValidator" /> to validate id_token signatures.</summary>
 public sealed class OidcJwksResolver
 {
     /// <summary>Default time-to-live for a cached JWKS document.</summary>
@@ -50,7 +45,7 @@ public sealed class OidcJwksResolver
     public bool Invalidate(string jwksUri)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(jwksUri);
-        return _cache.TryRemove(jwksUri, out _);
+        return _cache.TryRemove(jwksUri, out var _);
     }
 
     private async Task<OidcJwksDocument> GetAsync(string jwksUri, CancellationToken ct)
@@ -60,8 +55,8 @@ public sealed class OidcJwksResolver
             return entry.Document;
 
         _logger.LogDebug("Fetching JWKS from {Url}", jwksUri);
-        var doc = await _http.GetFromJsonAsync<OidcJwksDocument>(jwksUri, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException($"JWKS at '{jwksUri}' returned no body.");
+        var doc = await _http.GetFromJsonAsync<OidcJwksDocument>(jwksUri, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"JWKS at '{jwksUri}' returned no body.");
 
         _cache[jwksUri] = new(doc, now + _ttl);
         return doc;

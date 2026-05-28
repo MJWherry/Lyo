@@ -2,7 +2,6 @@
 @using Lyo.Authentication.Models.Records
 @using Lyo.Authentication.Web.Components.Abstractions
 @using Lyo.Web.Components
-@using Microsoft.AspNetCore.Components.Authorization
 @using Constants = Constants
 @inherits LayoutComponentBase
 @implements IDisposable
@@ -177,11 +176,12 @@ else {
         ApplyUser(authState.User);
     }
 
-    private void OnAuthStateChanged(Task<AuthenticationState> task) =>
-        _ = task.ContinueWith(t => InvokeAsync(() => {
-            ApplyUser(t.Result.User);
-            StateHasChanged();
-        }), TaskScheduler.Default);
+    private void OnAuthStateChanged(Task<AuthenticationState> task)
+        => _ = task.ContinueWith(
+            t => InvokeAsync(() => {
+                ApplyUser(t.Result.User);
+                StateHasChanged();
+            }), TaskScheduler.Default);
 
     private void ApplyUser(ClaimsPrincipal principal)
     {
@@ -193,13 +193,8 @@ else {
             return;
         }
 
-        _displayName = principal.Identity!.Name
-                       ?? principal.FindFirst(LyoJwtClaims.Subject)?.Value
-                       ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
-
-        _email = principal.FindFirst(ClaimTypes.Email)?.Value
-                 ?? principal.FindFirst("email")?.Value;
-
+        _displayName = principal.Identity!.Name ?? principal.FindFirst(LyoJwtClaims.Subject)?.Value ?? principal.FindFirst(LyoJwtClaims.LyoUser)?.Value;
+        _email = principal.FindFirst(ClaimTypes.Email)?.Value ?? principal.FindFirst("email")?.Value;
         _initials = BuildInitials(_displayName ?? _email);
     }
 

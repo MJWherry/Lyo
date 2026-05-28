@@ -15,6 +15,7 @@ internal static class CompressorFactoryConstants
 public sealed class GZipCompressorFactory : ICompressorFactory
 {
     public CompressionAlgorithm Algorithm => CompressionAlgorithm.GZip;
+
     public ICompressor Create(CompressionLevel level) => new GZipCompressor(CompressorFactoryConstants.CompressorName, level);
 }
 
@@ -22,6 +23,7 @@ public sealed class GZipCompressorFactory : ICompressorFactory
 public sealed class DeflateCompressorFactory : ICompressorFactory
 {
     public CompressionAlgorithm Algorithm => CompressionAlgorithm.Deflate;
+
     public ICompressor Create(CompressionLevel level) => new DeflateCompressor(CompressorFactoryConstants.CompressorName, level);
 }
 

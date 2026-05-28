@@ -1,8 +1,6 @@
 namespace Lyo.Images.Models;
 
-/// <summary>
-/// Outer canvas margin around an input image with optional rounded card fill and drop shadow, applied by <see cref="IImageDecorationService.AddOuterPaddingAsync" />.
-/// </summary>
+/// <summary>Outer canvas margin around an input image with optional rounded card fill and drop shadow, applied by <see cref="IImageDecorationService.AddOuterPaddingAsync" />.</summary>
 public sealed class PaddingOptions
 {
     /// <summary>Padding (pixels) between the input image and the inner edge of the card fill. Default: 24.</summary>

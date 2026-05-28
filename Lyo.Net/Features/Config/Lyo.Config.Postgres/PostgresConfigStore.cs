@@ -17,10 +17,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     private readonly TenancyOptions _featureTenancy;
 
     /// <summary>Creates a new PostgresConfigStore.</summary>
-    public PostgresConfigStore(
-        IDbContextFactory<ConfigDbContext> contextFactory,
-        IOptions<EntityRefOptions> entityRefOptions,
-        IOptions<PostgresConfigOptions> configOptions)
+    public PostgresConfigStore(IDbContextFactory<ConfigDbContext> contextFactory, IOptions<EntityRefOptions> entityRefOptions, IOptions<PostgresConfigOptions> configOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(entityRefOptions);
@@ -29,9 +26,6 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         _entityRefOptions = entityRefOptions.Value;
         _featureTenancy = configOptions.Value.Tenancy;
     }
-
-    private Guid? ResolveTenant(Guid? tenantId)
-        => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
 
     /// <inheritdoc />
     public async Task SaveDefinitionAsync(ConfigDefinitionRecord definition, CancellationToken ct = default)
@@ -146,10 +140,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             entity = await context.ConfigBindings.FindAsync([binding.Id], ct).ConfigureAwait(false);
 
         entity ??= await context.ConfigBindings.FirstOrDefaultAsync(
-                x => x.DefinitionId == definition.Id
-                    && x.ForEntityType == binding.ForEntityType
-                    && x.ForEntityId == binding.ForEntityId
-                    && x.TenantId == resolvedTenant, ct)
+                x => x.DefinitionId == definition.Id && x.ForEntityType == binding.ForEntityType && x.ForEntityId == binding.ForEntityId && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
         if (entity != null) {
@@ -189,9 +180,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var bindingEntity = await context.ConfigBindings.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct)
-            .ConfigureAwait(false);
+        var bindingEntity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(bindingEntity);
         var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(x => x.Id == bindingEntity.DefinitionId, ct).ConfigureAwait(false);
         var rows = await context.ConfigBindingRevisions.AsNoTracking()
@@ -218,9 +207,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var bindingEntity = await context.ConfigBindings.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct)
-            .ConfigureAwait(false);
+        var bindingEntity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (bindingEntity == null)
             return null;
 
@@ -228,6 +215,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         var row = await context.ConfigBindingRevisions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.BindingId == bindingId && x.Revision == revision && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         return row == null ? null : ToRevisionRecord(row, ResolveBindingValueType(bindingEntity, definition.ForValueType));
     }
 
@@ -238,9 +226,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var binding = await context.ConfigBindings.FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(binding);
-        var revEntity = await context.ConfigBindingRevisions
-            .FirstOrDefaultAsync(x => x.BindingId == bindingId && x.Revision == revision && x.TenantId == resolvedTenant, ct)
+        var revEntity = await context.ConfigBindingRevisions.FirstOrDefaultAsync(x => x.BindingId == bindingId && x.Revision == revision && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         OperationHelpers.ThrowIfNull(revEntity, $"No revision {revision} for binding '{bindingId}'.");
         var definition = await context.ConfigDefinitions.FindAsync([binding.DefinitionId], ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(definition);
@@ -266,9 +254,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct)
-            .ConfigureAwait(false);
+        var entity = await context.ConfigBindings.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
     }
 
@@ -280,11 +266,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.ConfigBindings.FirstOrDefaultAsync(
-                x => x.ForEntityType == forEntity.EntityType
-                    && x.ForEntityId == forEntity.EntityId
-                    && x.Key == key
-                    && x.TenantId == resolvedTenant,
-                ct)
+                x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
@@ -296,8 +278,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings
-            .Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var entities = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .OrderBy(x => x.Key)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -320,9 +301,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct)
-            .ConfigureAwait(false);
+        var entity = await context.ConfigBindings.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity == null)
             return;
 
@@ -339,8 +318,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings
-            .Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var entities = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -361,8 +339,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var definitions = await context.ConfigDefinitions.Where(x => x.ForEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
-        var bindings = await context.ConfigBindings
-            .Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
+        var bindings = await context.ConfigBindings.Where(x => x.ForEntityType == forEntity.EntityType && x.ForEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -406,6 +383,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         }
     }
 
+    private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
+
     private static async Task AppendRevisionRowAsync(ConfigDbContext context, ConfigBindingEntity entity, string valueJson, Guid? tenantId, CancellationToken ct)
     {
         var maxRev = await context.ConfigBindingRevisions.Where(x => x.BindingId == entity.Id).Select(x => (int?)x.Revision).MaxAsync(ct).ConfigureAwait(false) ?? 0;
@@ -420,15 +399,16 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             });
     }
 
-    private static async Task<Dictionary<Guid, string>> LoadLatestRevisionJsonByBindingIdAsync(ConfigDbContext context, IReadOnlyList<Guid> bindingIds, Guid? tenantId, CancellationToken ct)
+    private static async Task<Dictionary<Guid, string>> LoadLatestRevisionJsonByBindingIdAsync(
+        ConfigDbContext context,
+        IReadOnlyList<Guid> bindingIds,
+        Guid? tenantId,
+        CancellationToken ct)
     {
         if (bindingIds.Count == 0)
             return new();
 
-        var rows = await context.ConfigBindingRevisions.AsNoTracking()
-            .Where(r => bindingIds.Contains(r.BindingId) && r.TenantId == tenantId)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var rows = await context.ConfigBindingRevisions.AsNoTracking().Where(r => bindingIds.Contains(r.BindingId) && r.TenantId == tenantId).ToListAsync(ct).ConfigureAwait(false);
         var map = new Dictionary<Guid, string>(bindingIds.Count);
         foreach (var id in bindingIds) {
             var best = rows.Where(r => r.BindingId == id).OrderByDescending(r => r.Revision).FirstOrDefault();

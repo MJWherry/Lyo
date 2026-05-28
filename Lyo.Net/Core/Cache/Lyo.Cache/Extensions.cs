@@ -17,6 +17,7 @@ public static class CacheServiceExtensions
     {
         if (!services.Any(static d => d.ServiceType == typeof(CompressionService)))
             services.AddCompressionService();
+
         if (!services.Any(static d => d.ServiceType == typeof(ICompressionService)))
             services.AddDefaultCompressionService<CompressionService>();
     }
@@ -41,7 +42,6 @@ public static class CacheServiceExtensions
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
             EnsureCompressionRegistered(services);
-
             RegisterCachePayloadCodec(services);
             RegisterCachePayloadSerializer(services);
             services.AddSingleton<ICacheService>(serviceProvider => {
@@ -74,7 +74,6 @@ public static class CacheServiceExtensions
             services.AddSingleton(cacheOptions);
             services.AddMemoryCache();
             EnsureCompressionRegistered(services);
-
             RegisterCachePayloadCodec(services);
             RegisterCachePayloadSerializer(services);
             services.AddSingleton<ICacheService>(serviceProvider => {

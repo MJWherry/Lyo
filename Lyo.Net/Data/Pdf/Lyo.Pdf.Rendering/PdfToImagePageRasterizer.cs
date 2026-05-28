@@ -27,9 +27,10 @@ public sealed class PdfToImagePageRasterizer(ILogger<PdfToImagePageRasterizer>? 
                     ArgumentOutOfRangeException.ThrowIfLessThan(dpi, 1);
                     var buffer = pdfBytes.ToArray();
                     var pageCount = Conversion.GetPageCount(buffer, password ?? "");
-                    if (pageNumber1Based > pageCount)
+                    if (pageNumber1Based > pageCount) {
                         return Result<PdfRasterPage>.Failure(
                             new Error($"Page {pageNumber1Based} is out of range (document has {pageCount} pages).", PdfRenderErrorCodes.PageOutOfRange));
+                    }
 
                     var index = Index.FromStart(pageNumber1Based - 1);
                     using var pngStream = new MemoryStream();

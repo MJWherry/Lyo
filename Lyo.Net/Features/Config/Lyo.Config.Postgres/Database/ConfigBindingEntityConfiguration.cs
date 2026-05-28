@@ -20,7 +20,15 @@ public sealed class ConfigBindingEntityConfiguration : IEntityTypeConfiguration<
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasOne(e => e.Definition).WithMany().HasForeignKey(e => e.DefinitionId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_config_binding_entity");
-        builder.HasIndex(e => new { e.DefinitionId, e.ForEntityType, e.ForEntityId, e.TenantId }).IsUnique().HasDatabaseName("ux_config_binding_definition_entity");
+        builder.HasIndex(e => new {
+                e.DefinitionId,
+                e.ForEntityType,
+                e.ForEntityId,
+                e.TenantId
+            })
+            .IsUnique()
+            .HasDatabaseName("ux_config_binding_definition_entity");
+
         builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_config_binding_tenant").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

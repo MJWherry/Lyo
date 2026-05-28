@@ -1,6 +1,7 @@
 # Lyo.Authentication.Postgres
 
-PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, and `IExternalIdentityStore`.
+PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, and
+`IExternalIdentityStore`.
 
 Owns the `[user]` schema. Three tables in this lib:
 

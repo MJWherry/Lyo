@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Provider;
@@ -17,18 +12,19 @@ using Org.BouncyCastle.Crypto.Signers;
 namespace Lyo.Authentication.OpenIdConnect.Client;
 
 /// <summary>
-/// Validates an id_token: parses header/payload, looks up the signing key via <see cref="OidcJwksResolver"/>, verifies the signature (RS256 / RS384 / RS512 / EdDSA / ES256 / ES384), and
-/// checks <c>iss</c>, <c>aud</c>, <c>nonce</c>, <c>exp</c>, <c>iat</c>, and <c>nbf</c>.
+/// Validates an id_token: parses header/payload, looks up the signing key via <see cref="OidcJwksResolver" />, verifies the signature (RS256 / RS384 / RS512 / EdDSA / ES256
+/// / ES384), and checks <c>iss</c>, <c>aud</c>, <c>nonce</c>, <c>exp</c>, <c>iat</c>, and <c>nbf</c>.
 /// </summary>
 public sealed class OidcIdTokenValidator
 {
     /// <summary>Default clock skew when comparing <c>exp</c>/<c>iat</c>/<c>nbf</c>.</summary>
     public static readonly TimeSpan DefaultClockSkew = TimeSpan.FromSeconds(60);
 
+    private readonly TimeSpan _clockSkew;
+
     private readonly OidcDiscoveryCache _discovery;
     private readonly OidcJwksResolver _jwks;
     private readonly ILogger<OidcIdTokenValidator> _logger;
-    private readonly TimeSpan _clockSkew;
 
     /// <summary>Creates a new validator.</summary>
     public OidcIdTokenValidator(OidcDiscoveryCache discovery, OidcJwksResolver jwks, ILogger<OidcIdTokenValidator> logger, TimeSpan? clockSkew = null)
@@ -174,8 +170,8 @@ public sealed class OidcIdTokenValidator
         return matched;
     }
 
-    private static bool VerifySignature(string alg, OidcJsonWebKey key, byte[] data, byte[] signature) =>
-        alg switch {
+    private static bool VerifySignature(string alg, OidcJsonWebKey key, byte[] data, byte[] signature)
+        => alg switch {
             "RS256" => VerifyRsa(key, data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1),
             "RS384" => VerifyRsa(key, data, signature, HashAlgorithmName.SHA384, RSASignaturePadding.Pkcs1),
             "RS512" => VerifyRsa(key, data, signature, HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1),
@@ -185,7 +181,7 @@ public sealed class OidcIdTokenValidator
             "ES256" => VerifyEcdsa(key, data, signature, HashAlgorithmName.SHA256),
             "ES384" => VerifyEcdsa(key, data, signature, HashAlgorithmName.SHA384),
             "EdDSA" => VerifyEd25519(key, data, signature),
-            _ => false
+            var _ => false
         };
 
     private static bool VerifyRsa(OidcJsonWebKey key, byte[] data, byte[] signature, HashAlgorithmName hash, RSASignaturePadding padding)
@@ -194,11 +190,7 @@ public sealed class OidcIdTokenValidator
             return false;
 
         using var rsa = RSA.Create();
-        rsa.ImportParameters(new RSAParameters {
-            Modulus = Base64Url.Decode(key.N!),
-            Exponent = Base64Url.Decode(key.E!)
-        });
-
+        rsa.ImportParameters(new() { Modulus = Base64Url.Decode(key.N!), Exponent = Base64Url.Decode(key.E!) });
         return rsa.VerifyData(data, signature, hash, padding);
     }
 
@@ -207,23 +199,16 @@ public sealed class OidcIdTokenValidator
         if (!string.Equals(key.Kty, "EC", StringComparison.Ordinal) || string.IsNullOrEmpty(key.X) || string.IsNullOrEmpty(key.Y) || string.IsNullOrEmpty(key.Crv))
             return false;
 
-        ECCurve curve = key.Crv switch {
+        var curve = key.Crv switch {
             "P-256" => ECCurve.NamedCurves.nistP256,
             "P-384" => ECCurve.NamedCurves.nistP384,
-            _ => default
+            var _ => default
         };
 
         if (curve.Oid is null)
             return false;
 
-        using var ecdsa = ECDsa.Create(new ECParameters {
-            Curve = curve,
-            Q = new() {
-                X = Base64Url.Decode(key.X!),
-                Y = Base64Url.Decode(key.Y!)
-            }
-        });
-
+        using var ecdsa = ECDsa.Create(new ECParameters { Curve = curve, Q = new() { X = Base64Url.Decode(key.X!), Y = Base64Url.Decode(key.Y!) } });
         return ecdsa.VerifyData(data, signature, hash);
     }
 
@@ -252,14 +237,14 @@ public sealed class OidcIdTokenValidator
         return true;
     }
 
-    private static object? ToClaimValue(JsonElement el) =>
-        el.ValueKind switch {
+    private static object? ToClaimValue(JsonElement el)
+        => el.ValueKind switch {
             JsonValueKind.String => el.GetString(),
             JsonValueKind.Number => el.TryGetInt64(out var n) ? n : el.GetDouble(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Null or JsonValueKind.Undefined => null,
             JsonValueKind.Array or JsonValueKind.Object => el.Clone(),
-            _ => el.GetRawText()
+            var _ => el.GetRawText()
         };
 }

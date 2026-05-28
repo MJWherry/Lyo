@@ -8,5 +8,6 @@ public sealed record LzmaCompressionAlgorithm : CompressionAlgorithm
     /// <summary>Canonical singleton.</summary>
     public static readonly LzmaCompressionAlgorithm Instance = new();
 
-    private LzmaCompressionAlgorithm() : base("LZMA", ".lzma") { }
+    private LzmaCompressionAlgorithm()
+        : base("LZMA", ".lzma") { }
 }

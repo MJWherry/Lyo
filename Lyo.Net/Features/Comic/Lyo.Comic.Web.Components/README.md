@@ -12,14 +12,14 @@ All types live in the `Lyo.Comic.Web.Components` namespace.
 
 Top-level search panel: title input, type / status / language selects, a `LyoCheckSelect<string>` for tags, a view-mode toggle, results pagination, and a "Load more" button.
 
-| Parameter (`[EditorRequired]` in **bold**)                                                                  | Purpose                                                                                                          |
-|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| **`Func<ComicSeriesQuery, CancellationToken, Task<IReadOnlyList<ComicSeries>>>? SearchFunc`**               | Host-supplied search callback. Receives the query built from the current filter state.                          |
-| `IReadOnlyList<string> AvailableTags`                                                                       | All tag strings available for filtering. Bound to the tag check-select.                                          |
-| `Func<ComicSeries, string?>? ResolveCoverUrlFunc`                                                           | Resolves a display-ready cover URL from each series' `CoverImageRef`. Return `null` to fall back to placeholder. |
-| `EventCallback<ComicSeries> OnSeriesRead`                                                                   | Raised when the user jumps into the reader (cover, Read button, list read icon).                                  |
-| `EventCallback<ComicSeries> OnSeriesBrowse`                                                                 | Raised when the user opens the series browse page (card body, Details, or list row).                             |
-| `int PageSize` *(default `20`)*                                                                             | Page size used both for initial fetch and "Load more" follow-ups.                                                |
+| Parameter (`[EditorRequired]` in **bold**)                                                    | Purpose                                                                                                          |
+|-----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **`Func<ComicSeriesQuery, CancellationToken, Task<IReadOnlyList<ComicSeries>>>? SearchFunc`** | Host-supplied search callback. Receives the query built from the current filter state.                           |
+| `IReadOnlyList<string> AvailableTags`                                                         | All tag strings available for filtering. Bound to the tag check-select.                                          |
+| `Func<ComicSeries, string?>? ResolveCoverUrlFunc`                                             | Resolves a display-ready cover URL from each series' `CoverImageRef`. Return `null` to fall back to placeholder. |
+| `EventCallback<ComicSeries> OnSeriesRead`                                                     | Raised when the user jumps into the reader (cover, Read button, list read icon).                                 |
+| `EventCallback<ComicSeries> OnSeriesBrowse`                                                   | Raised when the user opens the series browse page (card body, Details, or list row).                             |
+| `int PageSize` *(default `20`)*                                                               | Page size used both for initial fetch and "Load more" follow-ups.                                                |
 
 Internally it builds `ComicSeriesQuery` from `TitleContains`, `ComicType`, `ComicStatus`, `Language`, `Tags`, `Skip`, and `Limit`, calls `SearchFunc`, tracks `_hasMore`, and
 renders results through `ComicBrowseResults` + `ComicCard`.
@@ -28,12 +28,12 @@ renders results through `ComicBrowseResults` + `ComicCard`.
 
 Layout shell for browse cards. Wraps `ChildContent` in a `<div>` whose CSS class is derived from `ViewMode`:
 
-| `ViewMode`                       | CSS layout class                                              |
-|----------------------------------|---------------------------------------------------------------|
-| `ComicBrowseViewMode.GridLarge`  | `comic-browse-results__grid comic-browse-results__grid--large` |
-| `ComicBrowseViewMode.GridSmall`  | `comic-browse-results__grid comic-browse-results__grid--small` |
-| `ComicBrowseViewMode.ListNoImage`| `comic-browse-results__list comic-browse-results__list--no-image` |
-| `ComicBrowseViewMode.ListLine`   | `comic-browse-results__list comic-browse-results__list--line`  |
+| `ViewMode`                        | CSS layout class                                                  |
+|-----------------------------------|-------------------------------------------------------------------|
+| `ComicBrowseViewMode.GridLarge`   | `comic-browse-results__grid comic-browse-results__grid--large`    |
+| `ComicBrowseViewMode.GridSmall`   | `comic-browse-results__grid comic-browse-results__grid--small`    |
+| `ComicBrowseViewMode.ListNoImage` | `comic-browse-results__list comic-browse-results__list--no-image` |
+| `ComicBrowseViewMode.ListLine`    | `comic-browse-results__list comic-browse-results__list--line`     |
 
 Parameters: `RenderFragment? ChildContent`, `ComicBrowseViewMode ViewMode`, optional extra `string? Class`.
 
@@ -48,20 +48,20 @@ taps to the corresponding events. Parameters: **`ComicSeries Series`** (`[Editor
 Presentational card used for both grid and list layouts. Renders the cover image, status badge, type/language overlays, title, subtitle, description (auto-truncated to 200
 characters), up to three visible tag chips with a "+N" overflow indicator, and optional Read/Details actions.
 
-| Parameter                                                | Purpose                                                                                |
-|----------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `string Title`                                           | Display title.                                                                          |
-| `string? Subtitle`                                       | Secondary line (author, publisher, …).                                                  |
-| `string? Description`                                    | Description; truncated to 200 chars for display.                                        |
-| `string? CoverImageUrl`                                  | Resolved cover URL.                                                                     |
-| `string? TypeBadge` / `string? LanguageLine`             | Overlays drawn on top of the cover.                                                     |
-| `int? PageCount`                                         | Optional page-count chip.                                                               |
-| `ComicStatus? Status`                                    | Drives the status badge CSS modifier (`--ongoing`, `--completed`, `--hiatus`, `--cancelled`, `--unknown`). |
-| `string? Demographic`, `int? PublishedYear`              | Optional metadata chips.                                                                |
-| `IReadOnlyList<string> Tags`                             | Tag chips (max 3 visible, overflow shown as "+N").                                      |
-| `ComicBrowseViewMode ViewMode`                           | Selects card layout (default `GridSmall`).                                              |
-| `bool ShowReadActions`                                   | When true, the Read / Details action row is rendered.                                   |
-| `EventCallback OnCoverClick`, `OnPrimaryClick`, `OnRead`, `OnDetails` | Tap targets.                                                                |
+| Parameter                                                             | Purpose                                                                                                    |
+|-----------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `string Title`                                                        | Display title.                                                                                             |
+| `string? Subtitle`                                                    | Secondary line (author, publisher, …).                                                                     |
+| `string? Description`                                                 | Description; truncated to 200 chars for display.                                                           |
+| `string? CoverImageUrl`                                               | Resolved cover URL.                                                                                        |
+| `string? TypeBadge` / `string? LanguageLine`                          | Overlays drawn on top of the cover.                                                                        |
+| `int? PageCount`                                                      | Optional page-count chip.                                                                                  |
+| `ComicStatus? Status`                                                 | Drives the status badge CSS modifier (`--ongoing`, `--completed`, `--hiatus`, `--cancelled`, `--unknown`). |
+| `string? Demographic`, `int? PublishedYear`                           | Optional metadata chips.                                                                                   |
+| `IReadOnlyList<string> Tags`                                          | Tag chips (max 3 visible, overflow shown as "+N").                                                         |
+| `ComicBrowseViewMode ViewMode`                                        | Selects card layout (default `GridSmall`).                                                                 |
+| `bool ShowReadActions`                                                | When true, the Read / Details action row is rendered.                                                      |
+| `EventCallback OnCoverClick`, `OnPrimaryClick`, `OnRead`, `OnDetails` | Tap targets.                                                                                               |
 
 ### `BrowseListPanel` *(`BrowseListPanel.razor` + `.razor.cs` + `.razor.css`)*
 
@@ -74,18 +74,18 @@ MangaFire-style reader: page area, page counter, slider, chapter selector, previ
 `./_content/Lyo.Comic.Web.Components/scripts/comicViewer.js` for rapid keyboard / tap navigation, prefetches neighbor pages (radius 5 — widened to 8 after a "jump"), and falls
 back to the cover image while the first page resolves.
 
-| Parameter                                                                                              | Purpose                                                                                                                                  |
-|--------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **`ComicSeries Series`** *(`[EditorRequired]`)*                                                        | The series being read.                                                                                                                   |
-| `IReadOnlyList<ComicChapter> Chapters`                                                                 | Ordered chapters available for navigation (already language-filtered by the host).                                                       |
-| `ComicChapter? CurrentChapter`                                                                         | Currently rendered chapter; `null` until the host picks one.                                                                             |
-| `int CurrentPage` *(default `1`)*                                                                      | 1-based page within the active chapter.                                                                                                  |
-| `int TotalPages`                                                                                       | Total pages for the chapter; falls back to `ComicChapter.PageCount` when `0`.                                                            |
-| **`Func<ComicSeries, ComicChapter, int, CancellationToken, Task<string?>>? LoadPageImageAsync`**       | Host-supplied page loader. Return a URL or Base-64 data URI, or `null` if unavailable.                                                   |
-| `string? CoverImageUrl`                                                                                | Cover URL, warmed in parallel and shown while the first page is resolving.                                                               |
-| `EventCallback<ComicChapter> OnChapterChanged` / `OnPreviousChapterChanged`                            | Raised when navigation crosses chapter boundaries (the "previous" variant falls back to `OnChapterChanged` if not wired).                |
-| `EventCallback<int> OnPageChanged`                                                                     | Raised when navigation changes the current page.                                                                                         |
-| `EventCallback OnClose`                                                                                | Raised when the close button is tapped.                                                                                                  |
+| Parameter                                                                                        | Purpose                                                                                                                   |
+|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| **`ComicSeries Series`** *(`[EditorRequired]`)*                                                  | The series being read.                                                                                                    |
+| `IReadOnlyList<ComicChapter> Chapters`                                                           | Ordered chapters available for navigation (already language-filtered by the host).                                        |
+| `ComicChapter? CurrentChapter`                                                                   | Currently rendered chapter; `null` until the host picks one.                                                              |
+| `int CurrentPage` *(default `1`)*                                                                | 1-based page within the active chapter.                                                                                   |
+| `int TotalPages`                                                                                 | Total pages for the chapter; falls back to `ComicChapter.PageCount` when `0`.                                             |
+| **`Func<ComicSeries, ComicChapter, int, CancellationToken, Task<string?>>? LoadPageImageAsync`** | Host-supplied page loader. Return a URL or Base-64 data URI, or `null` if unavailable.                                    |
+| `string? CoverImageUrl`                                                                          | Cover URL, warmed in parallel and shown while the first page is resolving.                                                |
+| `EventCallback<ComicChapter> OnChapterChanged` / `OnPreviousChapterChanged`                      | Raised when navigation crosses chapter boundaries (the "previous" variant falls back to `OnChapterChanged` if not wired). |
+| `EventCallback<int> OnPageChanged`                                                               | Raised when navigation changes the current page.                                                                          |
+| `EventCallback OnClose`                                                                          | Raised when the close button is tapped.                                                                                   |
 
 Public method: `Task ReloadPageAsync(int? forPage = null)` — re-fetches the displayed image; pass a value when calling immediately after updating local state because Blazor
 re-renders asynchronously. The component implements `IAsyncDisposable` so the JS module / `DotNetObjectReference` are torn down cleanly.

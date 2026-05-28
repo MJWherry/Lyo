@@ -11,9 +11,9 @@ PostgreSQL schema and EF Core context for caching Endato Person Search (PS) and 
 
 The two domains (Person Search and Contact Enrichment) are intentionally split into separate entity groups so caching either source is independent:
 
-| Group                    | Entities                                                                                                                                                                  |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Person Search (`Ps`)** | `EndatoPsQueryEntity`, `EndatoPsPersonEntity`, `EndatoPsAddressEntity`, `EndatoPsEmailAddressEntity`, `EndatoPsPhoneNumberEntity` (+ matching `*Configuration` classes).   |
+| Group                         | Entities                                                                                                                                                                 |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Person Search (`Ps`)**      | `EndatoPsQueryEntity`, `EndatoPsPersonEntity`, `EndatoPsAddressEntity`, `EndatoPsEmailAddressEntity`, `EndatoPsPhoneNumberEntity` (+ matching `*Configuration` classes). |
 | **Contact Enrichment (`Ce`)** | `EndatoCeQueryEntity`, `EndatoCePersonEntity`, `EndatoCeAddressEntity`, `EndatoCeEmailAddressEntity`, `EndatoCePhoneNumberEntity` (+ matching `*Configuration` classes). |
 
 `OnModelCreating` sets `HasDefaultSchema("endato")` and applies each entity configuration; the migrations history table is also written to the `endato` schema.
@@ -22,13 +22,13 @@ The two domains (Person Search and Contact Enrichment) are intentionally split i
 
 All registrations are extension methods on `IServiceCollection` (declared inside `extension(IServiceCollection services)` blocks):
 
-| Method                                                              | Description                                                                                                                                       |
-|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddEndatoDbContext(string connectionString)`                       | Convenience: registers the factory plus a scoped `EndatoDbContext` resolved from the factory.                                                     |
-| `AddEndatoDbContext(Action<DbContextOptionsBuilder>)`               | Standard EF `AddDbContext` overload.                                                                                                              |
-| `AddEndatoDbContextFactory(Action<PostgresEndatoOptions>)`          | Builds options inline.                                                                                                                            |
-| `AddEndatoDbContextFactoryFromConfiguration(config, sectionName?)`  | Binds options from configuration (default section `"PostgresEndato"`).                                                                            |
-| `AddEndatoDbContextFactory(PostgresEndatoOptions)`                  | Registers `IDbContextFactory<EndatoDbContext>` (Npgsql provider), wires `AddPostgresMigrations<EndatoDbContext, …>`, and sets the migrations history table to the `endato` schema. |
+| Method                                                             | Description                                                                                                                                                                        |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddEndatoDbContext(string connectionString)`                      | Convenience: registers the factory plus a scoped `EndatoDbContext` resolved from the factory.                                                                                      |
+| `AddEndatoDbContext(Action<DbContextOptionsBuilder>)`              | Standard EF `AddDbContext` overload.                                                                                                                                               |
+| `AddEndatoDbContextFactory(Action<PostgresEndatoOptions>)`         | Builds options inline.                                                                                                                                                             |
+| `AddEndatoDbContextFactoryFromConfiguration(config, sectionName?)` | Binds options from configuration (default section `"PostgresEndato"`).                                                                                                             |
+| `AddEndatoDbContextFactory(PostgresEndatoOptions)`                 | Registers `IDbContextFactory<EndatoDbContext>` (Npgsql provider), wires `AddPostgresMigrations<EndatoDbContext, …>`, and sets the migrations history table to the `endato` schema. |
 
 ## Quick start
 

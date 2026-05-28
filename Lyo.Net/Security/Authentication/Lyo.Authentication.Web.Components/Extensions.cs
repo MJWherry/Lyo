@@ -1,4 +1,3 @@
-using System;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Options;
 using Lyo.Authentication.Web.Components.Providers;
@@ -16,10 +15,10 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="LyoAuthWebComponentsOptions"/> and the default <see cref="IAuthProviderCatalog"/>. Does NOT register the host-specific
-        /// <see cref="IAuthSignInLauncher"/> / <see cref="IAuthUserClient"/> / <see cref="IAuthSessionAccessor"/> — call <c>AddLyoAuthWebComponentsServer</c> or
-        /// <c>AddLyoAuthWebComponentsWasm</c> for those. <see cref="IAuthPasswordSignIn"/> stays opt-in: register your own implementation if you want the
-        /// password card to appear on the login page.
+        /// Registers <see cref="LyoAuthWebComponentsOptions" /> and the default <see cref="IAuthProviderCatalog" />. Does NOT register the host-specific
+        /// <see cref="IAuthSignInLauncher" /> / <see cref="IAuthUserClient" /> / <see cref="IAuthSessionAccessor" /> — call <c>AddLyoAuthWebComponentsServer</c> or
+        /// <c>AddLyoAuthWebComponentsWasm</c> for those. <see cref="IAuthPasswordSignIn" /> stays opt-in: register your own implementation if you want the password card to appear on the
+        /// login page.
         /// </summary>
         public IServiceCollection AddLyoAuthWebComponents(IConfiguration configuration, string sectionName = LyoAuthWebComponentsOptions.SectionName)
         {
@@ -30,7 +29,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Same as <see cref="AddLyoAuthWebComponents(IConfiguration, string)"/> but configures the options inline.</summary>
+        /// <summary>Same as <see cref="AddLyoAuthWebComponents(IConfiguration, string)" /> but configures the options inline.</summary>
         public IServiceCollection AddLyoAuthWebComponents(Action<LyoAuthWebComponentsOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);

@@ -1,6 +1,6 @@
 namespace Lyo.Authentication.Web.Components.Models;
 
-/// <summary>Outcome of an <see cref="Abstractions.IAuthPasswordSignIn.SignInAsync"/> attempt. Discriminated-union-style using a single record + a static factory pair.</summary>
+/// <summary>Outcome of an <see cref="Abstractions.IAuthPasswordSignIn.SignInAsync" /> attempt. Discriminated-union-style using a single record + a static factory pair.</summary>
 /// <param name="Succeeded">True when sign-in completed.</param>
 /// <param name="ReturnUrl">Where to navigate after success (overrides the page's own return URL when non-null).</param>
 /// <param name="FailureReason">Human-readable reason rendered as a <c>MudAlert</c> on failure.</param>

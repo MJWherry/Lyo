@@ -15,15 +15,11 @@ public static class Extensions
     /// <param name="configuration">Configuration root.</param>
     /// <param name="section">Configuration section name (defaults to <see cref="DefaultSectionName" />).</param>
     /// <returns><paramref name="services" /> for chaining.</returns>
-    public static IServiceCollection AddEntityRefOptionsFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string section = DefaultSectionName)
+    public static IServiceCollection AddEntityRefOptionsFromConfiguration(this IServiceCollection services, IConfiguration configuration, string section = DefaultSectionName)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(section);
-
         services.AddOptions<EntityRefOptions>()
             .Bind(configuration.GetSection(section))
             .Validate(o => o.DefaultTenantId != Guid.Empty, $"{section}:{nameof(EntityRefOptions.DefaultTenantId)} cannot be empty.")

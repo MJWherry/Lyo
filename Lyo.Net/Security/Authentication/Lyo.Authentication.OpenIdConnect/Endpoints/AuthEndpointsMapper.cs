@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
@@ -16,17 +13,15 @@ using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.OpenIdConnect.Endpoints;
 
 /// <summary>
-/// Shared BFF + API-client auth endpoints. The browser flow is:
-/// <c>GET /auth/login/{provider}</c> → IdP → <c>GET /auth/callback/{provider}</c> → 302 to <c>{returnUrl}?lyo_handoff=lyoh_...</c>,
-/// then the consumer POSTs <c>/auth/handoff/exchange</c> server-to-server to redeem the code for tokens.
-/// The API-client flow uses <c>POST /auth/token</c> and <c>POST /auth/refresh</c> directly with JSON bodies — no cookies.
+/// Shared BFF + API-client auth endpoints. The browser flow is: <c>GET /auth/login/{provider}</c> → IdP → <c>GET /auth/callback/{provider}</c> → 302 to
+/// <c>{returnUrl}?lyo_handoff=lyoh_...</c>, then the consumer POSTs <c>/auth/handoff/exchange</c> server-to-server to redeem the code for tokens. The API-client flow uses
+/// <c>POST /auth/token</c> and <c>POST /auth/refresh</c> directly with JSON bodies — no cookies.
 /// </summary>
 public static class AuthEndpointsMapper
 {
@@ -36,19 +31,24 @@ public static class AuthEndpointsMapper
     /// <summary>Query-string parameter the callback uses to deliver the handoff code on the redirect back to the consumer origin.</summary>
     public const string HandoffQueryParameter = "lyo_handoff";
 
-    /// <summary>Scope policy name required for <c>GET /auth/users/{id}</c>. Matches the <c>scope:</c>-prefixed policy auto-created by <c>Lyo.Authentication.AspNetCore.Authorization.ScopeAuthorizationPolicyProvider</c>.</summary>
+    /// <summary>
+    /// Scope policy name required for <c>GET /auth/users/{id}</c>. Matches the <c>scope:</c>-prefixed policy auto-created by
+    /// <c>Lyo.Authentication.AspNetCore.Authorization.ScopeAuthorizationPolicyProvider</c>.
+    /// </summary>
     public const string UsersReadScopePolicy = "scope:auth.users.read";
 
-    /// <summary>Maps the standard auth endpoint group at <paramref name="prefix"/> (default <c>/auth</c>). Attaches the resolved state-cookie path as endpoint metadata so handlers can scope the cookie to the callback path.</summary>
+    private static readonly AuthCookiePathOptions DefaultPaths = new();
+
+    /// <summary>
+    /// Maps the standard auth endpoint group at <paramref name="prefix" /> (default <c>/auth</c>). Attaches the resolved state-cookie path as endpoint metadata so handlers can
+    /// scope the cookie to the callback path.
+    /// </summary>
     public static IEndpointConventionBuilder MapLyoAuthEndpoints(this IEndpointRouteBuilder endpoints, string prefix = "/auth")
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(prefix);
         var basePath = NormalizePrefix(prefix);
-        var paths = new AuthCookiePathOptions {
-            StateCookiePath = basePath + "/callback"
-        };
-
+        var paths = new AuthCookiePathOptions { StateCookiePath = basePath + "/callback" };
         var group = endpoints.MapGroup(basePath).WithTags("LyoAuth").WithMetadata(paths);
         group.MapGet("/login/{provider}", (Delegate)LoginAsync).WithName("LyoAuthLogin").AllowAnonymous();
         group.MapGet("/callback/{provider}", (Delegate)CallbackAsync).WithName("LyoAuthCallback").AllowAnonymous();
@@ -78,20 +78,19 @@ public static class AuthEndpointsMapper
                 var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
                 logger.LogWarning(
                     "Caller-supplied returnUrl {Requested} was rejected and downgraded to {SafeReturn}. Add the origin to LyoOidcBff:AllowedReturnOrigins (currently [{Allowed}]) if you want the post-login redirect to land there. The handoff code will be stamped with the API's own origin, so the consumer's exchange POST will fail with 'invalid_or_consumed_code'.",
-                    returnUrl,
-                    safeReturn,
-                    string.Join(", ", opts.AllowedReturnOrigins));
+                    returnUrl, safeReturn, string.Join(", ", opts.AllowedReturnOrigins));
             }
 
             var redirect = await coordinator.BuildLoginRedirectAsync(provider, safeReturn, mode ?? "browser", ctx.RequestAborted).ConfigureAwait(false);
-            ctx.Response.Cookies.Append(StateCookieName, redirect.SealedState, new() {
-                HttpOnly = true,
-                Secure = ctx.Request.IsHttps,
-                SameSite = SameSiteMode.Lax,
-                IsEssential = true,
-                Path = paths.StateCookiePath,
-                MaxAge = TimeSpan.FromMinutes(15)
-            });
+            ctx.Response.Cookies.Append(
+                StateCookieName, redirect.SealedState, new() {
+                    HttpOnly = true,
+                    Secure = ctx.Request.IsHttps,
+                    SameSite = SameSiteMode.Lax,
+                    IsEssential = true,
+                    Path = paths.StateCookiePath,
+                    MaxAge = TimeSpan.FromMinutes(15)
+                });
 
             return Results.Redirect(redirect.AuthorizeUrl);
         }
@@ -129,7 +128,10 @@ public static class AuthEndpointsMapper
 
             var returnOrigin = ExtractOrigin(result.ReturnUrl) ?? AbsoluteOrigin(ctx);
             var handoffId = await GenerateAndStoreHandoffAsync(issued, returnOrigin, handoffStore, bffOptions.Value, ctx.RequestAborted).ConfigureAwait(false);
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeIssued, subject: handoffId, provider: result.Provider, outcome: "success", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(
+                    auditContext, logger, AuthAuditEventKind.HandoffCodeIssued, subject: handoffId, provider: result.Provider, outcome: "success", ct: ctx.RequestAborted)
+                .ConfigureAwait(false);
+
             return Results.Redirect(AppendQuery(result.ReturnUrl, HandoffQueryParameter, handoffId));
         }
         catch (ExternalLoginRejectedException ex) {
@@ -148,33 +150,40 @@ public static class AuthEndpointsMapper
     {
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
         if (body is null || string.IsNullOrWhiteSpace(body.Code)) {
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, outcome: "failure", reason: "MissingCode", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, outcome: "failure", reason: "MissingCode", ct: ctx.RequestAborted)
+                .ConfigureAwait(false);
+
             return Results.BadRequest(new { error = "missing_code" });
         }
 
         var origin = ctx.Request.Headers.Origin.ToString();
         if (string.IsNullOrWhiteSpace(origin)) {
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "MissingOrigin", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(
+                    auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "MissingOrigin", ct: ctx.RequestAborted)
+                .ConfigureAwait(false);
+
             return Results.BadRequest(new { error = "missing_origin" });
         }
 
         var code = await store.ConsumeAsync(body.Code!, origin, ctx.RequestAborted).ConfigureAwait(false);
         if (code is null) {
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "InvalidOrConsumed", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(
+                    auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: body.Code, outcome: "failure", reason: "InvalidOrConsumed", ct: ctx.RequestAborted)
+                .ConfigureAwait(false);
+
             return Results.BadRequest(new { error = "invalid_or_consumed_code" });
         }
 
         if (DateTime.UtcNow >= code.AccessTokenExpiresAt) {
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: code.Id, outcome: "failure", reason: "AccessTokenExpired", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(
+                    auditContext, logger, AuthAuditEventKind.HandoffCodeRejected, subject: code.Id, outcome: "failure", reason: "AccessTokenExpired", ct: ctx.RequestAborted)
+                .ConfigureAwait(false);
+
             return Results.BadRequest(new { error = "access_token_expired" });
         }
 
         await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.HandoffCodeConsumed, subject: code.Id, outcome: "success", ct: ctx.RequestAborted).ConfigureAwait(false);
-        return Results.Json(new TokenResponse(
-            AccessToken: code.AccessToken,
-            ExpiresIn: (int)Math.Max(0, (code.AccessTokenExpiresAt - DateTime.UtcNow).TotalSeconds),
-            RefreshToken: code.RefreshToken,
-            TokenType: "Bearer"));
+        return Results.Json(new TokenResponse(code.AccessToken, (int)Math.Max(0, (code.AccessTokenExpiresAt - DateTime.UtcNow).TotalSeconds), code.RefreshToken, "Bearer"));
     }
 
     private static async Task<IResult> TokenAsync(HttpContext ctx, ILyoRefreshTokenExchange exchange, TokenRequest? body)
@@ -207,77 +216,62 @@ public static class AuthEndpointsMapper
         return Results.Json(BuildTokenResponse(issued));
     }
 
-    private static async Task<IResult> LogoutAsync(HttpContext ctx, IApiTokenStore store, IAuthAuditRecorder audit, IAuthAuditContextAccessor auditContext, ILoggerFactory loggerFactory, LogoutRequest? body)
+    private static async Task<IResult> LogoutAsync(
+        HttpContext ctx,
+        IApiTokenStore store,
+        IAuthAuditRecorder audit,
+        IAuthAuditContextAccessor auditContext,
+        ILoggerFactory loggerFactory,
+        LogoutRequest? body)
     {
         if (body is null || string.IsNullOrWhiteSpace(body.RefreshToken))
             return Results.NoContent();
 
         var logger = loggerFactory.CreateLogger(typeof(AuthEndpointsMapper));
-        if (ApiTokenCodec.TryParse(body.RefreshToken!, out var parsed)
-            && parsed is not null
-            && string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
+        if (ApiTokenCodec.TryParse(body.RefreshToken!, out var parsed) && parsed is not null && string.Equals(parsed.Kind, ApiTokenKind.Internal, StringComparison.Ordinal)) {
             Guid? ownerUserId = null;
             try {
-                var record = await store.GetByIdAsync(parsed.Id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+                var record = await store.GetByIdAsync(parsed.Id, null, ctx.RequestAborted).ConfigureAwait(false);
                 ownerUserId = record?.UserId;
-                await store.RevokeAsync(parsed.Id, DateTime.UtcNow, "logout", tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
-                await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.TokenRevoked, userId: ownerUserId, subject: parsed.Id, outcome: "success", reason: "logout", ct: ctx.RequestAborted).ConfigureAwait(false);
+                await store.RevokeAsync(parsed.Id, DateTime.UtcNow, "logout", null, ctx.RequestAborted).ConfigureAwait(false);
+                await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.TokenRevoked, ownerUserId, parsed.Id, outcome: "success", reason: "logout", ct: ctx.RequestAborted)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex) {
                 logger.LogWarning(ex, "Failed to revoke refresh token {TokenId} during logout", parsed.Id);
             }
 
-            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.SignedOut, userId: ownerUserId, subject: parsed.Id, outcome: "success", ct: ctx.RequestAborted).ConfigureAwait(false);
+            await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.SignedOut, ownerUserId, parsed.Id, outcome: "success", ct: ctx.RequestAborted).ConfigureAwait(false);
         }
 
         return Results.NoContent();
     }
 
-    private static AuthCookiePathOptions ResolvePaths(HttpContext ctx) =>
-        ctx.GetEndpoint()?.Metadata.GetMetadata<AuthCookiePathOptions>() ?? DefaultPaths;
+    private static AuthCookiePathOptions ResolvePaths(HttpContext ctx) => ctx.GetEndpoint()?.Metadata.GetMetadata<AuthCookiePathOptions>() ?? DefaultPaths;
 
-    private static readonly AuthCookiePathOptions DefaultPaths = new();
-
-    private static async Task<IResult> MeAsync(
-        HttpContext ctx,
-        IUserStore users,
-        IExternalIdentityStore identities)
+    private static async Task<IResult> MeAsync(HttpContext ctx, IUserStore users, IExternalIdentityStore identities)
     {
         var lyoUserClaim = ctx.User.FindFirst("lyo:user")?.Value ?? ctx.User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(lyoUserClaim) || !TryExtractUserId(lyoUserClaim, out var userId))
             return Results.Unauthorized();
 
-        var user = await users.GetByIdAsync(userId, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+        var user = await users.GetByIdAsync(userId, null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
             return Results.NotFound();
 
-        var links = await identities.ListForUserAsync(userId, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
-        var scopes = ctx.User.FindAll("scope")
-            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            .Distinct()
-            .ToArray();
-
-        return Results.Json(new MeResponse(
-            User: user,
-            Scopes: scopes,
-            LinkedIdentities: links.ToArray()));
+        var links = await identities.ListForUserAsync(userId, null, ctx.RequestAborted).ConfigureAwait(false);
+        var scopes = ctx.User.FindAll("scope").SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)).Distinct().ToArray();
+        return Results.Json(new MeResponse(user, scopes, links.ToArray()));
     }
 
-    private static async Task<IResult> UserByIdAsync(
-        Guid id,
-        HttpContext ctx,
-        IUserStore users,
-        IExternalIdentityStore identities)
+    private static async Task<IResult> UserByIdAsync(Guid id, HttpContext ctx, IUserStore users, IExternalIdentityStore identities)
     {
-        var user = await users.GetByIdAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+        var user = await users.GetByIdAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
         if (user is null)
             return Results.NotFound();
 
-        var links = await identities.ListForUserAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
-        return Results.Json(new MeResponse(
-            User: user,
-            Scopes: user.Scopes.ToArray(),
-            LinkedIdentities: links.ToArray()));
+        var links = await identities.ListForUserAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
+        return Results.Json(new MeResponse(user, user.Scopes.ToArray(), links.ToArray()));
     }
 
     private static bool TryExtractUserId(string claim, out Guid userId)
@@ -286,15 +280,13 @@ public static class AuthEndpointsMapper
         return Guid.TryParse(raw, out userId);
     }
 
-    /// <summary>
-    /// Origin-allow-list aware sanitizer. Used by <c>GET /auth/login/{provider}</c> to pre-validate the <c>returnUrl</c> query parameter before sealing it into the state cookie.
-    /// </summary>
+    /// <summary>Origin-allow-list aware sanitizer. Used by <c>GET /auth/login/{provider}</c> to pre-validate the <c>returnUrl</c> query parameter before sealing it into the state cookie.</summary>
     /// <param name="raw">The caller-supplied return target.</param>
     /// <param name="allowed">Origins (<c>scheme://host[:port]</c>) that may receive the post-login redirect.</param>
     /// <param name="defaultUrl">Fallback when nothing else is usable.</param>
-    /// <param name="referer">Optional <c>Referer</c> header value to use when <paramref name="raw"/> is empty.</param>
-    /// <returns>Either a safe relative path (starts with <c>/</c>) or an allow-listed absolute URL or <paramref name="defaultUrl"/>.</returns>
-    public static string SanitizeReturn(string? raw, System.Collections.Generic.IEnumerable<string> allowed, string defaultUrl, string? referer = null)
+    /// <param name="referer">Optional <c>Referer</c> header value to use when <paramref name="raw" /> is empty.</param>
+    /// <returns>Either a safe relative path (starts with <c>/</c>) or an allow-listed absolute URL or <paramref name="defaultUrl" />.</returns>
+    public static string SanitizeReturn(string? raw, IEnumerable<string> allowed, string defaultUrl, string? referer = null)
     {
         ArgumentHelpers.ThrowIfNull(allowed);
         ArgumentHelpers.ThrowIfNull(defaultUrl);
@@ -314,10 +306,10 @@ public static class AuthEndpointsMapper
         return defaultUrl;
     }
 
-    private static bool IsOriginAllowed(string absoluteUrl, System.Collections.Generic.IEnumerable<string> allowed) =>
-        Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var uri) && IsOriginAllowed(uri, allowed);
+    private static bool IsOriginAllowed(string absoluteUrl, IEnumerable<string> allowed)
+        => Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var uri) && IsOriginAllowed(uri, allowed);
 
-    private static bool IsOriginAllowed(Uri uri, System.Collections.Generic.IEnumerable<string> allowed)
+    private static bool IsOriginAllowed(Uri uri, IEnumerable<string> allowed)
     {
         var origin = uri.GetLeftPart(UriPartial.Authority);
         foreach (var allowedOrigin in allowed) {
@@ -334,29 +326,14 @@ public static class AuthEndpointsMapper
         return trimmed.StartsWith("/", StringComparison.Ordinal) ? trimmed : "/" + trimmed;
     }
 
-    private static string? ExtractOrigin(string returnUrl) =>
-        Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null;
+    private static string? ExtractOrigin(string returnUrl) => Uri.TryCreate(returnUrl, UriKind.Absolute, out var uri) ? uri.GetLeftPart(UriPartial.Authority) : null;
 
-    private static string AbsoluteOrigin(HttpContext ctx) =>
-        $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
+    private static string AbsoluteOrigin(HttpContext ctx) => $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
 
-    private static async Task<string> GenerateAndStoreHandoffAsync(
-        IssuedLyoJwt issued,
-        string issuedTo,
-        IHandoffCodeStore store,
-        OpenIdConnectBffOptions bff,
-        System.Threading.CancellationToken ct)
+    private static async Task<string> GenerateAndStoreHandoffAsync(IssuedLyoJwt issued, string issuedTo, IHandoffCodeStore store, OpenIdConnectBffOptions bff, CancellationToken ct)
     {
         var id = InMemoryHandoffCodeStore.NewId();
-        var code = new LyoHandoffCode(
-            Id: id,
-            AccessToken: issued.AccessToken,
-            RefreshToken: issued.RefreshToken,
-            AccessTokenExpiresAt: issued.AccessTokenExpiresAt,
-            RefreshTokenExpiresAt: issued.RefreshTokenExpiresAt,
-            IssuedTo: issuedTo,
-            CreatedAt: DateTime.UtcNow);
-
+        var code = new LyoHandoffCode(id, issued.AccessToken, issued.RefreshToken, issued.AccessTokenExpiresAt, issued.RefreshTokenExpiresAt, issuedTo, DateTime.UtcNow);
         await store.StoreAsync(code, bff.HandoffCodeTtl, ct).ConfigureAwait(false);
         return id;
     }
@@ -367,41 +344,45 @@ public static class AuthEndpointsMapper
         return $"{baseUrl}{separator}{name}={Uri.EscapeDataString(value)}";
     }
 
-    private static TokenResponse BuildTokenResponse(IssuedLyoJwt issued) => new(
-        AccessToken: issued.AccessToken,
-        ExpiresIn: (int)Math.Max(0, (issued.AccessTokenExpiresAt - DateTime.UtcNow).TotalSeconds),
-        RefreshToken: issued.RefreshToken,
-        TokenType: "Bearer");
+    private static TokenResponse BuildTokenResponse(IssuedLyoJwt issued)
+        => new(issued.AccessToken, (int)Math.Max(0, (issued.AccessTokenExpiresAt - DateTime.UtcNow).TotalSeconds), issued.RefreshToken, "Bearer");
 
     /// <summary>The JSON body accepted by <c>POST /auth/handoff/exchange</c>.</summary>
-    public sealed record HandoffExchangeRequest(
-        [property: JsonPropertyName("code")] string? Code);
+    public sealed record HandoffExchangeRequest([property: JsonPropertyName("code")] string? Code);
 
     /// <summary>The JSON body accepted by <c>POST /auth/token</c> (minimal OAuth2-style endpoint).</summary>
     public sealed record TokenRequest(
-        [property: JsonPropertyName("grant_type")] string? GrantType,
-        [property: JsonPropertyName("refresh_token")] string? RefreshToken);
+        [property: JsonPropertyName("grant_type")]
+        string? GrantType,
+        [property: JsonPropertyName("refresh_token")]
+        string? RefreshToken);
 
     /// <summary>The JSON body accepted by <c>POST /auth/refresh</c>.</summary>
     public sealed record RefreshRequest(
-        [property: JsonPropertyName("refresh_token")] string? RefreshToken);
+        [property: JsonPropertyName("refresh_token")]
+        string? RefreshToken);
 
     /// <summary>The JSON body accepted by <c>POST /auth/logout</c>.</summary>
     public sealed record LogoutRequest(
-        [property: JsonPropertyName("refresh_token")] string? RefreshToken);
+        [property: JsonPropertyName("refresh_token")]
+        string? RefreshToken);
 
     /// <summary>The JSON shape returned by <c>POST /auth/handoff/exchange</c>, <c>POST /auth/token</c>, and <c>POST /auth/refresh</c>. Snake-case per RFC 6749 (OAuth 2.0).</summary>
     public sealed record TokenResponse(
-        [property: JsonPropertyName("access_token")] string AccessToken,
-        [property: JsonPropertyName("expires_in")] int ExpiresIn,
-        [property: JsonPropertyName("refresh_token")] string? RefreshToken,
-        [property: JsonPropertyName("token_type")] string TokenType);
+        [property: JsonPropertyName("access_token")]
+        string AccessToken,
+        [property: JsonPropertyName("expires_in")]
+        int ExpiresIn,
+        [property: JsonPropertyName("refresh_token")]
+        string? RefreshToken,
+        [property: JsonPropertyName("token_type")]
+        string TokenType);
 
     /// <summary>The JSON shape returned by <c>GET /auth/me</c>.</summary>
     public sealed record MeResponse(LyoUser User, string[] Scopes, LinkedIdentity[] LinkedIdentities);
 }
 
-/// <summary>Singleton describing where the OIDC state cookie is scoped. Populated by <see cref="AuthEndpointsMapper.MapLyoAuthEndpoints"/> at mapping time.</summary>
+/// <summary>Singleton describing where the OIDC state cookie is scoped. Populated by <see cref="AuthEndpointsMapper.MapLyoAuthEndpoints" /> at mapping time.</summary>
 public sealed class AuthCookiePathOptions
 {
     /// <summary>Cookie <c>Path</c> attribute for the sealed OIDC state cookie. Defaults to the callback path under <c>/auth</c>.</summary>

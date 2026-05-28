@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Authentication.Postgres.Database;
 
-/// <summary>EF configuration for <see cref="LinkedIdentityEntity"/>.</summary>
+/// <summary>EF configuration for <see cref="LinkedIdentityEntity" />.</summary>
 public sealed class LinkedIdentityEntityConfiguration : IEntityTypeConfiguration<LinkedIdentityEntity>
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<LinkedIdentityEntity> builder)
     {
         builder.ToTable("linked_identity");
@@ -23,18 +23,14 @@ public sealed class LinkedIdentityEntityConfiguration : IEntityTypeConfiguration
         builder.Property(e => e.UpdatedTimestamp).HasColumnName("updated_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.LastUsedTimestamp).HasColumnName("last_used_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.UnlinkedTimestamp).HasColumnName("unlinked_timestamp").HasColumnType("timestamp with time zone");
-        builder.HasOne<UserEntity>()
-            .WithMany()
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<UserEntity>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(e => new { e.TenantId, e.Provider, e.Subject })
             .IsUnique()
             .HasDatabaseName("ux_linked_identity_tenant_provider_subject")
             .HasFilter("\"unlinked_timestamp\" IS NULL");
+
         builder.HasIndex(e => e.UserId).HasDatabaseName("ix_linked_identity_user_id");
         builder.HasIndex(e => e.Provider).HasDatabaseName("ix_linked_identity_provider");
-        builder.HasIndex(e => e.TenantId)
-            .HasDatabaseName("ix_linked_identity_tenant_id")
-            .HasFilter("\"tenant_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_linked_identity_tenant_id").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

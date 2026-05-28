@@ -17,9 +17,7 @@ public class NullAuditRecorderTests
     {
         var recorder = NullAuditRecorder.Instance;
         var change = new AuditChange(
-            EntityRef.ForKey("Test.MyEntity", "1"),
-            new Dictionary<string, object?> { ["Name"] = "old" },
-            new Dictionary<string, object?> { ["Name"] = "new" });
+            EntityRef.ForKey("Test.MyEntity", "1"), new Dictionary<string, object?> { ["Name"] = "old" }, new Dictionary<string, object?> { ["Name"] = "new" });
 
         recorder.RecordChange(change);
     }
@@ -48,11 +46,7 @@ public class NullAuditRecorderTests
     public void RecordEvents_DoesNotThrow()
     {
         var recorder = NullAuditRecorder.Instance;
-        var events = new[] {
-            new AuditEvent(EntityRef.ForKey("E", "1"), "E1"),
-            new AuditEvent(EntityRef.ForKey("E", "2"), "E2")
-        };
-
+        var events = new[] { new AuditEvent(EntityRef.ForKey("E", "1"), "E1"), new AuditEvent(EntityRef.ForKey("E", "2"), "E2") };
         recorder.RecordEvents(events);
     }
 }

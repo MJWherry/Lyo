@@ -17,23 +17,23 @@ Never hand-edit migrated columns in production — ship code-first migrations al
 
 All six entry points are exposed as `IServiceCollection` extensions in `Lyo.Comic.Postgres.Extensions`:
 
-| Entry point                                                                                          | What it does                                                                                                       |
-|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `AddComicDbContextFactory(Action<PostgresComicOptions>)`                                             | Registers `IOptions<PostgresComicOptions>`, **`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>()`**, and an `IDbContextFactory<ComicDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only — does **not** register `IComicStore`. |
-| `AddComicDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresComicOptions.SectionName)` | Same as above; binds from the configuration section (default `"PostgresComic"`).                                   |
-| `AddComicDbContextFactory(PostgresComicOptions options)`                                             | Same as above with a pre-built options instance.                                                                   |
-| `AddPostgresComicStore(Action<PostgresComicOptions>)`                                                | Calls `AddComicDbContextFactory(...)` then registers `IComicStore` → singleton `PostgresComicStore`.               |
-| `AddPostgresComicStoreFromConfiguration(IConfiguration, string sectionName = PostgresComicOptions.SectionName)` | Same as above; binds from configuration.                                                                           |
-| `AddPostgresComicStore(PostgresComicOptions options)`                                                | Same as above with a pre-built options instance — for tests / integration harnesses.                               |
+| Entry point                                                                                                        | What it does                                                                                                                                                                                                                                                                      |
+|--------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddComicDbContextFactory(Action<PostgresComicOptions>)`                                                           | Registers `IOptions<PostgresComicOptions>`, **`AddPostgresMigrations<ComicDbContext, PostgresComicOptions>()`**, and an `IDbContextFactory<ComicDbContext>` (`UseNpgsql` + migrations history under the configured schema). DbContext only — does **not** register `IComicStore`. |
+| `AddComicDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresComicOptions.SectionName)` | Same as above; binds from the configuration section (default `"PostgresComic"`).                                                                                                                                                                                                  |
+| `AddComicDbContextFactory(PostgresComicOptions options)`                                                           | Same as above with a pre-built options instance.                                                                                                                                                                                                                                  |
+| `AddPostgresComicStore(Action<PostgresComicOptions>)`                                                              | Calls `AddComicDbContextFactory(...)` then registers `IComicStore` → singleton `PostgresComicStore`.                                                                                                                                                                              |
+| `AddPostgresComicStoreFromConfiguration(IConfiguration, string sectionName = PostgresComicOptions.SectionName)`    | Same as above; binds from configuration.                                                                                                                                                                                                                                          |
+| `AddPostgresComicStore(PostgresComicOptions options)`                                                              | Same as above with a pre-built options instance — for tests / integration harnesses.                                                                                                                                                                                              |
 
 ### `PostgresComicOptions`
 
-| Member                        | Default      | Notes                                                                              |
-|-------------------------------|--------------|------------------------------------------------------------------------------------|
-| `ConnectionString`            | empty        | Required (validated by all entry points).                                           |
-| `EnableAutoMigrations`        | `false`      | Consumed by `AddPostgresMigrations<>` to gate the hosted startup migration runner. |
-| `SectionName` *(const)*       | `"PostgresComic"` | Default appsettings section for the `FromConfiguration` overloads.            |
-| `Schema` *(const)*            | `"comic"`    | Used for the EF migrations history table and entity configurations.                |
+| Member                  | Default           | Notes                                                                              |
+|-------------------------|-------------------|------------------------------------------------------------------------------------|
+| `ConnectionString`      | empty             | Required (validated by all entry points).                                          |
+| `EnableAutoMigrations`  | `false`           | Consumed by `AddPostgresMigrations<>` to gate the hosted startup migration runner. |
+| `SectionName` *(const)* | `"PostgresComic"` | Default appsettings section for the `FromConfiguration` overloads.                 |
+| `Schema` *(const)*      | `"comic"`         | Used for the EF migrations history table and entity configurations.                |
 
 ## Runtime expectations
 

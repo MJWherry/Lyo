@@ -20,10 +20,10 @@ EF Core schema and DbContext registration for a PostgreSQL-backed short-URL stor
 
 ## DI registration (`Extensions`)
 
-| Entry point                                                                                          | What it does                                                                                                                                |
-|------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddShortUrlDbContext(string connectionString)`                                                      | Registers the DbContext factory plus a scoped `ShortUrlDbContext` resolved from the factory.                                                |
-| `AddShortUrlDbContext(Action<DbContextOptionsBuilder>)`                                              | Bare `AddDbContext<ShortUrlDbContext>(...)` — bring your own provider configuration.                                                        |
+| Entry point                                                                                                           | What it does                                                                                                                                                                                                                |
+|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddShortUrlDbContext(string connectionString)`                                                                       | Registers the DbContext factory plus a scoped `ShortUrlDbContext` resolved from the factory.                                                                                                                                |
+| `AddShortUrlDbContext(Action<DbContextOptionsBuilder>)`                                                               | Bare `AddDbContext<ShortUrlDbContext>(...)` — bring your own provider configuration.                                                                                                                                        |
 | `AddShortUrlDbContextFactory(Action<PostgresShortUrlOptions>)` *(plus `(options)` and `FromConfiguration` overloads)* | Registers `IOptions<PostgresShortUrlOptions>`, `AddPostgresMigrations<ShortUrlDbContext, PostgresShortUrlOptions>()`, and `IDbContextFactory<ShortUrlDbContext>` (`UseNpgsql` + migrations history under the `url` schema). |
 
 There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService` — see the note at the top of this README. Wire your own service on top of the factory, for
@@ -39,10 +39,10 @@ services.AddSingleton<IShortUrlService, MyEfBackedShortUrlService>();
 
 ## Schema
 
-| Table              | Notable columns                                                                                                   |
-|--------------------|-------------------------------------------------------------------------------------------------------------------|
-| `url.short_urls`   | `Id` (PK, string ≤ 100), `LongUrl` (≤ 1024), `CustomAlias?` (≤ 100), `CreatedTimestamp`, `UpdatedTimestamp?`, `ExpirationDate?`, `LastAccessedDate?`, `ClickCount`, `IsActive`. |
-| `url.url_clicks`   | `Id` (PK, `long`), `ShortUrlId` (FK → `short_urls.Id`), `ClickedAt`, optional `IpAddress` (≤ 45), `UserAgent` (≤ 500), `Referrer` (≤ 512). |
+| Table            | Notable columns                                                                                                                                                                 |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `url.short_urls` | `Id` (PK, string ≤ 100), `LongUrl` (≤ 1024), `CustomAlias?` (≤ 100), `CreatedTimestamp`, `UpdatedTimestamp?`, `ExpirationDate?`, `LastAccessedDate?`, `ClickCount`, `IsActive`. |
+| `url.url_clicks` | `Id` (PK, `long`), `ShortUrlId` (FK → `short_urls.Id`), `ClickedAt`, optional `IpAddress` (≤ 45), `UserAgent` (≤ 500), `Referrer` (≤ 512).                                      |
 
 (Exact table / column names follow the EF defaults plus the configurations under `Database/`. The migrations history is tracked in `__EFMigrationsHistory` under the same
 `url` schema.)

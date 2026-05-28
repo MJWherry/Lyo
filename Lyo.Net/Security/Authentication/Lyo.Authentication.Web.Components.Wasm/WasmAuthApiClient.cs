@@ -1,25 +1,21 @@
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Web.Components.Wasm;
 
-/// <summary>Typed <see cref="HttpClient"/> wrapper for the API's <c>/auth/handoff/exchange</c>, <c>/auth/refresh</c>, and <c>/auth/logout</c> endpoints used by the WASM runtime.</summary>
+/// <summary>Typed <see cref="HttpClient" /> wrapper for the API's <c>/auth/handoff/exchange</c>, <c>/auth/refresh</c>, and <c>/auth/logout</c> endpoints used by the WASM runtime.</summary>
 public sealed class WasmAuthApiClient
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     private readonly HttpClient _http;
-    private readonly WasmAuthClientOptions _options;
+
+    /// <summary>Exposes the bound options so callers (handoff page, sign-in launcher) can read <see cref="WasmAuthClientOptions.AuthBaseUrl" /> without re-resolving.</summary>
+    public WasmAuthClientOptions Options { get; }
 
     /// <summary>Creates a new client.</summary>
     public WasmAuthApiClient(HttpClient http, IOptions<WasmAuthClientOptions> options)
@@ -27,11 +23,8 @@ public sealed class WasmAuthApiClient
         ArgumentHelpers.ThrowIfNull(http);
         ArgumentHelpers.ThrowIfNull(options);
         _http = http;
-        _options = options.Value;
+        Options = options.Value;
     }
-
-    /// <summary>Exposes the bound options so callers (handoff page, sign-in launcher) can read <see cref="WasmAuthClientOptions.AuthBaseUrl"/> without re-resolving.</summary>
-    public WasmAuthClientOptions Options => _options;
 
     /// <summary>POSTs <c>{ code }</c> to <c>/auth/handoff/exchange</c>. Returns the issued tokens on success, <c>null</c> otherwise.</summary>
     public async Task<WasmTokenResponse?> ExchangeHandoffAsync(string handoffCode, CancellationToken ct = default)
@@ -68,7 +61,11 @@ public sealed class WasmAuthApiClient
 
 /// <summary>Mirror of the API's <c>TokenResponse</c> record. Snake-case JSON.</summary>
 public sealed record WasmTokenResponse(
-    [property: JsonPropertyName("access_token")] string AccessToken,
-    [property: JsonPropertyName("expires_in")] int ExpiresIn,
-    [property: JsonPropertyName("refresh_token")] string? RefreshToken,
-    [property: JsonPropertyName("token_type")] string TokenType);
+    [property: JsonPropertyName("access_token")]
+    string AccessToken,
+    [property: JsonPropertyName("expires_in")]
+    int ExpiresIn,
+    [property: JsonPropertyName("refresh_token")]
+    string? RefreshToken,
+    [property: JsonPropertyName("token_type")]
+    string TokenType);

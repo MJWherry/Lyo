@@ -253,16 +253,16 @@ creation time), async variants of all write operations, and an `EnsureDirectoryA
 
 ### IOTempSessionOptions
 
-| Option                            | Default                                  | Description                                                                                       |
-|-----------------------------------|------------------------------------------|---------------------------------------------------------------------------------------------------|
-| `RootDirectory`                   | `{TempPath}/lyo-io-temp/{ProcessId}`     | Parent of the session folder; per-process suffix keeps parallel runners isolated by default.      |
-| `CreateRootDirectoryIfNotExists`  | `true`                                   | When true, `RootDirectory` is created on construction if missing; otherwise a missing root throws.|
-| `FileNamingStrategy`              | `Guid`                                   | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`.                                              |
-| `FileExtension`                   | `.tmp`                                   | Extension appended to auto-named files.                                                           |
-| `FilePrefix`/`Suffix`             | `null`                                   | Optional pre/suffix for generated file names.                                                     |
-| `MaxFileSizeBytes`                | 1 GB                                     | Per-file hard limit.                                                                              |
-| `MaxTotalSizeBytes`               | `null`                                   | Per-session total limit.                                                                          |
-| `OverflowStrategy`                | `ThrowException`                         | Action when total limit is exceeded.                                                              |
+| Option                           | Default                              | Description                                                                                        |
+|----------------------------------|--------------------------------------|----------------------------------------------------------------------------------------------------|
+| `RootDirectory`                  | `{TempPath}/lyo-io-temp/{ProcessId}` | Parent of the session folder; per-process suffix keeps parallel runners isolated by default.       |
+| `CreateRootDirectoryIfNotExists` | `true`                               | When true, `RootDirectory` is created on construction if missing; otherwise a missing root throws. |
+| `FileNamingStrategy`             | `Guid`                               | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`.                                               |
+| `FileExtension`                  | `.tmp`                               | Extension appended to auto-named files.                                                            |
+| `FilePrefix`/`Suffix`            | `null`                               | Optional pre/suffix for generated file names.                                                      |
+| `MaxFileSizeBytes`               | 1 GB                                 | Per-file hard limit.                                                                               |
+| `MaxTotalSizeBytes`              | `null`                               | Per-session total limit.                                                                           |
+| `OverflowStrategy`               | `ThrowException`                     | Action when total limit is exceeded.                                                               |
 
 ### Standalone sessions in tests
 

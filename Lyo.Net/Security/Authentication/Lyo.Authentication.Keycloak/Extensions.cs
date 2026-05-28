@@ -1,4 +1,3 @@
-using System;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +21,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers a Keycloak OIDC provider by binding <see cref="KeycloakOptions"/> from configuration (default section <c>KeycloakAuth</c>).</summary>
+        /// <summary>Registers a Keycloak OIDC provider by binding <see cref="KeycloakOptions" /> from configuration (default section <c>KeycloakAuth</c>).</summary>
         public IServiceCollection AddKeycloakProviderFromConfiguration(IConfiguration configuration, string sectionName = KeycloakOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);

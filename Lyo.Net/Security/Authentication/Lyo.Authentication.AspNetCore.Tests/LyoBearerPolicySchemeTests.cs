@@ -1,6 +1,5 @@
 using Lyo.Authentication.AspNetCore.Defaults;
 using Lyo.Authentication.AspNetCore.Schemes.Bearer;
-using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Authentication.AspNetCore.Tests;
 

@@ -6,47 +6,47 @@ Neutral data contracts shared by the **`Lyo.Geolocation`** abstraction and concr
 
 **Coordinates & geometry**
 
-| Type | Role |
-|------|------|
-| **`Coordinates.GeoCoordinate`** | Latitude / longitude (+ optional altitude, accuracy, timestamp). Validates lat in `[-90, 90]` and lon in `[-180, 180]` via property setters. |
-| **`BoundingBox`** | Southwest/Northeast pair with `Center`/`Northwest`/`Southeast` accessors, `Contains`, `Intersects`, `Expand(meters)`, `GetWidth/Height/Area`, and `FromCenterAndRadius` factory. |
+| Type                            | Role                                                                                                                                                                             |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`Coordinates.GeoCoordinate`** | Latitude / longitude (+ optional altitude, accuracy, timestamp). Validates lat in `[-90, 90]` and lon in `[-180, 180]` via property setters.                                     |
+| **`BoundingBox`**               | Southwest/Northeast pair with `Center`/`Northwest`/`Southeast` accessors, `Contains`, `Intersects`, `Expand(meters)`, `GetWidth/Height/Area`, and `FromCenterAndRadius` factory. |
 
 **Addresses**
 
-| Type | Role |
-|------|------|
-| **`Addresses.Address`** | Unified US + international address with structured street/unit/locality/postal/country fields, `GetFormattedAddress(AddressFormat)`, `Normalize()`, `IsValid()`, `IsComplete()`, `GetCanonicalForm()`, `IsSimilarTo(...)`, and `FromComponents` / `CreateUSAddress` / `CreateInternationalAddress` factories. |
-| **`Addresses.ContactAddress`** | Person ↔ address junction with `ContactAddressType`, primary flag, start/end dates. |
-| **`Extensions.AddressExtensions`** | `IsInUnitedStates`, `GetStateAbbreviation`, `ToMailingFormat`, `GetPostalCode`, `GetStateOrProvince`. |
-| **`AddressFormat`** / **`AddressType`** / **`AddressValidationStatus`** (in `Addresses.Address.cs`) | Formatting variant, classification, and validation lifecycle. |
+| Type                                                                                                | Role                                                                                                                                                                                                                                                                                                          |
+|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`Addresses.Address`**                                                                             | Unified US + international address with structured street/unit/locality/postal/country fields, `GetFormattedAddress(AddressFormat)`, `Normalize()`, `IsValid()`, `IsComplete()`, `GetCanonicalForm()`, `IsSimilarTo(...)`, and `FromComponents` / `CreateUSAddress` / `CreateInternationalAddress` factories. |
+| **`Addresses.ContactAddress`**                                                                      | Person ↔ address junction with `ContactAddressType`, primary flag, start/end dates.                                                                                                                                                                                                                           |
+| **`Extensions.AddressExtensions`**                                                                  | `IsInUnitedStates`, `GetStateAbbreviation`, `ToMailingFormat`, `GetPostalCode`, `GetStateOrProvince`.                                                                                                                                                                                                         |
+| **`AddressFormat`** / **`AddressType`** / **`AddressValidationStatus`** (in `Addresses.Address.cs`) | Formatting variant, classification, and validation lifecycle.                                                                                                                                                                                                                                                 |
 
 **Geocoding & places**
 
-| Type | Role |
-|------|------|
-| **`GeocodeOptions`** | Language, region bias, optional bounds, `MaxResults`, component restrictions. |
-| **`GeocodeResult`** / **`GeocodeResultItem`** / **`GeocodeMatchType`** | Single forward-geocode hit, batch row, and match-quality enum. |
-| **`ReverseGeocodeResult`** | Address(es) + confidence for a coordinate. |
-| **`BatchGeocodeResult`** | Aggregate totals + per-item results + processing time. |
-| **`Place`** / **`PlaceOpeningHours`** / **`PlaceHoursPeriod`** | POI with id, name, coordinate, address, rating, hours. |
-| **`ProximitySearchResult<T>`** | Wraps an arbitrary `T` with `DistanceMeters` and km/mile conversions. |
+| Type                                                                   | Role                                                                          |
+|------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| **`GeocodeOptions`**                                                   | Language, region bias, optional bounds, `MaxResults`, component restrictions. |
+| **`GeocodeResult`** / **`GeocodeResultItem`** / **`GeocodeMatchType`** | Single forward-geocode hit, batch row, and match-quality enum.                |
+| **`ReverseGeocodeResult`**                                             | Address(es) + confidence for a coordinate.                                    |
+| **`BatchGeocodeResult`**                                               | Aggregate totals + per-item results + processing time.                        |
+| **`Place`** / **`PlaceOpeningHours`** / **`PlaceHoursPeriod`**         | POI with id, name, coordinate, address, rating, hours.                        |
+| **`ProximitySearchResult<T>`**                                         | Wraps an arbitrary `T` with `DistanceMeters` and km/mile conversions.         |
 
 **Routing**
 
-| Type | Role |
-|------|------|
-| **`Route`** | Route id, start/end, waypoints, steps, total distance, estimated duration (+ traffic), transport mode, bounding box, summary, warnings. |
-| **`RouteStep`** | Per-leg distance, duration, instructions, road name, `ManeuverType`. |
-| **`RouteOptions`** | Mode, avoid tolls/highways/ferries, waypoints + optimization, departure/arrival time, language, units. |
+| Type               | Role                                                                                                                                    |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| **`Route`**        | Route id, start/end, waypoints, steps, total distance, estimated duration (+ traffic), transport mode, bounding box, summary, warnings. |
+| **`RouteStep`**    | Per-leg distance, duration, instructions, road name, `ManeuverType`.                                                                    |
+| **`RouteOptions`** | Mode, avoid tolls/highways/ferries, waypoints + optimization, departure/arrival time, language, units.                                  |
 
 **Distance / time zones / IP**
 
-| Type | Role |
-|------|------|
-| **`DistanceResult`** | Source/destination coordinates + meters (with km/mile conversions) + `DistanceCalculationMethod`. |
-| **`GeoTimeZone`** | IANA `TimeZoneId`, display name, UTC offset, DST offset, DST start/end. |
-| **`IpGeolocationResult`** | IP-to-location payload (city/region/country, ISP, proxy/VPN flags, accuracy radius). |
-| **`ValidationIssue`** / **`ValidationWarning`** | Severity-tagged validation findings for address/geocoding flows. |
+| Type                                            | Role                                                                                              |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| **`DistanceResult`**                            | Source/destination coordinates + meters (with km/mile conversions) + `DistanceCalculationMethod`. |
+| **`GeoTimeZone`**                               | IANA `TimeZoneId`, display name, UTC offset, DST offset, DST start/end.                           |
+| **`IpGeolocationResult`**                       | IP-to-location payload (city/region/country, ISP, proxy/VPN flags, accuracy radius).              |
+| **`ValidationIssue`** / **`ValidationWarning`** | Severity-tagged validation findings for address/geocoding flows.                                  |
 
 **Enums (under `Enums/`)**
 

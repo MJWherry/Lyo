@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
@@ -14,13 +10,13 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
-/// <summary>PostgreSQL implementation of <see cref="IUserStore"/>. Persists Lyo users to <c>[user].[user]</c>.</summary>
+/// <summary>PostgreSQL implementation of <see cref="IUserStore" />. Persists Lyo users to <c>[user].[user]</c>.</summary>
 public sealed class PostgresUserStore : IUserStore
 {
     private readonly IDbContextFactory<UserDbContext> _contextFactory;
-    private readonly ILogger<PostgresUserStore> _logger;
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
+    private readonly ILogger<PostgresUserStore> _logger;
 
     /// <summary>Creates a new store.</summary>
     public PostgresUserStore(
@@ -39,34 +35,26 @@ public sealed class PostgresUserStore : IUserStore
         _featureTenancy = userOptions.Value.Tenancy;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<LyoUser?> GetByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default)
     {
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Users.AsNoTracking()
-            .Where(u => u.TenantId == resolvedTenant)
-            .FirstOrDefaultAsync(u => u.Id == id, ct)
-            .ConfigureAwait(false);
-
+        var entity = await context.Users.AsNoTracking().Where(u => u.TenantId == resolvedTenant).FirstOrDefaultAsync(u => u.Id == id, ct).ConfigureAwait(false);
         return entity is null ? null : ToRecord(entity);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<LyoUser?> GetByEmailAsync(string email, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(email);
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Users.AsNoTracking()
-            .Where(u => u.TenantId == resolvedTenant)
-            .FirstOrDefaultAsync(u => u.Email == email, ct)
-            .ConfigureAwait(false);
-
+        var entity = await context.Users.AsNoTracking().Where(u => u.TenantId == resolvedTenant).FirstOrDefaultAsync(u => u.Email == email, ct).ConfigureAwait(false);
         return entity is null ? null : ToRecord(entity);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<LyoUser> CreateAsync(LyoUser user, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(user);
@@ -79,19 +67,14 @@ public sealed class PostgresUserStore : IUserStore
         return user;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task UpdateLastLoginAsync(Guid id, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         try {
             var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
             await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            await context.Users
-                .Where(u => u.Id == id && u.TenantId == resolvedTenant)
-                .ExecuteUpdateAsync(
-                    setters => setters
-                        .SetProperty(u => u.LastLoginTimestamp, utcNow)
-                        .SetProperty(u => u.UpdatedTimestamp, utcNow),
-                    ct)
+            await context.Users.Where(u => u.Id == id && u.TenantId == resolvedTenant)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastLoginTimestamp, utcNow).SetProperty(u => u.UpdatedTimestamp, utcNow), ct)
                 .ConfigureAwait(false);
         }
         catch (Exception ex) {
@@ -99,7 +82,7 @@ public sealed class PostgresUserStore : IUserStore
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task SetScopesAsync(Guid id, IReadOnlyList<string> scopes, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(scopes);
@@ -107,41 +90,31 @@ public sealed class PostgresUserStore : IUserStore
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var scopesJson = JsonHelper.SerializeStringList(scopes);
         var now = DateTime.UtcNow;
-        var rows = await context.Users
-            .Where(u => u.Id == id && u.TenantId == resolvedTenant)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(u => u.ScopesJson, scopesJson)
-                    .SetProperty(u => u.UpdatedTimestamp, now),
-                ct)
+        var rows = await context.Users.Where(u => u.Id == id && u.TenantId == resolvedTenant)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(u => u.ScopesJson, scopesJson).SetProperty(u => u.UpdatedTimestamp, now), ct)
             .ConfigureAwait(false);
 
         if (rows == 0)
             throw new InvalidOperationException($"User id '{id}' not found.");
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task SetDisabledAsync(Guid id, DateTime? disabledAt, string? reason, Guid? tenantId, CancellationToken ct = default)
     {
         var resolvedTenant = TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var now = DateTime.UtcNow;
-        var rows = await context.Users
-            .Where(u => u.Id == id && u.TenantId == resolvedTenant)
+        var rows = await context.Users.Where(u => u.Id == id && u.TenantId == resolvedTenant)
             .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(u => u.DisabledTimestamp, disabledAt)
-                    .SetProperty(u => u.DisabledReason, reason)
-                    .SetProperty(u => u.UpdatedTimestamp, now),
-                ct)
+                setters => setters.SetProperty(u => u.DisabledTimestamp, disabledAt).SetProperty(u => u.DisabledReason, reason).SetProperty(u => u.UpdatedTimestamp, now), ct)
             .ConfigureAwait(false);
 
         if (rows == 0)
             throw new InvalidOperationException($"User id '{id}' not found.");
     }
 
-    private static UserEntity ToEntity(LyoUser user) =>
-        new() {
+    private static UserEntity ToEntity(LyoUser user)
+        => new() {
             Id = user.Id,
             DisplayName = user.DisplayName,
             Email = user.Email,
@@ -158,20 +131,9 @@ public sealed class PostgresUserStore : IUserStore
             DisabledReason = user.DisabledReason
         };
 
-    private static LyoUser ToRecord(UserEntity entity) =>
-        new(
-            Id: entity.Id,
-            DisplayName: entity.DisplayName,
-            Email: entity.Email,
-            EmailVerified: entity.EmailVerified,
-            AvatarUrl: entity.AvatarUrl,
-            PreferredLanguageBcp47: entity.PreferredLanguageBcp47,
-            Scopes: JsonHelper.DeserializeStringList(entity.ScopesJson),
-            Metadata: JsonHelper.DeserializeMetadata(entity.MetadataJson),
-            PersonId: entity.PersonId,
-            CreatedAt: entity.CreatedTimestamp,
-            UpdatedAt: entity.UpdatedTimestamp,
-            LastLoginAt: entity.LastLoginTimestamp,
-            DisabledAt: entity.DisabledTimestamp,
-            DisabledReason: entity.DisabledReason);
+    private static LyoUser ToRecord(UserEntity entity)
+        => new(
+            entity.Id, entity.DisplayName, entity.Email, entity.EmailVerified, entity.AvatarUrl, entity.PreferredLanguageBcp47, JsonHelper.DeserializeStringList(entity.ScopesJson),
+            JsonHelper.DeserializeMetadata(entity.MetadataJson), entity.PersonId, entity.CreatedTimestamp, entity.UpdatedTimestamp, entity.LastLoginTimestamp,
+            entity.DisabledTimestamp, entity.DisabledReason);
 }

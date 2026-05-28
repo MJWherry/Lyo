@@ -16,7 +16,8 @@ app.UseAuthorization();
 app.MapLyoJwks();
 ```
 
-Per-endpoint scope-based authorization uses the `scope:<name>` policy convention. The `ScopeAuthorizationPolicyProvider` creates these policies on demand, so endpoints can simply do:
+Per-endpoint scope-based authorization uses the `scope:<name>` policy convention. The `ScopeAuthorizationPolicyProvider` creates these policies on demand, so endpoints can simply
+do:
 
 ```csharp
 endpoints.MapGet("/people", ...).RequireAuthorization("scope:people.read");

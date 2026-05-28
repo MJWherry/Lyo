@@ -1,6 +1,4 @@
-using System;
 using System.Text;
-using System.Threading.Tasks;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -12,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.Client;
 
-/// <summary>Maps the consumer-side BFF endpoints (sign-in initiator, handoff redemption, sign-out). All three live under <see cref="LyoAuthClientOptions"/> paths.</summary>
+/// <summary>Maps the consumer-side BFF endpoints (sign-in initiator, handoff redemption, sign-out). All three live under <see cref="LyoAuthClientOptions" /> paths.</summary>
 public static class LyoAuthClientEndpointsMapper
 {
     /// <summary>The query-string parameter that the API's callback uses to deliver the handoff code (mirrors <c>AuthEndpointsMapper.HandoffQueryParameter</c>).</summary>
@@ -23,15 +21,15 @@ public static class LyoAuthClientEndpointsMapper
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
         var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-        return endpoints
-            .MapGet(opts.SignInPath.TrimEnd('/') + "/{provider}", (string provider, string? returnUrl, HttpContext ctx) => {
-                var safeReturn = SanitizeLocalReturn(returnUrl);
-                var callbackOrigin = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
-                var callbackUrl = callbackOrigin + opts.HandoffCallbackPath + (safeReturn == "/" ? string.Empty : "?return=" + Uri.EscapeDataString(safeReturn));
-                var encodedReturn = Uri.EscapeDataString(callbackUrl);
-                var target = $"{opts.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
-                return Results.Redirect(target);
-            })
+        return endpoints.MapGet(
+                opts.SignInPath.TrimEnd('/') + "/{provider}", (string provider, string? returnUrl, HttpContext ctx) => {
+                    var safeReturn = SanitizeLocalReturn(returnUrl);
+                    var callbackOrigin = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}";
+                    var callbackUrl = callbackOrigin + opts.HandoffCallbackPath + (safeReturn == "/" ? string.Empty : "?return=" + Uri.EscapeDataString(safeReturn));
+                    var encodedReturn = Uri.EscapeDataString(callbackUrl);
+                    var target = $"{opts.AuthBaseUrl.TrimEnd('/')}/auth/login/{Uri.EscapeDataString(provider)}?returnUrl={encodedReturn}&mode=browser";
+                    return Results.Redirect(target);
+                })
             .WithName("LyoAuthClientSignIn")
             .AllowAnonymous();
     }
@@ -41,10 +39,7 @@ public static class LyoAuthClientEndpointsMapper
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
         var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-        return endpoints
-            .MapGet(opts.HandoffCallbackPath, (Delegate)HandoffCallbackAsync)
-            .WithName("LyoAuthClientHandoff")
-            .AllowAnonymous();
+        return endpoints.MapGet(opts.HandoffCallbackPath, (Delegate)HandoffCallbackAsync).WithName("LyoAuthClientHandoff").AllowAnonymous();
     }
 
     /// <summary>Maps <c>POST {SignOutPath}</c> which revokes the refresh token at the API, removes the local session, and clears the cookie.</summary>
@@ -52,10 +47,7 @@ public static class LyoAuthClientEndpointsMapper
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
         var opts = endpoints.ServiceProvider.GetRequiredService<IOptions<LyoAuthClientOptions>>().Value;
-        return endpoints
-            .MapPost(opts.SignOutPath, (Delegate)SignOutAsync)
-            .WithName("LyoAuthClientSignOut")
-            .AllowAnonymous();
+        return endpoints.MapPost(opts.SignOutPath, (Delegate)SignOutAsync).WithName("LyoAuthClientSignOut").AllowAnonymous();
     }
 
     private static async Task<IResult> HandoffCallbackAsync(
@@ -82,24 +74,19 @@ public static class LyoAuthClientEndpointsMapper
         }
 
         var claims = LyoJwtClaimsParser.Parse(tokens.AccessToken);
-        var session = sessions.Create(
-            accessToken: tokens.AccessToken,
-            refreshToken: tokens.RefreshToken,
-            accessTokenExpiresAt: DateTime.UtcNow.AddSeconds(tokens.ExpiresIn),
-            refreshTokenExpiresAt: null,
-            claims: claims);
-
+        var session = sessions.Create(tokens.AccessToken, tokens.RefreshToken, DateTime.UtcNow.AddSeconds(tokens.ExpiresIn), null, claims);
         var protector = protectionProvider.CreateProtector(LyoAuthCookieAuthenticationHandler.ProtectorPurpose);
         var sealedId = Convert.ToBase64String(protector.Protect(Encoding.UTF8.GetBytes(session.SessionId.ToString("D"))));
-        ctx.Response.Cookies.Append(opts.CookieName, sealedId, new() {
-            HttpOnly = true,
-            Secure = ctx.Request.IsHttps,
-            SameSite = SameSiteMode.Lax,
-            IsEssential = true,
-            Path = "/",
-            Domain = opts.CookieDomain,
-            MaxAge = opts.SessionAbsoluteExpiration
-        });
+        ctx.Response.Cookies.Append(
+            opts.CookieName, sealedId, new() {
+                HttpOnly = true,
+                Secure = ctx.Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                IsEssential = true,
+                Path = "/",
+                Domain = opts.CookieDomain,
+                MaxAge = opts.SessionAbsoluteExpiration
+            });
 
         return Results.Redirect(SanitizeLocalReturn(@return));
     }
@@ -128,13 +115,14 @@ public static class LyoAuthClientEndpointsMapper
             }
         }
 
-        ctx.Response.Cookies.Delete(opts.CookieName, new() {
-            HttpOnly = true,
-            Secure = ctx.Request.IsHttps,
-            SameSite = SameSiteMode.Lax,
-            Path = "/",
-            Domain = opts.CookieDomain
-        });
+        ctx.Response.Cookies.Delete(
+            opts.CookieName, new() {
+                HttpOnly = true,
+                Secure = ctx.Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Path = "/",
+                Domain = opts.CookieDomain
+            });
 
         await api.LogoutAsync(refreshToken, ctx.RequestAborted).ConfigureAwait(false);
         return Results.Redirect(SanitizeLocalReturn(opts.PostSignOutRedirectPath));

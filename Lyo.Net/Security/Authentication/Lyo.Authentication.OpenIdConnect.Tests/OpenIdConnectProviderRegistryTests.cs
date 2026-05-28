@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Lyo.Authentication.OpenIdConnect.Provider;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;

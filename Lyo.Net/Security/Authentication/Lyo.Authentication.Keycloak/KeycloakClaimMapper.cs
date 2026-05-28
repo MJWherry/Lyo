@@ -1,29 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using Lyo.Authentication.OpenIdConnect.Provider;
 
 namespace Lyo.Authentication.Keycloak;
 
-/// <summary>Maps Keycloak's id_token claims into a <see cref="OidcClaimMappingResult"/>, including <c>realm_access.roles</c> → Lyo scope translation.</summary>
+/// <summary>Maps Keycloak's id_token claims into a <see cref="OidcClaimMappingResult" />, including <c>realm_access.roles</c> → Lyo scope translation.</summary>
 public static class KeycloakClaimMapper
 {
-    /// <summary>Reads the canonical Keycloak claims and maps realm roles to Lyo scopes via <paramref name="rolesToScopes"/>.</summary>
+    /// <summary>Reads the canonical Keycloak claims and maps realm roles to Lyo scopes via <paramref name="rolesToScopes" />.</summary>
     public static OidcClaimMappingResult Map(IReadOnlyDictionary<string, object?> claims, IReadOnlyDictionary<string, string[]> rolesToScopes)
     {
         var name = ReadString(claims, "name");
         var preferred = ReadString(claims, "preferred_username");
         var email = ReadString(claims, "email");
         var displayName = FirstNonBlank(name, preferred, email) ?? "Keycloak user";
-        var emailVerified = ReadBool(claims, "email_verified", defaultIfMissing: false);
+        var emailVerified = ReadBool(claims, "email_verified", false);
         var picture = ReadString(claims, "picture");
         var locale = ReadString(claims, "locale");
         var scopes = ExtractScopes(claims, rolesToScopes);
         return new(displayName, email, emailVerified, picture, locale, scopes);
     }
 
-    /// <summary>Extracts realm-role names from <c>realm_access.roles</c> and maps them via <paramref name="rolesToScopes"/>.</summary>
+    /// <summary>Extracts realm-role names from <c>realm_access.roles</c> and maps them via <paramref name="rolesToScopes" />.</summary>
     public static IReadOnlyList<string> ExtractScopes(IReadOnlyDictionary<string, object?> claims, IReadOnlyDictionary<string, string[]> rolesToScopes)
     {
         var roles = ReadRealmRoles(claims);
@@ -43,7 +40,7 @@ public static class KeycloakClaimMapper
         return set.ToArray();
     }
 
-    /// <summary>Reads <c>realm_access.roles</c> if present. Tolerates the claim arriving as either a <see cref="JsonElement"/> or a plain CLR collection.</summary>
+    /// <summary>Reads <c>realm_access.roles</c> if present. Tolerates the claim arriving as either a <see cref="JsonElement" /> or a plain CLR collection.</summary>
     public static IReadOnlyList<string> ReadRealmRoles(IReadOnlyDictionary<string, object?> claims)
     {
         if (!claims.TryGetValue("realm_access", out var raw) || raw is null)
@@ -65,7 +62,6 @@ public static class KeycloakClaimMapper
                 }
 
                 return [];
-
             case IDictionary<string, object?> dict when dict.TryGetValue("roles", out var inner) && inner is IEnumerable<object?> seq:
                 var fromDict = new List<string>();
                 foreach (var item in seq) {
@@ -74,14 +70,12 @@ public static class KeycloakClaimMapper
                 }
 
                 return fromDict;
-
             default:
                 return [];
         }
     }
 
-    private static string? ReadString(IReadOnlyDictionary<string, object?> claims, string key)
-        => claims.TryGetValue(key, out var v) ? v?.ToString() : null;
+    private static string? ReadString(IReadOnlyDictionary<string, object?> claims, string key) => claims.TryGetValue(key, out var v) ? v?.ToString() : null;
 
     private static bool ReadBool(IReadOnlyDictionary<string, object?> claims, string key, bool defaultIfMissing)
     {

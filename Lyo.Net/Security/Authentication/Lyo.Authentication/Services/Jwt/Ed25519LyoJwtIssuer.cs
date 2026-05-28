@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
-using Lyo.Authentication.Format;
+using Lyo.Authentication.Exceptions;
 using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
@@ -22,15 +17,15 @@ using Org.BouncyCastle.Crypto.Signers;
 
 namespace Lyo.Authentication.Services.Jwt;
 
-/// <summary>Default <see cref="ILyoJwtIssuer"/> backed by BouncyCastle's Ed25519 signer. Always pulls the *current* signing key from <see cref="IKeyStore"/>.</summary>
+/// <summary>Default <see cref="ILyoJwtIssuer" /> backed by BouncyCastle's Ed25519 signer. Always pulls the *current* signing key from <see cref="IKeyStore" />.</summary>
 public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
 {
-    private readonly IKeyStore _keys;
-    private readonly LyoJwtOptions _options;
-    private readonly ILyoRefreshTokenIssuer? _refreshIssuer;
     private readonly IAuthAuditRecorder _audit;
     private readonly IAuthAuditContextAccessor _auditContext;
+    private readonly IKeyStore _keys;
     private readonly ILogger<Ed25519LyoJwtIssuer> _logger;
+    private readonly LyoJwtOptions _options;
+    private readonly ILyoRefreshTokenIssuer? _refreshIssuer;
 
     /// <summary>Creates a new issuer.</summary>
     public Ed25519LyoJwtIssuer(
@@ -52,7 +47,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         _auditContext = auditContext ?? NullAuthAuditContextAccessor.Instance;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<IssuedLyoJwt> IssueAsync(
         LyoUser user,
         IReadOnlyList<string> scopes,
@@ -65,7 +60,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         ArgumentHelpers.ThrowIfNull(scopes);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         if (user.IsDisabled)
-            throw new Exceptions.LyoUserDisabledException(user.Id, user.DisabledReason);
+            throw new LyoUserDisabledException(user.Id, user.DisabledReason);
 
         var now = DateTime.UtcNow;
         var expires = now + _options.AccessTokenLifetime;
@@ -73,22 +68,14 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         OperationHelpers.ThrowIfNullOrWhiteSpace(version, $"No current signing key version found for '{_options.SigningKeyId}'.");
         var seed = await _keys.GetCurrentKeyAsync(_options.SigningKeyId, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(seed, $"No current signing key bytes found for '{_options.SigningKeyId}'.");
-        if (seed!.Length != Ed25519Constants.PrivateSeedLength)
+        if (seed!.Length != Ed25519Constants.PrivateSeedLength) {
             throw new InvalidOperationException(
                 $"Signing key '{_options.SigningKeyId}' v{version} is {seed.Length} bytes; expected {Ed25519Constants.PrivateSeedLength} for Ed25519.");
+        }
 
         var kid = $"{_options.SigningKeyId}:{version}";
-        var jti = Convert.ToBase64String(CryptographicRandom.GetBytes(16))
-            .TrimEnd('=')
-            .Replace('+', '-')
-            .Replace('/', '_');
-
-        var header = new Dictionary<string, object> {
-            ["alg"] = _options.Algorithm,
-            ["kid"] = kid,
-            ["typ"] = "JWT"
-        };
-
+        var jti = Convert.ToBase64String(CryptographicRandom.GetBytes(16)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        var header = new Dictionary<string, object> { ["alg"] = _options.Algorithm, ["kid"] = kid, ["typ"] = "JWT" };
         var payload = new Dictionary<string, object?> {
             [LyoJwtClaims.Issuer] = _options.Issuer,
             [LyoJwtClaims.Audience] = _options.Audience,
@@ -113,7 +100,6 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         var signature = SignEd25519(seed, signingInputBytes);
         var signatureB64 = Base64Url.Encode(signature);
         var accessToken = $"{headerB64}.{payloadB64}.{signatureB64}";
-
         string? refreshToken = null;
         DateTime? refreshExpires = null;
         if (includeRefresh && _refreshIssuer is not null) {
@@ -123,13 +109,7 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         }
 
         _logger.LogInformation("Issued Lyo JWT for user {UserId} via provider {Provider} (jti={Jti}, exp={Exp:O})", user.Id, provider, jti, expires);
-        await _audit.RecordAsync(
-                _auditContext, _logger,
-                AuthAuditEventKind.JwtIssued,
-                userId: user.Id, subject: jti, provider: provider, outcome: "success",
-                ct: ct)
-            .ConfigureAwait(false);
-
+        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.JwtIssued, user.Id, jti, provider, "success", ct: ct).ConfigureAwait(false);
         return new(accessToken, jti, expires, refreshToken, refreshExpires);
     }
 
@@ -142,6 +122,5 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
         return signer.GenerateSignature();
     }
 
-    private static long ToUnixSeconds(DateTime utc) =>
-        (long)(utc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+    private static long ToUnixSeconds(DateTime utc) => (long)(utc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 }

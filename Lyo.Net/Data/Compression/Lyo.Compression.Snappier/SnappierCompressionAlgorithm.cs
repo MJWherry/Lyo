@@ -8,5 +8,6 @@ public sealed record SnappierCompressionAlgorithm : CompressionAlgorithm
     /// <summary>Canonical singleton.</summary>
     public static readonly SnappierCompressionAlgorithm Instance = new();
 
-    private SnappierCompressionAlgorithm() : base("Snappier", ".snappy") { }
+    private SnappierCompressionAlgorithm()
+        : base("Snappier", ".snappy") { }
 }

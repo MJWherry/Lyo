@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Lyo.Authentication.Web.Components.Models;
 
 namespace Lyo.Authentication.Web.Components.Options;
@@ -9,7 +8,7 @@ public sealed class LyoAuthWebComponentsOptions
     /// <summary>Configuration section name (<c>LyoAuthWebComponents</c>).</summary>
     public const string SectionName = "LyoAuthWebComponents";
 
-    /// <summary>Providers rendered on the login page. Each entry becomes a button that calls <c>IAuthSignInLauncher.SignInAsync(<see cref="AuthProviderDescriptor.Name"/>, ...)</c>.</summary>
+    /// <summary>Providers rendered on the login page. Each entry becomes a button that calls <c>IAuthSignInLauncher.SignInAsync(<see cref="AuthProviderDescriptor.Name" />, ...)</c>.</summary>
     public List<AuthProviderDescriptor> Providers { get; set; } = new();
 
     /// <summary>
@@ -18,8 +17,6 @@ public sealed class LyoAuthWebComponentsOptions
     /// </summary>
     public bool EnablePasswordSignIn { get; set; } = true;
 
-    /// <summary>
-    /// When <c>true</c> the password card shows a "Remember me" checkbox whose value is forwarded to <c>IAuthPasswordSignIn.SignInAsync</c>. Default <c>true</c>.
-    /// </summary>
+    /// <summary>When <c>true</c> the password card shows a "Remember me" checkbox whose value is forwarded to <c>IAuthPasswordSignIn.SignInAsync</c>. Default <c>true</c>.</summary>
     public bool ShowRememberMe { get; set; } = true;
 }

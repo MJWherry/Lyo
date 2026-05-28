@@ -67,13 +67,13 @@ helps when the PDF lacks an embedded text layer.
 
 ## Dependencies
 
-| Package / project                                                       | Role                                |
-|-------------------------------------------------------------------------|-------------------------------------|
-| `Lyo.Pdf.Rendering`                                                     | PDF → PNG raster                    |
-| `Lyo.Images.Ocr`                                                        | `IOcrEngine` + `OcrCoordinateTransforms` |
-| `Lyo.Pdf.Models`                                                        | `IPdfReader`, `PdfWord`             |
-| `Lyo.Exceptions`                                                        | Argument validation                 |
-| `Microsoft.Extensions.DependencyInjection.Abstractions`, `…Logging…`    | DI + logging                        |
+| Package / project                                                    | Role                                     |
+|----------------------------------------------------------------------|------------------------------------------|
+| `Lyo.Pdf.Rendering`                                                  | PDF → PNG raster                         |
+| `Lyo.Images.Ocr`                                                     | `IOcrEngine` + `OcrCoordinateTransforms` |
+| `Lyo.Pdf.Models`                                                     | `IPdfReader`, `PdfWord`                  |
+| `Lyo.Exceptions`                                                     | Argument validation                      |
+| `Microsoft.Extensions.DependencyInjection.Abstractions`, `…Logging…` | DI + logging                             |
 
 ## Related projects
 

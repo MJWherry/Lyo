@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Lyo.Authentication.Google;
 
 /// <summary>Configuration for the Google OIDC provider profile.</summary>

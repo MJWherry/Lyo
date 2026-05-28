@@ -5,13 +5,13 @@ namespace Lyo.Images.Builders;
 /// <summary>Fluent builder for <see cref="OverlayOptions" />. Use <see cref="New" /> to start a builder.</summary>
 public sealed class OverlayOptionsBuilder
 {
-    private OverlayPosition? _position;
-    private int? _overlaySizePercent;
-    private string? _padColorHex;
-    private bool? _drawBorder;
+    private int? _backgroundSquareSize;
     private string? _borderColorHex;
     private int? _borderStrokeWidthPx;
-    private int? _backgroundSquareSize;
+    private bool? _drawBorder;
+    private int? _overlaySizePercent;
+    private string? _padColorHex;
+    private OverlayPosition? _position;
 
     private OverlayOptionsBuilder() { }
 

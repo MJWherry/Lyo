@@ -17,11 +17,11 @@ public class UserDbContext : DbContext
     /// <summary>Auth audit events.</summary>
     public DbSet<UserEventEntity> Events { get; set; } = null!;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public UserDbContext(DbContextOptions<UserDbContext> options)
         : base(options) { }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(PostgresUserOptions.Schema);

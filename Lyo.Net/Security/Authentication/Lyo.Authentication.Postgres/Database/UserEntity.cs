@@ -1,5 +1,3 @@
-using System;
-
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[user]</c> table.</summary>

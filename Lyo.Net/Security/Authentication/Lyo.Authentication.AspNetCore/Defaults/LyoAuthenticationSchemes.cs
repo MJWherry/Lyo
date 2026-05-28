@@ -9,6 +9,6 @@ public static class LyoAuthenticationSchemes
     /// <summary>The Lyo-JWT scheme: validates Ed25519-signed JWTs minted by the Lyo API.</summary>
     public const string LyoJwt = "LyoJwt";
 
-    /// <summary>The dispatcher policy scheme: sniffs the credential prefix and forwards to <see cref="OpaqueToken"/> or <see cref="LyoJwt"/>.</summary>
+    /// <summary>The dispatcher policy scheme: sniffs the credential prefix and forwards to <see cref="OpaqueToken" /> or <see cref="LyoJwt" />.</summary>
     public const string Bearer = "LyoBearer";
 }

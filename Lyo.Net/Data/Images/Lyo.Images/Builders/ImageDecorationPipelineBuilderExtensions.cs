@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Images.Models;
 
 namespace Lyo.Images.Builders;
 

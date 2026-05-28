@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Options;
 using Lyo.Exceptions;
@@ -13,8 +8,8 @@ using Org.BouncyCastle.Crypto.Parameters;
 namespace Lyo.Authentication.Services.Jwt;
 
 /// <summary>
-/// Builds the JWKS document served at <c>/.well-known/jwks.json</c>. Publishes every version of the signing key currently in the keystore, so JWTs signed by an older key keep
-/// validating until they expire.
+/// Builds the JWKS document served at <c>/.well-known/jwks.json</c>. Publishes every version of the signing key currently in the keystore, so JWTs signed by an older key
+/// keep validating until they expire.
 /// </summary>
 public sealed class JwkSetBuilder
 {

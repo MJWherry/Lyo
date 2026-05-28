@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
+
 // ReSharper disable RedundantSuppressNullableWarningExpression
 #endif
 
@@ -97,9 +98,8 @@ public static class FileHelpers
             value!.Contains("..") || value.Contains("//") || value.Contains("\\\\") || value.IndexOf('\0') >= 0,
             $"Path prefix '{value}' contains a traversal pattern ('..', '//', '\\\\', or NULL).", paramName);
 
-        foreach (var segment in value.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)) {
+        foreach (var segment in value.Replace('\\', '/').Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
             ArgumentHelpers.ThrowIf(string.Equals(segment, "..", StringComparison.Ordinal), $"Path prefix '{value}' has a segment equal to '..'.", paramName);
-        }
     }
 
     /// <summary>

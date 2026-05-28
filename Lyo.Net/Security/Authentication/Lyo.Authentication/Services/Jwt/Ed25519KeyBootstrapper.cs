@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Options;
@@ -13,16 +11,16 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Authentication.Services.Jwt;
 
 /// <summary>
-/// On startup, ensures a Lyo JWT signing key exists in <see cref="IKeyStore"/>. When <see cref="LyoJwtOptions.AutoGenerateSigningKey"/> is true (the default) and no key is present
-/// under <see cref="LyoJwtOptions.SigningKeyId"/>, a fresh 32-byte Ed25519 private seed is generated and stored as version <c>v1</c>.
+/// On startup, ensures a Lyo JWT signing key exists in <see cref="IKeyStore" />. When <see cref="LyoJwtOptions.AutoGenerateSigningKey" /> is true (the default) and no key is
+/// present under <see cref="LyoJwtOptions.SigningKeyId" />, a fresh 32-byte Ed25519 private seed is generated and stored as version <c>v1</c>.
 /// </summary>
 public sealed class Ed25519KeyBootstrapper : IHostedService
 {
-    private readonly IKeyStore _keys;
-    private readonly LyoJwtOptions _options;
     private readonly IAuthAuditRecorder _audit;
     private readonly IAuthAuditContextAccessor _auditContext;
+    private readonly IKeyStore _keys;
     private readonly ILogger<Ed25519KeyBootstrapper> _logger;
+    private readonly LyoJwtOptions _options;
 
     /// <summary>Creates a new bootstrapper.</summary>
     public Ed25519KeyBootstrapper(
@@ -42,15 +40,17 @@ public sealed class Ed25519KeyBootstrapper : IHostedService
         _auditContext = auditContext ?? NullAuthAuditContextAccessor.Instance;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         if (!_options.AutoGenerateSigningKey) {
-            _logger.LogInformation("Skipping Ed25519 signing-key bootstrap because AutoGenerateSigningKey=false. Operator must provision '{KeyId}' out of band.", _options.SigningKeyId);
+            _logger.LogInformation(
+                "Skipping Ed25519 signing-key bootstrap because AutoGenerateSigningKey=false. Operator must provision '{KeyId}' out of band.", _options.SigningKeyId);
+
             return;
         }
 
-        if (await _keys.HasKeyAsync(_options.SigningKeyId, version: null, cancellationToken).ConfigureAwait(false)) {
+        if (await _keys.HasKeyAsync(_options.SigningKeyId, null, cancellationToken).ConfigureAwait(false)) {
             _logger.LogDebug("Signing key '{KeyId}' already present; nothing to do.", _options.SigningKeyId);
             return;
         }
@@ -62,9 +62,11 @@ public sealed class Ed25519KeyBootstrapper : IHostedService
         var seed = CryptographicRandom.GetBytes(Ed25519Constants.PrivateSeedLength);
         await _keys.AddKeyAsync(_options.SigningKeyId, "v1", seed, cancellationToken).ConfigureAwait(false);
         await _keys.SetCurrentVersionAsync(_options.SigningKeyId, "v1", cancellationToken).ConfigureAwait(false);
-        await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.SigningKeyBootstrapped, subject: $"{_options.SigningKeyId}:v1", outcome: "success", ct: cancellationToken).ConfigureAwait(false);
+        await _audit.RecordAsync(
+                _auditContext, _logger, AuthAuditEventKind.SigningKeyBootstrapped, subject: $"{_options.SigningKeyId}:v1", outcome: "success", ct: cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

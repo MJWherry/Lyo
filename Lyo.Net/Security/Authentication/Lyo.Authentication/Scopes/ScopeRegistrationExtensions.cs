@@ -6,9 +6,7 @@ namespace Lyo.Authentication.Scopes;
 /// <summary>Convenience DI extensions for registering scopes.</summary>
 public static class ScopeRegistrationExtensions
 {
-    /// <summary>
-    /// Registers a single scope. Resolves <see cref="ScopeRegistry"/> from the service collection — call <c>AddLyoAuthentication</c> first.
-    /// </summary>
+    /// <summary>Registers a single scope. Resolves <see cref="ScopeRegistry" /> from the service collection — call <c>AddLyoAuthentication</c> first.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="name">The scope name (lowercase dot-notation).</param>
     /// <param name="description">Human-readable description.</param>

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Lyo.Authentication.Web.Components.Models;
 
 namespace Lyo.Authentication.Web.Components.Abstractions;

@@ -5,9 +5,8 @@ using Lyo.Authentication.Models.Format;
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
-/// Projects a Lyo-signed JWT payload into a <see cref="ClaimsIdentity"/> for cookie-based or in-browser authentication.
-/// Does not verify the signature — callers must only feed in tokens they obtained from a trusted server-to-server exchange. Signature verification happens on the API side
-/// when the token is presented as <c>Authorization: Bearer</c>.
+/// Projects a Lyo-signed JWT payload into a <see cref="ClaimsIdentity" /> for cookie-based or in-browser authentication. Does not verify the signature — callers must only
+/// feed in tokens they obtained from a trusted server-to-server exchange. Signature verification happens on the API side when the token is presented as <c>Authorization: Bearer</c>.
 /// </summary>
 public static class LyoJwtClaimsParser
 {

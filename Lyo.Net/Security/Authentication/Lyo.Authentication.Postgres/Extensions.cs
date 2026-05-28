@@ -1,4 +1,3 @@
-using System;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Postgres.Stores;
@@ -15,13 +14,13 @@ using MsOptions = Microsoft.Extensions.Options.Options;
 
 namespace Lyo.Authentication.Postgres;
 
-/// <summary>DI surface for <c>Lyo.Authentication.Postgres</c>: <see cref="UserDbContext"/> registration plus the three Postgres-backed stores.</summary>
+/// <summary>DI surface for <c>Lyo.Authentication.Postgres</c>: <see cref="UserDbContext" /> registration plus the three Postgres-backed stores.</summary>
 public static class Extensions
 {
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}"/> against the supplied <see cref="PostgresUserOptions"/>.</summary>
+        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}" /> against the supplied <see cref="PostgresUserOptions" />.</summary>
         public IServiceCollection AddUserDbContextFactory(Action<PostgresUserOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -31,7 +30,7 @@ public static class Extensions
             return services.AddUserDbContextFactory(options);
         }
 
-        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}"/> using configuration binding.</summary>
+        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}" /> using configuration binding.</summary>
         public IServiceCollection AddUserDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -45,7 +44,7 @@ public static class Extensions
             return services.AddUserDbContextFactory(options);
         }
 
-        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}"/> and the <see cref="PostgresMigrationHostedService{UserDbContext, PostgresUserOptions}"/>.</summary>
+        /// <summary>Registers <see cref="IDbContextFactory{UserDbContext}" /> and the <see cref="PostgresMigrationHostedService{UserDbContext, PostgresUserOptions}" />.</summary>
         public IServiceCollection AddUserDbContextFactory(PostgresUserOptions options)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -55,12 +54,12 @@ public static class Extensions
             services.AddOptions<EntityRefOptions>();
             services.AddPostgresMigrations<UserDbContext, PostgresUserOptions>();
             services.AddDbContextFactory<UserDbContext>(dbOpts => dbOpts.UseNpgsql(
-                options.ConnectionString,
-                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresUserOptions.Schema)));
+                options.ConnectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresUserOptions.Schema)));
+
             return services;
         }
 
-        /// <summary>Registers <see cref="IApiTokenStore"/> backed by <see cref="UserDbContext"/>.</summary>
+        /// <summary>Registers <see cref="IApiTokenStore" /> backed by <see cref="UserDbContext" />.</summary>
         public IServiceCollection AddPostgresApiTokenStore(Action<PostgresUserOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -70,7 +69,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IApiTokenStore"/> backed by <see cref="UserDbContext"/>, binding options from configuration.</summary>
+        /// <summary>Registers <see cref="IApiTokenStore" /> backed by <see cref="UserDbContext" />, binding options from configuration.</summary>
         public IServiceCollection AddPostgresApiTokenStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -80,7 +79,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IUserStore"/> backed by <see cref="UserDbContext"/>.</summary>
+        /// <summary>Registers <see cref="IUserStore" /> backed by <see cref="UserDbContext" />.</summary>
         public IServiceCollection AddPostgresUserStore(Action<PostgresUserOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -90,7 +89,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IUserStore"/> backed by <see cref="UserDbContext"/>, binding options from configuration.</summary>
+        /// <summary>Registers <see cref="IUserStore" /> backed by <see cref="UserDbContext" />, binding options from configuration.</summary>
         public IServiceCollection AddPostgresUserStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -100,7 +99,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IExternalIdentityStore"/> backed by <see cref="UserDbContext"/>.</summary>
+        /// <summary>Registers <see cref="IExternalIdentityStore" /> backed by <see cref="UserDbContext" />.</summary>
         public IServiceCollection AddPostgresExternalIdentityStore(Action<PostgresUserOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -110,7 +109,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IExternalIdentityStore"/> backed by <see cref="UserDbContext"/>, binding options from configuration.</summary>
+        /// <summary>Registers <see cref="IExternalIdentityStore" /> backed by <see cref="UserDbContext" />, binding options from configuration.</summary>
         public IServiceCollection AddPostgresExternalIdentityStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -120,7 +119,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers all three Postgres-backed authentication stores plus the Postgres <see cref="IAuthAuditRecorder"/>.</summary>
+        /// <summary>Registers all three Postgres-backed authentication stores plus the Postgres <see cref="IAuthAuditRecorder" />.</summary>
         public IServiceCollection AddPostgresAuthenticationStores(Action<PostgresUserOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -133,7 +132,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers all three Postgres-backed authentication stores plus the Postgres <see cref="IAuthAuditRecorder"/>, binding options from configuration.</summary>
+        /// <summary>Registers all three Postgres-backed authentication stores plus the Postgres <see cref="IAuthAuditRecorder" />, binding options from configuration.</summary>
         public IServiceCollection AddPostgresAuthenticationStoresFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);

@@ -1,9 +1,9 @@
 namespace Lyo.Authentication.Models.Audit;
 
 /// <summary>
-/// One auth-subsystem audit row. Designed to map 1:1 to the <c>[user].[event]</c> table on the Postgres side, and to a "fire and forget" event sink (logger, queue, …) otherwise.
-/// Always carries the <see cref="Kind"/> (closed taxonomy), the timestamp (UTC), and an optional <see cref="UserId"/> when the event is user-attached; everything else is loosely typed
-/// metadata to keep the persistence shape stable across schema evolutions.
+/// One auth-subsystem audit row. Designed to map 1:1 to the <c>[user].[event]</c> table on the Postgres side, and to a "fire and forget" event sink (logger, queue, …)
+/// otherwise. Always carries the <see cref="Kind" /> (closed taxonomy), the timestamp (UTC), and an optional <see cref="UserId" /> when the event is user-attached; everything else is
+/// loosely typed metadata to keep the persistence shape stable across schema evolutions.
 /// </summary>
 /// <param name="Id">Server-generated row id (GUID v4). Set by the caller — recorders treat this as the primary key.</param>
 /// <param name="Timestamp">UTC at the moment the event happened (not the moment it was persisted).</param>

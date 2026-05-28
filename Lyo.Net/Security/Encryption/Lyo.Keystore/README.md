@@ -55,13 +55,14 @@ your cloud-specific API) before assuming discovery works.
 
 ## Dependency injection
 
-| Extension | Registers |
-|-----------|-----------|
-| `AddLocalKeyStore()` | `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddLocalKeyStore(Action<LocalKeyStore> configure)` | Configured `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
+| Extension                                                            | Registers                                        |
+|----------------------------------------------------------------------|--------------------------------------------------|
+| `AddLocalKeyStore()`                                                 | `LocalKeyStore` + unkeyed `IKeyStore`            |
+| `AddLocalKeyStore(Action<LocalKeyStore> configure)`                  | Configured `LocalKeyStore` + unkeyed `IKeyStore` |
+| `AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)` | Per-key `LocalKeyStore` + `IKeyStore`            |
 
-Configuration uses the **`configure =>`** lambda (there is no `AddLocalKeyStoreFromConfiguration`). Read **`IConfiguration`** inside `configure` — the same pattern as other Lyo libraries:
+Configuration uses the **`configure =>`** lambda (there is no `AddLocalKeyStoreFromConfiguration`). Read **`IConfiguration`** inside `configure` — the same pattern as other Lyo
+libraries:
 
 ```csharp
 using Lyo.Keystore;

@@ -20,9 +20,8 @@ internal static class QrHexColor
             return [r, g, b, 255];
         }
 
-        if (s.Length == 6) {
+        if (s.Length == 6)
             return [FromHexByte(s[0], s[1], hex, nameof(hex)), FromHexByte(s[2], s[3], hex, nameof(hex)), FromHexByte(s[4], s[5], hex, nameof(hex)), 255];
-        }
 
         throw new InvalidFormatException("Expected 3 or 6 hex digits after optional '#'.", nameof(hex), hex, "#RGB", "#RRGGBB");
     }

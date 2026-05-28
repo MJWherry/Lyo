@@ -1,7 +1,4 @@
-using System;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Exceptions;
@@ -12,20 +9,17 @@ using Microsoft.JSInterop;
 namespace Lyo.Authentication.Web.Components.Server;
 
 /// <summary>
-/// Server-side <see cref="IAuthSignInLauncher"/> that drives the BFF endpoints mapped by <see cref="LyoAuthClientEndpointsMapper"/>. Sign-in is a plain GET redirect; sign-out is
-/// a POST submitted via a dynamically constructed form because the consumer's <c>/auth/sign-out</c> endpoint is POST-only by design (CSRF protection).
+/// Server-side <see cref="IAuthSignInLauncher" /> that drives the BFF endpoints mapped by <see cref="LyoAuthClientEndpointsMapper" />. Sign-in is a plain GET redirect;
+/// sign-out is a POST submitted via a dynamically constructed form because the consumer's <c>/auth/sign-out</c> endpoint is POST-only by design (CSRF protection).
 /// </summary>
 public sealed class ServerAuthSignInLauncher : IAuthSignInLauncher
 {
-    private readonly NavigationManager _navigation;
     private readonly IJSRuntime _js;
+    private readonly NavigationManager _navigation;
     private readonly LyoAuthClientOptions _options;
 
     /// <summary>Creates a new launcher.</summary>
-    public ServerAuthSignInLauncher(
-        NavigationManager navigation,
-        IJSRuntime js,
-        IOptions<LyoAuthClientOptions> options)
+    public ServerAuthSignInLauncher(NavigationManager navigation, IJSRuntime js, IOptions<LyoAuthClientOptions> options)
     {
         ArgumentHelpers.ThrowIfNull(navigation);
         ArgumentHelpers.ThrowIfNull(js);
@@ -35,27 +29,22 @@ public sealed class ServerAuthSignInLauncher : IAuthSignInLauncher
         _options = options.Value;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task SignInAsync(string provider, string? returnUrl, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         var basePath = _options.SignInPath.TrimEnd('/') + "/" + Uri.EscapeDataString(provider);
-        var target = string.IsNullOrWhiteSpace(returnUrl)
-            ? basePath
-            : basePath + "?returnUrl=" + Uri.EscapeDataString(returnUrl!);
-
-        _navigation.NavigateTo(target, forceLoad: true);
+        var target = string.IsNullOrWhiteSpace(returnUrl) ? basePath : basePath + "?returnUrl=" + Uri.EscapeDataString(returnUrl!);
+        _navigation.NavigateTo(target, true);
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task SignOutAsync(CancellationToken ct = default)
     {
         var actionLiteral = JsonSerializer.Serialize(_options.SignOutPath);
         await _js.InvokeVoidAsync(
-                "eval",
-                ct,
-                "(function(a){var f=document.createElement('form');f.method='POST';f.action=a;document.body.appendChild(f);f.submit();})(" + actionLiteral + ")")
+                "eval", ct, "(function(a){var f=document.createElement('form');f.method='POST';f.action=a;document.body.appendChild(f);f.submit();})(" + actionLiteral + ")")
             .ConfigureAwait(false);
     }
 }

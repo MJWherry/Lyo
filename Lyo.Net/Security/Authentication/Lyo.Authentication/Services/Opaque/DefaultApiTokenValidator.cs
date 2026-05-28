@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Audit;
@@ -11,17 +12,17 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Authentication.Services.Opaque;
 
 /// <summary>
-/// Default <see cref="IApiTokenValidator"/>. Parses → store lookup → ring check → hash compare → expiry/revocation check → user-disabled check. Returns the principal on success or
-/// <c>null</c> on any failure. Best-effort touches <see cref="ApiTokenRecord.LastUsedAt"/> on success without awaiting.
+/// Default <see cref="IApiTokenValidator" />. Parses → store lookup → ring check → hash compare → expiry/revocation check → user-disabled check. Returns the principal on
+/// success or <c>null</c> on any failure. Best-effort touches <see cref="ApiTokenRecord.LastUsedAt" /> on success without awaiting.
 /// </summary>
 public sealed class DefaultApiTokenValidator : IApiTokenValidator
 {
-    private readonly IApiTokenStore _store;
-    private readonly IUserStore _users;
-    private readonly AuthenticationOptions _options;
     private readonly IAuthAuditRecorder _audit;
     private readonly IAuthAuditContextAccessor _auditContext;
     private readonly ILogger<DefaultApiTokenValidator> _logger;
+    private readonly AuthenticationOptions _options;
+    private readonly IApiTokenStore _store;
+    private readonly IUserStore _users;
 
     /// <summary>Creates a new validator.</summary>
     public DefaultApiTokenValidator(
@@ -44,7 +45,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
         _auditContext = auditContext ?? NullAuthAuditContextAccessor.Instance;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<ApiTokenPrincipal?> ValidateAsync(string presentedToken, CancellationToken ct = default)
     {
         if (!ApiTokenCodec.TryParse(presentedToken, out var parsed) || parsed is null) {
@@ -57,7 +58,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
             return null;
         }
 
-        var record = await _store.GetByIdAsync(parsed.Id, tenantId: null, ct).ConfigureAwait(false);
+        var record = await _store.GetByIdAsync(parsed.Id, null, ct).ConfigureAwait(false);
         if (record is null) {
             _logger.LogDebug("Token rejected: UnknownToken (id={TokenId})", parsed.Id);
             return null;
@@ -82,28 +83,36 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
         var now = DateTime.UtcNow;
         if (record.IsRevoked(now)) {
             _logger.LogDebug("Token {TokenId} rejected: Revoked at {RevokedAt}", parsed.Id, record.RevokedAt);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, userId: record.UserId, subject: record.Id, outcome: "failure", reason: "Revoked", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, record.UserId, record.Id, outcome: "failure", reason: "Revoked", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
         if (record.IsExpired(now)) {
             _logger.LogDebug("Token {TokenId} rejected: Expired at {ExpiresAt}", parsed.Id, record.ExpiresAt);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, userId: record.UserId, subject: record.Id, outcome: "failure", reason: "Expired", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, record.UserId, record.Id, outcome: "failure", reason: "Expired", ct: ct)
+                .ConfigureAwait(false);
+
             return null;
         }
 
         var scopes = (IReadOnlyList<string>)record.Scopes;
         if (record.UserId.HasValue) {
-            var user = await _users.GetByIdAsync(record.UserId.Value, tenantId: null, ct).ConfigureAwait(false);
+            var user = await _users.GetByIdAsync(record.UserId.Value, null, ct).ConfigureAwait(false);
             if (user is null) {
                 _logger.LogDebug("Token {TokenId} rejected: owning user {UserId} not found", parsed.Id, record.UserId);
-                await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, userId: record.UserId, subject: record.Id, outcome: "failure", reason: "OwnerMissing", ct: ct).ConfigureAwait(false);
+                await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, record.UserId, record.Id, outcome: "failure", reason: "OwnerMissing", ct: ct)
+                    .ConfigureAwait(false);
+
                 return null;
             }
 
             if (user.IsDisabled) {
                 _logger.LogDebug("Token {TokenId} rejected: UserDisabled (user={UserId})", parsed.Id, user.Id);
-                await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, userId: user.Id, subject: record.Id, outcome: "failure", reason: "UserDisabled", ct: ct).ConfigureAwait(false);
+                await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.TokenRejected, user.Id, record.Id, outcome: "failure", reason: "UserDisabled", ct: ct)
+                    .ConfigureAwait(false);
+
                 return null;
             }
 
@@ -120,20 +129,13 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
         }
 
         _ = TouchLastUsedAsync(record.Id, now);
-        return new(
-            TokenId: record.Id,
-            Subject: $"lyo_token:{record.Id}",
-            OwnerUserId: record.UserId,
-            Kind: record.Kind,
-            Ring: record.Ring,
-            Scopes: scopes,
-            ValidatedAt: now);
+        return new(record.Id, $"lyo_token:{record.Id}", record.UserId, record.Kind, record.Ring, scopes, now);
     }
 
     private async Task TouchLastUsedAsync(string id, DateTime now)
     {
         try {
-            await _store.TouchLastUsedAsync(id, now, tenantId: null, CancellationToken.None).ConfigureAwait(false);
+            await _store.TouchLastUsedAsync(id, now, null, CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, "Best-effort touch of last_used_at failed for token {TokenId}", id);
@@ -143,7 +145,7 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
     private static bool FixedTimeEquals(byte[] left, byte[] right)
     {
 #if NET10_0_OR_GREATER
-        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(left, right);
+        return CryptographicOperations.FixedTimeEquals(left, right);
 #else
         if (left is null || right is null || left.Length != right.Length)
             return false;

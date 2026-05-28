@@ -1,8 +1,5 @@
-using System.Collections.Generic;
 using System.Net;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
@@ -30,7 +27,7 @@ public sealed class OidcAuthorizationUrlBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(nonce);
         ArgumentHelpers.ThrowIfNull(pkce);
         var doc = await _discovery.GetAsync(provider.DiscoveryUrl, ct).ConfigureAwait(false);
-        var qs = new Dictionary<string, string>(System.StringComparer.Ordinal) {
+        var qs = new Dictionary<string, string>(StringComparer.Ordinal) {
             ["client_id"] = provider.ClientId,
             ["redirect_uri"] = provider.RedirectUri,
             ["response_type"] = "code",

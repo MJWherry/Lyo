@@ -1,5 +1,3 @@
-using System;
-
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[token]</c> table (Format-B opaque tokens).</summary>
@@ -11,10 +9,10 @@ public sealed class TokenEntity
     /// <summary>SHA-256 of the secret segment (32 bytes).</summary>
     public byte[] SecretHash { get; set; } = Array.Empty<byte>();
 
-    /// <summary>One of <see cref="Format.ApiTokenKind"/>.</summary>
+    /// <summary>One of <see cref="Format.ApiTokenKind" />.</summary>
     public string Kind { get; set; } = string.Empty;
 
-    /// <summary>One of <see cref="Format.ApiTokenRing"/>.</summary>
+    /// <summary>One of <see cref="Format.ApiTokenRing" />.</summary>
     public string Ring { get; set; } = string.Empty;
 
     /// <summary>Owning user (null for unowned <c>svc</c>/<c>internal</c> tokens).</summary>

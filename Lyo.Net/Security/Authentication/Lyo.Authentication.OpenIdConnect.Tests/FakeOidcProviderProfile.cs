@@ -1,11 +1,12 @@
-using System.Collections.Generic;
 using Lyo.Authentication.OpenIdConnect.Provider;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 
-/// <summary>A minimal in-test <see cref="IOpenIdConnectProvider"/> wired to <see cref="FakeOidcIdentityProvider"/>.</summary>
+/// <summary>A minimal in-test <see cref="IOpenIdConnectProvider" /> wired to <see cref="FakeOidcIdentityProvider" />.</summary>
 internal sealed class FakeOidcProviderProfile : IOpenIdConnectProvider
 {
+    public string? RejectIfClaim { get; set; }
+
     public string Name { get; set; } = "fake";
 
     public string DiscoveryUrl { get; set; } = FakeOidcIdentityProvider.DiscoveryUrl;
@@ -19,8 +20,6 @@ internal sealed class FakeOidcProviderProfile : IOpenIdConnectProvider
     public IReadOnlyList<string> Scopes { get; set; } = ["openid", "email", "profile"];
 
     public IReadOnlyDictionary<string, string> ExtraAuthorizeParameters { get; set; } = new Dictionary<string, string>();
-
-    public string? RejectIfClaim { get; set; }
 
     public OidcClaimMappingResult MapClaims(IReadOnlyDictionary<string, object?> claims)
     {

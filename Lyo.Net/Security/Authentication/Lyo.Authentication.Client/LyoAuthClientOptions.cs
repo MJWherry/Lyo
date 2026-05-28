@@ -1,16 +1,15 @@
-using System;
-
 namespace Lyo.Authentication.Client;
 
-/// <summary>
-/// Configuration for the consumer-side Lyo auth runtime. <see cref="AuthBaseUrl"/> is the only required field; the rest sensibly default for a web BFF (Gateway-style) host.
-/// </summary>
+/// <summary>Configuration for the consumer-side Lyo auth runtime. <see cref="AuthBaseUrl" /> is the only required field; the rest sensibly default for a web BFF (Gateway-style) host.</summary>
 public sealed class LyoAuthClientOptions
 {
     /// <summary>Configuration section name (<c>LyoAuthClient</c>).</summary>
     public const string SectionName = "LyoAuthClient";
 
-    /// <summary>The default authentication scheme name registered by <see cref="Extensions.AddLyoAuthClient(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action{LyoAuthClientOptions})"/>.</summary>
+    /// <summary>
+    /// The default authentication scheme name registered by
+    /// <see cref="Extensions.AddLyoAuthClient(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.Action{LyoAuthClientOptions})" />.
+    /// </summary>
     public const string SchemeName = "LyoAuthCookie";
 
     /// <summary>Absolute base URL of the Lyo API that hosts the OIDC endpoints (e.g. <c>http://localhost:5251</c>). Required.</summary>
@@ -37,6 +36,6 @@ public sealed class LyoAuthClientOptions
     /// <summary>How long the session cookie survives in the browser. Independent of the underlying refresh-token lifetime. Default 30 days.</summary>
     public TimeSpan SessionAbsoluteExpiration { get; set; } = TimeSpan.FromDays(30);
 
-    /// <summary>Grace window applied to access-token expiry before <see cref="LyoAuthDelegatingHandler"/> refreshes pre-emptively. Default 30 seconds.</summary>
+    /// <summary>Grace window applied to access-token expiry before <see cref="LyoAuthDelegatingHandler" /> refreshes pre-emptively. Default 30 seconds.</summary>
     public TimeSpan AccessTokenSkew { get; set; } = TimeSpan.FromSeconds(30);
 }

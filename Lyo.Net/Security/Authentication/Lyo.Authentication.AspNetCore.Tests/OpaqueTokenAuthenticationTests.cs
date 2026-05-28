@@ -1,7 +1,4 @@
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using Lyo.Authentication.Scopes;
 
 namespace Lyo.Authentication.AspNetCore.Tests;
@@ -22,7 +19,7 @@ public sealed class OpaqueTokenAuthenticationTests
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         var token = await harness.IssueOpaqueAsync("people.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/secure");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new("Bearer", token);
         var response = await harness.Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -32,7 +29,7 @@ public sealed class OpaqueTokenAuthenticationTests
     {
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         var request = new HttpRequestMessage(HttpMethod.Get, "/secure");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "lyo_pat_live_AAAAAAAAAAA_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        request.Headers.Authorization = new("Bearer", "lyo_pat_live_AAAAAAAAAAA_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         var response = await harness.Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -54,7 +51,7 @@ public sealed class OpaqueTokenAuthenticationTests
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         var token = await harness.IssueOpaqueAsync("orders.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new("Bearer", token);
         var response = await harness.Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -65,7 +62,7 @@ public sealed class OpaqueTokenAuthenticationTests
         await using var harness = await AuthenticationHandlerHarness.CreateAsync();
         var token = await harness.IssueOpaqueAsync("people.read");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new("Bearer", token);
         var response = await harness.Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -85,9 +82,10 @@ public sealed class OpaqueTokenAuthenticationTests
             services.AddScope("people.read", "Read people");
             services.AddScope("admin", "Full admin", "people.read");
         });
+
         var token = await harness.IssueOpaqueAsync("admin");
         var request = new HttpRequestMessage(HttpMethod.Get, "/scoped");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new("Bearer", token);
         var response = await harness.Client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

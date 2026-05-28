@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Abstractions;
@@ -12,21 +8,22 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using LyoJwtClaimsParser = Lyo.Authentication.Models.Records.LyoJwtClaimsParser;
 
 namespace Lyo.Authentication.Web.Components.Server;
 
 /// <summary>
-/// Server-side <see cref="IAuthSessionAccessor"/> that resolves the active <see cref="LyoAuthSession"/> from the consumer cookie (data-protected session id) and surfaces it for
-/// the debug page. <see cref="RefreshAsync"/> rotates the access/refresh pair through the API's <c>/auth/refresh</c> endpoint.
+/// Server-side <see cref="IAuthSessionAccessor" /> that resolves the active <see cref="LyoAuthSession" /> from the consumer cookie (data-protected session id) and surfaces
+/// it for the debug page. <see cref="RefreshAsync" /> rotates the access/refresh pair through the API's <c>/auth/refresh</c> endpoint.
 /// </summary>
 public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
 {
-    private readonly IHttpContextAccessor _httpContext;
-    private readonly LyoAuthSessionStore _sessions;
     private readonly LyoAuthApiClient _authApi;
+    private readonly IHttpContextAccessor _httpContext;
+    private readonly ILogger<ServerAuthSessionAccessor> _logger;
     private readonly LyoAuthClientOptions _options;
     private readonly IDataProtector _protector;
-    private readonly ILogger<ServerAuthSessionAccessor> _logger;
+    private readonly LyoAuthSessionStore _sessions;
 
     /// <summary>Creates a new accessor.</summary>
     public ServerAuthSessionAccessor(
@@ -51,29 +48,19 @@ public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
         _logger = logger;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<AuthSessionSnapshot?> GetCurrentAsync(CancellationToken ct = default)
     {
         var session = ResolveSession();
         if (session is null)
             return Task.FromResult<AuthSessionSnapshot?>(null);
 
-        var scopes = session.Claims
-            .Where(c => string.Equals(c.Type, LyoJwtClaims.Scope, StringComparison.Ordinal))
-            .Select(c => c.Value)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-        return Task.FromResult<AuthSessionSnapshot?>(new AuthSessionSnapshot(
-            AccessToken: session.AccessToken,
-            AccessTokenExpiresAt: session.AccessTokenExpiresAt,
-            HasRefreshToken: !string.IsNullOrWhiteSpace(session.RefreshToken),
-            RefreshTokenExpiresAt: session.RefreshTokenExpiresAt,
-            Claims: session.Claims,
-            Scopes: scopes));
+        var scopes = session.Claims.Where(c => string.Equals(c.Type, LyoJwtClaims.Scope, StringComparison.Ordinal)).Select(c => c.Value).Distinct(StringComparer.Ordinal).ToArray();
+        return Task.FromResult<AuthSessionSnapshot?>(
+            new(session.AccessToken, session.AccessTokenExpiresAt, !string.IsNullOrWhiteSpace(session.RefreshToken), session.RefreshTokenExpiresAt, session.Claims, scopes));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> RefreshAsync(CancellationToken ct = default)
     {
         var session = ResolveSession();
@@ -87,14 +74,8 @@ public sealed class ServerAuthSessionAccessor : IAuthSessionAccessor
             return false;
         }
 
-        var claims = Lyo.Authentication.Models.Records.LyoJwtClaimsParser.Parse(refreshed.AccessToken);
-        session.Update(
-            accessToken: refreshed.AccessToken,
-            refreshToken: refreshed.RefreshToken,
-            accessTokenExpiresAt: DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn),
-            refreshTokenExpiresAt: null,
-            claims: claims);
-
+        var claims = LyoJwtClaimsParser.Parse(refreshed.AccessToken);
+        session.Update(refreshed.AccessToken, refreshed.RefreshToken, DateTime.UtcNow.AddSeconds(refreshed.ExpiresIn), null, claims);
         return true;
     }
 

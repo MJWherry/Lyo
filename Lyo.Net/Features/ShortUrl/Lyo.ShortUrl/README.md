@@ -61,26 +61,26 @@ Fluent helper that validates as you go:
 
 ### `ShortUrlServiceOptions`
 
-| Member                  | Default              | Notes                                                                |
-|-------------------------|----------------------|----------------------------------------------------------------------|
-| `BaseUrl`               | empty                | Prepended to generated ids (e.g. `https://short.ly`).                |
-| `DefaultExpirationDays` | `null`               | Reserved for storage-backed implementations.                          |
-| `MaxAliasLength`        | `50`                 | Enforced by `ShortUrlService.ShortenCoreAsync`.                       |
-| `MinAliasLength`        | `3`                  | Enforced by `ShortUrlService.ShortenCoreAsync`.                       |
-| `AllowCustomAliases`    | `true`               | When `false`, custom aliases are rejected with `CUSTOM_ALIAS_NOT_ALLOWED`. |
-| `EnableMetrics`         | `false`              | Gates the `IMetrics` integration in `ShortUrlServiceBase`.            |
-| `EnforceHttps`          | `false`              | When `true`, HTTP URLs are rewritten to HTTPS before hitting `ShortenCoreAsync`. |
-| `SectionName` *(const)* | `"ShortUrlOptions"`  | Default appsettings section for `AddShortUrlFromConfiguration`.       |
+| Member                  | Default             | Notes                                                                            |
+|-------------------------|---------------------|----------------------------------------------------------------------------------|
+| `BaseUrl`               | empty               | Prepended to generated ids (e.g. `https://short.ly`).                            |
+| `DefaultExpirationDays` | `null`              | Reserved for storage-backed implementations.                                     |
+| `MaxAliasLength`        | `50`                | Enforced by `ShortUrlService.ShortenCoreAsync`.                                  |
+| `MinAliasLength`        | `3`                 | Enforced by `ShortUrlService.ShortenCoreAsync`.                                  |
+| `AllowCustomAliases`    | `true`              | When `false`, custom aliases are rejected with `CUSTOM_ALIAS_NOT_ALLOWED`.       |
+| `EnableMetrics`         | `false`             | Gates the `IMetrics` integration in `ShortUrlServiceBase`.                       |
+| `EnforceHttps`          | `false`             | When `true`, HTTP URLs are rewritten to HTTPS before hitting `ShortenCoreAsync`. |
+| `SectionName` *(const)* | `"ShortUrlOptions"` | Default appsettings section for `AddShortUrlFromConfiguration`.                  |
 
 ## DI registration (`Extensions`)
 
-| Entry point                                                                                                             | What it does                                                                                                                 |
-|-------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| `services.AddShortUrlGenerator()`                                                                                       | Registers singleton `IShortUrlGenerator` → `ShortUrlGenerator`.                                                              |
-| `services.AddShortUrl(Action<ShortUrlServiceOptions>? configure = null)` *(plus an `(options)` overload)*               | Registers `ShortUrlServiceOptions`, the generator, and singleton `IShortUrlService` → `ShortUrlService`.                     |
-| `services.AddShortUrlFromConfiguration(IConfiguration configuration, string sectionName = ShortUrlServiceOptions.SectionName)` | Same as `AddShortUrl(...)` but binds options from the configuration section (default `"ShortUrlOptions"`).                  |
-| `services.AddShortUrlService<TService, TOptions>(Action<TOptions>? configure = null)`                                   | Generic registration for a custom `IShortUrlService` + `TOptions : ShortUrlServiceOptions, new()` pair.                       |
-| `services.AddShortUrlService<TService>(ShortUrlServiceOptions options)`                                                 | Same with a pre-built options instance.                                                                                       |
+| Entry point                                                                                                                    | What it does                                                                                               |
+|--------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `services.AddShortUrlGenerator()`                                                                                              | Registers singleton `IShortUrlGenerator` → `ShortUrlGenerator`.                                            |
+| `services.AddShortUrl(Action<ShortUrlServiceOptions>? configure = null)` *(plus an `(options)` overload)*                      | Registers `ShortUrlServiceOptions`, the generator, and singleton `IShortUrlService` → `ShortUrlService`.   |
+| `services.AddShortUrlFromConfiguration(IConfiguration configuration, string sectionName = ShortUrlServiceOptions.SectionName)` | Same as `AddShortUrl(...)` but binds options from the configuration section (default `"ShortUrlOptions"`). |
+| `services.AddShortUrlService<TService, TOptions>(Action<TOptions>? configure = null)`                                          | Generic registration for a custom `IShortUrlService` + `TOptions : ShortUrlServiceOptions, new()` pair.    |
+| `services.AddShortUrlService<TService>(ShortUrlServiceOptions options)`                                                        | Same with a pre-built options instance.                                                                    |
 
 ## Quick start
 

@@ -106,13 +106,13 @@ emit metrics through the registered implementation.
 
 ## Dependencies
 
-| Package / project                                  | Role                                          |
-|----------------------------------------------------|-----------------------------------------------|
-| `UglyToad.PdfPig`                                  | Reading PDFs (text, layout)                   |
-| `PDFsharp`                                         | Structural edits / merges (`IPdfWriter`)      |
-| `Microsoft.Extensions.Configuration.Binder`        | `AddPdfServiceFromConfiguration`              |
-| `Microsoft.Extensions.Http`                        | URL loads via `IHttpClientFactory`            |
-| `Lyo.Pdf.Models`                                   | Contracts and DTOs                            |
+| Package / project                                           | Role                                         |
+|-------------------------------------------------------------|----------------------------------------------|
+| `UglyToad.PdfPig`                                           | Reading PDFs (text, layout)                  |
+| `PDFsharp`                                                  | Structural edits / merges (`IPdfWriter`)     |
+| `Microsoft.Extensions.Configuration.Binder`                 | `AddPdfServiceFromConfiguration`             |
+| `Microsoft.Extensions.Http`                                 | URL loads via `IHttpClientFactory`           |
+| `Lyo.Pdf.Models`                                            | Contracts and DTOs                           |
 | `Lyo.Common`, `Lyo.Exceptions`, `Lyo.Metrics`, `Lyo.Result` | Shared helpers, validation, metrics, results |
 
 ## Related projects

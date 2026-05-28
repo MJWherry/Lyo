@@ -72,17 +72,18 @@ Register **`Microsoft.Extensions.DependencyInjection.Abstractions`** (already re
 
 ### Registration overview
 
-| Call | Registers |
-|------|-----------|
-| `AddLocalKeyStore(configure)` | `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddKeyedLocalKeyStore(key, configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
-| `AddEncryptionServiceKeyed(...)` | Keyed DEK/KEK concretes, `IEncryptionService`, **`ITwoKeyEncryptionService`** |
-| `AddAesCcmEncryption()` (addon) | Unkeyed **`AesCcmEncryptionService`** only |
-| `AddDefaultEncryptionService<T>()` | Unkeyed **`IEncryptionService`** → `T` |
-| `AddDefaultTwoKeyEncryptionService<T>()` | Unkeyed **`ITwoKeyEncryptionService`** → `T` (rare) |
-| `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX) |
+| Call                                          | Registers                                                                     |
+|-----------------------------------------------|-------------------------------------------------------------------------------|
+| `AddLocalKeyStore(configure)`                 | `LocalKeyStore` + unkeyed `IKeyStore`                                         |
+| `AddKeyedLocalKeyStore(key, configure)`       | Per-key `LocalKeyStore` + `IKeyStore`                                         |
+| `AddEncryptionServiceKeyed(...)`              | Keyed DEK/KEK concretes, `IEncryptionService`, **`ITwoKeyEncryptionService`** |
+| `AddAesCcmEncryption()` (addon)               | Unkeyed **`AesCcmEncryptionService`** only                                    |
+| `AddDefaultEncryptionService<T>()`            | Unkeyed **`IEncryptionService`** → `T`                                        |
+| `AddDefaultTwoKeyEncryptionService<T>()`      | Unkeyed **`ITwoKeyEncryptionService`** → `T` (rare)                           |
+| `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX)                                   |
 
-Unkeyed addon methods do **not** register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. **File storage and envelope encryption** should use **keyed** registration (includes `ITwoKeyEncryptionService`).
+Unkeyed addon methods do **not** register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. **File storage and envelope encryption** should use *
+*keyed** registration (includes `ITwoKeyEncryptionService`).
 
 ### Keyed two-key (recommended)
 
@@ -125,7 +126,8 @@ services.AddEncryptionServiceKeyed<XChaCha20Poly1305EncryptionService, AesGcmEnc
 var envelope = serviceProvider.GetRequiredKeyedService<ITwoKeyEncryptionService>(keyName);
 ```
 
-`AddEncryptionServiceKeyed` overloads accept an existing keyed key-store name, or register the store via `Func<IServiceProvider, TKeyStore>`. Generic overloads support different DEK vs KEK types when both implement **`IEncryptionService`** and are built from **`IKeyStore`** (see source for the built-in type matrix).
+`AddEncryptionServiceKeyed` overloads accept an existing keyed key-store name, or register the store via `Func<IServiceProvider, TKeyStore>`. Generic overloads support different
+DEK vs KEK types when both implement **`IEncryptionService`** and are built from **`IKeyStore`** (see source for the built-in type matrix).
 
 ### Unkeyed (single algorithm / cache helper)
 
@@ -145,8 +147,10 @@ services.AddAesGcmRsaEncryption(publicPemPath: "keys/public.pem", privatePemPath
 
 ### Configuration notes
 
-- **Service options** (`EncryptionServiceOptions`: `MaxInputSize`, `FileExtension`, `AesGcmKeySize`, etc.) are set on concrete service constructors today — use algorithm parameters on `AddEncryptionServiceKeyed` (`aesGcmKeySize`) or construct services manually for advanced cases.
-- **Secrets and key material** — use `AddLocalKeyStore` / `AddKeyedLocalKeyStore` with `configure => { ... }` and read **`IConfiguration`** inside that callback (same pattern as other Lyo apps). There is no `AddEncryptionServiceFromConfiguration` on this package; bind appsettings in the key-store configure delegate or in a custom `IKeyStore` factory.
+- **Service options** (`EncryptionServiceOptions`: `MaxInputSize`, `FileExtension`, `AesGcmKeySize`, etc.) are set on concrete service constructors today — use algorithm parameters
+  on `AddEncryptionServiceKeyed` (`aesGcmKeySize`) or construct services manually for advanced cases.
+- **Secrets and key material** — use `AddLocalKeyStore` / `AddKeyedLocalKeyStore` with `configure => { ... }` and read **`IConfiguration`** inside that callback (same pattern as
+  other Lyo apps). There is no `AddEncryptionServiceFromConfiguration` on this package; bind appsettings in the key-store configure delegate or in a custom `IKeyStore` factory.
 
 **`EncryptionServiceExtensions.DetermineAlgorithm`**, **`DetermineDekAlgorithm`**, and **`DetermineKekAlgorithm`** introspect live instances for logging or diagnostics.
 

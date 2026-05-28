@@ -5,19 +5,24 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Encryption.AesCcm;
 
-/// <summary>Dependency-injection extensions for the AES-CCM addon. Mirrors the keyed-registration shape from <see cref="EncryptionServiceExtensions" /> but specialized to <see cref="AesCcmEncryptionService" />.</summary>
+/// <summary>
+/// Dependency-injection extensions for the AES-CCM addon. Mirrors the keyed-registration shape from <see cref="EncryptionServiceExtensions" /> but specialized to
+/// <see cref="AesCcmEncryptionService" />.
+/// </summary>
 public static class AesCcmEncryptionServiceExtensions
 {
     /// <param name="services">The service collection.</param>
     extension(IServiceCollection services)
     {
-        /// <summary>Registers <see cref="AesCcmEncryptionService" /> as a singleton resolved from the provided <see cref="IKeyStore" />. Use <see cref="EncryptionServiceExtensions.AddDefaultEncryptionService{TConcrete}" /> for unkeyed <see cref="IEncryptionService" />.</summary>
+        /// <summary>
+        /// Registers <see cref="AesCcmEncryptionService" /> as a singleton resolved from the provided <see cref="IKeyStore" />. Use
+        /// <see cref="EncryptionServiceExtensions.AddDefaultEncryptionService{TConcrete}" /> for unkeyed <see cref="IEncryptionService" />.
+        /// </summary>
         /// <param name="aesKeySize">Underlying AES key size for AES-CCM (128/192/256 bit).</param>
         public IServiceCollection AddAesCcmEncryption(AesGcmKeySizeBits aesKeySize = AesGcmKeySizeBits.Bits256)
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.AddSingleton<AesCcmEncryptionService>(provider => new(
-                provider.GetRequiredService<IKeyStore>(), aesKeySize));
+            services.AddSingleton<AesCcmEncryptionService>(provider => new(provider.GetRequiredService<IKeyStore>(), aesKeySize));
             return services;
         }
 
@@ -30,12 +35,11 @@ public static class AesCcmEncryptionServiceExtensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyName);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyStoreName);
-
             services.AddKeyedSingleton<AesCcmEncryptionService>(
                 keyName, (provider, _) => {
                     var keyStore = provider.GetKeyedService<IKeyStore>(keyStoreName);
                     OperationHelpers.ThrowIfNull(keyStore, $"Keyed key store service '{keyStoreName}' was not found.");
-                    return new AesCcmEncryptionService(keyStore, aesKeySize);
+                    return new(keyStore, aesKeySize);
                 });
 
             services.AddKeyedSingleton<IEncryptionService>(

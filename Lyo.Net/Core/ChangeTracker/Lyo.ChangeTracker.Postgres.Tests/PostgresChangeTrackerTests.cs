@@ -100,9 +100,8 @@ public class PostgresChangeTrackerTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
         var tracker = new PostgresChangeTracker(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresChangeTrackerOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.SystemOnly } }));
+            factory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } }));
+
         var record = new ChangeRecord(EntityRef.ForKey("Order", "system-only-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 }) {
             TenantId = Guid.NewGuid()
         };
@@ -118,9 +117,8 @@ public class PostgresChangeTrackerTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
         var tracker = new PostgresChangeTracker(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresChangeTrackerOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.MultiTenantStrict } }));
+            factory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } }));
+
         var record = new ChangeRecord(EntityRef.ForKey("Order", "strict-missing"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
         await Assert.ThrowsAsync<ArgumentNullException>(() => tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken));
     }
@@ -131,11 +129,9 @@ public class PostgresChangeTrackerTests
         var defaultTenant = Guid.NewGuid();
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
         var tracker = new PostgresChangeTracker(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresChangeTrackerOptions {
-                Tenancy = new TenancyOptions { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant }
-            }));
+            factory, Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } }));
+
         var record = new ChangeRecord(EntityRef.ForKey("Order", "default-tenant-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
         await tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);

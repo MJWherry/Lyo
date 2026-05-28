@@ -1,10 +1,8 @@
-using System;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 
 namespace Lyo.Authentication.Options;
 
-/// <summary>Top-level authentication options. Bound from configuration section <see cref="SectionName"/>.</summary>
+/// <summary>Top-level authentication options. Bound from configuration section <see cref="SectionName" />.</summary>
 public sealed class AuthenticationOptions
 {
     /// <summary>The configuration section name.</summary>
@@ -17,8 +15,8 @@ public sealed class AuthenticationOptions
     public TimeSpan DefaultPatLifetime { get; set; } = TimeSpan.FromDays(365);
 
     /// <summary>
-    /// When <c>true</c>, validators intersect the snapshotted scopes on a token with the user's *current* <c>scopes_json</c> at validation time (Option B). When <c>false</c> (the
-    /// default), the snapshotted scopes are honored as-is (Option C). Set to <c>true</c> only in high-security deployments that need instant scope demotion across all active tokens.
+    /// When <c>true</c>, validators intersect the snapshotted scopes on a token with the user's *current* <c>scopes_json</c> at validation time (Option B). When <c>false</c>
+    /// (the default), the snapshotted scopes are honored as-is (Option C). Set to <c>true</c> only in high-security deployments that need instant scope demotion across all active tokens.
     /// </summary>
     public bool EnableDynamicScopeIntersection { get; set; } = false;
 }

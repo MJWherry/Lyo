@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Authentication.Postgres.Database;
 
-/// <summary>EF configuration for <see cref="TokenEntity"/>.</summary>
+/// <summary>EF configuration for <see cref="TokenEntity" />.</summary>
 public sealed class TokenEntityConfiguration : IEntityTypeConfiguration<TokenEntity>
 {
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<TokenEntity> builder)
     {
         builder.ToTable("token");
@@ -27,21 +27,11 @@ public sealed class TokenEntityConfiguration : IEntityTypeConfiguration<TokenEnt
         builder.Property(e => e.RevokedTimestamp).HasColumnName("revoked_timestamp").HasColumnType("timestamp with time zone");
         builder.Property(e => e.RevokedReason).HasColumnName("revoked_reason").HasMaxLength(500);
         builder.Property(e => e.RotatedFromId).HasColumnName("rotated_from_id").HasMaxLength(11);
-        builder.HasOne<UserEntity>()
-            .WithMany()
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.SetNull);
-        builder.HasOne<TokenEntity>()
-            .WithMany()
-            .HasForeignKey(e => e.RotatedFromId)
-            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<UserEntity>().WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne<TokenEntity>().WithMany().HasForeignKey(e => e.RotatedFromId).OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(e => new { e.UserId, e.RevokedTimestamp }).HasDatabaseName("ix_token_user_id_revoked_timestamp");
-        builder.HasIndex(e => e.ExpiresTimestamp)
-            .HasDatabaseName("ix_token_expires_timestamp")
-            .HasFilter("\"expires_timestamp\" IS NOT NULL");
+        builder.HasIndex(e => e.ExpiresTimestamp).HasDatabaseName("ix_token_expires_timestamp").HasFilter("\"expires_timestamp\" IS NOT NULL");
         builder.HasIndex(e => new { e.Kind, e.Ring }).HasDatabaseName("ix_token_kind_ring");
-        builder.HasIndex(e => e.TenantId)
-            .HasDatabaseName("ix_token_tenant_id")
-            .HasFilter("\"tenant_id\" IS NOT NULL");
+        builder.HasIndex(e => e.TenantId).HasDatabaseName("ix_token_tenant_id").HasFilter("\"tenant_id\" IS NOT NULL");
     }
 }

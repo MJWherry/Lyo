@@ -1,4 +1,3 @@
-using System.Linq;
 using Lyo.Authentication.Exceptions;
 using Lyo.Authentication.Scopes;
 
@@ -39,7 +38,7 @@ public class ScopeRegistryTests
     public void Register_InvalidName_Throws()
     {
         var r = new ScopeRegistry();
-        Assert.Throws<System.ArgumentException>(() => r.Register("Bad Name", "x"));
+        Assert.Throws<ArgumentException>(() => r.Register("Bad Name", "x"));
     }
 
     [Fact]

@@ -25,10 +25,11 @@ public sealed class TelegramUrlPayload : IQrPayload
     public string ToQrString()
     {
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(Username), "Username cannot be empty.", nameof(Username));
-        if (!UsernameRegex.IsMatch(Username))
+        if (!UsernameRegex.IsMatch(Username)) {
             throw new InvalidFormatException(
                 "Telegram username must be 4–32 characters, start with a letter, and contain only letters, digits, and underscores.", nameof(Username), Username,
                 "example_channel");
+        }
 
         return "https://t.me/" + Username;
     }

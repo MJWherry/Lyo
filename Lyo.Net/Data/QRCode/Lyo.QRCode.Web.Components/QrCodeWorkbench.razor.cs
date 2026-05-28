@@ -19,11 +19,27 @@ namespace Lyo.QRCode.Web.Components;
 
 /// <summary>
 /// Blazor workbench for QR generation: three columns (output and styling, typed payloads, result). After the raw QR is generated, the workbench chains
-/// <see cref="IImageDecorationService" /> primitives (overlay, frame, caption, padding) via <see cref="IImageDecorationService.Pipeline(byte[])" /> to apply the workbench's
-/// badge preset. MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp before being passed into the pipeline.
+/// <see cref="IImageDecorationService" /> primitives (overlay, frame, caption, padding) via <see cref="IImageDecorationService.Pipeline(byte[])" /> to apply the workbench's badge
+/// preset. MudBlazor picker colors are converted to opaque <c>#RRGGBB</c> for ImageSharp before being passed into the pipeline.
 /// </summary>
 public partial class QrCodeWorkbench : IAsyncDisposable
 {
+    /// <summary>Badge-style presets for chaining <see cref="IImageDecorationPipeline" /> stages after raw QR generation (PNG only). Replaces the removed <c>QrFrameStyle</c> enum.</summary>
+    public enum QrBadgePreset
+    {
+        /// <summary>No decoration; the raw QR bytes are returned.</summary>
+        None = 0,
+
+        /// <summary>Header band (with optional notch) + outer card + thin frame matching the header chrome.</summary>
+        BadgeWithHeader = 1,
+
+        /// <summary>Outer rounded card + thin frame in a neutral slate stroke.</summary>
+        SimpleRoundedPanel = 2,
+
+        /// <summary>Just a stroke around the QR; caption (if supplied) becomes a footer band underneath.</summary>
+        BorderOnly = 3
+    }
+
     private const long MaxLogoFileBytes = 2 * 1024 * 1024;
 
     private static readonly QRCodeFormat[] AllQrFormats = Enum.GetValues<QRCodeFormat>();
@@ -490,11 +506,12 @@ public partial class QrCodeWorkbench : IAsyncDisposable
                 var pipeline = Decoration.Pipeline(imageBytes);
                 if (needsOverlay) {
                     var iconPct = QRCodeIconOptions.ClampIconSizePercent(_iconSizePercent);
-                    pipeline.Overlay(_logoBytes!, b => {
-                        b.WithOverlaySizePercent(iconPct).WithPadColor(ToOpaqueRgbHex(_lightColor));
-                        if (_drawIconBorder)
-                            b.WithBorder(ToOpaqueRgbHex(_darkColor));
-                    });
+                    pipeline.Overlay(
+                        _logoBytes!, b => {
+                            b.WithOverlaySizePercent(iconPct).WithPadColor(ToOpaqueRgbHex(_lightColor));
+                            if (_drawIconBorder)
+                                b.WithBorder(ToOpaqueRgbHex(_darkColor));
+                        });
                 }
 
                 if (needsFrameChain)
@@ -633,21 +650,5 @@ public partial class QrCodeWorkbench : IAsyncDisposable
         WebLarge,
         PrintHd,
         Custom
-    }
-
-    /// <summary>Badge-style presets for chaining <see cref="IImageDecorationPipeline" /> stages after raw QR generation (PNG only). Replaces the removed <c>QrFrameStyle</c> enum.</summary>
-    public enum QrBadgePreset
-    {
-        /// <summary>No decoration; the raw QR bytes are returned.</summary>
-        None = 0,
-
-        /// <summary>Header band (with optional notch) + outer card + thin frame matching the header chrome.</summary>
-        BadgeWithHeader = 1,
-
-        /// <summary>Outer rounded card + thin frame in a neutral slate stroke.</summary>
-        SimpleRoundedPanel = 2,
-
-        /// <summary>Just a stroke around the QR; caption (if supplied) becomes a footer band underneath.</summary>
-        BorderOnly = 3
     }
 }

@@ -2,7 +2,10 @@ using System.Diagnostics;
 
 namespace Lyo.QRCode.Models;
 
-/// <summary>Configuration options for QR code generation. Decoration (frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the returned bytes for that.</summary>
+/// <summary>
+/// Configuration options for QR code generation. Decoration (frame, caption, padding) is intentionally out of scope; chain <c>Lyo.Images.IImageDecorationService</c> on the
+/// returned bytes for that.
+/// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class QRCodeOptions
 {
@@ -32,8 +35,8 @@ public class QRCodeOptions
 
     /// <summary>
     /// Hint that the consumer plans to overlay a center logo. Used only for ECC level selection — set <see cref="QRCodeIconOptions.IconSizePercent" /> so the encoder bumps ECC
-    /// high enough for the logo to remain scannable. The encoder never reads <see cref="QRCodeIconOptions.IconBytes" /> / <see cref="QRCodeIconOptions.IconFilePath" />; compose
-    /// the icon with <c>IImageDecorationService.OverlayAsync</c> on the returned bytes.
+    /// high enough for the logo to remain scannable. The encoder never reads <see cref="QRCodeIconOptions.IconBytes" /> / <see cref="QRCodeIconOptions.IconFilePath" />; compose the icon
+    /// with <c>IImageDecorationService.OverlayAsync</c> on the returned bytes.
     /// </summary>
     public QRCodeIconOptions? Icon { get; set; }
 

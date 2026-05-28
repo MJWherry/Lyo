@@ -17,9 +17,7 @@
         }
         else if (_snapshot is null) {
             <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                @(UserId is null
-                    ? "No active session. Sign in to view your profile."
-                    : "User not found, or you do not have permission to view this user.")
+                @(UserId is null ? "No active session. Sign in to view your profile." : "User not found, or you do not have permission to view this user.")
             </MudAlert>
         }
         else {
@@ -107,7 +105,13 @@
                         else {
                             <MudSimpleTable Dense="true" Hover="true">
                                 <thead>
-                                <tr><th>Provider</th><th>Subject</th><th>Email at link</th><th>Linked at</th><th>Last used</th></tr>
+                                <tr>
+                                    <th>Provider</th>
+                                    <th>Subject</th>
+                                    <th>Email at link</th>
+                                    <th>Linked at</th>
+                                    <th>Last used</th>
+                                </tr>
                                 </thead>
                                 <tbody>
                                 @foreach (var link in _snapshot.LinkedIdentities) {
@@ -151,9 +155,7 @@
         _error = null;
         _snapshot = null;
         try {
-            _snapshot = UserId is { } id
-                ? await UserClient.GetUserAsync(id)
-                : await UserClient.GetMeAsync();
+            _snapshot = UserId is { } id ? await UserClient.GetUserAsync(id) : await UserClient.GetMeAsync();
         }
         catch (Exception ex) {
             _error = ex.Message;
@@ -172,7 +174,7 @@
         if (parts.Length == 1)
             return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
 
-        return ($"{parts[0][0]}{parts[^1][0]}").ToUpperInvariant();
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
     }
 
 }

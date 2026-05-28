@@ -127,13 +127,13 @@ decompression, and request compression bind under each integration’s configura
 
 All registrations are extension methods on `IServiceCollection` (no `IServiceCollection` first parameter shown — they live inside `extension(IServiceCollection services)` blocks):
 
-| Method                                      | Registers                                                                                                                                                                                                                                                                       |
-|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AddLyoQueryServices()`                     | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`. |
-| `AddLyoCrudServices<TContext>()`            | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `IQueryHistoryService`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults. |
-| `WithExportService<TContext>()`             | Scoped `IExportService<TContext>` (required for the Export endpoint / `ApiFeatureFlag.Export`).                                                                                                                                                                                |
-| `AddPostgresSprocService<TContext>()`       | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                              |
-| `AddLyoDiffServices()`                      | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                              |
+| Method                                | Registers                                                                                                                                                                                                                                                                                    |
+|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddLyoQueryServices()`               | `ITypeConversionService` (also exposed as `IValueConversionService`), `IEntityLoaderService`, `IProjectionService`, `IQueryPathExecutor`, `IQueryPagingHelper`, `QueryOptions`, plus `ICachePayloadSerializer` bound to host JSON options. Calls `AddLyoQueryServices(false)`.               |
+| `AddLyoCrudServices<TContext>()`      | Scoped `IQueryService<TContext>`, `ICreateService<TContext>`, `IPatchService<TContext>`, `IDeleteService<TContext>`, `IUpdateService<TContext>`, `IUpsertService<TContext>`, `IQueryHistoryService`, `ILyoRepository<TContext>`; ensures `BulkOperationOptions` and `CacheOptions` defaults. |
+| `WithExportService<TContext>()`       | Scoped `IExportService<TContext>` (required for the Export endpoint / `ApiFeatureFlag.Export`).                                                                                                                                                                                              |
+| `AddPostgresSprocService<TContext>()` | Scoped `ISprocService` → `PostgresSprocService<TContext>` for PostgreSQL set-returning functions (`SELECT * FROM schema.func(…)`).                                                                                                                                                           |
+| `AddLyoDiffServices()`                | Forwards to `Lyo.Diff.AddLyoDiff()` (text and object-graph diff, `IDiffService`).                                                                                                                                                                                                            |
 
 ### Diagnostic recording ([`LyoApiDiagnosticExtensions`](LyoApiDiagnosticExtensions.cs))
 
@@ -144,10 +144,12 @@ and structured logging for ASP.NET Core hosts. Pass an optional `Action<Diagnost
 
 Request/response middleware with three jobs:
 
-- **Per-request scope** that captures `Trace`, `RequestHost`, `RequestUserAgent`, `UserEmail` (from `ClaimTypes.Name`), method, path, and a sanitized query string (`Utilities.SanitizeUri`).
+- **Per-request scope** that captures `Trace`, `RequestHost`, `RequestUserAgent`, `UserEmail` (from `ClaimTypes.Name`), method, path, and a sanitized query string (
+  `Utilities.SanitizeUri`).
 - **Debug-level request and response lines** (method, path, response status, content type).
 - **Exception → ProblemDetails:** unhandled exceptions are converted via `LyoProblemDetailsBuilder.FromException` (with `Activity.Current` trace/span ids and the request path)
-  and serialized as JSON with status `500`. [`LFException`](../Lyo.Api.Models/Error/LFException.cs) (`Lyo.Api.Models.Error`) is logged as a warning; everything else is logged as an error.
+  and serialized as JSON with status `500`. [`LFException`](../Lyo.Api.Models/Error/LFException.cs) (`Lyo.Api.Models.Error`) is logged as a warning; everything else is logged as an
+  error.
 
 Wire it like any other middleware (e.g. `app.UseMiddleware<LoggingMiddleware>()`); typically place it **after** request decompression and **before** the endpoint pipeline.
 
@@ -155,10 +157,13 @@ Wire it like any other middleware (e.g. `app.UseMiddleware<LoggingMiddleware>()`
 
 Static helpers used by the CRUD pipeline and by hosts:
 
-- **`Extensions.ApiErrorFromException(ex, message?, errorCode?)`** — builds a `LyoProblemDetails` with `Activity.Current` trace/span ids; defaults to `Constants.ApiErrorCodes.Unknown` and uses `ex.Message` when no message is supplied.
+- **`Extensions.ApiErrorFromException(ex, message?, errorCode?)`** — builds a `LyoProblemDetails` with `Activity.Current` trace/span ids; defaults to
+  `Constants.ApiErrorCodes.Unknown` and uses `ex.Message` when no message is supplied.
 - **`IFormFile.HashAsync(ct)`** — async SHA-256 of an uploaded form file (32-byte digest); disposes the read stream.
-- **`Type` extensions** — `IsNumericType`, `IsNullable`, `GetUnderlyingType`, `GetCollectionElementType`, `GetFriendlyTypeName`, `IsCollectionType` (used by `PatchRequestPropertyValidator` and friends).
-- **`object` extensions** — `IsObjectEnumerable`, `TryGetAsEnumerable<T>`, `ConvertToTargetType(targetType)`, `ConvertToType(targetType)` (single-value and collection coercion that understands `JsonElement`, enums, `Guid`/`DateTime`/`DateOnly`/`TimeOnly`, booleans, and numerics).
+- **`Type` extensions** — `IsNumericType`, `IsNullable`, `GetUnderlyingType`, `GetCollectionElementType`, `GetFriendlyTypeName`, `IsCollectionType` (used by
+  `PatchRequestPropertyValidator` and friends).
+- **`object` extensions** — `IsObjectEnumerable`, `TryGetAsEnumerable<T>`, `ConvertToTargetType(targetType)`, `ConvertToType(targetType)` (single-value and collection coercion that
+  understands `JsonElement`, enums, `Guid`/`DateTime`/`DateOnly`/`TimeOnly`, booleans, and numerics).
 - **`JsonElement` extensions** — `ExtractValueFromJsonElement` and `ExtractArrayFromJsonElement` (safe value pull-out used by patch/dynamic-CRUD payloads).
 
 ## Validation

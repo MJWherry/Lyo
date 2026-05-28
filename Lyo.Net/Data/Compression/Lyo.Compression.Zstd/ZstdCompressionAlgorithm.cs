@@ -8,5 +8,6 @@ public sealed record ZstdCompressionAlgorithm : CompressionAlgorithm
     /// <summary>Canonical singleton.</summary>
     public static readonly ZstdCompressionAlgorithm Instance = new();
 
-    private ZstdCompressionAlgorithm() : base("ZstdSharp", ".zst") { }
+    private ZstdCompressionAlgorithm()
+        : base("ZstdSharp", ".zst") { }
 }

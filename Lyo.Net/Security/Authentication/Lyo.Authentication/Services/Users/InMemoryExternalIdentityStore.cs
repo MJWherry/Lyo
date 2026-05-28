@@ -1,34 +1,27 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Models.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Services.Users;
 
-/// <summary>In-memory <see cref="IExternalIdentityStore"/>. Used by default until <c>Lyo.Authentication.Postgres</c> overrides it. Thread-safe.</summary>
+/// <summary>In-memory <see cref="IExternalIdentityStore" />. Used by default until <c>Lyo.Authentication.Postgres</c> overrides it. Thread-safe.</summary>
 /// <remarks>The in-memory store does not enforce tenant filtering — the <c>tenantId</c> parameter is accepted for interface compatibility but ignored.</remarks>
 public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
 {
     private readonly ConcurrentDictionary<Guid, LinkedIdentity> _byId = new();
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<LinkedIdentity?> FindByProviderSubjectAsync(string provider, string subject, Guid? tenantId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(subject);
-        var match = _byId.Values.FirstOrDefault(l =>
-            l.IsActive
-            && string.Equals(l.Provider, provider, StringComparison.Ordinal)
-            && string.Equals(l.Subject, subject, StringComparison.Ordinal));
+        var match = _byId.Values.FirstOrDefault(l
+            => l.IsActive && string.Equals(l.Provider, provider, StringComparison.Ordinal) && string.Equals(l.Subject, subject, StringComparison.Ordinal));
 
         return Task.FromResult<LinkedIdentity?>(match);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<LinkedIdentity> LinkAsync(
         Guid userId,
         string provider,
@@ -44,10 +37,8 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
         ArgumentHelpers.ThrowIfNull(scopes);
         var now = DateTime.UtcNow;
         var snapScopes = scopes.ToArray();
-        var existing = _byId.Values.FirstOrDefault(l =>
-            l.IsActive
-            && string.Equals(l.Provider, provider, StringComparison.Ordinal)
-            && string.Equals(l.Subject, subject, StringComparison.Ordinal));
+        var existing = _byId.Values.FirstOrDefault(l
+            => l.IsActive && string.Equals(l.Provider, provider, StringComparison.Ordinal) && string.Equals(l.Subject, subject, StringComparison.Ordinal));
 
         if (existing is not null) {
             if (existing.UserId != userId)
@@ -65,35 +56,19 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
             return Task.FromResult(updated);
         }
 
-        var link = new LinkedIdentity(
-            Id: Guid.NewGuid(),
-            UserId: userId,
-            Provider: provider,
-            Subject: subject,
-            EmailAtLink: emailAtLink,
-            Scopes: snapScopes,
-            RawClaims: rawClaims,
-            LinkedAt: now,
-            UpdatedAt: now,
-            LastUsedAt: now,
-            UnlinkedAt: null);
-
+        var link = new LinkedIdentity(Guid.NewGuid(), userId, provider, subject, emailAtLink, snapScopes, rawClaims, now, now, now, null);
         _byId[link.Id] = link;
         return Task.FromResult(link);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task<IReadOnlyList<LinkedIdentity>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default)
     {
-        IReadOnlyList<LinkedIdentity> snapshot = _byId.Values
-            .Where(l => l.UserId == userId && l.IsActive)
-            .OrderBy(l => l.LinkedAt)
-            .ToArray();
-
+        IReadOnlyList<LinkedIdentity> snapshot = _byId.Values.Where(l => l.UserId == userId && l.IsActive).OrderBy(l => l.LinkedAt).ToArray();
         return Task.FromResult(snapshot);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public Task UnlinkAsync(Guid linkedIdentityId, DateTime utcNow, Guid? tenantId, CancellationToken ct = default)
     {
         _byId.AddOrUpdate(

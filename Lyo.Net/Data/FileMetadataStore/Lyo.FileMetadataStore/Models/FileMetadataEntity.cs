@@ -1,4 +1,3 @@
-using Lyo.Compression.Models;
 using Lyo.Encryption;
 
 namespace Lyo.FileMetadataStore.Models;
@@ -64,13 +63,15 @@ public sealed class FileMetadataEntity
     /// <summary>When set (UTC), logical delete — row kept for auditing; omitted from reads and duplicate detection.</summary>
     public DateTime? DeletedAt { get; set; }
 
-    /// <summary>Identifier of the principal that uploaded or owns this file (a user id, group id, or other domain owner). Nullable for system-uploaded files and rows created before ownership tracking. Indexed for ownership lookups and future file-sharing scenarios.</summary>
+    /// <summary>
+    /// Identifier of the principal that uploaded or owns this file (a user id, group id, or other domain owner). Nullable for system-uploaded files and rows created before
+    /// ownership tracking. Indexed for ownership lookups and future file-sharing scenarios.
+    /// </summary>
     public Guid? OwnerId { get; set; }
 
     public FileStoreResult ToFileStoreResult()
     {
-        var compressionAlgorithm = Lyo.Compression.Models.CompressionAlgorithm.TryFromName(CompressionAlgorithm);
-
+        var compressionAlgorithm = Compression.Models.CompressionAlgorithm.TryFromName(CompressionAlgorithm);
         EncryptionAlgorithm? dekAlgorithm = null;
         if (!string.IsNullOrEmpty(DataEncryptionKeyAlgorithm) && Enum.TryParse<EncryptionAlgorithm>(DataEncryptionKeyAlgorithm, out var dekAlg))
             dekAlgorithm = dekAlg;

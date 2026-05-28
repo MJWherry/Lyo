@@ -6,7 +6,10 @@ public enum TenancyMode
     /// <summary>Caller tenant is ignored; resolved value is always <see langword="null" /> (system-level row). Only valid for stores backed by a nullable <c>tenant_id</c> column.</summary>
     SystemOnly,
 
-    /// <summary>Caller-supplied tenant is honoured; when omitted/empty falls back to a default (feature-level then global). Suitable for single-tenant deployments and shared single-tenant defaults.</summary>
+    /// <summary>
+    /// Caller-supplied tenant is honoured; when omitted/empty falls back to a default (feature-level then global). Suitable for single-tenant deployments and shared
+    /// single-tenant defaults.
+    /// </summary>
     SingleTenantDefault,
 
     /// <summary>Caller must supply a non-empty tenant id; resolution throws when the caller omits the tenant. Used to enforce explicit multi-tenant scoping.</summary>

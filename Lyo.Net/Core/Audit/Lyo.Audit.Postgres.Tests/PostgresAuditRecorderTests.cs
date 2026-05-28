@@ -30,9 +30,8 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var entity = EntityRef.ForKey("TestApp.Models.Order", "42");
         var actor = EntityRef.ForKey("User", "u-1");
         var change = new AuditChange(
-                entity, new Dictionary<string, object?> { ["Name"] = "Old Order", ["Status"] = "Draft" },
-                new Dictionary<string, object?> { ["Name"] = "Updated Order", ["Status"] = "Submitted" })
-            { Actor = actor };
+            entity, new Dictionary<string, object?> { ["Name"] = "Old Order", ["Status"] = "Draft" },
+            new Dictionary<string, object?> { ["Name"] = "Updated Order", ["Status"] = "Submitted" }) { Actor = actor };
 
         await _fixture.Recorder.RecordChangeAsync(change, TestContext.Current.CancellationToken);
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
@@ -54,8 +53,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var subject = EntityRef.ForKey("User", "user-123");
         var actor = EntityRef.ForKey("User", "user-123");
         var evt = new AuditEvent(
-            subject, "UserLogin", "User signed in successfully", actor,
-            new Dictionary<string, object?> { ["IpAddress"] = "192.168.1.1", ["UserAgent"] = "TestBot/1.0" }) {
+            subject, "UserLogin", "User signed in successfully", actor, new Dictionary<string, object?> { ["IpAddress"] = "192.168.1.1", ["UserAgent"] = "TestBot/1.0" }) {
             Timestamp = DateTime.UtcNow.AddHours(-1)
         };
 
@@ -153,9 +151,8 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         var recorder = new PostgresAuditRecorder(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresAuditOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.SystemOnly } }));
+            factory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } }));
+
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "system-only"), "Created", "ignored tenant") { TenantId = Guid.NewGuid() };
         await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
@@ -168,9 +165,8 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         var recorder = new PostgresAuditRecorder(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresAuditOptions { Tenancy = new TenancyOptions { Mode = TenancyMode.MultiTenantStrict } }));
+            factory, Options.Create(new EntityRefOptions()), Options.Create(new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } }));
+
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "strict-missing"), "Created", "no tenant");
         await Assert.ThrowsAsync<ArgumentNullException>(() => recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken));
     }
@@ -181,11 +177,9 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var defaultTenant = Guid.NewGuid();
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
         var recorder = new PostgresAuditRecorder(
-            factory,
-            Options.Create(new EntityRefOptions()),
-            Options.Create(new PostgresAuditOptions {
-                Tenancy = new TenancyOptions { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant }
-            }));
+            factory, Options.Create(new EntityRefOptions()),
+            Options.Create(new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } }));
+
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "default-tenant"), "Created", "uses default");
         await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
@@ -199,12 +193,10 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
         var changeA = new AuditChange(
-                EntityRef.ForKey("Order", "1"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 })
-            { TenantId = tenantA };
+            EntityRef.ForKey("Order", "1"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 }) { TenantId = tenantA };
 
         var changeB = new AuditChange(
-                EntityRef.ForKey("Order", "2"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 })
-            { TenantId = tenantB };
+            EntityRef.ForKey("Order", "2"), new Dictionary<string, object?> { ["x"] = 1 }, new Dictionary<string, object?> { ["x"] = 2 }) { TenantId = tenantB };
 
         await _fixture.Recorder.RecordChangeAsync(changeA, TestContext.Current.CancellationToken);
         await _fixture.Recorder.RecordChangeAsync(changeB, TestContext.Current.CancellationToken);

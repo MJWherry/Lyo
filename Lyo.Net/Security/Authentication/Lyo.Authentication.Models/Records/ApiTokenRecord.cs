@@ -3,8 +3,8 @@ namespace Lyo.Authentication.Models.Records;
 /// <summary>The persistent shape of a Format-B token. Backed by the <c>[user].[token]</c> table when persisted via <c>Lyo.Authentication.Postgres</c>.</summary>
 /// <param name="Id">The 11-character Crockford base32 id (PK).</param>
 /// <param name="SecretHash">SHA-256 of the secret segment.</param>
-/// <param name="Kind">One of <see cref="Format.ApiTokenKind"/>.</param>
-/// <param name="Ring">One of <see cref="Format.ApiTokenRing"/>.</param>
+/// <param name="Kind">One of <see cref="Format.ApiTokenKind" />.</param>
+/// <param name="Ring">One of <see cref="Format.ApiTokenRing" />.</param>
 /// <param name="UserId">Owning user, or <c>null</c> for unowned <c>svc</c>/<c>internal</c> tokens.</param>
 /// <param name="DisplayName">User-facing label (e.g. "GitHub Actions deploy").</param>
 /// <param name="Scopes">Snapshot of scopes at issuance (Option C — never re-intersected at validation).</param>
@@ -33,9 +33,9 @@ public sealed record ApiTokenRecord(
     string? RevokedReason,
     string? RotatedFromId)
 {
-    /// <summary>True if <see cref="RevokedAt"/> is set and in the past relative to <paramref name="now"/>.</summary>
+    /// <summary>True if <see cref="RevokedAt" /> is set and in the past relative to <paramref name="now" />.</summary>
     public bool IsRevoked(DateTime now) => RevokedAt.HasValue && RevokedAt.Value <= now;
 
-    /// <summary>True if <see cref="ExpiresAt"/> is set and in the past relative to <paramref name="now"/>.</summary>
+    /// <summary>True if <see cref="ExpiresAt" /> is set and in the past relative to <paramref name="now" />.</summary>
     public bool IsExpired(DateTime now) => ExpiresAt.HasValue && ExpiresAt.Value <= now;
 }

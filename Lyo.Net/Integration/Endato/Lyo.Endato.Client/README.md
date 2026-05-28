@@ -7,10 +7,10 @@ optional request compression behave the same as for any other Lyo HTTP client.
 
 [`EndatoClient`](EndatoClient.cs) wires the two galaxy-API endpoints behind manager properties:
 
-| Property      | Manager                                                         | HTTP call                                                                                                                            |
-|---------------|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `Persons`     | [`PersonManager.QueryPersonsAsync(query, ct)`](PersonManager.cs)| `POST /PersonSearch` with header `galaxy-search-type: Person`. Returns `PersonQueryResponse`.                                        |
-| `Enrichment`  | [`EnrichmentManager.QueryEnrichmentAsync(query, ct)`](EnrichmentManager.cs) | `POST /Contact/Enrich` with header `galaxy-search-type: DevAPIContactEnrich`. Returns `EnrichmentResponse`.                |
+| Property     | Manager                                                                     | HTTP call                                                                                                   |
+|--------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `Persons`    | [`PersonManager.QueryPersonsAsync(query, ct)`](PersonManager.cs)            | `POST /PersonSearch` with header `galaxy-search-type: Person`. Returns `PersonQueryResponse`.               |
+| `Enrichment` | [`EnrichmentManager.QueryEnrichmentAsync(query, ct)`](EnrichmentManager.cs) | `POST /Contact/Enrich` with header `galaxy-search-type: DevAPIContactEnrich`. Returns `EnrichmentResponse`. |
 
 Authentication is wired automatically: the client sets `galaxy-ap-name` / `galaxy-ap-password` headers from options on every request.
 
@@ -21,20 +21,20 @@ Models live under [`Models/Person`](Models/Person) (request + response, plus pag
 Configuration section: `EndatoClient` (shadows the base `ApiClient` section). Inherits all
 [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flags and adds:
 
-| Property      | Description                                                |
-|---------------|------------------------------------------------------------|
-| `ApName`      | Endato AP name (sent as `galaxy-ap-name`). **Required.**   |
-| `ApPassword`  | Endato AP password (sent as `galaxy-ap-password`). **Required.** |
+| Property     | Description                                                      |
+|--------------|------------------------------------------------------------------|
+| `ApName`     | Endato AP name (sent as `galaxy-ap-name`). **Required.**         |
+| `ApPassword` | Endato AP password (sent as `galaxy-ap-password`). **Required.** |
 
 `BaseUrl` is required (validated in the constructor); point it at `https://api.endato.com` (or another Endato environment).
 
 ## DI registration ([`Extensions.cs`](Extensions.cs))
 
-| Method                                                          | Description                                                                                                |
-|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| `AddEndatoClientFromConfiguration(configuration, sectionName?)` | Binds `EndatoClientOptions` from configuration (default section `"EndatoClient"`) and registers the client.|
-| `AddEndatoClient(Action<EndatoClientOptions> configure)`        | Builds options inline.                                                                                     |
-| `AddEndatoClient(EndatoClientOptions options)`                  | Registers a pre-built options instance.                                                                    |
+| Method                                                          | Description                                                                                                 |
+|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `AddEndatoClientFromConfiguration(configuration, sectionName?)` | Binds `EndatoClientOptions` from configuration (default section `"EndatoClient"`) and registers the client. |
+| `AddEndatoClient(Action<EndatoClientOptions> configure)`        | Builds options inline.                                                                                      |
+| `AddEndatoClient(EndatoClientOptions options)`                  | Registers a pre-built options instance.                                                                     |
 
 All overloads register `EndatoClient` as a singleton, pulling `ILoggerFactory` and any registered `HttpClient` from DI.
 

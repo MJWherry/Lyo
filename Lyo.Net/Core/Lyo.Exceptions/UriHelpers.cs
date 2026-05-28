@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Lyo.Exceptions.Models;
 #if NET6_0_OR_GREATER
 using System.Diagnostics;
+
 // ReSharper disable RedundantSuppressNullableWarningExpression
 #endif
 

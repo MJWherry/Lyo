@@ -46,7 +46,7 @@ public static class DiscordGuildSettingsEndpoints
                                 ForEntityType = r.EntityType,
                                 ForEntityId = r.EntityId,
                                 Value = ConfigValue.From(body)
-                            }, tenantId: null, ct)
+                            }, null, ct)
                         .ConfigureAwait(false);
 
                     var updated = await DiscordGuildSettingsHelper.GetSettingsAsync(store, guildId, ct).ConfigureAwait(false);
@@ -61,7 +61,7 @@ public static class DiscordGuildSettingsEndpoints
                     => {
                     await DiscordGuildSettingsHelper.EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
                     var r = DiscordGuildSettingsHelper.GuildRef(guildId);
-                    var list = await store.GetBindingRevisionsAsync(r, DiscordGuildSettingsHelper.Key, tenantId: null, ct).ConfigureAwait(false);
+                    var list = await store.GetBindingRevisionsAsync(r, DiscordGuildSettingsHelper.Key, null, ct).ConfigureAwait(false);
                     return Results.Ok(list);
                 })
             .WithTags(Constants.Rest.Discord.Route)
@@ -80,7 +80,7 @@ public static class DiscordGuildSettingsEndpoints
 
                     await DiscordGuildSettingsHelper.EnsureDefaultBindingAsync(store, guildId, ct).ConfigureAwait(false);
                     var r = DiscordGuildSettingsHelper.GuildRef(guildId);
-                    await store.RevertBindingToRevisionAsync(r, DiscordGuildSettingsHelper.Key, revision, tenantId: null, ct).ConfigureAwait(false);
+                    await store.RevertBindingToRevisionAsync(r, DiscordGuildSettingsHelper.Key, revision, null, ct).ConfigureAwait(false);
                     var settings = await DiscordGuildSettingsHelper.GetSettingsAsync(store, guildId, ct).ConfigureAwait(false);
                     return Results.Ok(settings);
                 })

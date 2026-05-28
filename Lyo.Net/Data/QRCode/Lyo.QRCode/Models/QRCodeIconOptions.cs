@@ -19,7 +19,10 @@ public class QRCodeIconOptions
     /// <summary>Path to an icon image file carried alongside the QR options for the consumer's overlay step (not read by the encoder).</summary>
     public string? IconFilePath { get; set; }
 
-    /// <summary>Planned icon width/height as a percent of the QR side (1–<see cref="MaxIconSizePercent" />). Default: 15. This is the only field the encoder uses—to pick an ECC level robust to that erased fraction.</summary>
+    /// <summary>
+    /// Planned icon width/height as a percent of the QR side (1–<see cref="MaxIconSizePercent" />). Default: 15. This is the only field the encoder uses—to pick an ECC level
+    /// robust to that erased fraction.
+    /// </summary>
     public int IconSizePercent { get; set; } = 15;
 
     /// <summary>Whether the consumer's overlay step should draw a border around the icon. Metadata only; never read by the encoder.</summary>

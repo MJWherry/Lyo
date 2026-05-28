@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Keystore;
@@ -25,11 +23,7 @@ public class Ed25519KeyBootstrapperTests
     public async Task StartAsync_WhenAutoGenerateFalse_DoesNothing()
     {
         var keys = new LocalKeyStore();
-        var bs = new Ed25519KeyBootstrapper(
-            keys,
-            MsOptions.Create(new LyoJwtOptions { AutoGenerateSigningKey = false }),
-            NullLogger<Ed25519KeyBootstrapper>.Instance);
-
+        var bs = new Ed25519KeyBootstrapper(keys, MsOptions.Create(new LyoJwtOptions { AutoGenerateSigningKey = false }), NullLogger<Ed25519KeyBootstrapper>.Instance);
         await bs.StartAsync(CancellationToken.None);
         Assert.False(keys.HasKey("lyo-sig"));
     }

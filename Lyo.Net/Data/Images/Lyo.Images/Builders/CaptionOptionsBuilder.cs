@@ -5,18 +5,18 @@ namespace Lyo.Images.Builders;
 /// <summary>Fluent builder for <see cref="CaptionOptions" />. Use <see cref="New" /> to start a builder.</summary>
 public sealed class CaptionOptionsBuilder
 {
-    private string? _text;
-    private CaptionPlacement? _placement;
-    private string? _backgroundColorHex;
-    private string? _textColorHex;
-    private int? _fontSizePx;
-    private string? _fontFamily;
-    private int? _bandHeightPx;
     private bool? _autoSizeToCaption;
-    private bool? _drawNotch;
-    private int? _notchWidthPx;
-    private int? _notchDepthPx;
+    private string? _backgroundColorHex;
+    private int? _bandHeightPx;
     private int? _cornerRadiusPx;
+    private bool? _drawNotch;
+    private string? _fontFamily;
+    private int? _fontSizePx;
+    private int? _notchDepthPx;
+    private int? _notchWidthPx;
+    private CaptionPlacement? _placement;
+    private string? _text;
+    private string? _textColorHex;
 
     private CaptionOptionsBuilder() { }
 

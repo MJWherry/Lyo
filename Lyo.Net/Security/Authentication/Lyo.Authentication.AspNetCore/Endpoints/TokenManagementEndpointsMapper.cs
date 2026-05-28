@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Lyo.Authentication.AspNetCore.Authorization;
-using Lyo.Authentication.Format;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
@@ -11,7 +6,6 @@ using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Authentication.AspNetCore.Endpoints;
 
@@ -24,13 +18,13 @@ public static class TokenManagementEndpointsMapper
     /// <summary>The default scope required to read your own tokens (<c>auth.tokens.read</c>).</summary>
     public const string ReadScope = "auth.tokens.read";
 
-    /// <summary>Per-kind privileged scope prefix. Issuing a token of kind <c>svc</c> requires <c>auth.tokens.write.svc</c> in addition to <see cref="WriteScope"/>.</summary>
+    /// <summary>Per-kind privileged scope prefix. Issuing a token of kind <c>svc</c> requires <c>auth.tokens.write.svc</c> in addition to <see cref="WriteScope" />.</summary>
     public const string KindScopePrefix = "auth.tokens.write.";
 
-    /// <summary>Kinds that may be issued through this endpoint. <see cref="ApiTokenKind.Internal"/> is server-issued only and is never exposed to user-facing UIs.</summary>
+    /// <summary>Kinds that may be issued through this endpoint. <see cref="ApiTokenKind.Internal" /> is server-issued only and is never exposed to user-facing UIs.</summary>
     public static readonly IReadOnlyList<string> IssuableKinds = [ApiTokenKind.Pat, ApiTokenKind.Svc, ApiTokenKind.Cli, ApiTokenKind.Webhook];
 
-    /// <summary>Maps the token management endpoints at <paramref name="prefix"/> (default <c>/tokens</c>). All endpoints require an authenticated user.</summary>
+    /// <summary>Maps the token management endpoints at <paramref name="prefix" /> (default <c>/tokens</c>). All endpoints require an authenticated user.</summary>
     public static IEndpointConventionBuilder MapLyoTokenManagementEndpoints(this IEndpointRouteBuilder endpoints, string prefix = "/tokens")
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
@@ -46,12 +40,9 @@ public static class TokenManagementEndpointsMapper
     private static IResult KindsAsync(HttpContext ctx)
     {
         var callerScopes = ExtractScopes(ctx);
-        var kinds = IssuableKinds.Select(k => new TokenKindDescriptor(
-            Kind: k,
-            Description: DescribeKind(k),
-            Allowed: KindIsAllowed(k, callerScopes),
-            RequiredScope: k == ApiTokenKind.Pat ? WriteScope : KindScopePrefix + k))
+        var kinds = IssuableKinds.Select(k => new TokenKindDescriptor(k, DescribeKind(k), KindIsAllowed(k, callerScopes), k == ApiTokenKind.Pat ? WriteScope : KindScopePrefix + k))
             .ToArray();
+
         return Results.Json(kinds);
     }
 
@@ -60,7 +51,7 @@ public static class TokenManagementEndpointsMapper
         if (!TryResolveUser(ctx, out var userId))
             return Results.Unauthorized();
 
-        var tokens = await store.ListForUserAsync(userId, includeRevoked ?? false, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+        var tokens = await store.ListForUserAsync(userId, includeRevoked ?? false, null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.Json(tokens.Select(MapForDisplay).ToArray());
     }
 
@@ -86,22 +77,15 @@ public static class TokenManagementEndpointsMapper
         if (grantedScopes.Length == 0 && kind != ApiTokenKind.Webhook)
             return Results.BadRequest(new { error = "no_grantable_scopes" });
 
-        var issued = await issuer.IssueAsync(new ApiTokenIssueRequest(
-                Kind: kind,
-                DisplayName: body.DisplayName!,
-                Scopes: grantedScopes,
-                UserId: userId,
-                Lifetime: body.LifetimeSeconds is { } s ? TimeSpan.FromSeconds(s) : null,
-                Metadata: body.Metadata),
-            ctx.RequestAborted).ConfigureAwait(false);
+        var issued = await issuer.IssueAsync(
+                new(kind, body.DisplayName!, grantedScopes, userId, Lifetime: body.LifetimeSeconds is { } s ? TimeSpan.FromSeconds(s) : null, Metadata: body.Metadata),
+                ctx.RequestAborted)
+            .ConfigureAwait(false);
 
-        return Results.Json(new CreateTokenResponse(
-            Plaintext: issued.Plaintext,
-            Record: MapForDisplay(issued.Record)));
+        return Results.Json(new CreateTokenResponse(issued.Plaintext, MapForDisplay(issued.Record)));
     }
 
-    private static string NormalizeKind(string? raw) =>
-        string.IsNullOrWhiteSpace(raw) ? ApiTokenKind.Pat : raw!.Trim().ToLowerInvariant();
+    private static string NormalizeKind(string? raw) => string.IsNullOrWhiteSpace(raw) ? ApiTokenKind.Pat : raw!.Trim().ToLowerInvariant();
 
     private static bool KindIsAllowed(string kind, ISet<string> callerScopes)
     {
@@ -112,27 +96,28 @@ public static class TokenManagementEndpointsMapper
         return callerScopes.Contains(KindScopePrefix + kind);
     }
 
-    private static string DescribeKind(string kind) => kind switch {
-        ApiTokenKind.Pat => "Personal access token. Use from scripts and tools that act on your behalf.",
-        ApiTokenKind.Svc => "Service token. Identifies an automated service running under your account.",
-        ApiTokenKind.Cli => "CLI token. Long-lived credential for command-line tooling.",
-        ApiTokenKind.Webhook => "Webhook signing token. Used by external systems to sign callbacks back to Lyo.",
-        _ => kind
-    };
+    private static string DescribeKind(string kind)
+        => kind switch {
+            ApiTokenKind.Pat => "Personal access token. Use from scripts and tools that act on your behalf.",
+            ApiTokenKind.Svc => "Service token. Identifies an automated service running under your account.",
+            ApiTokenKind.Cli => "CLI token. Long-lived credential for command-line tooling.",
+            ApiTokenKind.Webhook => "Webhook signing token. Used by external systems to sign callbacks back to Lyo.",
+            var _ => kind
+        };
 
     private static async Task<IResult> RevokeAsync(string id, HttpContext ctx, IApiTokenStore store)
     {
         if (!TryResolveUser(ctx, out var userId))
             return Results.Unauthorized();
 
-        var record = await store.GetByIdAsync(id, tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+        var record = await store.GetByIdAsync(id, null, ctx.RequestAborted).ConfigureAwait(false);
         if (record is null)
             return Results.NotFound();
 
         if (record.UserId != userId)
             return Results.Forbid();
 
-        await store.RevokeAsync(id, DateTime.UtcNow, "revoked_by_owner", tenantId: null, ctx.RequestAborted).ConfigureAwait(false);
+        await store.RevokeAsync(id, DateTime.UtcNow, "revoked_by_owner", null, ctx.RequestAborted).ConfigureAwait(false);
         return Results.NoContent();
     }
 
@@ -147,22 +132,13 @@ public static class TokenManagementEndpointsMapper
         return Guid.TryParse(raw, out userId);
     }
 
-    private static ISet<string> ExtractScopes(HttpContext ctx) => new HashSet<string>(
-        ctx.User.FindAll("scope")
-            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)),
-        StringComparer.Ordinal);
+    private static ISet<string> ExtractScopes(HttpContext ctx)
+        => new HashSet<string>(ctx.User.FindAll("scope").SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries)), StringComparer.Ordinal);
 
-    private static TokenDisplay MapForDisplay(ApiTokenRecord record) => new(
-        Id: record.Id,
-        Kind: record.Kind,
-        Ring: record.Ring,
-        DisplayName: record.DisplayName,
-        Scopes: record.Scopes.ToArray(),
-        CreatedAt: record.CreatedAt,
-        ExpiresAt: record.ExpiresAt,
-        LastUsedAt: record.LastUsedAt,
-        RevokedAt: record.RevokedAt,
-        RevokedReason: record.RevokedReason);
+    private static TokenDisplay MapForDisplay(ApiTokenRecord record)
+        => new(
+            record.Id, record.Kind, record.Ring, record.DisplayName, record.Scopes.ToArray(), record.CreatedAt, record.ExpiresAt, record.LastUsedAt, record.RevokedAt,
+            record.RevokedReason);
 
     /// <summary>The JSON body accepted by <c>POST /tokens</c>.</summary>
     public sealed record CreateTokenRequest(
@@ -175,10 +151,13 @@ public static class TokenManagementEndpointsMapper
     /// <summary>The JSON shape returned by <c>POST /tokens</c>.</summary>
     public sealed record CreateTokenResponse(string Plaintext, TokenDisplay Record);
 
-    /// <summary>The JSON shape returned by <c>GET /tokens/kinds</c>: every kind the endpoint understands, paired with whether the caller is permitted to mint it and the scope they would need.</summary>
+    /// <summary>
+    /// The JSON shape returned by <c>GET /tokens/kinds</c>: every kind the endpoint understands, paired with whether the caller is permitted to mint it and the scope they would
+    /// need.
+    /// </summary>
     public sealed record TokenKindDescriptor(string Kind, string Description, bool Allowed, string RequiredScope);
 
-    /// <summary>The display-safe projection of an <see cref="ApiTokenRecord"/>.</summary>
+    /// <summary>The display-safe projection of an <see cref="ApiTokenRecord" />.</summary>
     public sealed record TokenDisplay(
         string Id,
         string Kind,

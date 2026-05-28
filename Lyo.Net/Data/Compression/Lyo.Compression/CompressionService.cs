@@ -13,7 +13,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Compression;
 
-/// <summary>Default <see cref="ICompressionService" /> implementation backed by registered <see cref="ICompressorFactory" /> instances, with optional <see cref="Lyo.Metrics.IMetrics" /> emission.</summary>
+/// <summary>
+/// Default <see cref="ICompressionService" /> implementation backed by registered <see cref="ICompressorFactory" /> instances, with optional
+/// <see cref="Lyo.Metrics.IMetrics" /> emission.
+/// </summary>
 /// <remarks>
 /// <para>
 /// The compressor and algorithm are fixed after construction. Safe to resolve as a singleton and call concurrently; batch APIs use parallel workers bounded by
@@ -68,11 +71,11 @@ public sealed class CompressionService : ICompressionService
     private ICompressor CreateCompressor(CompressionAlgorithm algorithm, CompressionLevel level)
     {
         ArgumentHelpers.ThrowIfNull(algorithm);
-        if (!_factories.TryGetValue(algorithm, out var factory))
+        if (!_factories.TryGetValue(algorithm, out var factory)) {
             throw new NotSupportedException(
-                $"No compressor registered for algorithm '{algorithm.Name}'. " +
-                $"Did you forget to install/register the Lyo.Compression.{algorithm.Name} addon package " +
+                $"No compressor registered for algorithm '{algorithm.Name}'. " + $"Did you forget to install/register the Lyo.Compression.{algorithm.Name} addon package " +
                 $"(e.g. services.Add{algorithm.Name}Compressor())?");
+        }
 
         Algorithm = algorithm;
         return factory.Create(level);

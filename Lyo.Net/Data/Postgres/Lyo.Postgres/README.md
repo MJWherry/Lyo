@@ -8,11 +8,11 @@ Shared PostgreSQL migration plumbing for Lyo libraries that ship their own EF Co
 
 ## Public API
 
-| Type                                                          | Role                                                                                                                                                                                |
-|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`IPostgresMigrationConfig`**                                | Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`.                             |
-| **`PostgresMigrationHostedService<TContext, TOptions>`**      | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`.        |
-| **`Extensions.AddPostgresMigrations<TContext, TOptions>()`**  | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`.                                           |
+| Type                                                         | Role                                                                                                                                                                         |
+|--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`IPostgresMigrationConfig`**                               | Contract for options classes that want to opt into hosted migrations. Members: `string ConnectionString`, `bool EnableAutoMigrations`, `string Schema`.                      |
+| **`PostgresMigrationHostedService<TContext, TOptions>`**     | `IHostedService` that, on `StartAsync`, scopes a fresh `TContext` over the configured connection string, runs `CREATE SCHEMA IF NOT EXISTS "<Schema>"`, then `MigrateAsync`. |
+| **`Extensions.AddPostgresMigrations<TContext, TOptions>()`** | Registers the hosted service. Both type parameters are constrained: `TContext : DbContext`, `TOptions : class, IPostgresMigrationConfig`.                                    |
 
 The hosted service activates a `TContext` instance via `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so each consumer DbContext **must expose a public
 constructor that takes a single `DbContextOptions<TContext>`**. The migrations history table is stored in the schema returned by `IPostgresMigrationConfig.Schema` as
@@ -58,15 +58,15 @@ The host must be started — typically `Host.CreateDefaultBuilder()` (worker / c
 
 ### NuGet packages
 
-| Package                                     | Version | Notes                                            |
-|---------------------------------------------|---------|--------------------------------------------------|
-| `Microsoft.EntityFrameworkCore`             | `[10,)` |                                                  |
+| Package                                     | Version | Notes                                              |
+|---------------------------------------------|---------|----------------------------------------------------|
+| `Microsoft.EntityFrameworkCore`             | `[10,)` |                                                    |
 | `Microsoft.EntityFrameworkCore.Design`      | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
-| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)` |                                                  |
-| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |                                                  |
-| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |                                                  |
-| `Microsoft.Extensions.Options`              | `[10,)` |                                                  |
-| `Npgsql.EntityFrameworkCore.PostgreSQL`     | `[10,)` |                                                  |
+| `Microsoft.EntityFrameworkCore.Relational`  | `[10,)` |                                                    |
+| `Microsoft.Extensions.Hosting.Abstractions` | `[10,)` |                                                    |
+| `Microsoft.Extensions.Logging.Abstractions` | `[10,)` |                                                    |
+| `Microsoft.Extensions.Options`              | `[10,)` |                                                    |
+| `Npgsql.EntityFrameworkCore.PostgreSQL`     | `[10,)` |                                                    |
 
 ### Project references
 

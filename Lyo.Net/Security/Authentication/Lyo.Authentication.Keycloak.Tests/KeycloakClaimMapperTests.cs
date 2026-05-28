@@ -1,14 +1,10 @@
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Lyo.Authentication.Keycloak.Tests;
 
 public sealed class KeycloakClaimMapperTests
 {
-    private static readonly Dictionary<string, string[]> Mapping = new() {
-        ["lyo-admin"] = ["admin"],
-        ["lyo-people-rw"] = ["people.read", "people.write"]
-    };
+    private static readonly Dictionary<string, string[]> Mapping = new() { ["lyo-admin"] = ["admin"], ["lyo-people-rw"] = ["people.read", "people.write"] };
 
     [Fact]
     public void Map_ExtractsCanonicalClaims_AndAppliesRoleMapping()
@@ -36,36 +32,22 @@ public sealed class KeycloakClaimMapperTests
     [Fact]
     public void Map_FallsBackToPreferredUsername_WhenNameMissing()
     {
-        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> {
-            ["preferred_username"] = "bob",
-            ["email"] = "bob@example.com"
-        }, Mapping);
-
+        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> { ["preferred_username"] = "bob", ["email"] = "bob@example.com" }, Mapping);
         Assert.Equal("bob", result.DisplayName);
     }
 
     [Fact]
     public void Map_FallsBackToEmail_WhenNameAndUsernameMissing()
     {
-        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> {
-            ["email"] = "carol@example.com"
-        }, Mapping);
-
+        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> { ["email"] = "carol@example.com" }, Mapping);
         Assert.Equal("carol@example.com", result.DisplayName);
     }
 
     [Fact]
     public void Map_HandlesDictionaryShapedRealmAccess()
     {
-        var realmAccess = new Dictionary<string, object?> {
-            ["roles"] = new object?[] { "lyo-admin" }
-        };
-
-        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> {
-            ["sub"] = "x",
-            ["realm_access"] = realmAccess
-        }, Mapping);
-
+        var realmAccess = new Dictionary<string, object?> { ["roles"] = new object?[] { "lyo-admin" } };
+        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> { ["sub"] = "x", ["realm_access"] = realmAccess }, Mapping);
         Assert.Contains("admin", result.ProviderScopes);
     }
 
@@ -73,11 +55,7 @@ public sealed class KeycloakClaimMapperTests
     public void Map_EmptyMapping_ProducesEmptyScopes()
     {
         var realmAccess = JsonSerializer.Deserialize<JsonElement>("""{ "roles": ["lyo-admin"] }""");
-        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> {
-            ["sub"] = "x",
-            ["realm_access"] = realmAccess
-        }, new Dictionary<string, string[]>());
-
+        var result = KeycloakClaimMapper.Map(new Dictionary<string, object?> { ["sub"] = "x", ["realm_access"] = realmAccess }, new Dictionary<string, string[]>());
         Assert.Empty(result.ProviderScopes);
     }
 
@@ -92,10 +70,7 @@ public sealed class KeycloakClaimMapperTests
     public void ExtractScopes_Deduplicates()
     {
         var realmAccess = JsonSerializer.Deserialize<JsonElement>("""{ "roles": ["lyo-people-rw", "lyo-people-rw"] }""");
-        var scopes = KeycloakClaimMapper.ExtractScopes(new Dictionary<string, object?> {
-            ["realm_access"] = realmAccess
-        }, Mapping);
-
+        var scopes = KeycloakClaimMapper.ExtractScopes(new Dictionary<string, object?> { ["realm_access"] = realmAccess }, Mapping);
         Assert.Equal(2, scopes.Count);
     }
 }

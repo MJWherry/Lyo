@@ -1,24 +1,22 @@
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Lyo.Exceptions;
 
 namespace Lyo.Diagnostic.Correlation;
 
 /// <summary>
-/// Outbound <see cref="DelegatingHandler"/> that stamps a correlation id on every request flowing through the typed <see cref="HttpClient"/> it's registered on. Pairs with
-/// <c>Lyo.Diagnostic.AspNetCore.HttpContextCorrelationIdResolver</c> on ASP.NET hosts (propagates the inbound id) and with <see cref="AmbientCorrelationIdResolver"/> everywhere else
-/// (mints a fresh id rooted at <see cref="System.Diagnostics.Activity.Current"/>).
+/// Outbound <see cref="DelegatingHandler" /> that stamps a correlation id on every request flowing through the typed <see cref="HttpClient" /> it's registered on. Pairs with
+/// <c>Lyo.Diagnostic.AspNetCore.HttpContextCorrelationIdResolver</c> on ASP.NET hosts (propagates the inbound id) and with <see cref="AmbientCorrelationIdResolver" /> everywhere else
+/// (mints a fresh id rooted at <see cref="System.Diagnostics.Activity.Current" />).
 /// </summary>
 /// <remarks>
-/// Register as the <strong>outermost</strong> handler in the pipeline so any nested handlers (e.g. <c>LyoAuthDelegatingHandler</c>'s own refresh roundtrip) also carry the header.
+/// Register as the <strong>outermost</strong> handler in the pipeline so any nested handlers (e.g. <c>LyoAuthDelegatingHandler</c>'s own refresh roundtrip) also carry the
+/// header.
 /// </remarks>
 public sealed class LyoCorrelationDelegatingHandler : DelegatingHandler
 {
-    private readonly ICorrelationIdResolver _resolver;
     private readonly CorrelationHandlerOptions _options;
+    private readonly ICorrelationIdResolver _resolver;
 
-    /// <summary>Creates a new handler. <paramref name="options"/> is optional — when omitted, the handler uses <see cref="CorrelationHandlerOptions.DefaultHeaders"/>.</summary>
+    /// <summary>Creates a new handler. <paramref name="options" /> is optional — when omitted, the handler uses <see cref="CorrelationHandlerOptions.DefaultHeaders" />.</summary>
     public LyoCorrelationDelegatingHandler(ICorrelationIdResolver resolver, CorrelationHandlerOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(resolver);
@@ -26,11 +24,10 @@ public sealed class LyoCorrelationDelegatingHandler : DelegatingHandler
         _options = options ?? new CorrelationHandlerOptions();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         ArgumentHelpers.ThrowIfNull(request);
-
         if (!RequestAlreadyHasCorrelation(request)) {
             var id = _resolver.Resolve();
             if (!string.IsNullOrWhiteSpace(id)) {

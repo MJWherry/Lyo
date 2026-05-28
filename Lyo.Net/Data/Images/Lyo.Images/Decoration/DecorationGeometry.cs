@@ -98,6 +98,5 @@ internal static class DecorationGeometry
     }
 
     /// <summary>Parses <paramref name="hex" />, falling back to <paramref name="fallback" /> on null/invalid input.</summary>
-    public static Color ParseColorOr(string? hex, Color fallback)
-        => TryParseColor(hex, out var c) ? c : fallback;
+    public static Color ParseColorOr(string? hex, Color fallback) => TryParseColor(hex, out var c) ? c : fallback;
 }
