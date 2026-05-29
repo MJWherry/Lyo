@@ -1,7 +1,6 @@
-@namespace Lyo.Web.Components.Export.Xlsx
 @using Lyo.Api.Models.Enums
 @using Lyo.Web.Components.DataGrid
-@using Lyo.Web.Components.Export
+@namespace Lyo.Web.Components.Export.Xlsx
 
 <MudMenuItem Icon="@Icons.Material.Filled.GridOn"
              Disabled="@(ExportHost is null || !ExportHost.CanExport)"
@@ -22,7 +21,7 @@
         if (ExportHost is null)
             return;
 
-        await ExportService.ExportAsync(ExportHost, ExportFormat.Xlsx, showColumnSelector: true, ExportHost.CancellationToken);
+        await ExportService.ExportAsync(ExportHost, ExportFormat.Xlsx, true, ExportHost.CancellationToken);
     }
 
 }

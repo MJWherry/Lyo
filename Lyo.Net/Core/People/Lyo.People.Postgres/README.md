@@ -2,6 +2,9 @@
 
 PostgreSQL persistence for Lyo.People.Models using Entity Framework Core.
 
+**Archetype A (Lyo domain).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host.
+See [package layout](../../../docs/package-layout.md).
+
 ## Overview
 
 This package provides Entity Framework Core entities and DbContext for storing person data in PostgreSQL. It uses the `people` schema and includes tables for:
@@ -17,7 +20,8 @@ This package provides Entity Framework Core entities and DbContext for storing p
 - **identification** — ID documents (passport, driver's license, SSN, etc.)
 - **person_relationship** — Relationships between people
 - **employment** — Employment history
-- **person_source**, **address_source**, **phone_number_source**, **email_address_source** — `EntityRef` import provenance (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))
+- **person_source**, **address_source**, **phone_number_source**, **email_address_source** — `EntityRef` import provenance (see [
+  `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))
 - **contact_address_source**, **contact_phone_number_source**, **contact_email_address_source** — optional junction-level provenance
 
 The legacy **`person.source`** varchar column is removed; use **`person_source`** instead.

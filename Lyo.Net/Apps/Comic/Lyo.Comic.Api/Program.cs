@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Xlsx;

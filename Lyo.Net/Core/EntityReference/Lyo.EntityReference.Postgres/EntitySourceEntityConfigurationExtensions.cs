@@ -11,9 +11,7 @@ public static class EntitySourceEntityConfigurationExtensions
     public const int SourceEntityIdMaxLength = 256;
 
     /// <summary>Maps provenance columns and unique index on source key.</summary>
-    public static void ConfigureEntitySourceColumns<TSource>(
-        this EntityTypeBuilder<TSource> builder,
-        string uniqueIndexName)
+    public static void ConfigureEntitySourceColumns<TSource>(this EntityTypeBuilder<TSource> builder, string uniqueIndexName)
         where TSource : EntitySourceEntityBase
     {
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");

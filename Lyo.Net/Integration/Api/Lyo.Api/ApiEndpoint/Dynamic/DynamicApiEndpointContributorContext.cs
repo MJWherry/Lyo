@@ -1,4 +1,3 @@
-using Lyo.Api.Models;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Export;
@@ -21,7 +20,6 @@ internal sealed class DynamicApiEndpointContributorContext<TContext>(
         var entityRoute = config.Defaults.BaseRoute.TrimEnd('/');
         var routePrefix = string.IsNullOrEmpty(entityRoute) ? "" : entityRoute + "/";
         entityRoute = $"{routePrefix}{{entityType}}";
-
         webApp.MapPost(
                 $"{entityRoute}/Export",
                 async (
@@ -29,7 +27,8 @@ internal sealed class DynamicApiEndpointContributorContext<TContext>(
                     [FromBody] ExportRequest request,
                     [FromServices] IExportService<TContext> exportService,
                     HttpContext httpContext,
-                    CancellationToken ct) => await DynamicCrudEndpointBuilder.HandleExport(registry, config, entityType, request, exportService, httpContext, SortDirection.Desc, ct))
+                    CancellationToken ct) => await DynamicCrudEndpointBuilder.HandleExport(
+                    registry, config, entityType, request, exportService, httpContext, SortDirection.Desc, ct))
             .WithTags("Dynamic")
             .Produces(StatusCodes.Status200OK)
             .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)

@@ -24,21 +24,18 @@ public sealed class GoogleMapsClient : ApiClient
 
     public GoogleMapsClient(GoogleMapsClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
-            loggerFactory?.CreateLogger<GoogleMapsClient>() ?? NullLoggerFactory.Instance.CreateLogger<GoogleMapsClient>(),
-            httpClient,
-            LyoJsonSerializerOptions.Create(),
-            options)
+            loggerFactory?.CreateLogger<GoogleMapsClient>() ?? NullLoggerFactory.Instance.CreateLogger<GoogleMapsClient>(), httpClient, LyoJsonSerializerOptions.Create(), options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ApiKey, nameof(options.ApiKey));
         if (string.IsNullOrWhiteSpace(options.BaseUrl))
             options.BaseUrl = "https://maps.googleapis.com/maps/api/";
-        options.EnsureStatusCode = false;
 
+        options.EnsureStatusCode = false;
         _options = options;
-        Geocoding = new GeocodingManager(this);
-        Directions = new DirectionsManager(this);
-        TimeZones = new TimeZoneManager(this);
+        Geocoding = new(this);
+        Directions = new(this);
+        TimeZones = new(this);
     }
 
     internal string BuildGeocodeUrl(string address)
@@ -46,8 +43,10 @@ public sealed class GoogleMapsClient : ApiClient
         var url = $"geocode/json?address={Uri.EscapeDataString(address)}&key={_options.ApiKey}";
         if (!string.IsNullOrEmpty(_options.DefaultLanguage))
             url += $"&language={_options.DefaultLanguage}";
+
         if (!string.IsNullOrEmpty(_options.DefaultRegion))
             url += $"&region={_options.DefaultRegion}";
+
         return url;
     }
 
@@ -56,6 +55,7 @@ public sealed class GoogleMapsClient : ApiClient
         var url = $"geocode/json?latlng={coordinate.Latitude},{coordinate.Longitude}&key={_options.ApiKey}";
         if (!string.IsNullOrEmpty(_options.DefaultLanguage))
             url += $"&language={_options.DefaultLanguage}";
+
         return url;
     }
 
@@ -75,8 +75,8 @@ public sealed class GoogleMapsClient : ApiClient
             TransportMode.Transit => "transit",
             var _ => "driving"
         };
-        url += $"&mode={mode}";
 
+        url += $"&mode={mode}";
         if (options.Waypoints != null && options.Waypoints.Any()) {
             var waypointStr = string.Join("|", options.Waypoints.Select(w => $"{w.Latitude},{w.Longitude}"));
             url += $"&waypoints={Uri.EscapeDataString(waypointStr)}";
@@ -87,10 +87,13 @@ public sealed class GoogleMapsClient : ApiClient
         var avoids = new List<string>();
         if (options.AvoidTolls)
             avoids.Add("tolls");
+
         if (options.AvoidHighways)
             avoids.Add("highways");
+
         if (options.AvoidFerries)
             avoids.Add("ferries");
+
         if (avoids.Count > 0)
             url += $"&avoid={string.Join("|", avoids)}";
 

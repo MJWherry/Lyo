@@ -1,10 +1,9 @@
 using Lyo.Exceptions;
-using Lyo.Exceptions.Models;
-using Lyo.Google.Geolocation.Client.Mapping;
-using Lyo.Google.Geolocation.Client.Models;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Models.Coordinates;
+using Lyo.Google.Geolocation.Client.Mapping;
+using Lyo.Google.Geolocation.Client.Models;
 
 namespace Lyo.Google.Geolocation.Client;
 

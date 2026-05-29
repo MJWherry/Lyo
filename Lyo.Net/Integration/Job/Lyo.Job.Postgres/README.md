@@ -130,10 +130,10 @@ dotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres
 
 ### NuGet packages
 
-| Package                                    | Version |
-|--------------------------------------------|---------|
-| `Mapster`                                  | `[10,)` |
-| `Microsoft.EntityFrameworkCore.Design`     | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Mapster`                                   | `[10,)` |
+| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
 | `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
@@ -148,4 +148,5 @@ dotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres
 
 ### Related / optional packages
 
-- [`Lyo.Api.Export.Csv`](../../Api/Lyo.Api.Export.Csv/README.md), [`Lyo.Api.Export.Xlsx`](../../Api/Lyo.Api.Export.Xlsx/README.md) — CSV/XLSX export add-ons (not direct refs of this assembly)
+- [`Lyo.Api.Export.Csv`](../../Api/Lyo.Api.Export.Csv/README.md), [`Lyo.Api.Export.Xlsx`](../../Api/Lyo.Api.Export.Xlsx/README.md) — CSV/XLSX export add-ons (not direct refs of
+  this assembly)

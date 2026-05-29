@@ -12,9 +12,6 @@ public sealed class AddressSourceEntityConfiguration : IEntityTypeConfiguration<
         builder.HasKey(e => e.Id);
         builder.ConfigureEntitySourceColumns("ix_address_source_source_entity");
         builder.Property(e => e.AddressId).HasColumnName("address_id").HasColumnType("uuid");
-        builder.HasOne(e => e.Address)
-            .WithMany(a => a.Sources)
-            .HasForeignKey(e => e.AddressId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(e => e.Address).WithMany(a => a.Sources).HasForeignKey(e => e.AddressId).OnDelete(DeleteBehavior.Cascade);
     }
 }

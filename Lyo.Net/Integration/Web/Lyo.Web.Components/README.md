@@ -62,7 +62,8 @@ Completed chips always render the shortened display name (not the raw full name 
 - **`ChipInput/LyoChipInput`** — chip-style multi-value input (tags / emails / freeform).
 - **`UniqueValueSelector/UniqueValueSelector`** — selector that loads distinct values for a column via the `SpUniqueValueCount` shape (used by grid filters).
 - **`Validation/LyoValidationWrapper`** — wraps a field with consistent validation message rendering.
-- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
+- **`LyoDataGrid` / `LyoDataGridProjected`** — data grids with filtering, bulk actions, and composable export via [
+  `Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).
 - **`JsonViewDialog`** + **`LyoElementRoot`** — utility dialog and the element-id root used by every component.
 
 ## Identifier workbench (`Identifiers/`)
@@ -117,4 +118,5 @@ operator menus used across the grid, query editor, and form.
 
 ### Related / optional packages
 
-- [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md), [`Lyo.Web.Components.Export.Csv`](../Lyo.Web.Components.Export.Csv/README.md), [`Lyo.Web.Components.Export.Xlsx`](../Lyo.Web.Components.Export.Xlsx/README.md) — export UI composables (not direct refs of this assembly)
+- [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md), [`Lyo.Web.Components.Export.Csv`](../Lyo.Web.Components.Export.Csv/README.md), [
+  `Lyo.Web.Components.Export.Xlsx`](../Lyo.Web.Components.Export.Xlsx/README.md) — export UI composables (not direct refs of this assembly)

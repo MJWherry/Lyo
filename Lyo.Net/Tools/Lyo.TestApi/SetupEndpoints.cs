@@ -93,14 +93,16 @@ public static class SetupEndpoints
                     .AfterCreate(ctx => {
                         if (ctx.DbContext is not PeopleDbContext db)
                             return;
+
                         var sourceType = string.IsNullOrWhiteSpace(ctx.Request.Source) ? PeopleSourceTypes.Manual : ctx.Request.Source;
-                        db.PersonSources.Add(new PersonSourceEntity {
-                            Id = Guid.NewGuid(),
-                            PersonId = ctx.Entity.Id,
-                            SourceEntityType = sourceType,
-                            SourceEntityId = ctx.Entity.Id.ToString(),
-                            ImportedAt = DateTime.UtcNow
-                        });
+                        db.PersonSources.Add(
+                            new() {
+                                Id = Guid.NewGuid(),
+                                PersonId = ctx.Entity.Id,
+                                SourceEntityType = sourceType,
+                                SourceEntityId = ctx.Entity.Id.ToString(),
+                                ImportedAt = DateTime.UtcNow
+                            });
                     }))
                 .WithMetadata()
                 .WithProjectionComputedFields()

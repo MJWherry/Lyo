@@ -11,9 +11,6 @@ public class Address : IEquatable<Address>, IHasEntitySources
     /// <summary>Unique identifier for the address</summary>
     public Guid Id { get; set; }
 
-    /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     // Street address components (US-style, Endato-aligned)
     /// <summary>House or street number</summary>
     public string? HouseNumber { get; set; }
@@ -88,15 +85,25 @@ public class Address : IEquatable<Address>, IHasEntitySources
 
     // Endato-style enrichment (nullable)
     public bool? IsDeliverable { get; set; }
+
     public bool? IsMergedAddress { get; set; }
+
     public bool? IsPublic { get; set; }
+
     public string? PropertyIndicator { get; set; }
+
     public string? BldgCode { get; set; }
+
     public string? UtilityCode { get; set; }
+
     public int? UnitCount { get; set; }
+
     public DateTime? FirstReportedDate { get; set; }
+
     public DateTime? LastReportedDate { get; set; }
+
     public DateTime? PublicFirstSeenDate { get; set; }
+
     public double? GeocodeConfidence { get; set; }
 
     /// <summary>Overflow vendor-specific fields (serialized at persistence boundary).</summary>
@@ -122,6 +129,9 @@ public class Address : IEquatable<Address>, IHasEntitySources
 
         return GetCanonicalForm() == other.GetCanonicalForm();
     }
+
+    /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <summary>Gets formatted street address</summary>
     public string GetFormattedStreet()

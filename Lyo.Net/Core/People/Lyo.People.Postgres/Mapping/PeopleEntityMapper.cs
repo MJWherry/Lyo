@@ -13,7 +13,7 @@ internal static class PeopleEntityMapper
     {
         var person = new Person {
             Id = entity.Id,
-            Name = new PersonName {
+            Name = new() {
                 Prefix = ParseNamePrefix(entity.NamePrefix),
                 FirstName = entity.FirstName,
                 MiddleName = entity.MiddleName,
@@ -63,17 +63,9 @@ internal static class PeopleEntityMapper
         };
 
     public static void ApplyPersonSources(PersonEntity entity, IEnumerable<EntitySourceRecord> sources)
-    {
-        EntitySourceMapping.SyncSources(
-            entity.Sources,
-            sources,
-            entity.Id,
-            parentId => new PersonSourceEntity { PersonId = parentId });
-    }
+        => EntitySourceMapping.SyncSources(entity.Sources, sources, entity.Id, parentId => new() { PersonId = parentId });
 
-    private static NamePrefix? ParseNamePrefix(string? value)
-        => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NamePrefix>(value, true, out var p) ? p : null;
+    private static NamePrefix? ParseNamePrefix(string? value) => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NamePrefix>(value, true, out var p) ? p : null;
 
-    private static NameSuffix? ParseNameSuffix(string? value)
-        => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NameSuffix>(value, true, out var s) ? s : null;
+    private static NameSuffix? ParseNameSuffix(string? value) => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NameSuffix>(value, true, out var s) ? s : null;
 }

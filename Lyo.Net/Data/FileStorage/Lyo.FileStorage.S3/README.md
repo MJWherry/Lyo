@@ -207,12 +207,12 @@ Deeper end-to-end coverage of presigned signing and live bucket I/O would need L
 
 ### NuGet packages
 
-| Package                                     | Version    |
-|---------------------------------------------|------------|
-| `AWSSDK.Core`                               | `4.0.3.13` |
-| `AWSSDK.S3`                                 | `4.0.18.4` |
-| `Microsoft.Extensions.Configuration.Binder` | `[10,)`    |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)` |
+| Package                                                 | Version    |
+|---------------------------------------------------------|------------|
+| `AWSSDK.Core`                                           | `4.0.3.13` |
+| `AWSSDK.S3`                                             | `4.0.18.4` |
+| `Microsoft.Extensions.Configuration.Binder`             | `[10,)`    |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`    |
 
 ### Project references
 

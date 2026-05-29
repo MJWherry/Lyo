@@ -1,8 +1,6 @@
-using Lyo.EntityReference.Models;
-using Lyo.Geolocation.Models;
-using Lyo.Geolocation.Models.Addresses;
-using Lyo.Geolocation.Models.Coordinates;
 using Lyo.Common.Enums;
+using Lyo.EntityReference.Models;
+using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,11 +57,7 @@ public class GeolocationPostgresExtensionsTests
             State = "CA",
             Zipcode = "94043",
             CountryCode = CountryCode.US,
-            Sources = {
-                new EntitySourceRecord(
-                    EntityRef.ForKey("GoogleMapsPlace", placeId),
-                    DateTime.UtcNow)
-            }
+            Sources = { new(EntityRef.ForKey("GoogleMapsPlace", placeId), DateTime.UtcNow) }
         };
 
         await store.SaveAddressAsync(address, TestContext.Current.CancellationToken);
@@ -72,10 +66,7 @@ public class GeolocationPostgresExtensionsTests
         Assert.Equal("Mountain View", loaded.City);
         Assert.Single(loaded.Sources);
         Assert.Equal(placeId, loaded.Sources.First().Source.EntityId);
-
-        var bySource = await store.GetBySourceAsync(
-            EntityRef.ForKey("GoogleMapsPlace", placeId),
-            TestContext.Current.CancellationToken);
+        var bySource = await store.GetBySourceAsync(EntityRef.ForKey("GoogleMapsPlace", placeId), TestContext.Current.CancellationToken);
         Assert.NotNull(bySource);
         Assert.Equal(address.Id, bySource.Id);
     }

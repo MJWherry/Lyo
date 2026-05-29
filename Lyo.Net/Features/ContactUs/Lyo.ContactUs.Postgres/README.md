@@ -42,11 +42,11 @@ Migrations history is tracked in `__EFMigrationsHistory` under the `contact` sch
 
 ### NuGet packages
 
-| Package                                      | Version |
-|----------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`       | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`  | `[10,)` |
-| `Microsoft.Extensions.Options`               | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
+| `Microsoft.Extensions.Options`              | `[10,)` |
 
 ### Project references
 

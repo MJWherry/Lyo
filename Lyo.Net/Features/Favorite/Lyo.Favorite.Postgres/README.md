@@ -133,10 +133,10 @@ Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).
 
 ### NuGet packages
 
-| Package                                      | Version |
-|----------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`       | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`  | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
 

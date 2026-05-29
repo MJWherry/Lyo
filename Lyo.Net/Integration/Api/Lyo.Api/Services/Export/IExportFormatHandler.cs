@@ -13,8 +13,5 @@ public interface IExportFormatHandler
         Dictionary<string, Func<object?, string>>? formatters,
         CancellationToken ct);
 
-    Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(
-        IReadOnlyList<T> items,
-        Dictionary<string, PropertyInfo>? columns,
-        CancellationToken ct);
+    Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(IReadOnlyList<T> items, Dictionary<string, PropertyInfo>? columns, CancellationToken ct);
 }

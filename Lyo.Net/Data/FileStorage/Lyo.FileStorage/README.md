@@ -271,10 +271,10 @@ Cloud backends use a `DispatchProxy`-based lightweight stub for `IAmazonS3`; dee
 
 ### NuGet packages
 
-| Package                           | Version   | Notes                 |
-|-----------------------------------|-----------|-----------------------|
-| `Microsoft.Bcl.AsyncInterfaces`   | `10.0.1`  | *netstandard2.0 only* |
-| `System.Text.Json`                | `[10,)`   | *netstandard2.0 only* |
+| Package                         | Version  | Notes                 |
+|---------------------------------|----------|-----------------------|
+| `Microsoft.Bcl.AsyncInterfaces` | `10.0.1` | *netstandard2.0 only* |
+| `System.Text.Json`              | `[10,)`  | *netstandard2.0 only* |
 
 ### Project references
 

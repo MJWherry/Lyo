@@ -121,10 +121,9 @@ public static class Extensions
         // Composite PK (UserId, GuildId): no GET/DELETE by single `{id}` route — use Query, Upsert, or PATCH with Keys in the body (two values in PK order).
         app.CreateBuilder<DiscordDbContext, DiscordMember, DiscordMemberReq, DiscordMemberRes, long>(Constants.Rest.Discord.Members, "Discord")
             .WithCrud(
-                new ApiFeatureSet([
+                new(
                     ApiFeature.Query, ApiFeature.Upsert, ApiFeature.UpsertBulk, ApiFeature.UpsertInheritCreate, ApiFeature.UpsertInheritUpdate, ApiFeature.Patch,
-                    ApiFeature.PatchBulk, ApiFeature.PatchInheritsUpdate
-                ]), new())
+                    ApiFeature.PatchBulk, ApiFeature.PatchInheritsUpdate), new())
             .Build();
 
         app.MapDiscordGuildSettingsEndpoints();

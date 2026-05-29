@@ -10,9 +10,6 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IHasEntitySources
     /// <summary>Unique identifier for the phone number</summary>
     public Guid Id { get; set; }
 
-    /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     /// <summary>Phone number in E.164 format</summary>
     public string Number { get; set; } = null!;
 
@@ -45,6 +42,9 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IHasEntitySources
 
         return Number == other.Number && CountryCode == other.CountryCode;
     }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is PhoneNumber other && Equals(other);

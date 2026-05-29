@@ -8,9 +8,6 @@ public class EmailAddress : IEquatable<EmailAddress>, IHasEntitySources
     /// <summary>Unique identifier for the email address</summary>
     public Guid Id { get; set; }
 
-    /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     /// <summary>Email address</summary>
     public string Email { get; set; } = null!;
 
@@ -25,6 +22,9 @@ public class EmailAddress : IEquatable<EmailAddress>, IHasEntitySources
 
     /// <inheritdoc />
     public bool Equals(EmailAddress? other) => other != null && string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is EmailAddress other && Equals(other);

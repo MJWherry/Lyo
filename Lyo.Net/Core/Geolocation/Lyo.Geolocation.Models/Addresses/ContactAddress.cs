@@ -8,9 +8,6 @@ public class ContactAddress : IHasEntitySources
 {
     public Guid Id { get; set; }
 
-    /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     public Guid PersonId { get; set; }
 
     public Guid AddressId { get; set; }
@@ -28,4 +25,7 @@ public class ContactAddress : IHasEntitySources
     public bool IsCurrent => EndDate == null;
 
     public string? Notes { get; set; } // Additional notes about this address relationship
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 }

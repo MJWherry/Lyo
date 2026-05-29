@@ -70,10 +70,10 @@ See [`Lyo.EntityReference.Postgres` — Tenancy](../../../Core/EntityReference/L
 
 ### NuGet packages
 
-| Package                                      | Version | Notes                                              |
-|----------------------------------------------|---------|----------------------------------------------------|
-| `Microsoft.EntityFrameworkCore.Design`       | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
-| `Microsoft.Extensions.Configuration.Binder`  | `[10,)` |                                                    |
+| Package                                     | Version | Notes                                              |
+|---------------------------------------------|---------|----------------------------------------------------|
+| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` | `PrivateAssets=all`; consumed only at design time. |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |                                                    |
 
 ### Project references
 

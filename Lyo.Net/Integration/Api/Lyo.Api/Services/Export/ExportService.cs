@@ -9,7 +9,6 @@ using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Enums;
-using Lyo.Common.Records;
 using Lyo.Formatter;
 using Lyo.Metrics;
 using Lyo.Query.Models.Common;
@@ -34,8 +33,8 @@ public class ExportService<TContext>(
     where TContext : DbContext
 {
     private static readonly (string, string)[] ExportTags = [("operation", "export")];
-    private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
     private readonly Dictionary<ExportFormat, IExportFormatHandler> _formatHandlers = formatHandlers.ToDictionary(h => h.Format);
+    private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
 
     public async Task<(Stream Stream, string ContentType, string FileName)> ExportAsync<TDbEntity, TResponse>(
         ExportRequest request,
@@ -278,7 +277,7 @@ public class ExportService<TContext>(
         var addonHint = format switch {
             ExportFormat.Csv => "AddCsvExport()",
             ExportFormat.Xlsx => "AddXlsxExport()",
-            _ => "register an IExportFormatHandler"
+            var _ => "register an IExportFormatHandler"
         };
 
         throw new NotSupportedException($"Export format '{format}' is not supported. Call {addonHint} on the service collection.");

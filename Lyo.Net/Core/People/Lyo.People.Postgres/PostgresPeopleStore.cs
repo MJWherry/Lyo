@@ -22,10 +22,7 @@ public sealed class PostgresPeopleStore : IPeopleStore
     public async Task<Person?> GetPersonByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Persons.AsNoTracking()
-            .Include(p => p.Sources)
-            .FirstOrDefaultAsync(p => p.Id == id, ct)
-            .ConfigureAwait(false);
+        var entity = await context.Persons.AsNoTracking().Include(p => p.Sources).FirstOrDefaultAsync(p => p.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : PeopleEntityMapper.ToPerson(entity);
     }
 
@@ -34,9 +31,7 @@ public sealed class PostgresPeopleStore : IPeopleStore
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var sourceRow = await context.PersonSources.AsNoTracking()
-            .FirstOrDefaultAsync(
-                s => s.SourceEntityType == source.EntityType && s.SourceEntityId == source.EntityId,
-                ct)
+            .FirstOrDefaultAsync(s => s.SourceEntityType == source.EntityType && s.SourceEntityId == source.EntityId, ct)
             .ConfigureAwait(false);
 
         if (sourceRow == null)
@@ -52,14 +47,9 @@ public sealed class PostgresPeopleStore : IPeopleStore
         ArgumentHelpers.ThrowIfNull(person.Name);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var mapped = PeopleEntityMapper.ToPersonEntity(person);
-
         PersonEntity entity;
         if (person.Id != default) {
-            entity = await context.Persons
-                .Include(p => p.Sources)
-                .FirstOrDefaultAsync(p => p.Id == person.Id, ct)
-                .ConfigureAwait(false) ?? mapped;
-
+            entity = await context.Persons.Include(p => p.Sources).FirstOrDefaultAsync(p => p.Id == person.Id, ct).ConfigureAwait(false) ?? mapped;
             if (entity.Id == mapped.Id)
                 context.Entry(entity).CurrentValues.SetValues(mapped);
             else {
@@ -73,11 +63,8 @@ public sealed class PostgresPeopleStore : IPeopleStore
         }
 
         person.Id = entity.Id;
-
-        context.PersonSources.RemoveRange(
-            await context.PersonSources.Where(s => s.PersonId == entity.Id).ToListAsync(ct).ConfigureAwait(false));
+        context.PersonSources.RemoveRange(await context.PersonSources.Where(s => s.PersonId == entity.Id).ToListAsync(ct).ConfigureAwait(false));
         PeopleEntityMapper.ApplyPersonSources(entity, person.Sources);
-
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 }

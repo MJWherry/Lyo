@@ -1,7 +1,11 @@
 # Lyo.Endato.Client
 
-Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API. Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and
-optional request compression behave the same as for any other Lyo HTTP client.
+Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.
+
+**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [
+`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). Host maps Endato DTOs → `Person` + `person_source`. See [package layout](../../../docs/package-layout.md).
+
+Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as for any other Lyo HTTP client.
 
 ## Surface
 

@@ -1,5 +1,8 @@
 # Lyo.Translation
 
+**Archetype B (capability).** Providers (`Lyo.Translation.Google`, `Lyo.Translation.Aws`) stay under `Communication/Translation/`, not `Integration/`.
+See [package layout](../../../docs/package-layout.md).
+
 Contracts and shared behaviour for machine translation in Lyo: the `ITranslationService` interface,
 `TranslationServiceBase` (bulk pipeline + metrics + lifecycle events), error codes, metric key names,
 and a small DI helper.

@@ -9,7 +9,8 @@ public interface IApiEndpointContributor
 
     void ConfigureTypedCrud(IApiEndpointCrudContributorContext context);
 
-    void RegisterDynamicRoutes<TContext>(IDynamicApiEndpointContributorContext<TContext> context) where TContext : DbContext;
+    void RegisterDynamicRoutes<TContext>(IDynamicApiEndpointContributorContext<TContext> context)
+        where TContext : DbContext;
 }
 
 /// <summary>Context for configuring typed CRUD endpoints from an <see cref="IApiEndpointContributor" />.</summary>
@@ -19,7 +20,8 @@ public interface IApiEndpointCrudContributorContext
 }
 
 /// <summary>Context for registering dynamic CRUD routes from an <see cref="IApiEndpointContributor" />.</summary>
-public interface IDynamicApiEndpointContributorContext<TContext> where TContext : DbContext
+public interface IDynamicApiEndpointContributorContext<TContext>
+    where TContext : DbContext
 {
     void RegisterExportRoute();
 }

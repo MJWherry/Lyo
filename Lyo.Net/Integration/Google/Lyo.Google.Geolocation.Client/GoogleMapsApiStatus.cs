@@ -1,4 +1,3 @@
-using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Google.Geolocation.Client;

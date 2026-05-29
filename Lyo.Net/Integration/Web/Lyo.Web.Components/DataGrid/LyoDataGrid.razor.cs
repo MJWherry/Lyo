@@ -6,7 +6,6 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
 using Lyo.Exceptions;

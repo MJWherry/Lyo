@@ -2,15 +2,19 @@
 
 Google Maps REST client and `IGeolocationService` implementation.
 
-References [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md) only — **not** `Lyo.Geolocation.Postgres`. The host wires this client together with the store.
+**Archetype C** — `Integration/Google/` (vendor folder). Geolocation is not Communication; this package mirrors `Lyo.Endato.Client` + Core store, not `Lyo.Translation.Google`. Path
+confirmed in [package layout](../../../docs/package-layout.md) (Phase 1).
+
+References [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md)
+only — **not** `Lyo.Geolocation.Postgres`. The host wires this client together with the store.
 
 ## Overview
 
-| Type | Role |
-|------|------|
-| `GoogleMapsClient` | Geocoding, directions, time zone APIs |
-| `GoogleMapsGeolocationService` | `IGeolocationService` |
-| `GoogleMapsMapper` | Google JSON → `Address` + `EntitySourceRecord` (`GoogleGeolocationSourceTypes.GoogleMapsPlace`) |
+| Type                           | Role                                                                                            |
+|--------------------------------|-------------------------------------------------------------------------------------------------|
+| `GoogleMapsClient`             | Geocoding, directions, time zone APIs                                                           |
+| `GoogleMapsGeolocationService` | `IGeolocationService`                                                                           |
+| `GoogleMapsMapper`             | Google JSON → `Address` + `EntitySourceRecord` (`GoogleGeolocationSourceTypes.GoogleMapsPlace`) |
 
 ## Consumer composition
 

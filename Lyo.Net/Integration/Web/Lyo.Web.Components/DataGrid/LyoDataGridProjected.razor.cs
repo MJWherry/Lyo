@@ -3,10 +3,8 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
-using Lyo.Common;
 using Lyo.Common.Enums;
 using Lyo.Common.Extensions;
-using Lyo.Exceptions;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
@@ -127,8 +125,6 @@ public partial class LyoDataGridProjected : IDataGridExportHost
 
     private string DeleteRoute => Route.TrimEnd('/');
 
-    string IDataGridExportHost.ExportRoute => ExportRoute;
-
     private string ExportRoute => Route.TrimEnd('/') + "/Export";
 
     /// <summary>Select fields derived from column Field values, filtered to visible columns, plus key paths when <see cref="KeySelector" /> is set.</summary>
@@ -174,6 +170,46 @@ public partial class LyoDataGridProjected : IDataGridExportHost
     private int EffectiveSelectedCount => KeySelector is null ? SelectedItems.Count : _savedSelectedKeys is { Count: > 0 } ? _savedSelectedKeys.Count : SelectedItems.Count;
 
     public bool IsSelectable => Features.HasFeature(LyoDataGridFeatureFlags.BulkMenu);
+
+    string IDataGridExportHost.ExportRoute => ExportRoute;
+
+    bool IDataGridExportHost.CanExport => CanExport();
+
+    bool IDataGridExportHost.IsLoading => _loading;
+
+    IApiClient IDataGridExportHost.ApiClient => ApiClient;
+
+    CancellationToken IDataGridExportHost.CancellationToken => _cts.Token;
+
+    Type? IDataGridExportHost.ExportDataType => null;
+
+    IEnumerable<string>? IDataGridExportHost.ExportAvailableFields => SelectFields;
+
+    IReadOnlyList<FilterPropertyDefinition>? IDataGridExportHost.ExportDisplayNameOverrides => FilterPropertyDefinitions;
+
+    IReadOnlyCollection<string>? IDataGridExportHost.ExportFieldsUncheckedByDefault => _visibilityBinder?.GetHiddenFields();
+
+    bool IDataGridExportHost.ExportAllowCustomColumns => true;
+
+    public async Task ExportViaApiAsync(ExportFormat format, List<ExportColumnMapping>? columnList, CancellationToken cancellationToken = default)
+    {
+        var queryBuilder = GetQuery(0, MaxBulkSize);
+        var query = queryBuilder.Build();
+        if (IsSelectable && KeySelector != null) {
+            if (_savedSelectedKeys is { Count: > 0 })
+                query.Keys = _savedSelectedKeys.ToList();
+            else if (SelectedItems.Count > 0)
+                query.Keys = SelectedItems.Select(KeySelector).ToList();
+        }
+
+        var exportRequest = new ExportRequest { Query = query, Format = format, ColumnList = columnList };
+        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute, exportRequest, ct: cancellationToken);
+        using var stream = new MemoryStream(bytes);
+        stream.Position = 0;
+        var extension = format.ToString().ToLowerInvariant();
+        var mimeType = Enum.Parse<MimeType>(format.ToString()).ToString().ToLowerInvariant();
+        await Js.DownloadFileFromStreamReference(stream, $"export.{extension}", mimeType);
+    }
 
     public void Dispose()
     {
@@ -676,44 +712,6 @@ public partial class LyoDataGridProjected : IDataGridExportHost
         catch (Exception ex) {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    bool IDataGridExportHost.CanExport => CanExport();
-
-    bool IDataGridExportHost.IsLoading => _loading;
-
-    IApiClient IDataGridExportHost.ApiClient => ApiClient;
-
-    CancellationToken IDataGridExportHost.CancellationToken => _cts.Token;
-
-    Type? IDataGridExportHost.ExportDataType => null;
-
-    IEnumerable<string>? IDataGridExportHost.ExportAvailableFields => SelectFields;
-
-    IReadOnlyList<FilterPropertyDefinition>? IDataGridExportHost.ExportDisplayNameOverrides => FilterPropertyDefinitions;
-
-    IReadOnlyCollection<string>? IDataGridExportHost.ExportFieldsUncheckedByDefault => _visibilityBinder?.GetHiddenFields();
-
-    bool IDataGridExportHost.ExportAllowCustomColumns => true;
-
-    public async Task ExportViaApiAsync(ExportFormat format, List<ExportColumnMapping>? columnList, CancellationToken cancellationToken = default)
-    {
-        var queryBuilder = GetQuery(0, MaxBulkSize);
-        var query = queryBuilder.Build();
-        if (IsSelectable && KeySelector != null) {
-            if (_savedSelectedKeys is { Count: > 0 })
-                query.Keys = _savedSelectedKeys.ToList();
-            else if (SelectedItems.Count > 0)
-                query.Keys = SelectedItems.Select(KeySelector).ToList();
-        }
-
-        var exportRequest = new ExportRequest { Query = query, Format = format, ColumnList = columnList };
-        var bytes = await ApiClient.PostAsBinaryAsync(ExportRoute, exportRequest, ct: cancellationToken);
-        using var stream = new MemoryStream(bytes);
-        stream.Position = 0;
-        var extension = format.ToString().ToLowerInvariant();
-        var mimeType = Enum.Parse<MimeType>(format.ToString()).ToString().ToLowerInvariant();
-        await Js.DownloadFileFromStreamReference(stream, $"export.{extension}", mimeType);
     }
 
     public bool CanExport()

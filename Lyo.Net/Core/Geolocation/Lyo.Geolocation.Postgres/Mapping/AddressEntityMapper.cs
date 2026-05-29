@@ -3,7 +3,6 @@ using Lyo.Common.Enums;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Geolocation.Models.Addresses;
-using Lyo.Geolocation.Models.Coordinates;
 using Lyo.Geolocation.Postgres.Database;
 using NpgsqlTypes;
 
@@ -52,7 +51,7 @@ internal static class AddressEntityMapper
         };
 
         if (entity.Coordinates is { } point)
-            address.Coordinate = new GeoCoordinate(point.Y, point.X);
+            address.Coordinate = new(point.Y, point.X);
 
         foreach (var source in entity.Sources)
             address.Sources.Add(EntitySourceMapping.ToRecord(source));
@@ -105,16 +104,9 @@ internal static class AddressEntityMapper
     }
 
     public static void ApplySources(AddressEntity entity, IEnumerable<EntitySourceRecord> sources)
-    {
-        EntitySourceMapping.SyncSources(
-            entity.Sources,
-            sources,
-            entity.Id,
-            parentId => new AddressSourceEntity { AddressId = parentId });
-    }
+        => EntitySourceMapping.SyncSources(entity.Sources, sources, entity.Id, parentId => new() { AddressId = parentId });
 
-    private static DateOnly? ToDateOnly(DateTime? value)
-        => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
+    private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
 
     private static IReadOnlyDictionary<string, string>? DeserializeMetadata(string? json)
     {
@@ -124,6 +116,5 @@ internal static class AddressEntityMapper
         return JsonSerializer.Deserialize<Dictionary<string, string>>(json, JsonOptions);
     }
 
-    private static string? SerializeMetadata(IReadOnlyDictionary<string, string>? metadata)
-        => metadata is { Count: > 0 } ? JsonSerializer.Serialize(metadata, JsonOptions) : null;
+    private static string? SerializeMetadata(IReadOnlyDictionary<string, string>? metadata) => metadata is { Count: > 0 } ? JsonSerializer.Serialize(metadata, JsonOptions) : null;
 }

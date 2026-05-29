@@ -1,5 +1,4 @@
 using Bogus;
-using Lyo.EntityReference.Models;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
@@ -42,13 +41,14 @@ public sealed class PeopleDbSeeder
         db.Persons.AddRange(persons);
         await db.SaveChangesAsync(ct);
         foreach (var person in persons) {
-            db.PersonSources.Add(new PersonSourceEntity {
-                Id = Guid.NewGuid(),
-                PersonId = person.Id,
-                SourceEntityType = PeopleSourceTypes.Seed,
-                SourceEntityId = person.Id.ToString(),
-                ImportedAt = DateTime.UtcNow
-            });
+            db.PersonSources.Add(
+                new() {
+                    Id = Guid.NewGuid(),
+                    PersonId = person.Id,
+                    SourceEntityType = PeopleSourceTypes.Seed,
+                    SourceEntityId = person.Id.ToString(),
+                    ImportedAt = DateTime.UtcNow
+                });
         }
 
         await db.SaveChangesAsync(ct);

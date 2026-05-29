@@ -130,10 +130,10 @@ for the full policy matrix and `appsettings.json` snippet.
 
 ### NuGet packages
 
-| Package                                      | Version |
-|----------------------------------------------|---------|
-| `Microsoft.EntityFrameworkCore.Design`       | `[10,)` |
-| `Microsoft.Extensions.Configuration.Binder`  | `[10,)` |
+| Package                                     | Version |
+|---------------------------------------------|---------|
+| `Microsoft.EntityFrameworkCore.Design`      | `[10,)` |
+| `Microsoft.Extensions.Configuration.Binder` | `[10,)` |
 
 ### Project references
 

@@ -151,6 +151,7 @@ public class GeoCoordinate : IEquatable<GeoCoordinate>
         var negative = dir is 'S' or 's' or 'W' or 'w';
         if (isLatitude && dir is not ('N' or 'n' or 'S' or 's'))
             throw new FormatException($"Invalid latitude direction in: {segment}");
+
         if (!isLatitude && dir is not ('E' or 'e' or 'W' or 'w'))
             throw new FormatException($"Invalid longitude direction in: {segment}");
 

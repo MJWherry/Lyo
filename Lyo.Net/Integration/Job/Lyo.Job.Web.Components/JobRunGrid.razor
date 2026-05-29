@@ -1,8 +1,8 @@
-@inject ISnackbar Snackbar
-@inject IDialogService DialogService
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
 @using Lyo.Web.Components.Export.Xlsx
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
@@ -14,9 +14,9 @@
                       Features="@LyoDataGridFeatureFlags.All">
     <BulkExportControls>
         <LyoDataGridExportMenu>
-            <ExportCsvMenuItem />
-            <ExportJsonMenuItem />
-            <ExportXlsxMenuItem />
+            <ExportCsvMenuItem/>
+            <ExportJsonMenuItem/>
+            <ExportXlsxMenuItem/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
     <LeftControls>

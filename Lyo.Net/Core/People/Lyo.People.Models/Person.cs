@@ -20,9 +20,6 @@ public class Person : IHasEntitySources
     /// <summary>Unique identifier for the person</summary>
     public Guid Id { get; set; }
 
-    /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     /// <summary>Person's name</summary>
     public PersonName Name { get; set; } = null!;
 
@@ -132,6 +129,9 @@ public class Person : IHasEntitySources
 
     /// <summary>Custom fields for extensibility</summary>
     public IDictionary<string, string> CustomFields { get; set; } = new Dictionary<string, string>();
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 
     // Helper methods for addresses
     /// <summary>Gets the primary address for the person</summary>

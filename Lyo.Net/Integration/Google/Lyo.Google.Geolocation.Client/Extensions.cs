@@ -44,8 +44,9 @@ public static class Extensions
             services.AddSingleton<GoogleMapsClient>(sp => {
                 var loggerFactory = sp.GetService<ILoggerFactory>();
                 var httpClient = sp.GetService<HttpClient>();
-                return new GoogleMapsClient(options, loggerFactory, httpClient);
+                return new(options, loggerFactory, httpClient);
             });
+
             return services;
         }
 
@@ -56,6 +57,5 @@ public static class Extensions
             services.AddSingleton<IGeolocationService>(sp => new GoogleMapsGeolocationService(sp.GetRequiredService<GoogleMapsClient>()));
             return services;
         }
-
     }
 }

@@ -74,7 +74,9 @@ public sealed class AddressEntity
     public NpgsqlPoint? Coordinates { get; set; }
 
     public bool? IsDeliverable { get; set; }
+
     public bool? IsMergedAddress { get; set; }
+
     public bool? IsPublic { get; set; }
 
     [MaxLength(32)]
@@ -89,7 +91,9 @@ public sealed class AddressEntity
     public int? UnitCount { get; set; }
 
     public DateOnly? FirstReportedDate { get; set; }
+
     public DateOnly? LastReportedDate { get; set; }
+
     public DateOnly? PublicFirstSeenDate { get; set; }
 
     public double? GeocodeConfidence { get; set; }

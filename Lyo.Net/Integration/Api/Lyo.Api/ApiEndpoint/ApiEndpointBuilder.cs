@@ -250,7 +250,11 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
 
         foreach (var contributor in app.Services.GetServices<IApiEndpointContributor>()) {
             if (features.Contains(contributor.Feature))
-                contributor.ConfigureTypedCrud(new ApiEndpointCrudContributorContext(config.ExportAuth, auth => { _ = WithExport(auth); }));
+                contributor.ConfigureTypedCrud(
+                    new ApiEndpointCrudContributorContext(
+                        config.ExportAuth, auth => {
+                            _ = WithExport(auth);
+                        }));
         }
 
         if (features.Contains(ApiFeature.Metadata))

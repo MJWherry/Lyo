@@ -19,10 +19,7 @@ public sealed class JsonExportFormatHandler(IServiceProvider serviceProvider) : 
         CancellationToken ct)
         => Task.FromResult(WriteJson(items, "export.json"));
 
-    public Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(
-        IReadOnlyList<T> items,
-        Dictionary<string, PropertyInfo>? columns,
-        CancellationToken ct)
+    public Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(IReadOnlyList<T> items, Dictionary<string, PropertyInfo>? columns, CancellationToken ct)
         => Task.FromResult(WriteJson(items, "export.json"));
 
     private (Stream Stream, string ContentType, string FileName) WriteJson<T>(IEnumerable<T> items, string fileName)

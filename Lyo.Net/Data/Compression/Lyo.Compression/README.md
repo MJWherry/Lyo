@@ -774,7 +774,9 @@ The library throws specific exceptions for different error conditions:
 
 ### Related / optional packages
 
-- [`Lyo.Compression.LZ4`](../Lyo.Compression.LZ4/README.md), [`Lyo.Compression.LZMA`](../Lyo.Compression.LZMA/README.md), [`Lyo.Compression.Snappier`](../Lyo.Compression.Snappier/README.md), [`Lyo.Compression.Zstd`](../Lyo.Compression.Zstd/README.md), [`Lyo.Compression.BZip2`](../Lyo.Compression.BZip2/README.md), [`Lyo.Compression.XZ`](../Lyo.Compression.XZ/README.md) — algorithm add-ons
+- [`Lyo.Compression.LZ4`](../Lyo.Compression.LZ4/README.md), [`Lyo.Compression.LZMA`](../Lyo.Compression.LZMA/README.md), [
+  `Lyo.Compression.Snappier`](../Lyo.Compression.Snappier/README.md), [`Lyo.Compression.Zstd`](../Lyo.Compression.Zstd/README.md), [
+  `Lyo.Compression.BZip2`](../Lyo.Compression.BZip2/README.md), [`Lyo.Compression.XZ`](../Lyo.Compression.XZ/README.md) — algorithm add-ons
 
 ### Project references
 

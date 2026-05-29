@@ -2,13 +2,16 @@
 
 Provider-agnostic geospatial operations and persistence contracts.
 
+**Archetype A (Lyo domain).** Vendor Maps clients (e.g. [`Lyo.Google.Geolocation.Client`](../../../Integration/Google/Lyo.Google.Geolocation.Client/README.md)) are Archetype C
+under `Integration/{Vendor}/`. See [package layout](../../../docs/package-layout.md).
+
 ## Assemblies
 
-| Package | Role |
-|---------|------|
-| [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md) | Domain DTOs (`Address`, `GeocodeResult`, `Route`, …) |
-| **`Lyo.Geolocation`** (this) | `IGeolocationService`, `IGeolocationStore`, `GeolocationQueryKey`, `GeolocationMath` |
-| [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md) | EF Core store (`geolocation` schema) |
+| Package                                                             | Role                                                                                 |
+|---------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`Lyo.Geolocation.Models`](../Lyo.Geolocation.Models/README.md)     | Domain DTOs (`Address`, `GeocodeResult`, `Route`, …)                                 |
+| **`Lyo.Geolocation`** (this)                                        | `IGeolocationService`, `IGeolocationStore`, `GeolocationQueryKey`, `GeolocationMath` |
+| [`Lyo.Geolocation.Postgres`](../Lyo.Geolocation.Postgres/README.md) | EF Core store (`geolocation` schema)                                                 |
 
 This package does **not** reference HTTP clients or vendor SDKs. Wire providers and import mappers in the **host** (API, worker, tool).
 

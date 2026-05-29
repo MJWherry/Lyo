@@ -30,7 +30,7 @@ public class DefaultApiTokenIssuerValidatorTests
     [Fact]
     public async Task Validate_RingMismatch_ReturnsNull()
     {
-        var (issuer, validator, _, users) = BuildPair(ApiTokenRing.Live);
+        var (issuer, validator, _, users) = BuildPair();
         var user = await users.CreateAsync(NewUser(), null, TCT);
         var issued = await issuer.IssueAsync(new(ApiTokenKind.Pat, "test", [], user.Id, ApiTokenRing.Dev), TCT);
         Assert.Null(await validator.ValidateAsync(issued.Plaintext, TCT));

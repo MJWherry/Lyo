@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
-using Lyo.Exceptions.Models;
 using Lyo.Geolocation;
-using Lyo.Google.Geolocation.Client.Mapping;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Models.Coordinates;
@@ -46,26 +44,28 @@ public sealed class GoogleMapsGeolocationService : IGeolocationService
             var query = addressList[i];
             try {
                 var result = await GeocodeAsync(query, ct).ConfigureAwait(false);
-                items.Add(new GeocodeResultItem {
-                    Index = i,
-                    OriginalQuery = query,
-                    IsSuccess = true,
-                    Result = result,
-                    ErrorMessage = string.Empty
-                });
+                items.Add(
+                    new() {
+                        Index = i,
+                        OriginalQuery = query,
+                        IsSuccess = true,
+                        Result = result,
+                        ErrorMessage = string.Empty
+                    });
             }
             catch (Exception ex) {
-                items.Add(new GeocodeResultItem {
-                    Index = i,
-                    OriginalQuery = query,
-                    IsSuccess = false,
-                    ErrorMessage = ex.Message
-                });
+                items.Add(
+                    new() {
+                        Index = i,
+                        OriginalQuery = query,
+                        IsSuccess = false,
+                        ErrorMessage = ex.Message
+                    });
             }
         }
 
         sw.Stop();
-        return new BatchGeocodeResult {
+        return new() {
             TotalRequests = addressList.Count,
             SuccessfulResults = items.Count(x => x.IsSuccess),
             FailedResults = items.Count(x => !x.IsSuccess),
@@ -75,12 +75,10 @@ public sealed class GoogleMapsGeolocationService : IGeolocationService
     }
 
     /// <inheritdoc />
-    public Task<ReverseGeocodeResult> ReverseGeocodeAsync(double latitude, double longitude, CancellationToken ct = default)
-        => ReverseGeocodeAsync(new GeoCoordinate(latitude, longitude), ct);
+    public Task<ReverseGeocodeResult> ReverseGeocodeAsync(double latitude, double longitude, CancellationToken ct = default) => ReverseGeocodeAsync(new(latitude, longitude), ct);
 
     /// <inheritdoc />
-    public Task<ReverseGeocodeResult> ReverseGeocodeAsync(GeoCoordinate coordinate, CancellationToken ct = default)
-        => _client.Geocoding.ReverseGeocodeAsync(coordinate, ct);
+    public Task<ReverseGeocodeResult> ReverseGeocodeAsync(GeoCoordinate coordinate, CancellationToken ct = default) => _client.Geocoding.ReverseGeocodeAsync(coordinate, ct);
 
     /// <inheritdoc />
     public Task<double> GetDistanceAsync(GeoCoordinate from, GeoCoordinate to, DistanceUnit unit = DistanceUnit.Kilometers, CancellationToken ct = default)
@@ -99,8 +97,7 @@ public sealed class GoogleMapsGeolocationService : IGeolocationService
         => Task.FromResult(GeolocationMath.IsWithinRadius(point1, point2, radiusKm));
 
     /// <inheritdoc />
-    public Task<string> GetTimeZoneAsync(GeoCoordinate coordinate, CancellationToken ct = default)
-        => _client.TimeZones.GetTimeZoneAsync(coordinate, ct);
+    public Task<string> GetTimeZoneAsync(GeoCoordinate coordinate, CancellationToken ct = default) => _client.TimeZones.GetTimeZoneAsync(coordinate, ct);
 
     /// <inheritdoc />
     public async Task<string> GetTimeZoneAsync(string address, CancellationToken ct = default)
@@ -116,14 +113,14 @@ public sealed class GoogleMapsGeolocationService : IGeolocationService
     /// <inheritdoc />
     public async Task<double> GetDrivingDistanceAsync(GeoCoordinate from, GeoCoordinate to, CancellationToken ct = default)
     {
-        var route = await GetRouteAsync(from, to, new RouteOptions { Mode = TransportMode.Driving }, ct).ConfigureAwait(false);
+        var route = await GetRouteAsync(from, to, new() { Mode = TransportMode.Driving }, ct).ConfigureAwait(false);
         return route.TotalDistanceMeters / 1000.0;
     }
 
     /// <inheritdoc />
     public async Task<TimeSpan> GetEstimatedTravelTimeAsync(GeoCoordinate from, GeoCoordinate to, TransportMode mode, CancellationToken ct = default)
     {
-        var route = await GetRouteAsync(from, to, new RouteOptions { Mode = mode }, ct).ConfigureAwait(false);
+        var route = await GetRouteAsync(from, to, new() { Mode = mode }, ct).ConfigureAwait(false);
         return route.EstimatedDuration;
     }
 }

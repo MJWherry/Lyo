@@ -9,9 +9,6 @@ public class ContactPhoneNumber : IHasEntitySources
     /// <summary>Unique identifier for the contact-phone association</summary>
     public Guid Id { get; set; }
 
-    /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
-
     /// <summary>ID of the person this phone number belongs to</summary>
     public Guid PersonId { get; set; }
 
@@ -38,4 +35,7 @@ public class ContactPhoneNumber : IHasEntitySources
 
     /// <summary>Navigation property to the phone number</summary>
     public PhoneNumber? PhoneNumber { get; set; }
+
+    /// <inheritdoc />
+    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
 }

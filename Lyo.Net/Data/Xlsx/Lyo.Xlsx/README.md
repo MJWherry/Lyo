@@ -146,13 +146,13 @@ IReadOnlyList<Result<DataTable>> async =
 
 ### NuGet packages
 
-| Package                                                 | Version   |
-|---------------------------------------------------------|-----------|
+| Package                                                 | Version    |
+|---------------------------------------------------------|------------|
 | `ClosedXML`                                             | `[0.100,)` |
-| `ExcelDataReader`                                       | `[3.8,)`  |
-| `ExcelDataReader.DataSet`                               | `[3.8,)`  |
-| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`   |
-| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`   |
+| `ExcelDataReader`                                       | `[3.8,)`   |
+| `ExcelDataReader.DataSet`                               | `[3.8,)`   |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | `[10,)`    |
+| `Microsoft.Extensions.Logging.Abstractions`             | `[10,)`    |
 
 ### Project references
 

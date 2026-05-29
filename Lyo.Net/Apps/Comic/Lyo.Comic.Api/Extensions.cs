@@ -104,7 +104,10 @@ public static class Extensions
             .Build();
 
         // Pages: all operations including plain GET (ComicPageRes has no async enrichment)
-        app.CreateBuilder<ComicDbContext, PageEntity, ComicPageReq, ComicPageRes>($"{prefix}/pages", "ComicPage").AllowAnonymous().WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new()).Build();
+        app.CreateBuilder<ComicDbContext, PageEntity, ComicPageReq, ComicPageRes>($"{prefix}/pages", "ComicPage")
+            .AllowAnonymous()
+            .WithCrud(ApiFeatureSet.CoreAll + ExportApiFeature.Instance, new())
+            .Build();
 
         // Characters: all CRUD + Query; volume appearances are managed via the join table
         app.CreateBuilder<ComicDbContext, CharacterEntity, ComicCharacterReq, ComicCharacterRes>($"{prefix}/characters", "ComicCharacter")

@@ -7,5 +7,6 @@ public sealed record ExportApiFeature : ApiFeature
 {
     public static readonly ExportApiFeature Instance = new();
 
-    private ExportApiFeature() : base("Export") { }
+    private ExportApiFeature()
+        : base("Export") { }
 }

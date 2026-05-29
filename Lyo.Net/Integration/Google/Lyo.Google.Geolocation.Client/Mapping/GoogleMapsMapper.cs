@@ -18,7 +18,7 @@ internal static class GoogleMapsMapper
         var location = googleResult.Geometry?.Location ?? throw new InvalidOperationException("Missing location in geocode result");
         var coordinate = new GeoCoordinate(location.Lat, location.Lng);
         address.Coordinate = coordinate;
-        return new GeocodeResult {
+        return new() {
             Address = address,
             Coordinate = coordinate,
             ConfidenceScore = MapConfidence(googleResult.Geometry?.LocationType),
@@ -33,7 +33,7 @@ internal static class GoogleMapsMapper
     {
         var address = ToAddress(googleResult);
         address.Coordinate = coordinate;
-        return new ReverseGeocodeResult {
+        return new() {
             Coordinate = coordinate,
             Address = address,
             ConfidenceScore = MapConfidence(googleResult.Geometry?.LocationType),
@@ -47,17 +47,13 @@ internal static class GoogleMapsMapper
     {
         var addressComponents = googleResult.AddressComponents ?? [];
         var address = new Address {
-            Coordinate = googleResult.Geometry?.Location != null
-                ? new GeoCoordinate(googleResult.Geometry.Location.Lat, googleResult.Geometry.Location.Lng)
-                : null,
+            Coordinate = googleResult.Geometry?.Location != null ? new GeoCoordinate(googleResult.Geometry.Location.Lat, googleResult.Geometry.Location.Lng) : null,
             FullAddress = googleResult.FormattedAddress,
             GeocodeConfidence = MapConfidence(googleResult.Geometry?.LocationType)
         };
 
         if (!string.IsNullOrWhiteSpace(googleResult.PlaceId)) {
-            address.Sources.Add(new EntitySourceRecord(
-                EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId),
-                DateTime.UtcNow));
+            address.Sources.Add(new(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId), DateTime.UtcNow));
         }
 
         foreach (var component in addressComponents) {
@@ -115,8 +111,8 @@ internal static class GoogleMapsMapper
             if (leg.Steps != null) {
                 route.Steps = leg.Steps.Select((step, index) => new RouteStep {
                         StepNumber = index + 1,
-                        StartLocation = step.StartLocation != null ? new GeoCoordinate(step.StartLocation.Lat, step.StartLocation.Lng) : start,
-                        EndLocation = step.EndLocation != null ? new GeoCoordinate(step.EndLocation.Lat, step.EndLocation.Lng) : end,
+                        StartLocation = step.StartLocation != null ? new(step.StartLocation.Lat, step.StartLocation.Lng) : start,
+                        EndLocation = step.EndLocation != null ? new(step.EndLocation.Lat, step.EndLocation.Lng) : end,
                         DistanceMeters = step.Distance?.Value ?? 0,
                         Duration = TimeSpan.FromSeconds(step.Duration?.Value ?? 0),
                         Instructions = step.HtmlInstructions ?? step.Instructions ?? string.Empty,
@@ -131,7 +127,7 @@ internal static class GoogleMapsMapper
                 var swLng = Math.Min(leg.StartLocation.Lng, leg.EndLocation.Lng);
                 var neLat = Math.Max(leg.StartLocation.Lat, leg.EndLocation.Lat);
                 var neLng = Math.Max(leg.StartLocation.Lng, leg.EndLocation.Lng);
-                route.Bounds = new BoundingBox { Southwest = new GeoCoordinate(swLat, swLng), Northeast = new GeoCoordinate(neLat, neLng) };
+                route.Bounds = new() { Southwest = new(swLat, swLng), Northeast = new(neLat, neLng) };
             }
         }
 

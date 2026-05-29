@@ -8,11 +8,7 @@ namespace Lyo.Web.Components.Export;
 
 public sealed class DataGridExportService(IDialogService dialogService, ILogger<DataGridExportService> logger)
 {
-    public async Task ExportAsync(
-        IDataGridExportHost host,
-        ExportFormat format,
-        bool showColumnSelector,
-        CancellationToken cancellationToken = default)
+    public async Task ExportAsync(IDataGridExportHost host, ExportFormat format, bool showColumnSelector, CancellationToken cancellationToken = default)
     {
         if (!host.CanExport)
             return;

@@ -10,6 +10,7 @@ public sealed class ExportEndpointContributor : IApiEndpointContributor
 
     public void ConfigureTypedCrud(IApiEndpointCrudContributorContext context) => context.EnableExport();
 
-    public void RegisterDynamicRoutes<TContext>(IDynamicApiEndpointContributorContext<TContext> context) where TContext : DbContext
+    public void RegisterDynamicRoutes<TContext>(IDynamicApiEndpointContributorContext<TContext> context)
+        where TContext : DbContext
         => context.RegisterExportRoute();
 }
