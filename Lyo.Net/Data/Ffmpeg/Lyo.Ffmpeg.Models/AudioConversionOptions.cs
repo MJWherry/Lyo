@@ -23,4 +23,8 @@ public class AudioConversionOptions
 
     /// <summary>Whether to strip video (audio only). Default: true</summary>
     public bool NoVideo { get; set; } = true;
+
+    /// <inheritdoc />
+    public override string ToString()
+        => $"AudioConversionOptions(Codec={Codec}, SampleRate={SampleRate}, Channels={Channels}, Format={Format}, Overwrite={Overwrite}, NoVideo={NoVideo})";
 }

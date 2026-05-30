@@ -91,18 +91,10 @@ public static class SetupEndpoints
                 .WithCrud(crud => crud.WithFlags(ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance)
                     .BeforeCreate(ctx => ctx.Entity.Id = LyoGuid.CreateCombPostgres())
                     .AfterCreate(ctx => {
-                        if (ctx.DbContext is not PeopleDbContext db)
-                            return;
-
                         var sourceType = string.IsNullOrWhiteSpace(ctx.Request.Source) ? PeopleSourceTypes.Manual : ctx.Request.Source;
-                        db.PersonSources.Add(
-                            new() {
-                                Id = Guid.NewGuid(),
-                                PersonId = ctx.Entity.Id,
-                                SourceEntityType = sourceType,
-                                SourceEntityId = ctx.Entity.Id.ToString(),
-                                ImportedAt = DateTime.UtcNow
-                            });
+                        ctx.Entity.SourceEntityType = sourceType;
+                        ctx.Entity.SourceEntityId = ctx.Entity.Id.ToString();
+                        ctx.Entity.ImportedAt = DateTime.UtcNow;
                     }))
                 .WithMetadata()
                 .WithProjectionComputedFields()

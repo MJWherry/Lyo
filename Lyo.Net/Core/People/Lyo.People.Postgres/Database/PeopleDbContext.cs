@@ -27,20 +27,6 @@ public class PeopleDbContext : DbContext
 
     public DbSet<EmploymentEntity> Employments { get; set; } = null!;
 
-    public DbSet<PersonSourceEntity> PersonSources { get; set; } = null!;
-
-    public DbSet<AddressSourceEntity> AddressSources { get; set; } = null!;
-
-    public DbSet<PhoneNumberSourceEntity> PhoneNumberSources { get; set; } = null!;
-
-    public DbSet<EmailAddressSourceEntity> EmailAddressSources { get; set; } = null!;
-
-    public DbSet<ContactAddressSourceEntity> ContactAddressSources { get; set; } = null!;
-
-    public DbSet<ContactPhoneNumberSourceEntity> ContactPhoneNumberSources { get; set; } = null!;
-
-    public DbSet<ContactEmailAddressSourceEntity> ContactEmailAddressSources { get; set; } = null!;
-
     public PeopleDbContext(DbContextOptions<PeopleDbContext> options)
         : base(options) { }
 
@@ -58,12 +44,5 @@ public class PeopleDbContext : DbContext
         modelBuilder.ApplyConfiguration(new IdentificationEntityConfiguration());
         modelBuilder.ApplyConfiguration(new PersonRelationshipEntityConfiguration());
         modelBuilder.ApplyConfiguration(new EmploymentEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new PersonSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new AddressSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new PhoneNumberSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new EmailAddressSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new ContactAddressSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new ContactPhoneNumberSourceEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new ContactEmailAddressSourceEntityConfiguration());
     }
 }

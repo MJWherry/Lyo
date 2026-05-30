@@ -21,8 +21,8 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    for_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    for_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    for_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     from_entity_type = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     from_entity_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     tenant_id = table.Column<Guid>(type: "uuid", nullable: true),

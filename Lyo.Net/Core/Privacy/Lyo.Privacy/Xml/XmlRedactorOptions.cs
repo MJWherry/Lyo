@@ -5,7 +5,7 @@ using Lyo.Privacy.Enums;
 namespace Lyo.Privacy.Xml;
 
 /// <summary>Options for <see cref="XmlRedactor" /> (case-insensitive element local names).</summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class XmlRedactorOptions
 {
     public IReadOnlyDictionary<string, XmlScalarStrategy> SensitiveElementLocalNames { get; set; } =
@@ -18,6 +18,7 @@ public sealed class XmlRedactorOptions
 
     public string? PolicyName { get; set; }
 
-    private string DebuggerDisplay
+    /// <inheritdoc />
+    public override string ToString()
         => $"XmlRedactorOptions(policy={PolicyName ?? "∅"}, sensitiveKeys={SensitiveElementLocalNames.Count}, textPass={ApplyTextRedactorToNonSensitiveText})";
 }

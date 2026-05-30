@@ -20,10 +20,10 @@ namespace Lyo.Favorite.Postgres.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    for_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    for_entity_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    from_entity_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    for_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    for_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
+                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     tenant_id = table.Column<Guid>(type: "uuid", nullable: false),
                     context = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

@@ -37,6 +37,4 @@ public sealed class ContactPhoneNumberEntity
 
     [ForeignKey(nameof(PhoneNumberId))]
     public PhoneNumberEntity? PhoneNumber { get; set; }
-
-    public ICollection<ContactPhoneNumberSourceEntity> Sources { get; set; } = [];
 }

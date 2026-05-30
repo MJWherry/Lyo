@@ -5,7 +5,7 @@ aggregate.
 
 ## Features
 
-- `ChangeRecord` for entity-scoped history with old values, changed values, optional actor `FromEntity`, and optional `ChangeType` / `Message`
+- `ChangeRecord` for entity-scoped history with old values, changed values, optional **actor** (`FromEntity` at API; `from_entity_*` in DB), and optional `ChangeType` / `Message`
 - `IChangeTracker` for recording, querying, and deleting change history
 - `NullChangeTracker.Instance` (singleton) when change tracking is optional — all writes/queries are no-ops
 

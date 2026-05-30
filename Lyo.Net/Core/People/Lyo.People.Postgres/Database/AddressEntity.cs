@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.EntityReference.Postgres.Database;
 using NpgsqlTypes;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Entity for storing addresses in PostgreSQL. Based on Endato address structure with street pre/post direction, street type, etc.</summary>
-public sealed class AddressEntity
+public sealed class AddressEntity : EntitySourceEntityBase
 {
     [Key]
     public Guid Id { get; set; }
@@ -71,6 +72,4 @@ public sealed class AddressEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
-
-    public ICollection<AddressSourceEntity> Sources { get; set; } = [];
 }

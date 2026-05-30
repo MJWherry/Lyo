@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Rating.Postgres.Database;
 
-public sealed class RatingEntityConfiguration : EntityRefConfiguration<RatingEntity>
+public sealed class RatingEntityConfiguration : EntityRelationConfiguration<RatingEntity>
 {
     public RatingEntityConfiguration()
         : base("rating") { }
@@ -22,14 +22,14 @@ public sealed class RatingEntityConfiguration : EntityRefConfiguration<RatingEnt
         builder.Property(e => e.LikeCount).HasColumnName("like_count");
         builder.Property(e => e.DislikeCount).HasColumnName("dislike_count");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
-        builder.HasIndex(e => new { e.TenantId, e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_rating_tenant_for_entity");
-        builder.HasIndex(e => new { e.TenantId, e.FromEntityType, e.FromEntityId }).HasDatabaseName("ix_rating_tenant_from_entity");
+        builder.HasIndex(e => new { e.TenantId, e.SubjectEntityType, e.SubjectEntityId }).HasDatabaseName("ix_rating_tenant_for_entity");
+        builder.HasIndex(e => new { e.TenantId, e.ActorEntityType, e.ActorEntityId }).HasDatabaseName("ix_rating_tenant_from_entity");
         builder.HasIndex(e => new {
                 e.TenantId,
-                e.ForEntityType,
-                e.ForEntityId,
-                e.FromEntityType,
-                e.FromEntityId,
+                e.SubjectEntityType,
+                e.SubjectEntityId,
+                e.ActorEntityType,
+                e.ActorEntityId,
                 e.Subject
             })
             .HasDatabaseName("ix_rating_tenant_for_from_subject");

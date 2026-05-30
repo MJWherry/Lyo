@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.QRCode.Models;
 
 /// <summary>Supported QR code output formats.</summary>
-[DebuggerDisplay("QRCodeFormat.{ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public enum QRCodeFormat
 {
     /// <summary>PNG image format.</summary>

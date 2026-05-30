@@ -95,7 +95,7 @@ public sealed class ConfigApiOptionsMonitor<TOptions> : IOptionsMonitor<TOptions
         if (!record.TryGetValue(_definitionKey, out var configValue) || configValue == null) {
             return _missing == ConfigApiMissingDefinitionKeyBehavior.Throw
                 ? throw new InvalidOperationException(
-                    $"Definition key '{_definitionKey}' is missing from resolved Config API payload for '{record.ForEntityType}:{record.ForEntityId}'.")
+                    $"Definition key '{_definitionKey}' is missing from resolved Config API payload for '{record.SubjectEntityType}:{record.SubjectEntityId}'.")
                 : new TOptions();
         }
 

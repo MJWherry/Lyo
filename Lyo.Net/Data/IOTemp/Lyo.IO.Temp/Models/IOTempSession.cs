@@ -15,7 +15,7 @@ namespace Lyo.IO.Temp.Models;
 
 /// <summary>Default <see cref="IIOTempSession" /> implementation.</summary>
 // ReSharper disable once InconsistentNaming
-[DebuggerDisplay("{DebugDisplay,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class IOTempSession : IIOTempSession
 {
     private const int DisposeRetryCount = 3;
@@ -36,7 +36,9 @@ public sealed class IOTempSession : IIOTempSession
     private bool _disposed;
     private long _totalBytesUsed;
 
-    private string DebugDisplay => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
+    /// <inheritdoc />
+    public override string ToString()
+        => $"Session: {Path.GetFileName(SessionDirectory)} | Files: {_files.Count} | Bytes: {_totalBytesUsed:N0}";
 
     /// <summary>Creates a session under <see cref="IOTempSessionOptions.RootDirectory" />, creating the session directory on disk.</summary>
     /// <param name="options">Layout, limits, and naming; defaults when null.</param>

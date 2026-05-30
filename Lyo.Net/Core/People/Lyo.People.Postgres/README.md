@@ -20,11 +20,10 @@ This package provides Entity Framework Core entities and DbContext for storing p
 - **identification** — ID documents (passport, driver's license, SSN, etc.)
 - **person_relationship** — Relationships between people
 - **employment** — Employment history
-- **person_source**, **address_source**, **phone_number_source**, **email_address_source** — `EntityRef` import provenance (see [
-  `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))
-- **contact_address_source**, **contact_phone_number_source**, **contact_email_address_source** — optional junction-level provenance
+- **person_source**, **address_source**, **phone_number_source**, **email_address_source** — import provenance via **`source_entity_*`** + **`imported_at`** (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs))
+- **contact_address_source**, **contact_phone_number_source**, **contact_email_address_source** — optional junction-level provenance (same shape)
 
-The legacy **`person.source`** varchar column is removed; use **`person_source`** instead.
+The legacy **`person.source`** varchar column is removed; use **`person_source`** instead. Domain: **`EntitySourceRecord.From(source, importedAt)`** on **`IEntitySourceDerived`** aggregates; lookup by external key uses **`source_entity_*`** (e.g. `GetPersonBySourceAsync`).
 
 ## `IPeopleStore`
 

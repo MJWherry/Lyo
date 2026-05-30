@@ -40,24 +40,22 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
-                    b.Property<string>("ForEntityId")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_id");
 
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<string>("FromEntityId")
+                    b.Property<string>("ActorEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_id");
 
-                    b.Property<string>("FromEntityType")
+                    b.Property<string>("ActorEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_type");
@@ -87,7 +85,7 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType")
+                    b.HasIndex("SubjectEntityType")
                         .HasDatabaseName("ix_changes_for_entity_type");
 
                     b.HasIndex("TenantId")
@@ -96,10 +94,10 @@ namespace Lyo.ChangeTracker.Postgres.Migrations
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_changes_timestamp");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "Timestamp")
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId", "Timestamp")
                         .HasDatabaseName("ix_changes_for_entity_timestamp");
 
-                    b.HasIndex("FromEntityType", "FromEntityId")
+                    b.HasIndex("ActorEntityType", "ActorEntityId")
                         .HasDatabaseName("ix_changes_from_entity");
 
                     b.ToTable("changes", "change_tracker");

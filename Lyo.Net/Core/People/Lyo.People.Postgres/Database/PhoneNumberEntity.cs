@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.EntityReference.Postgres.Database;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Entity for storing phone numbers in PostgreSQL.</summary>
-public sealed class PhoneNumberEntity
+public sealed class PhoneNumberEntity : EntitySourceEntityBase
 {
     [Key]
     public Guid Id { get; set; }
@@ -29,6 +30,4 @@ public sealed class PhoneNumberEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
-
-    public ICollection<PhoneNumberSourceEntity> Sources { get; set; } = [];
 }

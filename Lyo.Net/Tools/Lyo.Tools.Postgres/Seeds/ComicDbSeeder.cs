@@ -93,7 +93,7 @@ public sealed class ComicDbSeeder
             var tagCount = faker.Random.Int(2, 5);
             var picked = faker.Random.ArrayElements(GenreTags, tagCount);
             foreach (var tag in picked) {
-                var exists = await tagDb.Tags.AnyAsync(t => t.ForEntityType == SeriesEntityType && t.ForEntityId == s.Id && t.Name == tag && t.DeletedAt == null, ct)
+                var exists = await tagDb.Tags.AnyAsync(t => t.SubjectEntityType == SeriesEntityType && t.SubjectEntityId == s.Id.ToString() && t.Name == tag && t.DeletedAt == null, ct)
                     .ConfigureAwait(false);
 
                 if (exists)
@@ -102,10 +102,10 @@ public sealed class ComicDbSeeder
                 tagDb.Tags.Add(
                     new() {
                         Id = Guid.NewGuid(),
-                        ForEntityType = SeriesEntityType,
-                        ForEntityId = s.Id,
-                        FromEntityType = EntityRefWellKnown.SystemActorType,
-                        FromEntityId = EntityRefWellKnown.SystemActorId,
+                        SubjectEntityType = SeriesEntityType,
+                        SubjectEntityId = s.Id.ToString(),
+                        ActorEntityType = EntityRefWellKnown.SystemActorType,
+                        ActorEntityId = EntityRefWellKnown.SystemActorId.ToString(),
                         TenantId = EntityRefWellKnown.SingleTenantDefaultId,
                         Name = tag,
                         TagType = "tag",

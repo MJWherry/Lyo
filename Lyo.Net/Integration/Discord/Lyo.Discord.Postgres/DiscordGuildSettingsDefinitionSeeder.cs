@@ -19,7 +19,7 @@ public sealed class DiscordGuildSettingsDefinitionSeeder(IServiceProvider servic
 
         await store.SaveDefinitionAsync(
                 new() {
-                    ForEntityType = typeof(DiscordGuild).FullName!,
+                    SubjectEntityType = typeof(DiscordGuild).FullName!,
                     Key = DiscordGuildSettingsHelper.Key,
                     ForValueType = ConfigValue.GetTypeName(typeof(DiscordGuildSettings)),
                     Description = "Discord guild bot settings (channels and roles).",

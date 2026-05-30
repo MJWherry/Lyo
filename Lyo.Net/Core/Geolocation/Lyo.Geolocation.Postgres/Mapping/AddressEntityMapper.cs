@@ -53,8 +53,8 @@ internal static class AddressEntityMapper
         if (entity.Coordinates is { } point)
             address.Coordinate = new(point.Y, point.X);
 
-        foreach (var source in entity.Sources)
-            address.Sources.Add(EntitySourceMapping.ToRecord(source));
+        address.Source = EntitySourceMapping.ToRecord(entity);
+        address.LocallyModifiedAt = entity.LocallyModifiedAt;
 
         return address;
     }
@@ -94,17 +94,16 @@ internal static class AddressEntityMapper
             LastReportedDate = ToDateOnly(address.LastReportedDate),
             PublicFirstSeenDate = ToDateOnly(address.PublicFirstSeenDate),
             GeocodeConfidence = address.GeocodeConfidence,
-            MetadataJson = SerializeMetadata(address.Metadata)
+            MetadataJson = SerializeMetadata(address.Metadata),
+            LocallyModifiedAt = address.LocallyModifiedAt
         };
 
         if (address.Coordinate != null)
             entity.Coordinates = new NpgsqlPoint(address.Coordinate.Longitude, address.Coordinate.Latitude);
 
+        EntitySourceMapping.ApplySource(entity, address.Source);
         return entity;
     }
-
-    public static void ApplySources(AddressEntity entity, IEnumerable<EntitySourceRecord> sources)
-        => EntitySourceMapping.SyncSources(entity.Sources, sources, entity.Id, parentId => new() { AddressId = parentId });
 
     private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
 

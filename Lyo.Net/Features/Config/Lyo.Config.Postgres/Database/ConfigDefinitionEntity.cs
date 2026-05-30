@@ -11,7 +11,7 @@ public sealed class ConfigDefinitionEntity
 
     [Required]
     [MaxLength(500)]
-    public string ForEntityType { get; set; } = string.Empty;
+    public string SubjectEntityType { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(200)]

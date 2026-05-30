@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -10,6 +11,7 @@ public sealed class EmailAddressEntityConfiguration : IEntityTypeConfiguration<E
         builder.ToTable("email_address");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.ConfigureEntitySourceColumns("email_address");
         builder.Property(e => e.Email).HasMaxLength(256).IsRequired().HasColumnName("email");
         builder.Property(e => e.VerifiedAt).HasColumnType("timestamp with time zone").HasColumnName("verified_at");
         builder.Property(e => e.Label).HasMaxLength(100).HasColumnName("label");

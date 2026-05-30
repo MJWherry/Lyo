@@ -32,16 +32,16 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         ArgumentHelpers.ThrowIfNull(comment);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(comment.ForEntity);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(comment.FromEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(comment.SubjectRef);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(comment.ActorRef);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (comment.Id != default) {
             var existing = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == comment.Id, ct).ConfigureAwait(false);
             if (existing != null) {
-                existing.ForEntityType = comment.ForEntityType;
-                existing.ForEntityId = forId;
-                existing.FromEntityType = comment.FromEntityType;
-                existing.FromEntityId = fromId;
+                existing.SubjectEntityType = comment.SubjectEntityType;
+                existing.SubjectEntityId = forId;
+                existing.ActorEntityType = comment.ActorEntityType;
+                existing.ActorEntityId = fromId;
                 existing.Content = comment.Content;
                 existing.ReplyToCommentId = comment.ReplyToCommentId;
                 existing.IsEdited = true;
@@ -54,10 +54,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
 
         var entity = new CommentEntity {
             Id = comment.Id == default ? Guid.NewGuid() : comment.Id,
-            ForEntityType = comment.ForEntityType,
-            ForEntityId = forId,
-            FromEntityType = comment.FromEntityType,
-            FromEntityId = fromId,
+            SubjectEntityType = comment.SubjectEntityType,
+            SubjectEntityId = forId,
+            ActorEntityType = comment.ActorEntityType,
+            ActorEntityId = fromId,
             TenantId = tenant,
             Content = comment.Content,
             ReplyToCommentId = comment.ReplyToCommentId,
@@ -88,9 +88,9 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId);
+        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forId);
         if (!includeReplies)
             query = query.Where(c => c.ReplyToCommentId == null);
 
@@ -118,11 +118,11 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var tenant = ResolveTenant(tenantId);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Comments.WhereActive()
             .WhereTenant(tenant)
-            .Where(c => c.FromEntityType == fromEntity.EntityType && c.FromEntityId == fromId)
+            .Where(c => c.ActorEntityType == fromEntity.EntityType && c.ActorEntityId == fromId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -136,9 +136,9 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.ForEntityType == forEntityType);
+        var query = context.Comments.WhereActive().WhereTenant(tenant).Where(c => c.SubjectEntityType == forEntityType);
         if (forEntityId.HasValue)
-            query = query.Where(c => c.ForEntityId == forEntityId.Value);
+            query = query.Where(c => c.SubjectEntityId == forEntityId.Value.ToString());
 
         var entities = await query.OrderBy(c => c.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -151,14 +151,14 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var tenant = ResolveTenant(tenantId);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var comment = await context.Comments.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(c => c.Id == commentId, ct).ConfigureAwait(false);
         if (comment == null)
             return;
 
         var existing = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.ForEntityType == commentRef.EntityType && r.ForEntityId == commentId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         var reactionTypeInt = (int)reactionType;
@@ -181,10 +181,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         else {
             var reaction = new CommentReactionEntity {
                 Id = Guid.NewGuid(),
-                ForEntityType = commentRef.EntityType,
-                ForEntityId = commentId,
-                FromEntityType = fromEntity.EntityType,
-                FromEntityId = fromId,
+                SubjectEntityType = commentRef.EntityType,
+                SubjectEntityId = commentId.ToString(),
+                ActorEntityType = fromEntity.EntityType,
+                ActorEntityId = fromId,
                 ReactionType = reactionTypeInt,
                 TenantId = comment.TenantId,
                 CreatedTimestamp = DateTime.UtcNow
@@ -208,9 +208,9 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var existing = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.ForEntityType == commentRef.EntityType && r.ForEntityId == commentId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         if (existing == null)
@@ -236,9 +236,9 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         _ = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         var entity = await context.CommentReactions.FirstOrDefaultAsync(
-                r => r.ForEntityType == commentRef.EntityType && r.ForEntityId == commentId && r.FromEntityType == fromEntity.EntityType && r.FromEntityId == fromId, ct)
+                r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType && r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : ToReactionRecord(entity);
@@ -269,8 +269,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         foreach (var c in toSoftDelete)
             c.DeletedAt = utc;
 
-        var idSet = ids.ToHashSet();
-        var reactionsToDelete = await context.CommentReactions.Where(r => r.ForEntityType == "Comment" && idSet.Contains(r.ForEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var idSet = ids.Select(i => i.ToString()).ToHashSet();
+        var reactionsToDelete = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && idSet.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
         context.CommentReactions.RemoveRange(reactionsToDelete);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in toSoftDelete)
@@ -282,11 +282,11 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var comments = await context.Comments.WhereActive()
             .WhereTenant(tenant)
-            .Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forId)
+            .Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -297,8 +297,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         foreach (var c in comments)
             c.DeletedAt = utc;
 
-        var commentIds = comments.Select(c => c.Id).ToHashSet();
-        var reactions = await context.CommentReactions.Where(r => r.ForEntityType == "Comment" && commentIds.Contains(r.ForEntityId)).ToListAsync(ct).ConfigureAwait(false);
+        var commentIds = comments.Select(c => c.Id.ToString()).ToHashSet();
+        var reactions = await context.CommentReactions.Where(r => r.SubjectEntityType == "Comment" && commentIds.Contains(r.SubjectEntityId)).ToListAsync(ct).ConfigureAwait(false);
         context.CommentReactions.RemoveRange(reactions);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var c in comments)
@@ -348,10 +348,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     private static CommentReactionRecord ToReactionRecord(CommentReactionEntity e)
         => new() {
             Id = e.Id,
-            ForEntityType = e.ForEntityType,
-            ForEntityId = e.ForEntityId,
-            FromEntityType = e.FromEntityType,
-            FromEntityId = e.FromEntityId,
+            SubjectEntityType = e.SubjectEntityType,
+            SubjectEntityId = e.SubjectEntityId,
+            ActorEntityType = e.ActorEntityType,
+            ActorEntityId = e.ActorEntityId,
             TenantId = e.TenantId,
             ReactionType = (CommentReactionType)e.ReactionType,
             CreatedTimestamp = e.CreatedTimestamp
@@ -360,10 +360,10 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     private static CommentRecord ToRecord(CommentEntity e)
         => new() {
             Id = e.Id,
-            ForEntityType = e.ForEntityType,
-            ForEntityId = e.ForEntityId,
-            FromEntityType = e.FromEntityType,
-            FromEntityId = e.FromEntityId,
+            SubjectEntityType = e.SubjectEntityType,
+            SubjectEntityId = e.SubjectEntityId,
+            ActorEntityType = e.ActorEntityType,
+            ActorEntityId = e.ActorEntityId,
             TenantId = e.TenantId,
             Context = e.Context,
             CreatedAt = e.CreatedAt,

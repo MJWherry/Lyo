@@ -1,4 +1,5 @@
 using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.People.Models;
 using Lyo.People.Postgres.Database;
@@ -22,7 +23,7 @@ public sealed class PostgresPeopleStore : IPeopleStore
     public async Task<Person?> GetPersonByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Persons.AsNoTracking().Include(p => p.Sources).FirstOrDefaultAsync(p => p.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Persons.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : PeopleEntityMapper.ToPerson(entity);
     }
 
@@ -30,14 +31,11 @@ public sealed class PostgresPeopleStore : IPeopleStore
     public async Task<Person?> GetPersonBySourceAsync(EntityRef source, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var sourceRow = await context.PersonSources.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.SourceEntityType == source.EntityType && s.SourceEntityId == source.EntityId, ct)
+        var entity = await context.Persons.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.SourceEntityType == source.EntityType && p.SourceEntityId == source.EntityId, ct)
             .ConfigureAwait(false);
 
-        if (sourceRow == null)
-            return null;
-
-        return await GetPersonByIdAsync(sourceRow.PersonId, ct).ConfigureAwait(false);
+        return entity == null ? null : PeopleEntityMapper.ToPerson(entity);
     }
 
     /// <inheritdoc />
@@ -49,7 +47,7 @@ public sealed class PostgresPeopleStore : IPeopleStore
         var mapped = PeopleEntityMapper.ToPersonEntity(person);
         PersonEntity entity;
         if (person.Id != default) {
-            entity = await context.Persons.Include(p => p.Sources).FirstOrDefaultAsync(p => p.Id == person.Id, ct).ConfigureAwait(false) ?? mapped;
+            entity = await context.Persons.FirstOrDefaultAsync(p => p.Id == person.Id, ct).ConfigureAwait(false) ?? mapped;
             if (entity.Id == mapped.Id)
                 context.Entry(entity).CurrentValues.SetValues(mapped);
             else {
@@ -63,8 +61,7 @@ public sealed class PostgresPeopleStore : IPeopleStore
         }
 
         person.Id = entity.Id;
-        context.PersonSources.RemoveRange(await context.PersonSources.Where(s => s.PersonId == entity.Id).ToListAsync(ct).ConfigureAwait(false));
-        PeopleEntityMapper.ApplyPersonSources(entity, person.Sources);
+        EntitySourceMapping.ApplySource(entity, person.Source);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 }

@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.QRCode.Payloads;
 
 /// <summary>Discriminator for structured QR payloads (UI presets and factory helpers).</summary>
-[DebuggerDisplay("QrPayloadKind.{ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public enum QrPayloadKind
 {
     /// <summary>Arbitrary text; <see cref="PlainTextQrPayload" />.</summary>

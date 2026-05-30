@@ -1,8 +1,7 @@
 # Lyo.Comment
 
 Abstractions for attaching threaded, reactable comments to any entity. Each
-comment carries a **For** entity (what the comment is about), a **From** entity
-(the author), optional **ReplyToCommentId** for threads, and cached
+comment carries a **subject** (what it is about), an **actor** (author), optional **ReplyToCommentId** for threads, and cached
 like/dislike counters maintained via the reaction methods.
 
 ## Surface
@@ -13,7 +12,7 @@ like/dislike counters maintained via the reaction methods.
 
 - `SaveAsync(CommentRecord comment, CancellationToken ct = default)` — insert
   or update. When `comment.Id` matches an existing active row, that row's
-  `ForEntity`, `FromEntity`, `Content`, and `ReplyToCommentId` are updated and
+  subject/actor endpoints, `Content`, and `ReplyToCommentId` are updated and
   `IsEdited` is forced to `true`; otherwise a new row is inserted (and an `Id`
   is generated if `Id == default`).
 - `GetByIdAsync(Guid id, CancellationToken ct = default)` — single comment by
@@ -66,8 +65,7 @@ public static EntityRef ForComment(Guid commentId)
 
 ### `CommentRecord`
 
-Derives from `EntityRefRow` (standard `For*` / `From*` / `TenantId` /
-`Context` / `Visibility` / lifecycle columns). Comment-specific fields:
+Derives from **`EntityRelationRow`** (subject/actor + `TenantId` / `Context` / `Visibility` / lifecycle; DB `for_entity_*` / `from_entity_*`). Comment-specific fields:
 
 - `Content` — comment body.
 - `ReplyToCommentId` — parent comment id when this is a reply, `null` for
@@ -80,9 +78,7 @@ Derives from `EntityRefRow` (standard `For*` / `From*` / `TenantId` /
 
 ### `CommentReactionRecord`
 
-Standalone row (not an `EntityRefRow`) that stores `(Id, ForEntityType,
-ForEntityId, FromEntityType, FromEntityId, ReactionType, CreatedTimestamp)`.
-`ForEntity` is always the parent comment (`EntityType == "Comment"`).
+Standalone row (not **`EntityRelationRow`**) with subject/actor columns (`SubjectEntityType` / `SubjectEntityId` → parent comment; `ActorEntityType` / `ActorEntityId` → reactor; DB `for_entity_*` / `from_entity_*`), plus `ReactionType` and `CreatedTimestamp`.
 
 ## Related projects
 

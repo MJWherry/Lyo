@@ -167,19 +167,20 @@ public sealed class ComicEnrichmentService
         var favoriteCountsTask = _favoriteStore.GetFavoriteCountsForEntitiesAsync(SeriesEntityType, seriesGuids, ct: ct);
         var favoritedTask = callerRef.HasValue ? QueryFavoritedSeriesIdsAsync(callerRef.Value, seriesGuids, ct) : Task.FromResult(new HashSet<Guid>());
         await Task.WhenAll(tagsTask, ratingsTask, commentsTask, favoriteCountsTask, favoritedTask).ConfigureAwait(false);
-        var tagsByEntityId = (await tagsTask).GroupBy(t => t.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
-        var ratingsByEntityId = (await ratingsTask).GroupBy(r => r.ForEntityId).ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
-        var commentCountsByEntityId = (await commentsTask).GroupBy(c => c.ForEntityId).ToDictionary(static g => g.Key, static g => g.Count());
+        var tagsByEntityId = (await tagsTask).GroupBy(t => t.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Select(x => x.Name).OrderBy(n => n).ToList());
+        var ratingsByEntityId = (await ratingsTask).GroupBy(r => r.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Select(ToRatingRecord).ToList());
+        var commentCountsByEntityId = (await commentsTask).GroupBy(c => c.SubjectEntityId).ToDictionary(static g => g.Key, static g => g.Count());
         var favoriteCounts = await favoriteCountsTask;
         var favoritedLookup = await favoritedTask;
         var results = new ComicSeriesRes[items.Count];
         for (var i = 0; i < items.Count; i++) {
             var series = items[i];
-            tagsByEntityId.TryGetValue(series.Id, out var tagNames);
+            var seriesId = series.Id.ToString();
+            tagsByEntityId.TryGetValue(seriesId, out var tagNames);
             tagNames ??= [];
-            ratingsByEntityId.TryGetValue(series.Id, out var ratings);
+            ratingsByEntityId.TryGetValue(seriesId, out var ratings);
             ratings ??= [];
-            var commentCount = commentCountsByEntityId.GetValueOrDefault(series.Id);
+            var commentCount = commentCountsByEntityId.GetValueOrDefault(seriesId);
             var favoriteCount = favoriteCounts.TryGetValue(series.Id, out var fc) ? fc : 0;
             bool? isFavorited = callerRef.HasValue ? favoritedLookup.Contains(series.Id) : null;
             results[i] = ToSeriesRes(series, tagNames, ratings, commentCount, favoriteCount, isFavorited);
@@ -202,16 +203,16 @@ public sealed class ComicEnrichmentService
                 var req = QueryReqBuilder.New()
                     .For<TagEntity>()
                     .AddWhere(w => {
-                        w.AddEquals(t => t.ForEntityType, SeriesEntityType);
-                        w.In(t => t.ForEntityId, chunk);
+                        w.AddEquals(t => t.SubjectEntityType, SeriesEntityType);
+                        w.In(t => t.SubjectEntityId, chunk.Select(g => g.ToString()).ToArray());
                     })
-                    .AddSort(e => e.ForEntityId, SortDirection.Asc)
+                    .AddSort(e => e.SubjectEntityId, SortDirection.Asc)
                     .AddSort(e => e.Name, SortDirection.Asc)
                     .Done()
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _tagQueryService.Query<TagEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
+                return _tagQueryService.Query<TagEntity>(req, e => e.SubjectEntityId, SortDirection.Asc, ct);
             }, ct);
 
     private Task<List<RatingEntity>> QueryRatingEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
@@ -220,15 +221,15 @@ public sealed class ComicEnrichmentService
                 var req = QueryReqBuilder.New()
                     .For<RatingEntity>()
                     .AddWhere(w => {
-                        w.AddEquals(r => r.ForEntityType, SeriesEntityType);
-                        w.In(r => r.ForEntityId, chunk);
+                        w.AddEquals(r => r.SubjectEntityType, SeriesEntityType);
+                        w.In(r => r.SubjectEntityId, chunk.Select(g => g.ToString()).ToArray());
                     })
-                    .AddSort(e => e.ForEntityId, SortDirection.Asc)
+                    .AddSort(e => e.SubjectEntityId, SortDirection.Asc)
                     .Done()
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _ratingQueryService.Query<RatingEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
+                return _ratingQueryService.Query<RatingEntity>(req, e => e.SubjectEntityId, SortDirection.Asc, ct);
             }, ct);
 
     private Task<List<CommentEntity>> QueryTopLevelCommentEntitiesForSeriesAsync(Guid[] distinctIds, CancellationToken ct)
@@ -237,43 +238,45 @@ public sealed class ComicEnrichmentService
                 var req = QueryReqBuilder.New()
                     .For<CommentEntity>()
                     .AddWhere(w => {
-                        w.AddEquals(c => c.ForEntityType, SeriesEntityType);
-                        w.In(c => c.ForEntityId, chunk);
+                        w.AddEquals(c => c.SubjectEntityType, SeriesEntityType);
+                        w.In(c => c.SubjectEntityId, chunk.Select(g => g.ToString()).ToArray());
                         w.AddEquals(c => c.ReplyToCommentId, null);
                     })
-                    .AddSort(e => e.ForEntityId, SortDirection.Asc)
+                    .AddSort(e => e.SubjectEntityId, SortDirection.Asc)
                     .Done()
                     .SetPagination(0, _maxQueryPageSize)
                     .Build();
 
-                return _commentQueryService.Query<CommentEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct);
+                return _commentQueryService.Query<CommentEntity>(req, e => e.SubjectEntityId, SortDirection.Asc, ct);
             }, ct);
 
     private async Task<HashSet<Guid>> QueryFavoritedSeriesIdsAsync(EntityRef caller, Guid[] distinctIds, CancellationToken ct)
     {
         var favorited = new HashSet<Guid>();
-        var appliedId = EntityRefPersistedGuid.RequirePersistedGuid(caller);
+        var appliedId = EntityRefPersistedGuid.PersistedEntityId(caller);
         foreach (var chunk in distinctIds.Chunk(IdInClauseChunkSize)) {
             var chunkArr = chunk.ToArray();
             var req = QueryReqBuilder.New()
                 .For<FavoriteEntity>()
                 .AddWhere(w => {
-                    w.AddEquals(f => f.ForEntityType, SeriesEntityType);
-                    w.In(f => f.ForEntityId, chunkArr);
-                    w.AddEquals(f => f.FromEntityType, caller.EntityType);
-                    w.AddEquals(f => f.FromEntityId, appliedId);
+                    w.AddEquals(f => f.SubjectEntityType, SeriesEntityType);
+                    w.In(f => f.SubjectEntityId, chunkArr.Select(g => g.ToString()).ToArray());
+                    w.AddEquals(f => f.ActorEntityType, caller.EntityType);
+                    w.AddEquals(f => f.ActorEntityId, appliedId);
                 })
-                .AddSort(e => e.ForEntityId, SortDirection.Asc)
+                .AddSort(e => e.SubjectEntityId, SortDirection.Asc)
                 .Done()
                 .SetPagination(0, _maxQueryPageSize)
                 .Build();
 
-            var res = await _favoriteQueryService.Query<FavoriteEntity>(req, e => e.ForEntityId, SortDirection.Asc, ct).ConfigureAwait(false);
+            var res = await _favoriteQueryService.Query<FavoriteEntity>(req, e => e.SubjectEntityId, SortDirection.Asc, ct).ConfigureAwait(false);
             if (!TryDrainQuery(res, "favorites(caller)", out var rows))
                 continue;
 
-            foreach (var row in rows)
-                favorited.Add(row.ForEntityId);
+            foreach (var row in rows) {
+                if (Guid.TryParse(row.SubjectEntityId, out var entityId))
+                    favorited.Add(entityId);
+            }
         }
 
         return favorited;
@@ -310,10 +313,10 @@ public sealed class ComicEnrichmentService
     private static RatingRecord ToRatingRecord(RatingEntity e)
         => new() {
             Id = e.Id,
-            ForEntityType = e.ForEntityType,
-            ForEntityId = e.ForEntityId,
-            FromEntityType = e.FromEntityType,
-            FromEntityId = e.FromEntityId,
+            SubjectEntityType = e.SubjectEntityType,
+            SubjectEntityId = e.SubjectEntityId,
+            ActorEntityType = e.ActorEntityType,
+            ActorEntityId = e.ActorEntityId,
             TenantId = e.TenantId,
             Context = e.Context,
             CreatedAt = e.CreatedAt,

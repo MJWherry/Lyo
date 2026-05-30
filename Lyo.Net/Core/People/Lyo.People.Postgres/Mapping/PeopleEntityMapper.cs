@@ -34,14 +34,15 @@ internal static class PeopleEntityMapper
             EmergencyContactPersonId = entity.EmergencyContactPersonId
         };
 
-        foreach (var source in entity.Sources)
-            person.Sources.Add(EntitySourceMapping.ToRecord(source));
+        person.Source = EntitySourceMapping.ToRecord(entity);
+        person.LocallyModifiedAt = entity.LocallyModifiedAt;
 
         return person;
     }
 
     public static PersonEntity ToPersonEntity(Person person)
-        => new() {
+    {
+        var entity = new PersonEntity {
             Id = person.Id == default ? Guid.NewGuid() : person.Id,
             NamePrefix = person.Name.Prefix?.GetDescription(),
             FirstName = person.Name.FirstName,
@@ -59,11 +60,13 @@ internal static class PeopleEntityMapper
             CurrentJobTitle = person.CurrentJobTitle,
             CurrentCompany = person.CurrentCompany,
             PlaceOfBirthAddressId = person.PlaceOfBirthAddressId,
-            EmergencyContactPersonId = person.EmergencyContactPersonId
+            EmergencyContactPersonId = person.EmergencyContactPersonId,
+            LocallyModifiedAt = person.LocallyModifiedAt
         };
 
-    public static void ApplyPersonSources(PersonEntity entity, IEnumerable<EntitySourceRecord> sources)
-        => EntitySourceMapping.SyncSources(entity.Sources, sources, entity.Id, parentId => new() { PersonId = parentId });
+        EntitySourceMapping.ApplySource(entity, person.Source);
+        return entity;
+    }
 
     private static NamePrefix? ParseNamePrefix(string? value) => string.IsNullOrWhiteSpace(value) ? null : Enum.TryParse<NamePrefix>(value, true, out var p) ? p : null;
 

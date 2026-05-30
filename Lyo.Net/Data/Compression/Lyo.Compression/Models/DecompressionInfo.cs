@@ -6,7 +6,7 @@ namespace Lyo.Compression.Models;
 /// <param name="CompressedSize">Input compressed length in bytes.</param>
 /// <param name="DecompressedSize">Output restored length in bytes.</param>
 /// <param name="DecompressionTimeMs">Wall-clock milliseconds spent decompressing.</param>
-[DebuggerDisplay("{ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public record DecompressionInfo(long CompressedSize, long DecompressedSize, long DecompressionTimeMs)
 {
     /// <summary>DecompressedSize / CompressedSize. Values > 1 indicate expansion.</summary>

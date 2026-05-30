@@ -37,6 +37,4 @@ public sealed class ContactAddressEntity
 
     [ForeignKey(nameof(AddressId))]
     public AddressEntity? Address { get; set; }
-
-    public ICollection<ContactAddressSourceEntity> Sources { get; set; } = [];
 }

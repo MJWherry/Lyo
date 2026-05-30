@@ -30,16 +30,13 @@ default Postgres implementation.
 
 ### `TagRecord`
 
-Derives from `Lyo.EntityReference.Models.EntityRefRow`, so every tag carries the
-canonical entity-ref columns (`ForEntityType`, `ForEntityId`, `FromEntityType`,
-`FromEntityId`, `TenantId`, audit/soft-delete fields, `Visibility`,
-`MetadataJson`, `Context`) plus tag-specific fields:
+Derives from **`EntityRelationRow`** (subject/actor endpoints + `TenantId`, lifecycle, `Visibility`, `MetadataJson`, `Context`; DB `for_entity_*` / `from_entity_*`) plus:
 
 - `Name` — the tag display value (e.g. `"urgent"`).
 - `TagType` — discriminator for the tag namespace; defaults to `"tag"`
   (`"category"`, `"label"`, etc. are common conventions).
 - `Slug` — optional URL-friendly slug; empty when none was supplied.
-- `ForEntity` / `FromEntity` — convenience `EntityRef` projections.
+- **`SubjectRef`** / **`ActorRef`** — `EntityRef` projections.
 
 ## Related projects
 

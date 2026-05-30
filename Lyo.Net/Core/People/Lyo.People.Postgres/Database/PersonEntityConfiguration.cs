@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +10,8 @@ public sealed class PersonEntityConfiguration : IEntityTypeConfiguration<PersonE
     {
         builder.ToTable("person");
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.ConfigureEntitySourceDerivedColumns();
+        builder.ConfigureEntitySourceColumns("person");
         builder.Property(e => e.NamePrefix).HasMaxLength(12).HasColumnName("name_prefix");
         builder.Property(e => e.FirstName).HasMaxLength(25).IsRequired().HasColumnName("first_name");
         builder.Property(e => e.MiddleName).HasMaxLength(25).HasColumnName("middle_name");

@@ -57,15 +57,15 @@ public class GeolocationPostgresExtensionsTests
             State = "CA",
             Zipcode = "94043",
             CountryCode = CountryCode.US,
-            Sources = { new(EntityRef.ForKey("GoogleMapsPlace", placeId), DateTime.UtcNow) }
+            Source = EntitySourceRecord.From(EntityRef.ForKey("GoogleMapsPlace", placeId), DateTime.UtcNow)
         };
 
         await store.SaveAddressAsync(address, TestContext.Current.CancellationToken);
         var loaded = await store.GetAddressByIdAsync(address.Id, TestContext.Current.CancellationToken);
         Assert.NotNull(loaded);
         Assert.Equal("Mountain View", loaded.City);
-        Assert.Single(loaded.Sources);
-        Assert.Equal(placeId, loaded.Sources.First().Source.EntityId);
+        Assert.NotNull(loaded.Source);
+        Assert.Equal(placeId, loaded.Source.Value.Source.EntityId);
         var bySource = await store.GetBySourceAsync(EntityRef.ForKey("GoogleMapsPlace", placeId), TestContext.Current.CancellationToken);
         Assert.NotNull(bySource);
         Assert.Equal(address.Id, bySource.Id);

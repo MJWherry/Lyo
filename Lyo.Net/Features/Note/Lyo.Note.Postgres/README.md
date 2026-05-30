@@ -3,7 +3,7 @@
 PostgreSQL implementation of `Lyo.Note` using Entity Framework Core. Persists
 notes to the `note.note` table (schema constant:
 `PostgresNoteOptions.Schema = "note"`) with migrations support. Notes have
-**For** (what the note is about) and **From** (who wrote it) entity references.
+**subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
 
 `PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth`
 (`HealthCheckName = "note-postgres"`), so registering the store also wires up a
@@ -74,10 +74,10 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ```csharp
 await noteStore.SaveAsync(new NoteRecord {
-    ForEntityType = "Docket",
-    ForEntityId = docketId,
-    FromEntityType = "User",
-    FromEntityId = userId,
+    SubjectEntityType = "Docket",
+    SubjectEntityId = docketId.ToString(),
+    ActorEntityType = "User",
+    ActorEntityId = userId.ToString(),
     Content = "Follow up next week"
 });
 
@@ -91,9 +91,7 @@ await noteStore.SaveAsync(existing);
 
 Schema name: `note` (`PostgresNoteOptions.Schema`).
 
-- **note.note** — derived from `EntityRefRow`, so it includes `id` (uuid),
-  `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
-  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`, `created_at`,
+- **note.note** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`,
   `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`,
   `metadata` (jsonb), plus note-specific `content` and `updated_timestamp`.
 

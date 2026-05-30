@@ -6,7 +6,7 @@ using Lyo.Geolocation.Models.Coordinates;
 namespace Lyo.Geolocation.Models.Addresses;
 
 /// <summary>Unified address model that handles both US and international addresses</summary>
-public class Address : IEquatable<Address>, IHasEntitySources
+public class Address : IEquatable<Address>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the address</summary>
     public Guid Id { get; set; }
@@ -131,7 +131,10 @@ public class Address : IEquatable<Address>, IHasEntitySources
     }
 
     /// <summary>Import provenance (Google place, Endato hash, etc.).</summary>
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
 
     /// <summary>Gets formatted street address</summary>
     public string GetFormattedStreet()
@@ -273,7 +276,7 @@ public class Address : IEquatable<Address>, IHasEntitySources
     {
         var normalized = new Address {
             Id = Id,
-            Sources = Sources.ToList(),
+            Source = Source,
             HouseNumber = HouseNumber?.Trim(),
             StreetPreDirection = StreetPreDirection?.Trim(),
             StreetName = StreetName?.Trim(),
@@ -358,7 +361,7 @@ public class Address : IEquatable<Address>, IHasEntitySources
 
     private static string? NormalizeCity(string? city)
     {
-        if (string.IsNullOrEmpty(city))
+        if (city.IsNullOrEmpty())
             return city;
 
         // Capitalize first letter of each word
@@ -369,7 +372,7 @@ public class Address : IEquatable<Address>, IHasEntitySources
     public string GetCanonicalForm() => Normalize().GetFormattedAddress(AddressFormat.SingleLine).ToUpperInvariant();
 
     /// <summary>Checks if this address is similar to another (within tolerance)</summary>
-    public bool IsSimilarTo(Address other, double toleranceMeters = 100)
+    public bool IsSimilarTo(Address? other, double toleranceMeters = 100)
     {
         if (other == null)
             return false;

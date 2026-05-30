@@ -121,4 +121,23 @@ public class TenancyResolverTests
         var global = new EntityRefOptions { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = GlobalDefault };
         Assert.Throws<ArgumentNullException>(() => TenancyResolver.Resolve(null, feature, global));
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void MultiTenantOptional_ReturnsCallerOrNull(bool hasCaller)
+    {
+        var feature = new TenancyOptions { Mode = TenancyMode.MultiTenantOptional };
+        var global = new EntityRefOptions { DefaultTenantId = GlobalDefault };
+        var result = TenancyResolver.Resolve(hasCaller ? CallerTenant : null, feature, global);
+        Assert.Equal(hasCaller ? CallerTenant : null, result);
+    }
+
+    [Fact]
+    public void MultiTenantOptional_EmptyCaller_ReturnsNull()
+    {
+        var feature = new TenancyOptions { Mode = TenancyMode.MultiTenantOptional };
+        var global = new EntityRefOptions { DefaultTenantId = GlobalDefault };
+        Assert.Null(TenancyResolver.Resolve(Guid.Empty, feature, global));
+    }
 }

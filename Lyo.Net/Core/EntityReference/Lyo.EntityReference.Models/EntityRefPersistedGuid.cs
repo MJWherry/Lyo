@@ -17,7 +17,10 @@ public static class EntityRefPersistedGuid
         return Guid.TryParse(entityRef.EntityId.Trim(), out guid);
     }
 
-    /// <summary>Returns the GUID backing <paramref name="entityRef" /> for Option A stores, or throws <see cref="EntityRefPersistenceException" />.</summary>
+    /// <summary>Returns the persisted id string for <paramref name="entityRef" />.</summary>
+    public static string PersistedEntityId(EntityRef entityRef) => entityRef.EntityId;
+
+    /// <summary>Returns the GUID backing <paramref name="entityRef" /> when the id is a single Guid string, or throws.</summary>
     /// <param name="entityRef">Reference to validate.</param>
     /// <returns>The parsed <see cref="Guid" />.</returns>
     /// <exception cref="EntityRefPersistenceException"><see cref="EntityRef.EntityId" /> is not exactly one valid GUID (for example composite or malformed text).</exception>

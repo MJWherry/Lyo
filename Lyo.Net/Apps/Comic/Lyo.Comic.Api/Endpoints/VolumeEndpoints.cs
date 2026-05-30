@@ -82,10 +82,10 @@ public static class VolumeEndpoints
     {
         var record = new RatingRecord {
             Id = Guid.NewGuid(),
-            ForEntityType = EntityType,
-            ForEntityId = id,
-            FromEntityType = req.FromEntityType,
-            FromEntityId = Guid.Parse(req.FromEntityId),
+            SubjectEntityType = EntityType,
+            SubjectEntityId = id.ToString(),
+            ActorEntityType = req.ActorEntityType,
+            ActorEntityId = req.ActorEntityId,
             Subject = req.Subject,
             Title = req.Title,
             Value = req.Value,
@@ -106,10 +106,10 @@ public static class VolumeEndpoints
     {
         var record = new CommentRecord {
             Id = Guid.NewGuid(),
-            ForEntityType = EntityType,
-            ForEntityId = id,
-            FromEntityType = req.FromEntityType,
-            FromEntityId = Guid.Parse(req.FromEntityId),
+            SubjectEntityType = EntityType,
+            SubjectEntityId = id.ToString(),
+            ActorEntityType = req.ActorEntityType,
+            ActorEntityId = req.ActorEntityId,
             Content = req.Content,
             ReplyToCommentId = req.ReplyToCommentId
         };
@@ -122,10 +122,10 @@ public static class VolumeEndpoints
     {
         var record = new FavoriteRecord {
             Id = Guid.NewGuid(),
-            ForEntityType = EntityType,
-            ForEntityId = id,
-            FromEntityType = req.FromEntityType,
-            FromEntityId = Guid.Parse(req.FromEntityId)
+            SubjectEntityType = EntityType,
+            SubjectEntityId = id.ToString(),
+            ActorEntityType = req.ActorEntityType,
+            ActorEntityId = req.ActorEntityId
         };
 
         await favoriteStore.SaveAsync(record, null, null, ct);
@@ -134,7 +134,7 @@ public static class VolumeEndpoints
 
     private static async Task<IResult> RemoveFavorite(Guid id, [FromBody] RemoveFavoriteReq req, IFavoriteStore favoriteStore, CancellationToken ct = default)
     {
-        await favoriteStore.DeleteAsync(EntityRef.ForGuid(EntityType, id), EntityRef.ForGuid(req.FromEntityType, Guid.Parse(req.FromEntityId)), ct: ct);
+        await favoriteStore.DeleteAsync(EntityRef.ForGuid(EntityType, id), EntityRef.ForGuid(req.ActorEntityType, Guid.Parse(req.ActorEntityId)), ct: ct);
         return Results.NoContent();
     }
 }

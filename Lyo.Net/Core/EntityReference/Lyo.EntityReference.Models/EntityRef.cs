@@ -19,7 +19,7 @@ namespace Lyo.EntityReference.Models;
 /// </remarks>
 /// <param name="EntityType">Logical entity kind; stored in <see cref="EntityType" />.</param>
 /// <param name="EntityId">Identifier string; stored in <see cref="EntityId" />.</param>
-[DebuggerDisplay("{EntityType,nq}: {EntityId,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct EntityRef(string EntityType, string EntityId)
 {
     /// <summary>Separator for <see cref="ToOpaqueToken" /> and <see cref="TryParseOpaque" />.</summary>
@@ -40,7 +40,7 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     /// <param name="entity">Non-null instance to read keys from.</param>
     /// <param name="selector">Returns a single key, a non-string <see cref="IEnumerable" /> of keys, or an <c>object[]</c> of keys.</param>
     /// <returns>An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.</returns>
-    /// <example>EntityRef.For(docket, d => d.Id) or EntityRef.For(order, o => new object[] { o.OrderId, o.LineId }).</example>
+    /// <example>EntityRef.For(docket, d => d.Id) or EntityRef.For(order, o => [o.OrderId, o.LineId]).</example>
     public static EntityRef For<T>(T entity, Func<T, object?> selector)
         where T : class
     {
@@ -48,14 +48,28 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
         ArgumentHelpers.ThrowIfNull(selector);
         var key = selector(entity);
         ArgumentHelpers.ThrowIfNull(key);
-        var keys = key switch {
-            object[] arr => arr,
-            IEnumerable e and not string => e.Cast<object>().ToArray(),
-            var _ => [key]
-        };
+        return For<T>(NormalizeKeys(key));
+    }
 
+    /// <summary>Creates a reference from an entity instance using a selector that returns one or more keys.</summary>
+    /// <typeparam name="T">CLR type used to resolve the logical entity type name.</typeparam>
+    /// <param name="entity">Non-null instance to read keys from.</param>
+    /// <param name="selector">Returns key segments, including via collection expressions (e.g. <c>e => [e.Id, e.SecondId]</c>).</param>
+    /// <returns>An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.</returns>
+    public static EntityRef For<T>(T entity, Func<T, object?[]> selector)
+        where T : class
+    {
+        ArgumentHelpers.ThrowIfNull(entity);
+        ArgumentHelpers.ThrowIfNull(selector);
+        var keys = selector(entity) ?? throw new ArgumentNullException(nameof(selector));
         return For<T>(keys);
     }
+
+    /// <summary>Creates a reference using the logical type of <typeparamref name="T" /> and a single <see cref="Guid" /> key.</summary>
+    /// <typeparam name="T">CLR type used to resolve the stored entity type discriminator.</typeparam>
+    /// <param name="entityId">Identifier stored using the GUID's default string format.</param>
+    /// <returns>A new <see cref="EntityRef" />.</returns>
+    public static EntityRef For<T>(Guid entityId) => For<T>((object)entityId);
 
     /// <summary>
     /// Creates a reference using the logical or CLR type name of <typeparamref name="T" /> (see <see cref="EntityRefLogicalTypeAttribute" />) and the given key(s). Multiple keys
@@ -66,10 +80,10 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     /// <returns>A new <see cref="EntityRef" />.</returns>
     /// <exception cref="ArgumentException">A key is null or empty after <see cref="object.ToString" />.</exception>
     /// <example>Pass one Guid or string key, or several keys to build a composite EntityId (segments ordered lexically).</example>
-    public static EntityRef For<T>(params object[] keys)
+    public static EntityRef For<T>(params object?[] keys)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(keys);
-        var ordered = keys.Select((k, i) => k.ToString() is { Length: > 0 } s ? s : throw new ArgumentException($"Key at index {i} cannot be null or empty.", nameof(keys)))
+        var ordered = keys.Select((k, i) => k?.ToString() is { Length: > 0 } s ? s : throw new ArgumentException($"Key at index {i} cannot be null or empty.", nameof(keys)))
             .OrderBy(s => s, StringComparer.Ordinal)
             .ToArray();
 
@@ -129,6 +143,11 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     /// <returns>Type and id separated by <c>": "</c>.</returns>
     public override string ToString() => $"{EntityType}: {EntityId}";
 
+    /// <summary>Resolves the persisted entity type name for <typeparamref name="T" /> using <see cref="EntityRefLogicalTypeAttribute" /> or CLR metadata.</summary>
+    /// <typeparam name="T">CLR type whose logical name is needed.</typeparam>
+    /// <returns>Stable logical name or CLR full name / short name.</returns>
+    public static string LogicalTypeName<T>() => ResolveLogicalType(typeof(T));
+
     /// <summary>Resolves the persisted entity type name for <paramref name="type" /> using <see cref="EntityRefLogicalTypeAttribute" /> or CLR metadata.</summary>
     /// <param name="type">CLR type used when constructing references via <see cref="For{T}(object[])" />.</param>
     /// <returns>Stable logical name or CLR full name / short name.</returns>
@@ -141,4 +160,11 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
 
                 return t.FullName ?? t.Name;
             });
+
+    private static object[] NormalizeKeys(object key)
+        => key switch {
+            object[] arr => arr,
+            IEnumerable e and not string => e.Cast<object>().ToArray(),
+            var _ => [key]
+        };
 }

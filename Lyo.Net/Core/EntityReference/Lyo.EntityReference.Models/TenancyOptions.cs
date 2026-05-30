@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.EntityReference.Models;
 
 /// <summary>Per-feature tenancy configuration. Each property is nullable so feature options can opt to inherit from <see cref="EntityRefOptions" />.</summary>
-[DebuggerDisplay("Mode={Mode}, DefaultTenantId={DefaultTenantId}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class TenancyOptions
 {
     /// <summary>Override the per-feature tenancy mode. When <see langword="null" /> the feature inherits <see cref="EntityRefOptions.Mode" />.</summary>

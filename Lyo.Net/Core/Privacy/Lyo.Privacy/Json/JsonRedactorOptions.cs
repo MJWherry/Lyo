@@ -5,7 +5,7 @@ using Lyo.Privacy.Enums;
 namespace Lyo.Privacy.Json;
 
 /// <summary>Options for <see cref="JsonRedactor" />.</summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JsonRedactorOptions
 {
     public string Placeholder { get; set; } = "[redacted]";
@@ -21,8 +21,6 @@ public sealed class JsonRedactorOptions
 
     /// <summary>Optional stable label for metrics (tag <c>policy</c>) and <see cref="RedactionResult.PolicyName" />.</summary>
     public string? PolicyName { get; set; }
-
-    private string DebuggerDisplay => $"JsonRedactorOptions(policy={PolicyName ?? "∅"}, keys={SensitiveKeys.Count}, applyText={ApplyTextRulesToAllStringValues})";
 
     public static IReadOnlyDictionary<string, JsonKeyRedactionStrategy> DefaultSensitiveKeys { get; } =
         new Dictionary<string, JsonKeyRedactionStrategy>(StringComparer.OrdinalIgnoreCase) {

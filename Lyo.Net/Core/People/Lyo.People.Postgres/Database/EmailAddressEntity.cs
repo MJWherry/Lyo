@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using Lyo.EntityReference.Postgres.Database;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Entity for storing email addresses in PostgreSQL.</summary>
-public sealed class EmailAddressEntity
+public sealed class EmailAddressEntity : EntitySourceEntityBase
 {
     [Key]
     public Guid Id { get; set; }
@@ -20,6 +21,4 @@ public sealed class EmailAddressEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
-
-    public ICollection<EmailAddressSourceEntity> Sources { get; set; } = [];
 }

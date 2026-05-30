@@ -53,7 +53,7 @@ internal static class GoogleMapsMapper
         };
 
         if (!string.IsNullOrWhiteSpace(googleResult.PlaceId)) {
-            address.Sources.Add(new(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId), DateTime.UtcNow));
+            address.Source = EntitySourceRecord.From(EntityRef.ForKey(GoogleGeolocationSourceTypes.GoogleMapsPlace, googleResult.PlaceId), DateTime.UtcNow);
         }
 
         foreach (var component in addressComponents) {

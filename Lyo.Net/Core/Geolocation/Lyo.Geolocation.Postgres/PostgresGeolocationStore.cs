@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.EntityReference.Models;
+using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Postgres.Database;
@@ -24,7 +25,7 @@ public sealed class PostgresGeolocationStore : IGeolocationStore, IHealth
     public async Task<Address?> GetAddressByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.Addresses.AsNoTracking().Include(a => a.Sources).FirstOrDefaultAsync(a => a.Id == id, ct).ConfigureAwait(false);
+        var entity = await context.Addresses.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : AddressEntityMapper.ToModel(entity);
     }
 
@@ -32,14 +33,10 @@ public sealed class PostgresGeolocationStore : IGeolocationStore, IHealth
     public async Task<Address?> GetBySourceAsync(EntityRef source, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var sourceRow = await context.AddressSources.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.SourceEntityType == source.EntityType && s.SourceEntityId == source.EntityId, ct)
+        var entity = await context.Addresses.AsNoTracking()
+            .FirstOrDefaultAsync(a => a.SourceEntityType == source.EntityType && a.SourceEntityId == source.EntityId, ct)
             .ConfigureAwait(false);
 
-        if (sourceRow == null)
-            return null;
-
-        var entity = await context.Addresses.AsNoTracking().Include(a => a.Sources).FirstOrDefaultAsync(a => a.Id == sourceRow.AddressId, ct).ConfigureAwait(false);
         return entity == null ? null : AddressEntityMapper.ToModel(entity);
     }
 
@@ -51,7 +48,7 @@ public sealed class PostgresGeolocationStore : IGeolocationStore, IHealth
         var mapped = AddressEntityMapper.ToEntity(address);
         AddressEntity entity;
         if (address.Id != default) {
-            entity = await context.Addresses.Include(a => a.Sources).FirstOrDefaultAsync(a => a.Id == address.Id, ct).ConfigureAwait(false) ?? mapped;
+            entity = await context.Addresses.FirstOrDefaultAsync(a => a.Id == address.Id, ct).ConfigureAwait(false) ?? mapped;
             if (entity.Id == mapped.Id) {
                 context.Entry(entity).CurrentValues.SetValues(mapped);
                 if (mapped.Coordinates != null)
@@ -68,8 +65,7 @@ public sealed class PostgresGeolocationStore : IGeolocationStore, IHealth
         }
 
         address.Id = entity.Id;
-        context.AddressSources.RemoveRange(await context.AddressSources.Where(s => s.AddressId == entity.Id).ToListAsync(ct).ConfigureAwait(false));
-        AddressEntityMapper.ApplySources(entity, address.Sources);
+        EntitySourceMapping.ApplySource(entity, address.Source);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 

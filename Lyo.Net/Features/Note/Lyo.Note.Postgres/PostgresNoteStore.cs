@@ -53,16 +53,16 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     {
         ArgumentHelpers.ThrowIfNull(note);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(note.ForEntity);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(note.FromEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(note.SubjectRef);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(note.ActorRef);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (note.Id != default) {
             var existing = await context.Notes.WhereActive().WhereTenant(tenant).FirstOrDefaultAsync(n => n.Id == note.Id, ct).ConfigureAwait(false);
             if (existing != null) {
-                existing.ForEntityType = note.ForEntityType;
-                existing.ForEntityId = forId;
-                existing.FromEntityType = note.FromEntityType;
-                existing.FromEntityId = fromId;
+                existing.SubjectEntityType = note.SubjectEntityType;
+                existing.SubjectEntityId = forId;
+                existing.ActorEntityType = note.ActorEntityType;
+                existing.ActorEntityId = fromId;
                 existing.Content = note.Content;
                 await RunInterceptorsAsync(ModuleKey, tenant, EntityRefActionKind.BeforePersist, existing, ct).ConfigureAwait(false);
                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -73,10 +73,10 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
 
         var entity = new NoteEntity {
             Id = note.Id == default ? Guid.NewGuid() : note.Id,
-            ForEntityType = note.ForEntityType,
-            ForEntityId = forId,
-            FromEntityType = note.FromEntityType,
-            FromEntityId = fromId,
+            SubjectEntityType = note.SubjectEntityType,
+            SubjectEntityId = forId,
+            ActorEntityType = note.ActorEntityType,
+            ActorEntityId = fromId,
             TenantId = tenant,
             Content = note.Content,
             Visibility = string.IsNullOrWhiteSpace(note.Visibility) ? EntityRefVisibility.Private : note.Visibility,
@@ -103,11 +103,11 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
             .WhereTenant(tenant)
-            .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
+            .Where(n => n.SubjectEntityType == forEntity.EntityType && n.SubjectEntityId == forId)
             .OrderBy(n => n.CreatedAt)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -120,11 +120,11 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     {
         ArgumentHelpers.ThrowIfNull(fromEntity);
         var tenant = ResolveTenant(tenantId);
-        var fromId = EntityRefPersistedGuid.RequirePersistedGuid(fromEntity);
+        var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
             .WhereTenant(tenant)
-            .Where(n => n.FromEntityType == fromEntity.EntityType && n.FromEntityId == fromId)
+            .Where(n => n.ActorEntityType == fromEntity.EntityType && n.ActorEntityId == fromId)
             .OrderBy(n => n.CreatedAt)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -138,9 +138,9 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Notes.WhereActive().WhereTenant(tenant).Where(n => n.ForEntityType == forEntityType);
+        var query = context.Notes.WhereActive().WhereTenant(tenant).Where(n => n.SubjectEntityType == forEntityType);
         if (forEntityId.HasValue)
-            query = query.Where(n => n.ForEntityId == forEntityId.Value);
+            query = query.Where(n => n.SubjectEntityId == forEntityId.Value.ToString());
 
         var entities = await query.OrderBy(n => n.CreatedAt).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -165,11 +165,11 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         var tenant = ResolveTenant(tenantId);
-        var forId = EntityRefPersistedGuid.RequirePersistedGuid(forEntity);
+        var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entities = await context.Notes.WhereActive()
             .WhereTenant(tenant)
-            .Where(n => n.ForEntityType == forEntity.EntityType && n.ForEntityId == forId)
+            .Where(n => n.SubjectEntityType == forEntity.EntityType && n.SubjectEntityId == forId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
@@ -188,10 +188,10 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     private static NoteRecord ToRecord(NoteEntity e)
         => new() {
             Id = e.Id,
-            ForEntityType = e.ForEntityType,
-            ForEntityId = e.ForEntityId,
-            FromEntityType = e.FromEntityType,
-            FromEntityId = e.FromEntityId,
+            SubjectEntityType = e.SubjectEntityType,
+            SubjectEntityId = e.SubjectEntityId,
+            ActorEntityType = e.ActorEntityType,
+            ActorEntityId = e.ActorEntityId,
             TenantId = e.TenantId,
             Context = e.Context,
             CreatedAt = e.CreatedAt,

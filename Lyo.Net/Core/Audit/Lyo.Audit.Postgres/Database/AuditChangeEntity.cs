@@ -5,7 +5,7 @@ using Lyo.EntityReference.Postgres.Database;
 namespace Lyo.Audit.Postgres.Database;
 
 /// <summary>Entity for storing audit changes in PostgreSQL.</summary>
-public sealed class AuditChangeEntity : EntityRefOptionalFromStringAssociationBase
+public sealed class AuditChangeEntity : EntityRelationOptionalActorBase
 {
     /// <summary>Gets or sets the unique identifier (UUID).</summary>
     [Key]

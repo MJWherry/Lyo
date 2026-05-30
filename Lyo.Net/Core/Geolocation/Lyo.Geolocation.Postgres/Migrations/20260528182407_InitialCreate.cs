@@ -54,7 +54,12 @@ namespace Lyo.Geolocation.Postgres.Migrations
                     public_first_seen_date = table.Column<DateOnly>(type: "date", nullable: true),
                     geocode_confidence = table.Column<double>(type: "double precision", nullable: true),
                     metadata = table.Column<string>(type: "jsonb", nullable: true),
+                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    locally_modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -62,52 +67,18 @@ namespace Lyo.Geolocation.Postgres.Migrations
                     table.PrimaryKey("PK_address", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "address_source",
-                schema: "geolocation",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    address_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_address_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_address_source_address_address_id",
-                        column: x => x.address_id,
-                        principalSchema: "geolocation",
-                        principalTable: "address",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.CreateIndex(
-                name: "IX_address_source_address_id",
+                name: "uq_address_source",
                 schema: "geolocation",
-                table: "address_source",
-                column: "address_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_address_source_source_entity",
-                schema: "geolocation",
-                table: "address_source",
+                table: "address",
                 columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
+                unique: true,
+                filter: "\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "address_source",
-                schema: "geolocation");
-
             migrationBuilder.DropTable(
                 name: "address",
                 schema: "geolocation");

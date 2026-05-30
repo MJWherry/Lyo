@@ -38,24 +38,22 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
-                    b.Property<string>("ForEntityId")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_id");
 
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<string>("FromEntityId")
+                    b.Property<string>("ActorEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_id");
 
-                    b.Property<string>("FromEntityType")
+                    b.Property<string>("ActorEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_type");
@@ -80,7 +78,7 @@ namespace Lyo.Audit.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType")
+                    b.HasIndex("SubjectEntityType")
                         .HasDatabaseName("ix_audit_changes_for_entity_type");
 
                     b.HasIndex("TenantId")
@@ -89,10 +87,10 @@ namespace Lyo.Audit.Postgres.Migrations
                     b.HasIndex("Timestamp")
                         .HasDatabaseName("ix_audit_changes_timestamp");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "Timestamp")
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId", "Timestamp")
                         .HasDatabaseName("ix_audit_changes_for_entity_timestamp");
 
-                    b.HasIndex("FromEntityType", "FromEntityId")
+                    b.HasIndex("ActorEntityType", "ActorEntityId")
                         .HasDatabaseName("ix_audit_changes_from_entity");
 
                     b.ToTable("audit_changes", "audit");
@@ -114,24 +112,22 @@ namespace Lyo.Audit.Postgres.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("event_type");
 
-                    b.Property<string>("ForEntityId")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_id");
 
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
+                    b.Property<string>("SubjectEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<string>("FromEntityId")
+                    b.Property<string>("ActorEntityId")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_id");
 
-                    b.Property<string>("FromEntityType")
+                    b.Property<string>("ActorEntityType")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("from_entity_type");
@@ -172,10 +168,10 @@ namespace Lyo.Audit.Postgres.Migrations
                     b.HasIndex("EventType", "Timestamp")
                         .HasDatabaseName("ix_audit_events_event_type_timestamp");
 
-                    b.HasIndex("ForEntityType", "ForEntityId", "Timestamp")
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId", "Timestamp")
                         .HasDatabaseName("ix_audit_events_for_entity_timestamp");
 
-                    b.HasIndex("FromEntityType", "FromEntityId")
+                    b.HasIndex("ActorEntityType", "ActorEntityId")
                         .HasDatabaseName("ix_audit_events_from_entity");
 
                     b.ToTable("audit_events", "audit");

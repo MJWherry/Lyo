@@ -7,7 +7,7 @@ namespace Lyo.Profanity.Models;
 /// <param name="Length">The length of the matched text.</param>
 /// <param name="OriginalText">The original profane text that was matched.</param>
 /// <param name="Entry">The profanity entry that matched (id, tags, severity, etc.).</param>
-[DebuggerDisplay("{Entry.Id} at {Index}: \"{OriginalText}\"")]
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ProfanityMatch(int Index, int Length, string OriginalText, ProfanityEntry Entry)
 {
     /// <inheritdoc />

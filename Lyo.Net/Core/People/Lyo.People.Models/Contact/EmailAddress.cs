@@ -3,7 +3,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Base email address model containing the actual email address data</summary>
-public class EmailAddress : IEquatable<EmailAddress>, IHasEntitySources
+public class EmailAddress : IEquatable<EmailAddress>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the email address</summary>
     public Guid Id { get; set; }
@@ -24,7 +24,10 @@ public class EmailAddress : IEquatable<EmailAddress>, IHasEntitySources
     public bool Equals(EmailAddress? other) => other != null && string.Equals(Email, other.Email, StringComparison.OrdinalIgnoreCase);
 
     /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is EmailAddress other && Equals(other);

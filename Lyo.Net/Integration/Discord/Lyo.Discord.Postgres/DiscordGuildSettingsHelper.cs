@@ -31,8 +31,8 @@ public static class DiscordGuildSettingsHelper
         await store.SaveBindingAsync(
                 new() {
                     Key = Key,
-                    ForEntityType = r.EntityType,
-                    ForEntityId = r.EntityId,
+                    SubjectEntityType = r.EntityType,
+                    SubjectEntityId = r.EntityId,
                     Value = ConfigValue.From(defaults)
                 }, null, ct)
             .ConfigureAwait(false);

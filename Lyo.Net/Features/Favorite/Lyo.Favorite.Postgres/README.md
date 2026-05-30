@@ -3,8 +3,7 @@
 PostgreSQL implementation of `Lyo.Favorite` using Entity Framework Core.
 Persists favorites to the `favorite.favorite` table (schema constant:
 `PostgresFavoriteOptions.Schema = "favorite"`) with migrations support.
-Favorites have **For** (what is being favorited) and **From** (who favorited it)
-entity references. Duplicate active rows for the same
+Favorites have **subject** / **actor** (`for_entity_*` / `from_entity_*`). Duplicate active rows for the same
 `(tenant, ForEntity, FromEntity, context)` tuple are prevented by the
 `SaveAsync` idempotency check.
 
@@ -76,10 +75,10 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ```csharp
 await favoriteStore.SaveAsync(new FavoriteRecord {
-    ForEntityType = "Article",
-    ForEntityId = articleId,
-    FromEntityType = "User",
-    FromEntityId = userId
+    SubjectEntityType = "Article",
+    SubjectEntityId = articleId.ToString(),
+    ActorEntityType = "User",
+    ActorEntityId = userId.ToString()
 });
 
 var isFavorited = await favoriteStore.IsFavoritedAsync(
@@ -119,9 +118,7 @@ for the full policy matrix and `appsettings.json` snippet.
 
 Schema name: `favorite` (`PostgresFavoriteOptions.Schema`).
 
-- **favorite.favorite** — derived from `EntityRefRow`, so it includes
-  `id` (uuid), `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
-  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`,
+- **favorite.favorite** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`,
   `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
   `deleted_by_id`, and `metadata` (jsonb).
 

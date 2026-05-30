@@ -9,7 +9,7 @@ public sealed class ConfigDefinitionRecord
     public Guid Id { get; set; }
 
     /// <summary>Gets or sets the entity type this definition applies to.</summary>
-    public string ForEntityType { get; set; } = string.Empty;
+    public string SubjectEntityType { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the config key.</summary>
     public string Key { get; set; } = string.Empty;
@@ -48,7 +48,7 @@ public sealed class ConfigDefinitionRecord
     /// <summary>Validates that the configured default value matches the configured value type.</summary>
     public void Validate()
     {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForEntityType);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(SubjectEntityType);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(Key);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ForValueType);
         // Do not pass a single ThrowIf(condition, $"…{DefaultValue.TypeName}…"): the message is evaluated before ThrowIf runs, so DefaultValue null still dereferenced.

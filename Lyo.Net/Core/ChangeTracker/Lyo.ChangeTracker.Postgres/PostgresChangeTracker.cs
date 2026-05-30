@@ -83,7 +83,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Changes.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId)
+        var entities = await context.Changes.Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forEntity.EntityId)
             .OrderByDescending(c => c.Timestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -96,9 +96,9 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Changes.Where(c => c.ForEntityType == forEntityType);
+        var query = context.Changes.Where(c => c.SubjectEntityType == forEntityType);
         if (!string.IsNullOrWhiteSpace(forEntityId))
-            query = query.Where(c => c.ForEntityId == forEntityId);
+            query = query.Where(c => c.SubjectEntityId == forEntityId);
 
         var entities = await query.OrderByDescending(c => c.Timestamp).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
@@ -109,7 +109,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     {
         ArgumentHelpers.ThrowIfNull(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Changes.Where(c => c.ForEntityType == forEntity.EntityType && c.ForEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.Changes.Where(c => c.SubjectEntityType == forEntity.EntityType && c.SubjectEntityId == forEntity.EntityId).ToListAsync(ct).ConfigureAwait(false);
         if (entities.Count == 0)
             return;
 
@@ -144,10 +144,10 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
         return new() {
             Id = record.Id,
             Timestamp = record.Timestamp,
-            ForEntityType = record.ForEntity.EntityType,
-            ForEntityId = record.ForEntity.EntityId,
-            FromEntityType = record.FromEntity?.EntityType,
-            FromEntityId = record.FromEntity?.EntityId,
+            SubjectEntityType = record.ForEntity.EntityType,
+            SubjectEntityId = record.ForEntity.EntityId,
+            ActorEntityType = record.FromEntity?.EntityType,
+            ActorEntityId = record.FromEntity?.EntityId,
             TenantId = TenancyResolver.Resolve(record.TenantId, _featureTenancy, _entityRefOptions),
             ChangeType = record.ChangeType,
             Message = record.Message,
@@ -157,11 +157,11 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     }
 
     private static ChangeRecord ToRecord(ChangeEntryEntity entity)
-        => new(new(entity.ForEntityType, entity.ForEntityId), DeserializeDict(entity.OldValuesJson), DeserializeDict(entity.ChangedPropertiesJson)) {
+        => new(new(entity.SubjectEntityType, entity.SubjectEntityId), DeserializeDict(entity.OldValuesJson), DeserializeDict(entity.ChangedPropertiesJson)) {
             Id = entity.Id,
             Timestamp = entity.Timestamp,
-            FromEntity = !string.IsNullOrWhiteSpace(entity.FromEntityType) && !string.IsNullOrWhiteSpace(entity.FromEntityId)
-                ? new EntityRef(entity.FromEntityType, entity.FromEntityId)
+            FromEntity = !string.IsNullOrWhiteSpace(entity.ActorEntityType) && !string.IsNullOrWhiteSpace(entity.ActorEntityId)
+                ? new EntityRef(entity.ActorEntityType, entity.ActorEntityId)
                 : null,
             TenantId = entity.TenantId,
             ChangeType = entity.ChangeType,

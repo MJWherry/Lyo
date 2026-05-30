@@ -24,8 +24,8 @@ Contract for geocoding, routing, time zone, and distance operations (implementat
 Persistence boundary (implemented by [`PostgresGeolocationStore`](../Lyo.Geolocation.Postgres/PostgresGeolocationStore.cs)):
 
 - Canonical **`geolocation.address`** rows
-- **`geolocation.address_source`** — `EntityRef` provenance (`source_entity_type` + `source_entity_id` strings you define at import time)
-- **`GetBySourceAsync`** / **`SaveAddressAsync`**
+- **`geolocation.address_source`** — import provenance: **`source_entity_*`** + **`imported_at`** (owner `address_id` on parent); external type strings come from the importing app (e.g. `GoogleMapsPlace`)
+- **`GetBySourceAsync`** (matches **`source_entity_*`**) / **`SaveAddressAsync`** — parent **`Address`** implements **`IEntitySourceDerived`** (`Sources`, optional **`LocallyModifiedAt`**)
 
 Use [`Lyo.Cache`](../Cache/Lyo.Cache/README.md) in the host if you need query-key caching.
 

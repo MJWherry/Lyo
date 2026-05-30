@@ -68,10 +68,24 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnType("character varying(12)")
                         .HasColumnName("house_number");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("postal_code");
+
+                    b.Property<string>("SourceEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("source_entity_id");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("source_entity_type");
 
                     b.Property<string>("State")
                         .HasMaxLength(2)
@@ -137,55 +151,12 @@ namespace Lyo.People.Postgres.Migrations
                     b.HasIndex("CountryCode")
                         .HasDatabaseName("ix_address_country_code");
 
-                    b.ToTable("address", "people");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.AddressSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
-
                     b.HasIndex("SourceEntityType", "SourceEntityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_address_source_source_entity");
+                        .HasDatabaseName("uq_address_source")
+                        .HasFilter("\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
 
-                    b.ToTable("address_source", "people");
+                    b.ToTable("address", "people");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactAddressEntity", b =>
@@ -243,54 +214,6 @@ namespace Lyo.People.Postgres.Migrations
                         .HasDatabaseName("ix_contact_address_person_id");
 
                     b.ToTable("contact_address", "people");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactAddressSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ContactAddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("contact_address_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactAddressId");
-
-                    b.HasIndex("SourceEntityType", "SourceEntityId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_contact_address_source_source_entity");
-
-                    b.ToTable("contact_address_source", "people");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactEmailAddressEntity", b =>
@@ -354,54 +277,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.ToTable("contact_email_address", "people");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactEmailAddressSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ContactEmailAddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("contact_email_address_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactEmailAddressId");
-
-                    b.HasIndex("SourceEntityType", "SourceEntityId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_contact_email_address_source_source_entity");
-
-                    b.ToTable("contact_email_address_source", "people");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactPhoneNumberEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -459,54 +334,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.ToTable("contact_phone_number", "people");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactPhoneNumberSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ContactPhoneNumberId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("contact_phone_number_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactPhoneNumberId");
-
-                    b.HasIndex("SourceEntityType", "SourceEntityId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_contact_phone_number_source_source_entity");
-
-                    b.ToTable("contact_phone_number_source", "people");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.EmailAddressEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -524,10 +351,24 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("email");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
                     b.Property<string>("Label")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("label");
+
+                    b.Property<string>("SourceEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("source_entity_id");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("source_entity_type");
 
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
@@ -542,55 +383,12 @@ namespace Lyo.People.Postgres.Migrations
                     b.HasIndex("Email")
                         .HasDatabaseName("ix_email_address_email");
 
-                    b.ToTable("email_address", "people");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.EmailAddressSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("EmailAddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("email_address_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmailAddressId");
-
                     b.HasIndex("SourceEntityType", "SourceEntityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_email_address_source_source_entity");
+                        .HasDatabaseName("uq_email_address_source")
+                        .HasFilter("\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
 
-                    b.ToTable("email_address_source", "people");
+                    b.ToTable("email_address", "people");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.EmploymentEntity", b =>
@@ -805,6 +603,10 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnType("character varying(25)")
                         .HasColumnName("first_name");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
@@ -814,6 +616,10 @@ namespace Lyo.People.Postgres.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)")
                         .HasColumnName("last_name");
+
+                    b.Property<DateTime?>("LocallyModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locally_modified_at");
 
                     b.Property<string>("MaidenName")
                         .HasMaxLength(100)
@@ -879,6 +685,16 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnType("character varying(1)")
                         .HasColumnName("sex");
 
+                    b.Property<string>("SourceEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("source_entity_id");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("source_entity_type");
+
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -904,6 +720,11 @@ namespace Lyo.People.Postgres.Migrations
 
                     b.HasIndex("LastName", "FirstName")
                         .HasDatabaseName("ix_person_last_name_first_name");
+
+                    b.HasIndex("SourceEntityType", "SourceEntityId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_person_source")
+                        .HasFilter("\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
 
                     b.ToTable("person", "people");
                 });
@@ -965,54 +786,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.ToTable("person_relationship", "people");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.PersonSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<Guid>("PersonId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("person_id");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PersonId");
-
-                    b.HasIndex("SourceEntityType", "SourceEntityId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_person_source_source_entity");
-
-                    b.ToTable("person_source", "people");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.PhoneNumberEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1034,6 +807,10 @@ namespace Lyo.People.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
                     b.Property<string>("Label")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
@@ -1044,6 +821,16 @@ namespace Lyo.People.Postgres.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("number");
+
+                    b.Property<string>("SourceEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("source_entity_id");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("source_entity_type");
 
                     b.Property<string>("TechnologyType")
                         .HasMaxLength(20)
@@ -1063,55 +850,12 @@ namespace Lyo.People.Postgres.Migrations
                     b.HasIndex("Number")
                         .HasDatabaseName("ix_phone_number_number");
 
-                    b.ToTable("phone_number", "people");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.PhoneNumberSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<Guid>("PhoneNumberId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("phone_number_id");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PhoneNumberId");
-
                     b.HasIndex("SourceEntityType", "SourceEntityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_phone_number_source_source_entity");
+                        .HasDatabaseName("uq_phone_number_source")
+                        .HasFilter("\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
 
-                    b.ToTable("phone_number_source", "people");
+                    b.ToTable("phone_number", "people");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.SocialMediaProfileEntity", b =>
@@ -1174,17 +918,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.ToTable("social_media_profile", "people");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.AddressSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.AddressEntity", "Address")
-                        .WithMany("Sources")
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Address");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactAddressEntity", b =>
                 {
                     b.HasOne("Lyo.People.Postgres.Database.AddressEntity", "Address")
@@ -1202,17 +935,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("Address");
 
                     b.Navigation("Person");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactAddressSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.ContactAddressEntity", "ContactAddress")
-                        .WithMany("Sources")
-                        .HasForeignKey("ContactAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ContactAddress");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactEmailAddressEntity", b =>
@@ -1234,17 +956,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactEmailAddressSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.ContactEmailAddressEntity", "ContactEmailAddress")
-                        .WithMany("Sources")
-                        .HasForeignKey("ContactEmailAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ContactEmailAddress");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.ContactPhoneNumberEntity", b =>
                 {
                     b.HasOne("Lyo.People.Postgres.Database.PersonEntity", "Person")
@@ -1262,28 +973,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("Person");
 
                     b.Navigation("PhoneNumber");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactPhoneNumberSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.ContactPhoneNumberEntity", "ContactPhoneNumber")
-                        .WithMany("Sources")
-                        .HasForeignKey("ContactPhoneNumberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ContactPhoneNumber");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.EmailAddressSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.EmailAddressEntity", "EmailAddress")
-                        .WithMany("Sources")
-                        .HasForeignKey("EmailAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("EmailAddress");
                 });
 
             modelBuilder.Entity("Lyo.People.Postgres.Database.EmploymentEntity", b =>
@@ -1326,28 +1015,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.PersonSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.PersonEntity", "Person")
-                        .WithMany("Sources")
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Person");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.PhoneNumberSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.People.Postgres.Database.PhoneNumberEntity", "PhoneNumber")
-                        .WithMany("Sources")
-                        .HasForeignKey("PhoneNumberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PhoneNumber");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.SocialMediaProfileEntity", b =>
                 {
                     b.HasOne("Lyo.People.Postgres.Database.PersonEntity", "Person")
@@ -1359,31 +1026,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("Person");
                 });
 
-            modelBuilder.Entity("Lyo.People.Postgres.Database.AddressEntity", b =>
-                {
-                    b.Navigation("Sources");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactAddressEntity", b =>
-                {
-                    b.Navigation("Sources");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactEmailAddressEntity", b =>
-                {
-                    b.Navigation("Sources");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.ContactPhoneNumberEntity", b =>
-                {
-                    b.Navigation("Sources");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.EmailAddressEntity", b =>
-                {
-                    b.Navigation("Sources");
-                });
-
             modelBuilder.Entity("Lyo.People.Postgres.Database.PersonEntity", b =>
                 {
                     b.Navigation("ContactAddresses");
@@ -1391,13 +1033,6 @@ namespace Lyo.People.Postgres.Migrations
                     b.Navigation("ContactEmailAddresses");
 
                     b.Navigation("ContactPhoneNumbers");
-
-                    b.Navigation("Sources");
-                });
-
-            modelBuilder.Entity("Lyo.People.Postgres.Database.PhoneNumberEntity", b =>
-                {
-                    b.Navigation("Sources");
                 });
 #pragma warning restore 612, 618
         }

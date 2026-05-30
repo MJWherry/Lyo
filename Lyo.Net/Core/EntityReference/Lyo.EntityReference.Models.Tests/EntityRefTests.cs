@@ -24,6 +24,43 @@ public class EntityRefTests
     }
 
     [Fact]
+    public void For_WithEntityAndSelector_CollectionExpression_SingleKey_CreatesCorrectRef()
+    {
+        var docket = new TestDocket { Id = Guid.Parse("550e8400-e29b-41d4-a716-446655440000") };
+        var entityRef = EntityRef.For(docket, d => [d.Id]);
+        Assert.Equal(typeof(TestDocket).FullName, entityRef.EntityType);
+        Assert.Equal(docket.Id.ToString(), entityRef.EntityId);
+    }
+
+    [Fact]
+    public void For_WithEntityAndSelector_CollectionExpression_CompositeKeys_OrdersConsistently()
+    {
+        var order = new TestOrder { OrderId = "ord-1", LineId = "line-2" };
+        var entityRef = EntityRef.For(order, o => [o.OrderId, o.LineId]);
+        Assert.Equal("line-2:ord-1", entityRef.EntityId);
+    }
+
+    [Fact]
+    public void ForT_StringKey_CreatesCorrectRef()
+    {
+        var entityRef = EntityRef.For<TestEntity>("ext-123");
+        Assert.Equal(typeof(TestEntity).FullName, entityRef.EntityType);
+        Assert.Equal("ext-123", entityRef.EntityId);
+    }
+
+    [Fact]
+    public void LogicalTypeName_UsesFullTypeName()
+    {
+        Assert.Equal(typeof(TestEntity).FullName, EntityRef.LogicalTypeName<TestEntity>());
+    }
+
+    [Fact]
+    public void LogicalTypeName_Uses_EntityRefLogicalTypeAttribute_WhenPresent()
+    {
+        Assert.Equal("Stable.Order", EntityRef.LogicalTypeName<AttributedEntity>());
+    }
+
+    [Fact]
     public void For_WithEntityAndSelector_NullEntity_Throws()
     {
         TestDocket? docket = null;

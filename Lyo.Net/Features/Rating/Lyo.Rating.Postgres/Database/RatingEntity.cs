@@ -3,7 +3,7 @@ using Lyo.EntityReference.Postgres.Database;
 namespace Lyo.Rating.Postgres.Database;
 
 /// <summary>Entity for storing ratings in PostgreSQL.</summary>
-public sealed class RatingEntity : EntityRefEntityBase
+public sealed class RatingEntity : EntityRelationEntityBase
 {
     /// <summary>Optional subject axis.</summary>
     public string? Subject { get; set; }

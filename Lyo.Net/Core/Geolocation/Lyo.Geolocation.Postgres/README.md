@@ -10,7 +10,7 @@ PostgreSQL persistence for canonical geolocation data using Entity Framework Cor
 Schema **`geolocation`**:
 
 - **address** — Canonical normalized addresses (`Lyo.Geolocation.Models.Address`)
-- **address_source** — `EntityRef` provenance per import
+- **address_source** — provenance per import (`source_entity_*` + `imported_at`; owner `address_id`; lookup index on `source_entity_*`)
 
 There is **no** `geocode_cache` table.
 
@@ -25,8 +25,8 @@ services.AddPostgresGeolocationStoreFromConfiguration(configuration);
 Import flow (in your worker/API — not in this package):
 
 1. Call a vendor client (e.g. Google Maps) in a separate integration assembly.
-2. Map the response to `Address` and `EntitySourceRecord` rows.
-3. `await store.SaveAddressAsync(address, ct)` or `GetBySourceAsync` for idempotent ingest.
+2. Map to `Address` + `EntitySourceRecord.From(externalRef, importedAt)` on **`Sources`** (owner id set on save).
+3. `await store.SaveAddressAsync(address, ct)` or `GetBySourceAsync` (queries **`source_entity_*`**) for idempotent ingest.
 
 ## Migrations
 

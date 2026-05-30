@@ -19,7 +19,7 @@ public enum EntityRefActionKind
 }
 
 /// <summary>Payload passed to entity-ref interceptors.</summary>
-[DebuggerDisplay("{Kind}, Tenant={TenantId}, Module={ModuleKey,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EntityRefActionContext
 {
     /// <summary>Interceptor phase.</summary>

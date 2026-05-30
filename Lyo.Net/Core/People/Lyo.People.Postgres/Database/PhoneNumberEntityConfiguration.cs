@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -10,6 +11,7 @@ public sealed class PhoneNumberEntityConfiguration : IEntityTypeConfiguration<Ph
         builder.ToTable("phone_number");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.ConfigureEntitySourceColumns("phone_number");
         builder.Property(e => e.Number).HasMaxLength(20).IsRequired().HasColumnName("number");
         builder.Property(e => e.CountryCode).HasMaxLength(3).HasColumnName("country_code");
         builder.Property(e => e.CountryCodeString).HasMaxLength(10).HasColumnName("country_code_string");

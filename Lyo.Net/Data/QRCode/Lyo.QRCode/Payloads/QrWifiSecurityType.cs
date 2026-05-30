@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.QRCode.Payloads;
 
 /// <summary>Maps to the <c>T:</c> field in a <c>WIFI:</c> QR string (de‑facto Android/iOS grammar).</summary>
-[DebuggerDisplay("QrWifiSecurityType.{ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public enum QrWifiSecurityType
 {
     /// <summary>Open network (<c>T:nopass</c>).</summary>

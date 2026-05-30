@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.Web.Automation.Models;
 
 /// <summary>Engine-neutral cookie representation used by <see cref="Lyo.Web.Automation.Abstractions.IBrowserCookies" />.</summary>
-[DebuggerDisplay("{Name}={Value}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BrowserCookie
 {
     public string Name { get; init; } = "";

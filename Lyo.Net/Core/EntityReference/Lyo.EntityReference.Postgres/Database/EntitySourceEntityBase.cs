@@ -1,17 +1,23 @@
+using System.Diagnostics;
+
 namespace Lyo.EntityReference.Postgres.Database;
 
-/// <summary>EF base for <c>*_source</c> provenance child tables.</summary>
+/// <summary>Shared source provenance columns for parent rows (maps to <c>source_entity_*</c> / <c>imported_at</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class EntitySourceEntityBase
 {
-    public Guid Id { get; set; }
+    /// <summary>External source type discriminator.</summary>
+    public string? SourceEntityType { get; set; }
 
-    public string SourceEntityType { get; set; } = string.Empty;
+    /// <summary>External source identifier for <see cref="SourceEntityType" />.</summary>
+    public string? SourceEntityId { get; set; }
 
-    public string SourceEntityId { get; set; } = string.Empty;
+    /// <summary>When this row was imported from <see cref="SourceEntityType" /> / <see cref="SourceEntityId" />.</summary>
+    public DateTime? ImportedAt { get; set; }
 
-    public DateTime ImportedAt { get; set; }
-
-    public string? FromEntityType { get; set; }
-
-    public string? FromEntityId { get; set; }
+    /// <inheritdoc />
+    public override string ToString()
+        => string.IsNullOrEmpty(SourceEntityType)
+            ? $"{GetType().Name}: unsourced"
+            : $"{GetType().Name}: {SourceEntityType}/{SourceEntityId}, ImportedAt={ImportedAt}";
 }

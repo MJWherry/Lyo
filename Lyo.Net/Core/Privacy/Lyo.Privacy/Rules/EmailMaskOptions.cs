@@ -6,7 +6,7 @@ using Lyo.Privacy.Policy;
 namespace Lyo.Privacy.Rules;
 
 /// <summary>Configures partial email masking for <see cref="EmailRedactionRule" />.</summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EmailMaskOptions
 {
     /// <summary>Use <see cref="RedactionPolicy.Placeholder" /> for the full address.</summary>
@@ -54,11 +54,6 @@ public sealed class EmailMaskOptions
 
     /// <summary>When true, append everything from the first dot in the domain (e.g. <c>.example.com</c>) unchanged after the first label is masked.</summary>
     public bool PreserveDomainFromFirstDot { get; set; }
-
-    private string DebuggerDisplay
-        => UsePolicyPlaceholder
-            ? "EmailMaskOptions(Placeholder)"
-            : $"EmailMaskOptions(local↑{VisibleLocalPrefixLength}/↓{VisibleLocalSuffixLength}, @={PreserveAtSign}, domain↑{VisibleDomainPrefixLength}/↓{VisibleDomainSuffixLength}, host={PreserveEntireDomainHost}, fromDot={PreserveDomainFromFirstDot})";
 
     /// <summary>First local characters + full domain host.</summary>
     public static EmailMaskOptions PartialLocalPreserveDomain(int visibleLocalPrefixLength = 1)

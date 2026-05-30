@@ -3,7 +3,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.Rating;
 
 /// <summary>Represents a rating for an entity (canonical entity-ref row + rating fields).</summary>
-public sealed class RatingRecord : EntityRefRow
+public sealed class RatingRecord : EntityRelationRow
 {
     /// <summary>Optional subject (e.g. genre axis); null = general rating.</summary>
     public string? Subject { get; set; }
@@ -25,10 +25,4 @@ public sealed class RatingRecord : EntityRefRow
 
     /// <summary>Last update time (UTC).</summary>
     public DateTime? UpdatedTimestamp { get; set; }
-
-    /// <summary>Gets the entity reference for what is being rated.</summary>
-    public EntityRef ForEntity => EntityRef.ForGuid(ForEntityType, ForEntityId);
-
-    /// <summary>Gets the entity reference for who created the rating.</summary>
-    public EntityRef FromEntity => EntityRef.ForGuid(FromEntityType, FromEntityId);
 }

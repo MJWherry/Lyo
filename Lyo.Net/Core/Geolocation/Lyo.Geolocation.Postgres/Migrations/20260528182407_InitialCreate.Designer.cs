@@ -81,6 +81,10 @@ namespace Lyo.Geolocation.Postgres.Migrations
                         .HasColumnType("character varying(12)")
                         .HasColumnName("house_number");
 
+                    b.Property<DateTime?>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
                     b.Property<bool?>("IsDeliverable")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deliverable");
@@ -96,6 +100,10 @@ namespace Lyo.Geolocation.Postgres.Migrations
                     b.Property<DateOnly?>("LastReportedDate")
                         .HasColumnType("date")
                         .HasColumnName("last_reported_date");
+
+                    b.Property<DateTime?>("LocallyModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locally_modified_at");
 
                     b.Property<string>("MetadataJson")
                         .HasColumnType("jsonb")
@@ -119,6 +127,16 @@ namespace Lyo.Geolocation.Postgres.Migrations
                     b.Property<DateOnly?>("PublicFirstSeenDate")
                         .HasColumnType("date")
                         .HasColumnName("public_first_seen_date");
+
+                    b.Property<string>("SourceEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("source_entity_id");
+
+                    b.Property<string>("SourceEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("source_entity_type");
 
                     b.Property<string>("State")
                         .HasMaxLength(50)
@@ -200,71 +218,12 @@ namespace Lyo.Geolocation.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("address", "geolocation");
-                });
-
-            modelBuilder.Entity("Lyo.Geolocation.Postgres.Database.AddressSourceEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AddressId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("address_id");
-
-                    b.Property<string>("FromEntityId")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("from_entity_type");
-
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_at");
-
-                    b.Property<string>("SourceEntityId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("source_entity_id");
-
-                    b.Property<string>("SourceEntityType")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("source_entity_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
-
                     b.HasIndex("SourceEntityType", "SourceEntityId")
                         .IsUnique()
-                        .HasDatabaseName("ix_address_source_source_entity");
+                        .HasDatabaseName("uq_address_source")
+                        .HasFilter("\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
 
-                    b.ToTable("address_source", "geolocation");
-                });
-
-            modelBuilder.Entity("Lyo.Geolocation.Postgres.Database.AddressSourceEntity", b =>
-                {
-                    b.HasOne("Lyo.Geolocation.Postgres.Database.AddressEntity", "Address")
-                        .WithMany("Sources")
-                        .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Address");
-                });
-
-            modelBuilder.Entity("Lyo.Geolocation.Postgres.Database.AddressEntity", b =>
-                {
-                    b.Navigation("Sources");
+                    b.ToTable("address", "geolocation");
                 });
 #pragma warning restore 612, 618
         }

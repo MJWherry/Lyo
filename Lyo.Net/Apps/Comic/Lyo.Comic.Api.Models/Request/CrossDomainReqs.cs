@@ -16,9 +16,9 @@ public sealed class AddTagReq
 /// <summary>Request to add or update a rating on a comic entity.</summary>
 public sealed class AddRatingReq
 {
-    public string FromEntityType { get; set; } = string.Empty;
+    public string ActorEntityType { get; set; } = string.Empty;
 
-    public string FromEntityId { get; set; } = string.Empty;
+    public string ActorEntityId { get; set; } = string.Empty;
 
     /// <summary>Optional subject for the rating (e.g. "art", "story"). Null = general rating.</summary>
     public string? Subject { get; set; }
@@ -36,9 +36,9 @@ public sealed class AddRatingReq
 /// <summary>Request to add a comment to a comic entity.</summary>
 public sealed class AddCommentReq
 {
-    public string FromEntityType { get; set; } = string.Empty;
+    public string ActorEntityType { get; set; } = string.Empty;
 
-    public string FromEntityId { get; set; } = string.Empty;
+    public string ActorEntityId { get; set; } = string.Empty;
 
     public string Content { get; set; } = string.Empty;
 
@@ -49,15 +49,15 @@ public sealed class AddCommentReq
 /// <summary>Request to favorite a comic entity.</summary>
 public sealed class AddFavoriteReq
 {
-    public string FromEntityType { get; set; } = string.Empty;
+    public string ActorEntityType { get; set; } = string.Empty;
 
-    public string FromEntityId { get; set; } = string.Empty;
+    public string ActorEntityId { get; set; } = string.Empty;
 }
 
 /// <summary>Request to remove a favorite from a comic entity.</summary>
 public sealed class RemoveFavoriteReq
 {
-    public string FromEntityType { get; set; } = string.Empty;
+    public string ActorEntityType { get; set; } = string.Empty;
 
-    public string FromEntityId { get; set; } = string.Empty;
+    public string ActorEntityId { get; set; } = string.Empty;
 }

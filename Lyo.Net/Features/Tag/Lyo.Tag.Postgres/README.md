@@ -2,8 +2,7 @@
 
 PostgreSQL implementation of `Lyo.Tag` using Entity Framework Core. Persists
 tags to the `tag.tag` table (schema constant: `PostgresTagOptions.Schema = "tag"`)
-with migrations support. Tags carry **For** (what is tagged) and optional **From**
-(who applied the tag) entity references and are uniquely keyed by
+with migrations support. Tags carry **subject** / optional **actor** (`for_entity_*` / `from_entity_*`) and are uniquely keyed by
 `(for_entity_type, for_entity_id, name, tag_type, slug)` per tenant.
 
 `PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth`
@@ -96,7 +95,7 @@ await tagStore.RemoveAllTagsForEntityAsync(EntityRef.ForGuid("Docket", docketId)
 
 ## Schema
 
-- **tag.tag** – `id` (uuid), `for_entity_type`, `for_entity_id`, `tag`, `from_entity_type`, `from_entity_id`, `tenant_id` (uuid), `created_timestamp`
+- **tag.tag** – `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from **`EntityRelationEntityBase`**, plus tag-specific indexes
 - Unique index on (for_entity_type, for_entity_id, tag)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag

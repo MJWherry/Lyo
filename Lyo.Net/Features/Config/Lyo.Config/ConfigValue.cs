@@ -7,7 +7,7 @@ namespace Lyo.Config;
 public sealed class ConfigValue
 {
     /// <summary>
-    /// Gets or sets the CLR type name for JSON, same convention as <see cref="ConfigDefinitionRecord.ForEntityType" /> / <see cref="ConfigDefinitionRecord.ForValueType" />:
+    /// Gets or sets the CLR type name for JSON, same convention as <see cref="ConfigDefinitionRecord.SubjectEntityType" /> / <see cref="ConfigDefinitionRecord.ForValueType" />:
     /// <see cref="Type.FullName" /> (see <see cref="GetTypeName(System.Type)" />).
     /// </summary>
     public string TypeName { get; set; } = string.Empty;
@@ -75,7 +75,7 @@ public sealed class ConfigValue
     public static string GetTypeName<T>() => GetTypeName(typeof(T));
 
     /// <summary>
-    /// Returns the CLR type name for storage and for <see cref="ConfigDefinitionRecord.ForValueType" />, matching <see cref="ConfigDefinitionRecord.ForEntityType" />:
+    /// Returns the CLR type name for storage and for <see cref="ConfigDefinitionRecord.ForValueType" />, matching <see cref="ConfigDefinitionRecord.SubjectEntityType" />:
     /// <see cref="Type.FullName" />, then assembly-qualified name, then <see cref="Type.Name" />.
     /// </summary>
     public static string GetTypeName(Type type)

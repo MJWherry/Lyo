@@ -30,6 +30,16 @@ namespace Lyo.Comment.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ActorEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("from_entity_id");
+
+                    b.Property<string>("ActorEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("from_entity_type");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(8192)
@@ -66,26 +76,6 @@ namespace Lyo.Comment.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
-                    b.Property<Guid>("ForEntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("for_entity_id");
-
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("for_entity_type");
-
-                    b.Property<Guid>("FromEntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("from_entity_type");
-
                     b.Property<bool>("IsEdited")
                         .HasColumnType("boolean")
                         .HasColumnName("is_edited");
@@ -101,6 +91,16 @@ namespace Lyo.Comment.Postgres.Migrations
                     b.Property<Guid?>("ReplyToCommentId")
                         .HasColumnType("uuid")
                         .HasColumnName("reply_to_comment_id");
+
+                    b.Property<string>("SubjectEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("for_entity_id");
+
+                    b.Property<string>("SubjectEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("for_entity_type");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -133,11 +133,11 @@ namespace Lyo.Comment.Postgres.Migrations
                     b.HasIndex("TenantId", "Context")
                         .HasDatabaseName("ix_comment_tenant_context");
 
-                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId")
-                        .HasDatabaseName("ix_comment_tenant_for_entity");
-
-                    b.HasIndex("TenantId", "FromEntityType", "FromEntityId")
+                    b.HasIndex("TenantId", "ActorEntityType", "ActorEntityId")
                         .HasDatabaseName("ix_comment_tenant_from_entity");
+
+                    b.HasIndex("TenantId", "SubjectEntityType", "SubjectEntityId")
+                        .HasDatabaseName("ix_comment_tenant_for_entity");
 
                     b.ToTable("comment", "comment");
                 });
@@ -149,33 +149,33 @@ namespace Lyo.Comment.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ActorEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("from_entity_id");
+
+                    b.Property<string>("ActorEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("from_entity_type");
+
                     b.Property<DateTime>("CreatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_timestamp");
 
-                    b.Property<Guid>("ForEntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("for_entity_id");
-
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("for_entity_type");
-
-                    b.Property<Guid>("FromEntityId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("from_entity_id");
-
-                    b.Property<string>("FromEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("from_entity_type");
-
                     b.Property<int>("ReactionType")
                         .HasColumnType("integer")
                         .HasColumnName("reaction_type");
+
+                    b.Property<string>("SubjectEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("for_entity_id");
+
+                    b.Property<string>("SubjectEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("for_entity_type");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid")
@@ -183,16 +183,16 @@ namespace Lyo.Comment.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType", "ForEntityId")
-                        .HasDatabaseName("ix_comment_reaction_for_entity");
-
-                    b.HasIndex("ForEntityType", "ForEntityId", "FromEntityType", "FromEntityId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_comment_reaction_for_from");
-
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_comment_reaction_tenant")
                         .HasFilter("\"tenant_id\" IS NOT NULL");
+
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId")
+                        .HasDatabaseName("ix_comment_reaction_for_entity");
+
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId", "ActorEntityType", "ActorEntityId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_comment_reaction_for_from");
 
                     b.ToTable("comment_reaction", "comment");
                 });

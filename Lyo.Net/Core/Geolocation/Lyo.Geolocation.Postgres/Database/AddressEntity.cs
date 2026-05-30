@@ -1,15 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Lyo.EntityReference.Postgres.Database;
 using NpgsqlTypes;
 
 namespace Lyo.Geolocation.Postgres.Database;
 
 /// <summary>Canonical address row in the geolocation schema.</summary>
-public sealed class AddressEntity
+public sealed class AddressEntity : EntitySourceDerivedEntityBase
 {
-    [Key]
-    public Guid Id { get; set; }
-
     [MaxLength(12)]
     public string? HouseNumber { get; set; }
 
@@ -100,10 +98,4 @@ public sealed class AddressEntity
 
     [Column(TypeName = "jsonb")]
     public string? MetadataJson { get; set; }
-
-    public DateTime CreatedTimestamp { get; set; }
-
-    public DateTime? UpdatedTimestamp { get; set; }
-
-    public ICollection<AddressSourceEntity> Sources { get; set; } = [];
 }

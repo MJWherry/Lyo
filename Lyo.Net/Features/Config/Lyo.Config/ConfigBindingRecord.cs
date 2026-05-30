@@ -15,10 +15,10 @@ public sealed class ConfigBindingRecord
     public string Key { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the target entity type.</summary>
-    public string ForEntityType { get; set; } = string.Empty;
+    public string SubjectEntityType { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the target entity id (string — supports composite keys, e.g. Config app routes use <c>kind:id</c>).</summary>
-    public string ForEntityId { get; set; } = string.Empty;
+    public string SubjectEntityId { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the typed value bound to this entity.</summary>
     public ConfigValue Value { get; set; } = new();
@@ -30,5 +30,5 @@ public sealed class ConfigBindingRecord
     public DateTime? UpdatedTimestamp { get; set; }
 
     /// <summary>Gets the referenced entity.</summary>
-    public EntityRef ForEntity => EntityRef.ForKey(ForEntityType, ForEntityId);
+    public EntityRef ForEntity => EntityRef.ForKey(SubjectEntityType, SubjectEntityId);
 }

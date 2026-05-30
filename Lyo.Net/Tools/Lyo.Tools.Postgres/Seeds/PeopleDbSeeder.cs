@@ -38,19 +38,13 @@ public sealed class PeopleDbSeeder
         var faker = seed.HasValue ? new Faker { Random = new(seed.Value) } : new Faker();
         _logger.LogInformation("Seeding {Count} persons...", count);
         var persons = BuildPersons(faker, count);
-        db.Persons.AddRange(persons);
-        await db.SaveChangesAsync(ct);
         foreach (var person in persons) {
-            db.PersonSources.Add(
-                new() {
-                    Id = Guid.NewGuid(),
-                    PersonId = person.Id,
-                    SourceEntityType = PeopleSourceTypes.Seed,
-                    SourceEntityId = person.Id.ToString(),
-                    ImportedAt = DateTime.UtcNow
-                });
+            person.SourceEntityType = PeopleSourceTypes.Seed;
+            person.SourceEntityId = person.Id.ToString();
+            person.ImportedAt = DateTime.UtcNow;
         }
 
+        db.Persons.AddRange(persons);
         await db.SaveChangesAsync(ct);
         var phones = new List<(Guid personId, PhoneNumberEntity phone)>();
         var emails = new List<(Guid personId, EmailAddressEntity email)>();

@@ -56,24 +56,24 @@ namespace Lyo.Favorite.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
-                    b.Property<Guid>("ForEntityId")
-                        .HasColumnType("uuid")
+                    b.Property<string>("SubjectEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("for_entity_id");
 
-                    b.Property<string>("ForEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                    b.Property<string>("SubjectEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
                         .HasColumnName("for_entity_type");
 
-                    b.Property<Guid>("FromEntityId")
-                        .HasColumnType("uuid")
+                    b.Property<string>("ActorEntityId")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("from_entity_id");
 
-                    b.Property<string>("FromEntityType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                    b.Property<string>("ActorEntityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
                         .HasColumnName("from_entity_type");
 
                     b.Property<string>("MetadataJson")
@@ -104,13 +104,13 @@ namespace Lyo.Favorite.Postgres.Migrations
                     b.HasIndex("TenantId", "Context")
                         .HasDatabaseName("ix_favorite_tenant_context");
 
-                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId")
+                    b.HasIndex("TenantId", "SubjectEntityType", "SubjectEntityId")
                         .HasDatabaseName("ix_favorite_tenant_for_entity");
 
-                    b.HasIndex("TenantId", "FromEntityType", "FromEntityId")
+                    b.HasIndex("TenantId", "ActorEntityType", "ActorEntityId")
                         .HasDatabaseName("ix_favorite_tenant_from_entity");
 
-                    b.HasIndex("TenantId", "ForEntityType", "ForEntityId", "FromEntityType", "FromEntityId")
+                    b.HasIndex("TenantId", "SubjectEntityType", "SubjectEntityId", "ActorEntityType", "ActorEntityId")
                         .IsUnique()
                         .HasDatabaseName("uq_favorite_tenant_for_from_active")
                         .HasFilter("\"deleted_at\" IS NULL");

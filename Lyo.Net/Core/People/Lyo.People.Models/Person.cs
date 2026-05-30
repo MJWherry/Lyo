@@ -15,7 +15,7 @@ using Lyo.People.Models.Relationships;
 namespace Lyo.People.Models;
 
 /// <summary>Core person model representing an individual with contact info, demographics, and relationships</summary>
-public class Person : IHasEntitySources
+public class Person : IEntitySourceDerived
 {
     /// <summary>Unique identifier for the person</summary>
     public Guid Id { get; set; }
@@ -131,7 +131,10 @@ public class Person : IHasEntitySources
     public IDictionary<string, string> CustomFields { get; set; } = new Dictionary<string, string>();
 
     /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
 
     // Helper methods for addresses
     /// <summary>Gets the primary address for the person</summary>

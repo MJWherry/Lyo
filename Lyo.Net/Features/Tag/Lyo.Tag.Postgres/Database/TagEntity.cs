@@ -3,7 +3,7 @@ using Lyo.EntityReference.Postgres.Database;
 namespace Lyo.Tag.Postgres.Database;
 
 /// <summary>Entity for storing tags in PostgreSQL.</summary>
-public sealed class TagEntity : EntityRefEntityBase
+public sealed class TagEntity : EntityRelationEntityBase
 {
     /// <summary>Tag display value (e.g. "urgent").</summary>
     public string Name { get; set; } = string.Empty;

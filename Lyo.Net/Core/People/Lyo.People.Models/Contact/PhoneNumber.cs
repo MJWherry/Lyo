@@ -5,7 +5,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.People.Models.Contact;
 
 /// <summary>Base phone number model containing the actual phone number data</summary>
-public class PhoneNumber : IEquatable<PhoneNumber>, IHasEntitySources
+public class PhoneNumber : IEquatable<PhoneNumber>, IEntitySourceDerived
 {
     /// <summary>Unique identifier for the phone number</summary>
     public Guid Id { get; set; }
@@ -44,7 +44,10 @@ public class PhoneNumber : IEquatable<PhoneNumber>, IHasEntitySources
     }
 
     /// <inheritdoc />
-    public ICollection<EntitySourceRecord> Sources { get; set; } = new List<EntitySourceRecord>();
+    public EntitySourceRecord? Source { get; set; }
+
+    /// <inheritdoc />
+    public DateTime? LocallyModifiedAt { get; set; }
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is PhoneNumber other && Equals(other);

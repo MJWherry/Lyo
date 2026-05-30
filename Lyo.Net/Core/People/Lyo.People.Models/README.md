@@ -8,9 +8,7 @@ See [package layout](../../../docs/package-layout.md).
 ## Overview
 
 This package provides domain models for representing people, their contact information, relationships, employment history, and preferences. It integrates with
-`Lyo.Geolocation.Models` for address support. Internal rows live in **`people.*`** with parallel **`{entity}_source`** tables (`EntitySourceRecord` / [
-`PeopleSourceTypes`](PeopleSourceTypes.cs)) so imports from Endato (or any future provider) are traced without vendor-specific columns. Enriched locations may also be stored in [
-`geolocation.address`](../Geolocation/Lyo.Geolocation.Postgres/README.md); link across stores via `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs.
+`Lyo.Geolocation.Models` for address support. Internal rows live in **`people.*`** with parallel **`{entity}_source`** link tables ([`EntitySourceRecord`](../../EntityReference/Lyo.EntityReference.Models/EntitySourceRecord.cs) / [`PeopleSourceTypes`](PeopleSourceTypes.cs)): **`source_entity_*`** + **`imported_at`** (owner via parent FK). Aggregates implement **`IEntitySourceDerived`** (`Sources`, optional **`LocallyModifiedAt`**). Enriched locations may also be stored in [`geolocation.address`](../Geolocation/Lyo.Geolocation.Postgres/README.md); link across stores via `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs.
 
 ## Models
 

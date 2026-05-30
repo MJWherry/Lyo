@@ -1,10 +1,7 @@
 # Lyo.Note
 
 Abstractions for storing and retrieving notes attached to arbitrary entities.
-Each note has a **For** entity (what the note is about) and a **From** entity
-(who wrote it), both expressed as `EntityRef`. The default Postgres store
-persists the underlying ids as a single `Guid` per "Option A" persistence and
-applies soft-delete semantics.
+Each note has a **subject** (what it is about) and an **actor** (who wrote it), expressed as `EntityRef` at the API. The default Postgres store maps **`for_entity_*`** / **`from_entity_*`** (nullable varchar) and applies soft-delete semantics.
 
 ## Surface
 
@@ -12,7 +9,7 @@ applies soft-delete semantics.
 
 - `SaveAsync(NoteRecord note, CancellationToken ct = default)` — insert or
   update. When `note.Id` matches an existing active row, that row's
-  `ForEntity`, `FromEntity`, and `Content` are updated in place; otherwise a
+  subject/actor endpoints and `Content` are updated in place; otherwise a
   new row is inserted (a new `Id` is generated when `Id == default`).
 - `GetByIdAsync(Guid id, CancellationToken ct = default)` — single note by id
   (active rows only).
@@ -29,13 +26,11 @@ applies soft-delete semantics.
 
 ### `NoteRecord`
 
-Derives from `Lyo.EntityReference.Models.EntityRefRow`, so each row carries the
-standard `For*` / `From*` / `TenantId` / `Context` / `Visibility` / lifecycle
-columns plus note-specific fields:
+Derives from **`EntityRelationRow`** (subject/actor + `TenantId` / `Context` / `Visibility` / lifecycle; DB `for_entity_*` / `from_entity_*`) plus:
 
 - `Content` — note body (string, may be empty).
 - `UpdatedTimestamp` — last update time (UTC), nullable.
-- `ForEntity` / `FromEntity` — convenience `EntityRef` projections.
+- **`SubjectRef`** / **`ActorRef`** — `EntityRef` projections.
 
 ## Related projects
 

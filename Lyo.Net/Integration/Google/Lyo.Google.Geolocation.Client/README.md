@@ -14,7 +14,7 @@ only — **not** `Lyo.Geolocation.Postgres`. The host wires this client together
 |--------------------------------|-------------------------------------------------------------------------------------------------|
 | `GoogleMapsClient`             | Geocoding, directions, time zone APIs                                                           |
 | `GoogleMapsGeolocationService` | `IGeolocationService`                                                                           |
-| `GoogleMapsMapper`             | Google JSON → `Address` + `EntitySourceRecord` (`GoogleGeolocationSourceTypes.GoogleMapsPlace`) |
+| `GoogleMapsMapper`             | Google JSON → `Address` + `EntitySourceRecord.From(...)` (`GoogleGeolocationSourceTypes.GoogleMapsPlace` on **`source_entity_*`**) |
 
 ## Consumer composition
 

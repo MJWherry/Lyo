@@ -7,16 +7,16 @@ namespace Lyo.Config;
 public sealed class ResolvedConfigRecord
 {
     /// <summary>Gets or sets the target entity type.</summary>
-    public string ForEntityType { get; set; } = string.Empty;
+    public string SubjectEntityType { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the target entity id (string — may be a composite key such as <c>kind:id</c> for app-scoped config).</summary>
-    public string ForEntityId { get; set; } = string.Empty;
+    public string SubjectEntityId { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the resolved config entries.</summary>
     public IReadOnlyList<ResolvedConfigItemRecord> Items { get; set; } = [];
 
     /// <summary>Gets the referenced entity.</summary>
-    public EntityRef ForEntity => EntityRef.ForKey(ForEntityType, ForEntityId);
+    public EntityRef ForEntity => EntityRef.ForKey(SubjectEntityType, SubjectEntityId);
 
     /// <summary>Gets the resolved value for the given key if present.</summary>
     public bool TryGetValue(string key, out ConfigValue? value)
@@ -43,7 +43,7 @@ public sealed class ResolvedConfigRecord
             if (item.Value != null)
                 continue;
 
-            OperationHelpers.ThrowIf(true, $"Required config key '{item.Definition.Key}' for entity type '{ForEntityType}' (id '{ForEntityId}') has no binding and no default.");
+            OperationHelpers.ThrowIf(true, $"Required config key '{item.Definition.Key}' for entity type '{SubjectEntityType}' (id '{SubjectEntityId}') has no binding and no default.");
         }
     }
 

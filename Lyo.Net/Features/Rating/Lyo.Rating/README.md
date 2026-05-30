@@ -63,8 +63,7 @@ public static EntityRef ForRating(Guid ratingId)
 
 ### `RatingRecord`
 
-Derives from `EntityRefRow` (standard `For*` / `From*` / `TenantId` /
-`Context` / `Visibility` / lifecycle columns). Rating-specific fields:
+Derives from **`EntityRelationRow`** (subject/actor + `TenantId` / `Context` / `Visibility` / lifecycle; DB `for_entity_*` / `from_entity_*`). Rating-specific fields:
 
 - `Subject` — optional axis label (e.g. `"scary"`); `null` is a general rating.
 - `Title` — optional review title.
@@ -76,9 +75,7 @@ Derives from `EntityRefRow` (standard `For*` / `From*` / `TenantId` /
 
 ### `RatingReactionRecord`
 
-Standalone row (not an `EntityRefRow`) that stores `(Id, ForEntityType,
-ForEntityId, FromEntityType, FromEntityId, ReactionType, CreatedTimestamp)`.
-`ForEntity` is always the parent rating (`EntityType == "Rating"`).
+Standalone row (not **`EntityRelationRow`**) with subject/actor columns (parent rating on `for_entity_*`; reactor on `from_entity_*`), plus `ReactionType` and `CreatedTimestamp`.
 
 ## Related projects
 

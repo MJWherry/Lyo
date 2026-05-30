@@ -4,7 +4,7 @@ PostgreSQL implementation of `Lyo.Comment` using Entity Framework Core. Persists
 comments to the `comment.comment` table and reactions to
 `comment.comment_reaction` (schema constant:
 `PostgresCommentOptions.Schema = "comment"`) with migrations support. Comments
-have **For** (what the comment is about), **From** (who wrote it), optional
+have **subject** / **actor** (`for_entity_*` / `from_entity_*`), optional
 **ReplyToCommentId** (parent comment), and cached `LikeCount` / `DislikeCount`
 counters.
 
@@ -60,8 +60,7 @@ dotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Po
 
 ## Features
 
-- **For/From entity refs** — same dynamic entity-ref structure used by Rating
-  and Note.
+- **Subject/actor** — same relation endpoint shape as Rating and Note.
 - **Reply threads** — `ReplyToCommentId` points to the parent comment;
   `GetRepliesAsync(parentId)` returns direct replies; `DeleteAsync(id,
   deleteReplies: true)` walks the descendant tree and soft-deletes every
@@ -77,18 +76,18 @@ dotnet ef migrations add MigrationName --project Features/Comment/Lyo.Comment.Po
 
 ```csharp
 await commentStore.SaveAsync(new CommentRecord {
-    ForEntityType = "Docket",
-    ForEntityId = docketId,
-    FromEntityType = "User",
-    FromEntityId = userId,
+    SubjectEntityType = "Docket",
+    SubjectEntityId = docketId.ToString(),
+    ActorEntityType = "User",
+    ActorEntityId = userId.ToString(),
     Content = "Great work on this case!"
 });
 
 await commentStore.SaveAsync(new CommentRecord {
-    ForEntityType = "Docket",
-    ForEntityId = docketId,
-    FromEntityType = "User",
-    FromEntityId = otherUserId,
+    SubjectEntityType = "Docket",
+    SubjectEntityId = docketId.ToString(),
+    ActorEntityType = "User",
+    ActorEntityId = otherUserId.ToString(),
     Content = "I agree!",
     ReplyToCommentId = parentCommentId
 });
@@ -105,16 +104,12 @@ await commentStore.RemoveReactionAsync(commentRef, userRef);
 
 Schema name: `comment` (`PostgresCommentOptions.Schema`).
 
-- **comment.comment** — derived from `EntityRefRow`, so it includes
-  `id` (uuid), `for_entity_type`, `for_entity_id` (uuid), `from_entity_type`,
-  `from_entity_id` (uuid), `tenant_id`, `context`, `visibility`,
+- **comment.comment** — **`EntityRelationEntityBase`**: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id` — nullable varchar 128/256), `tenant_id`, `context`, `visibility`,
   `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`,
   `deleted_by_id`, `metadata` (jsonb), plus comment-specific `content`,
   `reply_to_comment_id` (nullable uuid), `like_count`, `dislike_count`,
   `is_edited`, and `updated_timestamp`.
-- **comment.comment_reaction** — `id` (uuid), `for_entity_type` (always
-  `"Comment"`), `for_entity_id` (the parent comment id), `from_entity_type`,
-  `from_entity_id` (uuid), `tenant_id` (nullable uuid, inherited from the parent
+- **comment.comment_reaction** — `id` (uuid); subject `for_entity_*` (always `"Comment"` + parent id); actor `from_entity_*`; `tenant_id` (nullable uuid, inherited from the parent
   comment at write time), `reaction_type` (`int`; `0 = Like`, `1 = Dislike`),
   `created_timestamp`.
 

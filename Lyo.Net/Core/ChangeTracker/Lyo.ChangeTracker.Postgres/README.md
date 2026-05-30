@@ -53,7 +53,7 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 ## Schema
 
 - All tables live in the `change_tracker` schema (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes` stores target `EntityRef` (`ForEntityType` / `ForEntityId`), optional actor `EntityRef` (`FromEntityType` / `FromEntityId`), nullable `tenant_id`
+- `change_tracker.changes` — subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id`
   (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
 
 ## Tenancy

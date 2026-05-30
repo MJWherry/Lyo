@@ -76,7 +76,8 @@ Geolocation is **not** Communication: Google Maps lives here (Archetype C), not 
 **Host**
 
 - Wire vendor client → mapper → Core store (`IPeopleStore`, `IGeolocationStore`, etc.).
-- Define `source_entity_type` strings in the vendor/mapper package, not in Core.
+- Define external source type strings (e.g. `EndatoPsPerson`, `GoogleMapsPlace`) in the vendor/mapper package, not in Core. Persist on `*_source` rows as **`source_entity_type`** / **`source_entity_id`** with a module owner column (e.g. `person_id`); EntityReference does not add PostgreSQL FK constraints on source links.
+- Tenant-scoped **relations** (favorite, note, …) use **`for_entity_*`** / **`from_entity_*`** for subject/actor endpoints via `EntityRelationEntityBase`.
 
 ## Naming
 
@@ -99,7 +100,7 @@ Geolocation is **not** Communication: Google Maps lives here (Archetype C), not 
 | `Lyo.Endato.Client` | C | Endato REST API |
 | `Lyo.Endato.Postgres` | D | Vendor-side persistence (not `people` schema) |
 
-Host/worker: Endato DTO → mapper → `Person` + `person_source` → `IPeopleStore`. Optional `EntityRef` to `geolocation.address` for enriched locations.
+Host/worker: Endato DTO → mapper → `Person` + `person_source` rows (`source`: `EndatoPsPerson`/vendor id, owner via `person_id`) → `IPeopleStore`. Optional `EntityRef` to `geolocation.address` for enriched locations.
 
 ### Geolocation + Google (A + C)
 
@@ -205,6 +206,17 @@ Stays under `Communication/Translation/`.
 | `Lyo.Geolocation.Postgres` | A | `Core/Geolocation/` |
 | `Lyo.EntityReference.Models` | A | `Core/EntityReference/` |
 | `Lyo.EntityReference.Postgres` | A | `Core/EntityReference/` |
+
+### EntityReference (Archetype A)
+
+Shared **`EntityRef`** value type and PostgreSQL persistence helpers. Two row families:
+
+| Package | Role |
+|---------|------|
+| **`Lyo.EntityReference.Models`** | `EntityRef`, relation domain (`EntityRelationRow`, `EntityRelationEndpoints`, `EntityRelationValidation`), source provenance (`EntitySourceRecord`, `IEntitySourceDerived`, `EntitySourceValidation`), JSON/composite/interceptors |
+| **`Lyo.EntityReference.Postgres`** | EF bases — **`EntityRelationEntityBase`** (subject/actor → `for_entity_*` / `from_entity_*`), **`EntitySourceLinkEntityBase`** (`source_entity_*` + `imported_at`), **`EntitySourceDerivedEntityBase`** (`LocallyModifiedAt`); shared indexes; no PG FK on source links |
+
+Domain modules (People, Geolocation, Favorite, …) subclass these bases and own module-specific owner columns and store logic.
 
 ---
 

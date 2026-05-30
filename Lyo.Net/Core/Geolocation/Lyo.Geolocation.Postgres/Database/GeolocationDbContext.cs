@@ -7,8 +7,6 @@ public class GeolocationDbContext : DbContext
 {
     public DbSet<AddressEntity> Addresses { get; set; } = null!;
 
-    public DbSet<AddressSourceEntity> AddressSources { get; set; } = null!;
-
     public GeolocationDbContext(DbContextOptions<GeolocationDbContext> options)
         : base(options) { }
 
@@ -16,7 +14,6 @@ public class GeolocationDbContext : DbContext
     {
         modelBuilder.HasDefaultSchema(PostgresGeolocationOptions.Schema);
         modelBuilder.ApplyConfiguration(new AddressEntityConfiguration());
-        modelBuilder.ApplyConfiguration(new AddressSourceEntityConfiguration());
     }
 
     public override int SaveChanges()

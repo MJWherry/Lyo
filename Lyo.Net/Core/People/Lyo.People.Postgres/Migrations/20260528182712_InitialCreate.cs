@@ -39,6 +39,9 @@ namespace Lyo.People.Postgres.Migrations
                     country_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     full_address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     coordinates = table.Column<NpgsqlPoint>(type: "point", nullable: true),
+                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -56,6 +59,9 @@ namespace Lyo.People.Postgres.Migrations
                     email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     verified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     label = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -89,7 +95,11 @@ namespace Lyo.People.Postgres.Migrations
                     emergency_contact_person_id = table.Column<Guid>(type: "uuid", nullable: true),
                     current_job_title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     current_company = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    locally_modified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     created_by = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
@@ -115,6 +125,9 @@ namespace Lyo.People.Postgres.Migrations
                     technology_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     verified_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     label = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -123,55 +136,7 @@ namespace Lyo.People.Postgres.Migrations
                     table.PrimaryKey("PK_phone_number", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "address_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    address_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_address_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_address_source_address_address_id",
-                        column: x => x.address_id,
-                        principalSchema: "people",
-                        principalTable: "address",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
-            migrationBuilder.CreateTable(
-                name: "email_address_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    email_address_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_email_address_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_email_address_source_email_address_email_address_id",
-                        column: x => x.email_address_id,
-                        principalSchema: "people",
-                        principalTable: "email_address",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
             migrationBuilder.CreateTable(
                 name: "contact_address",
@@ -187,6 +152,7 @@ namespace Lyo.People.Postgres.Migrations
                     end_date = table.Column<DateOnly>(type: "date", nullable: true),
                     notes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     created_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+
                     updated_timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -343,30 +309,6 @@ namespace Lyo.People.Postgres.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "person_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    person_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_person_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_person_source_person_person_id",
-                        column: x => x.person_id,
-                        principalSchema: "people",
-                        principalTable: "person",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
             migrationBuilder.CreateTable(
                 name: "social_media_profile",
@@ -431,105 +373,9 @@ namespace Lyo.People.Postgres.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "phone_number_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    phone_number_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_phone_number_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_phone_number_source_phone_number_phone_number_id",
-                        column: x => x.phone_number_id,
-                        principalSchema: "people",
-                        principalTable: "phone_number",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
-            migrationBuilder.CreateTable(
-                name: "contact_address_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    contact_address_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_contact_address_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_contact_address_source_contact_address_contact_address_id",
-                        column: x => x.contact_address_id,
-                        principalSchema: "people",
-                        principalTable: "contact_address",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
-            migrationBuilder.CreateTable(
-                name: "contact_email_address_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    contact_email_address_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_contact_email_address_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_contact_email_address_source_contact_email_address_contact_~",
-                        column: x => x.contact_email_address_id,
-                        principalSchema: "people",
-                        principalTable: "contact_email_address",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
-            migrationBuilder.CreateTable(
-                name: "contact_phone_number_source",
-                schema: "people",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    contact_phone_number_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    source_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    source_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    from_entity_type = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    from_entity_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_contact_phone_number_source", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_contact_phone_number_source_contact_phone_number_contact_ph~",
-                        column: x => x.contact_phone_number_id,
-                        principalSchema: "people",
-                        principalTable: "contact_phone_number",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
             migrationBuilder.CreateIndex(
                 name: "ix_address_country_code",
@@ -537,18 +383,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "address",
                 column: "country_code");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_address_source_address_id",
-                schema: "people",
-                table: "address_source",
-                column: "address_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_address_source_source_entity",
-                schema: "people",
-                table: "address_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_contact_address_address_id",
@@ -562,18 +397,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "contact_address",
                 column: "person_id");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_contact_address_source_contact_address_id",
-                schema: "people",
-                table: "contact_address_source",
-                column: "contact_address_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_contact_address_source_source_entity",
-                schema: "people",
-                table: "contact_address_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_contact_email_address_email_address_id",
@@ -587,18 +411,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "contact_email_address",
                 column: "person_id");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_contact_email_address_source_contact_email_address_id",
-                schema: "people",
-                table: "contact_email_address_source",
-                column: "contact_email_address_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_contact_email_address_source_source_entity",
-                schema: "people",
-                table: "contact_email_address_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_contact_phone_number_person_id",
@@ -612,18 +425,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "contact_phone_number",
                 column: "phone_number_id");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_contact_phone_number_source_contact_phone_number_id",
-                schema: "people",
-                table: "contact_phone_number_source",
-                column: "contact_phone_number_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_contact_phone_number_source_source_entity",
-                schema: "people",
-                table: "contact_phone_number_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_email_address_email",
@@ -631,18 +433,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "email_address",
                 column: "email");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_email_address_source_email_address_id",
-                schema: "people",
-                table: "email_address_source",
-                column: "email_address_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_email_address_source_source_entity",
-                schema: "people",
-                table: "email_address_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_employment_company_address_id",
@@ -716,18 +507,7 @@ namespace Lyo.People.Postgres.Migrations
                 table: "person_relationship",
                 column: "related_person_id");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_person_source_person_id",
-                schema: "people",
-                table: "person_source",
-                column: "person_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_person_source_source_entity",
-                schema: "people",
-                table: "person_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_phone_number_number",
@@ -735,24 +515,49 @@ namespace Lyo.People.Postgres.Migrations
                 table: "phone_number",
                 column: "number");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_phone_number_source_phone_number_id",
-                schema: "people",
-                table: "phone_number_source",
-                column: "phone_number_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ix_phone_number_source_source_entity",
-                schema: "people",
-                table: "phone_number_source",
-                columns: new[] { "source_entity_type", "source_entity_id" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_social_media_profile_person_id",
                 schema: "people",
                 table: "social_media_profile",
                 column: "person_id");
+
+
+            migrationBuilder.CreateIndex(
+                name: "uq_address_source",
+                schema: "people",
+                table: "address",
+                columns: new[] { "source_entity_type", "source_entity_id" },
+                unique: true,
+                filter: "\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "uq_email_address_source",
+                schema: "people",
+                table: "email_address",
+                columns: new[] { "source_entity_type", "source_entity_id" },
+                unique: true,
+                filter: "\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "uq_person_source",
+                schema: "people",
+                table: "person",
+                columns: new[] { "source_entity_type", "source_entity_id" },
+                unique: true,
+                filter: "\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "uq_phone_number_source",
+                schema: "people",
+                table: "phone_number",
+                columns: new[] { "source_entity_type", "source_entity_id" },
+                unique: true,
+                filter: "\"source_entity_type\" IS NOT NULL AND \"source_entity_id\" IS NOT NULL");
+
+
+
 
             migrationBuilder.CreateIndex(
                 name: "ix_social_media_profile_platform_username",
@@ -765,26 +570,6 @@ namespace Lyo.People.Postgres.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "address_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "contact_address_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "contact_email_address_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "contact_phone_number_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "email_address_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
                 name: "employment",
                 schema: "people");
 
@@ -794,14 +579,6 @@ namespace Lyo.People.Postgres.Migrations
 
             migrationBuilder.DropTable(
                 name: "person_relationship",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "person_source",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "phone_number_source",
                 schema: "people");
 
             migrationBuilder.DropTable(

@@ -1,14 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Lyo.EntityReference.Postgres.Database;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Entity for storing person records in PostgreSQL.</summary>
-public class PersonEntity
+public class PersonEntity : EntitySourceDerivedEntityBase
 {
-    [Key]
-    public Guid Id { get; set; }
-
     // Name (flattened from PersonName)
     [MaxLength(12)]
     public string? NamePrefix { get; set; }
@@ -69,10 +67,6 @@ public class PersonEntity
     public string? CurrentCompany { get; set; }
 
     // Metadata
-    public DateTime CreatedTimestamp { get; set; }
-
-    public DateTime? UpdatedTimestamp { get; set; }
-
     [MaxLength(500)]
     public string? CreatedBy { get; set; }
 
@@ -103,5 +97,4 @@ public class PersonEntity
 
     public virtual ICollection<ContactAddressEntity> ContactAddresses { get; set; } = new List<ContactAddressEntity>();
 
-    public ICollection<PersonSourceEntity> Sources { get; set; } = [];
 }

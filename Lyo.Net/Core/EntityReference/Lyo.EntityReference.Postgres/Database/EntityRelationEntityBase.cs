@@ -3,28 +3,16 @@ using Lyo.EntityReference.Models;
 
 namespace Lyo.EntityReference.Postgres.Database;
 
-/// <summary>EF entity base mapping the canonical association row (PostgreSQL).</summary>
+/// <summary>EF entity base mapping the canonical relation row (PostgreSQL).</summary>
 /// <remarks>
-/// Change-tracker and similar modules that keep arbitrary string keys (including composite ids) and optional actors should use
-/// <see cref="EntityRefOptionalFromStringAssociationBase" /> instead — they are not Option A uuid tenant rows.
+/// Change-tracker and similar modules that keep arbitrary string keys and optional actors should use
+/// <see cref="EntityRelationOptionalActorBase" /> instead.
 /// </remarks>
-[DebuggerDisplay("{ForEntityType,nq}:{ForEntityId} | {FromEntityType,nq}:{FromEntityId} | Tenant={TenantId}")]
-public abstract class EntityRefEntityBase
+[DebuggerDisplay("{ToString(),nq}")]
+public abstract class EntityRelationEntityBase : EntityRelationEndpointsEntityBase
 {
     /// <summary>Primary key.</summary>
     public Guid Id { get; set; }
-
-    /// <summary>Type discriminator for the entity being referenced.</summary>
-    public string ForEntityType { get; set; } = string.Empty;
-
-    /// <summary>Entity id for <see cref="ForEntityType" /> (PostgreSQL <c>uuid</c>).</summary>
-    public Guid ForEntityId { get; set; }
-
-    /// <summary>Type discriminator for the originating actor entity.</summary>
-    public string FromEntityType { get; set; } = string.Empty;
-
-    /// <summary>Entity id for <see cref="FromEntityType" /> (PostgreSQL <c>uuid</c>).</summary>
-    public Guid FromEntityId { get; set; }
 
     /// <summary>Tenant scope.</summary>
     public Guid TenantId { get; set; }
@@ -55,5 +43,5 @@ public abstract class EntityRefEntityBase
 
     /// <inheritdoc />
     public override string ToString()
-        => $"{GetType().Name}: Id={Id}, Tenant={TenantId}, For={ForEntityType}/{ForEntityId}, From={FromEntityType}/{FromEntityId}, Visibility={Visibility}, DeletedAt={DeletedAt}";
+        => $"{GetType().Name}: Id={Id}, Tenant={TenantId}, Subject={SubjectEntityType}/{SubjectEntityId}, Actor={ActorEntityType}/{ActorEntityId}, Visibility={Visibility}, DeletedAt={DeletedAt}";
 }

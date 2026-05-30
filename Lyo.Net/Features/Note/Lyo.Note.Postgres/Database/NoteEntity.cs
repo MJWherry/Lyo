@@ -3,7 +3,7 @@ using Lyo.EntityReference.Postgres.Database;
 namespace Lyo.Note.Postgres.Database;
 
 /// <summary>Entity for storing notes in PostgreSQL.</summary>
-public sealed class NoteEntity : EntityRefEntityBase
+public sealed class NoteEntity : EntityRelationEntityBase
 {
     /// <summary>Note body.</summary>
     public string Content { get; set; } = string.Empty;

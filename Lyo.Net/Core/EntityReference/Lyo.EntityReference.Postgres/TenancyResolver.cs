@@ -24,6 +24,8 @@ public static class TenancyResolver
             TenancyMode.SystemOnly => null,
             TenancyMode.MultiTenantStrict when !hasCaller => throw new ArgumentNullException(nameof(tenantId), "TenancyMode.MultiTenantStrict requires a non-empty tenantId."),
             TenancyMode.MultiTenantStrict => tenantId,
+            TenancyMode.MultiTenantOptional when hasCaller => tenantId,
+            TenancyMode.MultiTenantOptional => null,
             TenancyMode.SingleTenantDefault when hasCaller => tenantId,
             TenancyMode.SingleTenantDefault => feature.DefaultTenantId ?? global.DefaultTenantId,
             var _ => throw new ArgumentOutOfRangeException(nameof(feature), mode, $"Unsupported {nameof(TenancyMode)} value '{mode}'.")

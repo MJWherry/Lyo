@@ -5,7 +5,7 @@ using Lyo.EntityReference.Postgres.Database;
 namespace Lyo.ChangeTracker.Postgres.Database;
 
 /// <summary>Entity for storing tracked changes in PostgreSQL.</summary>
-public sealed class ChangeEntryEntity : EntityRefOptionalFromStringAssociationBase
+public sealed class ChangeEntryEntity : EntityRelationOptionalActorBase
 {
     [Key]
     public Guid Id { get; set; }

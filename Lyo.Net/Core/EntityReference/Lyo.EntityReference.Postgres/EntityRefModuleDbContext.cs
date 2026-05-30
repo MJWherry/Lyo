@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.EntityReference.Postgres;
 
-/// <summary>Base <see cref="DbContext" /> that stamps <see cref="EntityRefEntityBase.CreatedAt" /> on insert when left at default.</summary>
+/// <summary>Base <see cref="DbContext" /> that stamps <see cref="EntityRelationEntityBase.CreatedAt" /> on insert when left at default.</summary>
 public abstract class EntityRefModuleDbContext : DbContext
 {
     /// <summary>Creates the context.</summary>
@@ -39,11 +39,11 @@ public abstract class EntityRefModuleDbContext : DbContext
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
-    /// <summary>Sets <see cref="EntityRefEntityBase.CreatedAt" /> to UTC now for added <see cref="EntityRefEntityBase" /> entries when still default.</summary>
+    /// <summary>Sets <see cref="EntityRelationEntityBase.CreatedAt" /> to UTC now for added <see cref="EntityRelationEntityBase" /> entries when still default.</summary>
     private void StampCreatedAtUtc()
     {
         var utcNow = DateTime.UtcNow;
-        foreach (var entry in ChangeTracker.Entries<EntityRefEntityBase>()) {
+        foreach (var entry in ChangeTracker.Entries<EntityRelationEntityBase>()) {
             if (entry.State == EntityState.Added && entry.Entity.CreatedAt == default)
                 entry.Entity.CreatedAt = utcNow;
         }

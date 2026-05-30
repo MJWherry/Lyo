@@ -9,5 +9,9 @@ namespace Lyo.Email.Models;
 /// <param name="TemplateId">Optional template ID used for formatting the attachment or email.</param>
 /// <param name="ContentType">Optional MIME content type.</param>
 /// <param name="MetadataJson">Optional metadata as JSON for extensibility (e.g. template params, tags).</param>
-[DebuggerDisplay("{FileName,nq}")]
-public sealed record EmailAttachment(string FileName, byte[] Data, string? FileStorageId = null, Guid? TemplateId = null, string? ContentType = null, string? MetadataJson = null);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record EmailAttachment(string FileName, byte[] Data, string? FileStorageId = null, Guid? TemplateId = null, string? ContentType = null, string? MetadataJson = null)
+{
+    /// <inheritdoc />
+    public override string ToString() => FileName;
+}

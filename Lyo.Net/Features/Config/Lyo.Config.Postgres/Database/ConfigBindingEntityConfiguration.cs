@@ -12,18 +12,18 @@ public sealed class ConfigBindingEntityConfiguration : IEntityTypeConfiguration<
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.DefinitionId).IsRequired().HasColumnName("definition_id").HasColumnType("uuid");
         builder.Property(e => e.Key).HasMaxLength(200).IsRequired().HasColumnName("key");
-        builder.Property(e => e.ForEntityType).HasMaxLength(500).IsRequired().HasColumnName("for_entity_type");
-        builder.Property(e => e.ForEntityId).HasMaxLength(200).IsRequired().HasColumnName("for_entity_id");
+        builder.Property(e => e.SubjectEntityType).HasMaxLength(500).IsRequired().HasColumnName("for_entity_type");
+        builder.Property(e => e.SubjectEntityId).HasMaxLength(200).IsRequired().HasColumnName("for_entity_id");
         builder.Property(e => e.ValueType).HasMaxLength(1024).IsRequired().HasColumnName("value_type");
         builder.Property(e => e.TenantId).HasColumnType("uuid").HasColumnName("tenant_id");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasOne(e => e.Definition).WithMany().HasForeignKey(e => e.DefinitionId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasIndex(e => new { e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_config_binding_entity");
+        builder.HasIndex(e => new { e.SubjectEntityType, e.SubjectEntityId }).HasDatabaseName("ix_config_binding_entity");
         builder.HasIndex(e => new {
                 e.DefinitionId,
-                e.ForEntityType,
-                e.ForEntityId,
+                e.SubjectEntityType,
+                e.SubjectEntityId,
                 e.TenantId
             })
             .IsUnique()

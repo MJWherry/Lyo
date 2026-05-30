@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Tag.Postgres.Database;
 
-public sealed class TagEntityConfiguration : EntityRefConfiguration<TagEntity>
+public sealed class TagEntityConfiguration : EntityRelationConfiguration<TagEntity>
 {
     public TagEntityConfiguration()
         : base("tag") { }
@@ -20,11 +20,11 @@ public sealed class TagEntityConfiguration : EntityRefConfiguration<TagEntity>
         builder.Property(e => e.Slug).HasMaxLength(200).IsRequired().HasColumnName("slug").HasDefaultValue("");
         builder.HasIndex(e => e.Name).HasDatabaseName("ix_tag_name");
         builder.HasIndex(e => e.TagType).HasDatabaseName("ix_tag_tag_type");
-        builder.HasIndex(e => new { e.TenantId, e.ForEntityType, e.ForEntityId }).HasDatabaseName("ix_tag_tenant_for_entity");
+        builder.HasIndex(e => new { e.TenantId, e.SubjectEntityType, e.SubjectEntityId }).HasDatabaseName("ix_tag_tenant_for_entity");
         builder.HasIndex(e => new {
                 e.TenantId,
-                e.ForEntityType,
-                e.ForEntityId,
+                e.SubjectEntityType,
+                e.SubjectEntityId,
                 e.TagType,
                 e.Name,
                 e.Slug

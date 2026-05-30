@@ -41,13 +41,13 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("definition_id");
 
-                    b.Property<string>("ForEntityId")
+                    b.Property<string>("SubjectEntityId")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("for_entity_id");
 
-                    b.Property<string>("ForEntityType")
+                    b.Property<string>("SubjectEntityType")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -75,14 +75,14 @@ namespace Lyo.Config.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType", "ForEntityId")
+                    b.HasIndex("SubjectEntityType", "SubjectEntityId")
                         .HasDatabaseName("ix_config_binding_entity");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_config_binding_tenant")
                         .HasFilter("\"tenant_id\" IS NOT NULL");
 
-                    b.HasIndex("DefinitionId", "ForEntityType", "ForEntityId", "TenantId")
+                    b.HasIndex("DefinitionId", "SubjectEntityType", "SubjectEntityId", "TenantId")
                         .IsUnique()
                         .HasDatabaseName("ux_config_binding_definition_entity");
 
@@ -143,7 +143,7 @@ namespace Lyo.Config.Postgres.Migrations
                         .HasColumnType("character varying(4000)")
                         .HasColumnName("description");
 
-                    b.Property<string>("ForEntityType")
+                    b.Property<string>("SubjectEntityType")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
@@ -171,10 +171,10 @@ namespace Lyo.Config.Postgres.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ForEntityType")
+                    b.HasIndex("SubjectEntityType")
                         .HasDatabaseName("ix_config_definition_entity_type");
 
-                    b.HasIndex("ForEntityType", "Key")
+                    b.HasIndex("SubjectEntityType", "Key")
                         .IsUnique()
                         .HasDatabaseName("ux_config_definition_entity_type_key");
 

@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.Compression.Models;
 
 /// <summary><see cref="CompressionInfo" /> extended with source and destination paths for a file compress.</summary>
-[DebuggerDisplay("{ToString()}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileCompressionInfo(long InputSize, long OutputSize, long TimeMs, string InputFilePath, string OutputFilePath)
     : CompressionInfo(InputSize, OutputSize, TimeMs)
 {

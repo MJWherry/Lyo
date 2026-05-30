@@ -3,7 +3,7 @@ namespace Lyo.EntityReference.Models;
 /// <summary>Fixed identifiers shared across modules.</summary>
 public static class EntityRefWellKnown
 {
-    /// <summary><see cref="EntityRefRow.FromEntityType" /> value for automated or system attribution when no user actor exists.</summary>
+    /// <summary><see cref="EntityRelationRow.ActorEntityType" /> value for automated or system attribution when no user actor exists.</summary>
     public const string SystemActorType = "System";
 
     /// <summary>Default tenant used when callers omit an explicit tenant id (single-tenant deployments).</summary>

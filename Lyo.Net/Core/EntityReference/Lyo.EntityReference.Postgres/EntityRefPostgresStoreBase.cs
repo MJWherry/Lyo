@@ -17,7 +17,7 @@ public abstract class EntityRefPostgresStoreBase
 
     /// <summary>When <see langword="true" /> the underlying entity column is non-nullable, so <see cref="TenancyMode.SystemOnly" /> is invalid and the ctor will reject it.</summary>
     /// <remarks>
-    /// Stores derived from <see cref="Database.EntityRefEntityBase" /> leave the default; subclasses on a nullable-tenant entity should pass <see langword="false" /> to the base
+    /// Stores derived from <see cref="Database.EntityRelationEntityBase" /> leave the default; subclasses on a nullable-tenant entity should pass <see langword="false" /> to the base
     /// ctor.
     /// </remarks>
     protected bool RequiresNonNullTenant { get; }

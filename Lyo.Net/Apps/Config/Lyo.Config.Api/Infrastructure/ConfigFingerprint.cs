@@ -10,8 +10,8 @@ internal static class ConfigFingerprint
         using var ms = new MemoryStream();
         using (var writer = new Utf8JsonWriter(ms, new() { Indented = false })) {
             writer.WriteStartObject();
-            writer.WriteString("entityType", resolved.ForEntityType);
-            writer.WriteString("entityId", resolved.ForEntityId);
+            writer.WriteString("entityType", resolved.SubjectEntityType);
+            writer.WriteString("entityId", resolved.SubjectEntityId);
             writer.WriteStartArray("items");
             foreach (var it in sorted) {
                 writer.WriteStartObject();

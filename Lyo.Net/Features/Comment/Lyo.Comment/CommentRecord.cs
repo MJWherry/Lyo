@@ -3,7 +3,7 @@ using Lyo.EntityReference.Models;
 namespace Lyo.Comment;
 
 /// <summary>Represents a comment attached to an entity (canonical entity-ref row + thread/reaction metadata).</summary>
-public sealed class CommentRecord : EntityRefRow
+public sealed class CommentRecord : EntityRelationRow
 {
     /// <summary>Comment body.</summary>
     public string Content { get; set; } = string.Empty;
@@ -22,10 +22,4 @@ public sealed class CommentRecord : EntityRefRow
 
     /// <summary>Whether the comment was edited after creation.</summary>
     public bool IsEdited { get; set; }
-
-    /// <summary>Gets the entity reference for what the comment is about.</summary>
-    public EntityRef ForEntity => EntityRef.ForGuid(ForEntityType, ForEntityId);
-
-    /// <summary>Gets the entity reference for who created the comment.</summary>
-    public EntityRef FromEntity => EntityRef.ForGuid(FromEntityType, FromEntityId);
 }

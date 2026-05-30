@@ -7,6 +7,7 @@ using Lyo.Discord.Postgres;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Geolocation.Models.Enums;
 using Lyo.Job.Postgres;
+using Lyo.People.Models;
 using Lyo.People.Models.Enum;
 using Lyo.People.Postgres.Database;
 using Lyo.Query.Models.Common;
@@ -121,7 +122,7 @@ public static class SetupMapster
             config.NewConfig<PersonEntity, PersonRes>()
                 .MapWith(src => new(
                     src.Id, null, src.NamePrefix, src.FirstName, src.MiddleName, src.LastName, src.NameSuffix,
-                    src.Sources.OrderByDescending(s => s.ImportedAt).Select(s => s.SourceEntityType).FirstOrDefault() ?? "Manual",
+                    string.IsNullOrWhiteSpace(src.SourceEntityType) ? PeopleSourceTypes.Manual : src.SourceEntityType,
                     src.ContactAddresses.Where(ca => ca.Address != null)
                         .Select(ca => new PersonAddressRes(
                             ca.Address!.Id, ca.PersonId, ca.Address.HouseNumber, ca.Address.StreetPreDirection, ca.Address.StreetName, ca.Address.StreetPostDirection,

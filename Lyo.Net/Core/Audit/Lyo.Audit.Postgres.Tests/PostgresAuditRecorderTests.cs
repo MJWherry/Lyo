@@ -39,10 +39,10 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(entities);
         Assert.NotEqual(Guid.Empty, entities[0].Id);
-        Assert.Equal("TestApp.Models.Order", entities[0].ForEntityType);
-        Assert.Equal("42", entities[0].ForEntityId);
-        Assert.Equal("User", entities[0].FromEntityType);
-        Assert.Equal("u-1", entities[0].FromEntityId);
+        Assert.Equal("TestApp.Models.Order", entities[0].SubjectEntityType);
+        Assert.Equal("42", entities[0].SubjectEntityId);
+        Assert.Equal("User", entities[0].ActorEntityType);
+        Assert.Equal("u-1", entities[0].ActorEntityId);
         Assert.Contains("Old Order", entities[0].OldValuesJson);
         Assert.Contains("Updated Order", entities[0].ChangedPropertiesJson);
     }
@@ -65,10 +65,10 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         Assert.NotEqual(Guid.Empty, entities[0].Id);
         Assert.Equal("UserLogin", entities[0].EventType);
         Assert.Equal("User signed in successfully", entities[0].Message);
-        Assert.Equal("User", entities[0].ForEntityType);
-        Assert.Equal("user-123", entities[0].ForEntityId);
-        Assert.Equal("User", entities[0].FromEntityType);
-        Assert.Equal("user-123", entities[0].FromEntityId);
+        Assert.Equal("User", entities[0].SubjectEntityType);
+        Assert.Equal("user-123", entities[0].SubjectEntityId);
+        Assert.Equal("User", entities[0].ActorEntityType);
+        Assert.Equal("user-123", entities[0].ActorEntityId);
         Assert.NotNull(entities[0].MetadataJson);
         Assert.Contains("192.168.1.1", entities[0].MetadataJson);
     }
@@ -83,8 +83,8 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var entity = await context.AuditEvents.FirstOrDefaultAsync(e => e.EventType == "SimpleEvent", TestContext.Current.CancellationToken);
         Assert.NotNull(entity);
         Assert.Null(entity.MetadataJson);
-        Assert.Null(entity.FromEntityType);
-        Assert.Null(entity.FromEntityId);
+        Assert.Null(entity.ActorEntityType);
+        Assert.Null(entity.ActorEntityId);
     }
 
     [Fact]
@@ -100,8 +100,8 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var entities = await context.AuditChanges.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);
-        Assert.Contains(entities, e => e.ForEntityType == "App.A" && e.ForEntityId == "1");
-        Assert.Contains(entities, e => e.ForEntityType == "App.B" && e.ForEntityId == "2");
+        Assert.Contains(entities, e => e.SubjectEntityType == "App.A" && e.SubjectEntityId == "1");
+        Assert.Contains(entities, e => e.SubjectEntityType == "App.B" && e.SubjectEntityId == "2");
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var entities = await context.AuditEvents.ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, entities.Count);
         Assert.Contains(entities, e => e.EventType == "BulkEvent1");
-        Assert.Contains(entities, e => e.EventType == "BulkEvent2" && e.FromEntityType == "User" && e.FromEntityId == "actor-1");
+        Assert.Contains(entities, e => e.EventType == "BulkEvent2" && e.ActorEntityType == "User" && e.ActorEntityId == "actor-1");
     }
 
     [Fact]
@@ -136,14 +136,14 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var onlyTenantA = await context.AuditEvents.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlyTenantA);
-        Assert.Equal("doc-a", onlyTenantA[0].ForEntityId);
+        Assert.Equal("doc-a", onlyTenantA[0].SubjectEntityId);
         var onlySystem = await context.AuditEvents.WhereTenant(null).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlySystem);
-        Assert.Equal("system-1", onlySystem[0].ForEntityId);
+        Assert.Equal("system-1", onlySystem[0].SubjectEntityId);
         var tenantAOrSystem = await context.AuditEvents.WhereTenantOrSystem(tenantA).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, tenantAOrSystem.Count);
-        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "doc-a");
-        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "system-1");
+        Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "doc-a");
+        Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "system-1");
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "system-only"), "Created", "ignored tenant") { TenantId = Guid.NewGuid() };
         await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.AuditEvents.FirstAsync(e => e.ForEntityId == "system-only", TestContext.Current.CancellationToken);
+        var entity = await context.AuditEvents.FirstAsync(e => e.SubjectEntityId == "system-only", TestContext.Current.CancellationToken);
         Assert.Null(entity.TenantId);
     }
 
@@ -183,7 +183,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "default-tenant"), "Created", "uses default");
         await recorder.RecordEventAsync(evt, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.AuditEvents.FirstAsync(e => e.ForEntityId == "default-tenant", TestContext.Current.CancellationToken);
+        var entity = await context.AuditEvents.FirstAsync(e => e.SubjectEntityId == "default-tenant", TestContext.Current.CancellationToken);
         Assert.Equal(defaultTenant, entity.TenantId);
     }
 
@@ -204,9 +204,9 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var onlyTenantA = await context.AuditChanges.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlyTenantA);
-        Assert.Equal("1", onlyTenantA[0].ForEntityId);
+        Assert.Equal("1", onlyTenantA[0].SubjectEntityId);
         var onlyTenantB = await context.AuditChanges.WhereTenant(tenantB).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlyTenantB);
-        Assert.Equal("2", onlyTenantB[0].ForEntityId);
+        Assert.Equal("2", onlyTenantB[0].SubjectEntityId);
     }
 }

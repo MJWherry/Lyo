@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Favorite.Postgres.Database;
 
-public sealed class FavoriteEntityConfiguration : EntityRefConfiguration<FavoriteEntity>
+public sealed class FavoriteEntityConfiguration : EntityRelationConfiguration<FavoriteEntity>
 {
     public FavoriteEntityConfiguration()
         : base("favorite") { }

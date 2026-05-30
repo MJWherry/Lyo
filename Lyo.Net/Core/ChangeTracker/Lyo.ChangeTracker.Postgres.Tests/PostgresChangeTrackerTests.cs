@@ -8,11 +8,18 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.ChangeTracker.Postgres.Tests;
 
-public class PostgresChangeTrackerTests
+public class PostgresChangeTrackerTests : IAsyncDisposable
 {
     private readonly ChangeTrackerPostgresFixture _fixture;
 
     public PostgresChangeTrackerTests(ChangeTrackerPostgresFixture fixture) => _fixture = fixture;
+
+    public async ValueTask DisposeAsync()
+    {
+        var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
+        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE change_tracker.changes RESTART IDENTITY CASCADE;", TestContext.Current.CancellationToken);
+    }
 
     [Fact]
     public async Task RecordChangeAsync_PersistsAndQueriesByEntity()
@@ -85,14 +92,14 @@ public class PostgresChangeTrackerTests
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var onlyTenantA = await context.Changes.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlyTenantA);
-        Assert.Equal("tenant-a-1", onlyTenantA[0].ForEntityId);
+        Assert.Equal("tenant-a-1", onlyTenantA[0].SubjectEntityId);
         var onlySystem = await context.Changes.WhereTenant(null).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Single(onlySystem);
-        Assert.Equal("system-1", onlySystem[0].ForEntityId);
+        Assert.Equal("system-1", onlySystem[0].SubjectEntityId);
         var tenantAOrSystem = await context.Changes.WhereTenantOrSystem(tenantA).ToListAsync(TestContext.Current.CancellationToken);
         Assert.Equal(2, tenantAOrSystem.Count);
-        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "tenant-a-1");
-        Assert.Contains(tenantAOrSystem, e => e.ForEntityId == "system-1");
+        Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "tenant-a-1");
+        Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "system-1");
     }
 
     [Fact]
@@ -108,7 +115,7 @@ public class PostgresChangeTrackerTests
 
         await tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.Changes.FirstAsync(c => c.ForEntityId == "system-only-1", TestContext.Current.CancellationToken);
+        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "system-only-1", TestContext.Current.CancellationToken);
         Assert.Null(entity.TenantId);
     }
 
@@ -135,7 +142,7 @@ public class PostgresChangeTrackerTests
         var record = new ChangeRecord(EntityRef.ForKey("Order", "default-tenant-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
         await tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken);
         await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.Changes.FirstAsync(c => c.ForEntityId == "default-tenant-1", TestContext.Current.CancellationToken);
+        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "default-tenant-1", TestContext.Current.CancellationToken);
         Assert.Equal(defaultTenant, entity.TenantId);
     }
 

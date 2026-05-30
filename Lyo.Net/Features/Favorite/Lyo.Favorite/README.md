@@ -2,8 +2,7 @@
 
 Abstractions for "X favorited Y" relationships across any two entities. The API
 accepts `EntityRef` at the boundary (so any feature can produce a favorite);
-the default Postgres store persists the underlying ids as a single `Guid` per
-"Option A" persistence.
+the default Postgres store persists subject/actor as **nullable varchar** (`for_entity_*` / `from_entity_*` columns), using **`EntityRefPersistedGuid.PersistedEntityId()`** when callers pass Guid strings in `EntityRef.EntityId`.
 
 ## Surface
 
@@ -16,7 +15,7 @@ scoping to a workspace / personal / module-specific bucket.
 **Writes**
 
 - `SaveAsync(FavoriteRecord favorite, Guid? tenantId = null, string? context = null, CancellationToken ct = default)`
-  — idempotent: if the same `(tenant, ForEntity, FromEntity, context)` tuple
+  — idempotent: if the same `(tenant, subject, actor, context)` tuple
   already has an active row, the call is a no-op.
 - `DeleteAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)`
   — soft-delete by row id.
@@ -52,10 +51,7 @@ scoping to a workspace / personal / module-specific bucket.
 
 ### `FavoriteRecord`
 
-Derives from `Lyo.EntityReference.Models.EntityRefRow`, so each row carries the
-standard `ForEntityType` / `ForEntityId` / `FromEntityType` / `FromEntityId` /
-`TenantId` / `Context` / `Visibility` / lifecycle columns. No favorite-specific
-columns are added; `ForEntity` and `FromEntity` are convenience projections.
+Derives from **`EntityRelationRow`** (subject/actor endpoints: `SubjectEntityType` / `SubjectEntityId`, `ActorEntityType` / `ActorEntityId`; DB columns `for_entity_*` / `from_entity_*`), plus `TenantId`, `Context`, `Visibility`, and lifecycle fields. **`SubjectRef`** / **`ActorRef`** project `EntityRef` at the boundary.
 
 ## Related projects
 

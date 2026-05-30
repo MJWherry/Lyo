@@ -6,7 +6,7 @@ using Lyo.Privacy.Policy;
 namespace Lyo.Privacy.Rules;
 
 /// <summary>Configures how digits and separators are shown for <see cref="PhoneRedactionRule" /> matches.</summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PhoneMaskOptions
 {
     /// <summary>Use <see cref="RedactionPolicy.Placeholder" /> for the whole match.</summary>
@@ -34,11 +34,6 @@ public sealed class PhoneMaskOptions
     public bool DigitsOnlyOutput { get; set; }
 
     public char MaskChar { get; set; } = '*';
-
-    private string DebuggerDisplay
-        => UsePolicyPlaceholder
-            ? "PhoneMaskOptions(Placeholder)"
-            : $"PhoneMaskOptions(lead={LeadingDigitsVisible}, trail={TrailingDigitsVisible}, nLast={OnlyFirstDigitAmongLastN?.ToString() ?? "∅"}, sep={PreserveSeparators}, digitsOnly={DigitsOnlyOutput}, mask='{MaskChar}')";
 
     /// <summary>Show only the last four digits (optional digits-only output).</summary>
     public static PhoneMaskOptions LastFourDigits(bool digitsOnly = false) => new() { TrailingDigitsVisible = 4, DigitsOnlyOutput = digitsOnly };

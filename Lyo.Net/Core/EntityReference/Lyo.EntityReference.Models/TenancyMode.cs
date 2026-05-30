@@ -13,5 +13,8 @@ public enum TenancyMode
     SingleTenantDefault,
 
     /// <summary>Caller must supply a non-empty tenant id; resolution throws when the caller omits the tenant. Used to enforce explicit multi-tenant scoping.</summary>
-    MultiTenantStrict
+    MultiTenantStrict,
+
+    /// <summary>Caller-supplied tenant is stored when non-empty; when omitted/empty the row is untenanted (<see langword="null" />). For nullable <c>tenant_id</c> stores that mix tenant-scoped and system-level rows.</summary>
+    MultiTenantOptional
 }

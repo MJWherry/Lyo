@@ -6,8 +6,12 @@ No HTTP stacks and **no vendor client packages** — hosts that only need DTOs c
 
 ## Provenance
 
-[`Addresses.Address`](Addresses/Address.cs) exposes `ICollection<EntitySourceRecord> Sources`. Persisted via [`address_source`](../Lyo.Geolocation.Postgres/README.md). The *
-*`source_entity_type`** string is chosen by the **importing application** (e.g. a constant in `Lyo.Google.Geolocation.Client`), not hard-coded in this package.
+[`Addresses.Address`](Addresses/Address.cs) implements **`IEntitySourceDerived`** (`ICollection<EntitySourceRecord> Sources`, optional **`LocallyModifiedAt`**). Persisted via [`address_source`](../Lyo.Geolocation.Postgres/README.md):
+
+- Owner identity on parent **`address`** (`address_id` FK)
+- **`source_entity_*`** + **`imported_at`** — external source (e.g. `GoogleMapsPlace` + place id)
+
+The **`source_entity_type`** string is chosen by the **importing application** (e.g. `Lyo.Google.Geolocation.Client`), not this package. Use **`EntitySourceRecord.From(source, importedAt)`** when mapping vendor DTOs before persist.
 
 ## DTO catalog
 

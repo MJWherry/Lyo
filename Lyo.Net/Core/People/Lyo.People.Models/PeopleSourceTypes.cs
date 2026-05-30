@@ -4,6 +4,7 @@ namespace Lyo.People.Models;
 public static class PeopleSourceTypes
 {
     public const string EndatoPsPerson = nameof(EndatoPsPerson);
+    public const string EndatoCePerson = nameof(EndatoCePerson);
     public const string EndatoPsAddress = nameof(EndatoPsAddress);
     public const string EndatoPsPhoneNumber = nameof(EndatoPsPhoneNumber);
     public const string EndatoPsEmail = nameof(EndatoPsEmail);

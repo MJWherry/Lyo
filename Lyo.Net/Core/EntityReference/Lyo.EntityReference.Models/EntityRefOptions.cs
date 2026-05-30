@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Lyo.EntityReference.Models;
 
 /// <summary>Host configuration for association stores (single-tenant default tenant, default tenancy mode).</summary>
-[DebuggerDisplay("Mode={Mode}, DefaultTenantId={DefaultTenantId}")]
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EntityRefOptions
 {
     /// <summary>Tenant identifier applied when store methods receive <see langword="null" /> or omit tenant context (single-tenant deployments).</summary>

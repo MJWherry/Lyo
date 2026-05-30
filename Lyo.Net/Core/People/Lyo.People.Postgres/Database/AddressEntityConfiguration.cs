@@ -1,3 +1,4 @@
+using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -10,6 +11,7 @@ public sealed class AddressEntityConfiguration : IEntityTypeConfiguration<Addres
         builder.ToTable("address");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
+        builder.ConfigureEntitySourceColumns("address");
         builder.Property(e => e.HouseNumber).HasMaxLength(12).HasColumnName("house_number");
         builder.Property(e => e.StreetPreDirection).HasMaxLength(12).HasColumnName("street_pre_direction");
         builder.Property(e => e.StreetName).HasMaxLength(50).HasColumnName("street_name");

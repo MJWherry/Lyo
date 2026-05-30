@@ -7,13 +7,13 @@ public sealed class RatingReactionRecord
 {
     public Guid Id { get; set; }
 
-    public string ForEntityType { get; set; } = string.Empty;
+    public string? SubjectEntityType { get; set; }
 
-    public Guid ForEntityId { get; set; }
+    public string? SubjectEntityId { get; set; }
 
-    public string FromEntityType { get; set; } = string.Empty;
+    public string? ActorEntityType { get; set; }
 
-    public Guid FromEntityId { get; set; }
+    public string? ActorEntityId { get; set; }
 
     public Guid? TenantId { get; set; }
 
@@ -21,7 +21,7 @@ public sealed class RatingReactionRecord
 
     public DateTime CreatedTimestamp { get; set; }
 
-    public EntityRef ForEntity => EntityRef.ForGuid(ForEntityType, ForEntityId);
+    public EntityRef ForEntity => EntityRef.ForKey(SubjectEntityType ?? string.Empty, SubjectEntityId ?? string.Empty);
 
-    public EntityRef FromEntity => EntityRef.ForGuid(FromEntityType, FromEntityId);
+    public EntityRef FromEntity => EntityRef.ForKey(ActorEntityType ?? string.Empty, ActorEntityId ?? string.Empty);
 }
